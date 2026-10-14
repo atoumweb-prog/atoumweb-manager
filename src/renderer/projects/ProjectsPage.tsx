@@ -28,7 +28,7 @@ import {
 import { ProjectCompletionReviewPanel } from './ProjectCompletionReviewPanel';
 import { ProjectOperationsTab } from './ProjectOperationsTab';
 import { ProjectResourcesTab } from './ProjectResourcesTab';
-import { ProjectSitesTab } from './ProjectSitesTab';
+import { ProjectSitesTab, type ProjectSitesViewContext } from './ProjectSitesTab';
 import { ProjectTechnicalLibraryTab } from './ProjectTechnicalLibraryTab';
 import { ProjectTimeTab } from './ProjectTimeTab';
 import type { TimeSession } from '../../shared/time';
@@ -155,6 +155,7 @@ export type ProjectReturnContext = {
   statusFilter: 'all' | ProjectStatus;
   commercialFilter: 'all' | 'provisional' | 'frozen' | 'legacy';
   projectTopCollapsed: boolean;
+  sitesViewContext: ProjectSitesViewContext | null;
   productionTreeCollapsed: boolean;
   productionSplitPercent: number;
 };
@@ -182,6 +183,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
   const [productionSplitPercent, setProductionSplitPercent] = useState(returnContext?.productionSplitPercent ?? 40);
   const [productionTreeCollapsed, setProductionTreeCollapsed] = useState(returnContext?.productionTreeCollapsed ?? false);
   const [projectTopCollapsed, setProjectTopCollapsed] = useState(returnContext?.projectTopCollapsed ?? false);
+  const [sitesViewContext, setSitesViewContext] = useState<ProjectSitesViewContext | null>(returnContext?.sitesViewContext ?? null);
   const [productionOverlay, setProductionOverlay] = useState<'resources' | 'technical' | 'time' | 'secrets' | null>(null);
   const [loading, setLoading] = useState(true);
   const [createMode, setCreateMode] = useState<'quote' | 'internal' | null>(null);
@@ -300,6 +302,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
       setPhaseCompletionReview(null);
       setProductionOverlay(null);
       setProductionTreeCollapsed(returnContext?.projectId === id ? returnContext.productionTreeCollapsed : false);
+      setSitesViewContext(returnContext?.projectId === id ? returnContext.sitesViewContext : null);
       setCompletionReview(null);
       const next=await window.atoumweb.projects.projects.get(id);
       if(epoch!==openEpoch.current)return;
@@ -704,7 +707,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
               <span className="eyebrow">{detail.number} · {detail.commercialState === 'provisional' ? 'Projet prévisionnel · devis non signé' : detail.commercialState === 'frozen' ? 'Projet confirmé · devis accepté' : 'Projet historique'}</span>
               <h2>{detail.name}</h2>
               <p>{detail.commercialState === 'provisional' && !detail.clientAccountId ? 'Prospect : ' : 'Client / contact : '}{detail.clientLabel}</p>
-              {detail.sourceQuoteId && <p className="muted">Devis source associé <button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'quote', entityId: detail.sourceQuoteId, title: 'Devis source du Projet', parentEntityId: detail.id, projectContext: { projectId: detail.id, detailTab, selectedNodeId, expandedPhaseIds: [...expandedPhaseIds], query, statusFilter, commercialFilter, projectTopCollapsed, productionTreeCollapsed, productionSplitPercent } } }))}>Ouvrir le devis</button></p>}
+              {detail.sourceQuoteId && <p className="muted">Devis source associé <button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'quote', entityId: detail.sourceQuoteId, title: 'Devis source du Projet', parentEntityId: detail.id, projectContext: { projectId: detail.id, detailTab, selectedNodeId, expandedPhaseIds: [...expandedPhaseIds], query, statusFilter, commercialFilter, projectTopCollapsed, productionTreeCollapsed, productionSplitPercent, sitesViewContext } } }))}>Ouvrir le devis</button></p>}
               {detail.commercialState === 'provisional' && <p className="muted">Préparation interne : ce dossier n’est pas une commande acceptée.</p>}
             </div>
           </div>
@@ -751,6 +754,8 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
           <ProjectSitesTab
             key={detail.id}
             projectId={detail.id}
+            initialViewContext={sitesViewContext}
+            onViewContextChange={setSitesViewContext}
             nodes={detail.nodes}
             onMessage={onMessage}
             onProjectChanged={async (updated) => {
