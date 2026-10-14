@@ -8,6 +8,7 @@ import {QuoteDraftLines,type DraftLine} from '../workflow/QuoteDraftLines';
 import { QuoteProjectPanel, QuoteConditions } from '../workflow/QuoteWorkflow';
 import { canAccessQuoteProject } from '../../shared/quoteProjectEligibility';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { matchStatisticsDrilldown, type StatisticsDrilldownRoute } from '../../shared/statisticsDrilldown';
 import type { CatalogItemSummary, QuoteDetail, QuoteLineInput, QuoteStatus, QuoteSummary } from '../../shared/commercial';
 import type { ClientSummary, ProspectSummary } from '../../shared/crm';
 import { QuoteClientPreview } from './QuoteClientPreview';
@@ -39,7 +40,10 @@ function money(cents: number): string {
   return `${(cents / 100).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €`;
 }
 
-export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest }: { onMessage: (message: string) => void; initialId?: string | null; initialRequest?:number;onEntityReady?:EntityReady }) {
+export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest, statisticsDrilldown, onClearStatisticsDrilldown }: {
+  onMessage: (message: string) => void; initialId?: string | null; initialRequest?: number; onEntityReady?: EntityReady;
+  statisticsDrilldown?: StatisticsDrilldownRoute | null; onClearStatisticsDrilldown?: () => void;
+}) {
   const [draftLines,setDraftLines]=useState<DraftLine[]>([]);
   const [wizardTerms,setWizardTerms]=useState('');
   const [catalogPrice,setCatalogPrice]=useState('');
@@ -129,14 +133,17 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
     return () => document.removeEventListener('pointerdown', closeOnOutside);
   }, [detail?.id, previewOpen]);
 
+  const drilldown = statisticsDrilldown?.kind === 'signed' ? statisticsDrilldown : null;
+  const drilldownMatch = drilldown ? matchStatisticsDrilldown(quotes, drilldown, quote => quote.status === 'accepted') : null;
   const filtered = useMemo(() => {
+    if (drilldown) return matchStatisticsDrilldown(quotes, drilldown, quote => quote.status === 'accepted').rows;
     const needle = query.trim().toLocaleLowerCase('fr-FR');
     return quotes.filter((quote) => {
       if (statusFilter !== 'all' && quote.status !== statusFilter) return false;
       if (!needle) return true;
       return [quote.number, quote.subject, quote.ownerLabel].some((value) => value.toLocaleLowerCase('fr-FR').includes(needle));
     });
-  }, [quotes, query, statusFilter]);
+  }, [quotes, query, statusFilter, drilldown]);
 
   const ownerOptions = wizard.ownerKind === 'prospect'
     ? prospects.map((prospect) => ({ id: prospect.id, label: prospect.displayName }))
@@ -319,6 +326,12 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
         </div>}
       </div>{wizardError && <p className="form-error">{wizardError}</p>}<div className="quote-wizard-actions"><button className="secondary-button" type="button" disabled={wizardStep === 1} onClick={() => setWizardStep((step) => Math.max(1, step - 1))}>← Précédent</button>{wizardStep < 6 ? <button className="primary-button" type="button" onClick={nextWizard}>Suivant →</button> : <button className="primary-button" disabled={saving} type="button" onClick={() => void createQuote()}>{saving ? 'Création…' : 'Créer le devis'}</button>}</div></section>}
 
+      {drilldown && <section className="panel statistics-route-banner" aria-label="Filtre exact Statistiques">
+        <strong>Devis acceptés · {drilldown.periodLabel}</strong>
+        <p>Liste restreinte aux {drilldown.ids.length} devis acceptés retenus dans « Contractuel signé ». Ce n’est ni la liste générale des devis, ni un chiffre encaissé.</p>
+        {drilldownMatch && drilldownMatch.unavailable > 0 && <p role="alert">{drilldownMatch.unavailable} devis de la cohorte sont devenus indisponibles ou ne sont plus acceptés. Aucun autre devis n’est ajouté.</p>}
+        <button className="secondary-button" type="button" onClick={onClearStatisticsDrilldown}>Quitter ce filtre et voir tous les devis</button>
+      </section>}
       {loading ? <div className="panel"><p className="muted">Chargement des devis…</p></div> : <div className={detail ? 'quotes-layout with-detail' : 'quotes-layout'}><div className="panel quote-list-panel"><table className="quote-table"><thead><tr><th>Numéro</th><th>Destinataire</th><th>Objet</th><th>Statut</th><th>Valeur</th><th>Décision</th><th>Créé le</th></tr></thead><tbody>{filtered.map((quote) => {
         const prospect = quote.prospectId ? prospects.find((item) => item.id === quote.prospectId) ?? null : null;
         const actionable = quote.status === 'sent' || quote.status === 'viewed';
