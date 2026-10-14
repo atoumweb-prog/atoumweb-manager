@@ -22,6 +22,11 @@ export class ClientDocumentService {
     if(quote||linked)throw Error(`Ce document constitue une preuve contractuelle rattachée au devis ${quote?.quote_number ?? 'référencé dans son historique'}. Sa suppression définitive est interdite ; l’archivage conserve le fichier et son rattachement.`);
     const invoiceLink=this.db.get<{id:string}>('SELECT id FROM billing_items WHERE invoice_document_id=? LIMIT 1',[id]);
     if(invoiceLink)throw Error('Cette facture PDF est rattachée à un élément de facturation. Sa suppression définitive est interdite ; utilise l’archivage.');
+    const invoiceHistory=this.db.get<{id:number}>(
+      "SELECT id FROM activity_log WHERE entity_type='billing_item' AND action IN ('billing_invoice_attached','billing_invoice_replaced') AND json_valid(metadata_json) AND (json_extract(metadata_json,'$.previousDocumentId')=? OR json_extract(metadata_json,'$.currentDocumentId')=?) LIMIT 1",
+      [id,id],
+    );
+    if(invoiceHistory)throw Error('Cette facture PDF figure dans l’historique de facturation Abby. Sa suppression définitive est interdite ; utilise l’archivage.');
     const path=this.absolutePath(current);
     if(existsSync(path))unlinkSync(path);
     this.db.run('DELETE FROM client_documents WHERE id=?',[id]);
