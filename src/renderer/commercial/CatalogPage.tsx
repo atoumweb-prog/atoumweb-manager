@@ -827,7 +827,8 @@ function CommercialParametersSummary({ parameters }: { parameters?: CatalogComme
   return <section className="catalog-detail-section catalog-commercial-parameters"><strong>Paramètres commerciaux du catalogue</strong>{Object.entries(labels).map(([key, label]) => parameters[key as keyof CatalogCommercialParameters] ? <Summary key={key} label={label} value={parameters[key as keyof CatalogCommercialParameters]!} /> : null)}</section>;
 }
 
-function CatalogFields({ draft, onChange, showIdentity = false }: { draft: CatalogDraft; onChange: (draft: CatalogDraft) => void; showIdentity?: boolean }) {
+function CatalogFields({ draft, onChange, showIdentity = false, activeTab }: { draft: CatalogDraft; onChange: (draft: CatalogDraft) => void; showIdentity?: boolean; activeTab?: CatalogEditorTab }) {
+  const visible = (...tabs:CatalogEditorTab[]) => !activeTab || tabs.includes(activeTab);
   const priceDisabled = draft.priceMode === 'quote_only' || draft.priceMode === 'free';
 
   return (
@@ -850,9 +851,9 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
         </div>
       </section>}
 
-      <section className="catalog-field-group">
-        <div className="catalog-field-group-heading"><strong>Contenu de la prestation</strong><span>Ce que tu vends réellement et ce que le projet devra reprendre.</span></div>
-        <div className="catalog-fields-grid">
+      {visible('identity','pricing','scope') && <section className="catalog-field-group">
+        <div className="catalog-field-group-heading"><strong>Fiche versionnée</strong><span>Champs modifiables de cette version uniquement.</span></div>
+        {visible('identity','pricing') && <div className="catalog-fields-grid">
           {showIdentity && <label>Code canonique AW (facultatif)<input value={draft.canonicalCode} onChange={(e) => onChange({ ...draft, canonicalCode: e.target.value })} placeholder="AW-WEB-VITRINE" /></label>}
           <label>Nature commerciale<select value={draft.commercialKind} onChange={(e) => onChange({ ...draft, commercialKind: e.target.value as CatalogDraft['commercialKind'] })}><option value="">Non renseignée</option>{CATALOG_COMMERCIAL_KINDS.map((kind) => <option key={kind} value={kind}>{KIND_LABELS[kind]}</option>)}</select></label>
           <label>Famille canonique<input value={draft.familyCode} onChange={(e) => onChange({ ...draft, familyCode: e.target.value })} placeholder="WEB" /></label>
@@ -860,8 +861,8 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
           <label>Unité<input value={draft.unit} onChange={(e) => onChange({ ...draft, unit: e.target.value })} placeholder="Page, heure, produit…" /></label>
           <label>Périodicité<input value={draft.periodicity} onChange={(e) => onChange({ ...draft, periodicity: e.target.value })} placeholder="Ponctuelle, mensuelle, annuelle…" /></label>
           <label>Base de prix<select value={draft.priceBasis} onChange={(e) => onChange({ ...draft, priceBasis: e.target.value as CatalogPriceBasis, ...(e.target.value === 'actual_cost' ? { priceMode: 'quote_only' as const, priceEuros: '' } : {}) })}><option value="listed">Tarif catalogue</option><option value="actual_cost">Coût tiers réel</option></select></label>
-        </div>
-        <div className="catalog-fields-grid">
+        </div>}
+        {visible('scope') && <div className="catalog-fields-grid">
           <label className="catalog-wide">
             <span className="field-label-with-help">Nature de la prestation <FieldHelp text="Décris en une courte phrase le rôle de cette prestation. Exemple : rédaction d’un article de blog optimisé ou création d’une page supplémentaire." /></span>
             <input value={draft.nature} onChange={(e) => onChange({ ...draft, nature: e.target.value })} placeholder="Ex. Rédaction d’un article de blog prêt à publier" />
@@ -882,10 +883,10 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
             <span className="field-label-with-help">Prérequis <FieldHelp text="Un élément par ligne. Informations, accès ou validations nécessaires avant de commencer." /></span>
             <textarea value={draft.prerequisitesText} onChange={(e) => onChange({ ...draft, prerequisitesText: e.target.value })} placeholder={"Sujet validé\nAccès WordPress"} />
           </label>
-        </div>
-      </section>
+        </div>}
+      </section>}
 
-      <section className="catalog-field-group">
+      {visible('pricing') && <section className="catalog-field-group">
         <div className="catalog-field-group-heading"><strong>Tarification & délai</strong><span>Références commerciales et estimation interne.</span></div>
         <div className="catalog-fields-grid">
           <label>
@@ -913,21 +914,23 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
             <input inputMode="numeric" value={draft.recommendedDelayDays} onChange={(e) => onChange({ ...draft, recommendedDelayDays: e.target.value })} />
           </label>
         </div>
-      </section>
+      </section>}
 
-      <section className="catalog-field-group">
-        <div className="catalog-field-group-heading"><strong>Cadre commercial</strong><span>Informations de contrat et conseils internes.</span></div>
-        <div className="catalog-fields-grid">
+      {visible('identity','sales','contracts') && <section className="catalog-field-group">
+        <div className="catalog-field-group-heading"><strong>Cadre et aide commerciale</strong><span>Informations versionnées, distinctes des CGV publiées.</span></div>
+        {visible('identity') && <div className="catalog-fields-grid">
           <label>Référence de source<input value={draft.sourceReference} onChange={(e) => onChange({ ...draft, sourceReference: e.target.value })} placeholder="Document ou référence de décision" /></label>
           <label>Empreinte source SHA-256<input value={draft.sourceSha256} onChange={(e) => onChange({ ...draft, sourceSha256: e.target.value })} /></label>
           <label>Ligne ou clé de source<input value={draft.sourceRecordKey} onChange={(e) => onChange({ ...draft, sourceRecordKey: e.target.value })} /></label>
-        </div>
-        <div className="catalog-fields-grid">
+        </div>}
+        {visible('contracts') && <div className="catalog-fields-grid">
           <details className="contract-legacy"><summary>Ancien libellé contractuel (legacy)</summary><p>Conservé pour compatibilité uniquement. Les types structurés se choisissent dans les références contractuelles de la version Catalogue.</p><input readOnly value={draft.contractType} aria-label="Ancien libellé contractuel legacy" /></details>
           <label className="catalog-wide">
             <span className="field-label-with-help">Conditions commerciales <FieldHelp text="Conditions particulières à reprendre dans le devis lorsque cette prestation est utilisée." /></span>
             <textarea value={draft.specialTerms} onChange={(e) => onChange({ ...draft, specialTerms: e.target.value })} />
           </label>
+        </div>}
+        {visible('sales') && <div className="catalog-fields-grid">
           <label className="catalog-wide">
             <span className="field-label-with-help">Besoin client <FieldHelp text="Formule le problème que la prestation aide à résoudre. Utilisé pour rechercher cette prestation depuis Prospects et Devis après publication." /></span>
             <textarea value={draft.commercialParameters.clientNeed ?? ''} onChange={e => onChange({
@@ -950,9 +953,9 @@ function CatalogFields({ draft, onChange, showIdentity = false }: { draft: Catal
             <span className="field-label-with-help">Conseil interne AtoumWeb <FieldHelp text="Bonne pratique, point de vigilance ou conseil réservé à AtoumWeb. Jamais affiché automatiquement au client." /></span>
             <textarea value={draft.internalAdvice} onChange={(e) => onChange({ ...draft, internalAdvice: e.target.value })} placeholder="Ex. demander le sujet, le mot-clé principal et les visuels avant démarrage." />
           </label>
-          {showIdentity && <label className="catalog-public-check"><input type="checkbox" checked={draft.visiblePublic} onChange={(e) => onChange({ ...draft, visiblePublic: e.target.checked })} /> Visible sur le site public</label>}
-        </div>
-      </section>
+        </div>}
+        {showIdentity && <label className="catalog-public-check"><input type="checkbox" checked={draft.visiblePublic} onChange={(e) => onChange({ ...draft, visiblePublic: e.target.checked })} /> Visible sur le site public</label>}
+      </section>}
     </div>
   );
 }
