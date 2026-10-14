@@ -122,3 +122,20 @@ Le script refuse l'écrasement d'une destination existante et exige que chaque c
 
 Les 15 scénarios R04B restent ouverts tant que leurs preuves intermodules ne sont pas consolidées et que le SHA final de la PR n'a pas une CI verte.
 
+
+## 8. R04B-07 / E96 — champs de recherche versionnés et trois contextes
+
+**Décision technique : utiliser le `commercial_parameters_json` déjà versionné sur `catalog_versions`, sans migration 68 ni modification d'un contrat.** Deux propriétés descriptives sont ajoutées au type `CatalogCommercialParameters` : `benefits` (bénéfices client) et `keywords` (mots-clés/synonymes saisis par un humain). Le champ `clientNeed` existait déjà, mais n'était pas disponible dans l'éditeur Catalogue.
+
+- **Administration Catalogue :** `CatalogPage.tsx` permet d'éditer besoin, bénéfices et mots-clés dans le formulaire d'une nouvelle version. `buildVersion()` conserve également les autres valeurs `commercialParameters` des versions précédentes pour ne pas les effacer lors d'une réédition.
+- **Recherche partagée :** `src/shared/catalogDiscovery.ts` normalise accents/casse/espaces puis cherche exclusivement dans les champs réellement persistés. Ce n'est **pas** un moteur sémantique, une suggestion automatique ni une garantie de résultat SEO.
+- **Service Catalogue :** `CatalogService.list({search})` applique le même filtrage français aux résumés de la version effectivement sélectionnée, y compris besoin/bénéfices/mots-clés. Les autres filtres SQL et la catégorie brute restent conservés.
+- **Prospect / Besoins :** les deux sélecteurs `ProspectNeedsPanel` et `NeedDraftSelector` recherchent au-delà d'une catégorie, mais seulement les items actifs avec version publiée ; le clic reste une action explicite **d'ajout d'un besoin**. Aucune création de Devis/Projet.
+- **Devis :** `QuotesPage` utilise le même moteur pour sélectionner une version active et publiée. Il ne crée aucune ligne sans clic utilisateur sur « Ajouter une ligne » ; aucun texte interne `internalAdvice` n'est utilisé comme mot-clé commercial public.
+- **Compatibilité :** codes canoniques et Abby restent recherchables. Les items archivés et les versions brouillon demeurent consultables en **administration**, pas sélectionnables en Prospect/Devis.
+- **Tests ajoutés :** `src/shared/catalogDiscovery.test.ts`, `src/main/commercial/CatalogDiscoveryE96.test.ts` et assertions supplémentaires `scripts/check-catalog-identity-ui.cjs`. Les tests couvrent les accents, les champs versionnés, l'exclusion des brouillons, les archives, les conseils internes, la non-mutation de données, le stockage SQL et le maintien de la version publiée quand un nouveau brouillon est préparé.
+
+**Frontières restant ouvertes :** E96 n'implémente pas d'index de synonymes automatiques ; les recommandations offre-service versionnées, leur déduplication et leur motif humain appartiennent à **04D**, les aides `?` commerciales détaillées à **04E**. Le parcours complet Prospect → Devis → Projet reste un contrôle transversal indépendant, sans pouvoir être présumé sur la seule validation de la recherche.
+
+**Décision de recette de cette intervention :** la validation visuelle humaine n'est **pas exécutée**, conformément à la demande expresse de poursuivre **sans recette visuelle**. Les tests métier, CI, SQLite et Electron fonctionnels restent attendus sur le SHA final ; la non-réalisation de la recette visuelle est conservée comme réserve, et non transformée en succès.
+
