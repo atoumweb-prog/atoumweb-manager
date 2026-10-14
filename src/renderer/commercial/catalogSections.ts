@@ -70,20 +70,34 @@ export function buildCataloguePresentation(items: readonly CatalogItemSummary[])
     } else if (item.type === 'offer') {
       otherOffers.push(item);
     } else {
-      const category = cataloguePrimaryCategoryLabel(item);
-      const group = serviceGroups.get(category) ?? [];
+      // Do not merge two distinct persisted categories just because their aliases
+      // happen to have the same display label (E94/E95: requires explicit reconciliation).
+      const categoryKey = item.category?.trim() || '';
+      const group = serviceGroups.get(categoryKey) ?? [];
       group.push(item);
-      serviceGroups.set(category, group);
+      serviceGroups.set(categoryKey, group);
     }
   }
 
-  const serviceCategories = [...serviceGroups.entries()]
-    .sort(([left], [right]) => {
-      if (left === 'Sans catégorie') return right === left ? 0 : 1;
-      if (right === 'Sans catégorie') return -1;
-      return left.localeCompare(right, 'fr-FR', { sensitivity: 'base' });
+  const serviceLabels = [...serviceGroups.keys()].map((key) => ({
+    key,
+    label: key ? cataloguePrimaryCategoryLabel(serviceGroups.get(key)![0]) : 'Sans catégorie',
+  }));
+  const labelCounts = new Map<string, number>();
+  for (const { label } of serviceLabels) labelCounts.set(label, (labelCounts.get(label) ?? 0) + 1);
+
+  const serviceCategories = serviceLabels
+    .sort((left, right) => {
+      if (!left.key) return right.key ? 1 : 0;
+      if (!right.key) return -1;
+      return left.label.localeCompare(right.label, 'fr-FR', { sensitivity: 'base' }) ||
+        left.key.localeCompare(right.key, 'fr-FR', { sensitivity: 'base' });
     })
-    .map(([title, entries]) => ({ id: title, title, items: entries.sort(sortFrench) }));
+    .map(({ key, label }) => ({
+      id: key || '__without_category__',
+      title: key && (labelCounts.get(label) ?? 0) > 1 ? `${label} · ${key}` : label,
+      items: serviceGroups.get(key)!.sort(sortFrench),
+    }));
 
   return {
     featured: featured.filter((section) => section.items.length > 0).map((section) => ({
