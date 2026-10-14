@@ -43,6 +43,16 @@ jobs:
       - name: Tests
         run: npm test -- --maxWorkers=2
 
+      # Lot 04B: real Electron renderer + mocked IPC, isolated under Windows TEMP.
+      # This is deliberately scoped to the Catalogue pilot PR; no live workspace is opened.
+      - name: Electron Catalogue 04B — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 104 }}
+        shell: pwsh
+        timeout-minutes: 6
+        run: |
+          node scripts/check-catalog-identity-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       # PR98 standalone; the combined candidate runs this same recipe below.
       # La fixture crée exclusivement ses propres fichiers et profil dans %TEMP%.
       - name: Electron CRM 03B.6 — Windows TEMP
