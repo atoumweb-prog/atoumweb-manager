@@ -553,8 +553,8 @@ export class ContractTermsService {
       if(hasApprovedClassification){
         if(!assembly.ready)throw Error('Classement contractuel incomplet : faire approuver les rubriques et résoudre les doublons et clauses incomplètes avant finalisation.');
         const particular=clauses.filter(clause=>clause.enabled&&clause.sourceKind==='custom');
-        const append=particular.length?'\\n\\nCONDITIONS PARTICULIÈRES\\n\\n'+particular.map((clause,index)=>`${index+1}. ${clause.title.trim()}\\n${clause.body.trim()}`).join('\\n\\n'):'';
-        compiledText='CONDITIONS GÉNÉRALES DE VENTE – ATOUMWEB\\n\\n'+renderApprovedDraftContract(assembly)+append;
+        const append=particular.length?'\n\nCONDITIONS PARTICULIÈRES\n\n'+particular.map((clause,index)=>`${index+1}. ${clause.title.trim()}\n${clause.body.trim()}`).join('\n\n'):'';
+        compiledText='CONDITIONS GÉNÉRALES DE VENTE – ATOUMWEB\n\n'+renderApprovedDraftContract(assembly)+append;
       }
     }
     if(payload && !included.some(c=>c.sourceKind==='base'&&!c.isOrphaned)) throw Error('Préparation contractuelle incomplète : aucun socle publié disponible ; les brouillons ne sont pas consommés.');
