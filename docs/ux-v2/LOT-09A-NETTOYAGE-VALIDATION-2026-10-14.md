@@ -19,3 +19,6 @@ Date : 14 octobre 2026. Branche : `audit/ux-v2-lot09-20261014`.
 ## Gates bloquantes
 Dans un checkout Windows isolé, sur ce SHA : `npm ci`, `npm run typecheck`, `npm test`, tests ciblés des dépenses/documents/facturation, contrôles migrations et restaurations sur fixtures TEMP, Electron et UX-01. Aucun merge dans `main` avant ces résultats et revue de sécurité du nettoyage.
 
+
+## PR de validation
+La PR draft #113 a été créée pour recueillir des résultats réels du workflow qualité Windows. Cette étape ne constitue pas une autorisation de fusion.
