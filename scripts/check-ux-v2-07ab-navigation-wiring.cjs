@@ -10,6 +10,7 @@ const cases=[
  ['Shared navigation protects dirty draft',app.includes('const allowed=requestUnsavedExit(()=>')],
  ['Return project context set only after allowed navigation',app.includes("setQuoteReturnProjectId(result.entityType === 'quote' && activePageRef.current === 'Projets'")],
  ['Quote uses context passed by shell',app.includes('returnProjectId={quoteReturnProjectId}')],
+ ['Direct rail navigation clears stale source Project context',/function navigateDirect\(page: PageName\): void\s*\{\s*\/\/[^\n]*\n\s*setQuoteReturnProjectId\(null\);/.test(app)],
  ['Return action targets original project',quote.includes("entityId: returnProjectId")],
  ['Return uses shared navigate route',quote.includes("new CustomEvent('atoumweb:navigate'")],
  ['Project panel protects tab switch',project.includes('requestUnsavedExit(() => setDetailTab(tab))')],
