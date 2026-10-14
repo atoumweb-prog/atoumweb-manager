@@ -4,6 +4,7 @@ import type { ProjectNode } from '../../shared/projects';
 import type {
   AtoumWebCompositionDetail,
   AtoumWebCompositionPackageExportResult,
+  ProjectPagePackageHistoryEntry,
   AtoumWebCompositionItem,
   AtoumWebCompositionSummary,
   AtoumWebLibraryCategory,
@@ -183,6 +184,7 @@ export function ProjectPageCompositionPanel({
 }) {
   const [composition, setComposition] = useState<AtoumWebCompositionDetail | null>(null);
   const [preparedPackage, setPreparedPackage] = useState<(AtoumWebCompositionPackageExportResult & { sourceUpdatedAt: string }) | null>(null);
+  const [exportHistory, setExportHistory] = useState<ProjectPagePackageHistoryEntry[]>([]);
   const [allCompositions, setAllCompositions] = useState<AtoumWebCompositionSummary[]>([]);
   const [library, setLibrary] = useState<AtoumWebTechnicalItemSummary[]>([]);
   const [mode, setMode] = useState<PanelMode>(null);
@@ -218,15 +220,17 @@ export function ProjectPageCompositionPanel({
 
   async function reload(): Promise<void> {
     const epoch = pageEpoch.current;
-    const [nextComposition, nextCompositions, nextLibrary] = await Promise.all([
+    const [nextComposition, nextCompositions, nextLibrary, nextHistory] = await Promise.all([
       window.atoumweb.referentials.compositions.getForProjectPage(page.id),
       window.atoumweb.referentials.compositions.list(false),
       window.atoumweb.referentials.library.list({ includeArchived: false }),
+      window.atoumweb.referentials.compositions.listPageExports(page.id),
     ]);
     if (epoch !== pageEpoch.current) return;
     setComposition(nextComposition);
     setAllCompositions(nextCompositions);
     setLibrary(nextLibrary);
+    setExportHistory(nextHistory);
   }
 
   useEffect(() => {
@@ -234,6 +238,7 @@ export function ProjectPageCompositionPanel({
     ++pageEpoch.current;
     setComposition(null);
     setPreparedPackage(null);
+    setExportHistory([]);
     setMode(null);
     setInspected(null);
     setSettingsItemId(null);
@@ -483,6 +488,7 @@ export function ProjectPageCompositionPanel({
       // The Manager can only prove its local ZIP; a WordPress import has not
       // been acknowledged and must never be represented as a published Page.
       setPreparedPackage({ ...exported, sourceUpdatedAt: composition.updatedAt });
+      setExportHistory(await window.atoumweb.referentials.compositions.listPageExports(page.id));
       onMessage(
         `Package Page préparé localement (import Bridge non confirmé) : ${exported.fileName}`,
         () => void window.atoumweb.referentials.compositions.showPackage(exported.path),
@@ -541,6 +547,14 @@ export function ProjectPageCompositionPanel({
         Ouvrir le package local
       </button>
     </div>}
+
+    {exportHistory.length>0&&<details className="project-page-package-status">
+      <summary>Historique local des exports Page ({exportHistory.length}) — aucune importation WordPress confirmée</summary>
+      {exportHistory.map(entry=><p key={entry.exportId}>
+        {new Date(entry.createdAt).toLocaleString('fr-FR')} · {entry.exportId} · {entry.componentCount} composant(s) · empreinte {entry.fingerprint.slice(0,12)}
+      </p>)}
+      <p>Ces enregistrements prouvent la préparation de fichiers locaux, pas leur import dans un Workbench ni leur publication.</p>
+    </details>}
 
     <div className="project-page-composition-workspace">
       <div className="project-page-composition-primary">
