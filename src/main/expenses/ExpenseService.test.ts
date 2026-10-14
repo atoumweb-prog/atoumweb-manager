@@ -214,4 +214,41 @@ describe('ExpenseService', () => {
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+
+  it('autorise une dépense interne mensuelle sans générer de doublon et refuse les montants invalides', () => {
+    const source = {
+      category: 'software' as const, label: 'Service interne mensuel',
+      amountCents: 2400, vatCents: 400, status: 'planned' as const,
+      expenseDate: '2026-10-14T12:00:00.000Z', frequency: 'monthly' as const,
+      nextDueAt: '2026-11-14T12:00:00.000Z',
+    };
+    expect(() => expenses.create({ ...source, amountCents: -1 })).toThrow(/Montant de dépense invalide/);
+    expect(() => expenses.create({ ...source, vatCents: 3000 })).toThrow(/Montant de TVA invalide/);
+    const created = expenses.create(source);
+    expect(created).toMatchObject({
+      clientAccountId: null, projectId: null, frequency: 'monthly',
+      status: 'planned', nextDueAt: source.nextDueAt,
+    });
+    const committed = expenses.changeStatus(created.id, 'committed');
+    expect(committed.status).toBe('committed');
+    expect(expenses.list()).toHaveLength(1);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('signale explicitement un justificatif manquant sans créer de nouvelle preuve', () => {
+    const expense = expenses.create({
+      category: 'office', label: 'Justificatif à détecter', amountCents: 3000,
+      expenseDate: '2026-10-14T12:00:00.000Z',
+    });
+    const source = join(root, 'preuve-disparue.pdf');
+    writeFileSync(source, '%PDF-1.4\\nPreuve réelle de test');
+    expenses.importReceipt(expense.id, source);
+    const original = expenses.absoluteReceiptPath(expense.id);
+    rmSync(original, { force: true });
+    expect(expenses.get(expense.id).receiptMissing).toBe(true);
+    expect(() => expenses.absoluteReceiptPath(expense.id)).toThrow(/introuvable/);
+    expect(expenses.listReceiptVersions(expense.id)[0].integrity).toBe('missing');
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
 });
