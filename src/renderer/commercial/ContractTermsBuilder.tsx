@@ -468,7 +468,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
           </li>)}</ul>
         </div>}
       </details>}
-      {presentation&&<ContractReadPanel presentation={presentation} commercial={commercialAbbyBlock(quote)} unsaved={unsaved}/>}
+      {presentation&&<ContractReadPanel key={quote.id} presentation={presentation} commercial={commercialAbbyBlock(quote)} unsaved={unsaved}/>}
       <details className="cgv-editing" ref={clauseEditorRef}><summary>Adapter les clauses de ce devis ({build?.clauses.length ?? 0})</summary>
       <p className="muted">Les clauses sont présentées dans l’ordre contractuel du devis. Socle : commun et non modifiable ici ; prestation : déclenchée par une prestation ; particulière : propre à ce devis. Les clauses exclues et orphelines restent visibles pour contrôle.</p>
       {unsaved && <p role="status" className="cgv-warning">{changedClauseIds.length} clause(s) modifiée(s) non enregistrée(s) : enregistre chaque clause concernée avant la finalisation ou la sortie.</p>}
