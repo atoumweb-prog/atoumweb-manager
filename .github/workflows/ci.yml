@@ -112,6 +112,10 @@ jobs:
           node scripts/check-ux-v2-03e-directory.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Isolated operational SQLite fixture — Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 147 }}
+        run: npx vitest run src/main/testSupport/operationalRecipeFixture.test.ts --maxWorkers=1
+
       - name: Tests
         run: npm test -- --maxWorkers=2
 
