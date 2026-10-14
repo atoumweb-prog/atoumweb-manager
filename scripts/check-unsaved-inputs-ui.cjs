@@ -25,7 +25,43 @@ if(!process.versions.electron){
  const value=selector=>js('return document.querySelector('+JSON.stringify(selector)+')?.value');const context='.quote-contract-preparation input[data-contract-field=context]',admin='.quote-contract-preparation input[data-contract-field=admin-identity]';
  for(const theme of ['atoumweb','noir','blanc']){
  const quote=database.quotes.create({clientAccountId:client.id,subject:'TEST '+theme});database.quotes.addCustomLine(quote.id,{label:'Prestation fixture',proposedUnitPriceCents:10000});
+ if(process.argv.includes('--lot-pdf'))database.database.run("UPDATE quotes SET status='accepted' WHERE id=?",[quote.id]); // Fixture TEMP d'interface uniquement, sans simuler l'acceptation métier.
  win=new BrowserWindow({show:false,width:1600,height:1100,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});S.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));await wait('!!document.querySelector(".aw-navigation-rail")');await js('document.documentElement.dataset.theme='+JSON.stringify(theme)+';window.dispatchEvent(new CustomEvent("atoumweb:navigate",{detail:{entityType:"quote",entityId:'+JSON.stringify(quote.id)+',title:"TEST"}}));');await wait('!!document.querySelector(".quote-contract-preparation input")');
+ if(process.argv.includes('--lot-pdf')){
+   const selector='.quote-contract-document',saveSelector=selector+' .quote-contract-reference button',importSelector=selector+' .quote-contract-document-actions button.primary-button';
+   await wait('!!document.querySelector('+JSON.stringify(selector)+')');
+   check(theme+' accepted TEMP fixture shows Abby PDF panel',await js('return !!document.querySelector('+JSON.stringify(selector)+')'));
+   const originalReference=database.quotes.updateAbbyReference.bind(database.quotes);let referenceCalls=0,releaseReference;
+   database.quotes.updateAbbyReference=(...args)=>{referenceCalls++;return new Promise(resolve=>{releaseReference=()=>resolve(originalReference(...args));});};
+   await input('.quote-contract-reference input','ABBY UI '+theme);
+   await js('const b=document.querySelector('+JSON.stringify(saveSelector)+');b.click();b.click()');
+   for(let i=0;i<80&&!releaseReference;i++)await sleep(25);
+   check(theme+' reference first request intercepted',typeof releaseReference==='function');
+   check(theme+' rapid reference double click sends one IPC',referenceCalls===1);
+   check(theme+' reference pending disables button',await js('return document.querySelector('+JSON.stringify(saveSelector)+').disabled'));
+   releaseReference();await wait('!document.querySelector('+JSON.stringify(saveSelector)+').disabled');
+   check(theme+' reference persisted exactly once',database.quotes.get(quote.id).abbyReference==='ABBY UI '+theme);
+   database.quotes.updateAbbyReference=originalReference;
+   const originalOpen=dialog.showOpenDialog;let pickerCalls=0,releasePicker;
+   dialog.showOpenDialog=()=>{pickerCalls++;return new Promise(resolve=>{releasePicker=()=>resolve({canceled:true,filePaths:[]});});};
+   await js('const b=document.querySelector('+JSON.stringify(importSelector)+');b.click();b.click()');
+   for(let i=0;i<80&&!releasePicker;i++)await sleep(25);
+   check(theme+' PDF picker first request intercepted',typeof releasePicker==='function');
+   check(theme+' rapid PDF double click opens only one picker',pickerCalls===1);
+   check(theme+' pending PDF import disables button',await js('return document.querySelector('+JSON.stringify(importSelector)+').disabled'));
+   releasePicker();await wait('!document.querySelector('+JSON.stringify(importSelector)+').disabled');
+   check(theme+' cancelled PDF picker leaves no document',!database.quotes.get(quote.id).contractDocumentId);
+   dialog.showOpenDialog=async()=>{pickerCalls++;throw new Error('Injected TEMP PDF picker failure');};
+   await js('document.querySelector('+JSON.stringify(importSelector)+').click()');
+   await sleep(120);await wait('!document.querySelector('+JSON.stringify(importSelector)+').disabled');
+   check(theme+' failed PDF picker permits retry',pickerCalls===2&&!database.quotes.get(quote.id).contractDocumentId);
+   dialog.showOpenDialog=async()=>{pickerCalls++;return {canceled:true,filePaths:[]};};
+   await js('document.querySelector('+JSON.stringify(importSelector)+').click()');
+   await sleep(120);await wait('!document.querySelector('+JSON.stringify(importSelector)+').disabled');
+   check(theme+' retry PDF picker invoked exactly once',pickerCalls===3);
+   dialog.showOpenDialog=originalOpen;
+   win.destroy();win=null;continue;
+ }
  if(process.argv.includes('--abby')){
  const abby='.quote-abby-panel > button';
  await wait('!!document.querySelector(".quote-abby-panel > button")');
