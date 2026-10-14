@@ -33,3 +33,10 @@ export function isCurrentOperationsRefresh(
 ): boolean {
   return generation === currentGeneration && writeGenerationAtStart === currentWriteGeneration;
 }
+
+/** Synchronous lock: a second click cannot issue another mutation while the first is pending. */
+export function acquireCompletionLock(inFlight: Set<string>, interventionId: string): (() => void) | null {
+  if (inFlight.has(interventionId)) return null;
+  inFlight.add(interventionId);
+  return () => { inFlight.delete(interventionId); };
+}
