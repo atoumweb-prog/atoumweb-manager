@@ -1,0 +1,33 @@
+// Real Electron App, preload/IPC and isolated TEMP SQLite. No installed profile.
+module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
+ const {dialog}=require('electron');const original=dialog.showMessageBoxSync,answers=[],dialogs=[];
+ dialog.showMessageBoxSync=(...args)=>{dialogs.push(args.at(-1));return answers.shift()??0;};
+ const click=async(selector)=>{await js(`const e=document.querySelector(${JSON.stringify(selector)});if(!e||e.disabled)throw Error('Missing control: '+${JSON.stringify(selector)});e.click()`);await sleep(120);};
+ const input=async(selector,value)=>{await js(`const e=document.querySelector(${JSON.stringify(selector)});if(!e)throw Error('Missing input');const p=HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(p,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}))`);await sleep(80);};
+ try {
+  const org=db.crm.createOrganization({name:'07AB ORGANISATION'}),client=db.crm.createClient({organizationId:org.id});
+  const quote=db.quotes.create({clientAccountId:client.id,subject:'07AB DEVIS'});
+  const project=db.projects.createInternal({name:'07AB PROJET'});
+  await navigate('Projets');await wait('document.querySelector(".projects-layout")','project list');
+  await js(`window.dispatchEvent(new CustomEvent('atoumweb:navigate',{detail:{entityType:'project',entityId:${JSON.stringify(project.id)},title:'Projet 07AB'}}))`);
+  await wait(`document.querySelector('[data-search-entity-type="project"][data-search-entity-id="${project.id}"]')`,'project identity');
+  test(await get(`!!document.querySelector('[data-search-entity-id="${project.id}"]')`),'Project ID stable before navigation');
+  // The project fixture is internal, without a sourceQuoteId. Dispatch the exact event shape used by the button.
+  await js(`window.dispatchEvent(new CustomEvent('atoumweb:navigate',{detail:{entityType:'quote',entityId:${JSON.stringify(quote.id)},title:'Devis source du Projet',parentEntityId:${JSON.stringify(project.id)}}}))`);
+  await wait(`document.querySelector('[data-search-entity-type="quote"][data-search-entity-id="${quote.id}"]')`,'source quote identity');
+  test(await get(`!!document.querySelector('.quote-detail-heading-actions button')&&!![...document.querySelectorAll('.quote-detail-heading-actions button')].find(b=>b.textContent.includes('Retour au Projet'))`),'Quote exposes return to exact source Project');
+  await input('.quote-add-line input[placeholder="Libellé"]','07AB UNSAVED DRAFT');
+  const prior=dialogs.length;await click('.quote-detail-heading-actions button.secondary-button');
+  test(dialogs.length===prior+1,'Dirty quote prompts exactly once on return');
+  test(await get('document.querySelector(".quote-add-line input[placeholder=\\"Libellé\\"]")?.value==="07AB UNSAVED DRAFT"'),'Stay retains unsaved text');
+  test(await get(`!!document.querySelector('[data-search-entity-type="quote"][data-search-entity-id="${quote.id}"]')`),'Stay retains current quote identity');
+  answers.push(1);const before=dialogs.length;await click('.quote-detail-heading-actions button.secondary-button');
+  await wait(`document.querySelector('[data-search-entity-type="project"][data-search-entity-id="${project.id}"]')`,'return to source project');
+  test(dialogs.length===before+1,'Confirm triggers one guarded exit prompt');
+  test(await get(`!!document.querySelector('[data-search-entity-type="project"][data-search-entity-id="${project.id}"]')`),'Confirm returns to original project ID');
+  test(await get(`document.activeElement?.dataset?.searchEntityId===${JSON.stringify(project.id)}`),'Return restores targeted focus to Project');
+  test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','TEMP SQLite integrity');
+  test(db.database.all('PRAGMA foreign_key_check').length===0,'TEMP SQLite foreign keys');
+  console.log('NAVIGATION07AB_NATIVE_EVIDENCE '+JSON.stringify({checks:'passed',projectId:project.id,quoteId:quote.id,dialogs:dialogs.length,onlyTemp:true}));
+ }finally{dialog.showMessageBoxSync=original;}
+};
