@@ -22,3 +22,6 @@ Dans un checkout Windows isolé, sur ce SHA : `npm ci`, `npm run typecheck`, `np
 
 ## PR de validation
 La PR draft #113 a été créée pour recueillir des résultats réels du workflow qualité Windows. Cette étape ne constitue pas une autorisation de fusion.
+
+## Nouvelle validation CI
+Relance du pipeline sur le commit courant de la PR draft #113 ; résultat à vérifier dans GitHub Actions avant de lever le gate.
