@@ -18,7 +18,7 @@ describe('05E — contract document provenance is not acceptance',()=>{
   });
   it('recognizes a complete evidence record without mutating it',()=>{
     const record=evidence();const snapshot=JSON.stringify(record);
-    expect(assessContractEvidence(record)).toBe('accepted_evidence');
+    expect(assessContractEvidence(record)).toBe('evidence_metadata_complete');
     expect(JSON.stringify(record)).toBe(snapshot);
   });
 });
