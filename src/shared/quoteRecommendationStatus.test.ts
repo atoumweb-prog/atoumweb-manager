@@ -37,6 +37,23 @@ describe('04D — états du conseil commercial dans une ligne de Devis',()=>{
     });
     expect(quoteRecommendationState(offer,target(),[offer,bought])).toBe('option-purchased');
   });
+  it('does not offer to purchase an optional service already added elsewhere on the Quote',()=>{
+    const offer=quoteLine('offer',{snapshot:{offerComponents:[{
+      serviceItemId:'service',componentId:'optional-1',isOptional:true,
+    }]}});
+    const independentlyAdded=quoteLine('service-line',{
+      catalogItemId:'service',catalogVersionId:'service-v2',
+    });
+    expect(quoteRecommendationState(offer,target(),[offer,independentlyAdded]))
+      .toBe('already-added');
+    // Purchasing the precise option still takes precedence for its source offer.
+    const option=quoteLine('option',{catalogItemId:'service',optionPurchase:{
+      state:'purchased',sourceOfferLineId:'offer',sourceOfferItemId:'offer-item',
+      sourceOfferVersionId:'offer-v1',sourceComponentId:'optional-1',purchasedAt:'2026-10-14',
+    }});
+    expect(quoteRecommendationState(offer,target(),[offer,independentlyAdded,option]))
+      .toBe('option-purchased');
+  });
   it('detects already added service by item, including another version or a historical snapshot',()=>{
     const other=quoteLine('line',{catalogItemId:'service',catalogVersionId:'service-v2'});
     expect(quoteRecommendationState(source,target(),[source,other])).toBe('already-added');
