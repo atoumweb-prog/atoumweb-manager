@@ -8,6 +8,7 @@ import { ContractTermsService } from './ContractTermsService';
 import { QuoteService } from './QuoteService';
 import { quoteContractText } from '../../shared/contractTerms';
 import { buildQuoteHtml } from './quotePdf';
+import { prepareWordDraftManifest } from './wordDraftReview';
 
 let database: NodeSqliteAdapter;
 let crm: CrmService;
@@ -332,4 +333,50 @@ describe('ContractTermsService', () => {
     expect(copiedBuild.clauses.find((clause) => clause.sourceClauseId === specific.id)?.body).toBe('Texte négocié.');
     expect(copiedBuild.clauses.some((clause) => clause.title === 'Cas particulier' && clause.body === 'Conserver cette clause.')).toBe(true);
   });
+  it('valide Word vers une nouvelle version brouillon sans publier ni écraser la source',()=>{
+    const clause=contractTerms.createTemplate({code:'WORD-TEST',title:'Clause Word test',scope:'base'},{body:'Article 1\\nTexte original'});
+    const base=clause.versions[0];
+    const manifest=prepareWordDraftManifest({kind:'contract_clause',clauseId:clause.id,versionId:base.id,status:'draft',body:base.body});
+    const revised=contractTerms.createReviewedWordDraft(manifest,'Article 1\\nTexte corrigé');
+    expect(revised).toMatchObject({status:'draft',body:'Article 1\\nTexte corrigé',publishedAt:null});
+    const persisted=contractTerms.getTemplate(clause.id);
+    expect(persisted.versions.find(v=>v.id===base.id)?.body).toBe(base.body);
+    expect(persisted.versions).toHaveLength(2);
+    expect(persisted.currentVersionId).toBeNull();
+    const event=database.get<{metadata_json:string}>(
+      "SELECT metadata_json FROM activity_log WHERE entity_id=? AND action='contract_word_draft_approved'",[clause.id]);
+    expect(JSON.parse(event!.metadata_json)).toMatchObject({
+      previousVersionId:base.id,newVersionId:revised.id,sourceSha256:manifest.sourceSha256,exportId:manifest.exportId,
+    });
+    expect(()=>contractTerms.createReviewedWordDraft(manifest,'Une seconde correction')).toThrow(/Conflit/);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('refuse Word sur source publiée, source périmée, import inchangé, clause archivée',()=>{
+    const clause=contractTerms.createTemplate({code:'WORD-CHECK',title:'Interdits Word',scope:'base'},{body:'Base'});
+    const base=clause.versions[0];
+    const m=prepareWordDraftManifest({kind:'contract_clause',clauseId:clause.id,versionId:base.id,status:'draft',body:'Base'});
+    expect(()=>contractTerms.createReviewedWordDraft(m,'Base')).toThrow(/Aucune modification/);
+    expect(()=>contractTerms.createReviewedWordDraft({...m,sourceSha256:'f'.repeat(64)},'Autre')).toThrow(/Conflit/);
+    contractTerms.publishVersion(base.id);
+    expect(()=>contractTerms.createReviewedWordDraft(m,'Autre')).toThrow(/brouillon/);
+    const next=contractTerms.createVersion(clause.id,{body:'Brouillon ultérieur'});
+    const newManifest=prepareWordDraftManifest({kind:'contract_clause',clauseId:clause.id,versionId:next.id,status:'draft',body:next.body});
+    contractTerms.setTemplateStatus(clause.id,'archived');
+    expect(()=>contractTerms.createReviewedWordDraft(newManifest,'Encore')).toThrow(/archivée/);
+  });
+
+  it('annule nouvelle version Word si la journalisation de provenance échoue',()=>{
+    const clause=contractTerms.createTemplate({code:'WORD-ATOMIC',title:'Journal Word',scope:'base'},{body:'Avant'});
+    const base=clause.versions[0];
+    const manifest=prepareWordDraftManifest({kind:'contract_clause',clauseId:clause.id,versionId:base.id,status:'draft',body:'Avant'});
+    database.exec(`CREATE TRIGGER reject_word_approval BEFORE INSERT ON activity_log
+      WHEN NEW.entity_id='${clause.id}' AND NEW.action='contract_word_draft_approved'
+      BEGIN SELECT RAISE(ABORT,'journal Word indisponible'); END;`);
+    expect(()=>contractTerms.createReviewedWordDraft(manifest,'Après')).toThrow(/journal Word indisponible/);
+    expect(contractTerms.getTemplate(clause.id).versions).toHaveLength(1);
+    expect(contractTerms.getTemplate(clause.id).versions[0].body).toBe('Avant');
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
 });
