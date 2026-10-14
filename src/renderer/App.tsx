@@ -23,7 +23,7 @@ import { ProspectsPage } from './crm/ProspectsPage';
 import { ProspectReferenceWindow } from './crm/ProspectReferenceWindow';
 import { OperationsPage, type OperationsSearchTarget } from './operations/OperationsPage';
 import { OperationIcon } from './operations/OperationIcon';
-import { ProjectsPage } from './projects/ProjectsPage';
+import { ProjectsPage, type ProjectReturnContext } from './projects/ProjectsPage';
 import { AtoumWebLibraryPage } from './referentials/AtoumWebLibraryPage';
 import { BridgeSitesPage } from './bridge/BridgeSitesPage';
 import { StatisticsPage } from './statistics/StatisticsPage';
@@ -138,6 +138,7 @@ function App() {
   const [prospectPipelineFilter, setProspectPipelineFilter] = useState<ProspectPipelineFilter>('all');
   const [quoteTarget,setQuoteTarget] = useState<string|null>(null);
   const [quoteReturnProjectId, setQuoteReturnProjectId] = useState<string | null>(null);
+  const [projectReturnContext, setProjectReturnContext] = useState<ProjectReturnContext | null>(null);
   const routeKeys=useRef({crmTarget,quoteTarget,prospectViewTarget,prospectPipelineFilter});routeKeys.current={crmTarget,quoteTarget,prospectViewTarget,prospectPipelineFilter};
   const [documentTarget, setDocumentTarget] = useState<string | null>(null);
   const [contractTypeTarget,setContractTypeTarget]=useState<string|null>(null);
@@ -262,8 +263,9 @@ function App() {
   }
 
   function navigateDirect(page: PageName): void {
-    // Navigation par le rail : aucun contexte de retour Projet ne doit survivre à une ouverture directe de Devis.
+    // Le contexte Projet/Devis ne survit pas à une navigation indépendante par le rail.
     setQuoteReturnProjectId(null);
+    setProjectReturnContext(null);
     if (page === 'Interventions & Maintenance') setOperationsSearchTarget(null);
     if (page === 'Projets') setProjectSearchTarget(null);
     if (page === 'Bibliothèque AtoumWeb') setLibrarySearchTarget(null);
@@ -329,6 +331,13 @@ function App() {
         visibleEntity.current=null;pendingSearch.current={result,resolve};
         if(destination==='Clients'||destination==='Prospects')setCrmTarget(null);
         setQuoteReturnProjectId(result.entityType === 'quote' && activePageRef.current === 'Projets' ? result.parentEntityId ?? null : null);
+        setProjectReturnContext(previous => {
+          if (result.entityType === 'quote' && activePageRef.current === 'Projets') {
+            const context = (result as SearchResult & { projectContext?: ProjectReturnContext }).projectContext;
+            return result.parentEntityId && context?.projectId === result.parentEntityId ? context : null;
+          }
+          return result.entityType === 'project' && previous?.projectId === result.entityId ? previous : null;
+        });
         setNavigationRequest(value=>value+1);openSearchResultDirect(result);
       });
       if(!allowed)resolve({status:'cancelled',cancelledReason:'guard',message:'Navigation annulée ; brouillon et recherche conservés.'});
@@ -376,7 +385,7 @@ function App() {
           {activePage === 'Clients' && <ClientsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialId={catalogTarget}/>}
           {activePage === 'Devis' && <QuotesPage onEntityReady={markEntityReady} key={quoteTarget} initialId={quoteTarget} initialRequest={navigationRequest} returnProjectId={quoteReturnProjectId} onMessage={setMessage} />}
-          {activePage === 'Projets' && <ProjectsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={showMessage} initialProjectId={projectSearchTarget} showHoverHelp={showHoverHelp} />}
+          {activePage === 'Projets' && <ProjectsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={showMessage} initialProjectId={projectSearchTarget} returnContext={projectSearchTarget && projectReturnContext?.projectId === projectSearchTarget ? projectReturnContext : null} showHoverHelp={showHoverHelp} />}
           {activePage === 'Interventions & Maintenance' && <OperationsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialTarget={operationsSearchTarget} />}
           {activePage === 'Gestion des temps' && <TimePage onMessage={setMessage} />}
           {activePage === 'Facturation' && <BillingPage onMessage={setMessage} />}
