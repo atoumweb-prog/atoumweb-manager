@@ -306,6 +306,45 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
       'E08E abandoned September edit never persisted');
     test(db.maintenanceReports.get(october.id).clientSummary!=='E08E SEPTEMBRE NON ENREGISTRE',
       'E08E October remains isolated');
+    // 08C : une décision de dépassement non enregistrée doit être gardée
+    // pendant les changements de période et ne doit générer aucun handoff.
+    const extraMinor = db.operations.createIntervention({
+      clientAccountId: client.id, maintenancePeriodId: period.id,
+      type: 'maintenance', coverageMode: 'maintenance', subject: 'E08C Deuxième dépannage TEMP',
+    });
+    db.time.addManual({ interventionId: extraMinor.id, category: 'support',
+      startedAt: '2026-09-15T08:00:00Z', endedAt: '2026-09-15T08:25:00Z' });
+    await chooseSubscription('E08C B TEMP');
+    await wait('document.querySelector(".maintenance-compact-item.selected")?.textContent.includes("E08C B TEMP")',
+      'E08C B refreshed after minor intervention');
+    await chooseSubscription('E224 Quota TEMP');
+    await wait('document.querySelectorAll(".maintenance-period-list button").length>=2',
+      'E08C A periods refreshed after extra minor');
+    await choosePeriod('2026-09');
+    await wait('!!document.querySelector(".maintenance-overage-item")','E08C overage decision editor shown');
+    const fillOverage = async (selector, value) => {
+      await js('const el=document.querySelector('+JSON.stringify(selector)+');'+
+        'if(!el)throw Error("E08C overage field missing");'+
+        'Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(el,'+
+        JSON.stringify(value)+');el.dispatchEvent(new Event("input",{bubbles:true}));');
+      await sleep(80);
+    };
+    await fillOverage('.maintenance-overage-item input[placeholder^="Ex."]','E08C DECISION NON ENREGISTREE');
+    await fillOverage('.maintenance-overage-item input[type="number"]','42');
+    const beforeOverageExit=confirmations.length;
+    await choosePeriod('2026-10');
+    test(confirmations.length===beforeOverageExit+1,'E08C overage draft triggers UX-01 confirmation');
+    test(await get('document.querySelector(".maintenance-period-list button.selected")?.textContent.includes("2026-09")')===true,
+      'E08C Stay retains overage period');
+    test(await get('document.querySelector(".maintenance-overage-item input[placeholder^="Ex."]")?.value')==='E08C DECISION NON ENREGISTREE',
+      'E08C Stay retains unrecorded overage reason');
+    answers.push(1);
+    await choosePeriod('2026-10');
+    await wait('document.querySelector(".maintenance-period-list button.selected")?.textContent.includes("2026-10")',
+      'E08C confirmed switch after overage draft');
+    test(db.maintenanceOverages.review(period.id).unresolvedCount===1,
+      'E08C discarding overage draft never records a financial decision');
+    test(db.database.all('PRAGMA foreign_key_check').length===0,'E08C overage SQLite foreign keys');
     test(db.database.all('PRAGMA foreign_key_check').length===0,'E08C/E08E temp SQLite foreign keys');
     console.log('[UXV2 08C/08E] Native period-race/report pending and dirty navigation PASS');
 
