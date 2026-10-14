@@ -466,6 +466,8 @@ export interface ProjectsApi {
     prepareQuote(input: TransformQuoteToProjectInput): Promise<ProjectDetail>;
     previewQuote(input: TransformQuoteToProjectInput): Promise<ProjectCommercialPreview>;
     syncCommercial(projectId: string): Promise<ProjectDetail>;
+    previewRestart(projectId: string): Promise<ProjectCommercialRestartPreview>;
+    restartProject(projectId: string, reviewedSHA256: string): Promise<ProjectDetail>;
     assignTarget(projectId:string,input:ContributionTargetInput):Promise<ProjectCommercialScope>;
     commercialScope(projectId: string): Promise<ProjectCommercialScope>;
     resolveScopeConflict(projectId: string, conflictId: string, decision: ProjectConflictDecision): Promise<ProjectCommercialScope>;
@@ -518,6 +520,14 @@ export interface ProjectsApi {
     prepareForReuse(itemId: string, versionId?: string | null): Promise<ProjectTechnicalReuseExportResult>;
     archive(itemId: string): Promise<ProjectTechnicalItemDetail>;
   };
+}
+
+/** Read-only impact overview; the archived source is never physically removed. */
+export interface ProjectCommercialRestartPreview {
+  projectId: string;
+  quoteId: string;
+  counts: Record<string, number>;
+  sha256: string;
 }
 
 export type ProjectConflictDecision = 'keep' | 'archive' | 'detach' | 'delete';
