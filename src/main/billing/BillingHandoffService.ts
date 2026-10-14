@@ -242,6 +242,13 @@ export class BillingHandoffService {
     // Production supplies a workspace-aware verifier; do not attest tampered or missing PDF bytes.
     this.verifyInvoiceDocument?.(documentId);
 
+    // Reattaching the same document is not a new Abby invoice replacement.
+    if (current.invoiceDocumentId === documentId) {
+      const reference = input.reference === undefined ? current.invoiceReference : clean(input.reference);
+      const invoicedAt = input.invoicedAt ? this.dateIso(input.invoicedAt, 'Date de facture invalide.') : current.invoicedAt;
+      if (reference === current.invoiceReference && invoicedAt === current.invoicedAt) return current;
+      return this.updateInvoiceMetadata(id, { reference, invoicedAt });
+    }
     const reference = clean(input.reference);
     const invoicedAt = input.invoicedAt ? this.dateIso(input.invoicedAt, 'Date de facture invalide.') : nowIso();
     const now = nowIso();
