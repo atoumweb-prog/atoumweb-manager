@@ -7,6 +7,10 @@ export interface DraftClauseImpact {id:string;title:string;kinds:DraftImpactKind
 export function compareDraftContractClauses(
   saved:readonly QuoteContractClause[], next:readonly QuoteContractClause[],
 ):DraftClauseImpact[]{
+  // Fail closed when a malformed list repeats an identity: a summary must not silently hide a clause.
+  if(new Set(saved.map(c=>c.id)).size!==saved.length||new Set(next.map(c=>c.id)).size!==next.length){
+    throw new Error('Identifiants de clauses dupliqués dans la comparaison contractuelle.');
+  }
   const oldById=new Map(saved.map(c=>[c.id,c]));
   const newById=new Map(next.map(c=>[c.id,c]));
   const impacts:DraftClauseImpact[]=[];
