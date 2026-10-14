@@ -29,7 +29,12 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   test(await get('document.querySelector(".quote-add-line input[placeholder=\\"Libellé\\"]")?.value==="07AB UNSAVED DRAFT"'),'Stay retains unsaved text');
   test(await get(`!!document.querySelector('[data-search-entity-type="quote"][data-search-entity-id="${quote.id}"]')`),'Stay retains current quote identity');
   answers.push(1);const before=dialogs.length;await click('.quote-detail-heading-actions button.secondary-button');
-  await wait(`document.querySelector('[data-search-entity-type="project"][data-search-entity-id="${project.id}"]')`,'return to source project');
+  try { await wait(`document.querySelector('[data-search-entity-type="project"][data-search-entity-id="${project.id}"]')`,'return to source project'); }
+  catch(error){
+    const state=await get(`({url:location.href,text:document.body?.innerText?.slice(0,1200),fatal:document.querySelector('.renderer-fatal-shell')?.innerText,returnButton:!!document.querySelector('.quote-detail-heading-actions button'),project:!!document.querySelector('[data-search-entity-type="project"]')})`);
+    console.log('NAVIGATION07B_TIMEOUT_CONTEXT '+JSON.stringify({state,dialogs:dialogs.map(d=>({message:d.message,buttons:d.buttons})),answerQueue:answers}));
+    throw error;
+  }
   test(dialogs.length===before+1,'Confirm triggers one guarded exit prompt');
   test(await get(`!!document.querySelector('[data-search-entity-type="project"][data-search-entity-id="${project.id}"]')`),'Confirm returns to original project ID');
   test(await get(`document.activeElement?.dataset?.searchEntityId===${JSON.stringify(project.id)}`),'Return restores targeted focus to Project');
