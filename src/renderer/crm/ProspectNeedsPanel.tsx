@@ -50,6 +50,9 @@ function KindTabs({kind,onChange}:{kind:'offers'|'services';onChange:(kind:'offe
 
 export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onChange: (next: NeedInput[]) => void }) {
   const [catalog, setCatalog] = useState<CatalogItemSummary[]>([]);
+  const [catalogLoadError,setCatalogLoadError]=useState('');
+  const [catalogLoading,setCatalogLoading]=useState(true);
+  const [catalogReloadKey,setCatalogReloadKey]=useState(0);
   const [category, setCategory] = useState('Web');
   const [selectedId, setSelectedId] = useState('');
   const [otherText, setOtherText] = useState('');
@@ -63,7 +66,20 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
   const selectedCategory=categories.includes(category)?category:categories[0]??'';
   const choices=availableByKind.filter(item=>(catalogQuery.trim() ? catalogMatchesQuery(item,catalogQuery) : catalogueFamilyLabel(item)===selectedCategory)).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
 
-  useEffect(() => { void window.atoumweb.catalog.list({ status: 'active' }).then((items) => setCatalog(items.filter(catalogIsSelectable))); }, []);
+  useEffect(()=>{
+    let active=true;
+    setCatalogLoading(true);setCatalogLoadError('');setCatalog([]);
+    void window.atoumweb.catalog.list({status:'active'}).then(items=>{
+      if(!active)return;
+      setCatalog(items.filter(catalogIsSelectable));
+      setCatalogLoading(false);
+    }).catch(err=>{
+      if(!active)return;
+      setCatalogLoadError(err instanceof Error?err.message:'Catalogue indisponible.');
+      setCatalogLoading(false);
+    });
+    return()=>{active=false;};
+  },[catalogReloadKey]);
 
   function add() {
     if (selectedId === 'other') {
@@ -108,6 +124,8 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
 
   return <div className="need-selector-v2 form-span-3">
     <div className="need-selector-title"><strong>Besoins / Offres / Services</strong><small>Catégorie ou recherche par besoin, bénéfice ou mot-clé publié.</small></div>
+    {catalogLoading&&<p role="status">Chargement des prestations publiées…</p>}
+    {catalogLoadError&&<div role="alert"><span>Catalogue indisponible : {catalogLoadError}. Aucun service n'est proposé tant que la lecture n'a pas réussi.</span><button type="button" onClick={()=>setCatalogReloadKey(key=>key+1)}>Réessayer</button></div>}
     <label>Rechercher une prestation par besoin<input aria-label="Rechercher une prestation par besoin" value={catalogQuery} onChange={e=>setCatalogQuery(e.target.value)} placeholder="visibilité Google, SEO local…" /></label>
     {value.length > 0 && <div className="need-chip-list">{value.map((need, index) => {
       const item = need.catalogItemId ? catalog.find((candidate) => candidate.id === need.catalogItemId) : null;
