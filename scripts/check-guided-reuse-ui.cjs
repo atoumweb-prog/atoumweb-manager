@@ -7,7 +7,7 @@ if(!process.versions.electron){
   try{const run=spawnSync(require('electron'),[__filename,...process.argv.slice(2)],{cwd:repo,env,windowsHide:true,encoding:'utf8',timeout:180000});process.stdout.write(run.stdout||'');process.stderr.write(run.stderr||'');if(run.error)throw run.error;process.exitCode=run.status??1;}
   finally{if(path.resolve(temp).startsWith(path.resolve(os.tmpdir())+path.sep)&&path.basename(temp).startsWith('atoumweb-guided-reuse-ui-'))fs.rmSync(temp,{recursive:true,force:true,maxRetries:5,retryDelay:100});}
 }else{
-  const {app,BrowserWindow,shell}=require('electron'),args=process.argv.slice(2),temp=process.env.ATOUMWEB_REUSE_UI_TEMP;
+  const {app,BrowserWindow,shell,dialog}=require('electron'),args=process.argv.slice(2),temp=process.env.ATOUMWEB_REUSE_UI_TEMP;
   const output=args.includes('--output')?path.resolve(args[args.indexOf('--output')+1]):null;
   if(!temp||!output)throw Error('Use node wrapper and --output');fs.mkdirSync(output,{recursive:true});
   app.disableHardwareAcceleration();app.setPath('userData',path.join(temp,'profile'));
@@ -15,10 +15,13 @@ if(!process.versions.electron){
   esbuild.buildSync({stdin:{contents:`export * from '${base}/src/main/database/DatabaseService';export {MIGRATIONS} from '${base}/src/main/database/migrations';export * from '${base}/src/main/workspace';export * from '${base}/src/main/ipc';export * from '${base}/src/main/operations/operationsIpc';export * from '${base}/src/main/referentials/referentialsIpc';export * from '${base}/src/main/backups/businessBackupsIpc';export * from '${base}/src/main/time/timeIpc';`,resolveDir:repo,loader:'ts'},bundle:true,platform:'node',format:'cjs',outfile:path.join(temp,'services.cjs'),external:['electron'],logLevel:'silent'});
   for(const [entry,file,platform] of [['src/preload/preload.ts','preload.js','node'],['src/renderer/main.tsx','ui.js','browser']])esbuild.buildSync({entryPoints:[path.join(repo,entry)],bundle:true,platform,format:platform==='node'?'cjs':undefined,outfile:path.join(temp,file),external:platform==='node'?['electron']:[],logLevel:'silent'});
   fs.writeFileSync(path.join(temp,'index.html'),'<html lang="fr"><head><meta charset="utf-8"><link rel="stylesheet" href="ui.css"></head><body><div id="root"></div><script src="ui.js"></script></body></html>');
-  const S=require(path.join(temp,'services.cjs')),checks=[],errors=[],opened=[];let database,win;
+  const S=require(path.join(temp,'services.cjs')),checks=[],errors=[],opened=[],guardDialogs=[],guardChoice={value:0};let database,win;
   const check=(name,passed)=>{checks.push({name,passed:!!passed});if(!passed)throw Error(name);};
   shell.openPath=async p=>{check('ouverture shell sur un fichier réel de la fixture',path.resolve(p).startsWith(path.resolve(temp)+path.sep)&&fs.existsSync(p));opened.push(p);return '';};
   app.whenReady().then(async()=>{
+    // Exercise the real synchronous IPC and native UX-01 confirmation without
+    // requiring an operator to click a blocking Windows modal in CI.
+    dialog.showMessageBoxSync=(...args)=>{guardDialogs.push(args.at(-1));return guardChoice.value;};
     const workspace=S.ensureWorkspace(path.join(temp,'fixture'));database=new S.DatabaseService(workspace);await database.initialize();const db=database.database;
     const project=database.projects.createInternal({name:'TEST — réutilisation guidée'});database.projects.addProjectNode(project.id,{name:'TEST Phase source',type:'lot'});
     const original=database.projectTechnicalLibrary.create(project.id,{name:'TEST snippet client',category:'php',description:'Source spécifique client',tags:['client']},{contentType:'code',language:'php',contentText:'<?php echo "CLIENT";'});
@@ -50,6 +53,26 @@ if(!process.versions.electron){
       await click('Préparer pour réutilisation');await wait(`!!document.querySelector('[aria-label="Version Projet source"]')`);
       check(theme+' stable sélectionnée',await js(`document.querySelector('[aria-label="Version Projet source"]').value===${JSON.stringify(v1)}`));
       const v2=database.projectTechnicalLibrary.get(original.id).currentVersion.id;
+      if(theme==='atoumweb'){
+        await input('Notes de préparation','BROUILLON UX-01 A PROTEGER');
+        const dialogsBefore=guardDialogs.length;
+        await click('Fermer la préparation');
+        check('UX-01 fermeture refusée conserve le formulaire',await js(`document.querySelector('[aria-label="Notes de préparation"]')?.value==='BROUILLON UX-01 A PROTEGER'`));
+        check('UX-01 dialogue natif invoqué via IPC',guardDialogs.length===dialogsBefore+1&&guardDialogs.at(-1).detail.includes('Adaptation de réutilisation'));
+        await input('Version Projet source',v2);
+        check('UX-01 changement de version refusé',await js(`document.querySelector('[aria-label="Version Projet source"]').value===${JSON.stringify(v1)}`));
+        await click('Nouvelle version');
+        check('UX-01 changement éditeur parent refusé',await js(`!!document.querySelector('.reuse-preparation-panel')&&!document.querySelector('.technical-detail .technical-editor')`));
+        await js(`(()=>{const e=document.querySelector('.technical-library-toolbar input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'RECHERCHE BLOQUEE');e.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+        await sleep(100);
+        check('UX-01 recherche refusée conserve sélection et brouillon',await js(`document.querySelector('.technical-library-toolbar input').value===''&&document.querySelector('[aria-label="Notes de préparation"]')?.value==='BROUILLON UX-01 A PROTEGER'`));
+        guardChoice.value=1;
+        await click('Fermer la préparation');
+        check('UX-01 abandon confirmé ferme le panneau',await js(`!document.querySelector('.reuse-preparation-panel')`));
+        guardChoice.value=0;
+        await click('Préparer pour réutilisation');
+        await wait(`!!document.querySelector('[aria-label="Version Projet source"]')`);
+      }
       await input('Version Projet source',v2);check(theme+' choix de version charge contenu exact',await js(`document.querySelector('[aria-label="Version Projet source"]').value`)===v2);
       await input('Version Projet source',v1);await input('Notes de préparation','TEST — retirer les données client');await click('Créer la copie de travail');
       await wait(`!!document.querySelector('[aria-label="Contenu générique adapté"]')`);
@@ -65,6 +88,12 @@ if(!process.versions.electron){
       for(const file of fs.readdirSync(path.join(pkg,'contenu')))fs.writeFileSync(path.join(pkg,'contenu',file),'<?php echo $label;');
       check(theme+' fichiers de travail indépendants du Projet',JSON.stringify(database.projectTechnicalLibrary.get(original.id))===sourceBefore&&fs.readFileSync(sourceResourcePath).equals(sourceResourceBefore)&&fs.readFileSync(inputFile,'utf8')==='{"client":"CLIENT"}');
       await input('Nom générique','TEST générique '+theme);await input('Description générique','Composant adapté humainement');await input('Tags génériques','test, generique');await input('Contenu générique adapté','<?php echo $label;');
+      if(theme==='atoumweb'){
+        const dialogsBefore=guardDialogs.length;
+        await click('Préparer pour réutilisation');
+        check('UX-01 repli parent refusé conserve adaptation',await js(`document.querySelector('[aria-label="Contenu générique adapté"]')?.value==='<?php echo $label;'`));
+        check('UX-01 fermeture via parent utilise le dialogue',guardDialogs.length===dialogsBefore+1);
+      }
       await js(`document.querySelector('[aria-label="Adaptation relue"]').click()`);await input('Notes de version générique','TEST adaptation humaine');check(theme+' nouvelle édition exige nouvelle revue',await js(`!document.querySelector('[aria-label="Adaptation relue"]').checked`));
       await js(`document.querySelector('[aria-label="Adaptation relue"]').click()`);
       await js('document.querySelector(".reuse-fields:last-of-type").scrollIntoView({block:"start"})');await shot('adaptation-'+theme);
