@@ -108,7 +108,9 @@ if(!process.versions.electron){
         await until(()=>typeof window.fixture.release==='function','delayed reply');
         assert('04D pending blocks close',window.tryLeave()===false);
         const number=window.fixture.calls.length;
-        button('Enregistrer les recommandations').click();
+        const pendingButton=button('Enregistrement…');
+        assert('04D button disabled while pending',pendingButton?.disabled===true);
+        pendingButton.click();
         assert('04D double save blocked',window.fixture.calls.length===number);
         window.swap();
         await until(()=>document.body.textContent.includes('Aucune recommandation')&&!document.querySelector('.offer-component-row'),'second version');
