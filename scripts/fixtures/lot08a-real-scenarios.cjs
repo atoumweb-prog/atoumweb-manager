@@ -267,6 +267,45 @@ module.exports = async ({db, registered, evalUI: js, get, wait, navigate, test, 
       'E08E saved B content never appears in A report');
     test(db.maintenanceReports.get(periodB.id).clientSummary==='E08E SAUVEGARDE TEMP B',
       'E08E discarded later edits do not overwrite B saved version');
+    // 08E : deux périodes d'une même souscription doivent aussi avoir des
+    // brouillons distincts ; « Rester » garde septembre, « Quitter » ouvre octobre.
+    const october = db.maintenance.ensurePeriod(subscription.id, '2026-10-14');
+    await chooseSubscription('E08C B TEMP');
+    await wait('document.querySelector(".maintenance-compact-item.selected")?.textContent.includes("E08C B TEMP")',
+      'E08E B reselected to refresh A periods');
+    await chooseSubscription('E224 Quota TEMP');
+    await wait('document.querySelectorAll(".maintenance-period-list button").length>=2',
+      'E08E September and October periods listed');
+    const choosePeriod = (month) => js(
+      'const el=[...document.querySelectorAll(".maintenance-period-list button")].find(e=>e.textContent.includes('+
+      JSON.stringify(month)+'));if(!el)throw Error("E08E month missing");el.click();');
+    await choosePeriod('2026-09');
+    await wait('document.querySelector(".maintenance-period-list button.selected")?.textContent.includes("2026-09")',
+      'E08E September period selected');
+    await js('document.querySelector(".maintenance-report-toggle").click()');
+    await wait('!!document.querySelector(".maintenance-report-fields textarea")',
+      'E08E September report opened');
+    await input('.maintenance-report-fields textarea','E08E SEPTEMBRE NON ENREGISTRE');
+    const beforePeriodPrompt=confirmations.length;
+    await choosePeriod('2026-10');
+    test(confirmations.length===beforePeriodPrompt+1,'E08E changing period protects unsaved report');
+    test(await get('document.querySelector(".maintenance-period-list button.selected")?.textContent.includes("2026-09")')===true,
+      'E08E Stay leaves September selected');
+    test(await get('document.querySelector(".maintenance-report-fields textarea")?.value')==='E08E SEPTEMBRE NON ENREGISTRE',
+      'E08E Stay retains September draft');
+    answers.push(1);
+    await choosePeriod('2026-10');
+    await wait('document.querySelector(".maintenance-period-list button.selected")?.textContent.includes("2026-10")',
+      'E08E Quit opens October');
+    await js('document.querySelector(".maintenance-report-toggle").click()');
+    await wait('!!document.querySelector(".maintenance-report-fields textarea")',
+      'E08E October report opened');
+    test(await get('document.querySelector(".maintenance-report-fields textarea")?.value')!=='E08E SEPTEMBRE NON ENREGISTRE',
+      'E08E discarded September draft does not leak to October');
+    test(db.maintenanceReports.get(period.id).clientSummary!=='E08E SEPTEMBRE NON ENREGISTRE',
+      'E08E abandoned September edit never persisted');
+    test(db.maintenanceReports.get(october.id).clientSummary!=='E08E SEPTEMBRE NON ENREGISTRE',
+      'E08E October remains isolated');
     test(db.database.all('PRAGMA foreign_key_check').length===0,'E08C/E08E temp SQLite foreign keys');
     console.log('[UXV2 08C/08E] Native period-race/report pending and dirty navigation PASS');
 
