@@ -90,4 +90,29 @@ describe('ExpenseService', () => {
     expect(() => expenses.absoluteReceiptPath(item.id)).toThrow(/Chemin de justificatif invalide/);
   });
 
+  it('journalise les chemins des deux versions après remplacement du justificatif', () => {
+    const item = expenses.create({
+      clientAccountId: clientId, category: 'software', label: 'Abonnement logiciel',
+      amountCents: 2400, expenseDate: '2026-09-23T12:00:00.000Z',
+    });
+    const sourceA = join(root, 'original.pdf');
+    const sourceB = join(root, 'remplacement.pdf');
+    writeFileSync(sourceA, 'version initiale');
+    writeFileSync(sourceB, 'version corrigée');
+    const first = expenses.importReceipt(item.id, sourceA);
+    const original = expenses.absoluteReceiptPath(item.id);
+    const second = expenses.importReceipt(item.id, sourceB);
+    expect(second.receiptRelativePath).not.toBe(first.receiptRelativePath);
+    expect(existsSync(original)).toBe(true);
+    const versions = database.all<{ metadata_json: string }>(
+      "SELECT metadata_json FROM activity_log WHERE entity_type='expense' AND entity_id=? AND action='expense_receipt_version' ORDER BY id ASC",
+      [item.id],
+    ).map((row) => JSON.parse(row.metadata_json) as { previousRelativePath: string | null; currentRelativePath: string });
+    expect(versions).toHaveLength(2);
+    expect(versions[0].previousRelativePath).toBeNull();
+    expect(versions[0].currentRelativePath).toBe(first.receiptRelativePath);
+    expect(versions[1].previousRelativePath).toBe(first.receiptRelativePath);
+    expect(versions[1].currentRelativePath).toBe(second.receiptRelativePath);
+  });
+
 });
