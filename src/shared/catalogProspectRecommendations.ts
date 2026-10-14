@@ -6,6 +6,7 @@ export function resolveProspectCatalogRecommendations(
   selectedItemIds: readonly string[],
   managedVersionIds: readonly string[],
   legacyItemIds: readonly string[],
+  hasManagedLinks = managedVersionIds.length > 0,
 ): CatalogItemSummary[] {
   const alreadySelected=new Set(selectedItemIds);
   const allowed=(item:CatalogItemSummary)=>item.type==='service'&&item.status==='active'&&item.currentVersion?.status==='published'
@@ -17,5 +18,5 @@ export function resolveProspectCatalogRecommendations(
   // Backwards compatibility while old seeded catalogues lack managed relations.
   // A configured relation that became inadmissible must not resurrect unrelated
   // historical hard-coded suggestions. The fallback applies only to no managed links.
-  return managedVersionIds.length ? managed : legacy;
+  return hasManagedLinks ? managed : legacy;
 }
