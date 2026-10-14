@@ -20,6 +20,7 @@ import {
 } from '../../shared/statistics';
 import { validateAnalyticsCustomPeriod, type AnalyticsPeriodPreset } from '../../shared/analytics';
 import { TIME_CATEGORIES, type TimeCategory, type TimeSession } from '../../shared/time';
+import { buildStatisticsEvidence, statisticsEvidenceTotal, type StatisticsEvidenceKey, type StatisticsEvidenceRow } from '../../shared/statisticsEvidence';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 import { StatisticsPage as Phase7StatisticsPage } from '../analytics/StatisticsPage';
 import './StatisticsPage.css';
@@ -129,6 +130,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
   const [customDates, setCustomDates] = useState({ from: '', to: '' });
   const [tab, setTab] = useState<StatisticsTab>('overview');
   const [clientSort, setClientSort] = useState<StatisticsClientSortColumn>('invoiced');
+  const [expandedKpi, setExpandedKpi] = useState<StatisticsEvidenceKey | null>(null);
 
   async function load(): Promise<void> {
     const request = ++requestVersion.current;
@@ -264,6 +266,14 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
   })).filter((item) => item.seconds || item.invoiced || item.ready || item.projects || item.interventions);
   const rankedClientRows = sortStatisticsClients(clientRows, clientSort).slice(0, 8);
 
+  const evidence = buildStatisticsEvidence({
+    acceptedQuotes: accepted,
+    invoices,
+    sessions,
+    newClients,
+  });
+  const selectedEvidence = expandedKpi ? evidence[expandedKpi] : null;
+
   const financial = [
     { label: 'Contractuel signé', value: signed, display: money(signed), tone: 'blue' },
     { label: 'Facturé (PDF Abby)', value: invoiced, display: money(invoiced), tone: 'green' },
@@ -326,11 +336,16 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
 
     {!invalidCustomPeriod && tab === 'overview' && <>
       <div className="statistics-kpis">
-        <Kpi icon="wallet" label="Contractuel signé" value={money(signed)} comparison={comparison(signed, previousSigned)} />
-        <Kpi icon="receipt" label="Facturé suivi" value={money(invoiced)} comparison={comparison(invoiced, previousInvoiced)} />
-        <Kpi icon="clock" label="Temps travaillé" value={hours(seconds)} comparison={comparison(seconds, previousSeconds)} />
-        <Kpi icon="user" label="Nouveaux clients" value={String(newClients.length)} comparison={comparison(newClients.length, previousClients.length)} />
+        <Kpi icon="wallet" label="Contractuel signé" value={money(signed)} comparison={comparison(signed, previousSigned)}
+          expanded={expandedKpi === 'signed'} onInspect={() => setExpandedKpi((value) => value === 'signed' ? null : 'signed')} />
+        <Kpi icon="receipt" label="Facturé suivi" value={money(invoiced)} comparison={comparison(invoiced, previousInvoiced)}
+          expanded={expandedKpi === 'invoiced'} onInspect={() => setExpandedKpi((value) => value === 'invoiced' ? null : 'invoiced')} />
+        <Kpi icon="clock" label="Temps travaillé" value={hours(seconds)} comparison={comparison(seconds, previousSeconds)}
+          expanded={expandedKpi === 'time'} onInspect={() => setExpandedKpi((value) => value === 'time' ? null : 'time')} />
+        <Kpi icon="user" label="Nouveaux clients" value={String(newClients.length)} comparison={comparison(newClients.length, previousClients.length)}
+          expanded={expandedKpi === 'clients'} onInspect={() => setExpandedKpi((value) => value === 'clients' ? null : 'clients')} />
       </div>
+      {expandedKpi && selectedEvidence && <StatisticsEvidencePanel kind={expandedKpi} rows={selectedEvidence} />}
       <div className="statistics-main-grid">
         <article className="panel statistics-card">
           <CardTitle eyebrow="Finances" title="Repères de la période" action="Voir facturation →" onClick={() => openPage('Facturation')} />
@@ -417,8 +432,43 @@ function Tab({ active, icon, label, onClick }: { active: boolean; icon: Operatio
   return <button className={active ? 'active' : ''} type="button" onClick={onClick}><OperationIcon name={icon} size={17} />{label}</button>;
 }
 
-function Kpi({ icon, label, value, comparison, helper }: { icon: OperationIconName; label: string; value: string; comparison?: ReturnType<typeof compare>; helper?: string }) {
-  return <article className="statistics-kpi"><span><OperationIcon name={icon} size={28} /></span><div><strong>{label}</strong><b>{value}</b>{comparison ? <small className={'trend-' + comparison.direction}>{comparison.text}</small> : <small>{helper}</small>}</div></article>;
+function Kpi({ icon, label, value, comparison, helper, onInspect, expanded }: {
+  icon: OperationIconName; label: string; value: string;
+  comparison?: ReturnType<typeof compare>; helper?: string; onInspect?: () => void; expanded?: boolean;
+}) {
+  return <article className="statistics-kpi"><span><OperationIcon name={icon} size={28} /></span><div><strong>{label}</strong><b>{value}</b>{comparison ? <small className={'trend-' + comparison.direction}>{comparison.text}</small> : <small>{helper}</small>}
+    {onInspect && <button className="link-button statistics-kpi-inspect" type="button" aria-expanded={!!expanded} aria-controls="statistics-evidence-panel" onClick={onInspect}>{expanded ? 'Masquer les éléments' : 'Voir les éléments exacts'}</button>}
+  </div></article>;
+}
+
+function StatisticsEvidencePanel({ kind, rows }: { kind: StatisticsEvidenceKey; rows: StatisticsEvidenceRow[] }) {
+  const descriptions: Record<StatisticsEvidenceKey, { title: string; source: string; date: string }> = {
+    signed: { title: 'Devis acceptés retenus', source: 'quotes · valeur contractuelle', date: 'Date d’acceptation' },
+    invoiced: { title: 'Lignes de facturation suivies', source: 'billing_items · montant attendu facturé', date: 'Date facturée' },
+    time: { title: 'Sessions de temps retenues', source: 'time_sessions · secondes suivies', date: 'Début de session' },
+    clients: { title: 'Clients devenus clients', source: 'client_accounts · dates de conversion', date: 'Date de conversion' },
+  };
+  const description = descriptions[kind];
+  const formatValue = (value: number): string => kind === 'signed' || kind === 'invoiced'
+    ? (value / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
+    : kind === 'time' ? value.toLocaleString('fr-FR') + ' s' : String(value);
+  const dateValue = (date: string | null): string => {
+    if (!date) return '—';
+    const parsed = new Date(date);
+    return Number.isNaN(parsed.getTime()) ? date : parsed.toLocaleDateString('fr-FR');
+  };
+  const firstRows = rows.slice(0, 100);
+  return <section className="panel statistics-evidence-panel" id="statistics-evidence-panel" aria-label={description.title}>
+    <div className="statistics-evidence-heading"><div><span className="eyebrow">Traçabilité</span><h3>{description.title}</h3></div>
+      <strong>{rows.length} élément{rows.length > 1 ? 's' : ''} · total {formatValue(statisticsEvidenceTotal(rows))}</strong>
+    </div>
+    <p className="statistics-evidence-source">Source : {description.source}. Le détail reprend les mêmes éléments déjà filtrés pour le KPI, et ne prétend pas appliquer un filtre dans un autre module.</p>
+    {rows.length === 0 ? <p className="muted">Aucun élément sur cette période.</p> : <div className="statistics-table-wrap"><table className="statistics-evidence-table">
+      <thead><tr><th>Élément source</th><th>{description.date}</th><th>Valeur</th></tr></thead>
+      <tbody>{firstRows.map((row) => <tr key={row.id}><td><strong>{row.label}</strong><small title={row.id}>{row.detail}</small></td><td>{dateValue(row.businessDate)}</td><td>{formatValue(row.value)}</td></tr>)}</tbody>
+    </table></div>}
+    {rows.length > 100 && <p className="statistics-evidence-source">Les 100 premiers éléments sont affichés sur {rows.length}, sans réduire le total calculé.</p>}
+  </section>;
 }
 
 function Snapshot({ icon, label, value, helper, onClick }: { icon: OperationIconName; label: string; value: number; helper: string; onClick: () => void }) {
