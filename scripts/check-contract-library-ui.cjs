@@ -166,15 +166,15 @@ if(!process.versions.electron){
       await wait('!!document.querySelector(`[aria-label="Texte du module à versionner"]`)');await input('Texte du module à versionner','Texte adapté '+theme);await click('Créer la nouvelle version du module');await wait('document.querySelector(`[aria-label="Version du module"]`).options.length===2');await click('Publier la version du module');
       module=database.contractTerms.getTemplate(module.id);check(theme+' module versions',module.versions.length===2&&module.currentVersion.body==='Texte adapté '+theme);
       if(theme==='atoumweb'){
-        await wait('!!document.querySelector("[aria-label=\"Classement contractuel de la version\"]")');
+        await wait('[...document.querySelectorAll("section")].some(e=>e.getAttribute("aria-label")==="Classement contractuel de la version")');
         check('05C selected version initially unclassified',database.contractSectionReviews.get(module.currentVersionId).status==='unclassified');
         await input('Rubrique de la version','finance');await input('Rang de la version','2');await input('Motif du classement','Paiement du service classé en finances');
         await click('Enregistrer la proposition');
-        await wait('document.querySelector("[aria-label=\"Classement contractuel de la version\"]")?.textContent.includes("Proposition — validation humaine nécessaire")');
+        await wait('[...document.querySelectorAll("section")].some(e=>e.getAttribute("aria-label")==="Classement contractuel de la version"&&e.textContent.includes("Proposition — validation humaine nécessaire"))');
         check('05C proposal remains unapproved',database.contractSectionReviews.get(module.currentVersionId).status==='proposed');
         await input('Valideur du classement','Relecteur fixture');
         await click('Approuver le classement proposé');
-        await wait('document.querySelector("[aria-label=\"Classement contractuel de la version\"]")?.textContent.includes("Classement approuvé")');
+        await wait('[...document.querySelectorAll("section")].some(e=>e.getAttribute("aria-label")==="Classement contractuel de la version"&&e.textContent.includes("Classement approuvé"))');
         const review=database.contractSectionReviews.get(module.currentVersionId);
         check('05C explicit named approval',review.status==='approved'&&review.sectionKey==='finance'&&review.rankInSection===2&&review.reviewer==='Relecteur fixture');
         check('05C metadata cannot rewrite published version',database.contractTerms.getTemplate(module.id).currentVersion.body==='Texte adapté '+theme);
