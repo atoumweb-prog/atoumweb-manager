@@ -33,6 +33,8 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   test(dialogs.length===before+1,'Confirm triggers one guarded exit prompt');
   test(await get(`!!document.querySelector('[data-search-entity-type="project"][data-search-entity-id="${project.id}"]')`),'Confirm returns to original project ID');
   test(await get(`document.activeElement?.dataset?.searchEntityId===${JSON.stringify(project.id)}`),'Return restores targeted focus to Project');
+  const returnedState=await get(`({tabs:[...document.querySelectorAll('.project-production-nav button')].map(b=>({label:b.textContent.trim(),active:b.classList.contains('active')})),visibleProject:!!document.querySelector('[data-search-entity-type="project"]'),heading:document.querySelector('.project-production-title')?.innerText?.slice(0,160)})`);
+  console.log('NAVIGATION07B_RETURN_CONTEXT '+JSON.stringify(returnedState));
   test(await get(`[...document.querySelectorAll('.project-production-nav button.active')].some(b=>b.textContent.trim()==='Commercial')`),'Return restores commercial Project tab');
   await click('.project-production-back');
   await wait('!!document.querySelector(".projects-toolbar input.inline-search")','project list after return');
