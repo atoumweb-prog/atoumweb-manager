@@ -115,3 +115,11 @@ jobs:
         run: |
           node scripts/check-restore-quit-roundtrip.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Electron UX V2 Lot 10 — scénarios ciblés Réglages et Sauvegardes
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux-v2-lot10-candidate-v1' }}
+        shell: pwsh
+        timeout-minutes: 12
+        run: |
+          node scripts/check-ux-v2-lot10-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
