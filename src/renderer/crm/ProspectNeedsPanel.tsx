@@ -54,7 +54,7 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
   const [otherText, setOtherText] = useState('');
   const [kind,setKind]=useState<'offers'|'services'>('offers');
   const [catalogQuery,setCatalogQuery]=useState('');
-  const [managedRecommendations,setManagedRecommendations]=useState<string[]>([]);
+  const [managedRecommendations,setManagedRecommendations]=useState<{sourceKey:string;versionIds:string[]}>({sourceKey:'',versionIds:[]});
   const choiceGuard=useUnsavedDraft('Prestation à ajouter',{selectedId,otherText},{discard:s=>{setSelectedId(s.selectedId);setOtherText(s.otherText);}});
 
   const availableByKind=catalog.filter(item=>catalogueIsOffer(item)===(kind==='offers'));
@@ -84,16 +84,17 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
   // temporary fallback for historic fixtures that have no administered links.
   useEffect(()=>{
     let live=true;
-    setManagedRecommendations([]);
+    setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[]});
     if(!recommendationSourceIds)return;
     void Promise.all(recommendationSourceIds.split('|').map(id=>
       window.atoumweb.catalog.listRecommendations(id),
     )).then(groups=>{
-      if(live)setManagedRecommendations([...new Set(groups.flatMap(links=>links.map(link=>link.targetVersionId)))]);
-    }).catch(()=>{if(live)setManagedRecommendations([]);});
+      if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[...new Set(groups.flatMap(links=>links.map(link=>link.targetVersionId)))]});
+    }).catch(()=>{if(live)setManagedRecommendations({sourceKey:recommendationSourceIds,versionIds:[]});});
     return()=>{live=false;};
   },[recommendationSourceIds]);
-  const managedItems=managedRecommendations.map(id=>catalog.find(item=>
+  const managedItems=(managedRecommendations.sourceKey===recommendationSourceIds?managedRecommendations.versionIds:[])
+    .map(id=>catalog.find(item=>
     item.currentVersion?.id===id&&item.status==='active'&&item.currentVersion.status==='published',
   )).filter((item):item is CatalogItemSummary=>Boolean(item));
   const legacySuggestionIds = Array.from(new Set(selectedItems.flatMap((item) => item ? (SUGGESTIONS[item.id] ?? []) : [])))
