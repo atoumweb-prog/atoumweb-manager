@@ -188,6 +188,9 @@ app.whenReady().then(async () => {
       addV2Fixture('test-mariage','Mariage Essentiel','AW-MARIAGE-ESS','MARIAGE','offer','offer');
       addV2Fixture('test-maint','Maintenance WordPress mensuelle','AW-MAINT-WP-M','MAINT','service','subscription');
       addV2Fixture('test-seo','Audit SEO','AW-SEO-AUDIT','SEO','service','service');
+      window.items.find(x=>x.id==='test-seo').currentVersion.commercialParameters={
+        clientNeed:'Visibilité Google',benefits:'Être trouvé localement',keywords:'SEO de proximité',
+      };
       await click('↻ Actualiser');await click('Vue organisée');
       const mainGroups=[...document.querySelectorAll('.catalog-overview-featured-group h4')].map(h=>h.textContent.trim());
       assert('04B quatre rubriques prioritaires',JSON.stringify(mainGroups)===JSON.stringify(['Site vitrine','Site e-commerce','Site mariage','Maintenance WordPress']));
@@ -195,6 +198,16 @@ app.whenReady().then(async () => {
       assert('04B inclusions publiées visibles',document.querySelector('[data-catalog-item-id="test-vitrine"]').textContent.includes('Hébergement compris'));
       assert('04B code secondaire masqué sur carte',!document.querySelector('[data-catalog-item-id="test-vitrine"]').textContent.includes('AW-WEB-VITRINE'));
       assert('04B service complémentaire classé', [...document.querySelectorAll('.catalog-overview-category h4')].some(h=>h.textContent.includes('Référencement et visibilité')));
+      await fillField(document.querySelector('input.inline-search'),'VISIBILITE google');
+      assert('E96 recherche par besoin client versionné',document.querySelectorAll('.catalog-overview-card').length===1&&
+        document.querySelector('.catalog-overview-card').textContent.includes('Audit SEO'));
+      await fillField(document.querySelector('input.inline-search'),'etre trouve localement');
+      assert('E96 recherche par bénéfice versionné',document.querySelectorAll('.catalog-overview-card').length===1&&
+        document.querySelector('.catalog-overview-card').textContent.includes('Audit SEO'));
+      await fillField(document.querySelector('input.inline-search'),'seo de proximite');
+      assert('E96 recherche par mot-clé versionné',document.querySelectorAll('.catalog-overview-card').length===1&&
+        document.querySelector('.catalog-overview-card').textContent.includes('Audit SEO'));
+      await click('Réinitialiser les filtres');
       await fillField(document.querySelector('select[aria-label="Filtrer par catégorie"]'),'SEO');
       assert('04B filtre catégorie explicite',document.querySelectorAll('.catalog-overview-card').length===1&&document.querySelector('.catalog-overview-card').textContent.includes('Audit SEO'));
       await click('Réinitialiser les filtres');
