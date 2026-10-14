@@ -8,7 +8,7 @@ import type {
   AnalyticsPeriodInput,
   AnalyticsPeriodPreset,
 } from '../../shared/analytics';
-import { analyticsSnapshotMatchesSelection } from '../../shared/analytics';
+import { analyticsSnapshotMatchesSelection, validateAnalyticsCustomPeriod } from '../../shared/analytics';
 
 const PRESETS: Array<{ value: AnalyticsPeriodPreset; short: string }> = [
   { value: 'today', short: 'Jour' },
@@ -144,10 +144,12 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     return period;
   }, [period]);
 
+  const invalidCustomPeriod = validateAnalyticsCustomPeriod(effectivePeriod);
+
   async function load(): Promise<void> {
     // Une réponse antérieure ne doit ni changer la période visible ni masquer une erreur récente.
     const request = ++requestVersion.current;
-    if (effectivePeriod.preset === 'custom' && (!effectivePeriod.from || !effectivePeriod.to)) {
+    if (invalidCustomPeriod || (effectivePeriod.preset === 'custom' && (!effectivePeriod.from || !effectivePeriod.to))) {
       setLoading(false);
       return;
     }
@@ -233,6 +235,8 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         <span>→</span>
         <label>Au<input type="date" value={period.to ?? ''} onChange={(event) => setPeriod((current) => ({ ...current, to: event.target.value }))} /></label>
       </div>}
+
+      {invalidCustomPeriod && <p role="alert" className="phase7-statistics-comparability-note">{invalidCustomPeriod}</p>}
 
       {snapshot && <div className="phase7-statistics-period-summary">
         <div><span>Période</span><strong>{dateFr(snapshot.period.from)} → {dateFr(snapshot.period.to)}</strong></div>
