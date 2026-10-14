@@ -11,7 +11,7 @@ const COLLAPSIBLE_SPACES = /[\s\u00a0\u202f]+/gu;
 const UNSAFE_CONTROLS = /[\u0000-\u001f\u007f-\u009f]/u;
 
 export function normalizeCatalogCategory(value: string): CatalogCategoryCandidate {
-  if (UNSAFE_CONTROLS.test(value.replace(COLLAPSIBLE_SPACES, ' '))) {
+  if (UNSAFE_CONTROLS.test(value)) {
     throw new Error('Le libellé de catégorie contient des caractères de contrôle.');
   }
   const label = value.normalize('NFKC').replace(COLLAPSIBLE_SPACES, ' ').trim();
