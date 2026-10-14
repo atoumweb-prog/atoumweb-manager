@@ -49,7 +49,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
   const contractActionPending=useRef(false);
   const loadedQuoteId=useRef(quote.id);
   const [presentation,setPresentation]=useState<ContractPresentation|null>(null);
-  const [sectionReviewStatus,setSectionReviewStatus]=useState<{loading:boolean;approved:number;pending:number;unresolved:number;sections:NumberedContractSection[];ready:boolean;duplicates:number;error:string}|null>(null);
+  const [sectionReviewStatus,setSectionReviewStatus]=useState<{loading:boolean;approved:number;pending:number;unresolved:number;sections:NumberedContractSection[];ready:boolean;duplicates:number;invalidText:number;crossQuote:boolean;error:string}|null>(null);
   const sectionRequest=useRef(0);
   const clauseEditorRef=useRef<HTMLDetailsElement|null>(null);
   const clauseDetailsRefs=useRef<Record<string,HTMLDetailsElement>>({});
@@ -174,7 +174,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     }
     const selected=build.clauses.filter(clause=>clause.enabled&&!clause.isOrphaned);
     const versioned=selected.filter(clause=>!!clause.sourceClauseVersionId);
-    setSectionReviewStatus({loading:true,approved:0,pending:0,unresolved:0,sections:[],ready:false,duplicates:0,error:''});
+    setSectionReviewStatus({loading:true,approved:0,pending:0,unresolved:0,sections:[],ready:false,duplicates:0,invalidText:0,crossQuote:false,error:''});
     void Promise.all(versioned.map(async clause=>({
       clause,review:await window.atoumweb.contractTerms.sectionReviews.get(clause.sourceClauseVersionId!),
     }))).then(entries=>{
@@ -184,11 +184,11 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
         loading:false,approved:plan.included.length,
         pending:plan.unreviewed.length+selected.length-versioned.length,
         unresolved:plan.unresolved.length,sections:plan.sections,
-        ready:plan.ready&&selected.length===versioned.length,duplicates:plan.duplicateIds.length,error:'',
+        ready:plan.ready&&selected.length===versioned.length,duplicates:plan.duplicateIds.length,invalidText:plan.invalidText.length,crossQuote:plan.crossQuote,error:'',
       });
     }).catch(error=>{
       if(request===sectionRequest.current&&currentQuoteId.current===quote.id)
-        setSectionReviewStatus({loading:false,approved:0,pending:0,unresolved:0,sections:[],ready:false,duplicates:0,error:errorMessage(error)});
+        setSectionReviewStatus({loading:false,approved:0,pending:0,unresolved:0,sections:[],ready:false,duplicates:0,invalidText:0,crossQuote:false,error:errorMessage(error)});
     });
     return ()=>{sectionRequest.current++;};
   },[quote.id,editable,build]);
@@ -443,7 +443,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
        {build?.snapshotState==='draft'&&sectionReviewStatus&&!sectionReviewStatus.loading&&!sectionReviewStatus.error&&
          <details className="cgv-editing">
            <summary>Aperçu canonique 05C des clauses approuvées — sans remplacement du contrat du devis</summary>
-           {!sectionReviewStatus.ready&&<p className="cgv-warning" role="status">Assemblage incomplet : rubriques non approuvées ou clauses sans version classée. {sectionReviewStatus.duplicates>0?'Doublons : '+sectionReviewStatus.duplicates+'.':''} Aperçu non prêt à finaliser.</p>}
+           {!sectionReviewStatus.ready&&<p className="cgv-warning" role="status">Assemblage incomplet : rubriques non approuvées ou clauses sans version classée. {sectionReviewStatus.duplicates>0?'Doublons : '+sectionReviewStatus.duplicates+'.':''} {sectionReviewStatus.invalidText>0?'Clauses vides : '+sectionReviewStatus.invalidText+'.':''} {sectionReviewStatus.crossQuote?'Données de devis différents détectées.':''} Aperçu non prêt à finaliser.</p>}
            {sectionReviewStatus.sections.map(section=><section key={section.key}>
              <h4>{section.title}</h4>
              <ol>{section.articles.map(article=><li key={article.id}>
