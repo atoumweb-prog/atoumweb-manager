@@ -38,3 +38,9 @@ Audit initial : ExpenseService possède déjà les validations montants/TVA, fr�
 | R09C-17 | Fixtures Windows TEMP, trois thèmes × trois densités, restauration et SQLite ; CI finale à confirmer |
 
 La validation humaine et les vérifications de merge `main` restent séparées ; 09C n'est pas encore déclaré techniquement validé.
+
+## Complément de validation des invariants
+- R09C-02/03/15 : scénario SQLite sur deux Clients et un Projet réel ; création autorisée avec le bon Client, refus du mauvais rattachement à la création ou correction, puis changement de Client autorisé seulement après détachement du Projet.
+- Création de dépense renforcée : l'insertion et son événement `expense_created` forment une seule transaction SAVEPOINT ; un échec de journal annule la création entière.
+- Les opérations de modification de dépense, transition déclarative de paiement et remplacement de justificatif ont aussi des tests de rollback forcé.
+- Rejouer TypeScript, Vitest, Electron 09C, Electron UX général et restauration Windows sur le nouveau HEAD avant clôture ; les PR restent en brouillon.
