@@ -49,6 +49,13 @@ app.whenReady().then(async () => {
     await win.loadFile(path.join(dir, 'fixture.html'));
     const result = await win.webContents.executeJavaScript(`(async()=>{
       const checks=[];const wait=()=>new Promise(resolve=>setTimeout(resolve,90));
+      const waitFor=async(selector,label)=>{
+        for(let attempt=0;attempt<45;attempt++){
+          const element=document.querySelector(selector);if(element)return element;
+          await wait();
+        }
+        throw Error('Élément non monté : '+label+' ('+selector+'); page='+document.body.textContent.slice(0,600));
+      };
       const assert=(name,value)=>{checks.push({name,passed:Boolean(value)});if(!value)throw Error(name)};
       const click=async(text)=>{const b=[...document.querySelectorAll('button')].find(b=>b.textContent===text);if(!b)throw Error('Bouton absent : '+text);b.click();await wait()};
       const fillField=async(field,value)=>{if(!field)throw Error('Champ absent');const proto=field.tagName==='SELECT'?HTMLSelectElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(proto,'value').set.call(field,value);field.dispatchEvent(new Event(field.tagName==='SELECT'?'change':'input',{bubbles:true}));await wait()};
@@ -58,8 +65,9 @@ app.whenReady().then(async () => {
       assert('Vue organisée Catalogue visible par défaut',!!document.querySelector('.catalog-overview')&&document.body.textContent.includes('Services complémentaires'));
       await click("Tableau d'administration");
       assert('Tableau historique accessible',!!document.querySelector('tbody tr'));
-      document.querySelector('tbody tr').click();await wait();
-      assert('Ancien élément sans identité inventée',document.querySelector('.catalog-identity-section').textContent.includes('Non attribué'));
+      document.querySelector('tbody tr').click();
+      const identitySection=await waitFor('.catalog-identity-section','fiche après bascule organisée → tableau');
+      assert('Ancien élément sans identité inventée',identitySection.textContent.includes('Non attribué'));
       assert('Attribution désactivée sans code', [...document.querySelectorAll('button')].find(b=>b.textContent==='Attribuer ce code').disabled);
       await fill('Code AW à attribuer','invalide');await click('Attribuer ce code');
       assert('Erreur visible et aucune attribution après refus',messages.at(-1).includes('invalide')&&items[0].canonicalCode===null);
@@ -122,8 +130,9 @@ app.whenReady().then(async () => {
       assert('04B filtre catégorie explicite',document.querySelectorAll('.catalog-overview-card').length===1&&document.querySelector('.catalog-overview-card').textContent.includes('Audit SEO'));
       await click('Réinitialiser les filtres');
       assert('04B réinitialisation conserve toutes les prestations',document.querySelectorAll('.catalog-overview-card').length===window.items.length);
-      document.querySelector('[data-catalog-item-id="test-vitrine"]').click();await wait();
-      assert('04B carte ouvre le bon item via route existante',document.querySelector('[data-search-entity-id="test-vitrine"]')?.textContent.includes('Site vitrine'));
+      document.querySelector('[data-catalog-item-id="test-vitrine"]').click();
+      const openedFromCard=await waitFor('[data-search-entity-id="test-vitrine"]','fiche via carte 04B');
+      assert('04B carte ouvre le bon item via route existante',openedFromCard.textContent.includes('Site vitrine'));
       return {passed:checks.length,failed:0,checks};
     })()`);
     console.log(JSON.stringify(result, null, 2));win.destroy();app.exit(0);
