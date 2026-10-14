@@ -182,7 +182,15 @@ describe('Lot 6 — achats optionnels explicites', () => {
   });
 
   it('rejeu migration idempotent, anciennes lignes non requalifiées', () => {
-    expect(applyPendingMigrations(db)).toEqual([]); expect(MIGRATIONS.at(-1)?.id).toBe(MIGRATIONS.length);
+    expect(applyPendingMigrations(db)).toEqual([]);
+    expect(MIGRATIONS.at(-1)).toMatchObject({id:69,name:'contract_clause_section_review_v1'});
+    expect(MIGRATIONS.filter(m=>m.id>=67).map(m=>({id:m.id,name:m.name})))
+      .toEqual([{id:69,name:'contract_clause_section_review_v1'}]);
+    expect(new Set(MIGRATIONS.map(m=>m.id)).size).toBe(MIGRATIONS.length);
+    expect(db.get('SELECT name FROM schema_migrations WHERE id=?',[69]))
+      .toEqual({name:'contract_clause_section_review_v1'});
+    expect(db.all('SELECT id,name FROM schema_migrations ORDER BY id'))
+      .toEqual(MIGRATIONS.map(({id,name})=>({id,name})));
     const q = f.createQuote();
     expect(q.lines.every((line) => line.optionPurchase === null)).toBe(true);
     expect(db.all('PRAGMA integrity_check')).toEqual([{ integrity_check: 'ok' }]);
