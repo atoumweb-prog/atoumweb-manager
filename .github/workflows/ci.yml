@@ -50,6 +50,8 @@ jobs:
         shell: pwsh
         timeout-minutes: 15
         run: |
+          node scripts/check-ux-v2-lot01a-real-ui.cjs --lot08a
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/check-ux-v2-lot01a-real-ui.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
