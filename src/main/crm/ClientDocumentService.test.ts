@@ -96,4 +96,24 @@ describe('preuve contractuelle rattachée', () => {
     expect(existsSync(path)).toBe(false);
     expect(() => documents.get(doc.id)).toThrow(/introuvable/);
   });
+
+  it('conserve une ancienne facture Abby remplacée même si elle est archivée', () => {
+    const source = join(root, 'ancienne-facture.pdf');
+    writeFileSync(source, '%PDF-1.4\\nFacture historique fictive');
+    const doc = documents.importPaths(clientId, [source], { category: 'invoice', title: 'Ancienne facture' })[0];
+    const path = documents.absolutePath(doc);
+    const bytes = readFileSync(path);
+    const now = new Date().toISOString();
+    database.run(
+      "INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)",
+      ['billing_item', 'billing-history-test', 'billing_invoice_replaced', 'Remplacement Abby',
+        JSON.stringify({ previousDocumentId: doc.id, currentDocumentId: 'new-invoice-id' }), now],
+    );
+    documents.archive(doc.id);
+    expect(() => documents.deletePermanently(doc.id)).toThrow(/historique de facturation Abby/);
+    expect(readFileSync(path)).toEqual(bytes);
+    expect(documents.get(doc.id).archivedAt).toBeTruthy();
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
 });
