@@ -27,6 +27,20 @@ describe('Lot 7B — même Projet prévisionnel et révisions commerciales',()=>
   expect(f.sites.list(p.id)).toHaveLength(1);expect(pages(p.id)).toHaveLength(5);expect(db.all('SELECT * FROM project_blueprint_plans')).toHaveLength(0);
   const before=state();expect(prepare(q.id).id).toBe(p.id);sync(p.id);expect(state()).toEqual(before);
  });
+ it('R07G-05 refuse la préparation depuis une prévisualisation obsolète sans écriture',()=>{
+  const q=f.createQuote();
+  const initialPreview=f.projects.commercial.preview({quoteId:q.id});
+  pageLine(q.id,1000);
+  const currentPreview=f.projects.commercial.preview({quoteId:q.id});
+  expect(currentPreview.sha256).not.toBe(initialPreview.sha256);
+  const before=state();
+  expect(()=>f.projects.commercial.prepare({quoteId:q.id,previewSHA256:initialPreview.sha256})).toThrow(/prévisualisation périmée/i);
+  expect(state()).toEqual(before);
+  expect(db.all('SELECT id FROM projects')).toHaveLength(0);
+  const prepared=f.projects.commercial.prepare({quoteId:q.id,previewSHA256:currentPreview.sha256});
+  expect(prepared.commercialState).toBe('provisional');
+  expect(db.all('SELECT id FROM projects')).toHaveLength(1);
+ });
  it('une base absente ou des bases concurrentes ne créent aucun dossier ni Projet',()=>{
   const q=f.createQuote();f.quotes.removeLine(q.lines[0].id);const before=state();expect(()=>prepare(q.id)).toThrow(/base/);expect(state()).toEqual(before);
   f.quotes.addCatalogLine(q.id,f.offer.currentVersion!.id);f.quotes.addCatalogLine(q.id,f.offer.currentVersion!.id);const second=state();expect(()=>prepare(q.id)).toThrow(/concurrents/);expect(state()).toEqual(second);
@@ -147,6 +161,24 @@ describe('Lot 7B — même Projet prévisionnel et révisions commerciales',()=>
   blogLine(q.id);sync(p.id);expect(pages(p.id)).toHaveLength(7);expect(f.projects.getProject(p.id).nodes.some(n=>n.id===blog.id&&n.name==='À garder')).toBe(true);
   expect(f.projects.getProject(p.id).nodes.filter(n=>n.name==='Blog')).toHaveLength(1);
  });
+ it('R07G-14 : conflit Site ne permet pas d archiver un Site avec Pages actives',()=>{
+  const q=f.createQuote(),p=prepare(q.id),site=f.sites.list(p.id)[0],linked=pages(p.id);
+  expect(linked.length).toBeGreaterThan(0);
+  // Fixture contrôlée : l'ancien Site est hors contribution commerciale mais
+  // ses Pages restent réellement liées et en production.
+  db.run('DELETE FROM project_prepared_site_bindings WHERE project_id=? AND project_site_id=?',[p.id,site.id]);
+  db.run("UPDATE project_scope_entities SET state='out_of_scope' WHERE project_id=? AND entity_kind='site' AND entity_id=?",[p.id,site.id]);
+  const conflictId='ux07g-site-with-pages';
+  db.run("INSERT INTO project_scope_conflicts(id,project_id,entity_kind,entity_id,reason,created_at) VALUES(?,?,'site',?,'Site hors périmètre','2026-10-14')",[conflictId,p.id,site.id]);
+  const before=state();
+  expect(()=>f.projects.commercial.resolveConflict(p.id,conflictId,'archive')).toThrow(/Pages actives/);
+  expect(state()).toEqual(before);
+  expect(f.sites.get(site.id).archivedAt).toBeNull();
+  expect(pages(p.id).map(page=>page.projectNodeId).sort()).toEqual(linked.map(page=>page.projectNodeId).sort());
+  expect(f.projects.commercial.scope(p.id).conflicts.some(c=>c.id===conflictId)).toBe(true);
+  expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+ });
+
  it('archivage explicite conserve la ligne historique et masque la Page',()=>{
   const q=f.createQuote(),line=blogLine(q.id),p=prepare(q.id),blog=p.nodes.find(n=>n.name==='Blog')!;
   f.projects.updateProjectNode(blog.id,{name:'Archiver'});f.quotes.removeLine(line.id);sync(p.id);

@@ -12,7 +12,7 @@ if(!process.versions.electron){
   if(!temp||!output)throw Error('Use node wrapper and --output');fs.mkdirSync(output,{recursive:true});
   app.disableHardwareAcceleration();app.setPath('userData',path.join(temp,'profile'));
   const base=repo.replaceAll('\\','/'),esbuild=require('esbuild');
-  esbuild.buildSync({stdin:{contents:`export * from '${base}/src/main/database/DatabaseService';export * from '${base}/src/main/workspace';export * from '${base}/src/main/ipc';export * from '${base}/src/main/operations/operationsIpc';export * from '${base}/src/main/referentials/referentialsIpc';export * from '${base}/src/main/backups/businessBackupsIpc';export * from '${base}/src/main/time/timeIpc';`,resolveDir:repo,loader:'ts'},bundle:true,platform:'node',format:'cjs',outfile:path.join(temp,'services.cjs'),external:['electron'],logLevel:'silent'});
+  esbuild.buildSync({stdin:{contents:`export * from '${base}/src/main/database/DatabaseService';export {MIGRATIONS} from '${base}/src/main/database/migrations';export * from '${base}/src/main/workspace';export * from '${base}/src/main/ipc';export * from '${base}/src/main/operations/operationsIpc';export * from '${base}/src/main/referentials/referentialsIpc';export * from '${base}/src/main/backups/businessBackupsIpc';export * from '${base}/src/main/time/timeIpc';`,resolveDir:repo,loader:'ts'},bundle:true,platform:'node',format:'cjs',outfile:path.join(temp,'services.cjs'),external:['electron'],logLevel:'silent'});
   for(const [entry,file,platform] of [['src/preload/preload.ts','preload.js','node'],['src/renderer/main.tsx','ui.js','browser']])esbuild.buildSync({entryPoints:[path.join(repo,entry)],bundle:true,platform,format:platform==='node'?'cjs':undefined,outfile:path.join(temp,file),external:platform==='node'?['electron']:[],logLevel:'silent'});
   fs.writeFileSync(path.join(temp,'index.html'),'<html lang="fr"><head><meta charset="utf-8"><link rel="stylesheet" href="ui.css"></head><body><div id="root"></div><script src="ui.js"></script></body></html>');
   const S=require(path.join(temp,'services.cjs')),checks=[],errors=[],opened=[];let database,win;
@@ -33,12 +33,12 @@ if(!process.versions.electron){
     win.webContents.on('console-message',e=>{if(e.level==='error'||e.level===3)errors.push(e.message);});await win.loadFile(path.join(temp,'index.html'));
     const js=async code=>{const r=await win.webContents.executeJavaScript(`(async()=>{try{return{ok:true,value:await new Function('return ('+${JSON.stringify(code)}+')')()}}catch(e){return{ok:false,error:e.message}}})()`);if(!r.ok)throw Error(r.error+' / '+code);return r.value;};
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-    const wait=async code=>{for(let i=0;i<140;i++){if(await js(code))return;await sleep(40);}throw Error('UI timeout '+code);};
+    const wait=async code=>{for(let i=0;i<400;i++){if(await js(code))return;await sleep(50);}const state=await js(`({ready:document.readyState,sidebar:!!document.querySelector('.aw-navigation-rail'),preload:!!window.atoumweb,body:document.body?.innerText?.slice(0,900)})`);throw Error('UI timeout '+code+' '+JSON.stringify({state,consoleErrors:errors.slice(-5)}));};
     const click=async label=>{await wait(`[...document.querySelectorAll('button')].some(b=>b.textContent.trim()===${JSON.stringify(label)}&&!b.disabled)`);await js(`[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===${JSON.stringify(label)}).click()`);await sleep(90);};
     const input=async(label,value)=>{await js(`(()=>{const e=document.querySelector('[aria-label="${label}"]');Object.getOwnPropertyDescriptor(e.tagName==='SELECT'?HTMLSelectElement.prototype:e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event(e.tagName==='SELECT'?'change':'input',{bubbles:true}));})()`);await sleep(60);};
     const shot=async name=>{await sleep(130);fs.writeFileSync(path.join(output,name+'.png'),(await win.webContents.capturePage()).toPNG());};
     const go=async page=>{await js(`window.dispatchEvent(new CustomEvent('atoumweb:open-page',{detail:${JSON.stringify(page)}}))`);await sleep(80);};
-    await wait('!!window.atoumweb&&!!document.querySelector(".sidebar")');
+    await wait('!!window.atoumweb&&!!document.querySelector(".aw-navigation-rail")');
     for(const theme of ['atoumweb','noir','blanc']){
       await go('Réglages');await wait('!!document.querySelector(".theme-card")');
       await js(`[...document.querySelectorAll('.theme-card')].find(b=>b.querySelector('strong').textContent===${JSON.stringify({atoumweb:'AtoumWeb',noir:'Noir',blanc:'Blanc'}[theme])}).click()`);await wait(`document.documentElement.dataset.theme===${JSON.stringify(theme)}`);
@@ -77,7 +77,7 @@ if(!process.versions.electron){
       await shot('creation-'+theme);await click('Ouvrir la brique AtoumWeb');await wait('document.body.innerText.includes("TEST générique '+theme+'")&&!document.querySelector(".reuse-preparation-panel")');
       check(theme+' navigation Bibliothèque récente',await js('!document.querySelector(".renderer-fatal-shell")'));await shot('bibliotheque-'+theme);
     }
-    check('migrations exactement1–65',db.all('SELECT id FROM schema_migrations ORDER BY id').map(r=>r.id).join(',')===Array.from({length:65},(_,i)=>i+1).join(','));
+    check('migrations appliquées conformes au registre courant',db.all('SELECT id FROM schema_migrations ORDER BY id').map(r=>Number(r.id)).join(',')===S.MIGRATIONS.map(m=>m.id).sort((a,b)=>a-b).join(','));
     check('integrité fixture',db.get('PRAGMA integrity_check').integrity_check==='ok');check('FK fixture',db.all('PRAGMA foreign_key_check').length===0);check('aucune erreur renderer',errors.length===0);
     process.stdout.write(JSON.stringify({checks:checks.length,errors})+'\n');
   }).catch(e=>{errors.push(e.stack||String(e));process.stderr.write(e.stack+'\n');process.exitCode=1;}).finally(()=>{fs.writeFileSync(path.join(output,'controle-ui.json'),JSON.stringify({checks,errors,shellOpening:'Captured OS handoff only; real IPC and business services'},null,2));win?.destroy();database?.close();app.exit(process.exitCode||0);});

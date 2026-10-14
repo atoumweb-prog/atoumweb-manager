@@ -1,0 +1,136 @@
+name: UX 07A+07B Integration Windows
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  ux07ab:
+    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
+    runs-on: windows-2022
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      # The PR's separate CI/quality job already executes the complete Vitest suite on the same SHA.
+      # Keep this Windows integration job focused on native Project/Sites/Bridge regressions.
+      - name: Composition workshop 07C isolated native layout gate
+        shell: pwsh
+        timeout-minutes: 6
+        run: |
+          node scripts/check-project-composition-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Native Electron UX-01 and composition 07A on combined tree
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-ux-v2-07a-composition.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Navigation wiring assertions 07B
+        shell: pwsh
+        run: |
+          node scripts/check-ux-v2-07ab-navigation-wiring.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Project and Site/Page production native regressions
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-project-provisional-ui.cjs --output (Join-Path $env:RUNNER_TEMP 'check-project-provisional-ui')
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/check-project-operational-ui.cjs --output (Join-Path $env:RUNNER_TEMP 'check-project-operational-ui')
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Blueprint and reusable technical library native regressions
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-project-blueprint-origins-ui.cjs --output (Join-Path $env:RUNNER_TEMP 'check-project-blueprint-origins-ui')
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  ux07d-reuse:
+    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Dependencies
+        run: npm ci
+      - name: Guided technical reuse native Electron 07D
+        shell: pwsh
+        timeout-minutes: 12
+        run: |
+          node scripts/check-guided-reuse-ui.cjs --output (Join-Path $env:RUNNER_TEMP 'check-guided-reuse-ui')
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  ux07e-bridge:
+    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Dependencies
+        run: npm ci
+      - name: Install Electron binary before parallel Vitest (07E)
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          node -e "const fs=require('node:fs');const executable=require('electron');if(!fs.existsSync(executable))throw Error('Electron binary missing: '+executable);console.log('Electron ready:',executable)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Bridge export and reuse packages regression 07E
+        shell: pwsh
+        timeout-minutes: 10
+        run: |
+          npx vitest run src/main/bridge/BridgeSnapshotPackage.test.ts src/main/bridge/BridgeSnapshotService.test.ts src/main/projects/ProjectReuseExportService.test.ts src/main/referentials/AtoumWebCompositionPackageService.test.ts src/main/referentials/ReusePreparationService.test.ts --maxWorkers=2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  ux07b-return:
+    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Dependencies
+        run: npm ci
+      - name: Project to source Quote and guarded return Electron 07B
+        shell: pwsh
+        timeout-minutes: 12
+        run: |
+          node scripts/check-ux-v2-07ab-navigation-native.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  ux07c-commercial:
+    if: ${{ github.head_ref == 'integration/ux-v2-07a-07b-navigation-validation' || github.ref_name == 'integration/ux-v2-07a-07b-navigation-validation' }}
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Dependencies
+        run: npm ci
+      - name: Install Electron binary before parallel Vitest (07C)
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          node -e "const fs=require('node:fs');const executable=require('electron');if(!fs.existsSync(executable))throw Error('Electron binary missing: '+executable);console.log('Electron ready:',executable)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Provisional Project revision Blueprint and rollback 07C
+        shell: pwsh
+        timeout-minutes: 12
+        run: |
+          npx vitest run src/main/commercial/QuoteService.test.ts src/main/projects/ProjectCommercialService.test.ts src/main/projects/ProjectBlueprintCompositionService.test.ts src/main/projects/ProjectContributionTargets.test.ts src/main/projects/OperationalCommercialPreparationService.test.ts src/main/projects/OperationalStagingService.test.ts src/main/projects/ProjectSiteService.test.ts src/main/time/TimeService.test.ts --maxWorkers=1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

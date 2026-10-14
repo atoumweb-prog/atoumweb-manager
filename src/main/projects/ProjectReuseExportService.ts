@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdirSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { WorkspacePaths } from '../workspace';
@@ -137,18 +137,20 @@ export class ProjectReuseExportService {
     const directory = join(project.resource_root_path, '05 Technique - Sources - Exports');
     mkdirSync(directory, { recursive: true });
     const timestamp = createdAt.replace(/[:.]/g, '-');
-    const fileName = `Réutilisation - ${this.safeSegment(item.name)} - v${Number(version.version_number)} - ${timestamp}.json`;
+    const fileName = `Réutilisation - ${this.safeSegment(item.name)} - v${Number(version.version_number)} - ${timestamp} - ${randomUUID().slice(0, 8)}.json`;
     const destination = join(directory, fileName);
     const content = `${JSON.stringify(packageData, null, 2)}\n`;
-    writeFileSync(destination, content, 'utf8');
+    writeFileSync(destination, content, { encoding: 'utf8', flag: 'wx' });
 
     const stats = statSync(destination);
     const checksum = createHash('sha256').update(content, 'utf8').digest('hex');
     const resourceId = randomUUID();
     const relativePath = relative(this.workspace.root, destination);
 
-    this.database.exec('BEGIN IMMEDIATE;');
+    let transactionStarted = false;
     try {
+      this.database.exec('BEGIN IMMEDIATE;');
+      transactionStarted = true;
       this.database.run(
         `INSERT INTO file_assets (
           id,project_id,client_account_id,relative_path,original_name,
@@ -178,8 +180,13 @@ export class ProjectReuseExportService {
         ],
       );
       this.database.exec('COMMIT;');
+      transactionStarted = false;
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      if (transactionStarted) {
+        try { this.database.exec('ROLLBACK;'); } catch { /* preserve original error */ }
+      }
+      // Even a failure to BEGIN the transaction must clean the owned file.
+      try { unlinkSync(destination); } catch { /* preserve original error */ }
       throw error;
     }
 
