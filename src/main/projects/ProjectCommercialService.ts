@@ -105,9 +105,12 @@ export class ProjectCommercialService {
   sync(projectId: string): ProjectDetail {
     this.transaction(() => {
       const p = this.db.get<Row>('SELECT * FROM projects WHERE id=?',[projectId]);
-      required(p?.commercial_state === 'provisional','Seul un Projet prévisionnel peut être synchronisé.');
-      const dossier = this.db.get<Row>('SELECT * FROM commercial_project_dossiers WHERE id=?',[String(p!.commercial_dossier_id)])!;
-      const q = this.db.get<Row>('SELECT * FROM quotes WHERE id=?',[String(dossier.current_quote_id)])!;
+      required(p?.commercial_state === 'provisional' && p.status === 'to_prepare',
+        'Seul le Projet prévisionnel courant peut être synchronisé.');
+      const dossier = this.db.get<Row>('SELECT * FROM commercial_project_dossiers WHERE id=?',[String(p!.commercial_dossier_id)]);
+      required(dossier?.project_id === projectId && !dossier.accepted_quote_id,
+        'Projet prévisionnel remplacé ou archivé : synchronisation interdite.');
+      const q = this.db.get<Row>('SELECT * FROM quotes WHERE id=?',[String(dossier!.current_quote_id)])!;
       required(['draft','sent','viewed'].includes(String(q.status)), 'Révision non synchronisable.');
       this.synchronize(projectId,String(q.id),this.resolve(String(q.id),dossier.explicit_template_version_id as string | null,this.origins(String(q.id),String(dossier.id)),projectId));
     });
