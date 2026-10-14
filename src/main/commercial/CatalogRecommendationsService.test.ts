@@ -141,6 +141,20 @@ describe('04D — versioned recommendation persistence',()=>{
     expect(catalog.getItem(target.id).currentVersion?.id).toBe(target.versions[0].id);
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
+  it('refuses a published Offer as a recommendation target, without changing stored links',()=>{
+    const source=create('Source service');
+    const existing=create('Already recommended service');
+    catalog.publishVersion(existing.versions[0].id);
+    const previously=recommendations.replace(source.versions[0].id,[existing.versions[0].id],[]);
+    const offer=catalog.create({type:'offer',name:'Ineligible target offer'},{
+      priceMode:'fixed',priceCents:69900,
+    });
+    catalog.publishVersion(offer.versions[0].id);
+    expect(()=>recommendations.replace(source.versions[0].id,[offer.versions[0].id],
+      [existing.versions[0].id])).toThrow(/publiée|active|service/i);
+    expect(recommendations.list(source.versions[0].id)).toEqual(previously);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
   it('rolls back on invalid input without losing an existing association',()=>{
     const source=create('Source');
     const target=create('Target');
