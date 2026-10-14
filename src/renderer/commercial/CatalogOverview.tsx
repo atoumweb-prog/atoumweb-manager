@@ -17,12 +17,18 @@ function CatalogueCard({
   item,
   formatPrice,
   onOpen,
+  featured = false,
 }: {
   item: CatalogItemSummary;
+  featured?: boolean;
   formatPrice: Props['formatPrice'];
   onOpen: Props['onOpen'];
 }) {
   const version = item.currentVersion;
+  const isPublished = version?.status === 'published';
+  const available = item.status === 'active' && isPublished;
+  const inclusions = featured && isPublished ? (version.inclusions ?? []).filter(Boolean).slice(0, 2) : [];
+  const summary = featured && isPublished ? version.description?.trim() : null;
   const versionState = version
     ? `v${version.versionNumber} · ${version.status === 'published' ? 'Publiée' : version.status === 'draft' ? 'Brouillon' : 'Retirée'}`
     : 'Sans version';
@@ -33,15 +39,24 @@ function CatalogueCard({
       data-catalog-item-id={item.id}
       type="button"
       onClick={() => onOpen(item.id)}
-      aria-label={`Ouvrir ${item.name}`}
+      aria-label={`Ouvrir ${item.name}, ${STATUS_LABELS[item.status]}, ${versionState}`}
     >
       <span className="catalog-overview-card-title">{item.name}</span>
-      <span className="catalog-overview-card-price">{formatPrice(item)}</span>
+      {summary && <span className="catalog-overview-card-description">{summary}</span>}
+      {inclusions.length > 0 && (
+        <span className="catalog-overview-card-inclusions" aria-label="Inclus dans la version publiée">
+          {inclusions.map((value, index) => <span key={index}>✓ {value}</span>)}
+        </span>
+      )}
+      <span className="catalog-overview-card-price">
+        {available ? 'Tarif publié : ' : isPublished ? 'Tarif historique : ' : 'Tarif non publié : '}
+        {formatPrice(item)}
+      </span>
       <span className="catalog-overview-card-meta">
         <span className={`catalog-status catalog-${item.status}`}>{STATUS_LABELS[item.status]}</span>
         <span>{versionState}</span>
       </span>
-      {item.canonicalCode && <small className="catalog-canonical-code">{item.canonicalCode}</small>}
+      {/* Codes canoniques/Abby restent accessibles dans la fiche et par recherche, non en premier niveau. */}
     </button>
   );
 }
@@ -71,7 +86,7 @@ export function CatalogOverview({ items, formatPrice, onOpen }: Props) {
                 <h4>{group.title}</h4>
                 <div className="catalog-overview-card-list">
                   {group.items.map((item) => (
-                    <CatalogueCard key={item.id} item={item} formatPrice={formatPrice} onOpen={onOpen} />
+                    <CatalogueCard key={item.id} item={item} formatPrice={formatPrice} onOpen={onOpen} featured />
                   ))}
                 </div>
               </div>
