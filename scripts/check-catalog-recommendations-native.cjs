@@ -69,16 +69,12 @@ if(!process.versions.electron){
       ipcMain.handle('catalog:list-recommendations',(_event,id)=>rec.list(id));
       ipcMain.handle('catalog:replace-recommendations',(_event,id,ids,expected)=>rec.replace(id,ids,expected));
 
-      // Browser uses a real Electron preload/IPC bridge, not mocked async catalog calls.
-      const preload=String.raw`const {ipcRenderer}=require('electron');
-window.atoumweb={
-  catalog:{
-    listRecommendations:id=>ipcRenderer.invoke('catalog:list-recommendations',id),
-    replaceRecommendations:(id,ids,expected)=>ipcRenderer.invoke('catalog:replace-recommendations',id,ids,expected),
-  },
-  unsaved:{confirmExit:()=>false,publishState:()=>{}},
-};`;
-      fs.writeFileSync(local('preload.cjs'),preload);
+      // Bundle and exercise the ACTUAL production preload, isolated from real user data.
+      await esbuild.build({
+        entryPoints:[fromRepo('src/preload/preload.ts')],
+        bundle:true,platform:'node',format:'cjs',packages:'external',
+        outfile:local('preload.cjs'),logLevel:'silent',
+      });
       const entry=[
         "import React from 'react';",
         "import {createRoot} from 'react-dom/client';",
@@ -99,7 +95,7 @@ window.atoumweb={
       fs.writeFileSync(local('fixture.html'),
         '<!doctype html><html lang="fr"><head><meta charset="utf-8"></head><body><div id="root"></div><script src="fixture.js"></script></body></html>');
       win=new BrowserWindow({show:false,width:1100,height:800,webPreferences:{
-        preload:local('preload.cjs'),contextIsolation:false,sandbox:false,nodeIntegration:false,
+        preload:local('preload.cjs'),contextIsolation:true,sandbox:false,nodeIntegration:false,
         backgroundThrottling:false,
       }});
       await win.loadFile(local('fixture.html'));
