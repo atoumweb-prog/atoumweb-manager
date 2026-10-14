@@ -65,6 +65,19 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
   const quoteCreateInFlight = useRef(false); // verrou immédiat, avant le prochain rendu React.
   const versionActionInFlight = useRef(false); // Duplication et révision exclusives dans le même panneau.
   const [versionBusy, setVersionBusy] = useState(false);
+  // La liste et la fiche doivent partager le même verrou d'acceptation par devis.
+  const acceptanceInFlight = useRef(new Set<string>());
+  const [acceptanceBusyIds, setAcceptanceBusyIds] = useState<string[]>([]);
+  function beginAcceptance(id: string): boolean {
+    if (acceptanceInFlight.current.has(id)) return false;
+    acceptanceInFlight.current.add(id);
+    setAcceptanceBusyIds(ids => [...ids, id]);
+    return true;
+  }
+  function endAcceptance(id: string): void {
+    acceptanceInFlight.current.delete(id);
+    setAcceptanceBusyIds(ids => ids.filter(value => value !== id));
+  }
   const [pendingQuoteMutations, setPendingQuoteMutations] = useState(0);
   async function trackQuoteMutation<T>(action: () => Promise<T>): Promise<T> {
     setPendingQuoteMutations(count => count + 1);
@@ -267,16 +280,18 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
   }
 
   async function validateQuoteFromList(quote: QuoteSummary): Promise<void> {
-    if (!['sent', 'viewed'].includes(quote.status)) return;
-    if (!window.confirm(`Confirmer que le devis ${quote.number} a été accepté / signé dans Abby ?\n\nVérifie le bon devis, sa révision et l’acceptation réelle dans Abby avant de confirmer. Cette opération entraîne le rattachement ou la conversion Client, le gel contractuel, la confirmation du Projet et peut déclencher des prestations opérationnelles.`)) return;
+    if (!['sent', 'viewed'].includes(quote.status) || !beginAcceptance(quote.id)) return;
     try {
-      await window.atoumweb.quotes.accept(quote.id);
+      if (!window.confirm(`Confirmer que le devis ${quote.number} a été accepté / signé dans Abby ?\n\nVérifie le bon devis, sa révision et l’acceptation réelle dans Abby avant de confirmer. Cette opération entraîne le rattachement ou la conversion Client, le gel contractuel, la confirmation du Projet et peut déclencher des prestations opérationnelles.`)) return;
+      await trackQuoteMutation(() => window.atoumweb.quotes.accept(quote.id));
       await refresh();
       onMessage(quote.prospectId
         ? 'Acceptation Abby confirmée : le devis est accepté et le dossier Client a été mis à jour.'
         : 'Acceptation Abby confirmée.');
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Confirmation de l’acceptation Abby impossible.');
+    } finally {
+      endAcceptance(quote.id);
     }
   }
 
@@ -295,8 +310,12 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
     if (!detail) return;
     const createsVersion=action==='duplicate';
     if(createsVersion&&versionActionInFlight.current)return;
+    if(action==='accepted'&&acceptanceInFlight.current.has(detail.id))return;
     if(!requestUnsavedExit(()=>{},quoteGroup))return;
-    if (action === 'accepted' && !window.confirm(`Confirmer que le devis ${detail.number} a été accepté / signé dans Abby ?\n\nVérifie le bon devis, sa révision et l’acceptation réelle dans Abby. Cette action fige le contrat, rattache ou convertit le Client, confirme le Projet et peut déclencher des prestations opérationnelles.`)) return;
+    if (action === 'accepted') {
+      if(!beginAcceptance(detail.id))return;
+      if (!window.confirm(`Confirmer que le devis ${detail.number} a été accepté / signé dans Abby ?\n\nVérifie le bon devis, sa révision et l’acceptation réelle dans Abby. Cette action fige le contrat, rattache ou convertit le Client, confirme le Projet et peut déclencher des prestations opérationnelles.`)) {endAcceptance(detail.id);return;}
+    }
     if(createsVersion){versionActionInFlight.current=true;setVersionBusy(true);}
     try {
       if (action === 'finalized') {
@@ -316,7 +335,7 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
       else next = await trackQuoteMutation(()=>window.atoumweb.quotes.duplicate(detail.id));
       await refresh(); await openQuote(next.id); onMessage(action === 'accepted' ? 'Acceptation Abby confirmée : le devis est accepté et le dossier Client a été mis à jour.' : `Devis ${next.number} mis à jour.`);
     } catch (error) { onMessage(error instanceof Error ? error.message : 'Action impossible.'); }
-    finally { if(createsVersion){versionActionInFlight.current=false;setVersionBusy(false);} }
+    finally { if(createsVersion){versionActionInFlight.current=false;setVersionBusy(false);} if(action==='accepted')endAcceptance(detail.id); }
   }
 
   async function createCommercialRevision(): Promise<void> {
@@ -379,7 +398,7 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
           <td>{money(quote.contractValueCents)}</td>
           <td>
             <div className="quote-decision-actions">
-              {actionable && <button className="primary-button compact-button" type="button" onClick={(event) => { event.stopPropagation(); void validateQuoteFromList(quote); }}>Confirmer accepté dans Abby</button>}
+              {actionable && <button className="primary-button compact-button" type="button" disabled={acceptanceBusyIds.includes(quote.id)} onClick={(event) => { event.stopPropagation(); void validateQuoteFromList(quote); }}>Confirmer accepté dans Abby</button>}
               {actionable && quote.prospectId && !negotiating && <button className="secondary-button compact-button" type="button" onClick={(event) => { event.stopPropagation(); void negotiateQuote(quote); }}>À négocier</button>}
               {actionable && negotiating && <span className="status-pill">En négociation</span>}
               {quote.status === 'accepted' && <span className="status-pill">Validé</span>}
@@ -396,7 +415,7 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
           {canAccessQuoteProject(detail) && <QuoteProjectPanel key={'project:'+detail.id} quote={detail}/>}<QuoteOfferOptionsPanel key={'options:'+detail.id} quote={detail} onSave={q=>{setDetail(q);void refresh();}}/><QuoteAbbyPanel quote={detail} onMessage={onMessage}/><QuoteConditions quote={detail} onSave={q=>{setDetail(q);void refresh();}}/><div className="quote-lines"><strong>Lignes du devis</strong>{detail.lines.map((line) => <div className="quote-line-block" key={line.id}><div className="quote-line"><div><strong>{line.label}</strong><small>{line.source === 'catalog' ? `${line.snapshot?.canonicalCode||'Catalogue'} · ${line.snapshot?.familyCode||''} · v${line.snapshot?.versionNumber||''} · ${line.snapshot?.unit||'unité'}` : 'Ligne libre'} · {(line.quantityMilli ?? 1000) / 1000} ×{line.adjustmentMode && line.adjustmentMode !== 'none' ? ` · ${line.adjustmentMode}` : ''}</small></div><span>{money(line.contractLineValueCents)}</span>{detail.status === 'draft' && !detail.finalizedAt && <div className="quote-line-actions"><button type="button" title="Modifier" onClick={() => setEditingLineId(editingLineId === line.id ? null : line.id)}>✎</button><button type="button" title="Supprimer" onClick={() => void removeLine(line.id)}>×</button></div>}</div>{detail.status === 'draft' && !detail.finalizedAt && editingLineId === line.id && <UnsavedGroup name={quoteGroup+'/line:'+line.id+'/editor'}><QuoteLineEditor line={line} onCancel={() => applyEditingLineId(null)} onSave={(input) => saveLine(line.id, input)} /></UnsavedGroup>}<QuoteLineParametersPanel quote={detail} line={line} onSave={q=>setDetail(q)}/></div>)}{detail.lines.length === 0 && <p className="muted">Aucune ligne pour le moment.</p>}</div>
           {detail.status === 'draft' && !detail.finalizedAt && <><div className="quote-add-line"><strong>Ajouter depuis le catalogue</strong><input aria-label="Rechercher dans le catalogue" placeholder="Code AW, nom, famille, catégorie" value={catalogSearch} onChange={e=>setCatalogSearch(e.target.value)}/><select value={catalogToAdd} onChange={(e) => setCatalogToAdd(e.target.value)}><option value="">Choisir…</option>{visibleCatalog.map((item) => <option key={item.id} value={item.currentVersion!.id}>{catalogueLabel(item)}</option>)}</select><input aria-label="Prix proposé pour la prestation" placeholder="Prix proposé € (facultatif sauf Sur devis)" value={catalogPrice} onChange={e=>setCatalogPrice(e.target.value)}/><button className="secondary-button" type="button" onClick={() => void addCatalogLine()}>Ajouter une ligne</button></div><div className="quote-add-line"><strong>Ligne libre</strong><input value={customLabel} onChange={(e) => setCustomLabel(e.target.value)} placeholder="Libellé" /><input inputMode="decimal" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} placeholder="Prix €" /><button className="secondary-button" type="button" onClick={() => void addCustomLine()}>Ajouter</button></div></>}
           <div className="quote-totals"><div><span>Valeur catalogue</span><strong>{money(detail.catalogValueCents)}</strong></div><div><span>Remises</span><strong>- {money(detail.discountValueCents)}</strong></div><div className="quote-total-main"><span>Total contractuel</span><strong>{money(detail.contractValueCents)}</strong></div><div><span>{detail.initialPaymentQualification==='arrhes'?'Arrhes':'Acompte'} {detail.depositPercent ?? 0} %</span><strong>{money(detail.depositCents)}</strong></div><div><span>Solde</span><strong>{money(detail.balanceCents)}</strong></div></div>
-          <div className="quote-status-actions">{['draft','sent','viewed'].includes(detail.status) && <button className="secondary-button" type="button" disabled={versionBusy} onClick={()=>void createCommercialRevision()}>Créer une révision du même dossier</button>}{detail.status === 'draft' && !detail.finalizedAt && <QuoteFinalizationPanel quote={detail} onFinalize={()=>void transition('finalized')}/>}{detail.status === 'draft' && detail.finalizedAt && <button className="primary-button" type="button" onClick={() => void transition('sent')}>Marquer envoyé</button>}{detail.status === 'sent' && <><button className="secondary-button" type="button" onClick={() => void transition('viewed')}>Marquer vu</button><button className="primary-button" type="button" onClick={() => void transition('accepted')}>Confirmer accepté dans Abby</button>{detail.prospectId && <button className="secondary-button" type="button" onClick={() => void negotiateQuote(detail)}>À négocier</button>}<button className="secondary-button danger-outline" type="button" onClick={() => void transition('refused')}>Refuser</button><button className="secondary-button" type="button" onClick={() => void transition('expired')}>Expirer</button></>}{detail.status === 'viewed' && <><button className="primary-button" type="button" onClick={() => void transition('accepted')}>Confirmer accepté dans Abby</button>{detail.prospectId && <button className="secondary-button" type="button" onClick={() => void negotiateQuote(detail)}>À négocier</button>}<button className="secondary-button danger-outline" type="button" onClick={() => void transition('refused')}>Refuser</button><button className="secondary-button" type="button" onClick={() => void transition('expired')}>Expirer</button></>}{['draft','sent','viewed','refused', 'expired', 'cancelled'].includes(detail.status) && <button className="primary-button" type="button" disabled={versionBusy} onClick={() => void transition('duplicate')}>Dupliquer en nouveau devis</button>}</div>
+          <div className="quote-status-actions">{['draft','sent','viewed'].includes(detail.status) && <button className="secondary-button" type="button" disabled={versionBusy} onClick={()=>void createCommercialRevision()}>Créer une révision du même dossier</button>}{detail.status === 'draft' && !detail.finalizedAt && <QuoteFinalizationPanel quote={detail} onFinalize={()=>void transition('finalized')}/>}{detail.status === 'draft' && detail.finalizedAt && <button className="primary-button" type="button" onClick={() => void transition('sent')}>Marquer envoyé</button>}{detail.status === 'sent' && <><button className="secondary-button" type="button" onClick={() => void transition('viewed')}>Marquer vu</button><button className="primary-button" type="button" disabled={acceptanceBusyIds.includes(detail.id)} onClick={() => void transition('accepted')}>Confirmer accepté dans Abby</button>{detail.prospectId && <button className="secondary-button" type="button" onClick={() => void negotiateQuote(detail)}>À négocier</button>}<button className="secondary-button danger-outline" type="button" onClick={() => void transition('refused')}>Refuser</button><button className="secondary-button" type="button" onClick={() => void transition('expired')}>Expirer</button></>}{detail.status === 'viewed' && <><button className="primary-button" type="button" disabled={acceptanceBusyIds.includes(detail.id)} onClick={() => void transition('accepted')}>Confirmer accepté dans Abby</button>{detail.prospectId && <button className="secondary-button" type="button" onClick={() => void negotiateQuote(detail)}>À négocier</button>}<button className="secondary-button danger-outline" type="button" onClick={() => void transition('refused')}>Refuser</button><button className="secondary-button" type="button" onClick={() => void transition('expired')}>Expirer</button></>}{['draft','sent','viewed','refused', 'expired', 'cancelled'].includes(detail.status) && <button className="primary-button" type="button" disabled={versionBusy} onClick={() => void transition('duplicate')}>Dupliquer en nouveau devis</button>}</div>
         </aside></UnsavedGroup>}
       </div>}
       {detail && previewOpen && <QuoteClientPreview quote={detail} onClose={() => setPreviewOpen(false)} />}
