@@ -29,6 +29,7 @@ import commercialSource from '${repo.replaceAll('\\', '/')}/data/catalogue/atoum
 const oldVersion={id:'old-v1',itemId:'legacy-id',versionNumber:1,status:'published',priceMode:'fixed',priceCents:69900,description:'Ancienne offre',inclusions:[],exclusions:[],prerequisites:[],createdAt:'2026-09-14',publishedAt:'2026-09-14'};
 const items=[{id:'legacy-id',type:'service',name:'Ancien élément témoin',category:'Web',status:'active',visiblePublic:false,canonicalCode:null,currentVersion:oldVersion,versions:[oldVersion],createdAt:'2026-09-14'}];
 window.calls={create:[],version:[],assign:[],publish:0};window.items=items;window.messages=[];
+window.fixtureErrors=[];window.addEventListener('error',event=>window.fixtureErrors.push(String(event.error?.stack||event.message)));window.addEventListener('unhandledrejection',event=>window.fixtureErrors.push(String(event.reason?.stack||event.reason)));
 window.importedVersion={...commercialSource.records.find(r=>r.canonicalCode==='AW-WEB-VITRINE').version,id:'legacy-import-v2',itemId:'legacy-id',versionNumber:2,status:'draft',createdAt:'2026-10-03'};
 window.atoumweb={catalog:{
   list:async()=>structuredClone(items),getItem:async(id)=>structuredClone(items.find(i=>i.id===id)),
@@ -36,7 +37,11 @@ window.atoumweb={catalog:{
   createVersion:async(id,input)=>{calls.version.push({id,input});const item=items.find(i=>i.id===id);const v={...input,id:id+'-v2',itemId:id,versionNumber:2,status:'draft',createdAt:'2026-10-03'};item.versions.unshift(v);return structuredClone(v)},
   assignCanonicalCode:async(id,code)=>{calls.assign.push({id,code});if(!/^AW-[A-Z0-9-]+$/.test(code))throw Error('Code canonique invalide');const item=items.find(i=>i.id===id);item.canonicalCode=code;item.identityProvenance={reference:'manual'};return structuredClone(item)},
   publishVersion:async()=>{calls.publish++},listOfferComponents:async()=>[],
-}};
+},contractTypes:{
+  list:async()=>[],catalog:async()=>[],setCatalog:async()=>[],
+},contractTerms:{library:{list:async()=>[]}},
+  unsaved:{confirmExit:()=>true,publishState:()=>{}},
+};
 createRoot(document.getElementById('root')).render(<CatalogPage onMessage={message=>messages.push(message)}/>);
 `;
 app.whenReady().then(async () => {
@@ -54,7 +59,7 @@ app.whenReady().then(async () => {
           const element=document.querySelector(selector);if(element)return element;
           await wait();
         }
-        throw Error('Élément non monté : '+label+' ('+selector+'); page='+document.body.textContent.slice(0,600));
+        throw Error('Élément non monté : '+label+' ('+selector+'); page='+document.body.textContent.slice(0,600)+'; rendererErrors='+JSON.stringify(window.fixtureErrors));
       };
       const assert=(name,value)=>{checks.push({name,passed:Boolean(value)});if(!value)throw Error(name)};
       const click=async(text)=>{const b=[...document.querySelectorAll('button')].find(b=>b.textContent===text);if(!b)throw Error('Bouton absent : '+text);b.click();await wait()};
