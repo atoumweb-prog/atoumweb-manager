@@ -521,10 +521,10 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
         <CatalogCategoryInventory items={items}
           onChanged={refresh}
           onClose={() => requestUnsavedExit(() => setShowCategoryInventory(false))}
-          onFilter={category => {
-          setQuery(''); setTypeFilter('all'); setStatusFilter('all'); setCategoryFilter(category);
-          setShowCategoryInventory(false);
-        }} />
+          onFilter={category => requestUnsavedExit(() => {
+            setQuery(''); setTypeFilter('all'); setStatusFilter('all'); setCategoryFilter(category);
+            setShowCategoryInventory(false);
+          })} />
       )}
 
       {showForm && (
