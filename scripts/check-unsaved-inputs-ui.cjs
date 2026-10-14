@@ -113,7 +113,7 @@ if(!process.versions.electron){
  }
  if(win){win.destroy();win=null;}await sleep(180);
  }
- const db=database.database;check('migrations exactly 1–67',db.all('SELECT id FROM schema_migrations ORDER BY id').map(r=>r.id).join(',')===Array.from({length:67},(_,i)=>i+1).join(','));check('integrity',db.get('PRAGMA integrity_check').integrity_check==='ok');check('FK',db.all('PRAGMA foreign_key_check').length===0);console.log(JSON.stringify({checks:checks.length,failed:checks.filter(c=>!c.passed),details:checks}));
+ const db=database.database;check('migrations 1–66 + 69',db.all('SELECT id FROM schema_migrations ORDER BY id').map(r=>r.id).join(',')===[...Array.from({length:66},(_,i)=>i+1),69].join(','));check('integrity',db.get('PRAGMA integrity_check').integrity_check==='ok');check('FK',db.all('PRAGMA foreign_key_check').length===0);console.log(JSON.stringify({checks:checks.length,failed:checks.filter(c=>!c.passed),details:checks}));
  }).then(()=>{win?.destroy();database?.close();app.exit(0);}).catch(e=>{console.error(e.stack);try{win?.destroy();database?.close();}finally{app.exit(1)}});
 }
 
