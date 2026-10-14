@@ -387,7 +387,7 @@ const api: AtoumWebApi = {
     markSent: (id: string) => ipcRenderer.invoke('quotes:mark-sent', id),
     confirmPrincipleAgreement: (id: string) => ipcRenderer.invoke('quotes:principle-agreement:confirm', id),
     revokePrincipleAgreement: (id: string) => ipcRenderer.invoke('quotes:principle-agreement:revoke', id),
-    finalize:(id:string)=>ipcRenderer.invoke('quotes:finalize',id),
+    finalize:(id:string,canonicalReview?:boolean)=>ipcRenderer.invoke('quotes:finalize',id,canonicalReview===true),
     extendValidity:(id:string,validUntil:string)=>ipcRenderer.invoke('quotes:extend-validity',id,validUntil),
     markViewed: (id: string) => ipcRenderer.invoke('quotes:mark-viewed', id),
     accept: (id: string) => ipcRenderer.invoke('quotes:accept', id),
