@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ContractPresentation } from '../../shared/contractPresentation';
 import { contractCopy } from '../../shared/contractPresentation';
 import { reviewContractTextImport } from '../../shared/contractImportReview';
@@ -7,20 +7,23 @@ import './contract-library.css';
 export function ContractReadPanel({presentation,commercial='',unsaved=false,copy=true}:{presentation:ContractPresentation;commercial?:string;unsaved?:boolean;copy?:boolean}) {
   const [message,setMessage]=useState('');
   const [proposedText,setProposedText]=useState('');
+  const fileReadRequest=useRef(0);
   // A pasted comparison must never leak into the next quote or historical snapshot.
-  useEffect(()=>setProposedText(''),[presentation.text,presentation.state,presentation.compiledAt]);
+  useEffect(()=>{fileReadRequest.current++;setProposedText('');setMessage('');return ()=>{fileReadRequest.current++;};},[presentation.text,presentation.state,presentation.compiledAt]);
   async function loadPlainTextFile(file:File|undefined) {
     if(!file)return;
+    const request=++fileReadRequest.current;
     if(!file.name.toLowerCase().endsWith('.txt')||file.size>1_000_000){
       setMessage('Import refusé : sélectionner un fichier .txt de 1 Mo maximum.');
       return;
     }
     try {
       const value=await file.text();
+      if(request!==fileReadRequest.current)return;
       if(value.length>1_000_000){setMessage('Texte trop volumineux.');return;}
       setProposedText(value);
       setMessage('Texte chargé pour comparaison uniquement, sans enregistrement.');
-    } catch {setMessage('Lecture du fichier impossible.');}
+    } catch {if(request===fileReadRequest.current)setMessage('Lecture du fichier impossible.');}
   }
   const review=proposedText?reviewContractTextImport({originalText:presentation.text,importedText:proposedText,quoteState:presentation.state}):null;
   async function copyText(text:string,label:string) {
@@ -51,13 +54,13 @@ export function ContractReadPanel({presentation,commercial='',unsaved=false,copy
       <label>Charger un fichier texte (.txt, 1 Mo maximum) pour comparaison
         <input type="file" accept=".txt,text/plain" onChange={event=>{const file=event.currentTarget.files?.[0];event.currentTarget.value='';void loadPlainTextFile(file);}} />
       </label>
-      <textarea aria-label="Texte contractuel externe à comparer" value={proposedText} onChange={event=>setProposedText(event.target.value)} maxLength={1000001} rows={5} />
+      <textarea aria-label="Texte contractuel externe à comparer" value={proposedText} onChange={event=>{fileReadRequest.current++;setProposedText(event.target.value);}} maxLength={1000001} rows={5} />
       {review&&<div role="status">
         <p>{review.reason}</p>
         {review.changed&&<p>Différence (extraits limités) : supprimé «{review.removedExcerpt}» ; ajouté «{review.addedExcerpt}».</p>}
         {review.mayProposeDraft&&<p>Proposition uniquement : aucune écriture automatique. Une validation humaine et un enregistrement explicite restent nécessaires.</p>}
       </div>}
-      <button type="button" className="secondary-button" onClick={()=>setProposedText('')} disabled={!proposedText}>Effacer la comparaison</button>
+      <button type="button" className="secondary-button" onClick={()=>{fileReadRequest.current++;setProposedText('');}} disabled={!proposedText}>Effacer la comparaison</button>
     </details>}
     <details className="contract-module-inventory"><summary>Modules inclus ({presentation.modules.length}) et références utilisées</summary>
       {presentation.modules.map((m,i)=><div key={i}><strong>{m.title}</strong> · {m.code}{m.version!==null?` · v${m.version}`:''} · {m.source==='base'?'Socle commun':m.source==='catalog'?'Prestation vendue':'Particulière'}</div>)}
