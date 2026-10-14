@@ -320,8 +320,8 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
     catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut.'); }
   }
 
-  async function changeInterventionStatus(status: InterventionStatus): Promise<void> {
-    if (!selectedIntervention) return;
+  async function changeInterventionStatus(status: InterventionStatus): Promise<boolean> {
+    if (!selectedIntervention) return false;
     try {
       const updated = status === 'completed'
         ? await window.atoumweb.operations.interventions.complete(selectedIntervention.id)
@@ -329,7 +329,8 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
       setSelectedIntervention(updated);
       await refresh({ showLoading: false });
       if (status === 'completed') onMessage(`${updated.number} terminée · prise en charge traitée.`);
-    } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut.'); }
+      return true;
+    } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut.'); return false; }
   }
 
   async function changeCoverage(coverageMode: InterventionCoverageMode): Promise<void> {
@@ -634,7 +635,7 @@ function InterventionConclusionPanel({ intervention, forceOpen, onHandled, onSav
   forceOpen: boolean;
   onHandled: () => void;
   onSaved: () => void;
-  onComplete: () => Promise<void>;
+  onComplete: () => Promise<boolean>;
   onMessage: (message: string) => void;
 }) {
   const [open, setOpen] = useState(forceOpen);
@@ -680,9 +681,10 @@ function InterventionConclusionPanel({ intervention, forceOpen, onHandled, onSav
       draft.section.receive({cause:updated.incidentCause??'',diagnosis:updated.incidentDiagnosis??'',solution:updated.incidentSolution??'',followUp:updated.incidentFollowUp??''},{value:submitted});
       onSaved();
       if (finalize) {
-        await onComplete();
+        const completed = await onComplete();
+        if (!completed) return;
         setOpen(false);
-        onMessage(`${intervention.number} clôturée · conclusion et rapport de fin enregistrés.`);
+        onMessage(`${intervention.number} clôturée · conclusion enregistrée.`);
       } else {
         onMessage('Conclusion de panne enregistrée.');
       }
