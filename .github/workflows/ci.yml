@@ -43,6 +43,16 @@ jobs:
       - name: Tests
         run: npm test -- --maxWorkers=2
 
+      # PR109: native Windows smoke recipe on isolated TEMP profile and SQLite.
+      # This is a real Electron shell run, not the full E226 unsaved-draft interaction recipe.
+      - name: Electron 08A — real shell and operations navigation (TEMP)
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 109 }}
+        shell: pwsh
+        timeout-minutes: 15
+        run: |
+          node scripts/check-ux-v2-lot01a-real-ui.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       # PR98 standalone; the combined candidate runs this same recipe below.
       # La fixture crée exclusivement ses propres fichiers et profil dans %TEMP%.
       - name: Electron CRM 03B.6 — Windows TEMP
