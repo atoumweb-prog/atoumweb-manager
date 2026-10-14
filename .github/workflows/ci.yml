@@ -37,6 +37,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: UX 05 integration ancestry gate
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux05-candidate-20261014' }}
+        shell: pwsh
+        run: |
+          git fetch origin main --depth=100
+          git merge-base --is-ancestor origin/main HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Integration candidate is behind or diverged from main; rebuild and retest.' }
+          Write-Output 'UX 05 candidate contains current origin/main.'
+          
       - name: Typecheck
         run: npm run typecheck
 
