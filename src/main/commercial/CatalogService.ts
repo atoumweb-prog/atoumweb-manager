@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { catalogMatchesQuery } from '../../shared/catalogDiscovery';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import {
   CATALOG_ITEM_STATUSES,
@@ -151,11 +152,8 @@ export class CatalogService {
       where.push('v.price_mode=?');
       params.push(filters.priceMode);
     }
-    if (clean(filters.search)) {
-      where.push('(i.name LIKE ? COLLATE NOCASE OR COALESCE(i.category, \'\') LIKE ? COLLATE NOCASE OR COALESCE(v.nature, \'\') LIKE ? COLLATE NOCASE OR COALESCE(v.description, \'\') LIKE ? COLLATE NOCASE OR i.canonical_code LIKE ? COLLATE NOCASE OR v.abby_label LIKE ? COLLATE NOCASE OR v.family_code LIKE ? COLLATE NOCASE)');
-      const query = `%${clean(filters.search)}%`;
-      params.push(query, query, query, query, query, query, query);
-    }
+    // Search on the selected version's actual data, including E96 fields.
+    // French accent normalization is handled by a shared pure matcher below.
 
     const rows = this.database.all<CatalogRow>(
       `SELECT
@@ -195,7 +193,8 @@ export class CatalogService {
       params,
     );
 
-    return rows.map((row) => this.mapSummary(row));
+    const mapped = rows.map((row) => this.mapSummary(row));
+    return clean(filters.search) ? mapped.filter(item => catalogMatchesQuery(item, filters.search!, 'admin')) : mapped;
   }
 
   getItem(id: string): CatalogItemDetail {
