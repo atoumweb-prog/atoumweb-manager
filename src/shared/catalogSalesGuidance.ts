@@ -9,6 +9,8 @@ export interface CatalogSalesGuidance {
   clientNeed?: string | null;
   benefits?: string | null;
   objections?: string | null;
+  relevantSituations?: string | null;
+  commercialCautions?: string | null;
   salesPitch?: string | null;
   qualificationQuestions?: string | null;
   salesAdvice?: string | null;
@@ -18,6 +20,8 @@ export interface CatalogSalesGuidanceView {
   clientNeed: string | null;
   benefits: string | null;
   objections: string | null;
+  relevantSituations: string | null;
+  commercialCautions: string | null;
   salesPitch: string | null;
   qualificationQuestions: string | null;
   salesAdvice: string | null;
@@ -29,13 +33,15 @@ export function prepareCatalogSalesGuidance(input: CatalogSalesGuidance): Catalo
   const clientNeed = trim(input.clientNeed);
   const benefits = trim(input.benefits);
   const objections = trim(input.objections);
+  const relevantSituations = trim(input.relevantSituations);
+  const commercialCautions = trim(input.commercialCautions);
   const salesPitch = trim(input.salesPitch);
   const qualificationQuestions = trim(input.qualificationQuestions);
   const salesAdvice = trim(input.salesAdvice);
   return {
     versionId: input.versionId,
-    clientNeed, benefits, objections, salesPitch, qualificationQuestions, salesAdvice,
-    configured: [clientNeed, benefits, objections, salesPitch, qualificationQuestions, salesAdvice].some(Boolean),
+    clientNeed, benefits, objections, relevantSituations, commercialCautions, salesPitch, qualificationQuestions, salesAdvice,
+    configured: [clientNeed, benefits, objections, relevantSituations, commercialCautions, salesPitch, qualificationQuestions, salesAdvice].some(Boolean),
   };
 }
 
@@ -48,6 +54,8 @@ export function salesGuidanceFromCatalogVersion(
     clientNeed: version.commercialParameters?.clientNeed,
     benefits: version.commercialParameters?.benefits,
     objections: version.commercialParameters?.objections,
+    relevantSituations: version.commercialParameters?.relevantSituations,
+    commercialCautions: version.commercialParameters?.commercialCautions,
     salesPitch: version.commercialParameters?.salesPitch,
     qualificationQuestions: version.commercialParameters?.qualificationQuestions,
     salesAdvice: version.internalAdvice,
