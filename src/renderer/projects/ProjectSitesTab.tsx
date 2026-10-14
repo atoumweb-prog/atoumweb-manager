@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   PROJECT_SITE_PAGE_ROLES,
   type ProjectDetail,
@@ -69,6 +69,18 @@ export function ProjectSitesTab({
   const [pageName, setPageName] = useState('');
   const [pageSiteId, setPageSiteId] = useState('');
   const [busy, setBusy] = useState(false);
+  // A ref blocks same-tick double clicks before the busy UI state is committed.
+  const mutationPending = useRef(false);
+  function beginMutation(): boolean {
+    if (mutationPending.current) return false;
+    mutationPending.current = true;
+    setBusy(true);
+    return true;
+  }
+  function finishMutation(): void {
+    mutationPending.current = false;
+    setBusy(false);
+  }
   const [splitPercent, setSplitPercent] = useState(initialViewContext?.splitPercent ?? 40);
   const [treeCollapsed, setTreeCollapsed] = useState(initialViewContext?.treeCollapsed ?? false);
   const [detailCollapsed, setDetailCollapsed] = useState(initialViewContext?.detailCollapsed ?? false);
@@ -190,7 +202,7 @@ export function ProjectSitesTab({
   }
 
   async function run(action: () => Promise<unknown>, success?: string): Promise<void> {
-    setBusy(true);
+    if (!beginMutation()) return;
     try {
       await action();
       await reload();
@@ -198,12 +210,12 @@ export function ProjectSitesTab({
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de modifier les Sites du projet.');
     } finally {
-      setBusy(false);
+      finishMutation();
     }
   }
 
   async function applyBlueprint(): Promise<void> {
-    setBusy(true);
+    if (!beginMutation()) return;
     try {
       const result = await window.atoumweb.projects.sites.applyBlueprint(projectId);
       const updatedProject = await window.atoumweb.projects.projects.get(projectId);
@@ -219,7 +231,7 @@ export function ProjectSitesTab({
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible d’appliquer le blueprint Sites / Pages.');
     } finally {
-      setBusy(false);
+      finishMutation();
     }
   }
 
@@ -229,7 +241,7 @@ export function ProjectSitesTab({
 
   async function createSite(): Promise<void> {
     if (!siteName.trim()) return;
-    setBusy(true);
+    if (!beginMutation()) return;
     try {
       const created = await window.atoumweb.projects.sites.create(projectId, {
         name: siteName.trim(),
@@ -245,14 +257,14 @@ export function ProjectSitesTab({
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de créer le Site.');
     } finally {
-      setBusy(false);
+      finishMutation();
     }
   }
 
   async function createPage(): Promise<void> {
     const name = pageName.trim();
     if (!name) return;
-    setBusy(true);
+    if (!beginMutation()) return;
     try {
       const beforeIds = new Set(nodes.map((node) => node.id));
       const pageRoot = nodes.find((node) => node.semanticKey === 'pages' && !node.parentId)
@@ -283,7 +295,7 @@ export function ProjectSitesTab({
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de créer la Page.');
     } finally {
-      setBusy(false);
+      finishMutation();
     }
   }
 
@@ -331,7 +343,7 @@ export function ProjectSitesTab({
 
   async function startSelectedPageTimer(): Promise<void> {
     if (!selectedPage) return;
-    setBusy(true);
+    if (!beginMutation()) return;
     try {
       const current = await window.atoumweb.time.active();
       if (current) {
@@ -367,13 +379,13 @@ export function ProjectSitesTab({
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de démarrer le chrono.');
     } finally {
-      setBusy(false);
+      finishMutation();
     }
   }
 
   async function pauseOrResumeSelectedPageTimer(): Promise<void> {
     if (!activeTime || !activeOnSelectedPage) return;
-    setBusy(true);
+    if (!beginMutation()) return;
     try {
       const next = activeTime.paused
         ? await window.atoumweb.time.resume(activeTime.id)
@@ -384,13 +396,13 @@ export function ProjectSitesTab({
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible de modifier le chrono.');
     } finally {
-      setBusy(false);
+      finishMutation();
     }
   }
 
   async function stopSelectedPageTimer(): Promise<void> {
     if (!activeTime || !activeOnSelectedPage) return;
-    setBusy(true);
+    if (!beginMutation()) return;
     try {
       const stopped = await window.atoumweb.time.stop(activeTime.id);
       setActiveTime(null);
@@ -400,7 +412,7 @@ export function ProjectSitesTab({
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible d’arrêter le chrono.');
     } finally {
-      setBusy(false);
+      finishMutation();
     }
   }
 
