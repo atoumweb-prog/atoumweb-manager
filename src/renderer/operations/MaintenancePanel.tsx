@@ -1,4 +1,5 @@
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
+import {requestUnsavedExit,useUnsavedDraft} from '../unsaved/unsaved';
 import { useEffect, useMemo, useState } from 'react';
 import type { ClientSummary } from '../../shared/crm';
 import {
@@ -64,6 +65,31 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
   const [planQuota, setPlanQuota] = useState('0');
   const [planFrequency, setPlanFrequency] = useState<MaintenanceFrequency>('monthly');
 
+  useUnsavedDraft('Nouvelle souscription maintenance',
+    { clientId, projectId, planId, startDate, contractPrice },
+    {
+      ready: createSubscriptionOpen,
+      resetKey: createSubscriptionOpen,
+      pending: saving && createSubscriptionOpen,
+      discard: () => {
+        setClientId(''); setProjectId(''); setPlanId(''); setContractPrice('');
+        setStartDate(new Date().toISOString().slice(0, 10));
+        setCreateSubscriptionOpen(false);
+      },
+    });
+  useUnsavedDraft('Nouveau plan maintenance',
+    { planName, planPrice, planQuota, planFrequency },
+    {
+      ready: createPlanOpen,
+      resetKey: createPlanOpen,
+      pending: saving && createPlanOpen,
+      discard: () => {
+        setPlanName(''); setPlanPrice(''); setPlanQuota('0');
+        setPlanFrequency('monthly'); setCreatePlanOpen(false);
+      },
+    });
+
+
   async function refresh(): Promise<void> {
     try {
       const [nextPlans, nextSubscriptions] = await Promise.all([
@@ -103,9 +129,11 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
     if (!selectedSubscriptionId) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setSelectedSubscriptionId('');
-        setSelectedPeriodId('');
-        setDetailExpanded(false);
+        requestUnsavedExit(() => {
+          setSelectedSubscriptionId('');
+          setSelectedPeriodId('');
+          setDetailExpanded(false);
+        });
       }
     };
     window.addEventListener('keydown', closeOnEscape);
@@ -254,8 +282,8 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
       <div><strong>{activeSubscriptions.length}</strong><span> maintenance(s)</span></div>
       <div className="toolbar-controls">
         <button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button>
-        <button className="secondary-button" type="button" onClick={() => setCreatePlanOpen((value) => !value)}>+ Plan</button>
-        <button className="primary-button" type="button" onClick={() => setCreateSubscriptionOpen((value) => !value)}>+ Souscription</button>
+        <button className="secondary-button" type="button" onClick={() => requestUnsavedExit(() => setCreatePlanOpen((value) => !value))}>+ Plan</button>
+        <button className="primary-button" type="button" onClick={() => requestUnsavedExit(() => setCreateSubscriptionOpen((value) => !value))}>+ Souscription</button>
       </div>
     </div>
 
@@ -264,7 +292,7 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
       <label>Prix / période (€)<input type="number" min="0" step="0.01" value={planPrice} onChange={(event) => setPlanPrice(event.target.value)} /></label>
       <label>Interventions incluses<input type="number" min="0" value={planQuota} onChange={(event) => setPlanQuota(event.target.value)} /></label>
       <label>Fréquence<select value={planFrequency} onChange={(event) => setPlanFrequency(event.target.value as MaintenanceFrequency)}>{MAINTENANCE_FREQUENCIES.map((frequency) => <option key={frequency} value={frequency}>{FREQUENCY_LABELS[frequency]}</option>)}</select></label>
-    </div><div className="button-row"><button className="primary-button" disabled={saving || !planName.trim() || !planPrice} type="button" onClick={() => void createPlan()}>Créer le plan</button><button className="secondary-button" type="button" onClick={() => setCreatePlanOpen(false)}>Annuler</button></div></section>}
+    </div><div className="button-row"><button className="primary-button" disabled={saving || !planName.trim() || !planPrice} type="button" onClick={() => void createPlan()}>Créer le plan</button><button className="secondary-button" type="button" onClick={() => requestUnsavedExit(() => setCreatePlanOpen(false))}>Annuler</button></div></section>}
 
     {createSubscriptionOpen && <section className="panel operation-create-panel"><div className="panel-title"><div><span className="eyebrow">Maintenance client</span><h2>Nouvelle souscription</h2></div></div><div className="operation-create-grid">
       <label>Client<select value={clientId} onChange={(event) => { setClientId(event.target.value); setProjectId(''); }}><option value="">Choisir…</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.displayName}</option>)}</select></label>
@@ -272,7 +300,7 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
       <label>Plan<select value={planId} onChange={(event) => setPlanId(event.target.value)}><option value="">Choisir…</option>{plans.filter((plan) => plan.status === 'active').map((plan) => <option key={plan.id} value={plan.id}>{plan.name} · {euro(plan.periodicPriceCents)}</option>)}</select></label>
       <label>Début<input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} /></label>
       <label>Prix contractuel / période (€)<input type="number" min="0" step="0.01" value={contractPrice} onChange={(event) => setContractPrice(event.target.value)} /></label>
-    </div><div className="button-row"><button className="primary-button" disabled={saving || !clientId || !planId} type="button" onClick={() => void createSubscription()}>Créer la souscription</button><button className="secondary-button" type="button" onClick={() => setCreateSubscriptionOpen(false)}>Annuler</button></div></section>}
+    </div><div className="button-row"><button className="primary-button" disabled={saving || !clientId || !planId} type="button" onClick={() => void createSubscription()}>Créer la souscription</button><button className="secondary-button" type="button" onClick={() => requestUnsavedExit(() => setCreateSubscriptionOpen(false))}>Annuler</button></div></section>}
 
     <div
       className={selectedSubscription ? `maintenance-layout with-detail ${detailExpanded ? 'detail-expanded' : ''}` : 'maintenance-layout'}
