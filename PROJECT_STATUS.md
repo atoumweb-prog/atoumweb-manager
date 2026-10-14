@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/10/2026 — Lot 09C : validé techniquement (Dépenses/justificatifs)
+
+- PR [#129](https://github.com/atoumweb-prog/atoumweb-manager/pull/129) **draft**, base 09A/#113, indépendante de 09B/#119 ; aucun merge dans main.
+- CI Windows [#38600849268](https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38600849268) **SUCCESS** sur `607eb0d` : TypeScript, 110 fichiers Vitest, 67 assertions Electron Dépenses, 373 UX générales, restauration Windows TEMP.
+- Métier : justificatifs versionnés et protégés SHA-256, sauvegardes atomiques avec rollback, corrections de dépenses payées déclarées tracées et confirmées, garde UX-01, Client/Projet cohérents, alerte d'échéance sans occurrence artificielle.
+- Matrice R09C-01 à R09C-17 couverte : `docs/ux-v2/LOT-09C-PLAN-EXECUTION-2026-10-14.md`.
+- Validation humaine et convergence des sous-lots 09A/09B/09C, puis contrôles d'intégration main, demeurent à faire. 09D ouvert séparément, sans fusion.
+
 ## 14/10/2026 — Lot 09A : clôture technique et préparation 09B
 
 - Branche isolée `audit/ux-v2-lot09-20261014`, PR #113 **draft**, sans merge. CI #1042 (run 38579044064) **SUCCESS** sur `8b57e3e` : typecheck, suite Vitest, Electron UI/SQLite TEMP et restauration/redémarrage TEMP. Contrôles 09A exécutés, sans validation humaine anticipée.

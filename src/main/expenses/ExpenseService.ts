@@ -92,41 +92,84 @@ export class ExpenseService {
     const normalized = this.normalize(input);
     const id = randomUUID();
     const now = nowIso();
-    this.database.run(
-      'INSERT INTO expenses (id,client_account_id,project_id,category,supplier,label,amount_cents,vat_cents,status,expense_date,due_at,paid_at,frequency,next_due_at,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-      [
-        id, normalized.clientAccountId, normalized.projectId, normalized.category, normalized.supplier,
-        normalized.label, normalized.amountCents, normalized.vatCents, normalized.status,
-        normalized.expenseDate, normalized.dueAt, normalized.paidAt, normalized.frequency,
-        normalized.nextDueAt, normalized.notes, now, now,
-      ],
-    );
-    this.log(id, 'expense_created', normalized.label + ' · ' + (normalized.amountCents / 100) + ' €');
+    this.database.exec('SAVEPOINT expense_create');
+    try {
+      this.database.run(
+        'INSERT INTO expenses (id,client_account_id,project_id,category,supplier,label,amount_cents,vat_cents,status,expense_date,due_at,paid_at,frequency,next_due_at,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        [
+          id, normalized.clientAccountId, normalized.projectId, normalized.category, normalized.supplier,
+          normalized.label, normalized.amountCents, normalized.vatCents, normalized.status,
+          normalized.expenseDate, normalized.dueAt, normalized.paidAt, normalized.frequency,
+          normalized.nextDueAt, normalized.notes, now, now,
+        ],
+      );
+      this.log(id, 'expense_created', normalized.label + ' · ' + (normalized.amountCents / 100) + ' €');
+      this.database.exec('RELEASE SAVEPOINT expense_create');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT expense_create');
+      this.database.exec('RELEASE SAVEPOINT expense_create');
+      throw error;
+    }
     return this.get(id);
   }
 
   update(id: string, input: ExpenseInput): Expense {
-    this.get(id);
+    const before = this.get(id);
     const normalized = this.normalize(input);
-    this.database.run(
-      'UPDATE expenses SET client_account_id=?,project_id=?,category=?,supplier=?,label=?,amount_cents=?,vat_cents=?,status=?,expense_date=?,due_at=?,paid_at=?,frequency=?,next_due_at=?,notes=?,updated_at=? WHERE id=?',
-      [
-        normalized.clientAccountId, normalized.projectId, normalized.category, normalized.supplier,
-        normalized.label, normalized.amountCents, normalized.vatCents, normalized.status,
-        normalized.expenseDate, normalized.dueAt, normalized.paidAt, normalized.frequency,
-        normalized.nextDueAt, normalized.notes, nowIso(), id,
-      ],
-    );
-    this.log(id, 'expense_updated', normalized.label);
+    const now = nowIso();
+    this.database.exec('SAVEPOINT expense_update');
+    try {
+      this.database.run(
+        'UPDATE expenses SET client_account_id=?,project_id=?,category=?,supplier=?,label=?,amount_cents=?,vat_cents=?,status=?,expense_date=?,due_at=?,paid_at=?,frequency=?,next_due_at=?,notes=?,updated_at=? WHERE id=?',
+        [
+          normalized.clientAccountId, normalized.projectId, normalized.category, normalized.supplier,
+          normalized.label, normalized.amountCents, normalized.vatCents, normalized.status,
+          normalized.expenseDate, normalized.dueAt, normalized.paidAt, normalized.frequency,
+          normalized.nextDueAt, normalized.notes, now, id,
+        ],
+      );
+      this.database.run(
+        'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+        ['expense', id, 'expense_updated', normalized.label,
+          JSON.stringify({
+            previousStatus: before.status, currentStatus: normalized.status,
+            previousAmountCents: before.amountCents, currentAmountCents: normalized.amountCents,
+            previousPaidAt: before.paidAt, currentPaidAt: normalized.paidAt,
+            previousClientAccountId: before.clientAccountId, currentClientAccountId: normalized.clientAccountId,
+            previousProjectId: before.projectId, currentProjectId: normalized.projectId,
+            paymentVerifiedByBank: false,
+          }), now],
+      );
+      this.database.exec('RELEASE SAVEPOINT expense_update');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT expense_update');
+      this.database.exec('RELEASE SAVEPOINT expense_update');
+      throw error;
+    }
     return this.get(id);
   }
 
   changeStatus(id: string, status: ExpenseStatus): Expense {
     if (!EXPENSE_STATUSES.includes(status)) throw new Error('Statut de dépense invalide.');
     const current = this.get(id);
-    const paidAt = status === 'paid' ? current.paidAt ?? nowIso() : null;
-    this.database.run('UPDATE expenses SET status=?,paid_at=?,updated_at=? WHERE id=?', [status, paidAt, nowIso(), id]);
-    this.log(id, 'expense_status_changed', current.label + ' · ' + status);
+    if (current.status === status) return current;
+    const now = nowIso();
+    const paidAt = status === 'paid' ? current.paidAt ?? now : null;
+    this.database.exec('SAVEPOINT expense_status_update');
+    try {
+      this.database.run('UPDATE expenses SET status=?,paid_at=?,updated_at=? WHERE id=?', [status, paidAt, now, id]);
+      this.database.run(
+        'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+        ['expense', id, 'expense_status_changed', current.label + ' · ' + status,
+          JSON.stringify({ previousStatus: current.status, currentStatus: status,
+            previousPaidAt: current.paidAt, currentPaidAt: paidAt, paymentVerifiedByBank: false }), now],
+      );
+      this.database.exec('RELEASE SAVEPOINT expense_status_update');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT expense_status_update');
+      this.database.exec('RELEASE SAVEPOINT expense_status_update');
+      throw error;
+    }
     return this.get(id);
   }
 
@@ -137,19 +180,41 @@ export class ExpenseService {
     const directory = this.receiptDirectory(expense);
     mkdirSync(directory, { recursive: true });
     const destination = this.uniqueDestination(directory, basename(source));
-    if (resolve(source) !== resolve(destination)) copyFileSync(source, destination);
-    const stats = statSync(destination);
-    this.database.run(
-      'UPDATE expenses SET receipt_relative_path=?,receipt_original_name=?,receipt_mime_type=?,receipt_size_bytes=?,updated_at=? WHERE id=?',
-      [relative(this.workspace.root, destination), basename(source), this.mime(destination), Number(stats.size), nowIso(), id],
-    );
-    this.database.run(
-      'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
-      ['expense', id, 'expense_receipt_version', 'Historique justificatif : ' + basename(source),
-        JSON.stringify({ previousRelativePath: expense.receiptRelativePath ?? null, previousFileName: expense.receiptFileName ?? null, currentRelativePath: relative(this.workspace.root, destination), currentFileName: basename(source), currentSha256: createHash('sha256').update(readFileSync(destination)).digest('hex') }), nowIso()],
-    );
-    this.log(id, 'expense_receipt_imported', 'Justificatif : ' + basename(source));
-    return this.get(id);
+    const copied = source !== resolve(destination);
+    let committed = false;
+    try {
+      if (copied) copyFileSync(source, destination);
+      const stats = statSync(destination);
+      const now = nowIso();
+      const storedPath = relative(this.workspace.root, destination);
+      const sha256 = createHash('sha256').update(readFileSync(destination)).digest('hex');
+      this.database.exec('SAVEPOINT expense_receipt_import');
+      try {
+        this.database.run(
+          'UPDATE expenses SET receipt_relative_path=?,receipt_original_name=?,receipt_mime_type=?,receipt_size_bytes=?,updated_at=? WHERE id=?',
+          [storedPath, basename(source), this.mime(destination), Number(stats.size), now, id],
+        );
+        this.database.run(
+          'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+          ['expense', id, 'expense_receipt_version', 'Historique justificatif : ' + basename(source),
+            JSON.stringify({ previousRelativePath: expense.receiptRelativePath ?? null, previousFileName: expense.receiptFileName ?? null,
+              currentRelativePath: storedPath, currentFileName: basename(source), currentSha256: sha256 }), now],
+        );
+        this.log(id, 'expense_receipt_imported', 'Justificatif : ' + basename(source));
+        this.database.exec('RELEASE SAVEPOINT expense_receipt_import');
+        committed = true;
+      } catch (error) {
+        this.database.exec('ROLLBACK TO SAVEPOINT expense_receipt_import');
+        this.database.exec('RELEASE SAVEPOINT expense_receipt_import');
+        throw error;
+      }
+      return this.get(id);
+    } catch (error) {
+      // A rejected update must not leave a new, unattached receipt copy behind.
+      // Never delete the source or a pre-existing receipt version.
+      if (copied && !committed) rmSync(destination, { force: true });
+      throw error;
+    }
   }
 
   absoluteReceiptPath(id: string): string {
