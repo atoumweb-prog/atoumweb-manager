@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Intervention } from '../../shared/operations';
-import { acquireCompletionLock, isCurrentOperationsRefresh, resolveInterventionCompletion } from './operationAsyncGuards';
+import { acquireCompletionLock, interventionCompletionReview, isCurrentOperationsRefresh, resolveInterventionCompletion } from './operationAsyncGuards';
 
 const item = (status: Intervention['status']) => ({ id: 'intervention-test', number: 'INT-TEST', status }) as Intervention;
 
@@ -118,4 +118,24 @@ describe('verrou de double clôture', () => {
     expect(call).toHaveBeenCalledTimes(2);
   });
 
+});
+
+describe('revue avant clôture', () => {
+  it.each([
+    ['hour_pack', 'débitera le temps réellement terminé'],
+    ['maintenance', 'le quota et les éventuels dépassements'],
+    ['out_of_scope', 'aucune facture Abby ne sera émise automatiquement'],
+    ['commercial_gesture', 'Geste commercial'],
+    ['included_project', 'Inclus au projet'],
+    ['internal', 'Interne'],
+  ] as const)('décrit la couverture %s sans inventer de solde', (coverageMode, expected) => {
+    const intervention = { ...item('in_progress'), coverageMode, subject: 'Travail vérifié', clientLabel: 'Client TEST', totalTimeSeconds: 5400 };
+    const review = interventionCompletionReview(intervention);
+    expect(review).toContain('INT-TEST');
+    expect(review).toContain('Client TEST');
+    expect(review).toContain('1 h 30 min');
+    expect(review).toContain(expected);
+    expect(review).toContain('ne sont pas prévisualisés');
+    expect(review).toContain('\n');
+  });
 });
