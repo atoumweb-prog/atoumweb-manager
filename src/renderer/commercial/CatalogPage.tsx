@@ -163,6 +163,8 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [formError, setFormError] = useState<string | null>(null);
   const [versionMode, setVersionMode] = useState(false);
   const [versionDraft, setVersionDraft] = useState<CatalogDraft>(EMPTY_DRAFT);
+  // Survives a lost IPC response so an explicit retry addresses the SAME row.
+  const pendingVersionCreation = useRef<{ itemId: string; requestId: string; fingerprint: string } | null>(null);
   const [editingDraftVersion, setEditingDraftVersion] = useState<CatalogVersion | null>(null);
   const [versionFormError, setVersionFormError] = useState<string | null>(null);
   const [detailSplitPercent, setDetailSplitPercent] = useState(40);
@@ -352,7 +354,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   }
 
   function prepareNewVersion(): void {
-    if (!detail?.currentVersion) return;
+    if (!detail?.currentVersion || versionMode) return;
     // 04C/E99: reopen the existing draft instead of generating vN+1 on
     // every edit. A published version is only copied when no draft exists.
     const existingDraft = detail.versions.find(version => version.status === 'draft') ?? null;
@@ -395,14 +397,30 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
 
   async function createVersion(event: React.FormEvent): Promise<void> {
     event.preventDefault();
-    if (!detail) return;
+    if (!detail || saving) return;
+    const payload = buildVersion(versionDraft);
+    const payloadFingerprint = JSON.stringify(payload);
+    const previousRequest = pendingVersionCreation.current;
+    if (!editingDraftVersion && previousRequest &&
+      (previousRequest.itemId !== detail.id || previousRequest.fingerprint !== payloadFingerprint)) {
+      const message = 'Une création précédente a une réponse incertaine. Reprends la version envoyée sans modifier les champs, puis enregistre les changements dans le brouillon créé.';
+      setVersionFormError(message);
+      onMessage(message);
+      return;
+    }
+    if (!editingDraftVersion && !previousRequest) {
+      pendingVersionCreation.current = {
+        itemId: detail.id, requestId: crypto.randomUUID(), fingerprint: payloadFingerprint,
+      };
+    }
     setSaving(true);
     setVersionFormError(null);
     try {
       const version = editingDraftVersion
-        ? await window.atoumweb.catalog.saveDraftVersion(editingDraftVersion.id, editingDraftVersion, buildVersion(versionDraft))
-        : await window.atoumweb.catalog.createVersion(detail.id, buildVersion(versionDraft));
+        ? await window.atoumweb.catalog.saveDraftVersion(editingDraftVersion.id, editingDraftVersion, payload)
+        : await window.atoumweb.catalog.createVersion(detail.id, payload, pendingVersionCreation.current!.requestId);
       versionGuard.saved(versionDraft);
+      pendingVersionCreation.current = null;
       setVersionMode(false);
       setEditingDraftVersion(null);
       setVersionFormError(null);
@@ -666,7 +684,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
               {detail.currentVersion && (!detail.currentVersion.nature || !detail.currentVersion.description || (detail.currentVersion.inclusions?.length ?? 0) === 0) && (
                 <div className="catalog-completeness">
                   <div><strong>Fiche à compléter</strong><span>Nature, description et contenu inclus permettent de comprendre immédiatement ce qui est réellement vendu.</span></div>
-                  <button className="secondary-button" type="button" onClick={prepareNewVersion}>Compléter la fiche</button>
+                  <button className="secondary-button" type="button" disabled={versionMode || saving} onClick={prepareNewVersion}>Compléter la fiche</button>
                 </div>
               )}
 
@@ -715,7 +733,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 </div>
               ) : <p className="muted">Aucune version.</p>}
 
-              <div className="catalog-detail-actions"><button className="secondary-button" type="button" onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select value={detail.status} onChange={(e) => void updateStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion} onClick={prepareNewVersion}>{detail.versions.some(v => v.status === 'draft') ? 'Reprendre le brouillon' : 'Modifier via une nouvelle version'}</button></div>
+              <div className="catalog-detail-actions"><button className="secondary-button" type="button" onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select value={detail.status} onChange={(e) => void updateStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion || versionMode || saving} onClick={prepareNewVersion}>{detail.versions.some(v => v.status === 'draft') ? 'Reprendre le brouillon' : 'Modifier via une nouvelle version'}</button></div>
 
               <CatalogContractPanel key={detail.id+detail.versions.length} item={detail}/>
               {versionMode && <form className="catalog-version-editor" onSubmit={(event) => void createVersion(event)}>
