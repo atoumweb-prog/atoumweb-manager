@@ -12,7 +12,7 @@ import './ui/manager-shell.css';
 import {requestUnsavedExit,installUnsavedLifecycleBridge} from './unsaved/unsaved';
 import { DemoPanel } from './workflow/DemoPanel';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { BootstrapState, DisplayDensity, ThemeName } from '../shared/contracts';
+import type { BootstrapState, DisplayDensity, ThemeName, DatabaseHealth } from '../shared/contracts';
 import type { SearchResult } from '../shared/crm';
 import { BusinessBackupsPage } from './backups/BusinessBackupsPage';
 import { BillingPage } from './billing/BillingPage';
@@ -457,6 +457,21 @@ function SettingsPage({ visualStore, bootstrap, theme, displayDensity, showHover
   const [search, setSearch] = useState('');
   const [navigationPreference, setNavigationPreference] = useState<NavigationPreference>(defaultNavigationPreference);
   const [navigationError, setNavigationError] = useState<string | null>(null);
+  const [diagnostics, setDiagnostics] = useState<DatabaseHealth | null>(null);
+  const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
+  const [diagnosticsLoading, setDiagnosticsLoading] = useState(false);
+  const diagnosticsLock = useRef(false);
+  async function readDiagnostics(): Promise<void> {
+    if (diagnosticsLock.current) return;
+    diagnosticsLock.current = true;
+    setDiagnosticsLoading(true);
+    setDiagnosticsError(null);
+    try { setDiagnostics(await window.atoumweb.database.health()); }
+    catch (cause) {
+      setDiagnostics(null);
+      setDiagnosticsError(cause instanceof Error ? cause.message : 'Lecture de diagnostic indisponible.');
+    } finally { diagnosticsLock.current = false; setDiagnosticsLoading(false); }
+  }
   const [resetModuleIntent, setResetModuleIntent] = useState<SupportedLayoutModule | null>(null);
   useEffect(() => {
     const sync = () => {
@@ -487,12 +502,16 @@ function SettingsPage({ visualStore, bootstrap, theme, displayDensity, showHover
   const navigation = visible('navigation vues rail favoris modules ordre disposition largeur colonnes liste clients annuaire');
   const help = visible('aide aides conseil survol ? contextuelle clavier');
   const workspace = visible('stockage workspace dossier répertoire emplacement local changement données transfert redémarrage');
+  const documents = visible('documents fichiers archivage archives conservation contrats classement clients exports');
+  const advanced = visible('avancé diagnostic diagnostics version migration migrations sqlite intégrité base état erreurs');
   const security = visible('sécurité sauvegarde backup restauration restore sqlite base copie sécurité');
   const shortcuts = [
     ...(appearance ? [{ label: 'Apparence et densité', id: settingsSectionMatches(search, 'densité compact confort lisibilité') ? 'settings-density-compact' : 'settings-theme-atoumweb' }] : []),
     ...(navigation ? [{ label: 'Navigation et vues', id: 'settings-nav-collapse' }] : []),
     ...(help ? [{ label: 'Aide contextuelle', id: 'settings-hover-help' }] : []),
     ...(workspace ? [{ label: 'Workspace local', id: 'settings-choose-workspace' }] : []),
+    ...(documents ? [{ label: 'Documents et archivage', id: 'settings-open-documents' }] : []),
+    ...(advanced ? [{ label: 'Diagnostics avancés', id: 'settings-read-diagnostics' }] : []),
     ...(security ? [{ label: 'Sauvegarde et sécurité SQLite', id: 'settings-create-backup' }] : []),
   ];
 
@@ -500,7 +519,7 @@ function SettingsPage({ visualStore, bootstrap, theme, displayDensity, showHover
     <div className="settings-grid">
       <article className="panel panel-large">
         <label htmlFor="settings-quick-search"><strong>Rechercher un réglage</strong></label>
-        <input id="settings-quick-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Thème, densité, aide, sauvegarde, workspace…" aria-describedby="settings-search-help" />
+        <input id="settings-quick-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Thème, navigation, aide, documents, diagnostics, sauvegarde, workspace…" aria-describedby="settings-search-help" />
         <p id="settings-search-help" className="muted">Cette recherche filtre uniquement les rubriques visibles ; elle ne modifie aucune préférence.</p>
         {search.trim() && shortcuts.length > 0 && <nav className="button-row" aria-label="Accès direct aux réglages correspondant à la recherche">
           {shortcuts.map((shortcut) => <button key={shortcut.id} type="button" className="secondary-button" onClick={() => document.getElementById(shortcut.id)?.focus()}>
@@ -508,7 +527,7 @@ function SettingsPage({ visualStore, bootstrap, theme, displayDensity, showHover
           </button>)}
         </nav>}
         {error && <p role="alert" className="notice">{error}</p>}
-        {!appearance && !navigation && !help && !workspace && !security && <p role="status">Aucun réglage correspondant. Efface la recherche pour retrouver toutes les rubriques.</p>}
+        {!appearance && !navigation && !help && !documents && !advanced && !workspace && !security && <p role="status">Aucun réglage correspondant. Efface la recherche pour retrouver toutes les rubriques.</p>}
       </article>
       {appearance && <article className="panel panel-large">
         <div className="panel-title"><div><span className="eyebrow">Apparence</span><h2>Thème de l’interface</h2></div>{theme !== 'atoumweb' && <button className="secondary-button" type="button" disabled={saving} onClick={() => void runSetting(() => onThemeChange('atoumweb'))}>Rétablir le thème par défaut</button>}</div>
@@ -567,6 +586,39 @@ function SettingsPage({ visualStore, bootstrap, theme, displayDensity, showHover
             <span>{showHoverHelp ? 'Survol activé' : 'Survol désactivé'}</span>
           </label>
         </div>
+      </article>}
+      {documents && <article className="panel settings-documents" aria-label="Réglages Documents">
+        <span className="eyebrow">Documents et classement</span>
+        <h2>Organisation des fichiers Client</h2>
+        <p className="muted">Les documents Client sont importés et classés depuis « Documents & Contrats ». Chaque document conserve sa catégorie et son motif de conservation propre ; il n’existe pas ici de règle globale permettant leur suppression automatique.</p>
+        <dl className="settings-diagnostic-list">
+          <div><dt>Racine du workspace</dt><dd className="path-value">{bootstrap.workspacePath}</dd></div>
+          <div><dt>Dossier racine des Clients</dt><dd className="path-value">{bootstrap.workspacePath.replace(/[\\/]+$/, '') + '\\clients'}</dd></div>
+          <div><dt>Exports</dt><dd className="path-value">{bootstrap.workspacePath.replace(/[\\/]+$/, '') + '\\exports'}</dd></div>
+        </dl>
+        <p className="muted">Chemins conventionnels issus de la configuration ; cette vue ne contrôle ni la présence physique de chaque fichier ni la conformité légale des durées de conservation.</p>
+        <button id="settings-open-documents" className="secondary-button" type="button" onClick={() =>
+          window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: 'Documents & Contrats' }))
+        }>Ouvrir Documents & Contrats sans changer les règles d’archivage</button>
+      </article>}
+      {advanced && <article className="panel settings-advanced" aria-label="Diagnostics avancés">
+        <span className="eyebrow">Avancé · lecture seule</span>
+        <h2>Diagnostics du Manager</h2>
+        <p className="muted">Consultation technique uniquement. Cette rubrique n’exécute ni migration, ni restauration, ni indexation, ni suppression de données.</p>
+        <dl className="settings-diagnostic-list">
+          <div><dt>Version de l’application</dt><dd>{bootstrap.appVersion}</dd></div>
+          <div><dt>Base SQLite active</dt><dd className="path-value">{bootstrap.databasePath}</dd></div>
+          <div><dt>Migrations appliquées au démarrage</dt><dd>{bootstrap.database.migrationCount}</dd></div>
+          <div><dt>État au démarrage</dt><dd>{bootstrap.database.healthy ? 'Signalé sain au démarrage' : 'Anomalie signalée au démarrage'}</dd></div>
+          {diagnostics && <>
+            <div><dt>État à la dernière lecture</dt><dd>{diagnostics.healthy ? 'Signalé sain par le service' : 'Anomalie signalée par le service'}</dd></div>
+            <div><dt>Migrations à la dernière lecture</dt><dd>{diagnostics.migrationCount}</dd></div>
+            <div><dt>Chemin confirmé par le service</dt><dd className="path-value">{diagnostics.databasePath}</dd></div>
+          </>}
+        </dl>
+        {diagnosticsError && <p role="alert" className="settings-diagnostic-error">Diagnostic indisponible : {diagnosticsError}. Aucun état sain n’est déduit de cet échec.</p>}
+        <button id="settings-read-diagnostics" type="button" className="secondary-button" disabled={diagnosticsLoading} onClick={() => void readDiagnostics()}>{diagnosticsLoading ? 'Lecture en cours…' : 'Actualiser l’état SQLite (lecture seule)'}</button>
+        <p className="muted">Ce diagnostic ne constitue pas une vérification d’intégrité SQLite complète ou un test de restauration. Utilise le parcours Sécurité distinct pour les sauvegardes techniques.</p>
       </article>}
       {workspace && <article className="panel">
         <span className="eyebrow">Stockage · workspace</span>
