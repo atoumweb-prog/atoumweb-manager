@@ -62,6 +62,10 @@ if(!process.versions.electron){
           await go('Documents & Contrats');if(await js('!!document.querySelector(".contract-library")'))await click('Retour aux documents');
           await click('Bibliothèque contractuelle');await wait('!!document.querySelector(".contract-library")');
           check(theme+' '+density+' contract library rendered',await js('!!document.querySelector(".contract-type-list")'));
+          const layout=await js('(()=>{const root=document.querySelector(".contract-library");const list=document.querySelector(".contract-type-list");if(!root||!list)return null;const viewport=window.innerWidth;const rect=root.getBoundingClientRect();const lr=list.getBoundingClientRect();return {viewport,rootLeft:rect.left,rootRight:rect.right,listLeft:lr.left,listRight:lr.right,documentWidth:document.documentElement.scrollWidth}})()');
+          check(theme+' '+density+' library stays within viewport',!!layout&&layout.rootLeft>=-2&&layout.rootRight<=layout.viewport+2);
+          check(theme+' '+density+' type list stays inside viewport',!!layout&&layout.listLeft>=-2&&layout.listRight<=layout.viewport+2);
+          check(theme+' '+density+' no document horizontal overflow',!!layout&&layout.documentWidth<=layout.viewport+2);
           await shot('bibliotheque-'+theme+'-'+density);
           if(theme==='blanc'&&density==='comfort_plus'){
             await js('document.querySelector(".contract-type-list button").focus()');
