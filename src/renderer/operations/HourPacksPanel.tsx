@@ -1,4 +1,5 @@
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
+import {requestUnsavedExit,useUnsavedDraft} from '../unsaved/unsaved';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CatalogItemSummary } from '../../shared/commercial';
 import type { ClientSummary } from '../../shared/crm';
@@ -83,6 +84,16 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
   const [movementMode, setMovementMode] = useState<'manual_correction' | 'commercial_credit'>('manual_correction');
   const [interventionId, setInterventionId] = useState('');
   const [reversalReason, setReversalReason] = useState('Correction du mouvement');
+
+  useUnsavedDraft('Nouveau pack d’heures',
+    { catalogPackId, clientId, projectId, name, hoursPurchased, price, expiresAt },
+    {
+      ready: createOpen,
+      resetKey: createOpen,
+      pending: saving && createOpen,
+      discard: () => { resetCreateForm(); setCreateOpen(false); },
+    });
+
 
   async function refresh(): Promise<void> {
     try {
@@ -289,14 +300,14 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
           <option value="all">Tous les statuts</option>
           {HOUR_PACK_STATUSES.filter((status) => status !== 'archived').map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
         </select>
-        <button className="primary-button" type="button" onClick={() => setCreateOpen((value) => !value)}>{createOpen ? 'Fermer' : '+ Pack'}</button>
+        <button className="primary-button" type="button" onClick={() => requestUnsavedExit(() => setCreateOpen((value) => !value))}>{createOpen ? 'Fermer' : '+ Pack'}</button>
       </div>
     </div>
 
     {createOpen && <section className="panel operation-create-panel hour-pack-create-panel">
       <div className="panel-title">
         <div><span className="eyebrow">Pack d’heures</span><h2>Nouveau crédit de temps</h2><p className="muted">Choisis un forfait du Catalogue pour récupérer automatiquement ses heures et son tarif, ou utilise une saisie libre.</p></div>
-        <button className="close-detail" type="button" onClick={() => { setCreateOpen(false); resetCreateForm(); }}>×</button>
+        <button className="close-detail" type="button" onClick={() => requestUnsavedExit(() => { setCreateOpen(false); resetCreateForm(); })}>×</button>
       </div>
       <div className="hour-pack-template-picker">
         <label>Modèle depuis Offres & Tarifs
@@ -319,7 +330,7 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
         <label>Prix contractuel (€)<input type="number" min="0" step="0.01" value={price.replace(',', '.')} onChange={(event) => setPrice(event.target.value)} /></label>
         <label>Expiration éventuelle<input type="date" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} /></label>
       </div>
-      <div className="button-row"><button className="primary-button" type="button" disabled={saving || !clientId || !name.trim() || Number(hoursPurchased.replace(',', '.')) <= 0 || price.trim() === ''} onClick={() => void createPack()}>{saving ? 'Création…' : 'Créer le pack'}</button><button className="secondary-button" type="button" onClick={() => { setCreateOpen(false); resetCreateForm(); }}>Annuler</button></div>
+      <div className="button-row"><button className="primary-button" type="button" disabled={saving || !clientId || !name.trim() || Number(hoursPurchased.replace(',', '.')) <= 0 || price.trim() === ''} onClick={() => void createPack()}>{saving ? 'Création…' : 'Créer le pack'}</button><button className="secondary-button" type="button" onClick={() => requestUnsavedExit(() => { setCreateOpen(false); resetCreateForm(); })}>Annuler</button></div>
     </section>}
 
     <div
