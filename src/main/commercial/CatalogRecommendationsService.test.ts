@@ -28,6 +28,20 @@ describe('04D — versioned recommendation persistence',()=>{
       .toMatchObject([{sourceVersionId:source.versions[0].id,targetVersionId:target.versions[0].id}]);
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
+  it('rejects stale edits from another window and preserves committed links',()=>{
+    const source=create('Source');
+    const first=create('First');
+    const second=create('Second');
+    catalog.publishVersion(first.versions[0].id);
+    catalog.publishVersion(second.versions[0].id);
+    const oldSnapshot:string[]=[];
+    recommendations.replace(source.versions[0].id,[first.versions[0].id],oldSnapshot);
+    expect(()=>recommendations.replace(source.versions[0].id,[second.versions[0].id],oldSnapshot))
+      .toThrow(/Conflit/);
+    expect(recommendations.list(source.versions[0].id).map(link=>link.targetVersionId))
+      .toEqual([first.versions[0].id]);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
   it('rolls back on invalid input without losing an existing association',()=>{
     const source=create('Source');
     const target=create('Target');
