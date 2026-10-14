@@ -2,6 +2,7 @@ import {useCallback} from 'react';
 import {SEARCH_DESTINATIONS,searchDestination,readSearchTarget,type SearchNavigationResult} from '../shared/searchNavigation';
 import {useMemo} from 'react';
 import { settingsSectionMatches } from '../shared/settingsSearch';
+import { workspaceDisplayFolder } from '../shared/workspacePresentation';
 import { isStatisticsDrilldownRoute, type StatisticsDrilldownRoute } from '../shared/statisticsDrilldown';
 import { defaultNavigationPreference, readNavigationPreference, type NavigationPreference } from '../shared/navigationRail';
 import type { VisualPreferenceStore } from '../shared/panelLayout';
@@ -593,8 +594,8 @@ function SettingsPage({ visualStore, bootstrap, theme, displayDensity, showHover
         <p className="muted">Les documents Client sont importés et classés depuis « Documents & Contrats ». Chaque document conserve sa catégorie et son motif de conservation propre ; il n’existe pas ici de règle globale permettant leur suppression automatique.</p>
         <dl className="settings-diagnostic-list">
           <div><dt>Racine du workspace</dt><dd className="path-value">{bootstrap.workspacePath}</dd></div>
-          <div><dt>Dossier racine des Clients</dt><dd className="path-value">{bootstrap.workspacePath.replace(/[\\/]+$/, '') + '\\clients'}</dd></div>
-          <div><dt>Exports</dt><dd className="path-value">{bootstrap.workspacePath.replace(/[\\/]+$/, '') + '\\exports'}</dd></div>
+          <div><dt>Dossier racine des Clients</dt><dd className="path-value">{workspaceDisplayFolder(bootstrap.workspacePath, 'clients')}</dd></div>
+          <div><dt>Exports</dt><dd className="path-value">{workspaceDisplayFolder(bootstrap.workspacePath, 'exports')}</dd></div>
         </dl>
         <p className="muted">Chemins conventionnels issus de la configuration ; cette vue ne contrôle ni la présence physique de chaque fichier ni la conformité légale des durées de conservation.</p>
         <button id="settings-open-documents" className="secondary-button" type="button" onClick={() =>
