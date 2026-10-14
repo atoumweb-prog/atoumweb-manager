@@ -1,6 +1,8 @@
 import { ContractReadPanel } from './ContractReadPanel';
 import type { ContractPresentation } from '../../shared/contractPresentation';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import { requestUnsavedExit, useUnsavedDraft } from '../unsaved/unsaved';
+import { newModuleDraftChanged, typeDraftChanged } from './contractLibraryDrafts';
 import type { ContractType, ContractTypeVersionInput } from '../../shared/contractTypes';
 import type { ContractClauseTemplate, ContractClauseScope, ContractClauseAudience } from '../../shared/contractTerms';
 import type { CatalogItemSummary } from '../../shared/commercial';
@@ -23,6 +25,23 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
   const type=types.find(t=>t.id===id),version=type?.versions.find(v=>v.id===versionId)??type?.currentVersion??type?.versions[0];
   const editable=creating||!!(version?.status==='draft'&&type?.status!=='archived');
   const module=clauses.find(c=>c.id===moduleId),moduleVersion=module?.versions.find(v=>v.id===moduleVersionId)??module?.currentVersion??module?.versions[0];
+  // Le périmètre est propre à cette instance : aucun abandon d'un brouillon d'un autre écran.
+  const unsavedScope='contract-library/'+useId();
+  const typeGuard=useUnsavedDraft('Type de contrat',{code,input},{
+    group:unsavedScope,ready:creating||!!version,resetKey:creating?'new-type':version?.id,pending:busy,
+    dirty:creating?!!(code||input.name||input.description||input.moduleIds.length):!!(editable&&version&&typeDraftChanged(input,version)),
+    discard:()=>{setCode('');setInput(creating?empty:version?{name:version.name,description:version.description,moduleIds:[...version.moduleIds]}:empty);}
+  });
+  const moduleGuard=useUnsavedDraft('Texte de clause',{body},{
+    group:unsavedScope,ready:!!moduleVersion,resetKey:moduleVersion?.id,pending:busy,
+    dirty:!!moduleVersion&&body!==moduleVersion.body,discard:()=>setBody(moduleVersion?.body??'')
+  });
+  const newModuleGuard=useUnsavedDraft('Nouveau module de clause',{newCode,newTitle,newBody,newScope,newAudience},{
+    group:unsavedScope,ready:showNewModule,pending:busy,
+    dirty:showNewModule&&newModuleDraftChanged({newCode,newTitle,newBody,newScope,newAudience}),
+    discard:()=>{setNewCode('');setNewTitle('');setNewBody('');setNewScope('catalog');setNewAudience('all');setShowNewModule(false);}
+  });
+  const guardedNavigation=(run:()=>void)=>requestUnsavedExit(run,unsavedScope);
   async function refresh(select?:ContractType) {
     const [ts,cs,items]=await Promise.all([window.atoumweb.contractTypes.list(true),window.atoumweb.contractTerms.library.list(true),window.atoumweb.catalog.list()]);
     setTypes(ts);setClauses(cs.sort((a,b)=>a.title.localeCompare(b.title,'fr')));setCatalog(items.sort((a,b)=>a.name.localeCompare(b.name,'fr')));
@@ -30,8 +49,8 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
   }
   useEffect(()=>{void refresh().catch(e=>setError(String(e)));},[]);
   useEffect(()=>{if(initialTypeId){setId(initialTypeId);setCreating(false);}},[initialTypeId]);
-  useEffect(()=>{if(version&&!creating)setInput({name:version.name,description:version.description,moduleIds:[...version.moduleIds]});},[version?.id,types,creating]);
-  useEffect(()=>{if(moduleVersion)setBody(moduleVersion.body);},[moduleVersion?.id,clauses]);
+  useEffect(()=>{if(version&&!creating)setInput({name:version.name,description:version.description,moduleIds:[...version.moduleIds]});},[version?.id,creating]);
+  useEffect(()=>{if(moduleVersion)setBody(moduleVersion.body);},[moduleVersion?.id]);
   useEffect(()=>{
     setPreviewOpen(false);setPreview(null);
     const links=type?.catalogLinks??[];
@@ -46,25 +65,26 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
   function move(index:number,delta:number){const ids=[...input.moduleIds];[ids[index],ids[index+delta]]=[ids[index+delta],ids[index]];setInput({...input,moduleIds:ids});}
   function openModule(id:string){setModuleId(id);setModuleVersionId('');setEditServices(false);setServiceQuery('');}
   return <section className="contract-library">
-    <div className="contract-toolbar"><button type="button" className="secondary-button" onClick={onClose}>Retour aux documents</button><h2>Bibliothèque contractuelle</h2>
-      <button type="button" className="primary-button" disabled={busy} onClick={()=>{setCreating(true);setId('');setVersionId('');setInput(empty);setCode('');}}>Nouveau type de contrat</button>
-      <button type="button" className="secondary-button" disabled={busy} onClick={()=>setShowNewModule(v=>!v)}>Nouveau module</button>
+    <div className="contract-toolbar"><button type="button" className="secondary-button" disabled={busy} onClick={()=>guardedNavigation(onClose)}>Retour aux documents</button><h2>Bibliothèque contractuelle</h2>
+      <button type="button" className="primary-button" disabled={busy} onClick={()=>guardedNavigation(()=>{setCreating(true);setId('');setVersionId('');setInput(empty);setCode('');})}>Nouveau type de contrat</button>
+      <button type="button" className="secondary-button" disabled={busy} onClick={()=>showNewModule?newModuleGuard.request(()=>setShowNewModule(false)):setShowNewModule(true)}>Nouveau module</button>
       <button type="button" className="secondary-button" disabled={busy} onClick={()=>void run(async()=>{const r=await window.atoumweb.contractTypes.initialize();onMessage(`${r.created} type(s) créés en brouillon, ${r.linked} rattachement(s), ${r.unchanged} inchangé(s).`);})}>Initialiser depuis le Catalogue</button>
     </div>
     <p>Les textes restent dans la bibliothèque de clauses existante. Le type organise les modules ; seules les prestations vendues déclenchent leurs clauses. Aucune validation juridique globale.</p>
     {error&&<p role="alert" className="form-error">{error}</p>}
+    {(typeGuard.dirty||moduleGuard.dirty||newModuleGuard.dirty)&&<p role="status" className="contract-library-unsaved">Brouillon non enregistré — confirme l'abandon avant de quitter ou de changer de fiche.</p>
     {showNewModule&&<fieldset disabled={busy} className="contract-type-detail"><legend>Nouveau module — brouillon uniquement</legend>
       <label>Code du module<input aria-label="Code du module" value={newCode} onChange={e=>setNewCode(e.target.value)}/></label>
       <label>Titre du module<input aria-label="Titre du module" value={newTitle} onChange={e=>setNewTitle(e.target.value)}/></label>
       <label>Scope<select aria-label="Scope du module" value={newScope} onChange={e=>setNewScope(e.target.value as ContractClauseScope)}><option value="catalog">Prestation</option><option value="base">CGV communes</option></select></label>
       <label>Audience<select value={newAudience} onChange={e=>setNewAudience(e.target.value as ContractClauseAudience)}><option value="all">Tous</option><option value="professional">Professionnels</option><option value="consumer">Consommateurs</option></select></label>
       <label>Texte du nouveau module<textarea aria-label="Texte du nouveau module" value={newBody} onChange={e=>setNewBody(e.target.value)}/></label>
-      <button type="button" onClick={()=>void run(async()=>{const c=await window.atoumweb.contractTerms.library.create({code:newCode,title:newTitle,scope:newScope,audience:newAudience},{body:newBody});openModule(c.id);setShowNewModule(false);})}>Enregistrer le module en brouillon</button>
+      <button type="button" onClick={()=>void run(async()=>{const c=await window.atoumweb.contractTerms.library.create({code:newCode,title:newTitle,scope:newScope,audience:newAudience},{body:newBody});openModule(c.id);setNewCode('');setNewTitle('');setNewBody('');setNewScope('catalog');setNewAudience('all');setShowNewModule(false);})}>Enregistrer le module en brouillon</button>
     </fieldset>}
     <div className="contract-toolbar"><input aria-label="Rechercher un type de contrat" placeholder="Rechercher un type de contrat…" value={query} onChange={e=>setQuery(e.target.value)}/><label><input type="checkbox" checked={archived} onChange={e=>setArchived(e.target.checked)}/> Inclure les types archivés</label></div>
     <div className="contract-library-grid">
       <aside className="contract-type-list" aria-label="Types de contrats par ordre alphabétique">
-        {types.filter(t=>(archived||t.status!=='archived')&&[t.code,label(t)].join(' ').toLocaleLowerCase('fr').includes(query.toLocaleLowerCase('fr'))).map(t=><button type="button" key={t.id} className={id===t.id?'active':''} onClick={()=>{setId(t.id);setVersionId(t.currentVersionId??t.versions[0]?.id??'');setCreating(false);setModuleId('');}}><strong>{label(t)}</strong><span>{t.code} · {statusLabel(t.status)} · v{(t.currentVersion??t.versions[0])?.versionNumber} · {statusLabel((t.currentVersion??t.versions[0])?.status??'draft')}</span></button>)}
+        {types.filter(t=>(archived||t.status!=='archived')&&[t.code,label(t)].join(' ').toLocaleLowerCase('fr').includes(query.toLocaleLowerCase('fr'))).map(t=><button type="button" key={t.id} className={id===t.id?'active':''} disabled={busy} onClick={()=>guardedNavigation(()=>{setId(t.id);setVersionId(t.currentVersionId??t.versions[0]?.id??'');setCreating(false);setModuleId('');})}><strong>{label(t)}</strong><span>{t.code} · {statusLabel(t.status)} · v{(t.currentVersion??t.versions[0])?.versionNumber} · {statusLabel((t.currentVersion??t.versions[0])?.status??'draft')}</span></button>)}
         {!types.length&&<p>Aucun type structuré. L’initialisation proposée utilise les familles du Catalogue, jamais le libellé legacy.</p>}
       </aside>
       <div className="contract-type-detail">
@@ -72,7 +92,7 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
           <h3>{creating?'Nouveau type de contrat':label(type!)}</h3>
           {creating?<label>Code du type<input aria-label="Code du type" value={code} onChange={e=>setCode(e.target.value)}/></label>:<>
             <p>{type!.code} · {statusLabel(type!.status)}</p>
-            <label>Version du type<select aria-label="Version du type" value={version?.id??''} onChange={e=>setVersionId(e.target.value)}>{type!.versions.map(v=><option key={v.id} value={v.id}>v{v.versionNumber} — {v.name} — {statusLabel(v.status)}</option>)}</select></label>
+            <label>Version du type<select aria-label="Version du type" value={version?.id??''} onChange={e=>{const next=e.target.value;guardedNavigation(()=>setVersionId(next));}}>{type!.versions.map(v=><option key={v.id} value={v.id}>v{v.versionNumber} — {v.name} — {statusLabel(v.status)}</option>)}</select></label>
             <div className="contract-toolbar"><button type="button" disabled={busy||type!.status==='archived'} onClick={()=>void run(()=>window.atoumweb.contractTypes.createVersion(type!.id,input))}>Nouvelle version du type</button>
               <button type="button" disabled={busy} onClick={()=>void run(()=>window.atoumweb.contractTypes.setStatus(type!.id,type!.status==='archived'?'active':'archived'))}>{type!.status==='archived'?'Réactiver le type':'Archiver le type'}</button></div>
           </>}
@@ -88,19 +108,19 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
             <label>Nom du type<input aria-label="Nom du type" disabled={!editable} value={input.name} onChange={e=>setInput({...input,name:e.target.value})}/></label>
             <label>Description du type<textarea aria-label="Description du type" disabled={!editable} value={input.description} onChange={e=>setInput({...input,description:e.target.value})}/></label>
             <h4>Modules ordonnés — applicables selon les prestations vendues</h4>
-            {input.moduleIds.map((mid,index)=>{const c=clauses.find(x=>x.id===mid);return <div className="contract-module-row" key={mid}><button type="button" onClick={()=>openModule(mid)} disabled={false}>{index+1}. {c?.title??mid}</button><div><button type="button" aria-label={`Monter ${c?.code}`} disabled={!editable||index===0} onClick={()=>move(index,-1)}>↑</button><button type="button" aria-label={`Descendre ${c?.code}`} disabled={!editable||index===input.moduleIds.length-1} onClick={()=>move(index,1)}>↓</button><button type="button" disabled={!editable} onClick={()=>setInput({...input,moduleIds:input.moduleIds.filter(x=>x!==mid)})}>Retirer de la composition</button></div></div>;})}
+            {input.moduleIds.map((mid,index)=>{const c=clauses.find(x=>x.id===mid);return <div className="contract-module-row" key={mid}><button type="button" onClick={()=>guardedNavigation(()=>openModule(mid))} disabled={busy}>{index+1}. {c?.title??mid}</button><div><button type="button" aria-label={`Monter ${c?.code}`} disabled={!editable||index===0} onClick={()=>move(index,-1)}>↑</button><button type="button" aria-label={`Descendre ${c?.code}`} disabled={!editable||index===input.moduleIds.length-1} onClick={()=>move(index,1)}>↓</button><button type="button" disabled={!editable} onClick={()=>setInput({...input,moduleIds:input.moduleIds.filter(x=>x!==mid)})}>Retirer de la composition</button></div></div>;})}
             <label>Rattacher un module existant<select aria-label="Rattacher un module existant" disabled={!editable} value="" onChange={e=>{if(e.target.value)setInput({...input,moduleIds:[...input.moduleIds,e.target.value]});}}><option value="">Choisir un module…</option>{clauses.filter(c=>c.scope==='catalog'&&c.status!=='archived'&&!input.moduleIds.includes(c.id)).map(c=><option key={c.id} value={c.id}>{c.title} · {c.code}</option>)}</select></label>
             <p>Ajouter ici ne modifie pas les liens de prestations déclenchantes. Retirer ne supprime jamais la clause globale.</p>
           </fieldset>
           {editable&&<button type="button" className="primary-button" disabled={busy} onClick={()=>void run(()=>creating?window.atoumweb.contractTypes.create(code,input):window.atoumweb.contractTypes.updateDraft(version!.id,input))}>Enregistrer le type en brouillon</button>}
           {version?.status==='draft'&&type&&<button type="button" disabled={busy||JSON.stringify(input)!==JSON.stringify({name:version.name,description:version.description,moduleIds:version.moduleIds})} onClick={()=>void run(()=>window.atoumweb.contractTypes.publish(version.id))}>Publier la version du type</button>}
-          <details open><summary>CGV communes — socle automatique selon le client</summary>{clauses.filter(c=>c.scope==='base'&&c.status!=='archived').map(c=><button className="secondary-button" type="button" key={c.id} onClick={()=>openModule(c.id)}>{c.title} · {c.audience==='all'?'Tous clients':c.audience==='consumer'?'Particuliers':'Professionnels'}</button>)}</details>
+          <details open><summary>CGV communes — socle automatique selon le client</summary>{clauses.filter(c=>c.scope==='base'&&c.status!=='archived').map(c=><button className="secondary-button" type="button" key={c.id} onClick={()=>guardedNavigation(()=>openModule(c.id))}>{c.title} · {c.audience==='all'?'Tous clients':c.audience==='consumer'?'Particuliers':'Professionnels'}</button>)}</details>
           {type&&<section className="contract-associated-services"><h4>Prestations concernées — versions Catalogue</h4>{type.catalogLinks.map(l=><button key={l.catalogVersionId} type="button" className="secondary-button" onClick={()=>window.dispatchEvent(new CustomEvent('atoumweb:open-catalog-item',{detail:l.itemId}))}>{l.name} · {l.canonicalCode} · v{l.versionNumber} · {statusLabel(l.status)}</button>)}</section>}
         </>}
-        <details open={!type&&!creating}><summary>Tous les modules de la bibliothèque</summary><select aria-label="Consulter un module" value={moduleId} onChange={e=>openModule(e.target.value)}><option value="">Choisir un paragraphe…</option>{clauses.map(c=><option key={c.id} value={c.id}>{c.title} · {c.code} · {statusLabel(c.status)}</option>)}</select></details>
+        <details open={!type&&!creating}><summary>Tous les modules de la bibliothèque</summary><select aria-label="Consulter un module" value={moduleId} onChange={e=>{const next=e.target.value;guardedNavigation(()=>openModule(next));}}><option value="">Choisir un paragraphe…</option>{clauses.map(c=><option key={c.id} value={c.id}>{c.title} · {c.code} · {statusLabel(c.status)}</option>)}</select></details>
         {module&&<section className="contract-type-detail contract-module-editor">
           <h3>{module.title}</h3><p>{module.code} · {module.scope==='base'?'CGV communes':'Clause de prestation'} · {statusLabel(module.status)}</p>
-          <label>Version du module<select aria-label="Version du module" value={moduleVersion?.id??''} onChange={e=>setModuleVersionId(e.target.value)}>{module.versions.map(v=><option key={v.id} value={v.id}>v{v.versionNumber} — {statusLabel(v.status)}</option>)}</select></label>
+          <label>Version du module<select aria-label="Version du module" value={moduleVersion?.id??''} onChange={e=>{const next=e.target.value;guardedNavigation(()=>setModuleVersionId(next));}}>{module.versions.map(v=><option key={v.id} value={v.id}>v{v.versionNumber} — {statusLabel(v.status)}</option>)}</select></label>
           <div className="contract-module-text contract-paragraph">{moduleVersion?.body}</div>
           {moduleVersion?.review&&<details><summary>Revue documentaire et réserves — {moduleVersion.review.level}</summary><p>Aucune validation juridique globale. Publication et revue documentaire sont distinctes.</p><dl><dt>Sources conservées</dt><dd className="contract-paragraph">{moduleVersion.review.sources??'Non renseignées'}</dd><dt>Dernière vérification documentée</dt><dd>{moduleVersion.review.verifiedAt??'À vérifier pour cette rédaction'}</dd><dt>Réserves</dt><dd>{moduleVersion.review.reserve??'Non renseignées'}</dd><dt>Provenance</dt><dd className="contract-paragraph">{moduleVersion.review.provenance.reference} · {moduleVersion.review.provenance.sha256}</dd></dl></details>}
           <label>Texte à préparer dans une nouvelle version<textarea aria-label="Texte du module à versionner" value={body} onChange={e=>setBody(e.target.value)}/></label>
