@@ -73,3 +73,11 @@
 - L'effet passe désormais la réinitialisation et les chargements par la même garde UX-01 ; une sortie refusée ou une écriture `pending` conserve la fiche et son brouillon. Les résolutions asynchrones vérifient toujours `live` avant d'appliquer une réponse.
 - **Limite** : le comportement doit être confirmé dans l'application Electron avec une cible externe et un brouillon A non sauvegardé, plus la séquence A→B→A, erreur IPC et clavier. Pas de revendication de test Electron pour ce commit ; la CI et la recette ciblée demeurent des gates.
 - Le chronomètre, les données réelles, les API métier et les autres lots ne sont pas modifiés.
+
+## E227 — réouverture et mouvements financiers (audit du 14/10)
+
+- `OperationsService.changeInterventionStatus` permet techniquement `completed → in_progress` : la méthode vérifie l'appartenance à l'union de statuts et certains rattachements commerciaux, **pas** une matrice de transitions métier, et efface `completed_at` en quittant `completed`. Il n'existe pas de statut `reopened`.
+- `InterventionCompletionService.complete` réutilise la clé idempotente du débit pack et `BillingHandoffService.ensureForIntervention` pour les autres couvertures. La réouverture n'inverse pas automatiquement les mouvements ni les préparations de facturation. Une modification ultérieure des temps ne doit donc pas être traitée comme une nouvelle consommation implicite.
+- Test Vitest documentaire ajouté à `InterventionCompletionService.test.ts` : une clôture pack avec débit, transition `in_progress`, puis seconde clôture ; vérifie maintien du débit historique unique et du solde ainsi que FK. **Ne vaut pas autorisation métier d'un bouton Réouvrir.**
+- Décision à cadrer séparément : conditions de réouverture, éventuel mouvement compensatoire explicite, recalcul des temps et conséquences facturation. Aucune nouvelle commande, statut ni annulation automatique ajoutés.
+- Test publié sur branche isolée, **à valider dans sa propre CI**. Le code des lots 04/05 et `main` demeure hors périmètre.
