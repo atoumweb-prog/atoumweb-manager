@@ -288,4 +288,37 @@ describe('QuoteService', () => {
     expect(copy.lines).toHaveLength(1);
     expect(copy.contractValueCents).toBe(50000);
   });
+  it('06C : quantité, prix proposé et remise restent attachés à la version catalogue figée', () => {
+    const prospect = createProspect();
+    const service = createPublishedService(10000, 'Service 06C');
+    const originalVersionId = service.currentVersion!.id;
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Calcul et version immuable' });
+
+    const computed = quotes.addCatalogLine(quote.id, originalVersionId, {
+      quantityMilli: 1500,
+      proposedUnitPriceCents: 12000,
+      adjustmentMode: 'percent',
+      adjustmentValue: 1000,
+      discountReasonCode: 'commercial_gesture',
+    });
+
+    expect(computed.lines).toHaveLength(1);
+    expect(computed.lines[0].catalogVersionId).toBe(originalVersionId);
+    expect(computed.lines[0].quantityMilli).toBe(1500);
+    expect(computed.lines[0].catalogUnitPriceCents).toBe(10000);
+    expect(computed.lines[0].proposedUnitPriceCents).toBe(12000);
+    expect(computed.catalogValueCents).toBe(15000);
+    expect(computed.contractValueCents).toBe(16200);
+
+    const next = catalog.createVersion(service.id, { priceMode: 'fixed', priceCents: 20000 });
+    catalog.publishVersion(next.id);
+    const kept = quotes.get(quote.id);
+    expect(kept.lines[0].catalogVersionId).toBe(originalVersionId);
+    expect(kept.lines[0].snapshot?.versionNumber).toBe(1);
+    expect(kept.lines[0].catalogUnitPriceCents).toBe(10000);
+    expect(kept.lines[0].proposedUnitPriceCents).toBe(12000);
+    expect(kept.contractValueCents).toBe(16200);
+    expect(catalog.getItem(service.id).currentVersion?.priceCents).toBe(20000);
+  });
+
 });
