@@ -2,7 +2,7 @@ import type { Migration } from './migrations';
 
 /** Additive 05C store: no backfill or changes to any historical quote. */
 export const CONTRACT_SECTION_REVIEW_MIGRATION: Migration = {
-  id: 67,
+  id: 69,
   name: 'contract_clause_section_review_v1',
   sql: `
     CREATE TABLE contract_clause_section_reviews (
