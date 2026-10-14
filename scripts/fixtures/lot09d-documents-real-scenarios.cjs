@@ -98,6 +98,16 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
   let integrityRefused=false;
   try{documents.verifiedPath(docB.id);}catch(error){integrityRefused=/SHA-256 différente/.test(error.message);}
   test(integrityRefused,'09D-17: tampered document cannot be opened');
+  const missing=documents.importPaths(clientA.id,[source],
+    {category:'brief',title:'Justificatif manquant 09D'})
+    .find(item=>item.title==='Justificatif manquant 09D');
+  test(!!missing,'09D-17a: distinct missing-file fixture saved');
+  fs.unlinkSync(documents.absolutePath(missing.id));
+  test(documents.get(missing.id).missing===true,'09D-17b: physical absence reported without erasing metadata');
+  let missingRefused=false;
+  try{documents.verifiedPath(missing.id);}catch(error){missingRefused=/manquant/.test(error.message);}
+  test(missingRefused,'09D-17c: a vanished document cannot be opened');
+
   const generic=documents.importPaths(clientA.id,[source],
     {category:'technical',title:'Suppression générique autorisée'})
     .find(item=>item.title==='Suppression générique autorisée');
