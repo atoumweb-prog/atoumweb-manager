@@ -24,7 +24,7 @@ import {
 import type { ProjectNode, ProjectSummary } from '../../shared/projects';
 import type { TimeCategory } from '../../shared/time';
 import { HourPacksPanel } from './HourPacksPanel';
-import { isCurrentOperationsRefresh, resolveInterventionCompletion } from './operationAsyncGuards';
+import { acquireCompletionLock, isCurrentOperationsRefresh, resolveInterventionCompletion } from './operationAsyncGuards';
 import { MaintenancePanel } from './MaintenancePanel';
 import { OperationsAlertsPanel } from './OperationsAlertsPanel';
 import { InterventionBackupPanel } from './InterventionBackupPanel';
@@ -331,10 +331,8 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
   async function changeInterventionStatus(status: InterventionStatus): Promise<boolean> {
     if (!selectedIntervention) return false;
     const interventionId = selectedIntervention.id;
-    if (status === 'completed') {
-      if (completionInFlight.current.has(interventionId)) return false;
-      completionInFlight.current.add(interventionId);
-    }
+    const releaseLock = status === 'completed' ? acquireCompletionLock(completionInFlight.current, interventionId) : undefined;
+    if (status === 'completed' && !releaseLock) return false;
     try {
     let updated: Intervention;
     if (status === 'completed') {
@@ -371,7 +369,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
     }
     return true;
     } finally {
-      if (status === 'completed') completionInFlight.current.delete(interventionId);
+      releaseLock?.();
     }
   }
 
