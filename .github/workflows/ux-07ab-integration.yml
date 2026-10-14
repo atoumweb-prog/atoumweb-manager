@@ -80,6 +80,12 @@ jobs:
           node-version: '24'
       - name: Dependencies
         run: npm ci
+      - name: Install Electron binary before parallel Vitest (07E)
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          node -e "const fs=require('node:fs');const executable=require('electron');if(!fs.existsSync(executable))throw Error('Electron binary missing: '+executable);console.log('Electron ready:',executable)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Bridge export and reuse packages regression 07E
         shell: pwsh
         timeout-minutes: 10
@@ -116,6 +122,12 @@ jobs:
           node-version: '24'
       - name: Dependencies
         run: npm ci
+      - name: Install Electron binary before parallel Vitest (07C)
+        shell: pwsh
+        timeout-minutes: 5
+        run: |
+          node -e "const fs=require('node:fs');const executable=require('electron');if(!fs.existsSync(executable))throw Error('Electron binary missing: '+executable);console.log('Electron ready:',executable)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Provisional Project revision Blueprint and rollback 07C
         shell: pwsh
         timeout-minutes: 12
