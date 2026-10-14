@@ -13,6 +13,7 @@ import type {
 import { ProjectCompositionItemSettings, type CodeParts } from './ProjectCompositionItemSettings';
 import './ProjectPageCompositionPanel.css';
 import { buildComponentPreview } from './componentPreview';
+import { requestUnsavedExit } from '../unsaved/unsaved';
 
 type PanelMode = null | 'library' | 'create' | 'attach' | 'inspect' | 'preview';
 type CreateMode = 'new' | 'variant';
@@ -305,6 +306,10 @@ export function ProjectPageCompositionPanel({
   }
 
   async function inspect(item: AtoumWebCompositionItem): Promise<void> {
+    await requestUnsavedExit(() => { void inspectAllowed(item); }, 'project-composition');
+  }
+
+  async function inspectAllowed(item: AtoumWebCompositionItem): Promise<void> {
     if (inspected?.item.id === item.id) {
       setInspected(null);
       setCodePaneCollapsed(false);
@@ -328,6 +333,10 @@ export function ProjectPageCompositionPanel({
   }
 
   function toggleSettings(item: AtoumWebCompositionItem): void {
+    void requestUnsavedExit(() => toggleSettingsAllowed(item), 'project-composition');
+  }
+
+  function toggleSettingsAllowed(item: AtoumWebCompositionItem): void {
     if (settingsItemId === item.id) {
       setSettingsItemId(null);
       setSettingsDraft(null);
@@ -555,12 +564,12 @@ export function ProjectPageCompositionPanel({
                 onExpand={() => setInspectExpanded(true)}
                 previewDevice={inspectDevice}
                 onPreviewDeviceChange={setInspectDevice}
-                onClose={() => {
+                onClose={() => { void requestUnsavedExit(() => {
                   setSettingsItemId(null);
                   setSettingsDraft(null);
                   setSettingsPaneCollapsed(false);
                   if (!inspected) setInspectExpanded(false);
-                }}
+                }, 'project-composition'); }}
                 onDraftChange={setSettingsDraft}
               />}
         </section>}
