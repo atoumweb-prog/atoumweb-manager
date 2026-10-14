@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest';
 import {NodeSqliteAdapter} from './NodeSqliteAdapter';
-import {MIGRATIONS,applyPendingMigrations} from './migrations';
+import {MIGRATIONS,applyPendingMigrations,getPendingMigrations,ensureMigrationTable} from './migrations';
 import {CONTRACT_SECTION_REVIEW_MIGRATION} from './contractSectionReviewMigration';
 
 describe('lot 05 — migration 69 staged behind lots 04',()=>{
@@ -15,11 +15,17 @@ describe('lot 05 — migration 69 staged behind lots 04',()=>{
    const db=new NodeSqliteAdapter(':memory:');
    try{
      db.exec('PRAGMA foreign_keys=ON;');
-     applyPendingMigrations(db);
+     ensureMigrationTable(db);
+     for(const migration of MIGRATIONS.filter(m=>m.id<=66)){
+       db.exec(migration.sql);
+       db.run('INSERT INTO schema_migrations(id,name,applied_at) VALUES(?,?,?)',[migration.id,migration.name,'2026-10-14T00:00:00Z']);
+     }
      const before=db.all('SELECT id,name,applied_at FROM schema_migrations WHERE id<=66 ORDER BY id');
      // Only simulated lot-04 ledger records, not their actual DDL.
      db.run('INSERT INTO schema_migrations(id,name,applied_at) VALUES(?,?,?)',[67,'lot_04_catalogue_fixture','2026-10-14T00:00:00Z']);
      db.run('INSERT INTO schema_migrations(id,name,applied_at) VALUES(?,?,?)',[68,'lot_04_recommendations_fixture','2026-10-14T00:00:00Z']);
+     expect(getPendingMigrations(db).map(m=>m.id)).toEqual([69]);
+     expect(applyPendingMigrations(db).map(m=>m.id)).toEqual([69]);
      const contract=db.get<{name:string}>('SELECT name FROM schema_migrations WHERE id=?',[69]);
      expect(contract?.name).toBe('contract_clause_section_review_v1');
      expect(db.all('SELECT id,name,applied_at FROM schema_migrations WHERE id<=66 ORDER BY id')).toEqual(before);
