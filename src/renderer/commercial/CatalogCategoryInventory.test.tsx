@@ -54,7 +54,7 @@ describe('Lot 04B — catégories réellement persistées : inventaire non destr
       items: [item('x', 'SEO'), item('y', 'SEO / Visibilité'), item('z', null)],
       onFilter: () => {}, onClose: () => {}, onChanged: async () => {},
     }));
-    expect(html).toContain('Inventaire de lecture seule');
+    expect(html).toContain('Inventaire historique consultable');
     expect(html).toContain('À réconcilier');
     expect(html).toContain('Voir les prestations');
     expect(html).toContain('Sans catégorie');
