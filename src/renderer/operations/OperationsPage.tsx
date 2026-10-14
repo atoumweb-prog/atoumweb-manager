@@ -356,13 +356,9 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
             return false;
           }
           const subscriptions = await window.atoumweb.operations.maintenance.subscriptions.list();
-          const subscription = subscriptions.find((entry) => entry.clientAccountId === current.clientAccountId);
-          if (!subscription) {
-            onMessage('Souscription introuvable pour ce client : impossible de confirmer la prise en charge.');
-            return false;
-          }
-          const periods = await window.atoumweb.operations.maintenance.periods.list(subscription.id);
-          const period = periods.find((entry) => entry.id === current.maintenancePeriodId);
+          const owned = subscriptions.filter((entry) => entry.clientAccountId === current.clientAccountId);
+          const matchedPeriods = await Promise.all(owned.map((entry) => window.atoumweb.operations.maintenance.periods.list(entry.id)));
+          const period = matchedPeriods.flat().find((entry) => entry.id === current.maintenancePeriodId);
           if (!period) {
             onMessage('Période de maintenance introuvable : impossible de confirmer la clôture.');
             return false;
