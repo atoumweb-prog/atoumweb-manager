@@ -65,6 +65,20 @@ describe('05C — numbered draft contract from approved clauses',()=>{
    expect(unreviewed.warnings).toHaveLength(1);
    expect(unreviewed.ready).toBe(true);
  });
+ it('applies explicit purchased options and treats unknown options as unresolved',()=>{
+   const withOption=entry('option','vOption');
+   withOption.applicability={requiredOptionCodes:['OPT_PAID']};
+   const basic=entry('base','vBase','object');
+   const purchased=assembleReviewedDraftContract([basic,withOption],{optionCodes:['OPT_PAID']});
+   expect(purchased.ready).toBe(true);
+   expect(purchased.sections.flatMap(x=>x.articles.map(a=>a.id))).toEqual(['base','option']);
+   const notPurchased=assembleReviewedDraftContract([basic,withOption],{optionCodes:['OPT_OTHER']});
+   expect(notPurchased.excluded).toHaveLength(1);
+   expect(notPurchased.sections.flatMap(x=>x.articles.map(a=>a.id))).toEqual(['base']);
+   const unknown=assembleReviewedDraftContract([basic,withOption],{});
+   expect(unknown.ready).toBe(false);
+   expect(unknown.unresolved).toHaveLength(1);
+ });
  it('blocks duplicate versions and missing classifications',()=>{
    const result=assembleReviewedDraftContract([entry('a','v'),entry('b','v')],{});
    expect(result.ready).toBe(false);
