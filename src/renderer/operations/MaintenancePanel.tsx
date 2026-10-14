@@ -212,7 +212,7 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
   }
 
   async function ensureCurrentPeriod(): Promise<void> {
-    if (!selectedSubscription) return;
+    if (!selectedSubscription || !requestUnsavedExit(() => {})) return;
     try {
       const period = await window.atoumweb.operations.maintenance.periods.ensure(selectedSubscription.id);
       await loadPeriods(selectedSubscription.id);
@@ -224,7 +224,7 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
   }
 
   async function changeSubscriptionStatus(status: MaintenanceSubscriptionStatus): Promise<void> {
-    if (!selectedSubscription) return;
+    if (!selectedSubscription || !requestUnsavedExit(() => {})) return;
     try {
       await window.atoumweb.operations.maintenance.subscriptions.changeStatus(selectedSubscription.id, status);
       await refresh();
@@ -232,7 +232,7 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
   }
 
   async function changePeriodStatus(status: MaintenancePeriodStatus): Promise<void> {
-    if (!selectedPeriod) return;
+    if (!selectedPeriod || !requestUnsavedExit(() => {})) return;
     try {
       const updated = await window.atoumweb.operations.maintenance.periods.changeStatus(selectedPeriod.id, status);
       await loadPeriods(updated.subscriptionId);
