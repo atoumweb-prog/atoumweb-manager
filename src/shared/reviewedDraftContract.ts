@@ -21,6 +21,8 @@ export function assembleReviewedDraftContract(
 ){
  const selectable=entries.filter(e=>e.clause.enabled&&!e.clause.isOrphaned);
  const ids=new Set<string>();const versions=new Set<string>();
+ const quoteIds=new Set(selectable.map(e=>e.clause.quoteId));
+ const invalidText=selectable.filter(e=>!e.clause.title.trim()||!e.clause.body.trim()).map(e=>e.clause.id);
  const duplicateIds:string[]=[];
  for(const e of selectable){
    if(ids.has(e.clause.id))duplicateIds.push(e.clause.id);else ids.add(e.clause.id);
@@ -47,6 +49,8 @@ export function assembleReviewedDraftContract(
    sections,
    missing:missing.map(e=>e.clause.id),
    duplicateIds,
-   ready:plan.ready&&missing.length===0&&duplicateIds.length===0,
+   invalidText,
+   crossQuote:quoteIds.size>1,
+   ready:plan.ready&&missing.length===0&&duplicateIds.length===0&&invalidText.length===0&&quoteIds.size<=1,
  };
 }
