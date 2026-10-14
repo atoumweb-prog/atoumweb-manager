@@ -47,7 +47,7 @@ jobs:
         run: npm test -- --maxWorkers=2
 
       - name: Lot 05/09 — Contract Library native coexistence TEMP
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014' }}
+        if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014' }}
         shell: pwsh
         timeout-minutes: 15
         run: |
@@ -59,7 +59,7 @@ jobs:
           if ($report.errors.Count -ne 0 -or @($report.checks | Where-Object { -not $_.passed }).Count -ne 0) { throw '05B native test failed' }
 
       - name: Lot 05/09 — Unsaved contract library and clauses
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014' }}
+        if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014' }}
         shell: pwsh
         timeout-minutes: 15
         run: |
@@ -68,7 +68,7 @@ jobs:
 
 
       - name: Lot 09F — Abby billing
-        if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014') }}
+        if: ${{ always() && github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |
@@ -76,7 +76,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Lot 09F — Expenses and receipts
-        if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014') }}
+        if: ${{ always() && github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |
@@ -84,7 +84,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Lot 09F — Documents and archive
-        if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014') }}
+        if: ${{ always() && github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |
@@ -92,7 +92,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Lot 09F — Word DOCX and PDF work
-        if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014') }}
+        if: ${{ always() && github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |
@@ -100,7 +100,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Lot 09F — Global UX 3x3
-        if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014') }}
+        if: ${{ always() && github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |
@@ -108,7 +108,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Lot 09F — Restore and quit
-        if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014') }}
+        if: ${{ always() && github.event_name == 'push' && (github.ref == 'refs/heads/feature/ux-v2-lot09f-convergence-20261014' || github.ref == 'refs/heads/integration/ux-v2-lot09-05-compat-test-20261014') }}
         shell: pwsh
         timeout-minutes: 15
         run: |
