@@ -24,6 +24,7 @@ import {
 import type { ProjectNode, ProjectSummary } from '../../shared/projects';
 import type { TimeCategory } from '../../shared/time';
 import { HourPacksPanel } from './HourPacksPanel';
+import { isCurrentOperationsRefresh, resolveInterventionCompletion } from './operationAsyncGuards';
 import { MaintenancePanel } from './MaintenancePanel';
 import { OperationsAlertsPanel } from './OperationsAlertsPanel';
 import { InterventionBackupPanel } from './InterventionBackupPanel';
@@ -134,7 +135,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
       const [nextRequests, nextInterventions, nextClients, nextProjects] = await Promise.all([
         window.atoumweb.operations.requests.list(), window.atoumweb.operations.interventions.list(), window.atoumweb.crm.clients.list(), window.atoumweb.projects.projects.list(),
       ]);
-      if (generation !== refreshGeneration.current || writeAtStart !== interventionWriteGeneration.current) return false;
+      if (!isCurrentOperationsRefresh(generation, refreshGeneration.current, writeAtStart, interventionWriteGeneration.current)) return false;
       setRequests(nextRequests); setInterventions(nextInterventions); setClients(nextClients); setProjects(nextProjects);
       setSelectedRequest((current) => current ? nextRequests.find((item) => item.id === current.id) ?? null : null);
       setSelectedIntervention((current) => current ? nextInterventions.find((item) => item.id === current.id) ?? current : null);
@@ -330,24 +331,26 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
     if (!selectedIntervention) return false;
     const interventionId = selectedIntervention.id;
     let updated: Intervention;
-    try {
-      updated = status === 'completed'
-        ? await window.atoumweb.operations.interventions.complete(interventionId)
-        : await window.atoumweb.operations.interventions.changeStatus(interventionId, status);
-    } catch (error) {
-      if (status !== 'completed') {
-        onMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut.');
+    if (status === 'completed') {
+      const outcome = await resolveInterventionCompletion(
+        interventionId,
+        (id) => window.atoumweb.operations.interventions.complete(id),
+        (id) => window.atoumweb.operations.interventions.get(id),
+      );
+      if (outcome.kind === 'unknown') {
+        onMessage('Résultat de clôture inconnu : la confirmation et la relecture ont échoué. Vérifie le statut avant toute nouvelle tentative.');
         return false;
       }
+      if (outcome.kind === 'not_confirmed') {
+        onMessage(`Clôture non confirmée : ${outcome.intervention.number} est toujours « ${INTERVENTION_STATUS_LABELS[outcome.intervention.status]} ». Vérifie avant de relancer.`);
+        return false;
+      }
+      updated = outcome.intervention;
+    } else {
       try {
-        const current = await window.atoumweb.operations.interventions.get(interventionId);
-        if (current.status !== 'completed') {
-          onMessage(`Clôture non confirmée : ${current.number} est toujours « ${INTERVENTION_STATUS_LABELS[current.status]} ». Vérifie avant de relancer.`);
-          return false;
-        }
-        updated = current;
-      } catch {
-        onMessage('Résultat de clôture inconnu : la confirmation et la relecture ont échoué. Vérifie le statut avant toute nouvelle tentative.');
+        updated = await window.atoumweb.operations.interventions.changeStatus(interventionId, status);
+      } catch (error) {
+        onMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut.');
         return false;
       }
     }
