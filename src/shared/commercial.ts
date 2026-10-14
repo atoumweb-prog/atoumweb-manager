@@ -38,6 +38,10 @@ export interface CatalogCommercialIdentity {
 // Descriptive commercial data, never injected as contract clauses by this field.
 export interface CatalogCommercialParameters {
   clientNeed?: string | null;
+  /** Versioned commercial benefits, descriptive only and never contract clauses. */
+  benefits?: string | null;
+  /** Admin-managed search keywords/synonyms, separated by commas, semicolons or line breaks. */
+  keywords?: string | null;
   work?: string | null;
   options?: string | null;
   quoteRequiredWhen?: string | null;
