@@ -49,13 +49,21 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       # Lot 04D/04E: cross-cutting Catalogue UI and UX-01 checks on Windows TEMP.
-      - name: Electron Catalogue 04D-04E — Windows TEMP
+      - name: Electron Catalogue 04D-04E — Windows TEMP et 9 captures contrôlées
         if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
         shell: pwsh
-        timeout-minutes: 8
+        timeout-minutes: 10
         run: |
-          node scripts/check-catalog-identity-ui.cjs
+          $captures = Join-Path $env:RUNNER_TEMP 'lot04-consolide-native-captures'
+          if (Test-Path $captures) { throw "Capture directory already exists" }
+          node scripts/check-catalog-identity-ui.cjs --captures $captures
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $images = @(Get-ChildItem -LiteralPath $captures -Filter '*.png' -File)
+          if ($images.Count -ne 9) { throw "Expected 9 verified visual states, got $($images.Count)" }
+          foreach ($file in $images) {
+            $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            Write-Output "LOT04 VERIFIED FRAME $($file.Name) sha256=$hash bytes=$($file.Length)"
+          }
 
       - name: Electron Recommandations 04D — interactions et UX-01 Windows TEMP
         if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 118 }}
