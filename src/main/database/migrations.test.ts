@@ -23,7 +23,7 @@ describe('migrations SQLite', () => {
       }
       const sessionsBefore = version === 10 ? database.all('SELECT * FROM time_sessions') : [];
       expect(applyPendingMigrations(database).map((migration) => migration.id))
-        .toEqual(Array.from({ length: MIGRATIONS.length - version }, (_, index) => version + index + 1));
+        .toEqual(MIGRATIONS.filter(item => item.id > version).map(item => item.id));
       expect(database.all('SELECT id, name FROM schema_migrations ORDER BY id'))
         .toEqual(MIGRATIONS.map(({ id, name }) => ({ id, name })));
       expect(database.get('SELECT value_json FROM settings WHERE key=?', ['migration-sentinel']))
