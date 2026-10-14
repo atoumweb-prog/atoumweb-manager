@@ -176,8 +176,8 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
     await wait('document.querySelectorAll(".billing-table tbody tr").length===3','billing list refreshed for advanced filters');
     test(await get('document.querySelector(".billing-advanced-filters")!==null'),
       '09B-FILTER-01: advanced billing filter controls rendered');
-    await js('document.querySelector(".billing-table tbody tr").click()');
-    await wait('!!document.querySelector(".billing-detail-panel")','billing selected after reference update');
+    await js('const row=[...document.querySelectorAll(".billing-table tbody tr")].find(el=>el.textContent.includes("Prestation TEST 09B")&&!el.textContent.includes("Deuxième"));if(!row)throw Error("Original billing row missing");row.click()');
+    await wait('document.querySelector(".billing-invoice-fields input")?.value==="ABBY-NATIVE-09B"','billing original selected after reference update');
     test(await get('!document.querySelector(".billing-pdf-reference-warning")'),
       '09B-FILTER-01a: verified Abby reference removes incomplete metadata warning');
     await js('document.querySelector(".billing-detail-heading .close-detail").click()');
