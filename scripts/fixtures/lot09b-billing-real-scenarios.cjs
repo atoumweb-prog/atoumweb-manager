@@ -110,7 +110,7 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,test,sleep}) =>
       '09B-UI-16: controlled reference field holds unsaved input');
     await js('document.querySelector(".billing-compact-item:not(.selected)").click()');
     await sleep(110);
-    test(confirmations.length>0&&confirmations.at(-1).message.includes('non enregistrées'),
+    test(confirmations.length>0&&confirmations.at(-1).title==='Modifications non enregistrées'&&confirmations.at(-1).message.includes('pas enregistrées'),
       '09B-UI-17: native UX-01 confirmation requested on invoice switch');
     test(await get('document.querySelector(".billing-detail-heading h2")?.textContent.trim()==="Prestation TEST 09B"'),
       '09B-UI-18: Stay keeps invoice selection and draft');
