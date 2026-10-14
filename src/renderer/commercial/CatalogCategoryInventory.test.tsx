@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { CatalogItemSummary } from '../../shared/commercial';
-import { buildCatalogCategoryInventory } from './catalogCategoryInventory';
+import { buildCatalogCategoryInventory } from './catalogCategoryInventoryModel';
 import { CatalogCategoryInventory } from './CatalogCategoryInventory';
 
 function item(id: string, category: string | null, status: CatalogItemSummary['status'] = 'active'): CatalogItemSummary {
