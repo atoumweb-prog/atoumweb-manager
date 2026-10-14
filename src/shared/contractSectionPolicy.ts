@@ -78,3 +78,25 @@ export function evaluateContractApplicability(rule:ContractApplicabilityRule,con
   }
   return unknown?'unresolved':'eligible';
 }
+
+/** Only explicitly configured blocking conflicts may prevent DRAFT finalization.
+ * Conflicts must be reviewed by a human; never infer incompatibility from similar wording.
+ */
+export interface ContractClauseConflict {
+  id:string;
+  clauseVersionIds:readonly string[];
+  severity:'warning'|'blocking';
+  reason:string;
+  reviewed:boolean;
+}
+export function evaluateContractConflicts(
+  conflicts:readonly ContractClauseConflict[],selectedVersionIds:readonly string[],
+):{warnings:ContractClauseConflict[];blocking:ContractClauseConflict[]} {
+  const selected=new Set(selectedVersionIds);
+  const applicable=conflicts.filter(c=>c.clauseVersionIds.length>=2
+    &&c.clauseVersionIds.every(id=>selected.has(id)));
+  return {
+    warnings:applicable,
+    blocking:applicable.filter(c=>c.severity==='blocking'&&c.reviewed===true&&c.reason.trim().length>0),
+  };
+}
