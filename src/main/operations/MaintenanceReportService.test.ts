@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CrmService } from '../crm/CrmService';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
+import { TimeService } from '../time/TimeService';
 import { MaintenanceReportService } from './MaintenanceReportService';
 import { MaintenanceService } from './MaintenanceService';
 import { OperationsService } from './OperationsService';
@@ -25,6 +26,42 @@ beforeEach(() => {
 afterEach(() => database.close());
 
 describe('MaintenanceReportService', () => {
+  it('08E compare chrono avec pause et rapport : aucun arrondi perdu dans les statistiques', () => {
+    const contact = crm.createContact({ firstName: 'Durée', lastName: 'Exacte' });
+    const client = crm.createClient({ primaryContactId: contact.id });
+    const plan = maintenance.createPlan({
+      name: 'Maintenance avec chrono', periodicPriceCents: 4900,
+      includedInterventions: 2, includedMinutes: 120,
+    });
+    const subscription = maintenance.createSubscription({
+      clientAccountId: client.id, planId: plan.id, startDate: '2026-09-01',
+    });
+    const period = maintenance.ensurePeriod(subscription.id, '2026-09-14');
+    const intervention = operations.createIntervention({
+      clientAccountId: client.id, maintenancePeriodId: period.id,
+      type: 'maintenance', coverageMode: 'maintenance',
+      subject: 'Durée avec pause', status: 'in_progress',
+    });
+    let clock = new Date('2026-09-14T08:00:00.000Z');
+    const timer = new TimeService(database, () => new Date(clock));
+    const session = timer.start({ interventionId: intervention.id, category: 'support' });
+    clock = new Date('2026-09-14T08:20:00.000Z');
+    timer.pause(session.id, 'need_information', 'Attente validation client');
+    clock = new Date('2026-09-14T08:35:00.000Z');
+    timer.resume(session.id);
+    clock = new Date('2026-09-14T08:50:00.000Z');
+    expect(timer.stop(session.id).durationSeconds).toBe(2100);
+
+    const report = reports.get(period.id);
+    expect(report.interventions).toHaveLength(1);
+    expect(report.interventions[0].durationSeconds).toBe(2100);
+    expect(report.totalTimeSeconds).toBe(2100);
+    expect(report.interventionCount).toBe(1);
+    expect(maintenance.getPeriod(period.id).usage.usedSeconds).toBe(2100);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+
   it('prépare le rapport avec les données client sans exposer les notes internes', () => {
     const contact = crm.createContact({ firstName: 'Rapport', lastName: 'Client' });
     const client = crm.createClient({ primaryContactId: contact.id });
