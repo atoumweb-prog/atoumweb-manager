@@ -51,13 +51,14 @@ export class CatalogRecommendationsService {
   }
 
   /** Atomic replace; references use immutable published targets. No quote is changed. */
-  replace(sourceVersionId: string, targetVersionIds: readonly string[], expectedTargetVersionIds?: readonly string[], details?: readonly CatalogRecommendationDetails[]): CatalogRecommendationRow[] {
+  replace(sourceVersionId: string, targetVersionIds: readonly string[], expectedTargetVersionIds?: readonly string[], details?: readonly CatalogRecommendationDetails[], expectedDetails?: readonly CatalogRecommendationDetails[]): CatalogRecommendationRow[] {
     if(typeof sourceVersionId!=='string'||!sourceVersionId.trim()||
        !Array.isArray(targetVersionIds)||targetVersionIds.some(id=>typeof id!=='string'||!id.trim())||
        (expectedTargetVersionIds!==undefined&&(!Array.isArray(expectedTargetVersionIds)||
         expectedTargetVersionIds.some(id=>typeof id!=='string'||!id.trim())))) {
       throw new Error('Identifiants de recommandation invalides.');
     }
+    if(expectedDetails!==undefined && !Array.isArray(expectedDetails))throw new Error('Version des recommandations invalide.');
     if(details!==undefined && (!Array.isArray(details) || details.length!==targetVersionIds.length ||
       details.some((d,index)=>!d||d.targetVersionId!==targetVersionIds[index]||
         typeof d.reason!=='string'||d.reason.length>1000||typeof d.conditions!=='string'||d.conditions.length>3000||
@@ -74,6 +75,14 @@ export class CatalogRecommendationsService {
         const persisted = this.list(sourceVersionId).map(link => link.targetVersionId);
         if (JSON.stringify(persisted) !== JSON.stringify(expectedTargetVersionIds))
           throw new Error('Conflit : les recommandations ont été modifiées dans une autre fenêtre. Recharge la fiche avant de sauvegarder.');
+      }
+      if (expectedDetails) {
+        const persisted=this.list(sourceVersionId);
+        if (JSON.stringify(persisted.map(link=>({
+          targetVersionId:link.targetVersionId,reason:link.reason,status:link.status,
+          conditions:link.conditions,provenance:link.provenance,
+        })))!==JSON.stringify(expectedDetails))
+          throw new Error('Conflit : les motifs et conditions ont été modifiés dans une autre fenêtre. Recharge la fiche avant de sauvegarder.');
       }
       const seen=new Set<string>();
       for (const id of targetVersionIds) {
