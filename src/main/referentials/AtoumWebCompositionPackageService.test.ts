@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -181,6 +181,37 @@ describe('AtoumWebCompositionPackageService', () => {
     expect(database.all<{id:string}>(
       'SELECT id FROM project_page_exports WHERE project_node_id=? ORDER BY created_at,id',[page.id],
     ).map(row => row.id).sort()).toEqual([first.exportId,second.exportId].sort());
+  });
+
+  it('R07G-22 annule l historique, supprime le ZIP et préserve SQLite si l insertion de l export échoue', () => {
+    const hero = reusable('Hero panne export', 'hero', 'r07g-rollback');
+    const project = projectService.createInternal({name:'R07G export rollback'});
+    const updated = projectService.addProjectNode(project.id,{type:'module',displaySubtype:'page',name:'Page rollback'});
+    const page = updated.nodes.find(node => node.displaySubtype==='page')!;
+    const site = projectSites.create(project.id,{name:'Site rollback'});
+    projectSites.linkPage(site.id,page.id,{role:'standard'});
+    let composition = compositions.ensureForProjectPage(page.id);
+    composition = compositions.addItem(composition.id,{libraryItemId:hero.id});
+
+    const directory = join(workspace.exportsDirectory,'compositions-atoumweb');
+    const existingFiles = existsSync(directory) ? readdirSync(directory).sort() : [];
+    const activities = database.all(
+      "SELECT id FROM activity_log WHERE entity_type='atoumweb_composition' AND entity_id=?",
+      [composition.id],
+    );
+    database.exec(
+      "CREATE TRIGGER r07g_abort_page_export BEFORE INSERT ON project_page_exports " +
+      "BEGIN SELECT RAISE(ABORT, 'R07G_PAGE_EXPORT_ROLLBACK'); END;",
+    );
+    expect(() => projectPackages.exportPagePackage(page.id)).toThrow('R07G_PAGE_EXPORT_ROLLBACK');
+    expect(existsSync(directory) ? readdirSync(directory).sort() : []).toEqual(existingFiles);
+    expect(database.all('SELECT id FROM project_page_exports WHERE project_node_id=?',[page.id])).toEqual([]);
+    expect(database.all(
+      "SELECT id FROM activity_log WHERE entity_type='atoumweb_composition' AND entity_id=?",
+      [composition.id],
+    )).toEqual(activities);
+    expect(database.get('PRAGMA integrity_check')).toEqual({integrity_check:'ok'});
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
   it('R07G-21 refuse aussi les Sites archivés et les compositions vides sans historique d export', () => {
