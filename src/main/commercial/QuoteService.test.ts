@@ -461,6 +461,29 @@ describe('QuoteService', () => {
     expect(crm.listProspects().find(item => item.id === prospect.id)?.clientAccountId).toBeFalsy();
   });
 
+  it('R06C-15 : une clause liée à une ligne retirée devient orpheline et désactivée', () => {
+    const prospect = createProspect();
+    const quote = quotes.create({ prospectId: prospect.id, subject: 'Clause de prestation retirée' });
+    const first = quotes.addCustomLine(quote.id, { label: 'Service supprimé', proposedUnitPriceCents: 20000 });
+    const lineId = first.lines[0].id;
+    quotes.addCustomLine(quote.id, { label: 'Service conservé', proposedUnitPriceCents: 10000 });
+    // Représente une ancienne clause de provenance catalogue attachée à la ligne retirée.
+    database.run(
+      `INSERT INTO quote_contract_clauses
+       (id,quote_id,source_key,source_kind,source_clause_id,source_clause_version_id,source_catalog_item_ids_json,
+        title,body,sort_order,enabled,is_customized,is_orphaned,created_at,updated_at)
+       VALUES (?,?,?,'catalog',NULL,NULL,'[]',?,?,1800,1,0,0,datetime('now'),datetime('now'))`,
+      ['historical-line-clause',quote.id,`particular-line:${lineId}`,'Condition de prestation','Clause issue de la ligne retirée'],
+    );
+    const removed = quotes.removeLine(lineId);
+    const clause = database.get<{ enabled: number; is_orphaned: number; body: string }>(
+      'SELECT enabled,is_orphaned,body FROM quote_contract_clauses WHERE id=?', ['historical-line-clause'],
+    );
+    expect(removed.lines).toHaveLength(1);
+    expect(removed.contractValueCents).toBe(10000);
+    expect(clause).toEqual({ enabled: 0, is_orphaned: 1, body: 'Clause issue de la ligne retirée' });
+  });
+
   it('R06C-15 : retirer une prestation préserve les clauses particulières du devis', () => {
     const prospect = createProspect();
     const quote = quotes.create({ prospectId: prospect.id, subject: 'Retrait sans perte contractuelle' });
