@@ -51,7 +51,7 @@ if(!process.versions.electron){
    check(theme+' rapid commercial revision sends one request',revisionCalls===1);
    check(theme+' both version actions disabled while revision pending',await js('return ["Dupliquer en nouveau devis","Créer une révision du même dossier"].every(label=>[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()===label)?.disabled===true)'));
    rejectRevision();
-   await wait('[...document.querySelectorAll(".quote-status-actions button")].every(b=>!b.disabled)');
+   await wait('["Dupliquer en nouveau devis","Créer une révision du même dossier"].every(label=>[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()===label)?.disabled===false)');
    check(theme+' revision failure releases version controls',revisionCalls===1);
    database.quotes.duplicate=originalDuplicate;
    check(theme+' revision failure did not produce a second copy',database.quotes.list().filter(q=>q.subject===copySubject).length===1);
