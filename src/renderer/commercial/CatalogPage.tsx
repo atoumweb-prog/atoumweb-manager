@@ -870,7 +870,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
 function CommercialParametersSummary({ parameters }: { parameters?: CatalogCommercialParameters | null }) {
   if (!parameters) return null;
   const labels: Record<keyof CatalogCommercialParameters, string> = {
-    clientNeed: 'Besoin client', benefits: 'Bénéfices client', keywords: 'Mots-clés métier', work: 'Travail prévu', options: 'Options / compléments',
+    clientNeed: 'Besoin client', benefits: 'Bénéfices client', objections: 'Objections et réponses', keywords: 'Mots-clés métier', work: 'Travail prévu', options: 'Options / compléments',
     quoteRequiredWhen: 'Cas nécessitant un devis', deliverables: 'Livrables', deliveryTerms: 'Modalités / délai',
     reviewTerms: 'Corrections / recette', correctiveWarranty: 'Garantie corrective prévue',
     thirdPartyCosts: 'Coûts tiers', sourcePriceLabel: 'Règle tarifaire de source',
