@@ -335,7 +335,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
     <div className="documents-kpi-grid">
       <DocumentKpi icon="folder" label="Documents actifs" value={activeItems.length} helper="Tous les fichiers clients" />
       <DocumentKpi icon="file-text" label="Contrats" value={contractCount} helper="Documents contractuels" />
-      <DocumentKpi icon="receipt" label="Factures" value={invoiceCount} helper="PDF et factures archivés" />
+      <DocumentKpi icon="receipt" label="Factures actives" value={invoiceCount} helper="Documents de facture non archivés, sans statut de paiement" />
       <DocumentKpi icon={attentionCount ? 'alert' : 'check-circle'} label="À surveiller" value={attentionCount} helper={attentionCount ? 'Conservation ou fichier manquant' : 'Aucun point documentaire'} />
     </div>
 
