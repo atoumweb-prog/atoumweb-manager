@@ -82,6 +82,20 @@ describe('04D — états du conseil commercial dans une ligne de Devis',()=>{
       optionPurchase:{...origin,state:'available' as 'purchased'}});
     expect(quoteRecommendationState(offer,target(),[offer,pending])).toBe('already-added');
   });
+  it('does not transfer a purchased option to another version of the same offer line',()=>{
+    const offer=quoteLine('offer',{catalogVersionId:'offer-v2',snapshot:{offerComponents:[{
+      serviceItemId:'service',componentId:'component-1',isOptional:true,
+    }]}});
+    const oldPurchase=quoteLine('option',{catalogItemId:'service',optionPurchase:{
+      state:'purchased',sourceOfferLineId:'offer',sourceOfferItemId:'offer-item',
+      sourceOfferVersionId:'offer-v1',sourceComponentId:'component-1',purchasedAt:'2026-10-14',
+    }});
+    expect(quoteRecommendationState(offer,target(),[offer,oldPurchase])).toBe('already-added');
+    const currentPurchase=quoteLine('option-current',{catalogItemId:'service',optionPurchase:{
+      ...oldPurchase.optionPurchase!,sourceOfferVersionId:'offer-v2',
+    }});
+    expect(quoteRecommendationState(offer,target(),[offer,currentPurchase])).toBe('option-purchased');
+  });
   it('never treats an unrelated option purchase as buying this recommendation',()=>{
     const offer=quoteLine('offer',{snapshot:{offerComponents:[{
       serviceItemId:'service',componentId:'component-1',isOptional:true,
