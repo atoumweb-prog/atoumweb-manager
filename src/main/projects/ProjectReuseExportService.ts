@@ -147,8 +147,10 @@ export class ProjectReuseExportService {
     const resourceId = randomUUID();
     const relativePath = relative(this.workspace.root, destination);
 
-    this.database.exec('BEGIN IMMEDIATE;');
+    let transactionStarted = false;
     try {
+      this.database.exec('BEGIN IMMEDIATE;');
+      transactionStarted = true;
       this.database.run(
         `INSERT INTO file_assets (
           id,project_id,client_account_id,relative_path,original_name,
@@ -178,14 +180,13 @@ export class ProjectReuseExportService {
         ],
       );
       this.database.exec('COMMIT;');
+      transactionStarted = false;
     } catch (error) {
-      try {
-        this.database.exec('ROLLBACK;');
-      } finally {
-        // A rejected SQLite write must never leave an orphaned export file.
-        // The exclusive-create flag ensures this is the file from this call.
-        try { unlinkSync(destination); } catch { /* keep the original SQLite failure */ }
+      if (transactionStarted) {
+        try { this.database.exec('ROLLBACK;'); } catch { /* preserve original error */ }
       }
+      // Even a failure to BEGIN the transaction must clean the owned file.
+      try { unlinkSync(destination); } catch { /* preserve original error */ }
       throw error;
     }
 
