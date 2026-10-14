@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CatalogItemDetail, CatalogItemSummary, CatalogRecommendationLink } from '../../shared/commercial';
 import { useUnsavedDraft } from '../unsaved/unsaved';
 
@@ -15,6 +15,8 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
   const [loading,setLoading] = useState(true);
   const [saving,setSaving] = useState(false);
   const [error,setError] = useState('');
+  const sourceRef=useRef(sourceId);
+  sourceRef.current=sourceId;
   const guard=useUnsavedDraft('Recommandations Catalogue',targets,{
     group:'catalog:'+item.id,resetKey:sourceId,ready:!!sourceId&&!loading,
     pending:saving,discard:setTargets,
@@ -41,13 +43,15 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
     &&!targets.includes(candidate.currentVersion.id));
   async function save(){
     if(!sourceId||!editable||saving)return;
+    const savingSourceId=sourceId;
     setSaving(true);setError('');
     try{
       const links=await window.atoumweb.catalog.replaceRecommendations(sourceId,targets,savedLinks.map(link=>link.targetVersionId));
+      if(sourceRef.current!==savingSourceId)return;
       setSavedLinks(links);const saved=links.map(link=>link.targetVersionId);
       setTargets(saved);guard.saved(saved);
-    }catch(err){setError(err instanceof Error?err.message:'Enregistrement impossible : saisie conservée.');}
-    finally{setSaving(false);}
+    }catch(err){if(sourceRef.current===savingSourceId)setError(err instanceof Error?err.message:'Enregistrement impossible : saisie conservée.');}
+    finally{if(sourceRef.current===savingSourceId)setSaving(false);}
   }
   return <section className="catalog-detail-section" aria-label="Recommandations commerciales">
     <strong>Recommandations complémentaires · {source?'v'+source.versionNumber:'Aucune version'}</strong>
