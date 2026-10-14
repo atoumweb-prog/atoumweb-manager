@@ -330,12 +330,13 @@ function App() {
       const allowed=requestUnsavedExit(()=>{
         visibleEntity.current=null;pendingSearch.current={result,resolve};
         if(destination==='Clients'||destination==='Prospects')setCrmTarget(null);
-        setQuoteReturnProjectId(result.entityType === 'quote' && activePageRef.current === 'Projets' ? result.parentEntityId ?? null : null);
+        // Capturer la provenance AVANT de changer la page : un updater React différé
+        // ne doit jamais relire activePageRef lorsque cette valeur peut déjà avoir changé.
+        const fromProjectQuote = result.entityType === 'quote' && activePageRef.current === 'Projets';
+        const sourceContext = fromProjectQuote ? (result as SearchResult & { projectContext?: ProjectReturnContext }).projectContext : null;
+        setQuoteReturnProjectId(fromProjectQuote ? result.parentEntityId ?? null : null);
         setProjectReturnContext(previous => {
-          if (result.entityType === 'quote' && activePageRef.current === 'Projets') {
-            const context = (result as SearchResult & { projectContext?: ProjectReturnContext }).projectContext;
-            return result.parentEntityId && context?.projectId === result.parentEntityId ? context : null;
-          }
+          if (fromProjectQuote) return result.parentEntityId && sourceContext?.projectId === result.parentEntityId ? sourceContext : null;
           return result.entityType === 'project' && previous?.projectId === result.entityId ? previous : null;
         });
         setNavigationRequest(value=>value+1);openSearchResultDirect(result);
