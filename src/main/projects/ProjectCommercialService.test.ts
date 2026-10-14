@@ -82,6 +82,10 @@ describe('Lot 7B — même Projet prévisionnel et révisions commerciales',()=>
   expect(()=>f.projects.changeProjectStatus(original.id,'to_prepare')).toThrow(/réactivation interdite/);
   expect(state()).toEqual(beforeOldActions);
   expect(f.projects.commercial.findProject(revision.id)).toBe(next.id);
+  expect(f.projects.commercial.scope(next.id).currentQuoteId).toBe(revision.id);
+  const beforeCurrentSync=state();
+  expect(sync(next.id).id).toBe(next.id);
+  expect(state()).toEqual(beforeCurrentSync);
   expect(()=>f.projects.commercial.restart(original.id,review.sha256)).toThrow(/Projet prévisionnel actif/);
  });
  it('R07G-14 : revue périmée bloque la régénération sans aucune écriture SQL',()=>{
