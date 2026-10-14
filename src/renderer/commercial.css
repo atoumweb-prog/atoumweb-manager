@@ -1187,3 +1187,23 @@ body.catalog-resizing * {
   .catalog-view-switch { width: 100%; }
   .catalog-view-switch .secondary-button { flex: 1 1 190px; }
 }
+
+/* Published offer descriptions and inclusions: never derived from unpublished versions. */
+.catalog-overview-card-description {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+.catalog-overview-card-inclusions {
+  display: grid;
+  gap: 4px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.catalog-overview-card-inclusions > span { overflow-wrap: anywhere; }
