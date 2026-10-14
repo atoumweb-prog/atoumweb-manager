@@ -234,11 +234,25 @@ export class CatalogService {
           throw new Error('Le nom de catégorie a changé : vérifie le rattachement avant de créer.');
         categoryLabel = category.name;
       }
-      this.database.run(
+      // Some migration replay fixtures intentionally exercise CatalogService on a
+      // schema predating E95. Keep legacy creation working, but never accept a
+      // stable category ID without the registry column.
+      const hasCategoryRegistry = Boolean(this.database.get<{ name: string }>(
+        "SELECT name FROM pragma_table_info('catalog_items') WHERE name='category_id'",
+      ));
+      if (!hasCategoryRegistry && categoryId)
+        throw new Error('Référentiel de catégories indisponible : migration nécessaire.');
+      if (hasCategoryRegistry) this.database.run(
         `INSERT INTO catalog_items (
           id, item_type, name, category, category_id, status, visible_public, created_at, updated_at, archived_at, canonical_code, identity_provenance_json
         ) VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?, NULL, ?, ?)`,
         [id, input.type, name, categoryLabel, categoryId, input.visiblePublic ? 1 : 0, now, now, canonicalCode, identityProvenance ? JSON.stringify(identityProvenance) : null],
+      );
+      else this.database.run(
+        `INSERT INTO catalog_items (
+          id, item_type, name, category, status, visible_public, created_at, updated_at, archived_at, canonical_code, identity_provenance_json
+        ) VALUES (?, ?, ?, ?, 'active', ?, ?, ?, NULL, ?, ?)`,
+        [id,input.type,name,categoryLabel,input.visiblePublic ? 1 : 0,now,now,canonicalCode,identityProvenance ? JSON.stringify(identityProvenance) : null],
       );
       this.insertVersion(id, 1, firstVersion, now);
       if (categoryId) this.database.run(
