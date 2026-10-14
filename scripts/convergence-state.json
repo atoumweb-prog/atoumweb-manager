@@ -222,6 +222,24 @@
       [
         "scripts/check-ux01-packaged-relaunch.cjs"
       ]
+    ],
+    [
+      "workspace-preferences-and-escape",
+      [
+        "scripts/check-ux-v2-lot01f-workshop.cjs"
+      ]
+    ],
+    [
+      "rail-workshop",
+      [
+        "scripts/check-ux-v2-lot02a-workshop.cjs"
+      ]
+    ],
+    [
+      "header-workshop",
+      [
+        "scripts/check-ux-v2-lot02b-workshop.cjs"
+      ]
     ]
   ]
 }
