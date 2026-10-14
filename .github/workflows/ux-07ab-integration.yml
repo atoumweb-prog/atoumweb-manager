@@ -132,5 +132,5 @@ jobs:
         shell: pwsh
         timeout-minutes: 12
         run: |
-          npx vitest run src/main/commercial/QuoteService.test.ts src/main/projects/ProjectCommercialService.test.ts src/main/projects/ProjectBlueprintCompositionService.test.ts src/main/projects/ProjectContributionTargets.test.ts src/main/projects/OperationalCommercialPreparationService.test.ts src/main/projects/OperationalStagingService.test.ts src/main/projects/ProjectSiteService.test.ts --maxWorkers=1
+          npx vitest run src/main/commercial/QuoteService.test.ts src/main/projects/ProjectCommercialService.test.ts src/main/projects/ProjectBlueprintCompositionService.test.ts src/main/projects/ProjectContributionTargets.test.ts src/main/projects/OperationalCommercialPreparationService.test.ts src/main/projects/OperationalStagingService.test.ts src/main/projects/ProjectSiteService.test.ts src/main/time/TimeService.test.ts --maxWorkers=1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
