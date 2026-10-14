@@ -124,7 +124,7 @@ export function MaintenanceOveragePanel({ period, onMessage }: { period: Mainten
 
   if (!review || review.overageCount === 0) return null;
 
-  return <section className="maintenance-overage-box">
+  return <section className="maintenance-overage-box" data-period-id={period.id}>
     <div className="maintenance-overage-heading">
       <div><span className="eyebrow">Dépassement du forfait</span><strong>{review.overageCount} intervention(s) hors quota</strong></div>
       <span className={unresolved > 0 ? 'operation-priority priority-urgent' : 'operation-priority priority-low'}>{unresolved > 0 ? `${unresolved} à décider` : 'Décisions complètes'}</span>
@@ -133,7 +133,7 @@ export function MaintenanceOveragePanel({ period, onMessage }: { period: Mainten
     <div className="maintenance-overage-list">
       {candidates.map((candidate) => {
         const draft = drafts[candidate.interventionId] ?? defaultDraft(candidate);
-        return <div key={candidate.interventionId} className="maintenance-overage-item">
+        return <div key={candidate.interventionId} className="maintenance-overage-item" data-intervention-id={candidate.interventionId}>
           <div className="maintenance-overage-item-head">
             <div><strong>{candidate.interventionNumber} · {candidate.interventionSubject}</strong><small>{duration(candidate.totalTimeSeconds)} · {candidate.decision ? `Décision actuelle : ${DECISION_LABELS[candidate.decision.decision]}` : 'Aucune décision enregistrée'}</small></div>
           </div>
