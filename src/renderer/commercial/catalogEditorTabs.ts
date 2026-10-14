@@ -17,5 +17,6 @@ export function catalogTabHasVersionFields(tab: CatalogEditorTab): boolean {
 export function catalogTabAppliesToType(tab: CatalogEditorTab,type:'offer'|'service'): boolean {
   // Les compositions restent réservées aux offres ; les recommandations 04D
   // sont maintenant disponibles aussi sur les services.
+  if (tab === 'associations') return type === 'offer' || type === 'service';
   return true;
 }
