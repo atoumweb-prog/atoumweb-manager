@@ -3,6 +3,9 @@ import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations, getPendingMigrations } from '../database/migrations';
 import { CatalogService } from './CatalogService';
 import { CatalogCategoryService } from './CatalogCategoryService';
+import { QuoteService } from './QuoteService';
+import { CrmService } from '../crm/CrmService';
+import { ContractTermsService } from './ContractTermsService';
 
 let db: NodeSqliteAdapter;
 let catalog: CatalogService;
@@ -143,6 +146,33 @@ describe('04B E95 — administration transactionnelle et catégories historiques
     expect(catalog.getItem(a.id).category).toBe('Référencement');
     expect(catalog.getItem(b.id).category).toBe('SEO ');
     expect(categories.listLegacy().find(x=>x.rawValue==='SEO ')?.itemIds).toEqual([b.id]);
+  });
+
+  it('conserve les octets des lignes et snapshots Devis historiques lors du renommage', () => {
+    const item = catalog.create(
+      {type:'service',name:'Audit SEO',category:'SEO'},
+      {description:'Diagnostic de référencement',priceMode:'fixed',priceCents:14900,inclusions:['Rapport initial']},
+    );
+    catalog.publishVersion(item.versions[0].id);
+    const crm=new CrmService(db);
+    const terms=new ContractTermsService(db);
+    const quotes=new QuoteService(db,crm,terms);
+    const organization=crm.createOrganization({name:'Client fixture'});
+    const prospect=crm.createProspect({organizationId:organization.id,primaryNeed:'Visibilité'});
+    const quote=quotes.create({prospectId:prospect.id,subject:'Référencement de test'});
+    quotes.addCatalogLine(quote.id,item.versions[0].id);
+    // Historical accepted snapshot sentinel, without invoking external Abby or Project stages.
+    db.run("UPDATE quotes SET status='accepted',snapshot_locked_at='2026-10-14T08:00:00Z' WHERE id=?",[quote.id]);
+    const quoteBefore=db.get<Record<string,unknown>>('SELECT * FROM quotes WHERE id=?',[quote.id]);
+    const linesBefore=db.all<Record<string,unknown>>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY id',[quote.id]);
+    const versionsBefore=db.all<Record<string,unknown>>('SELECT * FROM catalog_versions WHERE item_id=?',[item.id]);
+    const category=categories.create('SEO et visibilité');
+    categories.reconcileLegacy('SEO',category.id,[item.id]);
+    categories.rename(category.id,'Référencement naturel',category.revision);
+    expect(db.get('SELECT * FROM quotes WHERE id=?',[quote.id])).toEqual(quoteBefore);
+    expect(db.all('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY id',[quote.id])).toEqual(linesBefore);
+    expect(db.all('SELECT * FROM catalog_versions WHERE item_id=?',[item.id])).toEqual(versionsBefore);
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
   it('toutes les opérations conservent intégrité FK, versions et tombstones', () => {
