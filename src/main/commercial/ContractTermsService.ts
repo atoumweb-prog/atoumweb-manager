@@ -527,6 +527,7 @@ export class ContractTermsService {
     // Locked legacy quotes must retain their historical absence, even with instances.
     if (this.hasSnapshot(state) || state.status !== 'draft' || state.finalized_at) return this.getQuoteBuild(quoteId);
     const payload=new QuoteContractPreparationService(this.database, this.documents).freezePayload(quoteId);
+    if(explicitCanonicalReview&&!payload)throw Error('Préparation du devis indispensable pour la validation canonique du contrat.');
     this.database.exec('SAVEPOINT quote_contract_freeze;');
     try {
     this.syncQuoteInternal(quoteId);
