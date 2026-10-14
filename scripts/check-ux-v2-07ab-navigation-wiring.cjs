@@ -19,6 +19,7 @@ const cases=[
  ['Project return retains production tree state',project.includes('returnContext?.projectId === id ? returnContext.productionTreeCollapsed : false')],
  ['Site/Page selection captured with Project return context',project.includes('sitesViewContext } } }))') && project.includes('onViewContextChange={setSitesViewContext}')],
  ['Site/Page view restores only existing Site and Page identities',sites.includes('initialViewContext?.selectedSiteId ?? null') && sites.includes('initialViewContext?.selectedPageId ?? null') && sites.includes('const siteStillExists') && sites.includes('const pageStillExists')],
+ ['Site/Page and timer mutations share same-tick concurrency gate',sites.includes('if (mutationPending.current) return false;') && (sites.match(/if \(!beginMutation\(\)\) return;/g) ?? []).length === 7],
  ['Independent page events clear stale return context',app.includes('visibleEntity.current=null;setQuoteReturnProjectId(null);setProjectReturnContext(null);')],
  ['Direct rail navigation clears Project workspace snapshot',app.includes('setProjectReturnContext(null);')],
  ['Provisional source Quote not falsely marked accepted',project.includes("project.commercialState === 'provisional' ? 'Devis non accepté'")],
