@@ -42,7 +42,7 @@ if(!process.versions.electron){
     const js=async code=>{const r=await win.webContents.executeJavaScript(`(async()=>{try{return{ok:true,value:await new Function('return ('+${JSON.stringify(code)}+')')()}}catch(e){return{ok:false,error:e.message}}})()`);if(!r.ok)throw Error(r.error+' / '+code);return r.value;};
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const wait=async code=>{for(let i=0;i<140;i++){if(await js(code))return;await sleep(40);}throw Error('UI timeout '+code);};
-    const click=async label=>{await wait(`[...document.querySelectorAll('button')].some(b=>b.textContent.trim()===${JSON.stringify(label)}&&!b.disabled)`);await js(`[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===${JSON.stringify(label)}&&!b.disabled).click()`);await sleep(100);};
+    const click=async label=>{const selector=label==='Bibliothèque contractuelle'?'strong':null;await wait(`[...document.querySelectorAll('button')].some(b=>(b.querySelector(${JSON.stringify(selector||'__no_match__')})?.textContent??b.textContent).trim()===${JSON.stringify(label)}&&!b.disabled)`);await js(`[...document.querySelectorAll('button')].find(b=>(b.querySelector(${JSON.stringify(selector||'__no_match__')})?.textContent??b.textContent).trim()===${JSON.stringify(label)}&&!b.disabled).click()`);await sleep(100);};
     const input=async(label,value)=>{await js(`(()=>{const e=document.querySelector('[aria-label="${label}"]');if(!e)throw Error('Input missing');Object.getOwnPropertyDescriptor(e.tagName==='SELECT'?HTMLSelectElement.prototype:e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event(e.tagName==='SELECT'?'change':'input',{bubbles:true}));})()`);await sleep(90);};
     const shot=async name=>{await sleep(120);fs.writeFileSync(path.join(output,name+'.png'),(await win.webContents.capturePage()).toPNG());};
     const go=async page=>{await js(`window.dispatchEvent(new CustomEvent('atoumweb:open-page',{detail:${JSON.stringify(page)}}))`);await sleep(100);};
@@ -204,6 +204,7 @@ if(!process.versions.electron){
       for(const issue of blocking){
         if(issue.code==='PUBLISHED_BASE_MISSING')continue;
         await js(`(()=>{document.querySelectorAll('.quote-contract-preparation details').forEach(d=>d.open=false);document.querySelector('.quote-finalization-check [data-issue-code="${issue.code}"]').click()})()`);
+        await js('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
         check(theme+' issue shortcut '+issue.code,await js('(()=>{const e=document.activeElement;return !!e.dataset.contractField&&!e.disabled&&[...e.closest(".quote-contract-preparation").querySelectorAll("details")].filter(d=>d.contains(e)).every(d=>d.open)})()'));
       }
       check(theme+' shortcuts do not change quote data',JSON.stringify(db.get('SELECT contract_parameters_json FROM quotes WHERE id=?',[q.id]))===JSON.stringify(rawBefore));

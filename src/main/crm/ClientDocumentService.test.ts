@@ -70,6 +70,25 @@ describe('preuve contractuelle rattachée', () => {
     expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
   });
 
+  it('interdit de supprimer une facture rattachée à la facturation, même archivée', () => {
+    const source = join(root, 'facture.pdf');
+    writeFileSync(source, '%PDF-1.4\\nFacture fictive de recette');
+    const doc = documents.importPaths(clientId, [source], { category: 'invoice', title: 'Facture test' })[0];
+    const path = documents.absolutePath(doc);
+    const bytes = readFileSync(path);
+    const now = new Date().toISOString();
+    database.run(
+      "INSERT INTO billing_items (id,client_account_id,source_type,source_id,source_key,description,expected_amount_cents,theoretical_value_cents,status,invoice_document_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+      ['lot09-linked-bill', clientId, 'other', 'lot09-test', 'lot09-test-invoice', 'Facture fictive', 10000, 10000, 'invoiced', doc.id, now, now],
+    );
+    expect(() => documents.deletePermanently(doc.id)).toThrow(/facture PDF.*rattachée/);
+    documents.archive(doc.id);
+    expect(() => documents.deletePermanently(doc.id)).toThrow(/facture PDF.*rattachée/);
+    expect(readFileSync(path)).toEqual(bytes);
+    expect(documents.get(doc.id).missing).toBe(false);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
   it('conserve la suppression explicite d’un document sans rattachement contractuel', () => {
     const doc = importPdf();
     const path = documents.absolutePath(doc);
@@ -77,4 +96,66 @@ describe('preuve contractuelle rattachée', () => {
     expect(existsSync(path)).toBe(false);
     expect(() => documents.get(doc.id)).toThrow(/introuvable/);
   });
+
+  it('conserve une ancienne facture Abby remplacée même si elle est archivée', () => {
+    const source = join(root, 'ancienne-facture.pdf');
+    writeFileSync(source, '%PDF-1.4\\nFacture historique fictive');
+    const doc = documents.importPaths(clientId, [source], { category: 'invoice', title: 'Ancienne facture' })[0];
+    const path = documents.absolutePath(doc);
+    const bytes = readFileSync(path);
+    const now = new Date().toISOString();
+    database.run(
+      "INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)",
+      ['billing_item', 'billing-history-test', 'billing_invoice_replaced', 'Remplacement Abby',
+        JSON.stringify({ previousDocumentId: doc.id, currentDocumentId: 'new-invoice-id' }), now],
+    );
+    documents.archive(doc.id);
+    expect(() => documents.deletePermanently(doc.id)).toThrow(/historique de facturation Abby/);
+    expect(readFileSync(path)).toEqual(bytes);
+    expect(documents.get(doc.id).archivedAt).toBeTruthy();
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+
+  it('détecte une facture modifiée après son empreinte et refuse son ouverture', () => {
+    const source = join(root, 'facture-integrite.pdf');
+    writeFileSync(source, '%PDF-1.4\\nFacture Abby de test');
+    const document = documents.importPaths(clientId, [source], { category: 'invoice', title: 'Facture à contrôler' })[0];
+    const original = documents.absolutePath(document);
+    expect(documents.fingerprint(document.id)).toMatch(/^[a-f0-9]{64}$/);
+    expect(documents.verifiedPath(document.id)).toBe(original);
+    writeFileSync(original, '%PDF-1.4\\nContenu modifié');
+    expect(() => documents.fingerprint(document.id)).toThrow(/empreinte SHA-256 différente/);
+    expect(() => documents.verifiedPath(document.id)).toThrow(/empreinte SHA-256 différente/);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('annule les métadonnées et l’archivage si le journal client refuse l’écriture', () => {
+    const doc = importPdf();
+    const before = documents.get(doc.id);
+    const source = documents.absolutePath(doc.id);
+    const bytes = readFileSync(source);
+    database.exec(`CREATE TRIGGER reject_document_metadata BEFORE INSERT ON activity_events
+      WHEN NEW.entity_id='${clientId}' AND NEW.action='document_updated'
+      BEGIN SELECT RAISE(ABORT, 'historique des métadonnées indisponible'); END;`);
+    expect(() => documents.update(doc.id,{
+      category:'legal', title:'Titre sans journal', retentionUntil:'2027-01-01',
+    })).toThrow(/historique des métadonnées indisponible/);
+    expect(documents.get(doc.id)).toEqual(before);
+    database.exec('DROP TRIGGER reject_document_metadata');
+    database.exec(`CREATE TRIGGER reject_document_archive BEFORE INSERT ON activity_events
+      WHEN NEW.entity_id='${clientId}' AND NEW.action='document_archived'
+      BEGIN SELECT RAISE(ABORT, 'historique archivage indisponible'); END;`);
+    expect(() => documents.archive(doc.id,true)).toThrow(/historique archivage indisponible/);
+    expect(documents.get(doc.id)).toEqual(before);
+    database.exec('DROP TRIGGER reject_document_archive');
+    const archived=documents.archive(doc.id,true);
+    expect(archived.archivedAt).toBeTruthy();
+    expect(documents.archive(doc.id,true)).toEqual(archived);
+    expect(readFileSync(source)).toEqual(bytes);
+    documents.archive(doc.id,false);
+    expect(documents.get(doc.id).sha256).toBe(before.sha256);
+    expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
 });

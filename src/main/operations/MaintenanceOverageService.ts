@@ -133,6 +133,13 @@ export class MaintenanceOverageService {
     if (input.decision === 'bill_out_of_scope' && expectedAmount <= 0) throw new Error('Indique le montant à facturer pour ce dépassement.');
 
     const existing = this.database.get<{ id: string }>('SELECT id FROM maintenance_overage_decisions WHERE intervention_id=?', [input.interventionId]);
+    if (existing) {
+      const invoiced = this.database.get<{ id: string }>(
+        "SELECT id FROM billing_items WHERE source_key=? AND invoice_document_id IS NOT NULL",
+        [`maintenance_overage:${existing.id}`],
+      );
+      if (invoiced) throw new Error('Facture PDF déjà rattachée : la décision de dépassement ne peut plus être modifiée.');
+    }
     const id = existing?.id ?? randomUUID();
     const now = nowIso();
     if (existing) {

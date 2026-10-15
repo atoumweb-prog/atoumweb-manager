@@ -136,6 +136,19 @@ export function quoteContractText(build: QuoteContractBuild): string {
   return build.compiledText;
 }
 
+/** Disposable review session: Word bytes never reach the renderer. */
+export interface WordDraftPreview {
+  sessionId:string;
+  clauseId:string;
+  sourceVersionId:string;
+  changed:boolean;
+  paragraphs:Array<{kind:'unchanged'|'added'|'removed';text:string;beforeIndex:number|null;afterIndex:number|null}>;
+  warnings:string[];
+  lossy:boolean;
+  importedFileName:string;
+}
+export interface WordDraftExportResult { cancelled:boolean;fileName?:string; }
+
 export interface ContractTermsApi {
   sectionReviews: {
     get(versionId:string):Promise<ContractSectionReview>;
@@ -147,6 +160,11 @@ export interface ContractTermsApi {
     get(id: string): Promise<ContractClauseTemplate>;
     create(input: ContractClauseTemplateInput, firstVersion: ContractClauseVersionInput): Promise<ContractClauseTemplate>;
     createVersion(clauseId: string, input: ContractClauseVersionInput): Promise<ContractClauseVersion>;
+    exportWordDraft(clauseId:string,versionId:string):Promise<WordDraftExportResult>;
+    exportWorkingPdf(clauseId:string,versionId:string):Promise<WordDraftExportResult>;
+    importWordDraft(clauseId:string,versionId:string):Promise<WordDraftPreview|null>;
+    approveWordDraft(sessionId:string):Promise<ContractClauseVersion>;
+    cancelWordDraft(sessionId:string):Promise<void>;
     publishVersion(versionId: string): Promise<ContractClauseTemplate>;
     setStatus(id: string, status: ContractClauseStatus): Promise<ContractClauseTemplate>;
     setAudience(id: string, audience: ContractClauseAudience): Promise<ContractClauseTemplate>;

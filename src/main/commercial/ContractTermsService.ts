@@ -11,6 +11,7 @@ import type { CommercialVersionRules } from '../../shared/commercialRules';
 import { QuoteContractPreparationService } from './QuoteContractPreparationService';
 import type { ClientDocumentService } from '../crm/ClientDocumentService';
 import { randomUUID } from 'node:crypto';
+import { compareWordDraftText, type WordDraftManifest } from './wordDraftReview';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import {
   CONTRACT_CLAUSE_AUDIENCES,
@@ -225,6 +226,45 @@ export class ContractTermsService {
     const row = this.database.get<VersionRow>('SELECT * FROM contract_clause_versions WHERE id=?', [id]);
     if (!row) throw new Error('Version contractuelle introuvable après création.');
     return this.mapVersion(row);
+  }
+
+  /**
+   * Human-approved DOCX text is saved as a new draft, never as an edit of the
+   * source version. Re-check ownership and version inside the main process.
+   */
+  createReviewedWordDraft(manifest: WordDraftManifest, body: string): ContractClauseVersion {
+    if(!manifest || typeof body !== 'string')throw Error('Révision Word invalide.');
+    const template=this.getTemplate(manifest.clauseId);
+    if(template.status==='archived')throw Error('Clause archivée : révision Word refusée.');
+    const source=template.versions.find(version=>version.id===manifest.versionId);
+    if(!source)throw Error('Version Word source introuvable.');
+    // First-created draft after an export invalidates that export, preventing
+    // double acceptance and "last import wins" on concurrent revisions.
+    if(template.versions[0]?.id!==source.id)throw Error('Conflit : une version plus récente existe. Réexporte le dernier brouillon.');
+    const review=compareWordDraftText(manifest,
+      {kind:'contract_clause',clauseId:template.id,versionId:source.id,status:source.status,body:source.body},body);
+    if(!review.changed)throw Error('Aucune modification textuelle à enregistrer.');
+    const now=new Date().toISOString();
+    this.database.exec('SAVEPOINT contract_word_review');
+    try{
+      const version=this.createVersion(template.id,{body});
+      this.database.run(
+        'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+        ['contract_clause',template.id,'contract_word_draft_approved',
+          'Révision Word approuvée en nouvelle version brouillon : '+template.code,
+          JSON.stringify({previousVersionId:source.id,newVersionId:version.id,
+            sourceSha256:manifest.sourceSha256,exportId:manifest.exportId,
+            added:review.paragraphs.filter(item=>item.kind==='added').length,
+            removed:review.paragraphs.filter(item=>item.kind==='removed').length,
+            limits:review.warnings}),now],
+      );
+      this.database.exec('RELEASE SAVEPOINT contract_word_review');
+      return version;
+    }catch(error){
+      this.database.exec('ROLLBACK TO SAVEPOINT contract_word_review');
+      this.database.exec('RELEASE SAVEPOINT contract_word_review');
+      throw error;
+    }
   }
 
   publishVersion(versionId: string): ContractClauseTemplate {

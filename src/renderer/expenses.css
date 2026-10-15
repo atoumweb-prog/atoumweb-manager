@@ -580,3 +580,22 @@ body.expenses-resizing {
     min-width: 220px;
   }
 }
+
+
+.expense-overdue-indicator {
+  display: inline-block;
+  margin-top: 3px;
+  color: var(--text);
+  font-size: var(--aw-font-functional, 14px);
+  font-weight: 650;
+}
+.expense-overdue-warning {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font-weight: 600;
+}

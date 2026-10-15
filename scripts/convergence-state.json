@@ -1,11 +1,41 @@
 {
-  "phase": "08",
+  "phase": "09",
   "nativeChecks": [
     [
-      "operations",
+      "billing",
       [
         "scripts/check-ux-v2-lot01a-real-ui.cjs",
-        "--lot08a"
+        "--lot09b"
+      ]
+    ],
+    [
+      "expenses",
+      [
+        "scripts/check-ux-v2-lot01a-real-ui.cjs",
+        "--lot09c"
+      ]
+    ],
+    [
+      "documents",
+      [
+        "scripts/check-ux-v2-lot01a-real-ui.cjs",
+        "--lot09d"
+      ]
+    ],
+    [
+      "word-review",
+      [
+        "scripts/check-ux-v2-lot01a-real-ui.cjs",
+        "--lot09e"
+      ]
+    ],
+    [
+      "contracts-native",
+      [
+        "scripts/check-contract-library-ui.cjs",
+        "--output",
+        "{out}/contract-captures",
+        "--ux05b"
       ]
     ],
     [

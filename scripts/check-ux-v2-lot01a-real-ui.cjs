@@ -10,7 +10,7 @@ const samples=['Accueil','Prospection','Devis','Projets','Interventions & Mainte
 const assert=(ok,msg)=>{if(!ok)throw Error(msg);};
 const normalize=v=>process.platform==='win32'?v.toLowerCase():v;
 const owned=dir=>!!dir&&fs.existsSync(dir)&&path.basename(dir).startsWith(prefix)&&normalize(fs.realpathSync.native(path.dirname(dir)))===normalize(fs.realpathSync.native(os.tmpdir()));
-const {lot03b,lot08a,searchOnly,captureFolder}=require(path.join(repo,'scripts','fixtures','native-recipe-args.cjs'))(process.argv.slice(2));
+const {lot03b,lot08a,lot09b,lot09c,lot09d,lot09e,searchOnly,captureFolder}=require(path.join(repo,'scripts','fixtures','native-recipe-args.cjs'))(process.argv.slice(2));
 const captureArg=process.argv.indexOf('--captures');
 if(captureArg>=0){
  const folder=captureFolder;assert(path.isAbsolute(folder)&&!/validation-msi/i.test(folder)&&!fs.existsSync(folder),'Use a new absolute capture directory outside Validation-MSI.');
@@ -186,6 +186,34 @@ if(!process.versions.electron){
     test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','08A TEMP SQLite integrity');
     test(db.database.all('PRAGMA foreign_key_check').length===0,'08A TEMP foreign keys');
     console.log('[UXV2 08A LIVE] PASSED '+checks+' native assertions; TEMP only');
+    return;
+  }
+  if(lot09b){
+    await require('./fixtures/lot09b-billing-real-scenarios.cjs')({win,db,temp,workspace,registered,evalUI,get,wait,navigate,select,test,sleep});
+    test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','09B live SQLite integrity');
+    test(db.database.all('PRAGMA foreign_key_check').length===0,'09B live SQLite foreign keys');
+    console.log('[UXV2 09B LIVE] PASSED '+checks+' native assertions; isolated TEMP only');
+    return;
+  }
+  if(lot09c){
+    await require('./fixtures/lot09c-expenses-real-scenarios.cjs')({win,db,temp,workspace,registered,evalUI,get,wait,navigate,select,test,sleep});
+    test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','09C live SQLite integrity');
+    test(db.database.all('PRAGMA foreign_key_check').length===0,'09C live SQLite foreign keys');
+    console.log('[UXV2 09C LIVE] PASSED '+checks+' native assertions; isolated TEMP only');
+    return;
+  }
+  if(lot09d){
+    await require('./fixtures/lot09d-documents-real-scenarios.cjs')({win,db,temp,workspace,registered,evalUI,get,wait,navigate,select,test,sleep});
+    test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','09D live SQLite integrity');
+    test(db.database.all('PRAGMA foreign_key_check').length===0,'09D live SQLite foreign keys');
+    console.log('[UXV2 09D LIVE] PASSED '+checks+' native assertions; isolated TEMP only');
+    return;
+  }
+  if(lot09e){
+    await require('./fixtures/lot09e-word-real-scenarios.cjs')({win,db,temp,evalUI,get,wait,navigate,select,test,sleep});
+    test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','09E SQLite integrity');
+    test(db.database.all('PRAGMA foreign_key_check').length===0,'09E SQLite foreign key checks');
+    console.log('[UXV2 09E LIVE] PASSED '+checks+' native Word assertions; TEMP only');
     return;
   }
   if(lot03b){

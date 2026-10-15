@@ -115,7 +115,16 @@ function App() {
       visibleEntity.current=id?{type,id}:null;
       pending.resolve({status:'opened'});
       setMessage((pending.result.title||'Fiche')+' : fiche chargée.');
-      if(id)requestAnimationFrame(()=>document.querySelector<HTMLElement>('[data-search-entity-id="'+CSS.escape(id)+'"][data-search-entity-type="'+type+'"]')?.focus({preventScroll:true}));
+      if(id){
+        const epoch=navigationEpoch.current;
+        requestAnimationFrame(()=>{
+          if(epoch!==navigationEpoch.current||visibleEntity.current?.type!==type||visibleEntity.current.id!==id)return;
+          const pane=document.querySelector<HTMLElement>('[data-search-entity-id="'+CSS.escape(id)+'"][data-search-entity-type="'+type+'"]');
+          // A field selected after loading owns focus; a delayed search acknowledgement must not take it back.
+          if(pane?.contains(document.activeElement)&&document.activeElement!==pane&&document.activeElement?.matches('input,textarea,select,[contenteditable=true],[data-contract-field]'))return;
+          pane?.focus({preventScroll:true});
+        });
+      }
     }else visibleEntity.current=!error&&id?{type,id}:null;
   },[]);
   useEffect(()=>()=>cancelSearchNavigation(),[cancelSearchNavigation]);
