@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/10/2026 — Convergence04–09 intégrée, candidat10 et nouveau workspace V2
+
+PR148 à152 fusionnées normalement après CI verte ; mainf72ddc9f contient04–09. PR sources conservées. Candidat10 préserve filtres de facturation/cohortes exactes, retour Projet/Devis, UX-01 et contrats05/09. Tests et preuves empaquetées dans le [bilan de convergence](docs/ux-v2/CONVERGENCE-04-10-2026-10-15.md). Validation finale35 recettes/typecheck/1453 tests à relever au SHA du candidat puis en CI.
+
+Utilisateur choisit un nouveau workspace réunissant contrats récents et226 temps/6 pauses historiques ; rapprochement sur copie vérifié par service réel et interface empaquetée. Originaux, profils et lanceurs existants inchangés. Nouveau workspace persistant en préparation, pas de bascule quotidienne implicite. Recette humaine/juridique et réserves externes maintenues.
+
+
+## 15/10/2026 — Convergence10 et parcours statistiques
+
+Source130 fc054e73 reprise avec son historique10A–E. Cohortes exactes10B combinées aux filtres09, protections de saisie facture et retour Projet/Devis07. Préférences10D et garde workspace/restauration existante conservées. Aucun changement de migration ou de durée historique. Les102 scénarios10 restent une matrice de couverture (42 traces,43 partiels,17 humains/intégration), pas102 réussites présumées. Recettes natives, couverture, UX-01 et restauration exigées sur candidat propre.
+
 ## 15/10/2026 — Correction du workflow candidat09
 
 CI1799 refusée avant création de jobs : l’étape08A avait perdu son bloc run lors du rapprochement, déplacé sous un doublon mal nommé03B. Rétablissement exact des commandes08A et suppression du seul doublon ; étape03B originale conservée. Validation locale actionlint1.7.12 et parsing YAML réussis. Aucun test, délai, service ou migration modifié. Nouvelle CI candidate nécessaire ; la précédente n’a exécuté aucun test.
@@ -88,6 +99,10 @@ Recette finale du SHA porteur à exécuter avant publication, résultats exacts 
 - **09A = Validé techniquement**, sous réserve de la recette humaine et de la revue finale d'intégration. `main` à `cc0bc679` lors du contrôle ; PR déclarée mergeable par GitHub mais aucun rebase ni merge réalisé.
 - Prochaine étape 09B : auditer les parcours sources→Abby→facture PDF, références client et états, puis introduire uniquement les corrections minimales justifiées par des tests, sans émettre de facture dans le Manager. 09C–09F restent cadrés/non livrés.
 
+## 14/10/2026 — Convergence technique UX/UI V2 lot 10, candidat isolé
+
+- Source main cc0bc679 ; 10A+10B PR #125/#126 f56cf381, 10C PR #127 33095a38 (validation de la dernière CI à vérifier), 10D PR #128 c69a0c78. Copie des blobs exacts de leurs fichiers applicatifs sur une branche de convergence dédiée ; aucun service de restauration ou schéma modifié. [Gates de recette](docs/ux-v2/LOT-10E-GATES-2026-10-14.md).
+- Aucun test ni recette du **candidat combiné** n'a été déclaré réussi. CI TypeScript/Vitest, Electron Windows/UX-01 et restore round-trip TEMP exigés au HEAD exact avant toute conclusion ou demande de fusion. Aucune donnée Validation-MSI ni workspace de production utilisée.
 
 ## 14/10/2026 — Dernier cas de focus : ligne toujours masquée
 

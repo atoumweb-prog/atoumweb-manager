@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { BillingItem } from '../../shared/billing';
 import type { QuoteSummary } from '../../shared/commercial';
 import type { ClientSummary, ProspectSummary } from '../../shared/crm';
@@ -8,13 +8,20 @@ import type { Intervention } from '../../shared/operations';
 import type { ProjectSummary } from '../../shared/projects';
 import {
   inStatisticsRange,
-  previousStatisticsPeriodRange,
+  isStatisticsPipelineProspect,
+  sortStatisticsClients,
+  type StatisticsClientSortColumn,
+  statisticsQuoteAcceptancePercent,
+  statisticsSelectionRanges,
   statisticsDelta,
   statisticsPeriodRange,
-  type StatisticsPeriod,
+  type StatisticsPeriodSelection,
   type StatisticsRange,
 } from '../../shared/statistics';
+import { validateAnalyticsCustomPeriod, type AnalyticsPeriodPreset } from '../../shared/analytics';
 import { TIME_CATEGORIES, type TimeCategory, type TimeSession } from '../../shared/time';
+import { buildStatisticsEvidence, statisticsEvidenceTotal, type StatisticsEvidenceKey, type StatisticsEvidenceRow } from '../../shared/statisticsEvidence';
+import { createStatisticsDrilldown, type StatisticsDrilldownKind } from '../../shared/statisticsDrilldown';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 import { StatisticsPage as Phase7StatisticsPage } from '../analytics/StatisticsPage';
 import './StatisticsPage.css';
@@ -57,7 +64,6 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 const PIPELINE = [
-  { stages: ['new'], label: 'Besoin à identifier', tone: 'blue' },
   { stages: ['qualifying', 'need_identified'], label: 'À qualifier', tone: 'purple' },
   { stages: ['quote_to_prepare', 'quote_to_send', 'quote_sent'], label: 'Devis', tone: 'green' },
   { stages: ['follow_up', 'waiting'], label: 'À relancer', tone: 'yellow' },
@@ -82,8 +88,8 @@ function hours(seconds: number): string {
   return value.toLocaleString('fr-FR', { maximumFractionDigits: value < 10 ? 1 : 0 }) + ' h';
 }
 
-function pct(value: number): string {
-  return value.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %';
+function pct(value: number | null): string {
+  return value === null ? '—' : value.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %';
 }
 
 function sum<T>(items: T[], selector: (item: T) => number): number {
@@ -119,11 +125,16 @@ function openPage(page: string): void {
 
 export function StatisticsPage({ onMessage }: { onMessage: (message: string) => void }) {
   const [data, setData] = useState<StatisticsData | null>(null);
+  const requestVersion = useRef(0);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<StatisticsPeriod>('month');
+  const [period, setPeriod] = useState<StatisticsPeriodSelection>({ preset: 'month' });
+  const [customDates, setCustomDates] = useState({ from: '', to: '' });
   const [tab, setTab] = useState<StatisticsTab>('overview');
+  const [clientSort, setClientSort] = useState<StatisticsClientSortColumn>('invoiced');
+  const [expandedKpi, setExpandedKpi] = useState<StatisticsEvidenceKey | null>(null);
 
   async function load(): Promise<void> {
+    const request = ++requestVersion.current;
     setLoading(true);
     try {
       const [prospects, clients, quotes, projects, sessions, billing, expenses, interventions] = await Promise.all([
@@ -136,11 +147,12 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         window.atoumweb.expenses.list(),
         window.atoumweb.operations.interventions.list({ includeArchived: true }),
       ]);
+      if (request !== requestVersion.current) return;
       setData({ prospects, clients, quotes, projects, sessions, billing, expenses, interventions });
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de charger les statistiques.');
+      if (request === requestVersion.current) onMessage(error instanceof Error ? error.message : 'Impossible de charger les statistiques.');
     } finally {
-      setLoading(false);
+      if (request === requestVersion.current) setLoading(false);
     }
   }
 
@@ -151,14 +163,20 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     window.addEventListener('atoumweb:time-changed', refresh);
     window.addEventListener('atoumweb:intervention-updated', refresh);
     return () => {
+      requestVersion.current += 1;
       window.removeEventListener('atoumweb:changed', refresh);
       window.removeEventListener('atoumweb:time-changed', refresh);
       window.removeEventListener('atoumweb:intervention-updated', refresh);
     };
   }, []);
 
-  const range = useMemo(() => statisticsPeriodRange(period), [period]);
-  const previousRange = useMemo(() => previousStatisticsPeriodRange(period), [period]);
+  const invalidCustomPeriod = period.preset === 'custom'
+    ? (!period.from || !period.to ? 'Renseigne les deux dates pour afficher les statistiques.' : validateAnalyticsCustomPeriod(period))
+    : null;
+  const selectedRanges = useMemo(() => statisticsSelectionRanges(period), [period]);
+  const range = selectedRanges?.current ?? statisticsPeriodRange('all');
+  const previousRange = selectedRanges?.previous ?? null;
+
 
   if (loading && !data) {
     return <div className="panel statistics-loading"><OperationIcon name="chart" size={30} /><strong>Calcul des statistiques…</strong><span>Les indicateurs sont dérivés des données métier.</span></div>;
@@ -169,8 +187,8 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
 
   const newProspects = ranged(data.prospects, range, (item) => item.createdAt);
   const previousProspects = previousRange ? ranged(data.prospects, previousRange, (item) => item.createdAt) : [];
-  const won = ranged(data.prospects, range, (item) => item.wonAt);
-  const lost = ranged(data.prospects, range, (item) => item.lostAt);
+  const won = ranged(data.prospects.filter((item) => item.stage === 'won'), range, (item) => item.wonAt);
+  const lost = ranged(data.prospects.filter((item) => item.stage === 'lost'), range, (item) => item.lostAt);
 
   const quotes = ranged(data.quotes, range, (item) => item.createdAt);
   const previousQuotes = previousRange ? ranged(data.quotes, previousRange, (item) => item.createdAt) : [];
@@ -178,6 +196,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
   const accepted = ranged(acceptedAll, range, (item) => item.acceptedAt);
   const previousAccepted = previousRange ? ranged(acceptedAll, previousRange, (item) => item.acceptedAt) : [];
   const refused = ranged(data.quotes.filter((item) => item.status === 'refused'), range, (item) => item.refusedAt);
+  const expired = ranged(data.quotes.filter((item) => item.status === 'expired'), range, (item) => item.expiredAt);
 
   const projectsCreated = ranged(data.projects, range, (item) => item.createdAt);
   const previousProjects = previousRange ? ranged(data.projects, previousRange, (item) => item.createdAt) : [];
@@ -203,12 +222,12 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
   const readyBilling = data.billing.filter((item) => item.status === 'ready' || item.status === 'planned');
   const readyAmount = sum(readyBilling, (item) => item.expectedAmountCents);
 
-  const activeProspects = data.prospects.filter((item) => !item.archivedAt && !['won', 'lost'].includes(item.stage || 'new'));
+  const activeProspects = data.prospects.filter((item) => isStatisticsPipelineProspect(item.stage, item.archivedAt));
   const activeProjects = data.projects.filter((item) => ['to_prepare', 'in_progress', 'waiting_client', 'blocked', 'to_validate'].includes(item.status));
   const activeInterventions = data.interventions.filter((item) => ['planned', 'in_progress', 'waiting_client', 'blocked', 'to_validate'].includes(item.status));
-  const acceptanceRate = ratio(accepted.length, accepted.length + refused.length);
-  const conversionRate = ratio(won.length, won.length + lost.length);
-  const offeredValue = Math.max(0, sum(accepted, (item) => item.catalogValueCents) - signed);
+  const acceptanceRate = statisticsQuoteAcceptancePercent(accepted.length, refused.length, expired.length);
+  const conversionRate = won.length + lost.length ? ratio(won.length, won.length + lost.length) : null;
+  const offeredValue = sum(accepted, (item) => Math.max(0, item.catalogValueCents - item.contractValueCents));
 
   const pipelineRows = PIPELINE.map((entry) => ({
     ...entry,
@@ -245,8 +264,16 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     ready: sum(readyBilling.filter((item) => item.clientAccountId === client.id), (item) => item.expectedAmountCents),
     projects: activeProjects.filter((item) => item.clientAccountId === client.id).length,
     interventions: data.interventions.filter((item) => item.clientAccountId === client.id && !['archived', 'cancelled'].includes(item.status)).length,
-  })).filter((item) => item.seconds || item.invoiced || item.ready || item.projects || item.interventions)
-    .sort((a, b) => (b.seconds + b.invoiced * 20) - (a.seconds + a.invoiced * 20)).slice(0, 8);
+  })).filter((item) => item.seconds || item.invoiced || item.ready || item.projects || item.interventions);
+  const rankedClientRows = sortStatisticsClients(clientRows, clientSort).slice(0, 8);
+
+  const evidence = buildStatisticsEvidence({
+    acceptedQuotes: accepted,
+    invoices,
+    sessions,
+    newClients,
+  });
+  const selectedEvidence = expandedKpi ? evidence[expandedKpi] : null;
 
   const financial = [
     { label: 'Contractuel signé', value: signed, display: money(signed), tone: 'blue' },
@@ -267,29 +294,59 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         <Tab active={tab === 'commercial'} icon="user" label="Commercial" onClick={() => setTab('commercial')} />
         <Tab active={tab === 'production'} icon="folder" label="Projets & temps" onClick={() => setTab('production')} />
         <Tab active={tab === 'clients'} icon="wallet" label="Clients" onClick={() => setTab('clients')} />
-        <Tab active={tab === 'analytics'} icon="chart" label="Rentabilité & analyse détaillée" onClick={() => setTab('analytics')} />
+        <Tab active={tab === 'analytics'} icon="chart" label="Analyse financière & rendement" onClick={() => setTab('analytics')} />
       </div>
-      {tab !== 'analytics' && <div className="statistics-period">
-        <span>{range.label}</span>
-        <select value={period} onChange={(event) => setPeriod(event.target.value as StatisticsPeriod)}>
-          <option value="month">Ce mois</option>
-          <option value="quarter">Ce trimestre</option>
-          <option value="year">Cette année</option>
-          <option value="all">Toutes les données</option>
-        </select>
+      <div className="statistics-period">
+        <span>{invalidCustomPeriod ? 'Dates à compléter' : range.label}</span>
+        <label>Période
+          <select aria-label="Période statistique commune" value={period.preset} onChange={(event) => {
+            const value = event.target.value;
+            if (value === 'all') setPeriod({ preset: 'all' });
+            else if (value === 'custom') setPeriod({ preset: 'custom', ...customDates });
+            else setPeriod({ preset: value as AnalyticsPeriodPreset });
+          }}>
+            <option value="today">Aujourd’hui</option>
+            <option value="week">Cette semaine</option>
+            <option value="month">Ce mois</option>
+            <option value="quarter">Ce trimestre</option>
+            <option value="year">Cette année</option>
+            <option value="previous_year">Année précédente</option>
+            <option value="custom">Dates personnalisées</option>
+            <option value="all">Toutes les données</option>
+          </select>
+        </label>
+        {period.preset === 'custom' && <div className="statistics-custom-dates">
+          <label>Du<input type="date" value={period.from ?? ''} onChange={(event) => {
+            const from = event.target.value;
+            setCustomDates((current) => ({ ...current, from }));
+            setPeriod((current) => current.preset === 'custom' ? { ...current, from } : current);
+          }} /></label>
+          <label>Au<input type="date" value={period.to ?? ''} onChange={(event) => {
+            const to = event.target.value;
+            setCustomDates((current) => ({ ...current, to }));
+            setPeriod((current) => current.preset === 'custom' ? { ...current, to } : current);
+          }} /></label>
+        </div>}
         <button className="secondary-button" type="button" onClick={() => void load()}><OperationIcon name="refresh" size={16} /> Actualiser</button>
-      </div>}
+      </div>
     </div>
 
-    {tab === 'analytics' && <Phase7StatisticsPage onMessage={onMessage} />}
+    {invalidCustomPeriod && <p role="alert" className="statistics-period-warning">{invalidCustomPeriod} Aucun chiffre d'une autre période n'est présenté.</p>}
+    {!invalidCustomPeriod && tab === 'analytics' && period.preset === 'all' && <p role="status" className="statistics-period-warning">La vue analytique nécessite des dates définies pour calculer les comparaisons. Les autres onglets affichent bien toutes les données ; choisis une période datée pour ouvrir les analyses détaillées.</p>}
+    {!invalidCustomPeriod && tab === 'analytics' && period.preset !== 'all' && <Phase7StatisticsPage onMessage={onMessage} externalPeriod={period} hidePeriodControls />}
 
-    {tab === 'overview' && <>
+    {!invalidCustomPeriod && tab === 'overview' && <>
       <div className="statistics-kpis">
-        <Kpi icon="wallet" label="Contractuel signé" value={money(signed)} comparison={comparison(signed, previousSigned)} />
-        <Kpi icon="receipt" label="Facturé suivi" value={money(invoiced)} comparison={comparison(invoiced, previousInvoiced)} />
-        <Kpi icon="clock" label="Temps travaillé" value={hours(seconds)} comparison={comparison(seconds, previousSeconds)} />
-        <Kpi icon="user" label="Nouveaux clients" value={String(newClients.length)} comparison={comparison(newClients.length, previousClients.length)} />
+        <Kpi icon="wallet" label="Contractuel signé" value={money(signed)} comparison={comparison(signed, previousSigned)}
+          expanded={expandedKpi === 'signed'} onInspect={() => setExpandedKpi((value) => value === 'signed' ? null : 'signed')} />
+        <Kpi icon="receipt" label="Facturé suivi" value={money(invoiced)} comparison={comparison(invoiced, previousInvoiced)}
+          expanded={expandedKpi === 'invoiced'} onInspect={() => setExpandedKpi((value) => value === 'invoiced' ? null : 'invoiced')} />
+        <Kpi icon="clock" label="Temps travaillé" value={hours(seconds)} comparison={comparison(seconds, previousSeconds)}
+          expanded={expandedKpi === 'time'} onInspect={() => setExpandedKpi((value) => value === 'time' ? null : 'time')} />
+        <Kpi icon="user" label="Nouveaux clients" value={String(newClients.length)} comparison={comparison(newClients.length, previousClients.length)}
+          expanded={expandedKpi === 'clients'} onInspect={() => setExpandedKpi((value) => value === 'clients' ? null : 'clients')} />
       </div>
+      {expandedKpi && selectedEvidence && <StatisticsEvidencePanel kind={expandedKpi} rows={selectedEvidence} periodLabel={range.label} />}
       <div className="statistics-main-grid">
         <article className="panel statistics-card">
           <CardTitle eyebrow="Finances" title="Repères de la période" action="Voir facturation →" onClick={() => openPage('Facturation')} />
@@ -298,7 +355,8 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         </article>
         <article className="panel statistics-card">
           <CardTitle eyebrow="Temps" title="Répartition facturable" action="Voir les temps →" onClick={() => openPage('Gestion des temps')} />
-          <div className="statistics-time">
+          <p className="statistics-note">Temps net regroupé par date de début de session : une session traversant deux périodes n’est pas divisée. Temps facturable ne signifie pas temps facturé.</p>
+           <div className="statistics-time">
             <div className={'statistics-donut' + (hasRecordedTime ? '' : ' no-data')} style={donutStyle}><span><strong>{hasRecordedTime ? pct(billableRatio) : '0 h'}</strong><small>{hasRecordedTime ? 'facturable' : 'aucun temps'}</small></span></div>
             <div className="statistics-legend">
               <div><i className="billable" /><span>Facturable</span><strong>{hours(billableSeconds)}</strong></div>
@@ -309,34 +367,40 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
         </article>
       </div>
       <div className="statistics-snapshots">
-        <Snapshot icon="user" label="Prospects actifs" value={activeProspects.length} helper={countLabel(newProspects.length, 'nouveau prospect', 'nouveaux prospects') + ' sur la période'} onClick={() => openPage('Prospects')} />
+        <Snapshot icon="user" label="Prospects actifs" value={activeProspects.length} helper={countLabel(newProspects.length, 'contact créé', 'contacts créés') + ' sur la période'} onClick={() => openPage('Prospects')} />
         <Snapshot icon="folder" label="Projets actifs" value={activeProjects.length} helper={countLabel(projectsCompleted.length, 'projet terminé', 'projets terminés') + ' sur la période'} onClick={() => openPage('Projets')} />
         <Snapshot icon="wrench" label="Interventions actives" value={activeInterventions.length} helper={countLabel(interventionsCompleted.length, 'intervention terminée', 'interventions terminées') + ' sur la période'} onClick={() => openPage('Interventions & Maintenance')} />
         <Snapshot icon="euro" label="À facturer" value={readyBilling.length} helper={money(readyAmount) + ' à préparer'} onClick={() => openPage('Facturation')} />
       </div>
     </>}
 
-    {tab === 'commercial' && <>
+    {!invalidCustomPeriod && tab === 'commercial' && <>
       <div className="statistics-kpis">
-        <Kpi icon="user" label="Nouveaux prospects" value={String(newProspects.length)} comparison={comparison(newProspects.length, previousProspects.length)} />
+        <Kpi icon="user" label="Contacts créés" value={String(newProspects.length)} comparison={comparison(newProspects.length, previousProspects.length)} />
         <Kpi icon="file-text" label="Devis créés" value={String(quotes.length)} comparison={comparison(quotes.length, previousQuotes.length)} />
-        <Kpi icon="check-circle" label="Taux d’acceptation" value={pct(acceptanceRate)} helper={countLabel(accepted.length, 'devis accepté', 'devis acceptés') + ' · ' + countLabel(refused.length, 'devis refusé', 'devis refusés')} />
+        <Kpi icon="check-circle" label="Taux d’acceptation" value={pct(acceptanceRate)} helper={countLabel(accepted.length, 'devis accepté', 'devis acceptés') + ' · ' + countLabel(refused.length, 'devis refusé', 'devis refusés') + ' · ' + countLabel(expired.length, 'devis expiré', 'devis expirés')} />
         <Kpi icon="chart" label="Conversion prospects" value={pct(conversionRate)} helper={countLabel(won.length, 'prospect gagné', 'prospects gagnés') + ' · ' + countLabel(lost.length, 'prospect perdu', 'prospects perdus')} />
+      </div>
+      <div className="statistics-decision-drilldown">
+        <span>Taux d’acceptation = {accepted.length} accepté(s) / {accepted.length + refused.length + expired.length} décision(s) (acceptés, refusés, expirés), sur les dates de décision de cette période.</span>
+        <button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-statistics-drilldown', {
+          detail: createStatisticsDrilldown('decisions', [...accepted, ...refused, ...expired].map(quote => quote.id), range.label),
+        }))}>Ouvrir les {accepted.length + refused.length + expired.length} devis de cette cohorte →</button>
       </div>
       <div className="statistics-main-grid">
         <article className="panel statistics-card">
           <CardTitle eyebrow="Pipeline actuel" title="Répartition commerciale" action="Ouvrir le pipeline →" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-prospects-view', { detail: 'pipeline' }))} />
           <div className="statistics-pipeline">{pipelineRows.map((item) => <div key={item.label} className={'tone-' + item.tone}><strong>{item.count}</strong><span>{item.label}</span></div>)}</div>
-          <div className="statistics-mini"><span><strong>{activeProspects.length}</strong> prospects actifs</span><span><strong>{money(signed)}</strong> signé</span><span><strong>{money(offeredValue)}</strong> écart catalogue / signé</span></div>
+          <div className="statistics-mini"><span><strong>{activeProspects.length}</strong> prospects actifs (hors Annuaire)</span><span><strong>{money(signed)}</strong> signé</span><span><strong>{money(offeredValue)}</strong> écart catalogue / signé</span></div>
         </article>
         <article className="panel statistics-card">
-          <CardTitle eyebrow="Origines" title="Prospects entrés sur la période" />
-          {sources.length ? <div className="statistics-ranking">{sources.slice(0, 7).map((item, index) => <div key={item.label}><span className="rank">{index + 1}</span><span>{item.label}</span><strong>{item.count}</strong><i style={{ width: ratio(item.count, Math.max(1, newProspects.length)) + '%' }} /></div>)}</div> : <Empty label="Aucun nouveau prospect sur cette période." />}
+          <CardTitle eyebrow="Origines" title="Contacts créés sur la période" />
+          {sources.length ? <div className="statistics-ranking">{sources.slice(0, 7).map((item, index) => <div key={item.label}><span className="rank">{index + 1}</span><span>{item.label}</span><strong>{item.count}</strong><i style={{ width: ratio(item.count, Math.max(1, newProspects.length)) + '%' }} /></div>)}</div> : <Empty label="Aucun nouveau contact créé sur cette période." />}
         </article>
       </div>
     </>}
 
-    {tab === 'production' && <>
+    {!invalidCustomPeriod && tab === 'production' && <>
       <div className="statistics-kpis">
         <Kpi icon="folder" label="Projets créés" value={String(projectsCreated.length)} comparison={comparison(projectsCreated.length, previousProjects.length)} />
         <Kpi icon="check-circle" label="Projets terminés" value={String(projectsCompleted.length)} helper={countLabel(activeProjects.length, 'projet actif', 'projets actifs')} />
@@ -356,16 +420,16 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
       </div>
     </>}
 
-    {tab === 'clients' && <>
+    {!invalidCustomPeriod && tab === 'clients' && <>
       <div className="statistics-kpis">
         <Kpi icon="user" label="Clients actifs" value={String(data.clients.filter((item) => item.status === 'active').length)} helper={countLabel(newClients.length, 'nouveau client', 'nouveaux clients') + ' sur la période'} />
         <Kpi icon="receipt" label="Facturé période" value={money(invoiced)} comparison={comparison(invoiced, previousInvoiced)} />
-        <Kpi icon="clock" label="Temps client" value={hours(sum(sessions.filter((item) => item.clientAccountId), (item) => item.durationSeconds))} helper="Sessions rattachées aux clients" />
+        <Kpi icon="clock" label="Temps client" value={hours(sum(sessions.filter((item) => item.clientAccountId), (item) => item.durationSeconds))} helper="Sessions rattachées aux clients, regroupées par date de début" />
         <Kpi icon="euro" label="À facturer" value={money(readyAmount)} helper={countLabel(readyBilling.length, 'élément', 'éléments') + ' actuellement'} />
       </div>
       <article className="panel statistics-card statistics-client-card">
-        <CardTitle eyebrow="Clients" title="Activité sur la période" />
-        {clientRows.length ? <div className="statistics-table-wrap"><table className="statistics-table"><thead><tr><th>Client</th><th>Temps</th><th>Facturé</th><th>À facturer</th><th>Projets actifs</th><th>Interventions</th></tr></thead><tbody>{clientRows.map((row) => <tr key={row.id} onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'client', entityId: row.id, title: row.label } }))}><td><strong>{row.label}</strong></td><td>{hours(row.seconds)}</td><td>{money(row.invoiced)}</td><td>{money(row.ready)}</td><td>{row.projects}</td><td>{row.interventions}</td></tr>)}</tbody></table></div> : <Empty label="Aucune activité client sur cette période." />}
+        <CardTitle eyebrow="Clients" title="Activité client · classement par unité" />
+        {rankedClientRows.length ? <div className="statistics-table-wrap"><table className="statistics-table"><thead><tr><th>Client</th><th aria-sort={clientSort === 'seconds' ? 'descending' : 'none'}><button type="button" className="link-button" onClick={() => setClientSort('seconds')}>Temps {clientSort === 'seconds' ? '↓' : '↕'}</button></th><th aria-sort={clientSort === 'invoiced' ? 'descending' : 'none'}><button type="button" className="link-button" onClick={() => setClientSort('invoiced')}>Facturé suivi {clientSort === 'invoiced' ? '↓' : '↕'}</button></th><th>À facturer</th><th>Projets actifs</th><th>Interventions</th></tr></thead><tbody>{rankedClientRows.map((row) => <tr key={row.id}><td><button className="link-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'client', entityId: row.id, title: row.label } }))}>{row.label}</button></td><td>{hours(row.seconds)}</td><td>{money(row.invoiced)}</td><td>{money(row.ready)}</td><td>{row.projects}</td><td>{row.interventions}</td></tr>)}</tbody></table></div> : <Empty label="Aucune activité client sur cette période." />}
       </article>
     </>}
   </section>;
@@ -375,8 +439,47 @@ function Tab({ active, icon, label, onClick }: { active: boolean; icon: Operatio
   return <button className={active ? 'active' : ''} type="button" onClick={onClick}><OperationIcon name={icon} size={17} />{label}</button>;
 }
 
-function Kpi({ icon, label, value, comparison, helper }: { icon: OperationIconName; label: string; value: string; comparison?: ReturnType<typeof compare>; helper?: string }) {
-  return <article className="statistics-kpi"><span><OperationIcon name={icon} size={28} /></span><div><strong>{label}</strong><b>{value}</b>{comparison ? <small className={'trend-' + comparison.direction}>{comparison.text}</small> : <small>{helper}</small>}</div></article>;
+function Kpi({ icon, label, value, comparison, helper, onInspect, expanded }: {
+  icon: OperationIconName; label: string; value: string;
+  comparison?: ReturnType<typeof compare>; helper?: string; onInspect?: () => void; expanded?: boolean;
+}) {
+  return <article className="statistics-kpi"><span><OperationIcon name={icon} size={28} /></span><div><strong>{label}</strong><b>{value}</b>{comparison ? <small className={'trend-' + comparison.direction}>{comparison.text}</small> : <small>{helper}</small>}
+    {onInspect && <button className="link-button statistics-kpi-inspect" type="button" aria-expanded={!!expanded} aria-controls="statistics-evidence-panel" onClick={onInspect}>{expanded ? 'Masquer les éléments' : 'Voir les éléments exacts'}</button>}
+  </div></article>;
+}
+
+function StatisticsEvidencePanel({ kind, rows, periodLabel }: { kind: StatisticsEvidenceKey; rows: StatisticsEvidenceRow[]; periodLabel: string }) {
+  const descriptions: Record<StatisticsEvidenceKey, { title: string; source: string; date: string }> = {
+    signed: { title: 'Devis acceptés retenus', source: 'quotes · valeur contractuelle', date: 'Date d’acceptation' },
+    invoiced: { title: 'Lignes de facturation suivies', source: 'billing_items · montant attendu facturé', date: 'Date facturée' },
+    time: { title: 'Sessions de temps retenues', source: 'time_sessions · secondes suivies', date: 'Début de session' },
+    clients: { title: 'Clients devenus clients', source: 'client_accounts · dates de conversion', date: 'Date de conversion' },
+  };
+  const description = descriptions[kind];
+  const formatValue = (value: number): string => kind === 'signed' || kind === 'invoiced'
+    ? (value / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
+    : kind === 'time' ? value.toLocaleString('fr-FR') + ' s' : String(value);
+  const dateValue = (date: string | null): string => {
+    if (!date) return '—';
+    const parsed = new Date(date);
+    return Number.isNaN(parsed.getTime()) ? date : parsed.toLocaleDateString('fr-FR');
+  };
+  const firstRows = rows.slice(0, 100);
+  return <section className="panel statistics-evidence-panel" id="statistics-evidence-panel" aria-label={description.title}>
+    <div className="statistics-evidence-heading"><div><span className="eyebrow">Traçabilité</span><h3>{description.title}</h3></div>
+      <strong>{rows.length} élément{rows.length > 1 ? 's' : ''} · total {formatValue(statisticsEvidenceTotal(rows))}</strong>
+    </div>
+    <p className="statistics-evidence-source">Source : {description.source}. Période : {periodLabel}. Le détail reprend les mêmes éléments déjà filtrés pour le KPI.</p>
+    {kind !== 'clients' && <button type="button" className="secondary-button statistics-open-drilldown"
+      onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-statistics-drilldown', {
+        detail: createStatisticsDrilldown(kind as StatisticsDrilldownKind, rows.map(row => row.id), periodLabel),
+      }))}>Ouvrir {kind === 'signed' ? 'les devis' : kind === 'invoiced' ? 'la facturation' : 'les sessions'} avec exactement ces {rows.length} éléments →</button>}
+    {rows.length === 0 ? <p className="muted">Aucun élément sur cette période.</p> : <div className="statistics-table-wrap"><table className="statistics-evidence-table">
+      <thead><tr><th>Élément source</th><th>{description.date}</th><th>Valeur</th></tr></thead>
+      <tbody>{firstRows.map((row) => <tr key={row.id}><td><strong>{row.label}</strong><small title={row.id}>{row.detail}</small></td><td>{dateValue(row.businessDate)}</td><td>{formatValue(row.value)}</td></tr>)}</tbody>
+    </table></div>}
+    {rows.length > 100 && <p className="statistics-evidence-source">Les 100 premiers éléments sont affichés sur {rows.length}, sans réduire le total calculé.</p>}
+  </section>;
 }
 
 function Snapshot({ icon, label, value, helper, onClick }: { icon: OperationIconName; label: string; value: number; helper: string; onClick: () => void }) {

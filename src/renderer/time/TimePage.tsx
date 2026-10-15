@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ProjectSummary } from '../../shared/projects';
 import { OperationIcon } from '../operations/OperationIcon';
 import { TIME_CATEGORIES, type TimeCategory, type TimeSession, type TimeSessionFilters, type TimeSummary } from '../../shared/time';
+import { matchStatisticsDrilldown, type StatisticsDrilldownRoute } from '../../shared/statisticsDrilldown';
 
 const CATEGORY_LABELS: Record<TimeCategory, string> = {
   production: 'Production',
@@ -59,7 +60,11 @@ function toLocalInput(date: Date): string {
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
-export function TimePage({ onMessage }: { onMessage: (message: string) => void }) {
+export function TimePage({ onMessage, statisticsDrilldown, onClearStatisticsDrilldown }: {
+  onMessage: (message: string) => void;
+  statisticsDrilldown?: StatisticsDrilldownRoute | null;
+  onClearStatisticsDrilldown?: () => void;
+}) {
   const [period, setPeriod] = useState<Period>('today');
   const [clientId, setClientId] = useState('');
   const [projectId, setProjectId] = useState('');
@@ -105,6 +110,7 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
     [projects, clientId],
   );
 
+  const drilldown = statisticsDrilldown?.kind === 'time' ? statisticsDrilldown : null;
   const filters = useMemo<TimeSessionFilters>(() => {
     const range = periodRange(period);
     return {
@@ -119,13 +125,18 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
   async function refresh(): Promise<void> {
     try {
       const [nextSessions, nextSummary, nextProjects, nextActive] = await Promise.all([
-        window.atoumweb.time.list(filters),
-        window.atoumweb.time.summary(filters),
+        drilldown ? window.atoumweb.time.list() : window.atoumweb.time.list(filters),
+        drilldown ? Promise.resolve(null) : window.atoumweb.time.summary(filters),
         window.atoumweb.projects.projects.list(),
         window.atoumweb.time.active(),
       ]);
-      setSessions(nextSessions);
-      setSummary(nextSummary);
+      const exact = drilldown ? matchStatisticsDrilldown(nextSessions, drilldown).rows : nextSessions;
+      setSessions(exact);
+      if (drilldown) {
+        const totalSeconds = exact.reduce((sum, item) => sum + item.durationSeconds, 0);
+        const billableSeconds = exact.filter(item => item.billable).reduce((sum, item) => sum + item.durationSeconds, 0);
+        setSummary({ totalSeconds, billableSeconds, nonBillableSeconds: totalSeconds - billableSeconds, sessionCount: exact.length });
+      } else if (nextSummary) setSummary(nextSummary);
       setProjects(nextProjects);
       setActiveSession(nextActive);
     } catch (error) {
@@ -133,7 +144,7 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
     }
   }
 
-  useEffect(() => { void refresh(); }, [filters]);
+  useEffect(() => { void refresh(); }, [filters, drilldown]);
 
   useEffect(() => {
     const refreshEvent = () => void refresh();
@@ -143,7 +154,7 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
       window.removeEventListener('atoumweb:time-changed', refreshEvent);
       window.clearInterval(interval);
     };
-  }, [filters]);
+  }, [filters, drilldown]);
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(new Date()), 1000);
@@ -221,21 +232,27 @@ export function TimePage({ onMessage }: { onMessage: (message: string) => void }
 
   return (
     <div className="time-page-stack">
+      {drilldown && <section className="panel statistics-route-banner" aria-label="Filtre exact Statistiques">
+        <strong>Sessions de temps · {drilldown.periodLabel}</strong>
+        <p>Durées et tableau calculés uniquement sur les {drilldown.ids.length} sessions identifiées par le KPI. Les contrôles standards de période sont suspendus jusqu’à la sortie de ce filtre.</p>
+        {sessions.length < new Set(drilldown.ids).size && <p role="alert">{new Set(drilldown.ids).size - sessions.length} session(s) de la cohorte sont devenues indisponibles ; aucune session de remplacement n’est ajoutée.</p>}
+        <button className="secondary-button" type="button" onClick={onClearStatisticsDrilldown}>Quitter le filtre et revenir à ce mois</button>
+      </section>}
       <div className="module-toolbar time-toolbar">
         <div className="time-period-tabs">
-          <button className={period === 'today' ? 'active' : ''} type="button" onClick={() => setPeriod('today')}>Aujourd’hui</button>
-          <button className={period === 'week' ? 'active' : ''} type="button" onClick={() => setPeriod('week')}>Cette semaine</button>
-          <button className={period === 'month' ? 'active' : ''} type="button" onClick={() => setPeriod('month')}>Ce mois</button>
+          <button className={period === 'today' ? 'active' : ''} type="button" disabled={!!drilldown} onClick={() => setPeriod('today')}>Aujourd’hui</button>
+          <button className={period === 'week' ? 'active' : ''} type="button" disabled={!!drilldown} onClick={() => setPeriod('week')}>Cette semaine</button>
+          <button className={period === 'month' ? 'active' : ''} type="button" disabled={!!drilldown} onClick={() => setPeriod('month')}>Ce mois</button>
         </div>
         <div className="toolbar-controls time-filters">
-          <select value={clientId} onChange={(event) => {
+          <select value={clientId} disabled={!!drilldown} onChange={(event) => {
             const next = event.target.value;
             setClientId(next);
             if (projectId && next && !projects.some((project) => project.id === projectId && project.clientAccountId === next)) setProjectId('');
           }}><option value="">Tous les clients</option>{clientOptions.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select>
-          <select value={projectId} onChange={(event) => setProjectId(event.target.value)}><option value="">Tous les projets</option>{filteredProjects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select>
-          <select value={category} onChange={(event) => setCategory(event.target.value as 'all' | TimeCategory)}><option value="all">Toutes les catégories</option>{TIME_CATEGORIES.map((value) => <option key={value} value={value}>{CATEGORY_LABELS[value]}</option>)}</select>
-          <select value={billable} onChange={(event) => setBillable(event.target.value as typeof billable)}><option value="all">Facturable + non facturable</option><option value="yes">Facturable</option><option value="no">Non facturable</option></select>
+          <select value={projectId} disabled={!!drilldown} onChange={(event) => setProjectId(event.target.value)}><option value="">Tous les projets</option>{filteredProjects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select>
+          <select value={category} disabled={!!drilldown} onChange={(event) => setCategory(event.target.value as 'all' | TimeCategory)}><option value="all">Toutes les catégories</option>{TIME_CATEGORIES.map((value) => <option key={value} value={value}>{CATEGORY_LABELS[value]}</option>)}</select>
+          <select value={billable} disabled={!!drilldown} onChange={(event) => setBillable(event.target.value as typeof billable)}><option value="all">Facturable + non facturable</option><option value="yes">Facturable</option><option value="no">Non facturable</option></select>
           <button className="primary-button" type="button" onClick={() => { setEditing(null); setManualOpen((value) => !value); }}>+ Temps manuel</button>
         </div>
       </div>

@@ -8,6 +8,7 @@ import {
 } from '../../shared/billing';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 import { useUnsavedDraft } from '../unsaved/unsaved';
+import { matchStatisticsDrilldown, type StatisticsDrilldownRoute } from '../../shared/statisticsDrilldown';
 
 const STATUS_LABELS: Record<BillingItemStatus, string> = {
   planned: 'Prévu',
@@ -58,7 +59,11 @@ function invoiceDateIso(value: string): string | null {
   return new Date(`${value}T12:00:00`).toISOString();
 }
 
-export function BillingPage({ onMessage }: { onMessage: (message: string) => void }) {
+export function BillingPage({ onMessage, statisticsDrilldown, onClearStatisticsDrilldown }: {
+  onMessage: (message: string) => void;
+  statisticsDrilldown?: StatisticsDrilldownRoute | null;
+  onClearStatisticsDrilldown?: () => void;
+}) {
   const [items, setItems] = useState<BillingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState('');
@@ -122,7 +127,10 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
     .map((item) => [item.projectId as string, item.projectLabel ?? item.projectId as string] as const)).entries()]
     .sort((a, b) => a[1].localeCompare(b[1], 'fr-FR')), [items]);
 
+  const drilldown = statisticsDrilldown?.kind === 'invoiced' ? statisticsDrilldown : null;
+  const drilldownMatch = drilldown ? matchStatisticsDrilldown(items, drilldown, item => item.status === 'invoiced') : null;
   const filtered = useMemo(() => {
+    if (drilldown) return matchStatisticsDrilldown(items, drilldown, item => item.status === 'invoiced').rows;
     const needle = query.trim().toLocaleLowerCase('fr-FR');
     return items.filter((item) => {
       if (statusFilter !== 'all' && item.status !== statusFilter) return false;
@@ -144,7 +152,7 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
         STATUS_LABELS[item.status],
       ].some((value) => value.toLocaleLowerCase('fr-FR').includes(needle));
     });
-  }, [items, query, sourceFilter, statusFilter, clientFilter, projectFilter, pdfFilter, exactReference, dueBefore]);
+  }, [items, query, sourceFilter, statusFilter, clientFilter, projectFilter, pdfFilter, exactReference, dueBefore, drilldown]);
 
   const plannedItems = items.filter((item) => item.status === 'planned');
   const readyItems = items.filter((item) => item.status === 'ready');
@@ -250,16 +258,22 @@ export function BillingPage({ onMessage }: { onMessage: (message: string) => voi
       <article><span className="billing-kpi-icon" aria-hidden="true"><OperationIcon name="gift" size={27} /></span><div><strong>Offerts / annulés</strong><span>{offeredOrCancelledItems.length}</span><small>Exclus du montant à facturer</small></div></article>
     </section>
 
+    {drilldown && <section className="panel statistics-route-banner" aria-label="Filtre exact Statistiques">
+      <strong>Facturation suivie · {drilldown.periodLabel}</strong>
+      <p>Liste limitée aux {drilldown.ids.length} éléments réellement comptés dans le KPI « Facturé suivi ». Le récapitulatif global ci-dessus concerne toute la facturation, pas ce sous-ensemble.</p>
+      {drilldownMatch && drilldownMatch.unavailable > 0 && <p role="alert">{drilldownMatch.unavailable} élément(s) de la cohorte ne sont plus au statut Facturé ou ne sont plus disponibles. La liste n’est pas élargie automatiquement.</p>}
+      <button className="secondary-button" type="button" onClick={onClearStatisticsDrilldown}>Quitter ce filtre et voir toute la facturation</button>
+    </section>}
     <div className="module-toolbar billing-toolbar">
       <div><strong>{filtered.length}</strong><span> élément(s)</span></div>
       <div className="toolbar-controls">
         <button className="secondary-button" type="button" onClick={() => invoiceDraft.request(() => { void refresh(); })}><OperationIcon name="refresh" size={16} /> Actualiser</button>
-        <input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher client, projet, facture…" />
-        <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value as typeof sourceFilter)}>
+        <input className="inline-search" value={query} disabled={!!drilldown} onChange={(event) => setQuery(event.target.value)} placeholder={drilldown ? 'Filtre exact actif : quitter pour chercher' : 'Rechercher client, projet, facture…'} />
+        <select value={sourceFilter} disabled={!!drilldown} onChange={(event) => setSourceFilter(event.target.value as typeof sourceFilter)}>
           <option value="all">Toutes les origines</option>
           {BILLING_ITEM_SOURCE_TYPES.map((source) => <option key={source} value={source}>{SOURCE_LABELS[source]}</option>)}
         </select>
-        <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
+        <select value={statusFilter} disabled={!!drilldown} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
           <option value="all">Tous les statuts</option>
           {BILLING_ITEM_STATUSES.map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
         </select>

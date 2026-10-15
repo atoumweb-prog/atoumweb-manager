@@ -198,6 +198,14 @@ jobs:
           node scripts/check-ux-v2-03e-directory.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Setup Python for isolated recovery tests
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Reference recovery isolated regression checks
+        run: python scripts/test_reference_workspace.py
+
       - name: Tests
         run: npm test -- --maxWorkers=2
 
@@ -433,6 +441,38 @@ jobs:
           node scripts/check-ux-v2-lot01a-real-ui.cjs --captures $captures
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/check-unsaved-inputs-ui.cjs --lot-b --lot-c --review
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Matrice Lot 10 — 102 scénarios et preuves tracées
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux-v2-lot10-candidate-v1' }}
+        shell: pwsh
+        run: |
+          node scripts/check-ux-v2-lot10-coverage.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # Lot 10 : recette native sur le candidat dédié, jamais sur un workspace réel.
+      - name: Electron UX V2 Lot 10 — parcours et UX-01 sur Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux-v2-lot10-candidate-v1' }}
+        shell: pwsh
+        timeout-minutes: 25
+        run: |
+          node scripts/check-ux-v2-integration-validate.cjs --native-only
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Electron UX V2 Lot 10 — restauration UX-16 sur Windows TEMP
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux-v2-lot10-candidate-v1' }}
+        shell: pwsh
+        timeout-minutes: 20
+        run: |
+          node scripts/check-restore-quit-roundtrip.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Electron UX V2 Lot 10 — scénarios ciblés Réglages et Sauvegardes
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'integration/ux-v2-lot10-candidate-v1' }}
+        shell: pwsh
+        timeout-minutes: 12
+        run: |
+          node scripts/check-ux-v2-lot10-ui.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Windows convergence native validation — current assembled SHA
