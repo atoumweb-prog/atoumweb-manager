@@ -72,8 +72,10 @@ module.exports=async ctx=>{
   const logo=assets().find(a=>a.role==='logo');
   const originalSet=db.setSetting.bind(db);let writes=0;db.setSetting=(key,v)=>{if(key==='ux_v2_visual_preferences_v1')writes++;return originalSet(key,v);};
   try{
-   await input('.crm-record-left input[type=range]','310');test(writes===0,'CRM resize preview does not write preferences');
-   await js('document.querySelector(".crm-record-left input[type=range]").dispatchEvent(new PointerEvent("pointerup",{bubbles:true}))');await sleep(80);test(writes===1,'Exactly one preference write at CRM resize end');
+   await js("const s=document.querySelector('.crm-pane-separator-left');s.dispatchEvent(new PointerEvent('pointerdown',{button:0,pointerId:31,clientX:260,bubbles:true}));window.dispatchEvent(new PointerEvent('pointermove',{pointerId:31,clientX:310}));");
+   test(writes===0,'CRM separator previews without persistence');
+   await js("window.dispatchEvent(new PointerEvent('pointerup',{pointerId:31,clientX:310}))");await sleep(80);test(writes===1,'Exactly one preference write at CRM resize end');
+
   }finally{db.setSetting=originalSet;}
   for(const side of ['left','right']){await click('.crm-record-'+side+'>button');test(await get('window.__finalInput===document.querySelector("#client-panel-contacts .contact-inline-form input")&&window.__finalInput.value==="BROUILLON TROIS ZONES"'),'Folding '+side+' retains same editor and text');await click('.crm-record-'+side+'>button');}
   for(const theme of ['atoumweb','noir','blanc'])for(const density of ['compact','comfort','comfort_plus']){

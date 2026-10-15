@@ -1,5 +1,6 @@
 import {useUnsavedDraft} from '../unsaved/unsaved';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import {FieldHelp} from '../ui/FieldHelp';
 import { OperationIcon } from '../operations/OperationIcon';
 import type {
   CrmIdentityAsset,
@@ -206,7 +207,7 @@ export function CrmIdentityAssetEditor({
     <div className="crm-identity-assets-compact">
       <span className="crm-identity-assets-icon"><OperationIcon name="image" size={18} /></span>
       <div className="crm-identity-assets-summary">
-        <strong>Logo et visuels</strong>
+        <strong>Logo et visuels <FieldHelp text="Formats et conservation des visuels" detail="JPG, PNG, WEBP, GIF ou ICO · 8 Mo maximum. Les images sont enregistrées dans le dossier crm-identites du workspace ; leurs associations sont dans SQLite. La sauvegarde SQLite seule ne contient pas ces fichiers. Conservez aussi ce dossier lors d’un transfert ou d’une copie complète du workspace. Les anciennes images restent disponibles pour les restaurations antérieures."/></strong>
         <small>{availableCount > 0 ? `${availableCount}/${slots.length} élément${availableCount > 1 ? 's' : ''} renseigné${availableCount > 1 ? 's' : ''}` : 'Aucun visuel renseigné'}</small>
       </div>
       <button
@@ -225,7 +226,7 @@ export function CrmIdentityAssetEditor({
     {open && <div className="crm-identity-assets-editor">
       <div className="crm-identity-assets-heading">
         <div><span className="eyebrow">Identité visuelle</span><strong>Logo, favicon & photo</strong></div>
-        <small>JPG, PNG, WEBP, GIF ou ICO · 8 Mo max. Les anciennes copies restent conservées dans le workspace pour les sauvegardes.</small>
+        
       </div>
       <div className="crm-identity-assets-grid">
         {slots.map((slot) => {

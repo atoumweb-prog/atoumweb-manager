@@ -43,3 +43,52 @@
 /* The asset editor is also usable inside a 220px identity pane. */
 .crm-record-side .crm-identity-assets-heading{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px}
 .crm-record-side .crm-identity-assets-heading>div{width:100%;min-width:0}
+
+/* Final ergonomic pass: centre first, stable mounted regions, one-row tabs. */
+.app-shell .crm-record-layout[data-full=true]{grid-template-columns:var(--crm-left) 8px minmax(0,1fr) 8px var(--crm-right);grid-template-rows:minmax(0,1fr);position:relative;gap:0;}
+.crm-record-layout[data-full=true]>.crm-record-left{grid-column:1;grid-row:1;max-height:none;}
+.crm-record-layout[data-full=true]>.crm-record-work{grid-column:3;grid-row:1;padding:0 12px;}
+.crm-record-layout[data-full=true]>.crm-record-right{grid-column:5;grid-row:1;max-height:none;margin:0;align-self:start;max-height:100%;}
+.crm-record-layout[data-full=true] .crm-record-right .crm-record-side-body{display:flex;flex-direction:column;gap:8px;padding:8px;}
+.crm-record-layout .crm-record-side-body[hidden]{display:none!important;}
+.crm-pane-separator{width:8px;cursor:col-resize;touch-action:none;position:relative;grid-row:1;outline-offset:-2px;}
+.crm-pane-separator-left{grid-column:2}.crm-pane-separator-right{grid-column:4}
+.crm-pane-separator:after{content:'';position:absolute;inset:14px 3px;border-radius:2px;background:var(--border);opacity:.45;}
+.crm-pane-separator:hover:after,.crm-pane-separator:focus-visible:after{background:var(--accent-strong);opacity:1;}
+.crm-pane-separator:focus-visible{outline:2px solid var(--accent-strong);}
+.app-shell .crm-record-layout .client-v2-tabs,.app-shell .client-summary-panel .client-v2-tabs{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;min-width:0;max-width:100%;gap:4px;padding:6px 2px 10px;margin:0;scroll-padding:4px;scrollbar-width:thin;}
+.app-shell .client-summary-panel .client-v2-tabs button{flex:0 0 auto;white-space:nowrap;min-height:36px;padding:6px 9px;}
+.crm-record-layout .crm-record-side-body{padding:10px;gap:14px;}
+.crm-record-layout .crm-record-properties{gap:6px;}
+.crm-record-layout .detail-panel-heading h2{font-size:20px;line-height:1.2;margin:0;}
+.crm-record-layout .crm-identity-avatar-large{width:42px;height:42px;font-size:18px;flex-shrink:0;}
+.crm-record-layout .crm-record-right h3{font-size:var(--ui-font-functional,14px);margin:0 0 2px;}
+.crm-record-layout .crm-record-right p{margin:0;font-size:var(--ui-font-secondary);}
+.crm-record-layout .crm-record-right .crm-record-side-body>button{padding:8px;display:flex;align-items:center;gap:6px;line-height:1.4;}
+.crm-record-layout .prospect-desk-content>.prospect-work-accordion{margin-bottom:12px;}
+.crm-record-layout .quote-command-header{padding:10px;gap:8px;}
+.crm-record-layout .quote-command-header strong{font-size:var(--ui-font-functional,14px);}
+.crm-record-layout .client-primary-card{padding:12px;margin-bottom:12px;}
+.crm-record-layout .contact-form-grid{gap:14px 18px;}
+/* Compact mode is measured against the actual record, including Electron zoom. */
+.app-shell .crm-record-layout[data-full=true][data-compact=true]{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;}
+.crm-record-layout[data-full=true][data-compact=true]>.crm-record-left{grid-column:1;grid-row:1;overflow:visible;max-height:none;}
+.crm-record-layout[data-full=true][data-compact=true]>.crm-record-work{grid-column:1;grid-row:2;overflow:hidden;min-height:0;padding:0 4px;}
+.crm-record-layout[data-full=true][data-compact=true]>.crm-record-right{grid-column:1;grid-row:3;max-height:28vh;overflow:auto;margin:0;align-self:stretch;}
+.crm-record-layout[data-compact=true] .crm-record-side-toggle{padding:5px 8px;min-height:28px;flex-direction:row;}
+.crm-record-layout[data-compact=true] .crm-record-side-toggle span{writing-mode:horizontal-tb;}
+.crm-record-layout[data-compact=true] .crm-record-left .crm-record-side-body{padding:4px 8px;gap:8px;}
+.crm-record-layout[data-compact=true] .crm-record-left[data-folded=true] .crm-record-side-body>:not(.detail-panel-heading){display:none;}
+.crm-record-layout[data-compact=true] .crm-record-left .detail-panel-heading{flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:8px;}
+.crm-record-layout[data-compact=true] .detail-panel-heading h2{font-size:17px;}
+.crm-record-layout[data-compact=true] .crm-record-left .detail-panel-heading>div:first-child{min-width:0;}
+.crm-record-layout[data-compact=true] .crm-record-left .eyebrow{display:none;}
+.crm-record-layout[data-compact=true] .crm-record-left .detail-heading-actions{flex-wrap:nowrap;flex-shrink:0;gap:4px;}
+.crm-record-layout[data-compact=true] .crm-record-left[data-folded=true] :is(.client-relationship-picker,.prospect-header-meta){display:none;}
+.crm-record-layout[data-compact=true] .crm-record-left .crm-identity-avatar-large{width:30px;height:30px;font-size:14px;}
+.crm-record-layout[data-compact=true] :is(.client-summary-head,.prospect-detail-identity-head){display:flex;align-items:center;gap:8px;}
+.crm-record-layout[data-compact=true] .client-summary-scroll,.crm-record-layout[data-full=true][data-compact=true] .prospect-desk-content{overflow:auto;min-height:0;flex:1;overscroll-behavior:contain;}
+.crm-record-layout[data-compact=true] .crm-record-left:not([data-folded=true]) .crm-record-side-body{max-height:30vh;overflow:auto;}
+.crm-record-layout[data-compact=true] .crm-record-properties{display:grid!important;}
+.crm-record-layout[data-compact=true] .crm-record-left[data-folded=true] .crm-record-properties{display:none!important;}
+.crm-record-layout[data-compact=true] .contact-form-grid,.crm-record-layout[data-compact=true] .reference-summary-grid{grid-template-columns:1fr;}

@@ -669,7 +669,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
               </div>
 <div className="crm-record-properties"><strong>Coordonnées essentielles</strong>{selected.contactName&&<SummaryLine label="Contact" value={selected.contactName}/>} {selected.email&&<SummaryLine label="Email" value={selected.email}/>} {selected.phone&&<SummaryLine label="Téléphone" value={selected.phone}/>}<small>Client depuis {new Date(selected.becameClientAt).toLocaleDateString('fr-FR')}</small></div>
  <CrmIdentityAssetEditor organizationId={selected.organizationId} contactId={selected.primaryContactId} onMessage={onMessage}/>
-</>} context={<><h3>Objets liés</h3><p className="muted">Liens de ce client uniquement</p>
+</>} context={<><h3>Dossiers associés</h3>
  {quotes.map(item=><button className="workflow-link" type="button" key={item.id} onClick={()=>openEntity({entityType:'quote',entityId:item.id,title:item.subject})}><OperationIcon name="file-text"/> {item.number} · {item.subject}</button>)}
  {projects.map(item=><button className="workflow-link" type="button" key={item.id} onClick={()=>openEntity({entityType:'project',entityId:item.id,title:item.name})}><OperationIcon name="folder"/> {item.name}</button>)}
  <button type="button" onClick={()=>setActiveTab('contracts')}>Contrats ({quotes.filter(q=>q.status==='accepted').length} devis acceptés)</button>
@@ -677,7 +677,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
  <button type="button" onClick={()=>setActiveTab('documents')}>Documents du client</button>
  {!quotes.length&&!projects.length&&<p className="muted">Aucun devis ni projet rattaché.</p>}</>}>
               <div role="tablist" aria-label="Rubriques du client" className="client-tabs-preview client-tabs-buttons client-v2-tabs">
-                {CLIENT_TABS.map(([id,label])=><button key={id} id={'client-tab-'+id} role="tab" aria-selected={activeTab===id} aria-controls={'client-panel-'+id} tabIndex={activeTab===id?0:-1} type="button" onClick={()=>setActiveTab(id)} onKeyDown={event=>{const next=clientTabKey(id,event.key);if(next){event.preventDefault();setActiveTab(next);document.getElementById('client-tab-'+next)?.focus();}}}><OperationIcon name={({summary:'user',contacts:'users',commercial:'file-text',contracts:'file-check',projects:'folder',operations:'wrench',documents:'inbox',history:'clock'} as const)[id]}/>{label}</button>)}
+                {CLIENT_TABS.map(([id,label])=><button key={id} id={'client-tab-'+id} role="tab" aria-selected={activeTab===id} aria-controls={'client-panel-'+id} tabIndex={activeTab===id?0:-1} type="button" onClick={event=>{setActiveTab(id);event.currentTarget.scrollIntoView({block:'nearest',inline:'nearest'});}} onKeyDown={event=>{const next=clientTabKey(id,event.key);if(next){event.preventDefault();setActiveTab(next);const target=document.getElementById('client-tab-'+next);target?.focus({preventScroll:true});target?.scrollIntoView({block:'nearest',inline:'nearest'});}}}><OperationIcon name={({summary:'user',contacts:'users',commercial:'file-text',contracts:'file-check',projects:'folder',operations:'wrench',documents:'inbox',history:'clock'} as const)[id]}/>{label}</button>)}
               </div>
               <div className="client-summary-scroll">
               {detailLoading&&<p role="status">Actualisation de la fiche…</p>}
