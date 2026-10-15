@@ -1,5 +1,10 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/10/2026 — Correction du workflow candidat09
+
+CI1799 refusée avant création de jobs : l’étape08A avait perdu son bloc run lors du rapprochement, déplacé sous un doublon mal nommé03B. Rétablissement exact des commandes08A et suppression du seul doublon ; étape03B originale conservée. Validation locale actionlint1.7.12 et parsing YAML réussis. Aucun test, délai, service ou migration modifié. Nouvelle CI candidate nécessaire ; la précédente n’a exécuté aucun test.
+
+
 ## 15/10/2026 — Convergence09 et protection de revue Word
 
 Source134 11631769 incorporée avec historique09A–E ; branches de coexistence135/136 non fusionnées. Bibliothèque05 (classement huit rubriques, UX-01, versions) préservée conjointement au DOCX de brouillon09E. Revue Word modifiée désormais protégée par la garde UX-01 existante : Rester conserve la comparaison, Quitter abandonne seulement le brouillon non approuvé, aucune publication implicite. Nouvelles assertions Electron explicites. Aucun texte juridique ni migration modifié. Source Abby reste externe et facturé ne signifie pas payé.
