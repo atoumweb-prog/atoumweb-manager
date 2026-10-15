@@ -69,4 +69,10 @@
 
 .app-shell .prospects-v2 .prospect-work-accordion-trigger{display:grid;grid-template-columns:auto minmax(140px,1fr) minmax(0,1.5fr);justify-content:start;text-align:left}
 .app-shell .prospects-v2 .prospect-work-accordion-title{font-weight:600}
+.app-shell .prospects-v2 .pipeline-step-column>header{display:flex;align-items:center;gap:10px}
+.app-shell .prospects-v2 .pipeline-step-column>header>svg{width:20px;height:20px;flex-shrink:0;color:var(--muted)}
+.app-shell .prospects-v2 .pipeline-step-column>header>div{flex:1;min-width:0}
+.app-shell .prospects-v2 .pipeline-state-icon{display:inline-flex;background:transparent;color:var(--muted)}
+.app-shell .prospects-v2 .pipeline-state-icon svg{width:18px;height:18px}
+.app-shell .prospects-v2 .card-drag-handle:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
 @media(max-width:700px){.app-shell .prospects-v2 .prospect-work-accordion-trigger{grid-template-columns:auto minmax(0,1fr)}.app-shell .prospects-v2 .prospect-work-accordion-summary{grid-column:2}}

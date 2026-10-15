@@ -324,7 +324,7 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
     {createOpen && <section className="panel operation-create-panel hour-pack-create-panel">
       <div className="panel-title">
         <div><span className="eyebrow">Pack d’heures</span><h2>Nouveau crédit de temps</h2><p className="muted">Choisis un forfait du Catalogue pour récupérer automatiquement ses heures et son tarif, ou utilise une saisie libre.</p></div>
-        <button className="close-detail" type="button" onClick={() => requestUnsavedExit(() => { setCreateOpen(false); resetCreateForm(); })}>×</button>
+        <button className="close-detail" type="button" onClick={() => requestUnsavedExit(() => { setCreateOpen(false); resetCreateForm(); })} aria-label="Fermer" title="Fermer"><OperationIcon name="close"/></button>
       </div>
       <div className="hour-pack-template-picker">
         <label>Modèle depuis Offres & Tarifs

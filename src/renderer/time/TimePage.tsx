@@ -1,3 +1,4 @@
+import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import { BUSINESS_TIME_CATEGORIES, type BusinessTimeCategory } from '../../shared/operational';
 import { useEffect, useMemo, useState } from 'react';
 import type { ProjectSummary } from '../../shared/projects';
@@ -289,7 +290,7 @@ export function TimePage({ onMessage, statisticsDrilldown, onClearStatisticsDril
 
       {manualOpen && (
         <section className="panel manual-time-panel">
-          <div className="panel-title"><div><span className="eyebrow">Saisie manuelle</span><h2>Ajouter une session</h2></div><button className="close-detail" type="button" onClick={() => setManualOpen(false)}>×</button></div>
+          <div className="panel-title"><div><span className="eyebrow">Saisie manuelle</span><h2>Ajouter une session</h2></div><button className="close-detail" type="button" onClick={() => setManualOpen(false)} aria-label="Fermer" title="Fermer"><OperationIcon name="close"/></button></div>
           <div className="manual-time-grid">
             <label>Projet<select value={manualProjectId} onChange={(event) => setManualProjectId(event.target.value)}><option value="">AtoumWeb · sans projet</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select></label>
             <label>Catégorie<select value={manualCategory} onChange={(event) => setManualCategory(event.target.value as TimeCategory)}>{TIME_CATEGORIES.map((value) => <option key={value} value={value}>{CATEGORY_LABELS[value]}</option>)}</select></label>
@@ -306,7 +307,7 @@ export function TimePage({ onMessage, statisticsDrilldown, onClearStatisticsDril
 
       {editing && (
         <section className="panel manual-time-panel time-correction-panel">
-          <div className="panel-title"><div><span className="eyebrow">Correction</span><h2>Corriger une session terminée</h2><p className="muted">Les pauses déjà enregistrées sont conservées. Si les nouveaux horaires excluent une pause, le Manager refusera la correction pour éviter un calcul faux.</p></div><button className="close-detail" type="button" onClick={() => setEditing(null)}>×</button></div>
+          <div className="panel-title"><div><span className="eyebrow">Correction</span><h2>Corriger une session terminée</h2><p className="muted">Les pauses déjà enregistrées sont conservées. Si les nouveaux horaires excluent une pause, le Manager refusera la correction pour éviter un calcul faux.</p></div><button className="close-detail" type="button" onClick={() => setEditing(null)} aria-label="Fermer" title="Fermer"><OperationIcon name="close"/></button></div>
           <div className="manual-time-grid">
             <label>Projet<select value={editProjectId} onChange={(event) => setEditProjectId(event.target.value)}><option value="">AtoumWeb · sans projet</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select></label>
             <label>Catégorie<select value={editCategory} onChange={(event) => setEditCategory(event.target.value as TimeCategory)}>{TIME_CATEGORIES.map((value) => <option key={value} value={value}>{CATEGORY_LABELS[value]}</option>)}</select></label>
@@ -322,23 +323,15 @@ export function TimePage({ onMessage, statisticsDrilldown, onClearStatisticsDril
       )}
 
       <section className="panel time-list-panel">
-        <table className="time-table">
-          <thead><tr><th>Date</th><th>Contexte</th><th>Catégorie</th><th>Durée</th><th>Facturable</th><th>Source</th><th>Actions</th></tr></thead>
-          <tbody>
-            {sessions.map((session) => (
-              <tr key={session.id}>
-                <td><span className="time-cell-value">{dateTimeLabel(session.startedAt)}</span>{!session.endedAt && <small className="time-live">En cours{session.paused ? ' · pause' : ''}</small>}</td>
-                <td><span className="time-cell-value">{session.projectNumber ? `${session.projectNumber} · ${session.projectLabel ?? ''}` : session.projectLabel || 'AtoumWeb'}</span><small>{session.projectNodeLabel || session.activityLabel || '—'}</small></td>
-                <td><span className="time-category-pill">{CATEGORY_LABELS[session.category]}</span><small>{session.businessCategory ?? 'Métier non qualifié'}</small></td>
-                <td><span className="time-cell-value">{secondsLabel(session.durationSeconds)}</span></td>
-                <td><span className={`time-billable-pill ${session.billable ? 'yes' : 'no'}`}>{session.billable ? 'Oui' : 'Non'}</span></td>
-                <td><span className={`time-source-pill source-${session.source}`}><span aria-hidden="true">{session.source === 'timer' ? '◷' : session.source === 'manual' ? '✎' : '⇩'}</span>{session.source === 'timer' ? 'Timer' : session.source === 'manual' ? 'Manuel' : 'Import'}</span></td>
-                <td>{session.endedAt ? <button className="text-button" type="button" onClick={() => openCorrection(session)}>Corriger</button> : <span className="muted">En cours</span>}</td>
-              </tr>
-            ))}
-            {sessions.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucune session sur cette période.</div></td></tr>}
-          </tbody>
-        </table>
+        <ConfiguredDataTable<(typeof sessions)[number]> scope="time-sessions" store={window.atoumweb.visualPreferences} rows={sessions} selectedId={null} getId={session=>session.id} className="time-table" caption="Sessions de la période et des filtres courants · source complète" columns={[
+{id:'identity',label:"Date",required:true,sortValue:session=>session.startedAt??null,render:session=><><span className="time-cell-value">{dateTimeLabel(session.startedAt)}</span>{!session.endedAt && <small className="time-live">En cours{session.paused ? ' · pause' : ''}</small>}</>},
+{id:'context',label:"Contexte",sortValue:session=>session.projectLabel??null,render:session=><><span className="time-cell-value">{session.projectNumber ? `${session.projectNumber} · ${session.projectLabel ?? ''}` : session.projectLabel || 'AtoumWeb'}</span><small>{session.projectNodeLabel || session.activityLabel || '—'}</small></>},
+{id:'category',label:"Catégorie",sortValue:session=>session.category??null,render:session=><><span className="time-category-pill">{CATEGORY_LABELS[session.category]}</span><small>{session.businessCategory ?? 'Métier non qualifié'}</small></>},
+{id:'duration',label:"Durée",sortValue:session=>session.durationSeconds??null,render:session=><><span className="time-cell-value">{secondsLabel(session.durationSeconds)}</span></>},
+{id:'billable',label:"Facturable",sortValue:session=>session.billable?1:0,render:session=><><span className={`time-billable-pill ${session.billable ? 'yes' : 'no'}`}>{session.billable ? 'Oui' : 'Non'}</span></>},
+{id:'source',label:"Source",sortValue:session=>session.source??null,render:session=><><span className={`time-source-pill source-${session.source}`}><OperationIcon name={session.source==='timer'?'clock':session.source==='manual'?'file-text':'upload'}/>{session.source === 'timer' ? 'Timer' : session.source === 'manual' ? 'Manuel' : 'Import'}</span></>},
+{id:'actions',label:"Actions",required:true,render:session=><>{session.endedAt ? <button className="text-button" type="button" onClick={() => openCorrection(session)}>Corriger</button> : <span className="muted">En cours</span>}</>}
+]}/>
       </section>
     </div>
   );

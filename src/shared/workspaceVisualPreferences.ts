@@ -5,7 +5,7 @@ import { TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES } from './tableWorkshopFixtu
 import {NAVIGATION_PREFERENCE_KEY,normalizeNavigationPreference} from './navigationRail';
 import{HEADER_PREFERENCE_KEY,normalizeHeaderPreference}from'./headerPresentation';
 import {HOME_WIDGET_PREFERENCE_KEY,normalizeHomeWidgets,defaultHomeWidgets} from './homeWidgetPreference';
-import {PROSPECT_DIRECTORY_COLUMNS,PROSPECT_DIRECTORY_VIEW} from './prospectTablePresentation';
+import {REAL_TABLE_SCHEMAS} from './realTableSchemas';
 
 /** Workspace-owned presentation adapter. No business command or SQL migration.
  * Pilot schemas are explicitly registered; later module ports must register their own domains. */
@@ -20,8 +20,10 @@ export function normalizeVisualValue(key: string, raw: string): string {
   if(key===HEADER_PREFERENCE_KEY)return JSON.stringify(normalizeHeaderPreference(JSON.parse(raw)));
   if (key === NAVIGATION_PREFERENCE_KEY) return JSON.stringify(normalizeNavigationPreference(JSON.parse(raw)));
   const store: VisualPreferenceStore = { getItem: () => raw, setItem() {}, removeItem() {} };
-  if(key===tableViewKey(PROSPECT_DIRECTORY_VIEW))return JSON.stringify(readTableView(store,key,[],[],PROSPECT_DIRECTORY_COLUMNS));
-  if(key===personalViewsKey(PROSPECT_DIRECTORY_VIEW))return JSON.stringify({version:1,views:readPersonalViews(store,PROSPECT_DIRECTORY_VIEW,[],[],PROSPECT_DIRECTORY_COLUMNS)});
+  for(const [scope,columns]of Object.entries(REAL_TABLE_SCHEMAS)){
+    if(key===tableViewKey(scope))return JSON.stringify(readTableView(store,key,[],[],columns));
+    if(key===personalViewsKey(scope))return JSON.stringify({version:1,views:readPersonalViews(store,scope,[],[],columns)});
+  }
   for (const module of modules) {
     if (key === layoutKey(`table-demo:${module}`, 'list')) return JSON.stringify({ version: 1, listPercent: readLayout(store, key, 60) });
     if (key === tableViewKey(module)) return JSON.stringify(readTableView(store, key, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES));

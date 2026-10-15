@@ -1,18 +1,24 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { VitePlugin } from '@electron-forge/plugin-vite';
+import { resolve } from 'node:path';
+
+const brandIcon = resolve(__dirname, 'assets/brand/candidate/atoum-manager.ico');
 
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     name: 'AtoumWeb Manager',
     executableName: 'atoumweb-manager',
+    icon: brandIcon,
+    extraResource: [brandIcon],
   },
   rebuildConfig: {},
   makers: [
     new MakerSquirrel({
       name: 'AtoumWebManager',
       setupExe: 'AtoumWeb-Manager-Setup.exe',
+      setupIcon: brandIcon,
     }),
   ],
   plugins: [

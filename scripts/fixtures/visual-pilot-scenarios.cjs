@@ -33,6 +33,19 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,select,test,sleep,saveS
   if(await get('!!document.querySelector(".prospect-detail-v2")'))await click('.prospect-detail-v2 [aria-label="Fermer la fiche prospect"]');
   await text('.prospect-view-switch button','Parcours commercial');await wait('document.querySelectorAll(".pipeline-step-column").length===7','6+1 columns');
   await saveScreenshot(theme,density,'Prospection',(before?'avant':'apres')+'-pipeline');
+  if(!before){
+   test(await get('document.querySelectorAll(".pipeline-step-column>header>svg").length===7'),'Six active step icons and distinct Conversion history '+theme+'/'+density);
+   await js('window.__pipelineCard=document.querySelector(".card-drag-handle");window.__pipelineCard.focus()');
+   win.webContents.sendInputEvent({type:'keyDown',keyCode:'Return'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Return'});
+   await wait('!!document.querySelector(".prospect-detail-v2")','keyboard quick record');
+   test(await get('document.querySelector(".prospect-detail-v2").dataset.prospectId===window.__pipelineCard.closest("[data-prospect-id]").dataset.prospectId'),'Enter opens exact pipeline identity '+theme+'/'+density);
+   await click('.prospect-detail-v2 [aria-label="Fermer la fiche prospect"]');
+   await js('window.__pipelineCard.focus()');
+   win.webContents.sendInputEvent({type:'keyDown',keyCode:'Space'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Space'});
+   await wait('!!document.querySelector(".prospect-detail-v2")','Space quick record');
+   test(await get('window.__pipelineCard.getAttribute("aria-expanded")==="false"'),'Space uses same guarded toggle '+theme+'/'+density);
+   await click('.prospect-detail-v2 [aria-label="Fermer la fiche prospect"]');
+  }
   test(await get('document.querySelectorAll(".global-timer").length===1'),'Unique real timer '+theme+'/'+density);
  }
  if(!before){

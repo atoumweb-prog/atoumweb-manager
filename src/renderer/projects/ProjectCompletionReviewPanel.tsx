@@ -1,3 +1,4 @@
+import {OperationIcon} from '../operations/OperationIcon';
 import type { ProjectCompletionReview } from '../../shared/projects';
 
 const STATE_ICON = {
@@ -25,7 +26,7 @@ export function ProjectCompletionReviewPanel({ review, busy, onConfirm, onCancel
             {review.checkCount > 0 ? ` · ${review.checkCount} point${review.checkCount > 1 ? 's' : ''} à vérifier` : ''}
           </small>
         </div>
-        <button className="close-detail" type="button" onClick={onCancel} aria-label="Fermer">×</button>
+        <button className="close-detail" type="button" onClick={onCancel} aria-label="Fermer"><OperationIcon name="close"/></button>
       </div>
 
       <p className="project-completion-note">

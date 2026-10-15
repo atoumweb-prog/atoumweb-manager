@@ -3,6 +3,7 @@ import {RECIPE_FLAG} from '../shared/operationalRecipe';
 import {createOperationalRecipeWindow} from './projects/operationalRecipeWindow';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { join } from 'node:path';
+import {windowBrandIcon} from './windowBranding';
 import { registerBusinessBackupsIpcHandlers } from './backups/businessBackupsIpc';
 import { DatabaseService } from './database/DatabaseService';
 import { registerIpcHandlers } from './ipc';
@@ -43,6 +44,7 @@ function openProspectReferenceWindow(prospectId: string): void {
   }
 
   const referenceWindow = new BrowserWindow({
+    icon: windowBrandIcon(),
     width: 1120,
     height: 860,
     minWidth: 760,
@@ -65,6 +67,7 @@ function openProspectReferenceWindow(prospectId: string): void {
 
 function createMainWindow(): void {
   mainWindow = new BrowserWindow({
+    icon: windowBrandIcon(),
     width: 1440,
     height: 920,
     minWidth: 760,

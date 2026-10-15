@@ -499,7 +499,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
         </button>
       </section>
 
-      {error && <div className="bridge-error" role="alert"><OperationIcon name="alert" size={18} /><span>{error}</span><button type="button" onClick={() => setError(null)}>×</button></div>}
+      {error && <div className="bridge-error" role="alert"><OperationIcon name="alert" size={18} /><span>{error}</span><button type="button" onClick={() => setError(null)} aria-label="Fermer" title="Fermer"><OperationIcon name="close"/></button></div>}
 
       {compareOpen && site && <div className="bridge-compare-backdrop" role="presentation" onMouseDown={(event) => {
         if (event.currentTarget === event.target) { setCompareOpen(false); setNodeMatchReview(null); }

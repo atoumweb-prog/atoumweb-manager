@@ -422,7 +422,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         <p className="muted business-backups-alerts-note">Avertissements issus des sauvegardes déclarées et des politiques existantes ; ils ne remplacent pas une vérification technique avant intervention.</p>
       </section>
 
-      {error && <div className="notice business-backups-error" role="alert"><span>{error}</span><button type="button" onClick={() => setError(null)}>×</button></div>}
+      {error && <div className="notice business-backups-error" role="alert"><span>{error}</span><button type="button" onClick={() => setError(null)} aria-label="Fermer" title="Fermer"><OperationIcon name="close"/></button></div>}
 
       <article className="panel business-backups-toolbar">
         <input aria-label="Rechercher des sauvegardes" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher une sauvegarde ou un emplacement…" />

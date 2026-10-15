@@ -1,3 +1,4 @@
+import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 
 import { useEffect, useMemo, useState } from 'react';
 import type { ClientSummary } from '../../shared/crm';
@@ -432,7 +433,16 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
             <span className="expenses-compact-supplier">{item.supplier || 'Fournisseur non renseigné'}</span>
           </button>)}
           {filtered.length === 0 && <div className="empty-table">Aucune dépense dans cette vue.</div>}
-        </div> : <div className="expenses-table-wrap"><table className="expenses-table"><thead><tr><th>Date</th><th>Dépense</th><th>Catégorie</th><th>Client / Projet</th><th>Montant</th><th>Statut</th><th>Justificatif</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.id} onClick={() => draft.request(() => { setSelectedId(item.id); setCreateOpen(false); setExpanded(false); })}><td>{dateLabel(item.expenseDate)}</td><td><strong>{item.label}</strong><small>{item.supplier || '—'}</small></td><td><span className="expense-category-pill"><OperationIcon name={CATEGORY_ICONS[item.category]} size={15} /> {CATEGORY_LABELS[item.category]}</span></td><td>{item.projectNumber ? item.projectNumber + ' · ' + item.projectLabel : item.clientLabel || 'AtoumWeb interne'}</td><td>{money(item.amountCents)}</td><td><span className={'expense-status status-' + item.status}>{STATUS_LABELS[item.status]}</span>{isOverdue(item) && <small className="expense-overdue-indicator">Échéance dépassée</small>}</td><td>{item.receiptFileName ? <span className="expense-receipt-present"><OperationIcon name="file-text" size={14} /> Oui</span> : <span className="muted">—</span>}</td></tr>)}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucune dépense.</div></td></tr>}</tbody></table></div>}
+        </div> : <div className="expenses-table-wrap"><ConfiguredDataTable<(typeof filtered)[number]> scope="expenses-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>draft.request(() => { setSelectedId(item.id); setCreateOpen(false); setExpanded(false); })} className="expenses-table" caption="Date · Dépense · Catégorie · Client / Projet · Montant · Statut · Justificatif · source complète des résultats filtrés" columns={[
+{id:"date",label:"Date",sortValue:item=>item.expenseDate??null,render:item=><>{dateLabel(item.expenseDate)}</>},
+{id:"identity",label:"Dépense",required:true,sortValue:item=>item.label??null,render:item=><><strong>{item.label}</strong><small>{item.supplier || '—'}</small></>},
+{id:"category",label:"Catégorie",sortValue:item=>item.category??null,render:item=><><span className="expense-category-pill"><OperationIcon name={CATEGORY_ICONS[item.category]} size={15} /> {CATEGORY_LABELS[item.category]}</span></>},
+{id:"context",label:"Client / Projet",sortValue:item=>item.clientLabel??null,render:item=><>{item.projectNumber ? item.projectNumber + ' · ' + item.projectLabel : item.clientLabel || 'AtoumWeb interne'}</>},
+{id:"amount",label:"Montant",sortValue:item=>item.amountCents??null,render:item=><>{money(item.amountCents)}</>},
+{id:"status",label:"Statut",sortValue:item=>item.status??null,render:item=><><span className={'expense-status status-' + item.status}>{STATUS_LABELS[item.status]}</span>{isOverdue(item) && <small className="expense-overdue-indicator">Échéance dépassée</small>}</>},
+{id:"receipt",label:"Justificatif",sortValue:item=>item.receiptFileName??null,render:item=><>{item.receiptFileName ? <span className="expense-receipt-present"><OperationIcon name="file-text" size={14} /> Oui</span> : <span className="muted">—</span>}</>},
+{id:'open',label:'Ouvrir',required:true,render:item=><button type="button" className="link-button" aria-label={'Ouvrir '+String(item.label??item.id)} onClick={event=>{event.stopPropagation();((item:(typeof filtered)[number])=>draft.request(() => { setSelectedId(item.id); setCreateOpen(false); setExpanded(false); }))(item);}}><OperationIcon name="external-link"/></button>}
+]}/></div>}
       </section>}
 
       {detailOpen && !expanded && <div className="expenses-splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la liste et la fiche" tabIndex={0} onPointerDown={beginResize} onDoubleClick={() => setSplitPercent(38)} onKeyDown={(event) => {

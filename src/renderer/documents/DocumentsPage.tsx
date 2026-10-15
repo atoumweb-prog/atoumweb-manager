@@ -1,3 +1,4 @@
+import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { ContractLibraryPage } from '../commercial/ContractLibraryPage';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -374,19 +375,15 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
           </button>)}
           {!filtered.length && <p className="muted documents-empty">Aucun document dans cette vue.</p>}
         </div> : <div className="documents-table-wrap">
-          <table className="documents-table">
-            <thead><tr><th>Document</th><th>Client</th><th>Type</th><th>Fichier</th><th>Mise à jour</th><th>État</th></tr></thead>
-            <tbody>
-              {filtered.map((item) => <tr key={item.id} onClick={() => draft.request(() => setSelectedId(item.id))}>
-                <td><div className="documents-table-title"><span className="documents-type-icon"><OperationIcon name={CATEGORY_ICONS[item.category]} size={16} /></span><strong>{item.title}</strong></div></td>
-                <td>{item.clientLabel}</td>
-                <td>{CATEGORY_LABELS[item.category]}</td>
-                <td><span>{item.fileName}</span><small>{sizeLabel(item.sizeBytes)}</small></td>
-                <td>{dateLabel(item.updatedAt)}</td>
-                <td>{item.archivedAt ? <span className="status-pill">Archivé</span> : item.missing ? <span className="status-pill danger">Fichier manquant</span> : <span className="status-pill success">Disponible</span>}</td>
-              </tr>)}
-            </tbody>
-          </table>
+          <ConfiguredDataTable<(typeof filtered)[number]> scope="documents-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>draft.request(() => setSelectedId(item.id))} className="documents-table" caption="Document · Client · Type · Fichier · Mise à jour · État · source complète des résultats filtrés" columns={[
+{id:"identity",label:"Document",required:true,sortValue:item=>item.title??null,render:item=><><div className="documents-table-title"><span className="documents-type-icon"><OperationIcon name={CATEGORY_ICONS[item.category]} size={16} /></span><strong>{item.title}</strong></div></>},
+{id:"client",label:"Client",sortValue:item=>item.clientLabel??null,render:item=><>{item.clientLabel}</>},
+{id:"category",label:"Type",sortValue:item=>item.category??null,render:item=><>{CATEGORY_LABELS[item.category]}</>},
+{id:"file",label:"Fichier",sortValue:item=>item.fileName??null,render:item=><><span>{item.fileName}</span><small>{sizeLabel(item.sizeBytes)}</small></>},
+{id:"updated",label:"Mise à jour",sortValue:item=>item.updatedAt??null,render:item=><>{dateLabel(item.updatedAt)}</>},
+{id:"status",label:"État",render:item=><>{item.archivedAt ? <span className="status-pill">Archivé</span> : item.missing ? <span className="status-pill danger">Fichier manquant</span> : <span className="status-pill success">Disponible</span>}</>},
+{id:'open',label:'Ouvrir',required:true,render:item=><button type="button" className="link-button" aria-label={'Ouvrir '+String(item.title??item.id)} onClick={event=>{event.stopPropagation();((item:(typeof filtered)[number])=>draft.request(() => setSelectedId(item.id)))(item);}}><OperationIcon name="external-link"/></button>}
+]}/>
           {!filtered.length && <p className="muted documents-empty">Aucun document dans cette vue.</p>}
         </div>}
       </article>}

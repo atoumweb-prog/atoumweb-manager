@@ -1,3 +1,4 @@
+import {OperationIcon} from '../operations/OperationIcon';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ProjectNode } from '../../shared/projects';
@@ -698,7 +699,7 @@ export function ProjectPageCompositionPanel({
                   setInspected(null);
                   setCodePaneCollapsed(false);
                   if (!settingsItemId) setInspectExpanded(false);
-                }}>×</button>
+                }}><OperationIcon name="close"/></button>
               </div>
             </header>
             <div className="project-page-preview-controls project-page-inspector-device-controls">

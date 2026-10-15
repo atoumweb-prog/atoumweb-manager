@@ -1,3 +1,6 @@
+import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {DIRECTORY_ORGANIZATIONS_VIEW,DIRECTORY_CONTACTS_VIEW} from '../../shared/realTableSchemas';
+import '../crm/crm-visual-foundation.css';
 import { layoutKey, readLayout, writeLayout } from '../../shared/panelLayout';
 import { useUnsavedDraft, requestUnsavedExit, UnsavedGroup, unsavedRegistry } from '../unsaved/unsaved';
 import type { DirectoryVerification } from '../../shared/directoryIdentity';
@@ -326,7 +329,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
       </div>
       <div className="toolbar-controls">
         <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh" size={16} /> Actualiser</button>
-        <input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={view === 'organizations' ? 'Rechercher entreprise, ville, activité…' : 'Rechercher contact, entreprise, fonction…'} />
+        <input aria-label="Rechercher dans l’annuaire" className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={view === 'organizations' ? 'Rechercher entreprise, ville, activité…' : 'Rechercher contact, entreprise, fonction…'} />
         <select value={relationFilter} onChange={(event) => setRelationFilter(event.target.value as 'all' | DirectoryRelation)}>
           <option value="all">Toutes les relations</option>
           <option value="client">Clients</option>
@@ -357,32 +360,23 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
             <span className={`directory-relation-pill ${relationClass(item.relation)}`}>{RELATION_LABELS[item.relation]}</span>
           </button>)}
           {((view === 'organizations' && !filteredOrganizations.length) || (view === 'contacts' && !filteredContacts.length)) && <p className="muted directory-empty">Aucun résultat dans cette vue.</p>}
-        </div> : view === 'organizations' ? <div className="directory-table-wrap">
-          <table className="directory-table">
-            <thead><tr><th>Organisation</th><th>Activité</th><th>Ville</th><th>Coordonnées</th><th>Contacts</th><th>Relation</th></tr></thead>
-            <tbody>{filteredOrganizations.map((item) => <tr key={item.id} tabIndex={0} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectOrganization(item.id);}}} data-directory-id={item.id} onClick={() => selectOrganization(item.id)}>
-              <td><div className="directory-name-cell"><CrmIdentityAvatar organizationId={item.id} name={item.name} /><div><strong>{item.name}</strong><small>{item.legalName || item.website || 'Organisation professionnelle'}</small></div></div></td>
-              <td>{item.industry || '—'}</td>
-              <td>{item.city || '—'}</td>
-              <td><span>{item.email || '—'}</span><small>{formatPhone(item.phone)}</small></td>
-              <td>{item.contactCount}</td>
-              <td><span className={`directory-relation-pill ${relationClass(item.relation)}`}>{RELATION_LABELS[item.relation]}</span></td>
-            </tr>)}</tbody>
-          </table>
-          {!filteredOrganizations.length && <p className="muted directory-empty">Aucune organisation dans cette vue.</p>}
-        </div> : <div className="directory-table-wrap">
-          <table className="directory-table">
-            <thead><tr><th>Contact</th><th>Entreprise</th><th>Fonction</th><th>Coordonnées</th><th>Relation</th></tr></thead>
-            <tbody>{filteredContacts.map((item) => <tr key={item.id} tabIndex={0} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectContact(item.id);}}} data-directory-id={item.id} onClick={() => selectContact(item.id)}>
-              <td><div className="directory-name-cell"><CrmIdentityAvatar organizationId={item.organizationId} contactId={item.id} name={`${item.firstName} ${item.lastName}`} /><div><strong>{item.firstName} {item.lastName}</strong><small>{item.preferredChannel || 'Contact professionnel'}</small></div></div></td>
-              <td>{item.organizationName || '—'}</td>
-              <td>{item.jobTitle || '—'}</td>
-              <td><span>{item.email || '—'}</span><small>{formatPhone(item.phone)}</small></td>
-              <td><span className={`directory-relation-pill ${relationClass(item.relation)}`}>{RELATION_LABELS[item.relation]}</span></td>
-            </tr>)}</tbody>
-          </table>
-          {!filteredContacts.length && <p className="muted directory-empty">Aucun contact dans cette vue.</p>}
-        </div>}
+        </div> : view === 'organizations' ? <ConfiguredDataTable<DirectoryOrganization> scope={DIRECTORY_ORGANIZATIONS_VIEW} store={window.atoumweb.visualPreferences} className="directory-table" rows={filteredOrganizations} selectedId={selectedType==='organization'?selectedId:null} getId={item=>item.id} onSelect={item=>selectOrganization(item.id)} rowAttributes={item=>({'data-directory-id':item.id})} caption="Organisations · source complète des résultats filtrés" columns={[
+          {id:'identity',label:'Organisation',required:true,sortValue:i=>i.name,render:i=><div className="directory-name-cell"><CrmIdentityAvatar organizationId={i.id} name={i.name}/><div><strong>{i.name}</strong><small>{i.legalName||i.website||'Organisation professionnelle'}</small></div></div>},
+          {id:'industry',label:'Activité',sortValue:i=>i.industry??null,render:i=>i.industry||'—'},
+          {id:'city',label:'Ville',sortValue:i=>i.city??null,render:i=>i.city||'—'},
+          {id:'coordinates',label:'Coordonnées',sortValue:i=>i.email||i.phone||null,render:i=><><span>{i.email||'—'}</span><small>{formatPhone(i.phone)}</small></>},
+          {id:'contacts',label:'Contacts',sortValue:i=>i.contactCount,render:i=>i.contactCount},
+          {id:'relation',label:'Relation',sortValue:i=>RELATION_LABELS[i.relation],render:i=><span className={'directory-relation-pill '+relationClass(i.relation)}>{RELATION_LABELS[i.relation]}</span>},
+          {id:'open',label:'Ouvrir',required:true,render:i=><button type="button" className="link-button" title={'Ouvrir '+i.name} aria-label={'Ouvrir '+i.name} onClick={e=>{e.stopPropagation();selectOrganization(i.id);}}><OperationIcon name="external-link"/></button>},
+        ]}/> : <ConfiguredDataTable<DirectoryContact> scope={DIRECTORY_CONTACTS_VIEW} store={window.atoumweb.visualPreferences} className="directory-table" rows={filteredContacts} selectedId={selectedType==='contact'?selectedId:null} getId={i=>i.id} onSelect={i=>selectContact(i.id)} rowAttributes={i=>({'data-directory-id':i.id})} caption="Contacts · source complète des résultats filtrés" columns={[
+          {id:'identity',label:'Contact',required:true,sortValue:i=>i.lastName+' '+i.firstName,render:i=><div className="directory-name-cell"><CrmIdentityAvatar organizationId={i.organizationId} contactId={i.id} name={i.firstName+' '+i.lastName}/><div><strong>{i.firstName} {i.lastName}</strong><small>{i.preferredChannel||'Contact professionnel'}</small></div></div>},
+          {id:'organization',label:'Entreprise',sortValue:i=>i.organizationName??null,render:i=>i.organizationName||'—'},
+          {id:'jobTitle',label:'Fonction',sortValue:i=>i.jobTitle??null,render:i=>i.jobTitle||'—'},
+          {id:'coordinates',label:'Coordonnées',sortValue:i=>i.email||i.phone||null,render:i=><><span>{i.email||'—'}</span><small>{formatPhone(i.phone)}</small></>},
+          {id:'relation',label:'Relation',sortValue:i=>RELATION_LABELS[i.relation],render:i=><span className={'directory-relation-pill '+relationClass(i.relation)}>{RELATION_LABELS[i.relation]}</span>},
+          {id:'open',label:'Ouvrir',required:true,render:i=><button type="button" className="link-button" title={'Ouvrir '+i.firstName+' '+i.lastName} aria-label={'Ouvrir '+i.firstName+' '+i.lastName} onClick={e=>{e.stopPropagation();selectContact(i.id);}}><OperationIcon name="external-link"/></button>},
+        ]}/>}
+
       </article>}
 
       {showDetail && !expanded && <div className="directory-splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la liste et la fiche annuaire" tabIndex={0} onPointerDown={beginResize} onDoubleClick={() => {setSplitPercent(38);persistSplit(38);}} onKeyDown={(event) => {

@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/10/2026 — Direction graphique approuvée, généralisation en cours
+
+L’utilisateur a validé le pilote, puis demandé explicitement son application aux autres onglets, au pipeline, aux icônes et aux interactions du référentiel. Branche locale `codex/ux-v2-visual-generalization`, départ `b1c3964b` ; main non modifié. Le symbole proposé est approuvé ; les wordmarks restent des approximations typographiques documentées.
+
+Premier incrément : Clients (huit onglets préservés), Annuaire, Catalogue, Devis, Projets, Demandes/Interventions, Temps, Facturation, Dépenses et Documents raccordés aux contrôles existants de colonnes/vues/tri, avec schémas propres et préférences workspace limitées à la présentation. Treize schémas de listes réelles. Colonnes Décision Devis et Actions Temps obligatoires. Les listes compactes et les éditeurs spécialisés restent conservés. Pipeline6+1 iconifié, cartes accessibles par Entrée/Espace via la même garde UX-01 ; aucune transition modifiée. Icône de destination et aide contextuelle commune dans les titres des modules. Boutons de fermeture/retrait iconifiés sans changement de callbacks ; labels conservés/ajoutés. Packaging et fenêtres raccordés au même symbole approuvé, sans modifier les identifiants de l’application ni un exécutable livré.
+
+Validation en cours : résultats définitifs à consigner au SHA testé. Les autres dispositions spécialisées04–10 ne sont pas présumées intégralement harmonisées. Aucune donnée réelle/Validation-MSI, service métier, IPC ou migration modifié ; aucune fusion/push/CI hébergée autorisé par cette validation graphique.
+
 ## 15/10/2026 — Reprise graphique : pilote Prospection en attente d’avis humain
 
 `main@c4bb744d` / PR153 / CI1803 verte confirme l’intégration technique01–10, **pas la conformité graphique globale**. Référentiel officiel relu sur `docs/ux-v2-reference-v1@0bb0860e`. Nouvelle branche locale `codex/ux-v2-visual-pilot`, correctifs du rail préservés ; code `78bad55f` puis alias typographique `5c6086d5`.

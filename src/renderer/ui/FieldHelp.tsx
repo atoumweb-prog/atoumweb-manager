@@ -1,3 +1,4 @@
+import {OperationIcon} from '../operations/OperationIcon';
 import { useEffect, useId, useRef, useState } from 'react';
 
 /**
@@ -136,7 +137,7 @@ export function FieldHelp({ text, detail }: { text: string; detail?: string }) {
           event.preventDefault();
           event.stopPropagation();
           close(true);
-        }}>×</button>
+        }}><OperationIcon name="close"/></button>
     </span>}
   </span>;
 }

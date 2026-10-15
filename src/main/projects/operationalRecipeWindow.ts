@@ -1,4 +1,5 @@
 import {BrowserWindow,ipcMain} from 'electron';
+import {windowBrandIcon} from '../windowBranding';
 import {RECIPE_FLAG} from '../../shared/operationalRecipe';
 import {OperationalRecipeService} from './OperationalRecipeService';
 import {registerOperationalRecipeIpc} from './operationalRecipeIpc';
@@ -7,7 +8,7 @@ export function createOperationalRecipeWindow(preload:string,load:(window:Browse
   let window:BrowserWindow|undefined;let removeHandlers:(()=>void)|undefined;let disposed=false;
   const dispose=()=>{if(disposed)return;disposed=true;removeHandlers?.();console.info('Contrôle fermeture recette',session.close());};
   try{
-    window=new BrowserWindow({show,width:1440,height:960,minWidth:760,minHeight:560,title:'AtoumWeb Manager — Recette BROUILLON',
+    window=new BrowserWindow({icon:windowBrandIcon(),show,width:1440,height:960,minWidth:760,minHeight:560,title:'AtoumWeb Manager — Recette BROUILLON',
       webPreferences:{preload,contextIsolation:true,nodeIntegration:false,sandbox:true,offscreen:!show,backgroundThrottling:false,additionalArguments:[RECIPE_FLAG]}});
     removeHandlers=registerOperationalRecipeIpc(ipcMain,window.webContents,session);
     window.webContents.setWindowOpenHandler(()=>({action:'deny'}));

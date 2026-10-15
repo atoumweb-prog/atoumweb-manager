@@ -1,3 +1,4 @@
+import {OperationIcon} from '../operations/OperationIcon';
 import { buildComponentPreview } from './componentPreview';
 import { useUnsavedDraft } from '../unsaved/unsaved';
 import {
@@ -379,7 +380,7 @@ export function ProjectCompositionItemSettings({
         </button>
         {onExpand && <button className="secondary-button project-inspector-expand-action" type="button" aria-label="Agrandir l’atelier" title="Agrandir l’atelier" onClick={onExpand}>Agrandir</button>}
         {onCollapse && <button className="secondary-button" type="button" aria-label="Réduire Réglages" title="Réduire Réglages" onClick={onCollapse}>←</button>}
-        {onClose && <button className="secondary-button" type="button" aria-label="Fermer les réglages" title="Fermer les réglages" onClick={onClose}>×</button>}
+        {onClose && <button className="secondary-button" type="button" aria-label="Fermer les réglages" title="Fermer les réglages" onClick={onClose}><OperationIcon name="close"/></button>}
       </div>
     </div>
 

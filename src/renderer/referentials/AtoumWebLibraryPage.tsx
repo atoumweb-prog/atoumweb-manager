@@ -1206,7 +1206,7 @@ export function AtoumWebLibraryPage({ onEntityReady, onMessage, initialItemId, i
         <Summary icon="file-text" label="Références" value={summary.references} />
       </div>
 
-      {error && <div className="notice aw-library-error"><span>{error}</span><button type="button" onClick={() => setError(null)}>×</button></div>}
+      {error && <div className="notice aw-library-error"><span>{error}</span><button type="button" onClick={() => setError(null)} aria-label="Fermer" title="Fermer"><OperationIcon name="close"/></button></div>}
 
       <article className="panel aw-library-toolbar">
         <div className="aw-library-toolbar-filters">
