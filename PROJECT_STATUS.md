@@ -1,5 +1,14 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/10/2026 — Dernière passe ergonomique CRM, avant avis visuel final
+
+Principe des trois zones accepté par l’utilisateur ; validation du rendu final encore ouverte. Sur `codex/ux-v2-final-crm-brand-help`, code `389a1a70` : adaptation à la largeur effective de la fiche (zoom compris), Identité compacte et Associations repliables sans démontage, huit onglets sur une ligne avec accès clavier/défilement, séparateurs souris/clavier avec une seule écriture en fin de geste. Explications techniques des visuels déplacées dans FieldHelp. Aucun service, migration, règle métier ou protection UX-01 modifié par cette passe.
+
+Contrôles exécutés au code389a1a70 : typecheck OK,1500/1500 Vitest (166 fichiers,96,19s),35 restaurations/6 binaires ;674 assertions du nouveau banc ergonomique et79 aides dans une vraie fiche, aucune erreur console/RPC. Comparaison avant/après sur fixtures identiques : trois tailles × trois zooms × neuf thèmes/densités, huit onglets Client, Prospect, pipeline et Annuaire. Dernière validation répétée et preuves finales rattachées au HEAD documentaire dans le ZIP autonome demandé ; ne pas réutiliser les anciennes captures015ff032 comme preuve de ce candidat.
+
+Sauvegarde : test réel TEMP prouve que `createBackup` conserve l’association SQLite mais pas les fichiers. Copie TEMP du dossier `crm-identites` rétablit les octets correspondants. **Aucune sauvegarde/restauration complète automatique du workspace n’est certifiée.** [Proposition et risques avant toute évolution du moteur](docs/ux-v2/DERNIERE-PASSE-ERGONOMIQUE-2026-10-15.md). Aucun push, CI, merge, installation, lanceur ou donnée réelle/Validation-MSI modifié. Prochain gate : avis visuel sur le ZIP, puis décision distincte concernant la sauvegarde complète.
+
+
 ## 15/10/2026 — Finalisation CRM et master de marque utilisateur : candidat local
 
 Le dossier utilisateur C01–C11 précise les critères de fin : logo original du 9 octobre, aides sans doublon, pictogrammes différenciés, logo d'entreprise persistant et fiches complètes à trois régions. Nouvelle branche locale `codex/ux-v2-final-crm-brand-help`, départ `3e2a1f32`. Les validations graphiques précédentes ne valent pas acceptation de ces nouveaux rendus. [Décisions, audit ciblé et limites de sauvegarde des médias](docs/ux-v2/FINALISATION-CRM-MARQUE-2026-10-15.md). Code applicatif `d2963d6864d7c1adf6421a536c702416cedda471` : typecheck OK,1500/1500 Vitest,35 restaurations/6 binaires,580 assertions CRM,825 tableaux,109 aides +52 sur vraie fiche,132 pilote Prospection,214 Annuaire ;468 captures avant/après. Gate humain du logo et des deux fiches encore ouvert avant packaging ou installation. Galerie locale `captures/finalization-20261015/review/index.html`. Aucun push, main, migration, workspace réel ou Validation-MSI modifié.
