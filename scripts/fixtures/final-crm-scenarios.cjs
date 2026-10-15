@@ -135,6 +135,7 @@ module.exports=async ctx=>{
    test(await get('document.querySelector(".aw-brand-logotype img").complete&&document.querySelector(".aw-brand-logotype img").naturalWidth===2048'),'Exact original master decoded in header '+theme+'/'+density);
    test(await get('document.querySelector(".global-timer")===window.__finalTimer&&document.querySelectorAll(".global-timer").length===1'),'True timer instance survives record work '+theme+'/'+density);
    test(await get('(()=>{const s=document.querySelector(".aw-data-table-scroll");return s.scrollWidth<=s.clientWidth})()'),'No avoidable Client table horizontal scroll '+theme+'/'+density);
+   test(await get('(()=>{const r=document.querySelector(".aw-brand-symbol").getBoundingClientRect();return r.width===44&&r.height===44})()'),'Rail brand keeps its actual 44px viewport '+theme+'/'+density);
    await capture('header-reduced-rail',theme,density);
   }
   const current=assets().find(a=>a.role==='logo');dialog.showMessageBox=async()=>({response:1});test(await removeAsset(null,current.id)===true&&assets().length===count,'Confirmed removal clears persisted shared logo');
