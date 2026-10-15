@@ -36,3 +36,33 @@ L’harmonisation des commandes et listes ne prétend pas refaire tous les sous-
 Les35 gates de convergence ont réellement réussi au code `0b6d598e` : Catalogue, contrats, devis, UX-01, restauration/redémarrage, CRM/recherche/Accueil, projets/composition, opérations, finances/documents/Word, réglages et ateliers de préférences/rail/en-tête. Les raffinements suivants sont de présentation (pictogrammes Actualiser/Modifier/Réduire) et de banc ; nouvelle validation ciblée et globale au SHA final requise, sans réattribuer ces35 gates à un autre arbre.
 
 La séparation finale du banc est par **processus et fixture indépendants**, sans rechargement forcé du renderer CRM. La recette03E reste exécutée par son banc existant ; le nouveau banc initialise ses propres Clients/Prospects/Devis/Projets/Demandes/Interventions/Packs/Facturation/Dépenses/Documents/Temps synthétiques avant le snapshot. Un rechargement réutilisant l’ancien contexte a été refusé par UX-01 lors d’une exécution avec captures ; le contrôle a été interrompu, pas présenté comme réussi. Aucune garde de l’application n’a été désactivée pour résoudre cette dépendance de recette.
+
+## Bilan vérifié de ce jalon
+
+Branche `codex/ux-v2-visual-generalization`. Code applicatif final `43a2129b4571f75934d69198b047bfb3c899d9a3` ; `68d82c75` sépare les fixtures et `a6396f50` corrige l’attente du fichier de diagnostic Windows. Diff `43a2129b..a6396f50` sur `src`, `forge.config.ts` et `assets` vide. Aucun changement métier, service, IPC, migration ou donnée réelle. `origin/main` revérifié : `c4bb744dbe58531350a61fb16ad5f8fbe90bd59d`.
+
+| Vérification réellement exécutée | Résultat | Référence |
+|---|---|---|
+| Typecheck | OK | Sources43a2129b puis a6396f50 |
+| Vitest final |1487/1487,164 fichiers,109,41 s ; aucune erreur RPC | `outputs-generalization-43a212-vitest.log` |
+| Restauration / équivalence binaire |35/35 et6/6 inclus dans Vitest ; migrations1–70, intégrité et FK testées | Aucun essai sur base réelle |
+|35 gates natives04–10 |35 étapes toutes vertes,491,71 s | Code0b6d598e ; manifeste `outputs/convergence-final-04-10-0b6d598e-1792050559350/manifest.json` |
+| Treize tableaux réels × neuf configurations |825 contrôles,117 captures synchronisées, aucune mutation des tables métier | Code applicatif43a2129b, banc68d82c75 ; `outputs-generalization-final-tables.log` |
+| CRM03A–E, Client/Annuaire |205 contrôles,0 erreur console | `outputs-generalization-final-crm.log`, code applicatif43a2129b |
+| Prospection/pipeline, clavier et brouillons |132 contrôles,36 captures synchronisées | Banc au HEAD68d82c75, `outputs-generalization-final-pipeline.log` |
+| Client huit onglets / Annuaire en conflit |72+9 captures synchronisées | Code43a2129b, phases CRM achevées avant le rechargement du banc ensuite refusé ; ne pas présenter cette ancienne exécution combinée comme verte |
+| Catalogue réel |109 contrôles, zoom/étroit sans débordement | `outputs-generalization-43a212-catalog.log` |
+| UX-01 réel |192 contrôles,0 échec | `outputs-generalization-43a212-ux01.log` |
+| Catalogue49 pictogrammes |42 contrôles, neuf configurations et clavier natif | `outputs-generalization-43a212-icons.log` |
+| Package réel produit |Build Windows réussi, aucun déploiement/installation | Build au HEAD68d82c75 ; sources applicatives identiques à43a2129b |
+| Package réel sur nouveau profil/workspace TEMP |331 contrôles,162 visites,0 erreur console, intégrité/FK/migrations exactes, pas de démarrage de chrono | `outputs-generalization-final-package-readiness.log`, banc a6396f50 |
+
+L’ancienne propriété `buildWorktreeSha` du smoke désigne le checkout au moment de l’inspection, pas un SHA embarqué dans le binaire. Le build réel était68d82c75 ; ne pas déduire son origine de ce seul champ. Empreintes du dernier package : EXE `c41cb2aee584bc6b9c588e8cfd7f42185cd20aa6270d234355eed92f1bf42b3e`, ASAR `7e9009abd692470c1abaf73625b38a9399111017ba10ca74e626bd80db5f747f`.
+
+Le dernier démarrage avait révélé une course de lecture du fichier Chromium `DevToolsActivePort` (`EBUSY` entre existence et lecture). Le banc attend désormais ses deux lignes complètes et lisibles, avec le même délai maximal et sans rejouer d’action applicative. Les erreurs restent enregistrées et bloquantes. Le premier échec console de l’ancien smoke reste sans diagnostic rétroactif ; aucune de ces exécutions refusées n’est comptée comme réussie.
+
+Galerie locale : `captures/visual-generalization-review/index.html`, avec listes, fiches Client/Annuaire et pipeline.234 captures :117 listes +72 onglets Client +9 Annuaire +36 Prospection. La trace de chaque capture indique son SHA ; les images des itérations de diagnostic ne sont pas utilisées dans cette galerie.
+
+**État : harmonisation des commandes, icônes, titres et treize listes réelle et testée.** Les éditeurs spécialisés (CGV, composition, Word, graphiques) gardent leur disposition et leurs règles ; aucun moteur parallèle. Réserves humaines/Word/Abby/Bridge et archivage Annuaire non exposé conservées. Ce jalon n’est pas une certification visuelle de chaque sous-écran, ni une installation Squirrel/MSI certifiée.
+
+Aucun push, workflow hébergé ou merge. Aucun remplacement de l’exécutable, du profil, du lanceur ou du workspace quotidien. Les fichiers de preuve sont ignorés par Git et ne contiennent que des données synthétiques.
