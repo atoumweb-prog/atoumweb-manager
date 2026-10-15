@@ -323,7 +323,7 @@ export function BillingPage({ onMessage, statisticsDrilldown, onClearStatisticsD
 {id:"amount",label:"Montant",sortValue:item=>item.expectedAmountCents??null,render:item=><>{money(item.expectedAmountCents)}</>},
 {id:"status",label:"Statut",sortValue:item=>item.status??null,render:item=><><span className={`billing-status status-${item.status}`}>{STATUS_LABELS[item.status]}</span></>},
 {id:"invoice",label:"Facture",render:item=><>{item.invoiceFileName ? <span className="billing-pdf-present"><OperationIcon name="file-text" size={14} /> {item.invoiceReference || 'Référence à vérifier'} · {dateLabel(item.invoicedAt)}</span> : <span className="muted">—</span>}</>},
-{id:'open',label:'Ouvrir',required:true,render:item=><button type="button" className="link-button" aria-label={'Ouvrir '+String(item.clientLabel??item.id)} onClick={event=>{event.stopPropagation();((item:(typeof filtered)[number])=>invoiceDraft.request(() => { setSelectedId(item.id); setExpanded(false); }))(item);}}><OperationIcon name="external-link"/></button>}
+{id:'open',label:'Ouvrir',required:true,render:item=><button type="button" className="link-button" aria-label={'Ouvrir '+String(item.clientLabel??item.id)} onClick={event=>{event.stopPropagation();((item:(typeof filtered)[number])=>invoiceDraft.request(() => { setSelectedId(item.id); setExpanded(false); }))(item);}}><OperationIcon name="record-open"/></button>}
 ]}/></div>}
       </section>}
 

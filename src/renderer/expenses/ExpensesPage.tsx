@@ -441,7 +441,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
 {id:"amount",label:"Montant",sortValue:item=>item.amountCents??null,render:item=><>{money(item.amountCents)}</>},
 {id:"status",label:"Statut",sortValue:item=>item.status??null,render:item=><><span className={'expense-status status-' + item.status}>{STATUS_LABELS[item.status]}</span>{isOverdue(item) && <small className="expense-overdue-indicator">Échéance dépassée</small>}</>},
 {id:"receipt",label:"Justificatif",sortValue:item=>item.receiptFileName??null,render:item=><>{item.receiptFileName ? <span className="expense-receipt-present"><OperationIcon name="file-text" size={14} /> Oui</span> : <span className="muted">—</span>}</>},
-{id:'open',label:'Ouvrir',required:true,render:item=><button type="button" className="link-button" aria-label={'Ouvrir '+String(item.label??item.id)} onClick={event=>{event.stopPropagation();((item:(typeof filtered)[number])=>draft.request(() => { setSelectedId(item.id); setCreateOpen(false); setExpanded(false); }))(item);}}><OperationIcon name="external-link"/></button>}
+{id:'open',label:'Ouvrir',required:true,render:item=><button type="button" className="link-button" aria-label={'Ouvrir '+String(item.label??item.id)} onClick={event=>{event.stopPropagation();((item:(typeof filtered)[number])=>draft.request(() => { setSelectedId(item.id); setCreateOpen(false); setExpanded(false); }))(item);}}><OperationIcon name="record-open"/></button>}
 ]}/></div>}
       </section>}
 

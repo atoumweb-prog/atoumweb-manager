@@ -969,7 +969,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
 {id:"progress",label:"Progression",sortValue:project=>project.progressPercent??null,render:project=><><div className="project-progress-cell"><span>{project.progressPercent} %</span><i><b style={{ width: `${project.progressPercent}%` }} /></i></div></>},
 {id:"estimated",label:"Temps estimé",sortValue:project=>project.estimatedMinutes??null,render:project=><>{duration(project.estimatedMinutes)}</>},
 {id:"target",label:"Cible",sortValue:project=>project.targetDate??null,render:project=><>{dateLabel(project.targetDate)}</>},
-{id:'open',label:'Ouvrir',required:true,render:project=><button type="button" className="link-button" aria-label={'Ouvrir '+String(project.number??project.id)} onClick={event=>{event.stopPropagation();((project:(typeof filtered)[number])=>void openProject(project.id))(project);}}><OperationIcon name="external-link"/></button>}
+{id:'open',label:'Ouvrir',required:true,render:project=><button type="button" className="link-button" aria-label={'Ouvrir '+String(project.number??project.id)} onClick={event=>{event.stopPropagation();((project:(typeof filtered)[number])=>void openProject(project.id))(project);}}><OperationIcon name="record-open"/></button>}
 ]}/>
           </section>
 

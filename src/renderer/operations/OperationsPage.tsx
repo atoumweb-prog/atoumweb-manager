@@ -550,7 +550,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
 {id:"identity",label:"Sujet",required:true,sortValue:request=>request.subject??null,render:request=><><strong>{request.subject}</strong><small>{SOURCE_LABELS[request.source]}</small></>},
 {id:"priority",label:"Priorité",sortValue:request=>request.priority??null,render:request=><><span className={`operation-priority priority-${request.priority}`}>{PRIORITY_LABELS[request.priority]}</span></>},
 {id:"status",label:"Statut",sortValue:request=>request.status??null,render:request=><>{REQUEST_STATUS_LABELS[request.status]}</>},
-{id:'open',label:'Ouvrir',required:true,render:request=><button type="button" className="link-button" aria-label={'Ouvrir '+String(request.subject??request.id)} onClick={event=>{event.stopPropagation();((request:(typeof filteredRequests)[number])=>requestUnsavedExit(()=>{ setSelectedRequest(request); setSelectedIntervention(null); setRequestExpanded(false); }))(request);}}><OperationIcon name="external-link"/></button>}
+{id:'open',label:'Ouvrir',required:true,render:request=><button type="button" className="link-button" aria-label={'Ouvrir '+String(request.subject??request.id)} onClick={event=>{event.stopPropagation();((request:(typeof filteredRequests)[number])=>requestUnsavedExit(()=>{ setSelectedRequest(request); setSelectedIntervention(null); setRequestExpanded(false); }))(request);}}><OperationIcon name="record-open"/></button>}
 ]}/>}
         </section>}
         {selectedRequest && !requestExpanded && <div
@@ -617,7 +617,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
 {id:"coverage",label:"Prise en charge",sortValue:intervention=>intervention.coverageMode??null,render:intervention=><>{COVERAGE_LABELS[intervention.coverageMode]}</>},
 {id:"time",label:"Temps",sortValue:intervention=>intervention.totalTimeSeconds??null,render:intervention=><>{duration(intervention.totalTimeSeconds)}</>},
 {id:"status",label:"Statut",sortValue:intervention=>intervention.status??null,render:intervention=><><span className={`operation-status-chip status-${intervention.status}`}>{INTERVENTION_STATUS_LABELS[intervention.status]}</span></>},
-{id:'open',label:'Ouvrir',required:true,render:intervention=><button type="button" className="link-button" aria-label={'Ouvrir '+String(intervention.number??intervention.id)} onClick={event=>{event.stopPropagation();((intervention:(typeof filteredInterventions)[number])=>requestUnsavedExit(()=>{ setSelectedIntervention(intervention); setSelectedRequest(null); setInterventionExpanded(false); }))(intervention);}}><OperationIcon name="external-link"/></button>}
+{id:'open',label:'Ouvrir',required:true,render:intervention=><button type="button" className="link-button" aria-label={'Ouvrir '+String(intervention.number??intervention.id)} onClick={event=>{event.stopPropagation();((intervention:(typeof filteredInterventions)[number])=>requestUnsavedExit(()=>{ setSelectedIntervention(intervention); setSelectedRequest(null); setInterventionExpanded(false); }))(intervention);}}><OperationIcon name="record-open"/></button>}
 ]}/>}
         </section>}
         {selectedIntervention && !interventionExpanded && <div

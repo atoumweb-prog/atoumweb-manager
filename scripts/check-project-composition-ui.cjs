@@ -43,7 +43,7 @@ app.whenReady().then(async () => {
   let rendererGone = null;
   const rendererConsole = [];
   try {
-    await esbuild.build({stdin:{contents:entry,resolveDir:repo,loader:'tsx'},nodePaths:[repo+'/node_modules'],bundle:true,outfile:dir+'/fixture.js',jsx:'automatic',logLevel:'silent'});
+    await esbuild.build({stdin:{contents:entry,resolveDir:repo,loader:'tsx'},nodePaths:[repo+'/node_modules'],bundle:true,loader:{'.png':'dataurl'},outfile:dir+'/fixture.js',jsx:'automatic',logLevel:'silent'});
     fs.writeFileSync(dir+'/fixture.html','<html><head><link rel="stylesheet" href="fixture.css"></head><body><div id="root"></div><script src="fixture.js"></script></body></html>');
     const win = new BrowserWindow({
       show:false,

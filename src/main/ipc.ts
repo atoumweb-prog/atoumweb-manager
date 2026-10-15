@@ -2,9 +2,9 @@ import { registerShellVisualPreferences } from './shellVisualPreferencesIpc';
 import {registerUnsavedConfirmationIpc,unsavedWindows} from './unsaved';
 import { restoreQuitGate } from './restoreQuitGate';
 import type { ContractAdministration, QuoteContractParameters, ContractDocumentLinkInput, ContractDocumentRole } from '../shared/quoteContractPreparation';
-import { app, clipboard, dialog, ipcMain, safeStorage, shell } from 'electron';
+import { app, clipboard, dialog, ipcMain, nativeImage, safeStorage, shell } from 'electron';
 import type { BridgeNodeMatchDecisionInput } from '../shared/bridgeSnapshots';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, statSync, writeFileSync } from 'node:fs';
 import {createWorkingContractDocx} from './commercial/workingContractDocx';
 import {extractWorkingDocxText} from './commercial/workingContractDocxImport';
 import { basename, join } from 'node:path';
@@ -263,6 +263,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:contact-methods:archive',(_event,id:string,archived?:boolean)=>database.crm.archiveContactMethod(id,archived));
   ipcMain.handle('crm:identity-assets:list', (_event, owner: CrmIdentityOwnerType, id: string) => database.crmIdentityAssets.list(owner, id));
   ipcMain.handle('crm:identity-assets:import', async (_event, owner: CrmIdentityOwnerType, id: string, role: CrmIdentityAssetRole) => {
+    const previous = database.crmIdentityAssets.list(owner, id).find(asset=>asset.role===role);
     const selection = await dialog.showOpenDialog({
       title: role === 'logo' ? 'Choisir le logo' : role === 'favicon' ? 'Choisir la favicon' : 'Choisir la photo',
       defaultPath: workspace.root,
@@ -270,10 +271,30 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'ico'] }],
     });
     if (selection.canceled || selection.filePaths.length === 0) return null;
-    return database.crmIdentityAssets.importFilePath(owner, id, role, selection.filePaths[0]);
+    const source = selection.filePaths[0];
+    const stats=statSync(source);
+    if(!stats.isFile()||stats.size===0||stats.size>8*1024*1024)throw Error('Image vide ou supérieure à 8 Mo.');
+    const bytes = readFileSync(source);
+    if (!bytes.length || bytes.length > 8 * 1024 * 1024) throw Error('Image vide ou supérieure à 8 Mo.');
+    const preview = nativeImage.createFromBuffer(bytes);
+    if (preview.isEmpty()) throw Error('Image invalide ou format non pris en charge.');
+    const dimensions=preview.getSize(),scale=Math.min(160/dimensions.width,160/dimensions.height);
+    const confirmation = await dialog.showMessageBox({type:'question',title:'Identité visuelle',message:'Enregistrer ce visuel ?',detail:basename(source)+'\nCe visuel sera partagé par les fiches liées à cette identité.',icon:preview.resize({width:Math.max(1,Math.round(dimensions.width*scale)),height:Math.max(1,Math.round(dimensions.height*scale)),quality:'best'}),buttons:['Enregistrer','Annuler'],defaultId:1,cancelId:1});
+    if(confirmation.response!==0)return null;
+    const current = database.crmIdentityAssets.list(owner,id).find(asset=>asset.role===role);
+    if(current?.relativePath!==previous?.relativePath)throw Error('Le visuel a changé dans une autre fenêtre. Actualise la fiche avant de réessayer.');
+    // Re-read once to reject a source changed while the confirmation was open.
+    if(!readFileSync(source).equals(bytes))throw Error('Le fichier choisi a changé. Choisis-le de nouveau.');
+    return database.crmIdentityAssets.importFilePath(owner, id, role, source);
   });
   ipcMain.handle('crm:identity-assets:preview', (_event, assetId: string) => database.crmIdentityAssets.preview(assetId));
-  ipcMain.handle('crm:identity-assets:remove', (_event, assetId: string) => database.crmIdentityAssets.remove(assetId));
+  ipcMain.handle('crm:identity-assets:remove', async (_event, assetId: string) => {
+    const previous=database.crmIdentityAssets.get(assetId);
+    const result=await dialog.showMessageBox({type:'question',title:'Retirer le visuel',message:'Retirer ce visuel de cette identité et de ses fiches liées ?',buttons:['Annuler','Retirer le visuel'],defaultId:0,cancelId:0});
+    if(result.response!==1)return false;
+    if(database.crmIdentityAssets.get(assetId).relativePath!==previous.relativePath)throw Error('Le visuel a changé dans une autre fenêtre. Actualise la fiche.');
+    database.crmIdentityAssets.remove(assetId);return true;
+  });
   ipcMain.handle('crm:prospects:list', (_event, filters?: ProspectFilters) => database.crm.listProspects(filters));
   ipcMain.handle('crm:prospects:create', (_event, input: ProspectInput) => database.crm.createProspect(input));
   ipcMain.handle('crm:prospects:update', (_event, id: string, input: ProspectInput) => database.crm.updateProspect(id, input));

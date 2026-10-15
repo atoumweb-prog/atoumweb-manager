@@ -1,3 +1,4 @@
+import {CrmRecordLayout} from './CrmRecordLayout';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import {CLIENT_DIRECTORY_VIEW} from '../../shared/realTableSchemas';
 import './crm-visual-foundation.css';
@@ -651,7 +652,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
               {id:'contact',label:'Contact principal',sortValue:c=>c.contactName??null,render:c=>c.contactName||'—'},
               {id:'coordinates',label:'Coordonnées',sortValue:c=>c.email||c.phone||null,render:c=><div className="contact-stack"><span>{c.email||'—'}</span><small>{c.phone||''}</small></div>},
               {id:'nextAction',label:'Prochaine action',sortValue:c=>c.nextActionAt??null,render:c=>c.nextActionAt?<><strong>{c.nextActionText||'Action prévue'}</strong><small>{new Date(c.nextActionAt).toLocaleDateString('fr-FR')}</small></>:<span className="muted">Aucune</span>},
-              {id:'open',label:'Ouvrir',required:true,render:c=><button className="link-button" type="button" aria-label={'Ouvrir '+c.displayName} title={'Ouvrir '+c.displayName} onClick={e=>{e.stopPropagation();openClient(c.id);}}><OperationIcon name="external-link"/></button>},
+              {id:'open',label:'Ouvrir',required:true,render:c=><button className="link-button" type="button" aria-label={'Ouvrir '+c.displayName} title={'Ouvrir '+c.displayName} onClick={e=>{e.stopPropagation();openClient(c.id);}}><OperationIcon name="record-open"/></button>},
             ]}/>
 
           </div>
@@ -659,13 +660,22 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
           {clientSplitter}
           {selected && (
             <aside key={selected.id} tabIndex={-1} data-search-entity-type="client" data-search-entity-id={selected.id} ref={sidePanelRef} className={`panel client-summary-panel client-relationship-${selected.relationshipStatus ?? 'neutral'} ${largeView ? 'client-large-view' : ''}`} role={largeView ? 'dialog' : undefined} aria-modal={largeView ? true : undefined} aria-label={largeView ? `Fiche client ${selected.displayName}` : undefined}>
-              <div className="detail-panel-heading">
+<CrmRecordLayout kind="client" full={largeView} identity={<>              <div className="detail-panel-heading">
                 <div>
                   <span className="eyebrow">Fiche client</span>
                   <div className="client-summary-head"><CrmIdentityAvatar organizationId={selected.organizationId} contactId={selected.primaryContactId} name={selected.displayName} size="large" /><div><h2>{selected.displayName}</h2><span className={`client-status status-${selected.status}`}>{STATUS_LABELS[selected.status ?? 'active']}</span></div></div>
                 </div>
-                <div className="detail-heading-actions"><div className="client-relationship-picker"><button className="secondary-button client-relationship-trigger" type="button" aria-expanded={relationshipMenuOpen} aria-haspopup="true" disabled={relationshipSaving} onClick={() => setRelationshipMenuOpen((value) => !value)}><span className="client-relationship-dot" />Relation client · {RELATION_LABELS[selected.relationshipStatus ?? 'neutral']}</button>{relationshipMenuOpen && <div className="client-relationship-menu" role="group" aria-label="Qualité de la relation client">{RELATION_OPTIONS.map((option) => <button key={option} type="button" className={`client-relationship-choice client-relationship-${option}`} aria-pressed={(selected.relationshipStatus ?? 'neutral') === option} onClick={() => void updateRelationship(selected, option)}><span className="client-relationship-dot" />{RELATION_LABELS[option]}</button>)}</div>}</div><button className="operation-detail-expand client-detail-expand" type="button" title={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setLargeView((value) => !value)}><OperationIcon name={largeView ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" aria-label="Fermer la fiche client" title="Fermer la fiche client" onClick={closeClient}><OperationIcon name="close"/></button></div>
+                <div className="detail-heading-actions"><div className="client-relationship-picker"><button className="secondary-button client-relationship-trigger" type="button" aria-expanded={relationshipMenuOpen} aria-haspopup="true" disabled={relationshipSaving} onClick={() => setRelationshipMenuOpen((value) => !value)}><span className="client-relationship-dot" />Relation client · {RELATION_LABELS[selected.relationshipStatus ?? 'neutral']}</button>{relationshipMenuOpen && <div className="client-relationship-menu" role="group" aria-label="Qualité de la relation client">{RELATION_OPTIONS.map((option) => <button key={option} type="button" className={`client-relationship-choice client-relationship-${option}`} aria-pressed={(selected.relationshipStatus ?? 'neutral') === option} onClick={() => void updateRelationship(selected, option)}><span className="client-relationship-dot" />{RELATION_LABELS[option]}</button>)}</div>}</div><button className="operation-detail-expand client-detail-expand" type="button" title={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setLargeView((value) => !value)}><OperationIcon name={largeView ? 'record-reduce' : 'record-expand'} size={18} /></button><button className="close-detail" type="button" aria-label="Fermer la fiche client" title="Fermer la fiche client" onClick={closeClient}><OperationIcon name="close"/></button></div>
               </div>
+<div className="crm-record-properties"><strong>Coordonnées essentielles</strong>{selected.contactName&&<SummaryLine label="Contact" value={selected.contactName}/>} {selected.email&&<SummaryLine label="Email" value={selected.email}/>} {selected.phone&&<SummaryLine label="Téléphone" value={selected.phone}/>}<small>Client depuis {new Date(selected.becameClientAt).toLocaleDateString('fr-FR')}</small></div>
+ <CrmIdentityAssetEditor organizationId={selected.organizationId} contactId={selected.primaryContactId} onMessage={onMessage}/>
+</>} context={<><h3>Objets liés</h3><p className="muted">Liens de ce client uniquement</p>
+ {quotes.map(item=><button className="workflow-link" type="button" key={item.id} onClick={()=>openEntity({entityType:'quote',entityId:item.id,title:item.subject})}><OperationIcon name="file-text"/> {item.number} · {item.subject}</button>)}
+ {projects.map(item=><button className="workflow-link" type="button" key={item.id} onClick={()=>openEntity({entityType:'project',entityId:item.id,title:item.name})}><OperationIcon name="folder"/> {item.name}</button>)}
+ <button type="button" onClick={()=>setActiveTab('contracts')}>Contrats ({quotes.filter(q=>q.status==='accepted').length} devis acceptés)</button>
+ <button type="button" onClick={()=>setActiveTab('operations')}>Interventions ({interventions.length})</button>
+ <button type="button" onClick={()=>setActiveTab('documents')}>Documents du client</button>
+ {!quotes.length&&!projects.length&&<p className="muted">Aucun devis ni projet rattaché.</p>}</>}>
               <div role="tablist" aria-label="Rubriques du client" className="client-tabs-preview client-tabs-buttons client-v2-tabs">
                 {CLIENT_TABS.map(([id,label])=><button key={id} id={'client-tab-'+id} role="tab" aria-selected={activeTab===id} aria-controls={'client-panel-'+id} tabIndex={activeTab===id?0:-1} type="button" onClick={()=>setActiveTab(id)} onKeyDown={event=>{const next=clientTabKey(id,event.key);if(next){event.preventDefault();setActiveTab(next);document.getElementById('client-tab-'+next)?.focus();}}}><OperationIcon name={({summary:'user',contacts:'users',commercial:'file-text',contracts:'file-check',projects:'folder',operations:'wrench',documents:'inbox',history:'clock'} as const)[id]}/>{label}</button>)}
               </div>
@@ -673,7 +683,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
               {detailLoading&&<p role="status">Actualisation de la fiche…</p>}
               {Object.entries(sectionErrors).map(([zone,error])=><p role="alert" key={zone}>Chargement incomplet — {zone} : {error} <button type="button" onClick={()=>void refreshSelectedClientData(selected.id)}>Réessayer</button></p>)}
               <section hidden={activeTab!=='summary'} id="client-panel-summary" role="tabpanel" aria-labelledby="client-tab-summary">
-                <section className="client-primary-card"><CrmIdentityAssetEditor organizationId={identity?.organization?.id} contactId={identity?.contact?.id} onMessage={onMessage} /><div className="contact-tab-heading"><h3>Coordonnées</h3>{identity?.organization&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'organization',entityId:identity.organization!.id,title:identity.organization!.name})}>Ouvrir l’organisation dans l’Annuaire</button>}<button className="secondary-button" type="button" onClick={beginCoordinateEdit}>Modifier</button></div>
+                <section className="client-primary-card"><div className="contact-tab-heading"><h3>Coordonnées</h3>{identity?.organization&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'organization',entityId:identity.organization!.id,title:identity.organization!.name})}>Ouvrir l’organisation dans l’Annuaire</button>}<button className="secondary-button" type="button" onClick={beginCoordinateEdit}>Modifier</button></div>
                   {selected.contactName && <SummaryLine label="Contact principal" value={selected.contactName} />}
                   {selected.phone && <SummaryLine label="Téléphone" value={selected.phone} />}
                   {selected.email && <SummaryLine label="Email" value={selected.email} />}
@@ -781,6 +791,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
               <section hidden={activeTab!=='documents'} id="client-panel-documents" role="tabpanel" aria-labelledby="client-tab-documents"><ClientDocumentsPanel clientId={selected.id}/></section>
               <section hidden={activeTab!=='history'} id="client-panel-history" role="tabpanel" aria-labelledby="client-tab-history"><ActivityList activity={activity}/></section>
               </div>
+</CrmRecordLayout>
             </aside>
           )}
         </div>

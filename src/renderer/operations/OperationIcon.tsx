@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 export type OperationIconName =
+  | 'record-open' | 'record-expand' | 'record-reduce' | 'rail-open' | 'rail-close' | 'header-expand' | 'header-compact'
   | 'home' | 'users' | 'file-check' | 'layers' | 'contact' | 'settings'
   | 'search' | 'filter' | 'menu' | 'plus' | 'arrow-left' | 'columns' | 'edit'
   | 'inbox'
@@ -41,6 +42,13 @@ export type OperationIconName =
   | 'moon';
 
 const paths: Record<OperationIconName, ReactNode> = {
+  'record-open': <><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16m4-11 3 3-3 3m-1-3h5"/></>,
+  'record-expand': <><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 17 17 7m-6 0h6v6"/></>,
+  'record-reduce': <><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m16 8-8 8m0-5v5h5"/></>,
+  'rail-open': <><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16m4-11 3 3-3 3"/></>,
+  'rail-close': <><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16m8-11-3 3 3 3"/></>,
+  'header-expand': <><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18m-12 5 3 3 3-3"/></>,
+  'header-compact': <><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18m-12 8 3-3 3 3"/></>,
   edit: <><path d="m15 4 5 5M4 20l5-1L21 7a2 2 0 0 0-5-4L4 15ZM4 15l5 4"/></>,
   home: <><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8"/></>,
   users: <><circle cx="9" cy="8" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 4v2"/></>,

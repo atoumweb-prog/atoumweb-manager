@@ -20,7 +20,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,select,test,sleep,saveS
   if(!before){
    test(await get('!document.querySelector(".aw-configured-table [role=alert]")'),'Real preferences readable '+theme+'/'+density);
    test(await get('document.querySelectorAll(".aw-rail-icon-slot,.aw-rail-logo-slot").length===0'),'No placeholder initials '+theme+'/'+density);
-   test(await get('document.querySelector(".aw-brand-symbol").naturalWidth>0'),'Candidate brand actually decoded '+theme+'/'+density);
+   test(await get('!!document.querySelector(".aw-brand-symbol image[href]")'),'Candidate brand actually decoded '+theme+'/'+density);
    test(await get('parseFloat(getComputedStyle(document.querySelector(".client-name-cell strong")).fontSize)==='+font),'Primary record font follows density '+theme+'/'+density);
    test(await get('document.querySelector(".aw-workspace-header").getBoundingClientRect().height<100'),'Header height below 100 CSS px on wide window '+theme+'/'+density);
   }

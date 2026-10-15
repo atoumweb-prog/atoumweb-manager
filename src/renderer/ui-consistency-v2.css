@@ -441,7 +441,7 @@ table td {
   cursor: pointer;
 }
 
-.field-help-detail {
+.field-help-detail, .field-help-short {
   position: fixed;
   display: flex;
   align-items: flex-start;
@@ -1646,3 +1646,5 @@ table td {
   outline: 2px solid var(--accent-strong);
   outline-offset: 2px;
 }
+
+.field-help-short{pointer-events:none;padding:8px 12px;max-height:120px;font-size:var(--ui-font-secondary)}

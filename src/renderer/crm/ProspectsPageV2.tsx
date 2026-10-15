@@ -1,3 +1,5 @@
+import {CrmRecordLayout} from './CrmRecordLayout';
+import {ProspectRelatedRecords} from './ProspectRelatedRecords';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import {PROSPECT_DIRECTORY_VIEW} from '../../shared/prospectTablePresentation';
 import {OperationIcon, type OperationIconName} from '../operations/OperationIcon';
@@ -28,7 +30,7 @@ import { FieldHelp, ProspectQualificationPanelV2 } from './ProspectQualification
 import { ProspectQuotePanel } from './ProspectQuotePanel';
 import { ProspectResearchPanel } from './ProspectResearchPanel';
 import { ProspectReferenceSummary } from './ProspectReferenceSummary';
-import { CrmIdentityAvatar } from './CrmIdentityVisual';
+import { CrmIdentityAssetEditor, CrmIdentityAvatar } from './CrmIdentityVisual';
 
 const ACTIVE_STAGES: ProspectStage[] = ['new', 'qualifying', 'need_identified', 'quote_to_prepare', 'quote_to_send', 'quote_sent', 'follow_up', 'negotiation', 'waiting'];
 const STAGE_LABELS: Record<ProspectStage, string> = {
@@ -601,7 +603,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
             {id:'city',label:'Ville',sortValue:p=>p.organizationCity??null,render:p=>p.organizationCity||'—'},
             {id:'contact',label:'Contact',sortValue:p=>p.secondaryLabel??null,render:p=>p.secondaryLabel||'À identifier'},
             {id:'status',label:'Statut',sortValue:p=>directoryStatus(p).label,render:p=><span className={'prospect-directory-status prospect-directory-status-'+directoryStatus(p).tone} title={p.stage==='new'&&!prospectReadiness(p).ready?'À compléter : '+prospectReadiness(p).missing.join(', '):directoryStatus(p).label}>{directoryStatus(p).label}</span>},
-            {id:'open',label:'Ouvrir',required:true,render:p=><button type="button" className="link-button pilot-icon-button" title={'Ouvrir '+p.displayName} aria-label={'Ouvrir '+p.displayName} onClick={e=>{e.stopPropagation();setSelectedId(p.id);}}><OperationIcon name="external-link"/></button>},
+            {id:'open',label:'Ouvrir',required:true,render:p=><button type="button" className="link-button pilot-icon-button" title={'Ouvrir '+p.displayName} aria-label={'Ouvrir '+p.displayName} onClick={e=>{e.stopPropagation();setSelectedId(p.id);}}><OperationIcon name="record-open"/></button>},
           ]}/>
 
         </div>
@@ -621,11 +623,11 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
           <button className="secondary-button" onClick={() => setView('directory')}>Annuaire prospects</button>
         </div>
       </div>
-      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}><div className="kanban-board">{PIPELINE_GROUPS.map((group) => {
+      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}><div className="pipeline-flow"><div className="kanban-board" tabIndex={0} aria-label="Pipeline actif : six étapes, défilement horizontal">{PIPELINE_GROUPS.map((group) => {
         const groupProspects = pipelineProjection.columns.find((column) => column.id === group.id)?.prospects ?? [];
         const targetStage = group.stages[0];
         return <section className={`kanban-column pipeline-step-column ${targetStage && dropStage === targetStage ? 'drag-over' : ''}`} key={group.id} onDragOver={(e) => { if (targetStage && draggingId) e.preventDefault(); }} onDragEnter={() => { if (targetStage && draggingId) setDropStage(targetStage); }} onDrop={(e) => { if (!targetStage || !draggingId) return; e.preventDefault(); void handleGroupDrop(group.stages); }}><header><OperationIcon name={group.icon}/><div><small>Étape {group.step}</small><strong>{group.label}</strong></div><span>{groupProspects.length}</span></header><div className="kanban-cards stacked-cards">{groupProspects.map((prospect) => renderProspectCard(prospect))}{groupProspects.length === 0 && <div className="kanban-empty">Aucun dossier</div>}</div></section>;
-      })}<section className="kanban-column pipeline-step-column pipeline-conversion-history" aria-label="Conversion : historique des prospects devenus clients"><header><OperationIcon name="check-circle"/><div><small>Étape 7 · Historique</small><strong>Conversion</strong></div><span>{historicalConversions.length}</span></header><div className="kanban-cards stacked-cards"><p className="muted">Prospects réellement devenus clients. Aucune conversion par glisser-déposer.</p><button className="secondary-button" type="button" onClick={() => setView('conversions')}>Voir les conversions</button></div></section></div>{prospectSplitter}{selected && !deskProspect && detail}</div>}
+      })}</div><section className="kanban-column pipeline-step-column pipeline-conversion-history" aria-label="Conversion : historique des prospects devenus clients"><header><OperationIcon name="check-circle"/><div><small>Étape 7 · Historique</small><strong>Conversion</strong></div><span>{historicalConversions.length}</span></header><div className="kanban-cards stacked-cards"><p className="muted">Prospects réellement devenus clients. Aucune conversion par glisser-déposer.</p><button className="secondary-button" type="button" onClick={() => setView('conversions')}>Voir les conversions</button></div></section></div>{prospectSplitter}{selected && !deskProspect && detail}</div>}
     </>}
 
     {(view === 'history' || view === 'conversions') && <>{view === 'conversions' && <div className="module-toolbar prospect-toolbar"><strong>Conversions réelles · {historicalConversions.length}</strong><button className="secondary-button" type="button" onClick={() => setView('pipeline')}>Retour au parcours commercial</button></div>}<HistoryView prospects={historyVisible} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected && historyVisible.some((item) => item.id === selected.id) ? selected : null} activity={activity} onClose={() => setSelectedId(null)} /></>}
@@ -682,7 +684,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
     return <aside data-prospect-id={prospect.id} className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-panel prospect-temperature-${prospect.temperature ?? 'neutral'}`}>
       <div className="detail-panel-heading">
         <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large" /><div><span className="eyebrow">{prospect.stage === 'new' ? 'Fiche annuaire' : 'Fiche de travail'}</span><h2>{prospect.displayName}</h2><div className="prospect-header-meta"><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>{prospect.organizationIndustry && <span className="status-pill">{prospect.organizationIndustry}</span>}{prospect.organizationCity && <span className="status-pill">{prospect.organizationCity}</span>}</div></div></div>
-        <div className="detail-heading-actions">{onOpenDesk && <button className="secondary-button open-desk-button" type="button" aria-label="Agrandir la fiche" title="Agrandir la fiche" onClick={onOpenDesk}><OperationIcon name="expand"/></button>}<button className="close-detail" type="button" aria-label="Fermer la fiche prospect" title="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button></div>
+        <div className="detail-heading-actions">{onOpenDesk && <button className="secondary-button open-desk-button" type="button" aria-label="Agrandir la fiche" title="Agrandir la fiche" onClick={onOpenDesk}><OperationIcon name="record-expand"/></button>}<button className="close-detail" type="button" aria-label="Fermer la fiche prospect" title="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button></div>
       </div>
       <div className="prospect-compact-scroll">
         {prospect.stage === 'new' && <div className={`prospect-readiness-card ${readiness.ready ? 'ready' : 'incomplete'}`}><div><span>Préparation</span><strong>{readiness.ready ? 'Prêt pour démarchage' : 'À compléter avant ou pendant le premier contact'}</strong>{!readiness.ready && <small>Manque : {readiness.missing.join(', ')}</small>}</div><button className="primary-button" type="button" onClick={onStart}>Démarrer la prospection</button></div>}
@@ -705,11 +707,13 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
   }
 
   return <aside className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-desk prospect-temperature-${prospect.temperature ?? 'neutral'}`}>
-    <div className="detail-panel-heading">
+<CrmRecordLayout kind="prospect" full identity={<>    <div className="detail-panel-heading">
       <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large" /><div><span className="eyebrow">Fiche de travail prospect</span><h2>{prospect.displayName}</h2><div className="prospect-header-meta"><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>{prospect.source && <span className="status-pill">{SOURCE_LABELS[prospect.source]}{prospect.source === 'other' && prospect.sourceDetail ? ` · ${prospect.sourceDetail}` : ''}</span>}</div></div></div>
       <div className="detail-heading-actions"><button className="secondary-button" type="button" title="Ouvrir la référence dans une fenêtre" aria-label="Ouvrir la référence dans une fenêtre" onClick={() => void window.atoumweb.app.openProspectReferenceWindow(prospect.id)}><OperationIcon name="external-link"/><span>Référence</span></button><button className="close-detail" type="button" aria-label="Fermer la fiche prospect" title="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button></div>
     </div>
 
+<div className="crm-record-properties"><strong>Repères du prospect</strong><p>{prospect.secondaryLabel||'Interlocuteur à préciser'}</p><p>{prospect.organizationIndustry||'Activité à compléter'}</p><p>{prospect.organizationCity||'Ville à compléter'}</p><p>{prospect.organizationWebsite||prospect.existingUrl||'Site à renseigner'}</p></div><CrmIdentityAssetEditor organizationId={prospect.organizationId} contactId={prospect.contactId} onMessage={onRefresh}/>
+</>} context={<ProspectRelatedRecords prospect={prospect}/>}>
     <div className="prospect-desk-tabs" role="tablist" aria-label="Fiche prospect">
       <button type="button" className={deskTab === 'commercial' ? 'active' : ''} onClick={() => setDeskTab('commercial')}><OperationIcon name="file-text"/>Fiche de travail</button>
       <button type="button" className={deskTab === 'reference' ? 'active' : ''} onClick={() => setDeskTab('reference')}><OperationIcon name="contact"/>Référence prospect</button>
@@ -740,7 +744,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
               <div><span>Besoin</span><strong>{prospect.primaryNeed || prospect.projectSummary || 'À préciser'}</strong></div>
               <div><span>Prochaine action</span><strong>{nextAction?.title || 'À programmer'}</strong>{nextAction?.dueAt && <small>{formatDate(nextAction.dueAt)}</small>}</div>
             </div>
-            <ProspectReferenceSummary prospect={prospect} />
+
           </section>
         </ProspectWorkAccordion>
 
@@ -776,6 +780,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
         </ProspectWorkAccordion>
       </>}
     </div>
+</CrmRecordLayout>
   </aside>;
 }
 

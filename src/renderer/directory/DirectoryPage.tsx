@@ -367,14 +367,14 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
           {id:'coordinates',label:'Coordonnées',sortValue:i=>i.email||i.phone||null,render:i=><><span>{i.email||'—'}</span><small>{formatPhone(i.phone)}</small></>},
           {id:'contacts',label:'Contacts',sortValue:i=>i.contactCount,render:i=>i.contactCount},
           {id:'relation',label:'Relation',sortValue:i=>RELATION_LABELS[i.relation],render:i=><span className={'directory-relation-pill '+relationClass(i.relation)}>{RELATION_LABELS[i.relation]}</span>},
-          {id:'open',label:'Ouvrir',required:true,render:i=><button type="button" className="link-button" title={'Ouvrir '+i.name} aria-label={'Ouvrir '+i.name} onClick={e=>{e.stopPropagation();selectOrganization(i.id);}}><OperationIcon name="external-link"/></button>},
+          {id:'open',label:'Ouvrir',required:true,render:i=><button type="button" className="link-button" title={'Ouvrir '+i.name} aria-label={'Ouvrir '+i.name} onClick={e=>{e.stopPropagation();selectOrganization(i.id);}}><OperationIcon name="record-open"/></button>},
         ]}/> : <ConfiguredDataTable<DirectoryContact> scope={DIRECTORY_CONTACTS_VIEW} store={window.atoumweb.visualPreferences} className="directory-table" rows={filteredContacts} selectedId={selectedType==='contact'?selectedId:null} getId={i=>i.id} onSelect={i=>selectContact(i.id)} rowAttributes={i=>({'data-directory-id':i.id})} caption="Contacts · source complète des résultats filtrés" columns={[
           {id:'identity',label:'Contact',required:true,sortValue:i=>i.lastName+' '+i.firstName,render:i=><div className="directory-name-cell"><CrmIdentityAvatar organizationId={i.organizationId} contactId={i.id} name={i.firstName+' '+i.lastName}/><div><strong>{i.firstName} {i.lastName}</strong><small>{i.preferredChannel||'Contact professionnel'}</small></div></div>},
           {id:'organization',label:'Entreprise',sortValue:i=>i.organizationName??null,render:i=>i.organizationName||'—'},
           {id:'jobTitle',label:'Fonction',sortValue:i=>i.jobTitle??null,render:i=>i.jobTitle||'—'},
           {id:'coordinates',label:'Coordonnées',sortValue:i=>i.email||i.phone||null,render:i=><><span>{i.email||'—'}</span><small>{formatPhone(i.phone)}</small></>},
           {id:'relation',label:'Relation',sortValue:i=>RELATION_LABELS[i.relation],render:i=><span className={'directory-relation-pill '+relationClass(i.relation)}>{RELATION_LABELS[i.relation]}</span>},
-          {id:'open',label:'Ouvrir',required:true,render:i=><button type="button" className="link-button" title={'Ouvrir '+i.firstName+' '+i.lastName} aria-label={'Ouvrir '+i.firstName+' '+i.lastName} onClick={e=>{e.stopPropagation();selectContact(i.id);}}><OperationIcon name="external-link"/></button>},
+          {id:'open',label:'Ouvrir',required:true,render:i=><button type="button" className="link-button" title={'Ouvrir '+i.firstName+' '+i.lastName} aria-label={'Ouvrir '+i.firstName+' '+i.lastName} onClick={e=>{e.stopPropagation();selectContact(i.id);}}><OperationIcon name="record-open"/></button>},
         ]}/>}
 
       </article>}

@@ -1,3 +1,4 @@
+import {CRM_RECORD_KEYS,normalizeCrmRecordPresentation,defaultCrmRecordPresentation} from './crmRecordPresentation';
 import { layoutKey, readLayout, type VisualPreferenceStore } from './panelLayout';
 import { defaultTableView, readTableView, tableViewKey } from './tableViewPreference';
 import { personalViewsKey, readPersonalViews } from './personalTableViews';
@@ -13,6 +14,7 @@ export const VISUAL_SETTINGS_KEY = 'ux_v2_visual_preferences_v1';
 export interface SettingsOwner { getSetting<T>(key: string, fallback: T): T; setSetting(key: string, value: unknown): void }
 const modules = ['dossiers', 'autre-vue'];
 export function normalizeVisualValue(key: string, raw: string): string {
+  if(CRM_RECORD_KEYS.some(allowed=>allowed===key))return JSON.stringify(normalizeCrmRecordPresentation(JSON.parse(raw)));
   if (raw.length > 100_000) throw Error('Préférence trop volumineuse.');
   if(key===layoutKey('directory','list'))return JSON.stringify({version:1,listPercent:readLayout({getItem:()=>raw,setItem(){},removeItem(){}},key,38)});
   if(key===layoutKey('clients','list'))return JSON.stringify({version:1,listPercent:readLayout({getItem:()=>raw,setItem(){},removeItem(){}},key,68)});
@@ -46,7 +48,7 @@ export class WorkspaceVisualPreferenceStore implements VisualPreferenceStore {
   getItem(key: string): string | null {
     if(key===HOME_WIDGET_PREFERENCE_KEY){normalizeVisualValue(key,JSON.stringify(defaultHomeWidgets()));return this.entries()[key]??null;}
     // Validate keys even when absent. Never expose arbitrary settings/business fields.
-    normalizeVisualValue(key, key===HEADER_PREFERENCE_KEY?'{"version":1,"compact":false}':key === NAVIGATION_PREFERENCE_KEY ? '{"version":1,"railCollapsed":false,"favoriteModuleKeys":[]}' : key.startsWith('atoumweb:layout:') ? '{"version":1,"listPercent":60}' : key.includes(':personal:') ? '{"version":1,"views":[]}' : JSON.stringify(defaultTableView()));
+    normalizeVisualValue(key, CRM_RECORD_KEYS.some(allowed=>allowed===key)?JSON.stringify(defaultCrmRecordPresentation()):key===HEADER_PREFERENCE_KEY?'{"version":1,"compact":false}':key === NAVIGATION_PREFERENCE_KEY ? '{"version":1,"railCollapsed":false,"favoriteModuleKeys":[]}' : key.startsWith('atoumweb:layout:') ? '{"version":1,"listPercent":60}' : key.includes(':personal:') ? '{"version":1,"views":[]}' : JSON.stringify(defaultTableView()));
     return this.entries()[key] ?? null;
   }
   setItem(key: string, raw: string) { const value = normalizeVisualValue(key, raw), entries = this.entries(); entries[key] = value; this.owner.setSetting(VISUAL_SETTINGS_KEY, { version: 1, entries }); }

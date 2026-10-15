@@ -22,3 +22,8 @@
 .app-shell .aw-configured-table .aw-data-table :is(strong,.aw-ui-button-label){font-size:var(--ui-font-primary)}
 .app-shell .aw-configured-table .aw-data-table small{display:block;color:var(--muted);font-size:var(--ui-font-secondary)}
 .app-shell .aw-configured-table .aw-data-table caption{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+/* Labels may wrap inside a narrow configured column; only user-resized widths persist. */
+.app-shell .aw-configured-table .aw-data-table th .aw-ui-button-label{white-space:normal;text-align:left;overflow-wrap:anywhere}
+.app-shell .aw-configured-table .aw-data-table th .aw-ui-button{max-width:100%;padding-right:16px}
+.app-shell .aw-configured-table .aw-data-table th[data-column-id=open],.app-shell .aw-configured-table .aw-data-table td[data-column-id=open]{min-width:0;box-shadow:-1px 0 var(--border)}

@@ -336,7 +336,7 @@ export interface CrmApi {
     list(owner: CrmIdentityOwnerType, id: string): Promise<CrmIdentityAsset[]>;
     importFile(owner: CrmIdentityOwnerType, id: string, role: CrmIdentityAssetRole): Promise<CrmIdentityAsset | null>;
     preview(assetId: string): Promise<CrmIdentityAssetPreview>;
-    remove(assetId: string): Promise<void>;
+    remove(assetId: string): Promise<boolean>;
   };
   prospects: {
     list(filters?: ProspectFilters): Promise<ProspectSummary[]>;

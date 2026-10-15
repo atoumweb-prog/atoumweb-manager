@@ -9,8 +9,8 @@ if(!process.versions.electron){
  try{
   fs.writeFileSync(path.join(temp,'revision.json'),JSON.stringify({sha:execFileSync('git',['rev-parse','HEAD'],{cwd:repo,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:repo,encoding:'utf8'}).trim()}));
   const build=require('esbuild').buildSync;
-  build({stdin:{contents:"import React from 'react';import {createRoot} from 'react-dom/client';import {FormFeedbackWorkshop} from './src/renderer/ui/FormFeedbackWorkshop';createRoot(document.getElementById('root')).render(<FormFeedbackWorkshop/>);",resolveDir:repo,loader:'tsx'},bundle:true,platform:'browser',outfile:path.join(temp,'fixture.js'),logLevel:'silent'});
-  build({entryPoints:[path.join(repo,'src/main/unsaved.ts')],bundle:true,platform:'node',format:'cjs',external:['electron'],outfile:path.join(temp,'guards.cjs'),logLevel:'silent'});
+  build({stdin:{contents:"import React from 'react';import {createRoot} from 'react-dom/client';import {FormFeedbackWorkshop} from './src/renderer/ui/FormFeedbackWorkshop';createRoot(document.getElementById('root')).render(<FormFeedbackWorkshop/>);",resolveDir:repo,loader:'tsx'},bundle:true,loader:{'.png':'dataurl'},platform:'browser',outfile:path.join(temp,'fixture.js'),logLevel:'silent'});
+  build({entryPoints:[path.join(repo,'src/main/unsaved.ts')],bundle:true,loader:{'.png':'dataurl'},platform:'node',format:'cjs',external:['electron'],outfile:path.join(temp,'guards.cjs'),logLevel:'silent'});
   fs.writeFileSync(path.join(temp,'preload.cjs'),"const {contextBridge,ipcRenderer}=require('electron');contextBridge.exposeInMainWorld('atoumweb',{unsaved:{confirmExit:(labels,pending)=>ipcRenderer.sendSync('unsaved:confirm-exit',labels,pending),publishState:state=>ipcRenderer.sendSync('unsaved:state',state)}});");
   const entry=fs.readFileSync(path.join(repo,'src/renderer/main.tsx'),'utf8');
   const css=[...entry.matchAll(/^import '\.\/([^']+\.css)';$/gm)].map(m=>fs.readFileSync(path.join(repo,'src/renderer',m[1]),'utf8')).join('\n');

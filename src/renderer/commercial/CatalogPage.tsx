@@ -711,7 +711,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 {id:'status',label:'Statut',sortValue:item=>STATUS_LABELS[item.status],render:item=><span className={`catalog-status catalog-${item.status}`}>{STATUS_LABELS[item.status]}</span>},
                 {id:'public',label:'Site',sortValue:item=>item.visiblePublic?1:0,render:item=>item.visiblePublic?'Oui':'Non'},
                 {id:'version',label:'Version',sortValue:item=>item.currentVersion?.versionNumber??null,render:item=>item.currentVersion?`v${item.currentVersion.versionNumber} · ${VERSION_STATUS_LABELS[item.currentVersion.status]}`:'—'},
-                {id:'open',label:'Ouvrir',required:true,render:item=><button type="button" className="link-button" aria-label={'Ouvrir '+item.name} onClick={event=>{event.stopPropagation();void openItem(item.id);}}><OperationIcon name="external-link"/></button>},
+                {id:'open',label:'Ouvrir',required:true,render:item=><button type="button" className="link-button" aria-label={'Ouvrir '+item.name} onClick={event=>{event.stopPropagation();void openItem(item.id);}}><OperationIcon name="record-open"/></button>},
               ]}/>
 
             )}

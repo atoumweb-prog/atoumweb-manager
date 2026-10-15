@@ -29,11 +29,12 @@ if(!process.versions.electron){
    "  React.createElement('label', { htmlFor: 'name-field' },",
    "    'Nom commercial',",
    "    React.createElement(FieldHelp, { text: 'Aide courte', detail: 'Détail complet et accessible. '+ 'Paragraphe long pour la lecture et le défilement. '.repeat(100) }),",
+   "    React.createElement(FieldHelp, { text: 'Autre aide', detail: 'Autre détail' }),",
    "    React.createElement('input', { id: 'name-field', type: 'checkbox' })",
    "  )",
    ");"
   ].join('\n');
-  require('esbuild').buildSync({stdin:{contents:source,resolveDir:repo,loader:'tsx'},bundle:true,
+  require('esbuild').buildSync({stdin:{contents:source,resolveDir:repo,loader:'tsx'},bundle:true,loader:{'.png':'dataurl'},
     platform:'browser',format:'iife',outfile:path.join(temp,'fixture.js'),logLevel:'silent'});
   const sub={...env};
   const run=spawnSync(require('electron'),[__filename],{cwd:repo,env:sub,windowsHide:true,encoding:'utf8',timeout:110000,maxBuffer:2*1024*1024});
@@ -86,6 +87,7 @@ if(!process.versions.electron){
   await evaluate('document.querySelector(".app-shell").classList.add("help-disabled")');
   check(await get('getComputedStyle(document.querySelector(".field-help")).display')!=='none',
     'disabled automatic help keeps icon visible');
+  check(await get('!document.querySelector(".field-help").hasAttribute("title")'),'No competing native title tooltip');
   await activate();
   check(await get('document.querySelector(".field-help-detail").getAttribute("role")==="dialog"'),
     'detail has dialog semantics');
@@ -117,9 +119,11 @@ if(!process.versions.electron){
   await sleep(120);
   check(!(await get('!!document.querySelector(".field-help-detail")')),
     'short hover has no detailed panel');
+  check(await get('document.querySelectorAll(".field-help-short").length===1&&document.querySelector(".field-help-short").textContent==="Aide courte"'),'One custom short tooltip with no native competitor');
   await wait('!!document.querySelector(".field-help-detail")','enabled long hover reveals details');
   check(await get('document.querySelector(".field-help-detail").dataset.openSource==="hover"'),
     'long hover detail correctly marked as automatic');
+  check(await get('document.querySelectorAll(".field-help-short,.field-help-detail").length===1'),'Long detail replaces short layer rather than stacking');
   await evaluate('document.querySelector(".field-help-anchor").dispatchEvent(new MouseEvent("mouseout",{bubbles:true,relatedTarget:document.body}))');
   await wait('!document.querySelector(".field-help-detail")','automatic detail removed on exit');
   win.show();win.focus();win.webContents.focus();
@@ -151,6 +155,22 @@ if(!process.versions.electron){
     await wait('!document.querySelector(".field-help-detail")','Long help dismissal');
     check(!(await get('document.querySelector("#name-field").checked')),'Narrow help never mutates field');
    }
+  }
+  win.webContents.setZoomFactor(1);win.setSize(1240,850);
+  for(const theme of ['atoumweb','noir','blanc'])for(const density of ['compact','comfort','comfort_plus']){
+   await evaluate('document.documentElement.dataset.theme='+JSON.stringify(theme)+';document.documentElement.dataset.density='+JSON.stringify(density));
+   await evaluate('document.querySelector(".field-help-anchor").style.cssText="";document.querySelector(".field-help-anchor").dispatchEvent(new MouseEvent("mouseover",{bubbles:true}))');
+   await wait('document.querySelectorAll(".field-help-short").length===1','one short help');
+   check(await get('document.querySelectorAll(".field-help[title]").length===0'),'No native tooltip in '+theme+'/'+density);
+   await activate();
+   check(await get('document.querySelectorAll(".field-help-short,.field-help-detail").length===1'),'Explicit replaces short in '+theme+'/'+density);
+   await evaluate('document.querySelectorAll(".field-help")[1].click()');
+   check(await get('document.querySelectorAll(".field-help-short,.field-help-detail").length===1&&document.querySelector(".field-help-detail").textContent.includes("Autre détail")'),'Only latest source owns help in '+theme+'/'+density);
+   await evaluate('document.querySelector(".field-help-detail-close").click()');
+   await evaluate('document.querySelector(".field-help-anchor").dispatchEvent(new MouseEvent("mouseover",{bubbles:true}))');
+   await wait('!!document.querySelector(".field-help-detail[data-open-source=hover]")','long hover '+theme+'/'+density);
+   check(await get('document.querySelectorAll(".field-help-short,.field-help-detail").length===1'),'Long help single layer in '+theme+'/'+density);
+   await evaluate('document.querySelector(".field-help-anchor").dispatchEvent(new MouseEvent("mouseout",{bubbles:true,relatedTarget:document.body}))');
   }
   console.log('[UXV2 01B] RESULT '+JSON.stringify({checks,failed:0,themeDensityCombinations:9,
    explicitHelp:true,hoverDisabled:true,delayedHover:true,escapeAndFocus:true,onlyTemp:true}));

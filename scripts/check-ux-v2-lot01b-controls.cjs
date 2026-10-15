@@ -39,7 +39,7 @@ if(!process.versions.electron){
    ");}",
    "createRoot(document.getElementById('root')).render(React.createElement(Demo));"
   ].join('\n');
-  require('esbuild').buildSync({stdin:{contents:source,resolveDir:repo,loader:'tsx'},bundle:true,
+  require('esbuild').buildSync({stdin:{contents:source,resolveDir:repo,loader:'tsx'},bundle:true,loader:{'.png':'dataurl'},
    format:'iife',platform:'browser',outfile:path.join(temp,'fixture.js'),logLevel:'silent'});
   const env={...process.env,[envName]:temp};delete env.ELECTRON_RUN_AS_NODE;
   const sub=spawnSync(require('electron'),[__filename],{cwd:repo,env,windowsHide:true,

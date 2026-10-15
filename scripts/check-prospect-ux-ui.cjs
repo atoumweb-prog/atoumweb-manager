@@ -22,7 +22,7 @@ window.render=(mode='need')=>root.render(mode==='need'?<div className="prospect-
 window.render();
 `;
 app.whenReady().then(async()=>{try{
-require('esbuild').buildSync({stdin:{contents:entry,resolveDir:repo,loader:'tsx'},bundle:true,jsx:'automatic',outfile:path.join(temp,'ui.js'),logLevel:'silent'});
+require('esbuild').buildSync({stdin:{contents:entry,resolveDir:repo,loader:'tsx'},bundle:true,loader:{'.png':'dataurl'},jsx:'automatic',outfile:path.join(temp,'ui.js'),logLevel:'silent'});
 fs.writeFileSync(path.join(temp,'index.html'),'<html lang="fr"><head><link rel="stylesheet" href="ui.css"></head><body><div id="root" class="content-area" style="height:100vh;overflow:auto"></div><script src="ui.js"></script></body></html>');
 win=new BrowserWindow({show:false,width:1200,height:760,webPreferences:{contextIsolation:false,nodeIntegration:false,backgroundThrottling:false}});win.webContents.on('console-message',e=>{if(e.level==='error'||e.level===3)errors.push(e.message);});await win.loadFile(path.join(temp,'index.html'));
 const js=s=>win.webContents.executeJavaScript(s),sleep=ms=>new Promise(r=>setTimeout(r,ms)),check=(name,passed)=>{checks.push({name,passed:!!passed});if(!passed)throw Error(name)},wait=async s=>{for(let i=0;i<100;i++){if(await js(s))return;await sleep(30);}throw Error('Timeout '+s)},click=async label=>{await js('[...document.querySelectorAll("button")].find(b=>b.textContent.trim()==='+JSON.stringify(label)+').click()');await sleep(100)};

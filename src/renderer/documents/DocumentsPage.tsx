@@ -382,7 +382,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
 {id:"file",label:"Fichier",sortValue:item=>item.fileName??null,render:item=><><span>{item.fileName}</span><small>{sizeLabel(item.sizeBytes)}</small></>},
 {id:"updated",label:"Mise à jour",sortValue:item=>item.updatedAt??null,render:item=><>{dateLabel(item.updatedAt)}</>},
 {id:"status",label:"État",render:item=><>{item.archivedAt ? <span className="status-pill">Archivé</span> : item.missing ? <span className="status-pill danger">Fichier manquant</span> : <span className="status-pill success">Disponible</span>}</>},
-{id:'open',label:'Ouvrir',required:true,render:item=><button type="button" className="link-button" aria-label={'Ouvrir '+String(item.title??item.id)} onClick={event=>{event.stopPropagation();((item:(typeof filtered)[number])=>draft.request(() => setSelectedId(item.id)))(item);}}><OperationIcon name="external-link"/></button>}
+{id:'open',label:'Ouvrir',required:true,render:item=><button type="button" className="link-button" aria-label={'Ouvrir '+String(item.title??item.id)} onClick={event=>{event.stopPropagation();((item:(typeof filtered)[number])=>draft.request(() => setSelectedId(item.id)))(item);}}><OperationIcon name="record-open"/></button>}
 ]}/>
           {!filtered.length && <p className="muted documents-empty">Aucun document dans cette vue.</p>}
         </div>}
