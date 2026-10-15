@@ -50,3 +50,15 @@
  .app-shell .prospect-detail-desk .prospect-focus-next>button{grid-column:1/-1;grid-row:auto}
  .app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-next>button{grid-column:1/-1;grid-row:auto}
 }
+
+/* Contain intrinsic select/URL widths; preserve the existing functional type. */
+.app-shell .prospect-detail-desk .prospect-focus-summary>.prospect-temperature-control{display:block;min-width:0;max-width:100%;}
+.app-shell .prospect-detail-desk .prospect-focus-summary .prospect-temperature-control label{width:100%;min-width:0;white-space:nowrap;}
+.app-shell .prospect-detail-desk .prospect-focus-summary .prospect-temperature-control select{box-sizing:border-box;max-width:100%;min-width:0;}
+.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-summary{grid-template-columns:minmax(260px,1fr) minmax(0,1fr);}
+.app-shell .prospect-detail-desk .crm-record-properties{min-width:0;max-width:100%;}
+.app-shell .prospect-detail-desk .crm-record-properties p{min-width:0;max-width:100%;overflow-wrap:anywhere;white-space:normal;}
+.app-shell .prospect-detail-desk .quote-command-header .eyebrow{display:none;}
+.app-shell .prospect-detail-desk details.quote-draft-waiting{padding:8px 0;border:0;margin-bottom:12px;}
+.app-shell .prospect-detail-desk details.quote-draft-waiting summary{cursor:pointer;color:var(--muted);padding:4px 0;}
+.app-shell .prospect-detail-desk details.quote-draft-waiting>span{display:block;padding:10px 0;line-height:1.6;}
