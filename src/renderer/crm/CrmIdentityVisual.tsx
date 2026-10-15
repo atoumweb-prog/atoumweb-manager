@@ -226,7 +226,7 @@ export function CrmIdentityAssetEditor({
     {open && <div className="crm-identity-assets-editor">
       <div className="crm-identity-assets-heading">
         <div><span className="eyebrow">Identité visuelle</span><strong>Logo, favicon & photo</strong></div>
-        
+
       </div>
       <div className="crm-identity-assets-grid">
         {slots.map((slot) => {

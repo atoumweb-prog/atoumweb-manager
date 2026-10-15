@@ -92,3 +92,8 @@
 .crm-record-layout[data-compact=true] .crm-record-properties{display:grid!important;}
 .crm-record-layout[data-compact=true] .crm-record-left[data-folded=true] .crm-record-properties{display:none!important;}
 .crm-record-layout[data-compact=true] .contact-form-grid,.crm-record-layout[data-compact=true] .reference-summary-grid{grid-template-columns:1fr;}
+
+.app-shell .crm-record-layout[data-full=true][data-compact=true] .crm-record-left .detail-panel-heading{display:flex;flex-direction:row;align-items:center;gap:8px;padding:0;border:0;}
+.app-shell .crm-record-layout[data-full=true][data-compact=true] .crm-record-left .client-summary-head{margin:0;align-items:center;}
+.app-shell .crm-record-layout[data-full=true][data-compact=true] .crm-record-left .eyebrow{display:none;}
+.app-shell .crm-record-layout[data-full=true][data-compact=true] .crm-record-left h2{font-size:17px;line-height:1.2;margin:0;}
