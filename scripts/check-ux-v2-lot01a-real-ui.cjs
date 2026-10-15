@@ -116,7 +116,9 @@ if(!process.versions.electron){
    const dest=path.join(folder,label.replace(/[^a-z0-9_-]/gi,'_')+'.png');
    assert(!fs.existsSync(dest),'Refusing overwrite of '+dest);
    // Await the page title, theme/density, and loaded dashboard before painting.
-   await wait('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label")==='+
+   // A collapsed group need not contain the current route (e.g. Settings).
+   const captureNavigation='(document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label") ?? (document.querySelector(".aw-navigation-rail").dataset.railCollapsed==="true" ? document.querySelector(".content-area .page-heading h1")?.textContent.trim() : null))';
+   await wait(captureNavigation+'==='+
      JSON.stringify(page),'capture current navigation '+label);
    if(page==='Accueil'){
      await wait('!!document.querySelector(".home-dashboard:not(.home-dashboard-loading)")',
@@ -150,7 +152,7 @@ if(!process.versions.electron){
    assert(captured,'COMPOSITOR OUT OF SYNC: refused '+label+
      ' after '+attempts+' frames; no misleading screenshot saved');
    // Confirm DOM did not navigate again while the screenshot was captured.
-   const final=await get('({page:document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label"),'+
+   const final=await get('({page:'+captureNavigation+','+
       'heading:document.querySelector(".page-heading h1")?.textContent.trim()??"Accueil",'+
       'theme:document.documentElement.dataset.theme,'+
       'density:document.documentElement.dataset.density})');
@@ -158,7 +160,7 @@ if(!process.versions.electron){
      'Navigation changed during capture '+label+': '+JSON.stringify(final));
    fs.writeFileSync(dest,captured.toPNG());
    capturesVerified++;
-   console.log('[UXV2 CAPTURE] VERIFIED '+capturesVerified+'/'+(lot03b?9:63)+' '+label+
+   console.log('[UXV2 CAPTURE] VERIFIED '+capturesVerified+'/'+(lot03b||process.env.ATOUMWEB_RAIL_RENDER_ONLY==='1'?9:63)+' '+label+
      ' frameAttempt='+attempts);
  };
  app.whenReady().then(async()=>{
@@ -220,6 +222,12 @@ if(!process.versions.electron){
     await require('./fixtures/lot03b-real-scenarios.cjs')({win,db,evalUI,get,wait,navigate,test,sleep,saveScreenshot});
     if(captureArg>=0)test(capturesVerified===9,'Nine current 03B screenshots verified by composited-frame sentinel');
     console.log('[UXV2 03B LIVE] PASSED '+checks+' real native assertions; TEMP only');
+    return;
+  }
+  await require('./fixtures/rail-render-scenarios.cjs')({win, db, evalUI, get, wait, navigate, select, test, sleep, saveScreenshot:process.env.ATOUMWEB_RAIL_RENDER_ONLY==='1'?saveScreenshot:undefined});
+  if(process.env.ATOUMWEB_RAIL_RENDER_ONLY==='1'){
+    if(captureArg>=0)test(capturesVerified===9,'Nine collapsed-rail captures synchronized with compositor');
+    console.log('[RAIL RENDER] PASSED '+checks+' assertions; isolated TEMP only');
     return;
   }
   await require('./fixtures/real-shell-scenarios.cjs')({win, db, preload:path.join(temp,'preload.js'), evalUI, get, wait, navigate, test, sleep});

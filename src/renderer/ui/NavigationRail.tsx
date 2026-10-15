@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState,useImperativeHandle,type Ref} from 'react';
+import {useEffect,useLayoutEffect,useRef,useState,useImperativeHandle,type Ref,type CSSProperties} from 'react';
 import {NAVIGATION_MODULES,NAVIGATION_GROUPS,defaultNavigationPreference,moveFavorite,readNavigationPreference,writeNavigationPreference,type NavigationModule,type NavigationModuleKey,type NavigationGroup,type NavigationPreference} from '../../shared/navigationRail';
 import type {VisualPreferenceStore} from '../../shared/panelLayout';
 import {OperationIcon} from '../operations/OperationIcon';
@@ -7,7 +7,28 @@ function ModuleIcon({module}:{module:NavigationModule}){return module.icon?<Oper
 export interface NavigationRailControls{toggle:()=>void}
 export function NavigationRail({active,onNavigate,store,confirmReset,controlsRef,onCollapsedChange,appVersion}:{active:NavigationModuleKey;onNavigate:(key:NavigationModuleKey)=>boolean;store:VisualPreferenceStore;confirmReset:()=>boolean;controlsRef?:Ref<NavigationRailControls>;onCollapsedChange?:(value:boolean)=>void;appVersion?:string}){
  const [preference,setPreference]=useState<NavigationPreference>(defaultNavigationPreference),latest=useRef(preference),[temporary,setTemporary]=useState<true|null>(null),[openGroup,setOpenGroup]=useState<NavigationGroup|null>(null),[error,setError]=useState('');
- const root=useRef<HTMLElement>(null),trigger=useRef<HTMLButtonElement|null>(null);const collapsed=temporary??preference.railCollapsed;
+ const root=useRef<HTMLElement>(null),trigger=useRef<HTMLButtonElement|null>(null),flyout=useRef<HTMLElement>(null);
+ const [flyoutStyle,setFlyoutStyle]=useState<CSSProperties>({});
+ const collapsed=temporary??preference.railCollapsed;
+ // Keep the menu below the real header instead of covering its search/timer.
+ // Measure again when that header wraps, the window zooms, or the rail scrolls.
+ useLayoutEffect(()=>{
+  if(!openGroup||!collapsed)return;
+  const header=document.querySelector<HTMLElement>('.aw-workspace-header');
+  const position=()=>{
+   if(!root.current||!flyout.current)return;
+   const gap=8,rail=root.current.getBoundingClientRect(),anchor=trigger.current?.getBoundingClientRect();
+   const minimumTop=Math.max(gap,(header?.getBoundingClientRect().bottom??0)+gap);
+   const available=Math.max(0,window.innerHeight-minimumTop-gap);
+   const menuHeight=Math.min(flyout.current.scrollHeight+2,available);
+   const top=Math.max(minimumTop,Math.min(anchor?.top??minimumTop,window.innerHeight-menuHeight-gap));
+   setFlyoutStyle({left:rail.right,top,width:Math.min(350,Math.max(0,window.innerWidth-rail.right-gap)),maxHeight:Math.max(0,window.innerHeight-top-gap)});
+  };
+  position();
+  const observer=new ResizeObserver(position);observer.observe(root.current!);if(header)observer.observe(header);
+  window.addEventListener('resize',position);window.addEventListener('scroll',position,true);
+  return()=>{observer.disconnect();window.removeEventListener('resize',position);window.removeEventListener('scroll',position,true);};
+ },[openGroup,collapsed]);
  useEffect(()=>{const read=()=>{try{const next=readNavigationPreference(store);latest.current=next;setPreference(next);setError('');}catch{const next=defaultNavigationPreference();latest.current=next;setPreference(next);setError('Navigation non lue ; défaut sûr affiché.');}};read();const external=(event:StorageEvent)=>{if(event.key===null||event.key==='atoumweb:navigation:rail:v1')read();};window.addEventListener('storage',external);return()=>window.removeEventListener('storage',external);},[store]);
  useEffect(()=>{const contextual=(event:Event)=>{const value=(event as CustomEvent<unknown>).detail;if(typeof value==='boolean')setTemporary(value?true:null);};window.addEventListener('atoumweb:sidebar-collapse',contextual);return()=>window.removeEventListener('atoumweb:sidebar-collapse',contextual);},[]);
  useEffect(()=>{if(!openGroup)return;root.current?.querySelector<HTMLButtonElement>('.aw-rail-flyout .aw-rail-destination')?.focus();const outside=(event:PointerEvent)=>{if(!root.current?.contains(event.target as Node)){setOpenGroup(null);trigger.current?.focus();}};window.addEventListener('pointerdown',outside);return()=>window.removeEventListener('pointerdown',outside);},[openGroup]);
@@ -31,6 +52,6 @@ export function NavigationRail({active,onNavigate,store,confirmReset,controlsRef
    {!collapsed&&<details className="aw-rail-favorites-editor"><summary>Organiser les favoris</summary>{preference.favoriteModuleKeys.map((key,index)=><div key={key}><span>{NAVIGATION_MODULES.find(module=>module.key===key)!.label}</span><button type="button" aria-label={`Monter ${key}`} disabled={index===0} onClick={()=>update({...latest.current,favoriteModuleKeys:moveFavorite(latest.current.favoriteModuleKeys,key,-1)})}>↑</button><button type="button" aria-label={`Descendre ${key}`} disabled={index===preference.favoriteModuleKeys.length-1} onClick={()=>update({...latest.current,favoriteModuleKeys:moveFavorite(latest.current.favoriteModuleKeys,key,1)})}>↓</button><button type="button" aria-label={`Retirer le favori ${key}`} onClick={()=>pin(key)}>×</button></div>)}<button type="button" disabled={!preference.favoriteModuleKeys.length} onClick={()=>{if(confirmReset())update({...latest.current,favoriteModuleKeys:[]});}}>Réinitialiser les favoris</button></details>}
   </div>
   {error&&<p className="aw-rail-error" role="alert">{error}</p>}
-  {openGroup&&collapsed&&<section className="aw-rail-flyout" role="dialog" aria-label={`Modules ${openGroup}`}><header><h2>{openGroup}</h2><button type="button" aria-label="Fermer le groupe" onClick={close}>×</button></header>{NAVIGATION_MODULES.filter(module=>module.group===openGroup).map(module=>destination(module,'group'))}</section>}
+  {openGroup&&collapsed&&<section ref={flyout} style={flyoutStyle} className="aw-rail-flyout" role="dialog" aria-label={`Modules ${openGroup}`}><header><h2>{openGroup}</h2><button type="button" aria-label="Fermer le groupe" onClick={close}>×</button></header>{NAVIGATION_MODULES.filter(module=>module.group===openGroup).map(module=>destination(module,'group'))}</section>}
  </aside>;
 }
