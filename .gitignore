@@ -23,3 +23,7 @@ outputs/
 backups/
 captures/
 screenshots/
+
+# Python diagnostic/test bytecode
+__pycache__/
+*.pyc

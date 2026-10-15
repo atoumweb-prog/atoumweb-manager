@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/10/2026 — Convergence04–09 intégrée, candidat10 et nouveau workspace V2
+
+PR148 à152 fusionnées normalement après CI verte ; mainf72ddc9f contient04–09. PR sources conservées. Candidat10 préserve filtres de facturation/cohortes exactes, retour Projet/Devis, UX-01 et contrats05/09. Tests et preuves empaquetées dans le [bilan de convergence](docs/ux-v2/CONVERGENCE-04-10-2026-10-15.md). Validation finale35 recettes/typecheck/1453 tests à relever au SHA du candidat puis en CI.
+
+Utilisateur choisit un nouveau workspace réunissant contrats récents et226 temps/6 pauses historiques ; rapprochement sur copie vérifié par service réel et interface empaquetée. Originaux, profils et lanceurs existants inchangés. Nouveau workspace persistant en préparation, pas de bascule quotidienne implicite. Recette humaine/juridique et réserves externes maintenues.
+
+
 ## 15/10/2026 — Convergence10 et parcours statistiques
 
 Source130 fc054e73 reprise avec son historique10A–E. Cohortes exactes10B combinées aux filtres09, protections de saisie facture et retour Projet/Devis07. Préférences10D et garde workspace/restauration existante conservées. Aucun changement de migration ou de durée historique. Les102 scénarios10 restent une matrice de couverture (42 traces,43 partiels,17 humains/intégration), pas102 réussites présumées. Recettes natives, couverture, UX-01 et restauration exigées sur candidat propre.
