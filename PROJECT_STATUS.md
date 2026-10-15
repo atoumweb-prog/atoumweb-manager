@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/10/2026 — Deux compositions Prospect uniquement, choix visuel en attente
+
+L’utilisateur valide l’architecture trois régions mais demande un allègement plus net de la fiche Prospect, particulièrement Noir/Confort/125%. Branche locale `codex/ux-v2-prospect-density-options`, départf66a06d1. Deux propositions réelles sur les mêmes éditeurs : A Synthèse en bandeau, B Action prioritaire. Titre « Fiche de travail prospect » retiré ; logo/nom/statut prioritaires, référence/provenance dans un volet secondaire ; température/situation/prochaine action regroupées, détails consultables, cadres Devis allégés. Aucun corps métier ni callback supprimé. Un lien de synthèse déplie l’accordéon existant avant de le cibler et rend le focus au bouton.
+
+B est une variante de présentation réservée au banc isolé (attribut DOM), sans nouveau réglage utilisateur ni deuxième architecture UX-01. Les deux propositions partagent la même fiche et le même brouillon. Tests/captures réellement exécutés au HEAD candidat dans le bilan local livré ; ne pas les déduire des résultats f66a06d1. Aucune généralisation Client, fusion, publication GitHub, CI, migration, installation ou données réelles/Validation-MSI. Les demandes transversales du fichier joint restent à reprendre après le choix de densité demandé dans le message principal. **Prochain gate : choix visuel A/B ; aucune option n’est déclarée validée humainement.**
+
+
 ## 15/10/2026 — Dernière passe ergonomique CRM, avant avis visuel final
 
 Principe des trois zones accepté par l’utilisateur ; validation du rendu final encore ouverte. Sur `codex/ux-v2-final-crm-brand-help`, code `389a1a70` : adaptation à la largeur effective de la fiche (zoom compris), Identité compacte et Associations repliables sans démontage, huit onglets sur une ligne avec accès clavier/défilement, séparateurs souris/clavier avec une seule écriture en fin de geste. Explications techniques des visuels déplacées dans FieldHelp. Aucun service, migration, règle métier ou protection UX-01 modifié par cette passe.

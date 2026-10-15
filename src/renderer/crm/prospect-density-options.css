@@ -1,0 +1,52 @@
+/* Prospect only. Two real compositions share the SAME mounted editors/actions.
+   The action-led attribute is set only by the isolated comparison recipe until
+   the user chooses a composition; no new preference or business service. */
+.app-shell .prospect-detail-desk .crm-record-left .detail-panel-heading{border:0;gap:10px}
+.app-shell .prospect-detail-desk .prospect-detail-identity-head{align-items:center;gap:12px}
+.app-shell .prospect-detail-desk .prospect-header-meta{margin-top:6px}
+.app-shell .prospect-detail-desk .crm-record-left .detail-heading-actions{justify-content:flex-end}
+.app-shell .prospect-detail-desk .prospect-secondary-actions{border-top:1px solid var(--border);padding-top:10px}
+.app-shell .prospect-detail-desk .prospect-secondary-actions summary{cursor:pointer;color:var(--muted);padding:6px 0}
+.app-shell .prospect-detail-desk .prospect-secondary-actions>div{display:flex;flex-direction:column;gap:10px;padding-top:10px}
+.app-shell .prospect-detail-desk .prospect-secondary-actions summary:focus-visible{outline:2px solid var(--accent-strong);outline-offset:3px}
+.app-shell .prospect-detail-desk .crm-record-properties strong{font-weight:600}
+.app-shell .prospect-detail-desk .prospect-focus-summary{display:grid;grid-template-columns:minmax(140px,.8fr) minmax(150px,1fr) minmax(230px,1.7fr);align-items:start;gap:20px;padding:16px 0 20px;margin-bottom:8px;border-bottom:1px solid var(--border)}
+.app-shell .prospect-detail-desk .prospect-focus-summary :is(.prospect-temperature-control label,.prospect-focus-stage,.prospect-focus-next){display:flex;flex-direction:column;align-items:flex-start;gap:8px;color:var(--text)}
+.app-shell .prospect-detail-desk .prospect-focus-summary :is(label>span,.prospect-focus-stage>span,.prospect-focus-next>span){color:var(--muted)}
+.app-shell .prospect-detail-desk .prospect-temperature-control{margin:0}
+.app-shell .prospect-detail-desk .prospect-temperature-control select{width:100%;min-width:0}
+.app-shell .prospect-detail-desk .prospect-focus-next button{margin-top:2px}
+.app-shell .prospect-detail-desk .prospect-work-accordion{background:transparent!important;border:0;border-bottom:1px solid var(--border);border-radius:0;overflow:visible;margin:0}
+.app-shell .prospect-detail-desk .prospect-work-accordion-trigger{background:transparent!important;grid-template-columns:18px minmax(180px,1fr) minmax(0,1.4fr);border:0;padding:16px 4px;text-transform:none;letter-spacing:normal}
+.app-shell .prospect-detail-desk .prospect-work-accordion.open>.prospect-work-accordion-trigger{border:0}
+.app-shell .prospect-detail-desk .prospect-work-accordion-body{padding:4px 4px 18px 26px;gap:16px}
+.app-shell .prospect-detail-desk .prospect-work-accordion-body>.prospect-commercial-priority{padding:0;border:0;background:transparent!important}
+.app-shell .prospect-detail-desk .prospect-work-accordion-summary{white-space:normal;line-height:1.5}
+.app-shell .prospect-detail-desk .prospect-quote-panel{padding:0;border:0;background:transparent!important}
+.app-shell .prospect-detail-desk .quote-command-header{padding:0 0 12px;border:0;background:transparent!important;gap:12px}
+.app-shell .prospect-detail-desk :is(.quote-command-header .eyebrow,.work-section-heading .eyebrow){text-transform:none;letter-spacing:normal}
+.app-shell .prospect-detail-desk .quote-draft-waiting{border:0;border-left:2px solid var(--border);border-radius:0;background:transparent;padding:0 0 0 12px;margin:0 0 16px}
+.app-shell .prospect-detail-desk .quote-command-actions{gap:10px}
+.app-shell .prospect-detail-desk .crm-record-right .crm-record-side-body{gap:8px}
+.app-shell .prospect-detail-desk .crm-record-right h3{margin:0}
+/* B: action first, subordinate metadata on a single unframed row. */
+.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-summary{grid-template-columns:minmax(140px,1fr) minmax(150px,1.4fr);gap:12px 24px;padding-top:8px}
+.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-next{grid-column:1/-1;grid-row:1;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;border-left:3px solid var(--accent-strong);padding:10px 14px;background:var(--surface-soft)}
+.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-next>span{grid-column:1}
+.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-next>strong{grid-column:1}
+.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-next>button{grid-column:2;grid-row:1/3;align-self:center;margin:0}
+.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-temperature-control label{flex-direction:row;align-items:center;gap:12px}
+.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-stage{flex-direction:row;align-items:center;flex-wrap:wrap;gap:8px 12px}
+.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-work-accordion-trigger{grid-template-columns:18px minmax(180px,1fr) minmax(0,1.4fr)}
+@media(max-width:1100px){
+ .app-shell .prospect-detail-desk .prospect-focus-summary{grid-template-columns:minmax(130px,1fr) minmax(140px,1fr);gap:12px}
+ .app-shell .prospect-detail-desk .prospect-focus-next{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
+ .app-shell .prospect-detail-desk .prospect-focus-next>span,.app-shell .prospect-detail-desk .prospect-focus-next>strong{grid-column:1}
+ .app-shell .prospect-detail-desk .prospect-focus-next>button{grid-column:2;grid-row:1/3}
+}
+@media(max-width:650px){
+ .app-shell .prospect-detail-desk .prospect-work-accordion-trigger{grid-template-columns:18px minmax(0,1fr)}
+ .app-shell .prospect-detail-desk .prospect-work-accordion-summary{grid-column:2}
+ .app-shell .prospect-detail-desk .prospect-focus-next>button{grid-column:1/-1;grid-row:auto}
+ .app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-next>button{grid-column:1/-1;grid-row:auto}
+}
