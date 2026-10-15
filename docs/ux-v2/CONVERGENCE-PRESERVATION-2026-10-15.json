@@ -483,5 +483,30 @@
       "integrity": true,
       "foreignKeys": true
     }
-  ]
+  ],
+  "referenceWorkspace": {
+    "preparedAt": "2026-10-15",
+    "originalDatabasesUnchanged": true,
+    "originalProfilesUnchanged": true,
+    "dailyProfileSwitched": false,
+    "migrations": 70,
+    "timeSessions": 226,
+    "pauses": 6,
+    "referencedProjects": 194,
+    "totalSeconds": 17774,
+    "contractTypes": 13,
+    "clauseVersions": 118,
+    "clientDocuments": 120,
+    "missingClientDocuments": 0,
+    "filesCopied": 2081,
+    "identicalSharedFiles": 1960,
+    "rebasedLocalPaths": 252,
+    "realServiceVerified": true,
+    "packagedProof": {
+      "checks": 58,
+      "themeDensityCaptures": 9,
+      "sessionsVisible": 226,
+      "noTimeMutation": true
+    }
+  }
 }

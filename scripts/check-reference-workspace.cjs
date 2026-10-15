@@ -9,7 +9,7 @@ assert(preparation.validated&&path.resolve(preparation.destination)===root,'Prep
 const bundle=path.join(out,'reference-workspace-services.cjs');
 if(!process.versions.electron){
  require('esbuild').buildSync({stdin:{contents:"export * from './src/main/database/DatabaseService';export * from './src/main/database/NodeSqliteAdapter';export * from './src/main/database/migrations';export * from './src/main/workspace';",resolveDir:repo,loader:'ts'},bundle:true,platform:'node',format:'cjs',external:['electron'],outfile:bundle,logLevel:'silent'});
- const r=cp.spawnSync(require('electron'),[__filename,root],{cwd:repo,env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},encoding:'utf8',windowsHide:true,maxBuffer:4*1024*1024});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');process.exit(r.status??1);
+ const r=cp.spawnSync(require('electron'),[__filename,...process.argv.slice(2)],{cwd:repo,env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},encoding:'utf8',windowsHide:true,maxBuffer:4*1024*1024});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');process.exit(r.status??1);
 }
 const {DatabaseService,NodeSqliteAdapter,ensureWorkspace,MIGRATIONS}=require(bundle);
 (async()=>{
