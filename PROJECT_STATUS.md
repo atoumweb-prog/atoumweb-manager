@@ -1,4 +1,8 @@
 # AtoumWeb Manager — Suivi du projet
+## 15/10/2026 — Correction visuelle du rail réduit
+
+Après signalement utilisateur, reprise du référentiel 02A/02B et correction locale du sous-menu masqué par l'en-tête. Base `c4bb744d`, branche `codex/fix-v2-collapsed-rail-render`, code `241bf1d6`. Placement réactif sous l'en-tête, libellés alignés, clavier/focus préservés. Typecheck OK ; 1 453 tests Vitest, 840 contrôles de l'application réelle, 125 contrôles atelier et 192 UX-01 réussis sur fixtures temporaires. Neuf captures synchronisées ; [bilan et réserves visuelles](docs/ux-v2/RAIL-REDUIT-RENDU-2026-10-15.md). Aucun déploiement, merge ou changement des données réelles. Logo/pictogrammes provisoires et recette humaine restent ouverts.
+
 
 ## 15/10/2026 — Convergence04–09 intégrée, candidat10 et nouveau workspace V2
 
