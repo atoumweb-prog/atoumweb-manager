@@ -70,6 +70,7 @@ module.exports=async ctx=>{
     win.setSize(width,height);await sleep(100);
     test(await get('(()=>{const r=document.querySelector(".crm-record-layout"),l=r.querySelector(".crm-record-left").getBoundingClientRect(),c=r.querySelector(".crm-record-work").getBoundingClientRect(),a=r.querySelector(".crm-record-right").getBoundingClientRect();return l.right<=c.left+2&&c.right<=a.left+2&&c.width>l.width&&c.width>a.width})()'),'Three unequal Client regions '+width+'/'+theme+'/'+density);
     test(await get('window.__finalInput.isConnected&&document.querySelectorAll(".client-v2-tabs [role=tab]").length===8'),'Eight tabs and exact draft remain '+width+'/'+theme+'/'+density);
+    test(await get('(()=>{const h=document.querySelector(".crm-record-left .crm-identity-assets-heading");return h.firstElementChild.getBoundingClientRect().width>=h.clientWidth-2})()'),'Asset heading retains full pane width '+width+'/'+theme+'/'+density);
     await capture('client-'+width,theme,density);
    }
   }

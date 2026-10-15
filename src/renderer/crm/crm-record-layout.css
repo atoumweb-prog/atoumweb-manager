@@ -39,3 +39,7 @@
 }
 
 .crm-record-layout .client-status,.crm-record-layout .status-pill{font-size:var(--ui-font-secondary);line-height:1.35;padding:4px 8px}
+
+/* The asset editor is also usable inside a 220px identity pane. */
+.crm-record-side .crm-identity-assets-heading{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px}
+.crm-record-side .crm-identity-assets-heading>div{width:100%;min-width:0}
