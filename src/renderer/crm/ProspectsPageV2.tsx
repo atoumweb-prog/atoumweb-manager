@@ -718,7 +718,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
 
   return <aside data-prospect-composition="balanced" className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-desk prospect-temperature-${prospect.temperature ?? 'neutral'}`}>
 <CrmRecordLayout kind="prospect" full identity={<>    <div className="detail-panel-heading">
-      <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large" /><div><h2>{prospect.displayName}</h2><div className="prospect-header-meta"><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span></div></div></div>
+      <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large" /><div><h2>{prospect.displayName}</h2></div></div>
       <div className="detail-heading-actions"><button className="close-detail" type="button" aria-label="Fermer la fiche prospect" title="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button></div>
     </div>
 
@@ -743,7 +743,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
         <section className="prospect-focus-summary" aria-label="Synthèse commerciale">
           <div className="prospect-temperature-control"><label>Température<select value={prospect.temperature ?? 'neutral'} onChange={(event) => onTemperature(event.target.value as ProspectTemperature)}>{PROSPECT_TEMPERATURES.map((value) => <option key={value} value={value}>{TEMPERATURE_LABELS[value]}</option>)}</select></label></div>
           <div className="prospect-focus-stage"><span>Situation commerciale</span><strong>{STAGE_LABELS[prospect.stage ?? 'new']}</strong></div>
-          <div className="prospect-focus-next"><span>Prochaine action{nextAction?.dueAt ? ` · ${formatDate(nextAction.dueAt)}` : ''}</span><strong>{nextAction?.title || 'À programmer'}</strong><button className="secondary-button" type="button" onClick={()=>showSection(`prospect-followup-section-${prospect.id}`)}>{nextAction?'Consulter la relance':'Programmer une relance'}</button></div>
+          <div className="prospect-focus-next"><span className="prospect-next-label"><OperationIcon name="clock" />Prochaine action{nextAction?.dueAt ? ` · ${formatDate(nextAction.dueAt)}` : ''}</span><strong>{nextAction?.title || 'À programmer'}</strong><button className="secondary-button" type="button" onClick={()=>showSection(`prospect-followup-section-${prospect.id}`)}>{nextAction?'Consulter la relance':'Programmer une relance'}</button></div>
         </section>
         {prospect.stage === 'need_identified' && !prospect.primaryNeed && <div className="prospect-missing-actions" aria-label="Informations à compléter"><div className="missing-action"><span>Le besoin reste à préciser.</span><button type="button" className="secondary-button" onClick={()=>showSection(`prospect-need-section-${prospect.id}`)}>Renseigner le besoin</button></div></div>}
         {prospect.stage === 'new' && <button className="primary-button start-qualification-button" onClick={onStart}>Démarrer la prospection</button>}

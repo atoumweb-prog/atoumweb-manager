@@ -16,17 +16,19 @@ module.exports=async ctx=>{
  try{
   await navigate('Prospection');await text('.prospect-view-switch button','Annuaire prospects');await click(`[data-record-id="${prospect.id}"]`);await click('[aria-label="Agrandir la fiche"]');await wait('!!document.querySelector(".prospect-detail-desk .crm-record-layout")','full Prospect');await wait('!!document.querySelector(".prospect-detail-desk .crm-identity-avatar img")','persisted identity logo');
   await js(`window.__densityDesk=document.querySelector('.prospect-detail-desk');window.__densityTimer=document.querySelector('.global-timer');window.atoumweb.visualPreferences.setItem('atoumweb:crm-record:prospect:v1',JSON.stringify({version:1,leftWidth:260,rightWidth:220,leftClosed:false,rightClosed:false}));window.dispatchEvent(new StorageEvent('storage',{key:'atoumweb:crm-record:prospect:v1'}));`);await sleep(100);
-  const variants=before?['reference']:['balanced','action'];
+  const variants=before?['reference']:['balanced'];
   for(const variant of variants){
    if(!before)await js(`window.__densityDesk.dataset.prospectComposition=${JSON.stringify(variant)}`);
    for(const theme of ['atoumweb','noir','blanc'])for(const density of ['compact','comfort','comfort_plus']){
     await presentation(theme,density);
     if(!before){
      test(await get(`document.querySelectorAll('.prospect-focus-summary').length===1&&document.querySelector('.prospect-focus-next').textContent.includes('Confirmer le périmètre du site vitrine')&&document.querySelector('.prospect-focus-stage').textContent.trim().length>20`),'Single useful synthesis with exact shared next action '+variant+'/'+theme+'/'+density);
+     test(await get(`!document.querySelector('.crm-record-left').textContent.includes('Devis à préparer')&&document.querySelector('.prospect-focus-stage strong').textContent==='Devis à préparer'`),'Real stage appears once in synthesis, never duplicated in Identity');
+     test(await get(`(()=>{const label=document.querySelector('.prospect-next-label');return label.textContent.startsWith('Prochaine action')&&!!label.querySelector('svg[aria-hidden="true"]')&&getComputedStyle(label).fontWeight>=600&&document.querySelector('.prospect-focus-next strong').textContent==='Confirmer le périmètre du site vitrine'})()`),'Next action has a decorative shared icon, clear label and exact real title');
      test(await get(`document.querySelectorAll('.prospect-section-group').length===3&&[...document.querySelectorAll('.prospect-section-group')].every(e=>!e.open)`),'Three functional groups initially folded, no deleted editor');
-     test(await get(`!document.querySelector('.crm-record-left').textContent.includes('Fiche de travail prospect')&&!document.querySelector('.prospect-secondary-actions').open&&document.querySelector('.crm-record-left h2').textContent==='Atelier Horizon'`),'Name/logo/status before secondary actions, no large redundant title');
+     test(await get(`!document.querySelector('.crm-record-left').textContent.includes('Fiche de travail prospect')&&!document.querySelector('.prospect-secondary-actions').open&&document.querySelector('.crm-record-left h2').textContent==='Atelier Horizon'`),'Name/logo before secondary actions, no large redundant title');
      test(await get(`(()=>{const e=document.querySelector('.prospect-work-accordion-trigger');return getComputedStyle(e).borderTopWidth==='0px'&&getComputedStyle(e).textTransform==='none'&&parseFloat(getComputedStyle(e).fontSize)>=14})()`),'Unframed section rows, sentence case, functional type not reduced');
-     test(await get(`window.__densityDesk===document.querySelector('.prospect-detail-desk')&&window.__densityTimer===document.querySelector('.global-timer')&&document.querySelectorAll('.global-timer').length===1`),'Same record and unique timer through two compositions');
+     test(await get(`window.__densityDesk===document.querySelector('.prospect-detail-desk')&&window.__densityTimer===document.querySelector('.global-timer')&&document.querySelectorAll('.global-timer').length===1`),'Same record and unique timer through approved A presentation');
      const r=await get(`(()=>{const r=document.querySelector('.prospect-detail-desk .crm-record-layout'),c=r.querySelector('.crm-record-work').getBoundingClientRect();return {overflow:r.scrollWidth-r.clientWidth,centre:c.width,height:c.height,body:innerWidth}})()`);test(r.overflow<=2&&r.centre>300&&r.height>150,'Readable centre at125% '+variant+'/'+theme+'/'+density+' '+JSON.stringify(r));
     }
     if(!before)test(await get(`(()=>{const t=document.querySelector('.prospect-temperature-control select').getBoundingClientRect(),s=document.querySelector('.prospect-focus-stage').getBoundingClientRect(),l=document.querySelector('.crm-record-left').getBoundingClientRect();return t.right<=s.left+2&&[...document.querySelectorAll('.crm-record-properties p')].every(e=>{const r=document.createRange();r.selectNodeContents(e);return r.getBoundingClientRect().right<=l.right+2})})()`),'Temperature never overlaps status; identity text stays in its own region '+variant+'/'+theme+'/'+density);
@@ -39,7 +41,7 @@ module.exports=async ctx=>{
    await click('.prospect-focus-next button');await wait(`document.querySelector('#prospect-followup-section-${prospect.id} > button')?.getAttribute('aria-expanded')==='true'`,'synthesis opens existing followup section');
    test(await get(`document.activeElement===document.querySelector('#prospect-followup-section-${prospect.id}>button')`),'Next-action link opens the real collapsed section and returns focus, without service mutation');
    await text('.prospect-work-accordion-trigger','Relances & prochaines actions');
-   for(const variant of ['balanced','action']){
+   for(const variant of ['balanced']){
     await js(`window.__densityDesk.dataset.prospectComposition=${JSON.stringify(variant)}`);await click('.prospect-secondary-actions summary');test(await get(`document.querySelector('.prospect-secondary-actions').open&&!!document.querySelector('.prospect-secondary-actions [aria-label="Ouvrir la référence dans une fenêtre"]')`),'Original secondary window action reachable '+variant);await click('.crm-record-left .crm-identity-assets-toggle');await capture(variant+'-identity-details','noir','comfort');await click('.crm-record-left .crm-identity-assets-toggle');await click('.prospect-secondary-actions summary');
    }
    // Pause editor uses the SAME quote service/UX-01 guard; presentation changes
@@ -47,7 +49,7 @@ module.exports=async ctx=>{
    await js(`const g=document.querySelector('.prospect-section-group[data-group=activities]');if(!g.open)g.querySelector(':scope>summary').click()`);
    await text('.prospect-quote-panel button','Info manquante');await wait('!!document.querySelector(".prospect-quote-panel .inline-editor textarea")','existing pause draft');
    await js(`window.__densityDraft=document.querySelector('.prospect-quote-panel .inline-editor textarea');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(window.__densityDraft,'Conserver les photos avant validation du devis');window.__densityDraft.dispatchEvent(new Event('input',{bubbles:true}));window.__densityQuote=document.querySelector('.prospect-quote-panel');`);await sleep(80);
-   for(const variant of ['balanced','action']){
+   for(const variant of ['balanced']){
     await js(`window.__densityDesk.dataset.prospectComposition=${JSON.stringify(variant)}`);
     await click('.prospect-section-group[data-group=activities]>summary');await click('.prospect-section-group[data-group=activities]>summary');await text('.prospect-work-accordion-trigger','Devis');await text('.prospect-work-accordion-trigger','Devis');
     await click('.crm-record-right>.crm-record-side-toggle');test(await get(`document.querySelector('.crm-record-right .crm-record-side-body').hidden`),'Associations fold without actions or draft loss '+variant);await click('.crm-record-right>.crm-record-side-toggle');
@@ -59,6 +61,6 @@ module.exports=async ctx=>{
    test(snapshot()===baseline,'Presentation, links, draft and refused exits do not mutate ANY business table');
   }
   test(db.database.get('PRAGMA integrity_check').integrity_check==='ok'&&db.database.all('PRAGMA foreign_key_check').length===0,'TEMP integrity and foreign keys');
-  console.log('PROSPECT_DENSITY_RESULT '+JSON.stringify({before,variants,onlyTemp:true,quoteId:quote.id,confirmations,businessMutation:false,captures:before?11:26}));
+  console.log('PROSPECT_DENSITY_RESULT '+JSON.stringify({before,variants,onlyTemp:true,quoteId:quote.id,confirmations,businessMutation:false,captures:before?11:13}));
  }finally{dialog.showMessageBoxSync=old;}
 };

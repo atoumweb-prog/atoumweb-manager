@@ -1,9 +1,6 @@
-/* Prospect only. Two real compositions share the SAME mounted editors/actions.
-   The action-led attribute is set only by the isolated comparison recipe until
-   the user chooses a composition; no new preference or business service. */
+/* Prospect only. Validated A: compact synthesis, same mounted editors/actions. */
 .app-shell .prospect-detail-desk .crm-record-left .detail-panel-heading{border:0;gap:10px}
 .app-shell .prospect-detail-desk .prospect-detail-identity-head{align-items:center;gap:12px}
-.app-shell .prospect-detail-desk .prospect-header-meta{margin-top:6px}
 .app-shell .prospect-detail-desk .crm-record-left .detail-heading-actions{justify-content:flex-end}
 .app-shell .prospect-detail-desk .prospect-secondary-actions{border-top:1px solid var(--border);padding-top:10px}
 .app-shell .prospect-detail-desk .prospect-secondary-actions summary{cursor:pointer;color:var(--muted);padding:6px 0}
@@ -29,15 +26,6 @@
 .app-shell .prospect-detail-desk .quote-command-actions{gap:10px}
 .app-shell .prospect-detail-desk .crm-record-right .crm-record-side-body{gap:8px}
 .app-shell .prospect-detail-desk .crm-record-right h3{margin:0}
-/* B: action first, subordinate metadata on a single unframed row. */
-.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-summary{grid-template-columns:minmax(140px,1fr) minmax(150px,1.4fr);gap:12px 24px;padding-top:8px}
-.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-next{grid-column:1/-1;grid-row:1;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;border-left:3px solid var(--accent-strong);padding:10px 14px;background:var(--surface-soft)}
-.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-next>span{grid-column:1}
-.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-next>strong{grid-column:1}
-.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-next>button{grid-column:2;grid-row:1/3;align-self:center;margin:0}
-.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-temperature-control label{flex-direction:row;align-items:center;gap:12px}
-.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-stage{flex-direction:row;align-items:center;flex-wrap:wrap;gap:8px 12px}
-.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-work-accordion-trigger{grid-template-columns:18px minmax(180px,1fr) minmax(0,1.4fr)}
 @media(max-width:1100px){
  .app-shell .prospect-detail-desk .prospect-focus-summary{grid-template-columns:minmax(130px,1fr) minmax(140px,1fr);gap:12px}
  .app-shell .prospect-detail-desk .prospect-focus-next{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
@@ -48,14 +36,12 @@
  .app-shell .prospect-detail-desk .prospect-work-accordion-trigger{grid-template-columns:18px minmax(0,1fr)}
  .app-shell .prospect-detail-desk .prospect-work-accordion-summary{grid-column:2}
  .app-shell .prospect-detail-desk .prospect-focus-next>button{grid-column:1/-1;grid-row:auto}
- .app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-next>button{grid-column:1/-1;grid-row:auto}
 }
 
 /* Contain intrinsic select/URL widths; preserve the existing functional type. */
 .app-shell .prospect-detail-desk .prospect-focus-summary>.prospect-temperature-control{display:block;min-width:0;max-width:100%;}
 .app-shell .prospect-detail-desk .prospect-focus-summary .prospect-temperature-control label{width:100%;min-width:0;white-space:nowrap;}
 .app-shell .prospect-detail-desk .prospect-focus-summary .prospect-temperature-control select{box-sizing:border-box;max-width:100%;min-width:0;}
-.app-shell .prospect-detail-desk[data-prospect-composition=action] .prospect-focus-summary{grid-template-columns:minmax(260px,1fr) minmax(0,1fr);}
 .app-shell .prospect-detail-desk .crm-record-properties{min-width:0;max-width:100%;}
 .app-shell .prospect-detail-desk .crm-record-properties p{min-width:0;max-width:100%;overflow-wrap:anywhere;white-space:normal;}
 .app-shell .prospect-detail-desk .quote-command-header .eyebrow{display:none;}
@@ -80,3 +66,7 @@
 .app-shell .prospect-detail-desk .crm-record-right .crm-record-side-body>button{border:0;border-radius:0;background:transparent;padding:6px 0;}
 .app-shell .prospect-detail-desk .crm-record-right .crm-record-side-body>button:hover{text-decoration:underline;text-underline-offset:4px;}
 .app-shell .prospect-detail-desk .prospect-association-hint{display:flex;justify-content:flex-end;}
+
+/* A: emphasis stays inline, without an extra card or smaller text. */
+.app-shell .prospect-detail-desk .prospect-focus-next>.prospect-next-label{display:flex;align-items:center;gap:6px;color:var(--text);font-weight:600;}
+.app-shell .prospect-detail-desk .prospect-next-label>svg{color:var(--accent-strong);flex-shrink:0;}
