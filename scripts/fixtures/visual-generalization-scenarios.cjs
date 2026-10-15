@@ -51,9 +51,12 @@ module.exports=async context=>{
    test(await get('window.__generalTimer===document.querySelector(".global-timer")&&document.querySelectorAll(".global-timer").length===1'),'Same business timer '+scope+'/'+theme+'/'+density);
    await js('window.__generalTable.querySelector("summary").click()');
    if(process.env.ATOUMWEB_VISUAL_GENERALIZATION_CAPTURES)await require('./verified-crm-capture.cjs')({win,js,test,folder:process.env.ATOUMWEB_VISUAL_GENERALIZATION_CAPTURES,file:scope+'-'+theme+'-'+density+'.png',theme,density,scene:scope});
-   win.setSize(900,720);win.webContents.setZoomFactor(1.25);await sleep(40);
+   win.setSize(900,720);win.webContents.setZoomFactor(1.25);
+   const expectedWidth=Math.round(win.getContentBounds().width/1.25);
+   await wait('Math.abs(innerWidth-'+expectedWidth+')<=2','actual Chromium zoom viewport');
    await js('await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
-   test(await get('document.documentElement.scrollWidth<=innerWidth+2&&window.__generalTable.isConnected'),'Narrow/zoom table scroll stays local '+scope+'/'+theme+'/'+density);
+   const geometry=await get('({scroll:document.documentElement.scrollWidth,width:innerWidth,connected:window.__generalTable.isConnected,wide:[...document.querySelectorAll(".app-shell *")].filter(e=>e.getBoundingClientRect().right>innerWidth+2&&getComputedStyle(e).position!=="fixed").slice(0,8).map(e=>({tag:e.tagName,class:e.className,right:e.getBoundingClientRect().right}))})');
+   test(geometry.scroll<=geometry.width+2&&geometry.connected,'Narrow/zoom table scroll stays local '+scope+'/'+theme+'/'+density+' '+JSON.stringify(geometry));
    win.webContents.setZoomFactor(1);win.setSize(1510,1030);
   }
  }

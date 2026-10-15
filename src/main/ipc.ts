@@ -1,8 +1,9 @@
+import {crmIdentityImagePreview} from './crm/crmIdentityImagePreview';
 import { registerShellVisualPreferences } from './shellVisualPreferencesIpc';
 import {registerUnsavedConfirmationIpc,unsavedWindows} from './unsaved';
 import { restoreQuitGate } from './restoreQuitGate';
 import type { ContractAdministration, QuoteContractParameters, ContractDocumentLinkInput, ContractDocumentRole } from '../shared/quoteContractPreparation';
-import { app, clipboard, dialog, ipcMain, nativeImage, safeStorage, shell } from 'electron';
+import { app, clipboard, dialog, ipcMain, safeStorage, shell } from 'electron';
 import type { BridgeNodeMatchDecisionInput } from '../shared/bridgeSnapshots';
 import { readFileSync, statSync, writeFileSync } from 'node:fs';
 import {createWorkingContractDocx} from './commercial/workingContractDocx';
@@ -276,10 +277,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     if(!stats.isFile()||stats.size===0||stats.size>8*1024*1024)throw Error('Image vide ou supérieure à 8 Mo.');
     const bytes = readFileSync(source);
     if (!bytes.length || bytes.length > 8 * 1024 * 1024) throw Error('Image vide ou supérieure à 8 Mo.');
-    const preview = nativeImage.createFromBuffer(bytes);
-    if (preview.isEmpty()) throw Error('Image invalide ou format non pris en charge.');
-    const dimensions=preview.getSize(),scale=Math.min(160/dimensions.width,160/dimensions.height);
-    const confirmation = await dialog.showMessageBox({type:'question',title:'Identité visuelle',message:'Enregistrer ce visuel ?',detail:basename(source)+'\nCe visuel sera partagé par les fiches liées à cette identité.',icon:preview.resize({width:Math.max(1,Math.round(dimensions.width*scale)),height:Math.max(1,Math.round(dimensions.height*scale)),quality:'best'}),buttons:['Enregistrer','Annuler'],defaultId:1,cancelId:1});
+    const preview = await crmIdentityImagePreview(_event.sender,bytes);
+    const confirmation = await dialog.showMessageBox({type:'question',title:'Identité visuelle',message:'Enregistrer ce visuel ?',detail:basename(source)+'\nCe visuel sera partagé par les fiches liées à cette identité.',icon:preview,buttons:['Enregistrer','Annuler'],defaultId:1,cancelId:1});
     if(confirmation.response!==0)return null;
     const current = database.crmIdentityAssets.list(owner,id).find(asset=>asset.role===role);
     if(current?.relativePath!==previous?.relativePath)throw Error('Le visuel a changé dans une autre fenêtre. Actualise la fiche avant de réessayer.');

@@ -19,12 +19,23 @@ module.exports=async ctx=>{
  const assets=()=>db.crmIdentityAssets.list('organization',client.organizationId);
  try{
   const count=assets().length;
-  dialog.showOpenDialog=async()=>({canceled:true,filePaths:[]});test(await importAsset(null,'organization',client.organizationId,'logo')===null&&assets().length===count,'Cancelled file selection has no SQL/file mutation');
+  dialog.showOpenDialog=async()=>({canceled:true,filePaths:[]});test(await importAsset({sender:win.webContents},'organization',client.organizationId,'logo')===null&&assets().length===count,'Cancelled file selection has no SQL/file mutation');
   dialog.showOpenDialog=async()=>({canceled:false,filePaths:[source]});
-  let previews=0;dialog.showMessageBox=async options=>{previews++;test(options.icon&&!options.icon.isEmpty()&&options.defaultId===1&&options.cancelId===1,'Decoded preview before commit; default is Cancel');return {response:1};};
-  test(await importAsset(null,'organization',client.organizationId,'logo')===null&&assets().length===count,'Cancelled preview preserves shared identity');test(previews===1,'One preview per selected image');
+  let previews=0,acceptPreview=false;dialog.showMessageBox=async options=>{previews++;test(options.icon&&!options.icon.isEmpty()&&options.defaultId===1&&options.cancelId===1,'Decoded preview before commit; default is Cancel');return {response:acceptPreview?0:1};};
+  test(await importAsset({sender:win.webContents},'organization',client.organizationId,'logo')===null&&assets().length===count,'Cancelled preview preserves shared identity');test(previews===1,'One preview per selected image');
+  const png=fs.readFileSync(source),icoHeader=Buffer.alloc(22);icoHeader.writeUInt16LE(1,2);icoHeader.writeUInt16LE(1,4);icoHeader[6]=icoHeader[7]=80;icoHeader.writeUInt16LE(1,10);icoHeader.writeUInt16LE(32,12);icoHeader.writeUInt32LE(png.length,14);icoHeader.writeUInt32LE(22,18);
+  const webp=await get("(()=>{const canvas=document.createElement('canvas');canvas.width=2;canvas.height=2;canvas.getContext('2d').fillRect(0,0,2,2);return canvas.toDataURL('image/webp').split(',')[1]})()");
+  const formats=[['png',png],['jpg',nativeImage.createFromBuffer(png).toJPEG(90)],['webp',Buffer.from(webp,'base64')],['gif',Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7','base64')],['ico',Buffer.concat([icoHeader,png])]];
+  const formatOwner=db.crm.createOrganization({name:'TEST FORMAT PERSISTENCE'});
+  for(const [extension,bytes]of formats){
+   const file=path.join(temp,'actual-format.'+extension);fs.writeFileSync(file,bytes);dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});
+   const n=previews;test(await importAsset({sender:win.webContents},'organization',client.organizationId,'logo')===null&&previews===n+1&&assets().length===count,'Actual '+extension+' decoded before cancellation with no write');
+   acceptPreview=true;const saved=await importAsset({sender:win.webContents},'organization',formatOwner.id,'logo');acceptPreview=false;
+   test(saved&&fs.readFileSync(path.join(ctx.workspace.root,saved.relativePath)).equals(bytes),'Confirmed '+extension+' persists the full ORIGINAL bytes without conversion');
+  }
+
   const corrupt=path.join(temp,'corrupt.png');fs.writeFileSync(corrupt,'not an image');dialog.showOpenDialog=async()=>({canceled:false,filePaths:[corrupt]});
-  let rejected=false;try{await importAsset(null,'organization',client.organizationId,'logo');}catch(e){rejected=/invalide/.test(e.message);}test(rejected&&assets().length===count,'Actual IPC rejects corrupt image without any write');
+  let rejected=false;try{await importAsset({sender:win.webContents},'organization',client.organizationId,'logo');}catch(e){rejected=/invalide/.test(e.message);}test(rejected&&assets().length===count,'Actual IPC rejects corrupt image without any write');
   dialog.showOpenDialog=async()=>({canceled:false,filePaths:[source]});
   await navigate('Clients');await textClick('.clients-table tr',client.displayName);await wait('!!document.querySelector(".client-summary-panel")','Client');await click('.client-detail-expand');
   await click('#client-tab-contacts');await textClick('#client-panel-contacts button','+ Ajouter');await input('#client-panel-contacts .contact-inline-form input','BROUILLON TROIS ZONES');
@@ -86,7 +97,7 @@ module.exports=async ctx=>{
   dialog.showMessageBox=async()=>({response:0});test(await removeAsset(null,logo.id)===false&&assets().some(a=>a.id===logo.id),'Removal Cancel leaves image unchanged');
   // Concurrent import while native confirmation is open must never be overwritten.
   dialog.showMessageBox=async()=>{db.crmIdentityAssets.importFilePath('organization',client.organizationId,'logo',source);return {response:0};};
-  let conflict=false;try{await importAsset(null,'organization',client.organizationId,'logo');}catch(e){conflict=/autre fenêtre/.test(e.message);}test(conflict,'Cross-window logo change is rejected instead of silently overwritten');
+  let conflict=false;try{await importAsset({sender:win.webContents},'organization',client.organizationId,'logo');}catch(e){conflict=/autre fenêtre/.test(e.message);}test(conflict,'Cross-window logo change is rejected instead of silently overwritten');
   await navigate('Prospection');await textClick('.prospect-view-switch button','Annuaire prospects');
   await wait(`!!document.querySelector('[data-record-id="${prospect.id}"]')`,'synthetic active Prospect row');
   await js(`document.querySelector('[data-record-id="${prospect.id}"]').click()`);await wait('!!document.querySelector(".prospect-detail-v2")','Prospect');await click('[aria-label="Agrandir la fiche"]');await wait('!!document.querySelector(".prospect-detail-desk .crm-record-layout")','three-zone prospect');
