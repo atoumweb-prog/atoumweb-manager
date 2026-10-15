@@ -404,6 +404,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
           <button className="secondary-button" type="button" onClick={toggleEdit}>{editing ? 'Annuler' : 'Modifier'}</button>
         </div>
 
+        <CrmIdentityAssetEditor organizationId={selectedOrganization.id} onMessage={onMessage}/>
         {verificationPanel}{editing ? <OrganizationEditor value={organizationDraft} onChange={setOrganizationDraft} onSave={() => void saveOrganization(false)} busy={busy} /> : <>
           <div className="directory-meta-grid">
             <div><span>Activité</span><strong>{selectedOrganization.industry || 'Non renseignée'}</strong></div>
@@ -418,7 +419,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
             <div className="directory-linked-contacts">{selectedOrganizationContacts.map((contact) => <button type="button" key={contact.id} onClick={() => { setView('contacts'); setSecondaryFilter('all'); selectContact(contact.id); }}><CrmIdentityAvatar organizationId={selectedOrganization.id} contactId={contact.id} name={`${contact.firstName} ${contact.lastName}`} /><span><strong>{contact.firstName} {contact.lastName}</strong><small>{contact.jobTitle || 'Fonction non renseignée'}</small></span></button>)}{!selectedOrganizationContacts.length && <p className="muted">Aucun contact rattaché.</p>}</div>
           </section>
           <section className="directory-info-block"><div><span>Notes</span><strong>{selectedOrganization.notes || 'Aucune note'}</strong></div></section>
-          <details className="directory-identity-details"><summary>Logo et identité visuelle</summary><CrmIdentityAssetEditor organizationId={selectedOrganization.id} onMessage={onMessage} /></details>
+
         </>}
       </article>}
 
@@ -435,6 +436,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
           <button className="secondary-button" type="button" onClick={toggleEdit}>{editing ? 'Annuler' : 'Modifier'}</button>
         </div>
 
+        <CrmIdentityAssetEditor contactId={selectedContact.id} onMessage={onMessage}/>
         {verificationPanel}{editing ? <ContactEditor value={contactDraft} organizations={organizations} onChange={setContactDraft} onSave={() => void saveContact(false)} busy={busy} /> : <>
           <div className="directory-meta-grid">
             <div><span>Entreprise</span><strong>{selectedContact.organizationName || 'Aucune'}</strong></div>
@@ -444,7 +446,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
           </div>
           <ContactMethodsPanel organizationId={selectedContact.organizationId} contactId={selectedContact.id} summaryLabel="Coordonnées du contact" />
           <section className="directory-info-block"><div><span>Notes</span><strong>{selectedContact.notes || 'Aucune note'}</strong></div></section>
-          <details className="directory-identity-details"><summary>Photo / avatar</summary><CrmIdentityAssetEditor contactId={selectedContact.id} onMessage={onMessage} /></details>
+
         </>}
       </article>}
     </div>

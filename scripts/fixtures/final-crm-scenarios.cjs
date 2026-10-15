@@ -40,6 +40,23 @@ module.exports=async ctx=>{
   finishPreview({response:0});await wait('!document.querySelector(".crm-record-left [role=status]")','logo commit');
   test(assets().length===count+1&&fs.existsSync(path.join(ctx.workspace.root,assets().find(a=>a.role==='logo').relativePath)),'Confirmed logo really copied into TEMP workspace and persisted in SQLite');
   await wait('!!document.querySelector(".crm-record-left .crm-identity-avatar img")','shared logo decoded');
+
+  const oldList=db.crmIdentityAssets.list.bind(db.crmIdentityAssets),delayed=[];
+  db.crmIdentityAssets.list=(...args)=>{const snapshot=oldList(...args);return new Promise(resolve=>delayed.push(()=>resolve(snapshot)));};
+  await js('window.dispatchEvent(new Event("atoumweb:crm-identity-changed"))');await sleep(80);
+  test(delayed.length>0,'Old identity reload really held at IPC');
+  db.crmIdentityAssets.list=oldList;
+  const newerSource=path.join(temp,'newer-company-logo.png');fs.copyFileSync(source,newerSource);
+  db.crmIdentityAssets.importFilePath('organization',client.organizationId,'logo',newerSource);
+  await js('window.dispatchEvent(new Event("atoumweb:crm-identity-changed"))');
+  await wait('document.querySelector(".crm-record-left .role-logo .crm-identity-asset-copy small").textContent==="newer-company-logo.png"','newer identity reload');
+  delayed.forEach(resolve=>resolve());await sleep(100);
+  test(await get('document.querySelector(".crm-record-left .role-logo .crm-identity-asset-copy small").textContent==="newer-company-logo.png"'),'Late old success cannot overwrite newer shared logo');
+
+  const oldFailures=[];db.crmIdentityAssets.list=()=>new Promise((_resolve,reject)=>oldFailures.push(()=>reject(Error('TEST old image list failure'))));
+  await js('window.dispatchEvent(new Event("atoumweb:crm-identity-changed"))');await sleep(80);test(oldFailures.length>0,'Old failing image reload really held');
+  db.crmIdentityAssets.list=oldList;await js('window.dispatchEvent(new Event("atoumweb:crm-identity-changed"))');await sleep(100);oldFailures.forEach(reject=>reject());await sleep(100);
+  test(await get('document.querySelector(".crm-record-left .role-logo .crm-identity-asset-copy small").textContent==="newer-company-logo.png"&&!document.querySelector(".crm-record-left [role=alert]")'),'Late old failure cannot erase current image or announce a false current error');
   const logo=assets().find(a=>a.role==='logo');
   const originalSet=db.setSetting.bind(db);let writes=0;db.setSetting=(key,v)=>{if(key==='ux_v2_visual_preferences_v1')writes++;return originalSet(key,v);};
   try{
@@ -56,10 +73,10 @@ module.exports=async ctx=>{
     await capture('client-'+width,theme,density);
    }
   }
-  for(const theme of ['atoumweb','noir','blanc'])for(const zoom of [1,1.25,1.5]){
-   win.setSize(1280,720);win.webContents.setZoomFactor(zoom);await js(`document.documentElement.dataset.theme=${JSON.stringify(theme)};document.documentElement.dataset.density='comfort'`);await sleep(100);
+  for(const theme of ['atoumweb','noir','blanc'])for(const density of ['compact','comfort','comfort_plus'])for(const zoom of [1,1.25,1.5]){
+   win.setSize(1280,720);win.webContents.setZoomFactor(zoom);await js(`document.documentElement.dataset.theme=${JSON.stringify(theme)};document.documentElement.dataset.density=${JSON.stringify(density)}`);await sleep(100);
    test(await get('window.__finalInput.isConnected&&document.querySelector(".client-summary-panel").scrollWidth<=document.querySelector(".client-summary-panel").clientWidth+2'),'Client narrow/zoom local layout '+theme+'/'+zoom);
-   await capture('client-narrow-'+zoom,theme,'comfort');
+   await capture('client-narrow-'+zoom,theme,density);
   }
   win.webContents.setZoomFactor(1);win.setSize(1510,1030);
   const beforeClose=confirmations.length;answers.push(1);await click('.client-summary-panel .close-detail');test(confirmations.length===beforeClose+1&&await get('!document.querySelector(".client-summary-panel")'),'Explicit discard through existing UX01, exactly one confirmation');
@@ -84,9 +101,9 @@ module.exports=async ctx=>{
     await capture('prospect-'+width,theme,density);
    }
   }
-  for(const theme of ['atoumweb','noir','blanc'])for(const zoom of [1,1.25,1.5]){
-   win.setSize(1280,720);win.webContents.setZoomFactor(zoom);await js(`document.documentElement.dataset.theme=${JSON.stringify(theme)};document.documentElement.dataset.density='comfort'`);await sleep(100);
-   test(await get('window.__finalProspect===document.querySelector(".prospect-detail-desk")&&window.__finalAccordion.isConnected'),'Prospect retains exact component at narrow/zoom '+theme+'/'+zoom);await capture('prospect-narrow-'+zoom,theme,'comfort');
+  for(const theme of ['atoumweb','noir','blanc'])for(const density of ['compact','comfort','comfort_plus'])for(const zoom of [1,1.25,1.5]){
+   win.setSize(1280,720);win.webContents.setZoomFactor(zoom);await js(`document.documentElement.dataset.theme=${JSON.stringify(theme)};document.documentElement.dataset.density=${JSON.stringify(density)}`);await sleep(100);
+   test(await get('window.__finalProspect===document.querySelector(".prospect-detail-desk")&&window.__finalAccordion.isConnected'),'Prospect retains exact component at narrow/zoom '+theme+'/'+zoom);await capture('prospect-narrow-'+zoom,theme,density);
   }
   win.webContents.setZoomFactor(1);win.setSize(1510,1030);await click('.prospect-desk-overlay [aria-label="Fermer la fiche prospect"]');
   if(await get('!!document.querySelector(".prospect-detail-v2")'))await click('.prospect-detail-v2 [aria-label="Fermer la fiche prospect"]');

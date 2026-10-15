@@ -89,7 +89,7 @@ export function CrmIdentityAssetEditor({
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
-  const generation=useRef(0),locked=useRef(false);
+  const generation=useRef(0),loadSequence=useRef(0),locked=useRef(false);
   useUnsavedDraft('Identité visuelle : opération en cours',null,{dirty:false,pending:Boolean(busyKey)});
 
   const slots = useMemo<AssetSlot[]>(() => {
@@ -123,19 +123,25 @@ export function CrmIdentityAssetEditor({
   }, [organizationId, contactId]);
 
   async function load(expected=generation.current): Promise<void> {
+    const sequence=++loadSequence.current;
+    try {
     const batches = await Promise.all([
       organizationId ? window.atoumweb.crm.identityAssets.list('organization', organizationId) : Promise.resolve([]),
       contactId ? window.atoumweb.crm.identityAssets.list('contact', contactId) : Promise.resolve([]),
     ]);
     const nextAssets = batches.flat();
-    if(expected!==generation.current)return;
+    if(expected!==generation.current || sequence!==loadSequence.current)return;
     setAssets(nextAssets);
     const pairs = await Promise.all(nextAssets.filter((asset) => !asset.missing).map(async (asset) => {
       const preview = await window.atoumweb.crm.identityAssets.preview(asset.id);
       return preview.available && preview.dataUrl ? [asset.id, preview.dataUrl] as const : null;
     }));
-    if(expected!==generation.current)return;
+    if(expected!==generation.current || sequence!==loadSequence.current)return;
     setPreviews(Object.fromEntries(pairs.filter((pair): pair is readonly [string, string] => pair !== null)));
+    } catch(error) {
+      if(expected!==generation.current || sequence!==loadSequence.current)return;
+      throw error;
+    }
   }
 
   useEffect(() => {
@@ -147,7 +153,9 @@ export function CrmIdentityAssetEditor({
       setAssets([]);
       setPreviews({});
     });
-    return()=>{generation.current++;};
+    const refresh=()=>{const ownerGeneration=generation.current;void load(ownerGeneration).catch(()=>{if(ownerGeneration===generation.current)setError('Impossible d’actualiser les visuels.');});};
+    window.addEventListener('atoumweb:crm-identity-changed',refresh);
+    return()=>{generation.current++;loadSequence.current++;window.removeEventListener('atoumweb:crm-identity-changed',refresh);};
   }, [organizationId, contactId]);
 
   async function importAsset(slot: AssetSlot): Promise<void> {

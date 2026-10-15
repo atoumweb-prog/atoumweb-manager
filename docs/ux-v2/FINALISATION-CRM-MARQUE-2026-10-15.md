@@ -31,3 +31,9 @@ Premiers contrôles de développement : 129 assertions Client ; 250 assertions d
 ## Gate humain requis
 
 À présenter : comparaisons avant/après et master → rail → header clair/sombre, les neuf configurations et 1280×720/zoom. Attente de validation explicite de la fidélité du logo et des dispositions Client/Prospect. Pas de packaging final, généralisation supplémentaire ou remplacement du lanceur avant cette validation. Recette visuelle humaine non acquise.
+
+## Ajustements issus de la recette élargie
+
+Au candidat `4d71bc48`, Vitest 1500/1500 sur 166 fichiers, typecheck OK. La campagne native a passé 32 étapes puis détecté une régression dans 01F : la poignée de colonne recevait la largeur d'aperçu comme point de départ, son effet de nettoyage annulait donc son propre geste avant pointerup. Correction ciblée : point de départ stable, aperçu uniquement sur le tableau ; aucune assertion supprimée ou diminuée. Le contrôle existant 01F « une écriture finale » passe après correction. Les deux étapes suivantes (rail/en-tête) seront exécutées explicitement ; le premier rapport de campagne reste conservé avec son échec.
+
+Compléments : éditeurs visuels Annuaire disponibles près de l'identité, également pendant l'édition des coordonnées ; rechargements des images séquencés, succès ET erreurs anciens ignorés après une réponse plus récente ; synchronisation des deux emplacements existants via l'événement CRM partagé. Recette supplémentaire avec de vraies réponses IPC volontairement retenues. Fenêtres étroites et zoom étendus aux neuf configurations, sans changement de préférence métier.
