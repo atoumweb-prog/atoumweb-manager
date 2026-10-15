@@ -83,8 +83,8 @@ export class MaintenanceReportService {
     const interventions = this.database.all<InterventionRow>(
       `SELECT i.id,i.intervention_number,i.subject,i.intervention_type,i.status,i.completed_at,i.maintenance_usage_kind,
         COALESCE((
-          SELECT SUM(MAX(0,CAST((julianday(ts.ended_at)-julianday(ts.started_at))*86400 AS INTEGER)) - COALESCE((
-            SELECT SUM(MAX(0,CAST((julianday(tsp.ended_at)-julianday(tsp.started_at))*86400 AS INTEGER)))
+          SELECT SUM(MAX(0,CAST(ROUND((julianday(ts.ended_at)-julianday(ts.started_at))*86400) AS INTEGER)) - COALESCE((
+            SELECT SUM(MAX(0,CAST(ROUND((julianday(tsp.ended_at)-julianday(tsp.started_at))*86400) AS INTEGER)))
             FROM time_session_pauses tsp WHERE tsp.time_session_id=ts.id AND tsp.ended_at IS NOT NULL
           ),0))
           FROM time_sessions ts WHERE ts.intervention_id=i.id AND ts.ended_at IS NOT NULL

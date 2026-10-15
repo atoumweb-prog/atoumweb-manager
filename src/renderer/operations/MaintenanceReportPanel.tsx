@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { MaintenanceReportData } from '../../shared/maintenanceReport';
+import { requestUnsavedExit, useUnsavedDraft } from '../unsaved/unsaved';
 import './MaintenanceReportPanel.css';
 
 function duration(seconds: number): string {
@@ -16,40 +17,68 @@ export function MaintenanceReportPanel({ periodId, onMessage }: { periodId: stri
   const [anomalies, setAnomalies] = useState('');
   const [recommendations, setRecommendations] = useState('');
   const [saving, setSaving] = useState(false);
+  const loadGeneration = useRef(0);
+  const savingRef = useRef(false);
+  const [saved, setSaved] = useState({ summary: '', anomalies: '', recommendations: '' });
+  const draft = { summary, anomalies, recommendations };
+  const dirty = summary !== saved.summary || anomalies !== saved.anomalies || recommendations !== saved.recommendations;
+  useUnsavedDraft('Rapport de maintenance', draft, {
+    group: `maintenance-report:${periodId}`,
+    dirty,
+    pending: saving,
+    discard: () => { setSummary(saved.summary); setAnomalies(saved.anomalies); setRecommendations(saved.recommendations); },
+  });
 
-  async function load(): Promise<void> {
+  async function load(generation: number): Promise<void> {
     try {
       const next = await window.atoumweb.maintenanceReports.get(periodId);
+      if (generation !== loadGeneration.current) return;
       setReport(next);
       setSummary(next.clientSummary ?? '');
       setAnomalies(next.anomaliesActions ?? '');
       setRecommendations(next.recommendations ?? '');
+      setSaved({ summary: next.clientSummary ?? '', anomalies: next.anomaliesActions ?? '', recommendations: next.recommendations ?? '' });
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de préparer le rapport de maintenance.');
+      if (generation === loadGeneration.current) {
+        onMessage(error instanceof Error ? error.message : 'Impossible de préparer le rapport de maintenance.');
+      }
     }
   }
 
-  useEffect(() => { if (open) void load(); }, [periodId, open]);
+  useEffect(() => {
+    if (!open) return;
+    const generation = ++loadGeneration.current;
+    void load(generation);
+    return () => { loadGeneration.current += 1; };
+  }, [periodId, open]);
 
   async function save(): Promise<void> {
+    // Un double clic avant le prochain rendu React ne doit pas lancer deux écritures.
+    if (savingRef.current) return;
+    savingRef.current = true;
+    const submitted = { summary, anomalies, recommendations };
     setSaving(true);
     try {
       const next = await window.atoumweb.maintenanceReports.updateDraft(periodId, {
-        clientSummary: summary,
-        anomaliesActions: anomalies,
-        recommendations,
+        clientSummary: submitted.summary,
+        anomaliesActions: submitted.anomalies,
+        recommendations: submitted.recommendations,
       });
       setReport(next);
+      // La base de comparaison est l'envoi effectivement sauvegardé ; la saisie
+      // réalisée pendant la requête reste un brouillon local non enregistré.
+      setSaved(submitted);
       onMessage('Brouillon du rapport client enregistré.');
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Impossible d’enregistrer le rapport.');
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }
 
   return <section className="maintenance-report-box">
-    <button className="maintenance-report-toggle" type="button" onClick={() => setOpen((value) => !value)}>
+    <button className="maintenance-report-toggle" type="button" onClick={() => { if (open) requestUnsavedExit(() => setOpen(false)); else setOpen(true); }}>
       <span><span className="eyebrow">Rapport client</span><strong>Rapport de maintenance de la période</strong></span>
       <span aria-hidden="true">{open ? '−' : '+'}</span>
     </button>

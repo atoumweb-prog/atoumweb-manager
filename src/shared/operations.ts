@@ -285,6 +285,19 @@ export interface HourPackFilters {
   includeArchived?: boolean;
 }
 
+/** Projection en lecture seule, calculée par le même service que le débit réel.
+ * État instantané : la clôture revalide toujours le pack et le temps. */
+export interface HourPackDebitPreview {
+  packId: string;
+  interventionId: string;
+  packName: string;
+  packStatus: HourPackStatus;
+  balanceBeforeSeconds: number;
+  secondsToDebit: number;
+  balanceAfterSeconds: number;
+  alreadyDebited: boolean;
+}
+
 export interface HourPackMovementInput {
   secondsDelta: number;
   reason: string;
@@ -337,6 +350,7 @@ export interface OperationsApi {
     create(input: HourPackInput): Promise<HourPack>;
     changeStatus(id: string, status: HourPackStatus): Promise<HourPack>;
     addMovement(id: string, input: HourPackMovementInput): Promise<HourPack>;
+    previewInterventionDebit(packId: string, interventionId: string): Promise<HourPackDebitPreview>;
     debitIntervention(packId: string, interventionId: string): Promise<HourPack>;
     reverseMovement(movementId: string, reason: string): Promise<HourPack>;
   };

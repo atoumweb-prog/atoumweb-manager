@@ -24,6 +24,7 @@ import {
 import type { ProjectNode, ProjectSummary } from '../../shared/projects';
 import type { TimeCategory } from '../../shared/time';
 import { HourPacksPanel } from './HourPacksPanel';
+import { acquireCompletionLock, interventionCompletionReview, isCurrentOperationsRefresh, resolveInterventionCompletion } from './operationAsyncGuards';
 import { MaintenancePanel } from './MaintenancePanel';
 import { OperationsAlertsPanel } from './OperationsAlertsPanel';
 import { InterventionBackupPanel } from './InterventionBackupPanel';
@@ -97,6 +98,9 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
   const [interventionDemoMode, setInterventionDemoMode] = useState(false);
   const requestDetailRef = useRef<HTMLDivElement | null>(null);
   const interventionDetailRef = useRef<HTMLDivElement | null>(null);
+  const refreshGeneration = useRef(0);
+  const interventionWriteGeneration = useRef(0);
+  const completionInFlight = useRef(new Set<string>());
 
   const [requestClientId, setRequestClientId] = useState('');
   const [requestProjectId, setRequestProjectId] = useState('');
@@ -123,19 +127,23 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
   const [transformProjectNodes, setTransformProjectNodes] = useState<ProjectNode[]>([]);
   const [closeReason, setCloseReason] = useState('');
 
-  async function refresh(options: { showLoading?: boolean } = {}): Promise<void> {
+  async function refresh(options: { showLoading?: boolean } = {}): Promise<boolean> {
     const showLoading = options.showLoading ?? true;
+    const generation = ++refreshGeneration.current;
+    const writeAtStart = interventionWriteGeneration.current;
     if (showLoading) setLoading(true);
     try {
       const [nextRequests, nextInterventions, nextClients, nextProjects] = await Promise.all([
         window.atoumweb.operations.requests.list(), window.atoumweb.operations.interventions.list(), window.atoumweb.crm.clients.list(), window.atoumweb.projects.projects.list(),
       ]);
+      if (!isCurrentOperationsRefresh(generation, refreshGeneration.current, writeAtStart, interventionWriteGeneration.current)) return false;
       setRequests(nextRequests); setInterventions(nextInterventions); setClients(nextClients); setProjects(nextProjects);
-      if (selectedRequest) setSelectedRequest(nextRequests.find((item) => item.id === selectedRequest.id) ?? null);
-      if (selectedIntervention) setSelectedIntervention(nextInterventions.find((item) => item.id === selectedIntervention.id) ?? null);
+      setSelectedRequest((current) => current ? nextRequests.find((item) => item.id === current.id) ?? null : null);
+      setSelectedIntervention((current) => current ? nextInterventions.find((item) => item.id === current.id) ?? current : null);
       setAlertRefreshKey((value) => value + 1);
-    } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de charger les opérations.'); }
-    finally { if (showLoading) setLoading(false); }
+      return true;
+    } catch (error) { if (generation === refreshGeneration.current) onMessage(error instanceof Error ? error.message : 'Impossible de charger les opérations.'); return false; }
+    finally { if (showLoading && generation === refreshGeneration.current) setLoading(false); }
   }
 
   useEffect(() => { void refresh({ showLoading: true }); }, []);
@@ -183,45 +191,58 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
 
   useEffect(() => {
     if (!initialTarget) return;
-    let live=true;
-    if(initialTarget.entityType==='intervention'&&selectedIntervention?.id===initialTarget.entityId){
-      if(initialTarget.focus==='conclusion'){setConclusionInterventionId(selectedIntervention.id);setInterventionExpanded(true);}
-      return()=>{live=false;};
+    let live = true;
+    if (initialTarget.entityType === 'intervention' && selectedIntervention?.id === initialTarget.entityId) {
+      if (initialTarget.focus === 'conclusion') {
+        setConclusionInterventionId(selectedIntervention.id);
+        setInterventionExpanded(true);
+      }
+      return () => { live = false; };
     }
-    setQuery('');
-    setSelectedRequest(null);
-    setSelectedIntervention(null);
-
-    if (initialTarget.entityType === 'service_request') {
-      setView('requests');
-      setRequestStatus('all');
-      void window.atoumweb.operations.requests.get(initialTarget.entityId)
-        .then((request) => {if(live)setSelectedRequest(request);})
-        .catch((error: unknown) => {if(!live)return;const message=error instanceof Error?error.message:'Demande introuvable.';onEntityReady?.('service_request',initialTarget.entityId,message);onMessage(message);});
-      return()=>{live=false;};
-    }
-    if (initialTarget.entityType === 'intervention') {
-      setView('interventions');
-      setInterventionStatus('all');
-      void window.atoumweb.operations.interventions.get(initialTarget.entityId)
-        .then((intervention) => {
-          if(!live)return;
-          setSelectedIntervention(intervention);
-          if (initialTarget.focus === 'conclusion') {
-            setConclusionInterventionId(intervention.id);
-            setInterventionExpanded(true);
-          }
-        })
-        .catch((error: unknown) => {if(!live)return;const message=error instanceof Error?error.message:'Intervention introuvable.';onEntityReady?.('intervention',initialTarget.entityId,message);onMessage(message);});
-      return()=>{live=false;};
-    }
-    if (initialTarget.entityType === 'maintenance') {
-      setView('maintenance');
-      return()=>{live=false;};
-    }
-    setView('packs');
-    return()=>{live=false;};
-  }, [initialTarget?.entityType, initialTarget?.entityId, initialTarget?.focus,initialRequest]);
+    // A change initiated by external routing must use the same UX-01 guard as a click.
+    // A refused exit leaves the current selection and its draft intact.
+    requestUnsavedExit(() => {
+      if (!live) return;
+      setQuery('');
+      setSelectedRequest(null);
+      setSelectedIntervention(null);
+      if (initialTarget.entityType === 'service_request') {
+        setView('requests');
+        setRequestStatus('all');
+        void window.atoumweb.operations.requests.get(initialTarget.entityId)
+          .then(request => { if (live) setSelectedRequest(request); })
+          .catch((error: unknown) => {
+            if (!live) return;
+            const message = error instanceof Error ? error.message : 'Demande introuvable.';
+            onEntityReady?.('service_request', initialTarget.entityId, message);
+            onMessage(message);
+          });
+      } else if (initialTarget.entityType === 'intervention') {
+        setView('interventions');
+        setInterventionStatus('all');
+        void window.atoumweb.operations.interventions.get(initialTarget.entityId)
+          .then(intervention => {
+            if (!live) return;
+            setSelectedIntervention(intervention);
+            if (initialTarget.focus === 'conclusion') {
+              setConclusionInterventionId(intervention.id);
+              setInterventionExpanded(true);
+            }
+          })
+          .catch((error: unknown) => {
+            if (!live) return;
+            const message = error instanceof Error ? error.message : 'Intervention introuvable.';
+            onEntityReady?.('intervention', initialTarget.entityId, message);
+            onMessage(message);
+          });
+      } else if (initialTarget.entityType === 'maintenance') {
+        setView('maintenance');
+      } else {
+        setView('packs');
+      }
+    });
+    return () => { live = false; };
+  }, [initialTarget?.entityType, initialTarget?.entityId, initialTarget?.focus, initialRequest]);
 
   useEffect(() => {
     if (!interventionProjectId) {
@@ -320,16 +341,100 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
     catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut.'); }
   }
 
-  async function changeInterventionStatus(status: InterventionStatus): Promise<void> {
-    if (!selectedIntervention) return;
+  async function changeInterventionStatus(status: InterventionStatus): Promise<boolean> {
+    if (!selectedIntervention) return false;
+    const interventionId = selectedIntervention.id;
+    const releaseLock = status === 'completed' ? acquireCompletionLock(completionInFlight.current, interventionId) : undefined;
+    if (status === 'completed' && !releaseLock) return false;
     try {
-      const updated = status === 'completed'
-        ? await window.atoumweb.operations.interventions.complete(selectedIntervention.id)
-        : await window.atoumweb.operations.interventions.changeStatus(selectedIntervention.id, status);
-      setSelectedIntervention(updated);
-      await refresh({ showLoading: false });
-      if (status === 'completed') onMessage(`${updated.number} terminée · prise en charge traitée.`);
-    } catch (error) { onMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut.'); }
+    if (status === 'completed' && !requestUnsavedExit(() => {})) return false;
+    if (status === 'completed') {
+      let context: string[] = [];
+      try {
+        const current = await window.atoumweb.operations.interventions.get(interventionId);
+        if (current.status === 'completed') {
+          onMessage('Cette intervention est déjà terminée. Actualise la fiche avant une nouvelle action.');
+          return false;
+        }
+        if (current.coverageMode === 'hour_pack') {
+          if (!current.hourPackId) {
+            onMessage('Aucun pack rattaché : choisis un pack avant la clôture.');
+            return false;
+          }
+          const preview = await window.atoumweb.operations.hourPacks.previewInterventionDebit(current.hourPackId, current.id);
+          const formatSeconds = (seconds: number): string => {
+            const count = Math.abs(Math.trunc(seconds));
+            const sign = seconds < 0 ? '−' : '';
+            return `${sign}${Math.floor(count / 3600)} h ${Math.floor((count % 3600) / 60)} min ${count % 60} s`;
+          };
+          context = [
+            `Pack : ${preview.packName} · état : ${preview.packStatus}`,
+            preview.alreadyDebited
+              ? 'Débit déjà enregistré pour cette intervention : aucun second débit automatique.'
+              : `Temps terminé débitable : ${formatSeconds(preview.secondsToDebit)} · solde actuel : ${formatSeconds(preview.balanceBeforeSeconds)} · solde projeté : ${formatSeconds(preview.balanceAfterSeconds)}`,
+            'Projection en lecture seule : les montants et le temps seront vérifiés à nouveau par le service au moment de la clôture.',
+          ];
+        } else if (current.coverageMode === 'maintenance') {
+          if (!current.maintenancePeriodId) {
+            onMessage('Aucune période de maintenance rattachée : complète la prise en charge avant la clôture.');
+            return false;
+          }
+          const subscriptions = await window.atoumweb.operations.maintenance.subscriptions.list();
+          const owned = subscriptions.filter((entry) => entry.clientAccountId === current.clientAccountId);
+          const matchedPeriods = await Promise.all(owned.map((entry) => window.atoumweb.operations.maintenance.periods.list(entry.id)));
+          const period = matchedPeriods.flat().find((entry) => entry.id === current.maintenancePeriodId);
+          if (!period) {
+            onMessage('Période de maintenance introuvable : impossible de confirmer la clôture.');
+            return false;
+          }
+          context = [`Période : ${period.periodStart} → ${period.periodEnd} · état : ${period.status}`,
+            `Quota actuel : ${period.usage.interventionCount} intervention(s) · restant : ${period.usage.remainingInterventions ?? 'sans limite'} · dépassement : ${period.usage.interventionsOverQuota}`];
+        } else if (current.coverageMode === 'out_of_scope') {
+          context = [`Montant facturable enregistré : ${(current.billableAmountCents ?? 0) / 100} € (aucune facture émise automatiquement)`];
+        }
+        if (!window.confirm(interventionCompletionReview(current, context))) return false;
+      } catch (error) {
+        onMessage(error instanceof Error ? `Prévalidation impossible : ${error.message}` : 'Prévalidation impossible : données de prise en charge indisponibles.');
+        return false;
+      }
+    }
+    let updated: Intervention;
+    if (status === 'completed') {
+      const outcome = await resolveInterventionCompletion(
+        interventionId,
+        (id) => window.atoumweb.operations.interventions.complete(id),
+        (id) => window.atoumweb.operations.interventions.get(id),
+      );
+      if (outcome.kind === 'unknown') {
+        onMessage('Résultat de clôture inconnu : la confirmation et la relecture ont échoué. Vérifie le statut avant toute nouvelle tentative.');
+        return false;
+      }
+      if (outcome.kind === 'not_confirmed') {
+        onMessage(`Clôture non confirmée : ${outcome.intervention.number} est toujours « ${INTERVENTION_STATUS_LABELS[outcome.intervention.status]} ». Vérifie avant de relancer.`);
+        return false;
+      }
+      updated = outcome.intervention;
+    } else {
+      try {
+        updated = await window.atoumweb.operations.interventions.changeStatus(interventionId, status);
+      } catch (error) {
+        onMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut.');
+        return false;
+      }
+    }
+    interventionWriteGeneration.current += 1;
+    setSelectedIntervention((current) => current?.id === updated.id ? updated : current);
+    setInterventions((current) => current.map((item) => item.id === updated.id ? updated : item));
+    const refreshed = await refresh({ showLoading: false });
+    if (status === 'completed') {
+      onMessage(refreshed
+        ? `${updated.number} terminée · prise en charge traitée.`
+        : `${updated.number} terminée dans les données, mais l’actualisation des listes n’a pas été confirmée. Vérifie avant toute nouvelle action.`);
+    }
+    return true;
+    } finally {
+      releaseLock?.();
+    }
   }
 
   async function changeCoverage(coverageMode: InterventionCoverageMode): Promise<void> {
@@ -407,7 +512,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
       <article><span className="operations-kpi-icon"><OperationIcon name="wrench" /></span><div><strong>Interventions actives</strong><span>{activeInterventions.length}</span><small>Planifiées, en cours ou à valider</small></div></article>
       <article><span className="operations-kpi-icon"><OperationIcon name="clock" /></span><div><strong>En attente client</strong><span>{waitingClientCount}</span><small>Demandes + interventions</small></div></article>
     </section>
-    <OperationsAlertsPanel refreshKey={alertRefreshKey} onNavigate={(target) => setView(target)} onMessage={onMessage} />
+    <OperationsAlertsPanel refreshKey={alertRefreshKey} onNavigate={(target) => requestUnsavedExit(() => setView(target))} onMessage={onMessage} />
     <div className="operations-view-tabs">
       <button type="button" className={view === 'requests' ? 'active' : ''} onClick={() => {if(view!=='requests')requestUnsavedExit(()=>setView('requests'));}}>Demandes <span>{requests.filter((item) => !['closed', 'converted', 'archived'].includes(item.status)).length}</span></button>
       <button type="button" className={view === 'interventions' ? 'active' : ''} onClick={() => {if(view!=='interventions')requestUnsavedExit(()=>setView('interventions'));}}>Interventions <span>{interventions.filter((item) => !['completed', 'cancelled', 'archived'].includes(item.status)).length}</span></button>
@@ -530,7 +635,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
     </>}
 
     {view === 'maintenance' && <MaintenancePanel initialRequest={initialRequest} onEntityReady={onEntityReady} clients={clients} projects={projects} onMessage={onMessage} initialSubscriptionId={initialTarget?.entityType === 'maintenance' ? initialTarget.entityId : null} onInterventionCreated={(intervention) => { setSelectedRequest(null); setSelectedIntervention(intervention); setView('interventions'); void refresh({ showLoading: false }); }} />}
-    {view === 'packs' && <HourPacksPanel initialRequest={initialRequest} onEntityReady={onEntityReady} clients={clients} projects={projects} interventions={interventions} onMessage={onMessage} onOperationsChanged={refresh} initialPackId={initialTarget?.entityType === 'hour_pack' ? initialTarget.entityId : null} />}
+    {view === 'packs' && <HourPacksPanel initialRequest={initialRequest} onEntityReady={onEntityReady} clients={clients} projects={projects} interventions={interventions} onMessage={onMessage} onOperationsChanged={async () => { await refresh({ showLoading: false }); }} initialPackId={initialTarget?.entityType === 'hour_pack' ? initialTarget.entityId : null} />}
   </div>;
 }
 
@@ -539,7 +644,7 @@ function RequestDetail({ request, expanded, onExpand, transformType, setTransfor
   return <aside className={`panel operation-detail-panel request-workbench-panel ${expanded ? 'expanded' : ''}`}><div className="detail-panel-heading"><div><span className="eyebrow">Demande · {SOURCE_LABELS[request.source]}</span><h2>{request.subject}</h2><p className="muted">{request.clientLabel}{request.projectLabel ? ` · ${request.projectLabel}` : ''}</p></div><div className="request-workbench-heading-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la demande' : 'Agrandir la demande'} aria-label={expanded ? 'Réduire la demande' : 'Agrandir la demande'} onClick={onExpand}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={onClose}><OperationIcon name="close" size={18} /></button></div></div><div className="operation-detail-grid"><div><span>Reçue</span><strong>{dateLabel(request.receivedAt)}</strong></div><div><span>Priorité</span><strong>{PRIORITY_LABELS[request.priority]}</strong></div></div><label>Statut<select disabled={request.status === 'converted'} value={request.status} onChange={(event) => void onStatus(event.target.value as ServiceRequestStatus)}>{SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{REQUEST_STATUS_LABELS[status]}</option>)}</select></label>{request.description && <div className="operation-description"><span className="eyebrow">Description</span><p>{request.description}</p></div>}{request.interventionId ? <div className="operation-linked"><strong>✓ Transformée en intervention</strong><span>L’intervention liée est conservée comme source unique du travail réalisé.</span></div> : !locked && <><div className="operation-action-box"><strong>Créer une intervention</strong>{request.projectId && <label>Module / Page / Tâche<select value={transformProjectNodeId} onChange={(event) => setTransformProjectNodeId(event.target.value)} disabled={transformProjectNodes.length === 0}><option value="">Aucun rattachement précis</option>{transformProjectNodes.map((node) => <option key={node.id} value={node.id}>{projectNodeLabel(node)}</option>)}</select></label>}<label>Type<select value={transformType} onChange={(event) => setTransformType(event.target.value as InterventionType)}>{INTERVENTION_TYPES.map((type) => <option key={type} value={type}>{INTERVENTION_TYPE_LABELS[type]}</option>)}</select></label><label>Prise en charge<select value={transformCoverage} onChange={(event) => setTransformCoverage(event.target.value as InterventionCoverageMode)}>{INTERVENTION_COVERAGE_MODES.map((mode) => <option key={mode} value={mode}>{COVERAGE_LABELS[mode]}</option>)}</select></label><button className="primary-button" type="button" disabled={saving} onClick={() => void onTransform()}>Créer l’intervention</button></div><div className="operation-action-box subtle"><strong>Ou clore sans travail</strong><input value={closeReason} onChange={(event) => setCloseReason(event.target.value)} placeholder="Motif facultatif" /><button className="secondary-button" type="button" onClick={() => void onCloseRequest()}>Clore sans intervention</button></div></>}</aside>;
 }
 
-function InterventionDetail({ onSaved, intervention, expanded, onExpand, onClose, onStatus, onCoverage, onProjectNode, onTimer, conclusionRequested, onConclusionHandled, onMessage }: { onSaved:()=>void; intervention: Intervention; expanded: boolean; onExpand: () => void; onClose: () => void; onStatus: (status: InterventionStatus) => Promise<void>; onCoverage: (coverage: InterventionCoverageMode) => Promise<void>; onProjectNode: (projectNodeId: string | null) => Promise<void>; onTimer: (intervention: Intervention) => void; conclusionRequested: boolean; onConclusionHandled: () => void; onMessage: (message: string) => void; }) {
+function InterventionDetail({ onSaved, intervention, expanded, onExpand, onClose, onStatus, onCoverage, onProjectNode, onTimer, conclusionRequested, onConclusionHandled, onMessage }: { onSaved:()=>void; intervention: Intervention; expanded: boolean; onExpand: () => void; onClose: () => void; onStatus: (status: InterventionStatus) => Promise<boolean>; onCoverage: (coverage: InterventionCoverageMode) => Promise<void>; onProjectNode: (projectNodeId: string | null) => Promise<void>; onTimer: (intervention: Intervention) => void; conclusionRequested: boolean; onConclusionHandled: () => void; onMessage: (message: string) => void; }) {
   const [projectNodes, setProjectNodes] = useState<ProjectNode[]>([]);
   useEffect(() => {
     if (!intervention.projectId) {
@@ -634,7 +739,7 @@ function InterventionConclusionPanel({ intervention, forceOpen, onHandled, onSav
   forceOpen: boolean;
   onHandled: () => void;
   onSaved: () => void;
-  onComplete: () => Promise<void>;
+  onComplete: () => Promise<boolean>;
   onMessage: (message: string) => void;
 }) {
   const [open, setOpen] = useState(forceOpen);
@@ -680,9 +785,10 @@ function InterventionConclusionPanel({ intervention, forceOpen, onHandled, onSav
       draft.section.receive({cause:updated.incidentCause??'',diagnosis:updated.incidentDiagnosis??'',solution:updated.incidentSolution??'',followUp:updated.incidentFollowUp??''},{value:submitted});
       onSaved();
       if (finalize) {
-        await onComplete();
+        const completed = await onComplete();
+        if (!completed) return;
         setOpen(false);
-        onMessage(`${intervention.number} clôturée · conclusion et rapport de fin enregistrés.`);
+        onMessage(`${intervention.number} clôturée · conclusion enregistrée.`);
       } else {
         onMessage('Conclusion de panne enregistrée.');
       }

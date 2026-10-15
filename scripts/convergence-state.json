@@ -1,54 +1,11 @@
 {
-  "phase": "07",
+  "phase": "08",
   "nativeChecks": [
     [
-      "composition-workshop",
+      "operations",
       [
-        "scripts/check-project-composition-ui.cjs"
-      ]
-    ],
-    [
-      "composition-native",
-      [
-        "scripts/check-ux-v2-07a-composition.cjs"
-      ]
-    ],
-    [
-      "project-quote-return",
-      [
-        "scripts/check-ux-v2-07ab-navigation-native.cjs"
-      ]
-    ],
-    [
-      "project-provisional",
-      [
-        "scripts/check-project-provisional-ui.cjs",
-        "--output",
-        "{out}/provisional"
-      ]
-    ],
-    [
-      "project-operational",
-      [
-        "scripts/check-project-operational-ui.cjs",
-        "--output",
-        "{out}/operational"
-      ]
-    ],
-    [
-      "blueprints",
-      [
-        "scripts/check-project-blueprint-origins-ui.cjs",
-        "--output",
-        "{out}/blueprints"
-      ]
-    ],
-    [
-      "guided-reuse",
-      [
-        "scripts/check-guided-reuse-ui.cjs",
-        "--output",
-        "{out}/reuse"
+        "scripts/check-ux-v2-lot01a-real-ui.cjs",
+        "--lot08a"
       ]
     ],
     [

@@ -4,6 +4,7 @@ import {
   HOUR_PACK_STATUSES,
   type HourPack,
   type HourPackFilters,
+  type HourPackDebitPreview,
   type HourPackInput,
   type HourPackMovement,
   type HourPackMovementInput,
@@ -86,10 +87,48 @@ export class HourPackService {
     if (!['manual_correction', 'commercial_credit'].includes(type)) throw new Error('Type de mouvement manuel invalide.');
     if (type === 'commercial_credit' && input.secondsDelta < 0) throw new Error('Un geste commercial doit créditer du temps.');
     this.assertRelatedContext(pack, clean(input.interventionId), clean(input.timeSessionId));
-    this.database.run(`INSERT INTO hour_pack_movements (id,pack_id,intervention_id,time_session_id,movement_type,seconds_delta,reason,created_at) VALUES (?,?,?,?,?,?,?,?)`, [randomUUID(), packId, clean(input.interventionId), clean(input.timeSessionId), type, input.secondsDelta, reason, nowIso()]);
-    this.refreshDerivedStatus(packId);
-    this.writeActivity('hour_pack', packId, 'hour_pack_movement_added', `${reason} · ${input.secondsDelta > 0 ? '+' : ''}${input.secondsDelta}s`);
-    return this.get(packId);
+    this.database.exec('SAVEPOINT hour_pack_manual_movement;');
+    try {
+      this.database.run(`INSERT INTO hour_pack_movements (id,pack_id,intervention_id,time_session_id,movement_type,seconds_delta,reason,created_at) VALUES (?,?,?,?,?,?,?,?)`, [randomUUID(), packId, clean(input.interventionId), clean(input.timeSessionId), type, input.secondsDelta, reason, nowIso()]);
+      this.refreshDerivedStatus(packId);
+      this.writeActivity('hour_pack', packId, 'hour_pack_movement_added', `${reason} · ${input.secondsDelta > 0 ? '+' : ''}${input.secondsDelta}s`);
+      const updated = this.get(packId);
+      this.database.exec('RELEASE hour_pack_manual_movement;');
+      return updated;
+    } catch (error) {
+      this.database.exec('ROLLBACK TO hour_pack_manual_movement; RELEASE hour_pack_manual_movement;');
+      throw error;
+    }
+  }
+
+  /** Aucun mouvement ni journal écrit ici : la clôture recalcule au moment du débit. */
+  previewInterventionDebit(packId: string, interventionId: string): HourPackDebitPreview {
+    const pack = this.get(packId);
+    if (['archived', 'suspended', 'expired'].includes(pack.status)) {
+      throw new Error('Ce pack ne peut pas être débité dans son état actuel.');
+    }
+    const intervention = this.database.get<{
+      client_account_id: string; project_id: string | null; hour_pack_id: string | null;
+    }>('SELECT client_account_id,project_id,hour_pack_id FROM interventions WHERE id=?', [interventionId]);
+    if (!intervention) throw new Error('Intervention introuvable.');
+    if (intervention.client_account_id !== pack.clientAccountId) throw new Error('L’intervention appartient à un autre client.');
+    if (pack.projectId && intervention.project_id !== pack.projectId) throw new Error('L’intervention n’appartient pas au projet de ce pack.');
+    if (intervention.hour_pack_id && intervention.hour_pack_id !== packId) {
+      throw new Error('Cette intervention est déjà rattachée à un autre pack.');
+    }
+    const sourceKey = `intervention:${packId}:${interventionId}`;
+    const alreadyDebited = Boolean(this.database.get<{ id: string }>(
+      'SELECT id FROM hour_pack_movements WHERE source_key=?', [sourceKey],
+    ));
+    const secondsToDebit = alreadyDebited ? 0 : this.interventionSeconds(interventionId);
+    if (!alreadyDebited && secondsToDebit <= 0) {
+      throw new Error('Aucun temps terminé à débiter pour cette intervention.');
+    }
+    return {
+      packId, interventionId, packName: pack.name, packStatus: pack.status,
+      balanceBeforeSeconds: pack.balanceSeconds, secondsToDebit,
+      balanceAfterSeconds: pack.balanceSeconds - secondsToDebit, alreadyDebited,
+    };
   }
 
   debitIntervention(packId: string, interventionId: string): HourPack {
@@ -124,10 +163,18 @@ export class HourPackService {
     if (this.database.get<{ id: string }>('SELECT id FROM hour_pack_movements WHERE reversal_of_movement_id=?', [movementId])) return this.get(movement.pack_id);
     const cleanReason = clean(reason); if (!cleanReason) throw new Error('Motif d’annulation requis.');
     const now = nowIso();
-    this.database.run(`INSERT INTO hour_pack_movements (id,pack_id,intervention_id,time_session_id,reversal_of_movement_id,movement_type,seconds_delta,reason,source_key,created_at) VALUES (?,?,?,?,?,'reversal',?,?,?,?)`, [randomUUID(), movement.pack_id, movement.intervention_id, movement.time_session_id, movement.id, -Number(movement.seconds_delta), cleanReason, `reversal:${movement.id}`, now]);
-    this.refreshDerivedStatus(movement.pack_id);
-    this.writeActivity('hour_pack', movement.pack_id, 'hour_pack_movement_reversed', `Mouvement annulé : ${cleanReason}`);
-    return this.get(movement.pack_id);
+    this.database.exec('SAVEPOINT hour_pack_reversal;');
+    try {
+      this.database.run(`INSERT INTO hour_pack_movements (id,pack_id,intervention_id,time_session_id,reversal_of_movement_id,movement_type,seconds_delta,reason,source_key,created_at) VALUES (?,?,?,?,?,'reversal',?,?,?,?)`, [randomUUID(), movement.pack_id, movement.intervention_id, movement.time_session_id, movement.id, -Number(movement.seconds_delta), cleanReason, `reversal:${movement.id}`, now]);
+      this.refreshDerivedStatus(movement.pack_id);
+      this.writeActivity('hour_pack', movement.pack_id, 'hour_pack_movement_reversed', `Mouvement annulé : ${cleanReason}`);
+      const updated = this.get(movement.pack_id);
+      this.database.exec('RELEASE hour_pack_reversal;');
+      return updated;
+    } catch (error) {
+      this.database.exec('ROLLBACK TO hour_pack_reversal; RELEASE hour_pack_reversal;');
+      throw error;
+    }
   }
 
   private mapPack(row: PackRow): HourPack {

@@ -139,8 +139,8 @@ export class MaintenanceService {
     this.database.run(
       `INSERT INTO maintenance_subscriptions
        (id,client_account_id,project_id,plan_id,plan_name_snapshot,frequency_snapshot,included_interventions_snapshot,included_minutes_snapshot,
-        catalog_price_cents_snapshot,contract_price_cents,start_date,end_date,status,notes,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'active',?,?,?)`,
+        catalog_price_cents_snapshot,contract_price_cents,start_date,end_date,period_alignment,status,notes,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'anniversary','active',?,?,?)`,
       [id, clientId, projectId, plan.id, plan.name, plan.frequency, plan.includedInterventions, plan.includedMinutes ?? null,
         plan.periodicPriceCents, contractPrice, startDate, endDate, clean(input.notes), now, now],
     );
@@ -283,8 +283,8 @@ export class MaintenanceService {
       [row.id],
     )?.count ?? 0);
     const usedSeconds = Number(this.database.get<{ total: number | null }>(
-      `SELECT SUM(MAX(0, CAST((julianday(COALESCE(ts.ended_at,CURRENT_TIMESTAMP))-julianday(ts.started_at))*86400 AS INTEGER)) - COALESCE((
-        SELECT SUM(MAX(0, CAST((julianday(COALESCE(tsp.ended_at,COALESCE(ts.ended_at,CURRENT_TIMESTAMP)))-julianday(tsp.started_at))*86400 AS INTEGER)))
+      `SELECT SUM(MAX(0, ROUND((julianday(COALESCE(ts.ended_at,CURRENT_TIMESTAMP))-julianday(ts.started_at))*86400)) - COALESCE((
+        SELECT SUM(MAX(0, ROUND((julianday(COALESCE(tsp.ended_at,COALESCE(ts.ended_at,CURRENT_TIMESTAMP)))-julianday(tsp.started_at))*86400)))
         FROM time_session_pauses tsp WHERE tsp.time_session_id=ts.id
       ),0)) AS total
        FROM time_sessions ts
@@ -292,8 +292,8 @@ export class MaintenanceService {
        WHERE i.maintenance_period_id=? AND i.status NOT IN ('cancelled','archived') AND COALESCE(i.maintenance_usage_kind,'minor')='minor'`,
       [row.id],
     )?.total ?? 0);
-    const routineSeconds=Number(this.database.get<{total:number|null}>(`SELECT SUM(MAX(0, CAST((julianday(COALESCE(ts.ended_at,CURRENT_TIMESTAMP))-julianday(ts.started_at))*86400 AS INTEGER)) - COALESCE((
-      SELECT SUM(MAX(0,CAST((julianday(COALESCE(tsp.ended_at,COALESCE(ts.ended_at,CURRENT_TIMESTAMP)))-julianday(tsp.started_at))*86400 AS INTEGER))) FROM time_session_pauses tsp WHERE tsp.time_session_id=ts.id
+    const routineSeconds=Number(this.database.get<{total:number|null}>(`SELECT SUM(MAX(0, ROUND((julianday(COALESCE(ts.ended_at,CURRENT_TIMESTAMP))-julianday(ts.started_at))*86400)) - COALESCE((
+      SELECT SUM(MAX(0,ROUND((julianday(COALESCE(tsp.ended_at,COALESCE(ts.ended_at,CURRENT_TIMESTAMP)))-julianday(tsp.started_at))*86400))) FROM time_session_pauses tsp WHERE tsp.time_session_id=ts.id
     ),0)) total FROM time_sessions ts JOIN interventions i ON i.id=ts.intervention_id WHERE i.maintenance_period_id=? AND i.status NOT IN ('cancelled','archived') AND i.maintenance_usage_kind='routine'`,[row.id])?.total??0);
     const interventionQuota = Number(row.included_interventions);
     const secondsQuota = row.included_minutes == null ? null : Number(row.included_minutes) * 60;
