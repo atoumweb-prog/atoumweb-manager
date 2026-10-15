@@ -24,3 +24,13 @@ Suite du [pilote et audit](VISUAL-REPRISE-2026-10-15.md), sans réécriture des 
 Départ `b1c3964b`, branche `codex/ux-v2-visual-generalization`. Résultats finaux à relever au commit de code avant clôture. Recettes exclusivement TEMP, aucune ouverture de Validation-MSI ni donnée réelle. Pas de migration, changement contractuel, service ou IPC métier. Pas de publication GitHub/CI/fusion dans ce jalon.
 
 L’harmonisation des commandes et listes ne prétend pas refaire tous les sous-éditeurs spécialisés07/09 ni certifier une installation Windows. Les mises en page spécialisées sont préservées et leur recette visuelle humaine demeure distincte de la vérification technique.
+
+## Correctifs révélés par la recette
+
+- `selected-row` historique conservé en complément de `data-selected`, pour les styles et les consommateurs natifs existants (la recette Contrats05D l’a détecté).
+- Le banc transversal repart d’un renderer neuf après le parcours CRM complet, sur la même base TEMP. Le contexte précédent conservait une cible Devis et rouvrait sa fiche, déclenchant la synchronisation contractuelle existante. Ni ce service ni ses règles n’ont été modifiés ; le snapshot complet sans mutation reste exigé pour le parcours de présentation isolé.
+- Redimensionnement/zoom du banc synchronisé sur deux frames du renderer ; pas d’allongement du timeout ni de suppression d’assertion.
+- Actualiser et Réduire utilisent les SVG communs, libellés textuels inchangés ; pictogramme crayon `edit` ajouté dans la même famille (49 icônes) pour éviter de représenter Modifier par une feuille de document. Sélecteurs de recettes actualisés vers le texte Actualiser, assertions conservées.
+- Le premier smoke de package a signalé des erreurs console sans en conserver le détail. Une exécution diagnostique du même binaire a ensuite passé331 contrôles/162 visites ; cette répétition n’explique pas rétroactivement la première erreur. Le banc conserve désormais le détail de toute erreur et un `failure.json` sur sa base TEMP pour éviter une perte de diagnostic. La dernière exécution officielle reste à relever ci-dessous.
+
+Les35 gates de convergence ont réellement réussi au code `0b6d598e` : Catalogue, contrats, devis, UX-01, restauration/redémarrage, CRM/recherche/Accueil, projets/composition, opérations, finances/documents/Word, réglages et ateliers de préférences/rail/en-tête. Les raffinements suivants sont de présentation (pictogrammes Actualiser/Modifier/Réduire) et de banc ; nouvelle validation ciblée et globale au SHA final requise, sans réattribuer ces35 gates à un autre arbre.

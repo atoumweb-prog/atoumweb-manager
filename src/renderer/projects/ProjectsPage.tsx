@@ -907,7 +907,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
       <div className="module-toolbar projects-toolbar">
         <div><strong>{filtered.length}</strong><span> projet{filtered.length > 1 ? 's' : ''}</span></div>
         <div className="toolbar-controls project-toolbar-controls">
-          <button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button>
+          <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh"/>Actualiser</button>
           <button className="secondary-button" type="button" onClick={() => setView('templates')}>Modèles de projets</button>
           <select aria-label="État commercial" value={commercialFilter} onChange={(event) => setCommercialFilter(event.target.value as typeof commercialFilter)}>
             <option value="all">Tous les états commerciaux</option>

@@ -306,7 +306,7 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
     <div className="module-toolbar operations-toolbar">
       <div><strong>{activeSubscriptions.length}</strong><span> maintenance(s)</span></div>
       <div className="toolbar-controls">
-        <button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button>
+        <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh"/>Actualiser</button>
         <button className="secondary-button" type="button" onClick={() => requestUnsavedExit(() => setCreatePlanOpen((value) => !value))}>+ Plan</button>
         <button className="primary-button" type="button" onClick={() => requestUnsavedExit(() => setCreateSubscriptionOpen((value) => !value))}>+ Souscription</button>
       </div>

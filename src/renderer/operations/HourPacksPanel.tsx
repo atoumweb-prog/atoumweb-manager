@@ -311,7 +311,7 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
     <div className="module-toolbar operations-toolbar">
       <div><strong>{filteredPacks.length}</strong><span> pack(s)</span></div>
       <div className="toolbar-controls hour-pack-toolbar-controls">
-        <button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button>
+        <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh"/>Actualiser</button>
         <input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher client, projet, pack…" />
         <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
           <option value="all">Tous les statuts</option>

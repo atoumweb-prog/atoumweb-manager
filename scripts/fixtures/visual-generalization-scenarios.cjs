@@ -2,6 +2,12 @@
 module.exports=async context=>{
  const {win,db,evalUI:js,get,wait,navigate,test,sleep}=context;
  await require('./03e-directory-scenarios.cjs')(context);
+ // That journey intentionally leaves targeted Quote navigation in App state.
+ // Finish it, then start a fresh renderer context over the SAME TEMP database.
+ // Otherwise revisiting Devis reopens its former detail and invokes the existing
+ // contract synchronisation; it is not a table preference or sort operation.
+ await new Promise(resolve=>{win.webContents.once('did-finish-load',resolve);win.webContents.reload();});
+ await wait('!!document.querySelector(".aw-manager-shell")','fresh context after completed CRM journey');
  const snapshot=()=>JSON.stringify(db.database.all("SELECT name FROM sqlite_master WHERE type='table' AND name<>'settings' ORDER BY name").map(({name})=>[name,db.database.all('SELECT * FROM "'+name+'" ORDER BY rowid')]));
  const baseline=snapshot();await js('window.__generalTimer=document.querySelector(".global-timer")');
  const textClick=async(selector,text)=>{await js(`const e=[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>e.textContent.includes(${JSON.stringify(text)}));if(!e)throw Error('Missing '+${JSON.stringify(text)});e.click()`);await sleep(70);};
@@ -32,6 +38,7 @@ module.exports=async context=>{
    await js('window.__generalTable.querySelector("summary").click()');
    if(process.env.ATOUMWEB_VISUAL_GENERALIZATION_CAPTURES)await require('./verified-crm-capture.cjs')({win,js,test,folder:process.env.ATOUMWEB_VISUAL_GENERALIZATION_CAPTURES,file:scope+'-'+theme+'-'+density+'.png',theme,density,scene:scope});
    win.setSize(900,720);win.webContents.setZoomFactor(1.25);await sleep(40);
+   await js('await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
    test(await get('document.documentElement.scrollWidth<=innerWidth+2&&window.__generalTable.isConnected'),'Narrow/zoom table scroll stays local '+scope+'/'+theme+'/'+density);
    win.webContents.setZoomFactor(1);win.setSize(1510,1030);
   }

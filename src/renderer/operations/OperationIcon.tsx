@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 export type OperationIconName =
   | 'home' | 'users' | 'file-check' | 'layers' | 'contact' | 'settings'
-  | 'search' | 'filter' | 'menu' | 'plus' | 'arrow-left' | 'columns'
+  | 'search' | 'filter' | 'menu' | 'plus' | 'arrow-left' | 'columns' | 'edit'
   | 'inbox'
   | 'alert'
   | 'wrench'
@@ -41,6 +41,7 @@ export type OperationIconName =
   | 'moon';
 
 const paths: Record<OperationIconName, ReactNode> = {
+  edit: <><path d="m15 4 5 5M4 20l5-1L21 7a2 2 0 0 0-5-4L4 15ZM4 15l5 4"/></>,
   home: <><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8"/></>,
   users: <><circle cx="9" cy="8" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 4v2"/></>,
   'file-check': <><path d="M6 3h8l4 4v14H6ZM14 3v5h4m-9 7 2 2 4-5"/></>,

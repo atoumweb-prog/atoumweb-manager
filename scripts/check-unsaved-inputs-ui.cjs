@@ -100,12 +100,12 @@ if(!process.versions.electron){
    const staleSnapshot=originalList();
    let releaseStale,rejectStale,invocations=0;
    database.quotes.list=(...args)=>{invocations++;if(invocations===1)return new Promise((resolve,reject)=>{releaseStale=()=>resolve(staleSnapshot);rejectStale=reject;});return originalList(...args);};
-   await click('↻ Actualiser');
+   await click('Actualiser');
    for(let i=0;i<100&&!releaseStale;i++)await sleep(20);
    check(theme+' obsolete refresh request intercepted',typeof releaseStale==='function');
    const latestSubject='UX06 REFRESH LATEST '+theme;
    const newest=database.quotes.create({clientAccountId:client.id,subject:latestSubject});
-   await click('↻ Actualiser');
+   await click('Actualiser');
    await wait('document.querySelector(".quote-table")?.textContent.includes('+JSON.stringify(latestSubject)+')');
    check(theme+' newer refresh displays newest quote',await js('return document.querySelector(".quote-table").textContent.includes('+JSON.stringify(latestSubject)+')'));
    releaseStale();await sleep(150);
@@ -113,10 +113,10 @@ if(!process.versions.electron){
    database.quotes.list=originalList;
    let rejectOld;let secondCount=0;
    database.quotes.list=(...args)=>{secondCount++;if(secondCount===1)return new Promise((_resolve,reject)=>{rejectOld=reject;});return originalList(...args);};
-   await click('↻ Actualiser');
+   await click('Actualiser');
    for(let i=0;i<100&&!rejectOld;i++)await sleep(20);
    check(theme+' stale failing refresh intercepted',typeof rejectOld==='function');
-   await click('↻ Actualiser');
+   await click('Actualiser');
    await wait('document.querySelector(".quote-table")?.textContent.includes('+JSON.stringify(latestSubject)+')');
    rejectOld(new Error('OBSOLETE QUOTE LIST FAILURE '+theme));await sleep(150);
    check(theme+' stale refresh error not shown to operator',await js('return !document.body.textContent.includes('+JSON.stringify('OBSOLETE QUOTE LIST FAILURE '+theme)+')'));

@@ -1,3 +1,4 @@
+import {OperationIcon} from '../operations/OperationIcon';
 import { useEffect, useState } from 'react';
 import type {
   HourPack,
@@ -72,7 +73,7 @@ export function ProjectOperationsTab({ projectId, onMessage }: { projectId: stri
       {packs.map((pack) => <div className="project-operation-row" key={pack.id}><div><strong>{pack.name}</strong><small>{duration(pack.balanceSeconds)} restant · {duration(pack.consumedSeconds)} consommé</small></div><span>{pack.status}</span></div>)}
     </OperationSection>
 
-    <button className="secondary-button project-operations-refresh" type="button" onClick={() => void load()}>↻ Actualiser</button>
+    <button className="secondary-button project-operations-refresh" type="button" onClick={() => void load()}><OperationIcon name="refresh"/>Actualiser</button>
   </div>;
 }
 

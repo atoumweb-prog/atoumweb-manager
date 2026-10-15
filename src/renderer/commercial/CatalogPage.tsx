@@ -601,7 +601,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       <div className="module-toolbar catalog-toolbar">
         <div><strong>{filtered.length}</strong><span> élément{filtered.length > 1 ? 's' : ''}</span></div>
         <div className="toolbar-controls catalog-toolbar-controls">
-          <button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button>
+          <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh"/>Actualiser</button>
           <input className="inline-search" placeholder="Rechercher dans le catalogue…" value={query} onChange={(e) => setQuery(e.target.value)} />
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as 'all' | CatalogItemType)}>
             <option value="all">Services + Offres</option><option value="service">Services</option><option value="offer">Offres</option>
