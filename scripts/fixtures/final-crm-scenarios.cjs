@@ -8,6 +8,7 @@ module.exports=async ctx=>{
  const click=async selector=>{await js(`const e=document.querySelector(${JSON.stringify(selector)});if(!e)throw Error('Missing '+${JSON.stringify(selector)});e.click()`);await sleep(80);};
  const textClick=async(selector,text)=>{await js(`const e=[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>e.textContent.includes(${JSON.stringify(text)}));if(!e)throw Error('Missing '+${JSON.stringify(text)});e.click()`);await sleep(80);};
  const input=async(selector,value)=>{await js(`const e=document.querySelector(${JSON.stringify(selector)});Object.getOwnPropertyDescriptor(e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));`);await sleep(80);};
+ const contrast=async(selector,background)=>get(`(()=>{const e=document.querySelector(${JSON.stringify(selector)}),b=document.querySelector(${JSON.stringify(background)});if(!e||!b)return 0;const rgba=s=>{const n=s.match(/[0-9.]+/g).map(Number);return [n[0],n[1],n[2],n[3]??1]};const over=(a,b)=>a.slice(0,3).map((v,i)=>v*a[3]+b[i]*(1-a[3]));const layers=[];for(let n=b;n;n=n.parentElement)layers.push(rgba(getComputedStyle(n).backgroundColor));let pixel=[255,255,255];for(const c of layers.reverse())pixel=over(c,pixel);const style=getComputedStyle(e),ink=over(rgba(style.webkitTextFillColor.includes('rgb')?style.webkitTextFillColor:style.color),pixel);const lum=rgb=>{const n=rgb.map(v=>{const c=v/255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4});return n[0]*.2126+n[1]*.7152+n[2]*.0722};const a=lum(ink),d=lum(pixel);return (Math.max(a,d)+.05)/(Math.min(a,d)+.05)})()`);
  const root=process.env.ATOUMWEB_FINAL_CRM_CAPTURES;
  const capture=async(scene,theme,density)=>{if(root)await require('./verified-crm-capture.cjs')({win,js,test,folder:root,file:scene+'-'+theme+'-'+density+'.png',theme,density,scene});};
  const client=db.crm.listClients({includeArchived:true}).find(c=>c.displayName==='TEST03D CLIENT');
@@ -71,6 +72,7 @@ module.exports=async ctx=>{
     test(await get('(()=>{const r=document.querySelector(".crm-record-layout"),l=r.querySelector(".crm-record-left").getBoundingClientRect(),c=r.querySelector(".crm-record-work").getBoundingClientRect(),a=r.querySelector(".crm-record-right").getBoundingClientRect();return l.right<=c.left+2&&c.right<=a.left+2&&c.width>l.width&&c.width>a.width})()'),'Three unequal Client regions '+width+'/'+theme+'/'+density);
     test(await get('window.__finalInput.isConnected&&document.querySelectorAll(".client-v2-tabs [role=tab]").length===8'),'Eight tabs and exact draft remain '+width+'/'+theme+'/'+density);
     test(await get('(()=>{const h=document.querySelector(".crm-record-left .crm-identity-assets-heading");return h.firstElementChild.getBoundingClientRect().width>=h.clientWidth-2})()'),'Asset heading retains full pane width '+width+'/'+theme+'/'+density);
+    test(await contrast('.contact-card .contact-card-main strong','.contact-card')>=4.5,'Client card text contrast >=4.5 '+width+'/'+theme+'/'+density);
     await capture('client-'+width,theme,density);
    }
   }
@@ -99,6 +101,7 @@ module.exports=async ctx=>{
     win.setSize(width,height);await sleep(100);
     test(await get('(()=>{const r=document.querySelector(".prospect-detail-desk .crm-record-layout"),l=r.querySelector(".crm-record-left").getBoundingClientRect(),c=r.querySelector(".crm-record-work").getBoundingClientRect(),a=r.querySelector(".crm-record-right").getBoundingClientRect();return l.right<=c.left+2&&c.right<=a.left+2&&c.width>l.width&&c.width>a.width})()'),'Three unequal Prospect regions '+width+'/'+theme+'/'+density);
     test(await get('[...document.querySelectorAll(".prospect-work-accordion.open")].every(e=>e.scrollHeight<=e.clientHeight+2)'), 'Open Prospect content is never vertically clipped '+width+'/'+theme+'/'+density);
+    test(await contrast('.quote-command-header small','.prospect-quote-panel')>=4.5,'Prospect quote subtitle contrast >=4.5 '+width+'/'+theme+'/'+density);
     await capture('prospect-'+width,theme,density);
    }
   }
