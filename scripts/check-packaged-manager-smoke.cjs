@@ -14,8 +14,16 @@ const check=(ok,label)=>{assert(ok,label);report.checks++;};let socket,seq=0,pen
 child.on('exit',()=>{closed=true;});
 async function until(fn,label){const start=Date.now();while(Date.now()-start<20000){if(await fn())return;await sleep(50);}throw Error('Packaged smoke: '+label);}
 async function connect(){
- const portFile=path.join(profile,'DevToolsActivePort');await until(()=>fs.existsSync(portFile),'isolated DevTools port');
- const port=Number(fs.readFileSync(portFile,'utf8').split(/\r?\n/)[0]);check(port>0,'CDP bound to owned profile');
+ const portFile=path.join(profile,'DevToolsActivePort');let port;
+ // Existence is not readiness on Windows: Chromium can still hold the file
+ // while publishing its two lines. Wait for readable, complete metadata;
+ // no application operation or assertion is retried, timeout unchanged.
+ await until(()=>{try{
+  const lines=fs.readFileSync(portFile,'utf8').trim().split(/\r?\n/),value=Number(lines[0]);
+  if(Number.isInteger(value)&&value>0&&value<=65535&&lines[1]?.startsWith('/devtools/browser/')){port=value;return true;}
+  return false;
+ }catch(error){if(error.code==='ENOENT'||error.code==='EBUSY')return false;throw error;}},'readable isolated DevTools metadata');
+ check(port>0,'CDP bound to owned profile');
  let page;await until(async()=>{const pages=await (await fetch('http://127.0.0.1:'+port+'/json/list')).json();page=pages.find(p=>p.type==='page'&&p.url.startsWith('file:'));return !!page;},'packaged renderer');
  socket=new WebSocket(page.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject;});
  socket.onmessage=message=>{const event=JSON.parse(message.data);if(event.id){const task=pending.get(event.id);if(task){pending.delete(event.id);event.error?task.reject(Error(JSON.stringify(event.error))):task.resolve(event.result);}}else if(event.method==='Runtime.exceptionThrown')errors.push(JSON.stringify(event.params.exceptionDetails));else if(event.method==='Runtime.consoleAPICalled'&&event.params.type==='error')errors.push(JSON.stringify(event.params.args));};
