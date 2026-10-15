@@ -1,13 +1,27 @@
 'use strict';
 module.exports=async context=>{
  const {win,db,evalUI:js,get,wait,navigate,test,sleep}=context;
- await require('./03e-directory-scenarios.cjs')(context);
- // That journey intentionally leaves targeted Quote navigation in App state.
- // Finish it, then start a fresh renderer context over the SAME TEMP database.
- // Otherwise revisiting Devis reopens its former detail and invokes the existing
- // contract synchronisation; it is not a table preference or sort operation.
- await new Promise(resolve=>{win.webContents.once('did-finish-load',resolve);win.webContents.reload();});
- await wait('!!document.querySelector(".aw-manager-shell")','fresh context after completed CRM journey');
+ // Independent renderer/fixture: the complete 03E journey has its own runner.
+ // Do not reload/discard a context used by another recipe to get a clean table.
+ const fs=require('node:fs'),path=require('node:path');
+ for(const name of ['Atelier Lumière','Studio Rive']){
+  const org=db.crm.createOrganization({name,industry:'Services',city:'Dijon'});
+  const contact=db.crm.createContact({organizationId:org.id,firstName:'Contact',lastName:name});
+  const client=db.crm.createClient({organizationId:org.id,primaryContactId:contact.id});
+  db.crm.createProspect({organizationId:org.id,contactId:contact.id,primaryNeed:'Présenter son activité'});
+  db.quotes.create({clientAccountId:client.id,subject:'Présentation · '+name});
+  db.projects.createInternal({name:'Préparation · '+name});
+  db.operations.createRequest({clientAccountId:client.id,subject:'Mise à jour · '+name});
+  db.operations.createIntervention({clientAccountId:client.id,type:'incident',coverageMode:'internal',subject:'Vérification · '+name});
+  const pack=db.hourPacks.create({clientAccountId:client.id,name:'Accompagnement · '+name,purchasedSeconds:3600,contractPriceCents:9000});
+  db.billingHandoff.ensureForHourPack(pack.id);
+  db.expenses.create({category:'software',label:'Licence · '+name,amountCents:3500,status:'committed',expenseDate:new Date().toISOString()});
+  const source=path.join(context.temp,name+'.pdf');fs.writeFileSync(source,'%PDF-1.4\n% Synthetic visual fixture');
+  db.clientDocuments.importPaths(client.id,[source],{category:'other',title:'Document · '+name});
+ }
+ const endedAt=new Date(),startedAt=new Date(endedAt.getTime()-300000);
+ db.time.addManual({category:'administrative',activityLabel:'Préparation visuelle TEMP',startedAt:startedAt.toISOString(),endedAt:endedAt.toISOString()});
+ await js('window.dispatchEvent(new Event("atoumweb:changed"))');
  const snapshot=()=>JSON.stringify(db.database.all("SELECT name FROM sqlite_master WHERE type='table' AND name<>'settings' ORDER BY name").map(({name})=>[name,db.database.all('SELECT * FROM "'+name+'" ORDER BY rowid')]));
  const baseline=snapshot();await js('window.__generalTimer=document.querySelector(".global-timer")');
  const textClick=async(selector,text)=>{await js(`const e=[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>e.textContent.includes(${JSON.stringify(text)}));if(!e)throw Error('Missing '+${JSON.stringify(text)});e.click()`);await sleep(70);};
