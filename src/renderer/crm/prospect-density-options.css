@@ -62,3 +62,21 @@
 .app-shell .prospect-detail-desk details.quote-draft-waiting{padding:8px 0;border:0;margin-bottom:12px;}
 .app-shell .prospect-detail-desk details.quote-draft-waiting summary{cursor:pointer;color:var(--muted);padding:4px 0;}
 .app-shell .prospect-detail-desk details.quote-draft-waiting>span{display:block;padding:10px 0;line-height:1.6;}
+
+/* User's supplied diagram: one overview and three initially folded groups. */
+.app-shell .prospect-detail-desk .crm-record-left .detail-panel-heading{display:flex;flex-direction:row;align-items:flex-start;justify-content:space-between;gap:8px;padding:0;background:transparent!important;}
+.app-shell .prospect-detail-desk .crm-record-left .prospect-detail-identity-head{min-width:0;flex:1;}
+.app-shell .prospect-detail-desk .crm-record-left .detail-heading-actions{flex-shrink:0;}
+.app-shell .prospect-detail-desk .prospect-desk-tabs{background:transparent;border:0;padding:4px 0 10px;gap:16px;}
+.app-shell .prospect-detail-desk .prospect-desk-tabs button{background:transparent;border:0;border-radius:0;padding:8px 0;color:var(--muted);}
+.app-shell .prospect-detail-desk .prospect-desk-tabs button.active{background:transparent;color:var(--text);box-shadow:inset 0 -2px var(--accent-strong);}
+.app-shell .prospect-detail-desk .prospect-section-group{border:0;border-bottom:1px solid var(--border);padding:0;margin:0;}
+.app-shell .prospect-detail-desk .prospect-section-group>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;padding:20px 4px;cursor:pointer;font-weight:600;}
+.app-shell .prospect-detail-desk .prospect-section-group>summary::-webkit-details-marker{display:none;}
+.app-shell .prospect-detail-desk .prospect-section-group>summary>svg{transform:rotate(-90deg);flex-shrink:0;}
+.app-shell .prospect-detail-desk .prospect-section-group[open]>summary>svg{transform:none;}
+.app-shell .prospect-detail-desk .prospect-section-group>summary:focus-visible{outline:2px solid var(--accent-strong);outline-offset:-2px;}
+.app-shell .prospect-detail-desk .prospect-section-group-body{padding:0 4px 18px;}
+.app-shell .prospect-detail-desk .crm-record-right .crm-record-side-body>button{border:0;border-radius:0;background:transparent;padding:6px 0;}
+.app-shell .prospect-detail-desk .crm-record-right .crm-record-side-body>button:hover{text-decoration:underline;text-underline-offset:4px;}
+.app-shell .prospect-detail-desk .prospect-association-hint{display:flex;justify-content:flex-end;}

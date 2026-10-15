@@ -23,6 +23,7 @@ module.exports=async ctx=>{
     await presentation(theme,density);
     if(!before){
      test(await get(`document.querySelectorAll('.prospect-focus-summary').length===1&&document.querySelector('.prospect-focus-next').textContent.includes('Confirmer le périmètre du site vitrine')&&document.querySelector('.prospect-focus-stage').textContent.trim().length>20`),'Single useful synthesis with exact shared next action '+variant+'/'+theme+'/'+density);
+     test(await get(`document.querySelectorAll('.prospect-section-group').length===3&&[...document.querySelectorAll('.prospect-section-group')].every(e=>!e.open)`),'Three functional groups initially folded, no deleted editor');
      test(await get(`!document.querySelector('.crm-record-left').textContent.includes('Fiche de travail prospect')&&!document.querySelector('.prospect-secondary-actions').open&&document.querySelector('.crm-record-left h2').textContent==='Atelier Horizon'`),'Name/logo/status before secondary actions, no large redundant title');
      test(await get(`(()=>{const e=document.querySelector('.prospect-work-accordion-trigger');return getComputedStyle(e).borderTopWidth==='0px'&&getComputedStyle(e).textTransform==='none'&&parseFloat(getComputedStyle(e).fontSize)>=14})()`),'Unframed section rows, sentence case, functional type not reduced');
      test(await get(`window.__densityDesk===document.querySelector('.prospect-detail-desk')&&window.__densityTimer===document.querySelector('.global-timer')&&document.querySelectorAll('.global-timer').length===1`),'Same record and unique timer through two compositions');
@@ -43,11 +44,12 @@ module.exports=async ctx=>{
    }
    // Pause editor uses the SAME quote service/UX-01 guard; presentation changes
    // may hide its parent but must never discard or reassign its local draft.
+   await js(`const g=document.querySelector('.prospect-section-group[data-group=activities]');if(!g.open)g.querySelector(':scope>summary').click()`);
    await text('.prospect-quote-panel button','Info manquante');await wait('!!document.querySelector(".prospect-quote-panel .inline-editor textarea")','existing pause draft');
    await js(`window.__densityDraft=document.querySelector('.prospect-quote-panel .inline-editor textarea');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(window.__densityDraft,'Conserver les photos avant validation du devis');window.__densityDraft.dispatchEvent(new Event('input',{bubbles:true}));window.__densityQuote=document.querySelector('.prospect-quote-panel');`);await sleep(80);
    for(const variant of ['balanced','action']){
     await js(`window.__densityDesk.dataset.prospectComposition=${JSON.stringify(variant)}`);
-    await text('.prospect-work-accordion-trigger','Devis');await text('.prospect-work-accordion-trigger','Devis');
+    await click('.prospect-section-group[data-group=activities]>summary');await click('.prospect-section-group[data-group=activities]>summary');await text('.prospect-work-accordion-trigger','Devis');await text('.prospect-work-accordion-trigger','Devis');
     await click('.crm-record-right>.crm-record-side-toggle');test(await get(`document.querySelector('.crm-record-right .crm-record-side-body').hidden`),'Associations fold without actions or draft loss '+variant);await click('.crm-record-right>.crm-record-side-toggle');
     test(await get(`window.__densityDraft===document.querySelector('.prospect-quote-panel .inline-editor textarea')&&window.__densityDraft.value==='Conserver les photos avant validation du devis'&&window.__densityQuote===document.querySelector('.prospect-quote-panel')&&window.__densityDesk===document.querySelector('.prospect-detail-desk')`),'Same quote, record, textarea and exact text through fold/composition '+variant);
     await capture(variant+'-draft-preserved','noir','comfort');
