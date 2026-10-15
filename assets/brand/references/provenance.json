@@ -1,0 +1,20 @@
+[
+  {
+    "source": "Image ChatGPT 9 oct. 2026, 01_50_56.png",
+    "file": "primary-dark.png",
+    "sha256": "7cc0c0f584b3ff9c611bc474bc8c590926b1458731652c6e7d40cbea9dfaf698",
+    "status": "user supplied reference; no alteration"
+  },
+  {
+    "source": "Image ChatGPT 9 oct. 2026, 01_51_08.png",
+    "file": "horizontal-light.png",
+    "sha256": "606677d012dcb843300530110b2f055a3fec573b310b0a288976dae4512339b3",
+    "status": "user supplied reference; no alteration"
+  },
+  {
+    "source": "Icône jaune au logo géométrique noir.png",
+    "file": "application-icon.png",
+    "sha256": "6fc2430258f0fb263a5a4b79a88337d4484f539aef3c06b5afa567cf2dc1f761",
+    "status": "user supplied reference; no alteration"
+  }
+]

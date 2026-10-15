@@ -1,3 +1,8 @@
+import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {PROSPECT_DIRECTORY_VIEW} from '../../shared/prospectTablePresentation';
+import {OperationIcon} from '../operations/OperationIcon';
+import {AppButton} from '../ui/AppButton';
+import './prospect-visual-pilot.css';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';
@@ -536,20 +541,20 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
 
   return <div className="crm-stack prospects-v2">
     <div className="prospect-view-switch" role="tablist">
-      <button className={view === 'directory' ? 'active' : ''} onClick={() => setView('directory')}>Annuaire prospects <span>{directory.length}</span></button>
-      <button className={view === 'pipeline' ? 'active' : ''} onClick={() => { setView('pipeline'); setPipelineFilter('all'); }}>Parcours commercial <span>{pipelineActive.length}</span></button>
-      <button className={view === 'history' || view === 'conversions' ? 'active' : ''} onClick={() => setView('history')}>Historique <span>{closed.length}</span></button>
+      <button className={view === 'directory' ? 'active' : ''} onClick={() => setView('directory')}><OperationIcon name="contact"/>Annuaire prospects <span>{directory.length}</span></button>
+      <button className={view === 'pipeline' ? 'active' : ''} onClick={() => { setView('pipeline'); setPipelineFilter('all'); }}><OperationIcon name="layers"/>Parcours commercial <span>{pipelineActive.length}</span></button>
+      <button className={view === 'history' || view === 'conversions' ? 'active' : ''} onClick={() => setView('history')}><OperationIcon name="clock"/>Historique <span>{closed.length}</span></button>
     </div>
 
     {view === 'directory' && <>
       <div className="module-toolbar prospect-toolbar prospect-directory-toolbar">
         <div><strong>{directoryFiltered.length}</strong><span> entreprise{directoryFiltered.length > 1 ? 's' : ''} dans l’annuaire</span></div>
-        <div className="toolbar-controls"><button className="secondary-button" onClick={() => void refresh()}>↻ Actualiser</button><button className="primary-button" onClick={() => setShowForm((value) => !value)}>{showForm ? 'Fermer' : '+ Ajouter une entreprise'}</button></div>
+        <div className="toolbar-controls"><AppButton variant="quiet" aria-label="Actualiser les prospects" title="Actualiser les prospects" icon={<OperationIcon name="refresh"/>} onAction={refresh}/><button className="primary-button" onClick={() => setShowForm((value) => !value)}><OperationIcon name={showForm?'close':'plus'}/>{showForm ? 'Fermer' : 'Ajouter une entreprise'}</button></div>
       </div>
       <div className="prospect-directory-filters">
-        <input value={directorySearch} onChange={(e) => setDirectorySearch(e.target.value)} placeholder="Rechercher entreprise, activité, ville…" />
-        <select value={directoryIndustry} onChange={(e) => setDirectoryIndustry(e.target.value)}><option value="">Tous les métiers</option>{directoryIndustries.map((value) => <option key={value} value={value}>{value}</option>)}</select>
-        <select value={directoryCity} onChange={(e) => setDirectoryCity(e.target.value)}><option value="">Toutes les villes</option>{directoryCities.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+        <input aria-label="Rechercher les prospects" value={directorySearch} onChange={(e) => setDirectorySearch(e.target.value)} placeholder="Rechercher entreprise, activité, ville…" />
+        <select aria-label="Filtrer par activité" value={directoryIndustry} onChange={(e) => setDirectoryIndustry(e.target.value)}><option value="">Tous les métiers</option>{directoryIndustries.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+        <select aria-label="Filtrer par ville" value={directoryCity} onChange={(e) => setDirectoryCity(e.target.value)}><option value="">Toutes les villes</option>{directoryCities.map((value) => <option key={value} value={value}>{value}</option>)}</select>
         <select value={directoryStatusFilter} onChange={(e) => setDirectoryStatusFilter(e.target.value as DirectoryStatusFilter)} aria-label="Filtrer par statut de prospection">
           <option value="follow">À suivre</option>
           <option value="all">Tous les statuts</option>
@@ -586,26 +591,15 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
       </div>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="form-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Ajouter à l’annuaire'}</button></div></form>}
       {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}>
         <div className="panel table-panel prospect-directory-table-panel">
-          <div className="clients-table-wrap">
-            <table className="clients-table prospect-directory-table">
-              <thead><tr><th>Entreprise</th><th>Activité</th><th>Ville</th><th>Contact</th><th>Statut</th><th /></tr></thead>
-              <tbody>
-                {directoryFiltered.map((prospect) => {
-                  const readiness = prospectReadiness(prospect);
-                  const status = directoryStatus(prospect);
-                  return <tr key={prospect.id} className={`prospect-temperature-${prospect.temperature ?? 'neutral'} ${selectedId === prospect.id ? 'selected-row' : ''}`} onClick={() => setSelectedId(prospect.id)}>
-                    <td><div className="client-name-cell"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} /><div><strong>{prospect.displayName}</strong><small>{SOURCE_LABELS[prospect.source ?? 'other']}</small></div></div></td>
-                    <td>{prospect.organizationIndustry || <span className="muted">À compléter</span>}</td>
-                    <td>{prospect.organizationCity || <span className="muted">—</span>}</td>
-                    <td>{prospect.secondaryLabel || <span className="muted">À identifier</span>}</td>
-                    <td><span className={`prospect-directory-status prospect-directory-status-${status.tone}`} title={prospect.stage === 'new' && !readiness.ready ? `À compléter : ${readiness.missing.join(', ')}` : status.label}>{status.label}</span></td>
-                    <td><button type="button" className="link-button" onClick={(event) => { event.stopPropagation(); setSelectedId(prospect.id); }}>Ouvrir</button></td>
-                  </tr>;
-                })}
-                {directoryFiltered.length === 0 && <tr><td colSpan={6}><div className="empty-table">Aucune entreprise ne correspond aux filtres.</div></td></tr>}
-              </tbody>
-            </table>
-          </div>
+          <ConfiguredDataTable<ProspectSummary> scope={PROSPECT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} rows={directoryFiltered} selectedId={selectedId} getId={p=>p.id} onSelect={p=>setSelectedId(p.id)} className="prospect-directory-table" caption="Annuaire prospects · source complète · tri sur tous les résultats filtrés" columns={[
+            {id:'identity',label:'Entreprise',required:true,sortValue:p=>p.displayName,render:p=><div className="client-name-cell"><CrmIdentityAvatar organizationId={p.organizationId} contactId={p.contactId} name={p.displayName}/><div><strong>{p.displayName}</strong><small><span className={'prospect-temperature-dot '+(p.temperature??'neutral')} title={TEMPERATURE_LABELS[p.temperature??'neutral']} aria-label={'Température : '+TEMPERATURE_LABELS[p.temperature??'neutral']}/> {SOURCE_LABELS[p.source??'other']}</small></div></div>},
+            {id:'industry',label:'Activité',sortValue:p=>p.organizationIndustry??null,render:p=>p.organizationIndustry||<span className="muted">À compléter</span>},
+            {id:'city',label:'Ville',sortValue:p=>p.organizationCity??null,render:p=>p.organizationCity||'—'},
+            {id:'contact',label:'Contact',sortValue:p=>p.secondaryLabel??null,render:p=>p.secondaryLabel||'À identifier'},
+            {id:'status',label:'Statut',sortValue:p=>directoryStatus(p).label,render:p=><span className={'prospect-directory-status prospect-directory-status-'+directoryStatus(p).tone} title={p.stage==='new'&&!prospectReadiness(p).ready?'À compléter : '+prospectReadiness(p).missing.join(', '):directoryStatus(p).label}>{directoryStatus(p).label}</span>},
+            {id:'open',label:'Ouvrir',required:true,render:p=><button type="button" className="link-button pilot-icon-button" title={'Ouvrir '+p.displayName} aria-label={'Ouvrir '+p.displayName} onClick={e=>{e.stopPropagation();setSelectedId(p.id);}}><OperationIcon name="external-link"/></button>},
+          ]}/>
+
         </div>
         {prospectSplitter}
         {selected && !deskProspect && detail}
@@ -619,7 +613,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
           <button className={pipelineFilter === 'all' ? 'primary-button' : 'secondary-button'} type="button" onClick={() => setPipelineFilter('all')}>Tous · {pipelineActive.length}</button>
           <button className={pipelineFilter === 'relaunch' ? 'primary-button' : 'secondary-button'} type="button" onClick={() => setPipelineFilter('relaunch')}>À relancer · {relaunchCount}</button>
           <button className={pipelineFilter === 'overdue' ? 'primary-button' : 'secondary-button'} type="button" onClick={() => setPipelineFilter('overdue')}>En retard · {overdueCount}</button>
-          <button className="secondary-button" onClick={() => void refresh()}>↻ Actualiser</button>
+          <AppButton variant="quiet" aria-label="Actualiser les prospects" title="Actualiser les prospects" icon={<OperationIcon name="refresh"/>} onAction={refresh}/>
           <button className="secondary-button" onClick={() => setView('directory')}>Annuaire prospects</button>
         </div>
       </div>
@@ -684,7 +678,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
     return <aside className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-panel prospect-temperature-${prospect.temperature ?? 'neutral'}`}>
       <div className="detail-panel-heading">
         <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large" /><div><span className="eyebrow">{prospect.stage === 'new' ? 'Fiche annuaire' : 'Fiche de travail'}</span><h2>{prospect.displayName}</h2><div className="prospect-header-meta"><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>{prospect.organizationIndustry && <span className="status-pill">{prospect.organizationIndustry}</span>}{prospect.organizationCity && <span className="status-pill">{prospect.organizationCity}</span>}</div></div></div>
-        <div className="detail-heading-actions">{onOpenDesk && <button className="secondary-button open-desk-button" type="button" aria-label="Agrandir la fiche" title="Agrandir la fiche" onClick={onOpenDesk}>⛶</button>}<button className="close-detail" type="button" aria-label="Fermer la fiche prospect" onClick={onClose}>×</button></div>
+        <div className="detail-heading-actions">{onOpenDesk && <button className="secondary-button open-desk-button" type="button" aria-label="Agrandir la fiche" title="Agrandir la fiche" onClick={onOpenDesk}><OperationIcon name="expand"/></button>}<button className="close-detail" type="button" aria-label="Fermer la fiche prospect" title="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button></div>
       </div>
       <div className="prospect-compact-scroll">
         {prospect.stage === 'new' && <div className={`prospect-readiness-card ${readiness.ready ? 'ready' : 'incomplete'}`}><div><span>Préparation</span><strong>{readiness.ready ? 'Prêt pour démarchage' : 'À compléter avant ou pendant le premier contact'}</strong>{!readiness.ready && <small>Manque : {readiness.missing.join(', ')}</small>}</div><button className="primary-button" type="button" onClick={onStart}>Démarrer la prospection</button></div>}
@@ -699,7 +693,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
         </section>}
         <ProspectReferenceSummary prospect={prospect} />
         <div className="prospect-compact-actions">
-          {prospect.stage !== 'new' && <button type="button" className="secondary-button" onClick={() => void window.atoumweb.app.openProspectReferenceWindow(prospect.id)}>Ouvrir la référence dans une fenêtre</button>}
+          {prospect.stage !== 'new' && <button type="button" className="secondary-button" title="Ouvrir la référence dans une fenêtre" aria-label="Ouvrir la référence dans une fenêtre" onClick={() => void window.atoumweb.app.openProspectReferenceWindow(prospect.id)}><OperationIcon name="external-link"/><span>Référence</span></button>}
           {onOpenDesk && <button type="button" className="primary-button" onClick={onOpenDesk}>Ouvrir la fiche de travail</button>}
         </div>
       </div>
@@ -709,12 +703,12 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
   return <aside className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-desk prospect-temperature-${prospect.temperature ?? 'neutral'}`}>
     <div className="detail-panel-heading">
       <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large" /><div><span className="eyebrow">Fiche de travail prospect</span><h2>{prospect.displayName}</h2><div className="prospect-header-meta"><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>{prospect.source && <span className="status-pill">{SOURCE_LABELS[prospect.source]}{prospect.source === 'other' && prospect.sourceDetail ? ` · ${prospect.sourceDetail}` : ''}</span>}</div></div></div>
-      <div className="detail-heading-actions"><button className="secondary-button" type="button" onClick={() => void window.atoumweb.app.openProspectReferenceWindow(prospect.id)}>Ouvrir la référence dans une fenêtre</button><button className="close-detail" type="button" aria-label="Fermer la fiche prospect" onClick={onClose}>×</button></div>
+      <div className="detail-heading-actions"><button className="secondary-button" type="button" title="Ouvrir la référence dans une fenêtre" aria-label="Ouvrir la référence dans une fenêtre" onClick={() => void window.atoumweb.app.openProspectReferenceWindow(prospect.id)}><OperationIcon name="external-link"/><span>Référence</span></button><button className="close-detail" type="button" aria-label="Fermer la fiche prospect" title="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button></div>
     </div>
 
     <div className="prospect-desk-tabs" role="tablist" aria-label="Fiche prospect">
-      <button type="button" className={deskTab === 'commercial' ? 'active' : ''} onClick={() => setDeskTab('commercial')}>Fiche de travail</button>
-      <button type="button" className={deskTab === 'reference' ? 'active' : ''} onClick={() => setDeskTab('reference')}>Référence prospect</button>
+      <button type="button" className={deskTab === 'commercial' ? 'active' : ''} onClick={() => setDeskTab('commercial')}><OperationIcon name="file-text"/>Fiche de travail</button>
+      <button type="button" className={deskTab === 'reference' ? 'active' : ''} onClick={() => setDeskTab('reference')}><OperationIcon name="contact"/>Référence prospect</button>
     </div>
 
     <div className="prospect-desk-content">

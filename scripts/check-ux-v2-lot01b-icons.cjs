@@ -1,4 +1,4 @@
-/* UX V2 / 01B.3 — reuse existing 36 SVG OperationIcon names.
+/* UX V2 / 01B.3 — reuse existing catalogue + 12 navigation/action SVG OperationIcon names.
  * Verify decoration vs actionable accessible name in React/Electron, with real
  * 31 renderer CSS in an independent OS TEMP profile; no user workspace.
  * node scripts/check-ux-v2-lot01b-icons.cjs
@@ -26,7 +26,7 @@ if(!process.versions.electron){
   const declaration=source.match(/export type OperationIconName =([\s\S]*?);/);
   assert(!!declaration,'Icon union not found');
   const names=[...declaration[1].matchAll(/'([^']+)'/g)].map(x=>x[1]);
-  assert(names.length===36&&new Set(names).size===36,'OperationIcon enum changed, review catalogue');
+  assert(names.length===48&&new Set(names).size===48,'OperationIcon enum changed, review catalogue');
   const fixture=[
    "import React from 'react';",
    "import {createRoot} from 'react-dom/client';",
@@ -71,9 +71,9 @@ if(!process.versions.electron){
   win=new BrowserWindow({show:false,width:1240,height:840,
     webPreferences:{sandbox:true,nodeIntegration:false,contextIsolation:true,backgroundThrottling:false}});
   await win.loadFile(path.join(tmp,'index.html'));
-  await wait('document.querySelectorAll(".icon-sample").length===36','React icon gallery');
-  check((await get('document.querySelectorAll(".icon-sample").length'))===36,'Complete 36 SVG pilot');
-  check(await get('document.querySelectorAll(".icon-sample svg").length===36'),'Every icon paints SVG');
+  await wait('document.querySelectorAll(".icon-sample").length===48','React icon gallery');
+  check((await get('document.querySelectorAll(".icon-sample").length'))===48,'Complete 48 SVG catalogue');
+  check(await get('document.querySelectorAll(".icon-sample svg").length===48'),'Every icon paints SVG');
   check(await get('[...document.querySelectorAll(".icon-sample svg")].every(svg=>svg.getAttribute("aria-hidden")==="true"&&svg.getAttribute("focusable")==="false")'),'Decorative SVG inaccessible to focus readers');
   check(await get('document.querySelector("#icon-action").getAttribute("aria-label")==="Agrandir la fiche"'),'Icon only button has action label');
   check(await get('document.querySelector("#icon-label").textContent.includes("Actualiser la vue")'),'Labeled command text visible');
@@ -88,7 +88,7 @@ if(!process.versions.electron){
     check(sizes.body===base,'Theme/density body '+theme+'/'+density);
     check(sizes.button>=control,'Icon button control size '+theme+'/'+density);
     check(sizes.icons.every(([w,h])=>w===20&&h===20),'All SVG retain 20×20 viewBox scale '+theme+'/'+density);
-    console.log('[UXV2 01B ICONS] PASS '+theme+'/'+density+' 36 decorative icons, action labels');
+    console.log('[UXV2 01B ICONS] PASS '+theme+'/'+density+' 48 decorative icons, action labels');
    }
   }
   // R01B-02: distinguish Electron key injection from AppButton behavior.
@@ -157,7 +157,7 @@ if(!process.versions.electron){
   await exec('document.querySelector("#icon-label").click()');
   await wait('window.__iconTest.calls===2','Labeled icon button activation');
   check(await get('window.__iconTest.labels[1]==="refresh"'),'Label + icon invokes one handler');
-  console.log('[UXV2 01B ICONS] RESULT '+JSON.stringify({checks,failed:0,icons:36,
+  console.log('[UXV2 01B ICONS] RESULT '+JSON.stringify({checks,failed:0,icons:48,
     combinations:9,iconSize:20,decorativeSvg:true,accessibleAction:true,keyboardEnter:true,onlyTemp:true}));
  }).catch(e=>{console.error('[UXV2 01B ICONS] ERROR',e.stack||e);process.exitCode=1;})
  .finally(()=>{try{win?.destroy()}catch{}app.exit(process.exitCode||0)});

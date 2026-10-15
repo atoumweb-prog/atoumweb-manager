@@ -3,3 +3,25 @@
 .aw-workspace-header.content-area{overflow:visible}.aw-header-fixture-timer button{font:inherit;min-height:36px;padding:8px;border:1px solid var(--border);border-radius:8px;color:var(--text);background:var(--surface-soft)}
 .aw-header-content label{display:flex;flex-direction:column;gap:8px;margin:12px 0}.aw-header-content textarea{width:100%;min-height:80px;box-sizing:border-box;font:inherit}.aw-header-content [contenteditable]{border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--surface)}
 
+
+/* Real-shell visual pilot: one compact row, secondary information on demand.
+   The same search and GlobalTimer nodes stay mounted, including all dialogs. */
+.app-shell .aw-workspace-header{padding:10px 16px}
+.app-shell .aw-header-primary{gap:8px;flex-wrap:nowrap}
+.app-shell .aw-header-context{flex:1 1 160px;min-width:0;gap:4px}
+.app-shell .aw-header-context small{flex-basis:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+.app-shell .aw-header-module-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.app-shell .aw-header-search:not(.is-open),.app-shell .aw-header-secondary:not(.is-open){display:none}
+.app-shell .aw-header-secondary.is-open{padding:12px;background:var(--surface-soft);border-radius:8px}
+.app-shell .aw-header-command{display:inline-grid;place-items:center;min-width:var(--ui-control-height);height:var(--ui-control-height);padding:8px;background:transparent}
+.app-shell .aw-header-command svg{width:20px;height:20px}
+.app-shell .aw-header-timer{flex:0 1 360px;min-width:240px}
+.app-shell .aw-header-timer .global-timer{min-width:0;max-width:none;width:100%;min-height:var(--ui-control-height);border-radius:10px;box-shadow:none;background:var(--surface-soft)}
+.app-shell .aw-header-timer .timer-main-button{padding:6px 10px}
+.app-shell .aw-header-timer .timer-brand-icon{width:24px;height:24px}
+.app-shell .aw-header-timer .timer-label{font-weight:600;letter-spacing:0;text-transform:none}
+.app-shell .aw-header-timer .timer-context{max-width:210px}
+.app-shell .aw-workspace-header.is-compact .timer-context{display:none}
+.app-shell .aw-workspace-header.is-compact{padding:6px 12px}
+@media(max-width:1000px){.app-shell .aw-header-context{flex-basis:100px}.app-shell .aw-header-context small{max-width:150px}.app-shell .aw-header-timer{flex-basis:280px;min-width:180px}}
+@media(max-width:700px){.app-shell .aw-header-primary{flex-wrap:wrap}.app-shell .aw-header-context{flex:1 1 calc(100% - 60px)}.app-shell .aw-header-timer{flex:1 1 220px;min-width:160px}.app-shell .aw-header-context small{max-width:100%}}

@@ -2,9 +2,9 @@ import type { VisualPreferenceStore } from './panelLayout';
 export const NAVIGATION_GROUPS = ['Commercial','Production','Gestion','Ressources','Pilotage'] as const;
 export type NavigationGroup = typeof NAVIGATION_GROUPS[number];
 export const NAVIGATION_MODULES = [
-  {key:'Accueil',label:'Accueil',group:null,icon:null,slot:'AC'},
+  {key:'Accueil',label:'Accueil',group:null,icon:'home',slot:'AC'},
   {key:'Prospects',label:'Prospection',group:'Commercial',icon:'user',slot:'PR'},
-  {key:'Clients',label:'Clients',group:'Commercial',icon:null,slot:'CL'},
+  {key:'Clients',label:'Clients',group:'Commercial',icon:'users',slot:'CL'},
   {key:'Offres & Tarifs',label:'Offres & Tarifs',group:'Commercial',icon:'package',slot:'OT'},
   {key:'Devis',label:'Devis',group:'Commercial',icon:'file-text',slot:'DV'},
   {key:'Projets',label:'Projets',group:'Production',icon:'folder',slot:'PJ'},
@@ -12,13 +12,13 @@ export const NAVIGATION_MODULES = [
   {key:'Gestion des temps',label:'Gestion des temps',group:'Production',icon:'clock',slot:'GT'},
   {key:'Facturation',label:'Facturation',group:'Gestion',icon:'receipt',slot:'FA'},
   {key:'Dépenses',label:'Dépenses',group:'Gestion',icon:'wallet',slot:'DP'},
-  {key:'Documents & Contrats',label:'Documents & Contrats',group:'Gestion',icon:null,slot:'DC'},
-  {key:'Bibliothèque AtoumWeb',label:'Bibliothèque AtoumWeb',group:'Ressources',icon:null,slot:'BA'},
+  {key:'Documents & Contrats',label:'Documents & Contrats',group:'Gestion',icon:'file-check',slot:'DC'},
+  {key:'Bibliothèque AtoumWeb',label:'Bibliothèque AtoumWeb',group:'Ressources',icon:'layers',slot:'BA'},
   {key:'Sites',label:'Sites',group:'Ressources',icon:'server',slot:'SI'},
   {key:'Sauvegardes',label:'Sauvegardes',group:'Ressources',icon:'database',slot:'SA'},
-  {key:'Annuaire',label:'Annuaire',group:'Ressources',icon:null,slot:'AN'},
+  {key:'Annuaire',label:'Annuaire',group:'Ressources',icon:'contact',slot:'AN'},
   {key:'Statistiques',label:'Statistiques',group:'Pilotage',icon:'chart',slot:'ST'},
-  {key:'Réglages',label:'Réglages',group:'Pilotage',icon:null,slot:'RE'},
+  {key:'Réglages',label:'Réglages',group:'Pilotage',icon:'settings',slot:'RE'},
 ] as const;
 export type NavigationModuleKey = typeof NAVIGATION_MODULES[number]['key'];
 export type NavigationModule = typeof NAVIGATION_MODULES[number];

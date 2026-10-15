@@ -21,22 +21,24 @@ function ColumnSizer({ id, width, onPreview, onCommit }: { id: string; width: nu
       window.addEventListener('pointermove', move); window.addEventListener('pointerup', finish); window.addEventListener('pointercancel', cancel); window.addEventListener('blur', cancel);
     }}/ >;
 }
-export function DataTable<T>({ rows, columns, selectedId, getId, sort, onSort, caption, widths = {}, onWidth, preferenceScope = '', loading = false, unavailable = false }: {
+export function DataTable<T>({ rows, columns, selectedId, getId, sort, onSort, caption, widths = {}, onWidth, preferenceScope = '', loading = false, unavailable = false, onRowActivate, className='' }: {
   rows: readonly T[]; columns: readonly TableColumn<T>[]; selectedId: string | null;
   getId: (row: T) => string; sort: TableSort | null; onSort: (id: string) => void; caption: string;
   widths?: Readonly<Record<string, number>>; onWidth?: (id: string, width: number) => void;
   preferenceScope?: string;
   loading?: boolean; unavailable?: boolean;
+  onRowActivate?: (row:T)=>void;
+  className?:string;
 }) {
   const [preview, setPreview] = useState<{ id: string; width: number } | null>(null);
   useEffect(() => setPreview(null), [preferenceScope]);
   const widthOf = (id: string) => preview?.id === id ? preview.width : widths[id] ?? columnWidth(id, id === 'identity' ? 260 : 180);
   return <div className="aw-data-table-scroll" tabIndex={0} aria-label="Tableau défilable" aria-busy={loading}>
-    <table className="aw-data-table" style={onWidth ? { tableLayout: 'fixed', width: columns.reduce((total, column) => total + widthOf(column.id), 0) } : undefined}><caption>{caption}</caption>{onWidth && <colgroup>{columns.map(column => <col key={column.id} style={{ width: widthOf(column.id) }}/>)}</colgroup>}<thead><tr>{columns.map(column => <th key={column.id} scope="col" data-column-id={column.id}
+    <table className={`aw-data-table ${className}`} style={onWidth ? { tableLayout: 'fixed', width: columns.reduce((total, column) => total + widthOf(column.id), 0) } : undefined}><caption>{caption}</caption>{onWidth && <colgroup>{columns.map(column => <col key={column.id} style={{ width: widthOf(column.id) }}/>)}</colgroup>}<thead><tr>{columns.map(column => <th key={column.id} scope="col" data-column-id={column.id}
       aria-sort={column.sortValue ? sort?.columnId === column.id ? sort.direction === 'asc' ? 'ascending' : 'descending' : 'none' : undefined}>
       {column.sortValue ? <AppButton variant="quiet" aria-label={`Trier par ${column.label}`} onAction={() => onSort(column.id)}>{column.label}{sort?.columnId === column.id ? sort.direction === 'asc' ? ' ↑' : ' ↓' : ''}</AppButton> : column.label}
       {onWidth && <ColumnSizer key={`${preferenceScope}:${column.id}`} id={column.id} width={widths[column.id] ?? columnWidth(column.id, column.id === 'identity' ? 260 : 180)} onPreview={width => setPreview(width === null ? null : { id: column.id, width })} onCommit={width => onWidth(column.id, width)}/>}
-    </th>)}</tr></thead><tbody>{rows.map(row => <tr key={getId(row)} data-record-id={getId(row)} data-selected={selectedId === getId(row)}>{columns.map(column => <td key={column.id} data-column-id={column.id}>{column.render(row)}</td>)}</tr>)}</tbody></table>
+    </th>)}</tr></thead><tbody>{rows.map(row => <tr key={getId(row)} data-record-id={getId(row)} data-selected={selectedId === getId(row)} tabIndex={onRowActivate?0:undefined} onClick={onRowActivate?()=>onRowActivate(row):undefined} onKeyDown={onRowActivate?event=>{if(event.target===event.currentTarget&&['Enter',' '].includes(event.key)){event.preventDefault();onRowActivate(row);}}:undefined}>{columns.map(column => <td key={column.id} data-column-id={column.id}>{column.render(row)}</td>)}</tr>)}</tbody></table>
     {!rows.length && !loading && !unavailable && <p role="status">Aucun dossier ne correspond aux filtres. Efface les filtres pour retrouver la liste.</p>}
   </div>;
 }

@@ -160,7 +160,7 @@ if(!process.versions.electron){
      'Navigation changed during capture '+label+': '+JSON.stringify(final));
    fs.writeFileSync(dest,captured.toPNG());
    capturesVerified++;
-   console.log('[UXV2 CAPTURE] VERIFIED '+capturesVerified+'/'+(lot03b||process.env.ATOUMWEB_RAIL_RENDER_ONLY==='1'?9:63)+' '+label+
+   console.log('[UXV2 CAPTURE] VERIFIED '+capturesVerified+'/'+(process.env.ATOUMWEB_VISUAL_PILOT?36:lot03b||process.env.ATOUMWEB_RAIL_RENDER_ONLY==='1'?9:63)+' '+label+
      ' frameAttempt='+attempts);
  };
  app.whenReady().then(async()=>{
@@ -223,6 +223,11 @@ if(!process.versions.electron){
     if(captureArg>=0)test(capturesVerified===9,'Nine current 03B screenshots verified by composited-frame sentinel');
     console.log('[UXV2 03B LIVE] PASSED '+checks+' real native assertions; TEMP only');
     return;
+  }
+  if(process.env.ATOUMWEB_VISUAL_PILOT){
+    await require('./fixtures/visual-pilot-scenarios.cjs')({win,db,evalUI,get,wait,navigate,select,test,sleep,saveScreenshot});
+    if(captureArg>=0)test(capturesVerified===36,'36 visual pilot captures synchronized');
+    console.log('[VISUAL PILOT] PASSED '+checks+' assertions; TEMP only');return;
   }
   await require('./fixtures/rail-render-scenarios.cjs')({win, db, evalUI, get, wait, navigate, select, test, sleep, saveScreenshot:process.env.ATOUMWEB_RAIL_RENDER_ONLY==='1'?saveScreenshot:undefined});
   if(process.env.ATOUMWEB_RAIL_RENDER_ONLY==='1'){

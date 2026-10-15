@@ -1,3 +1,4 @@
+import {FieldHelp} from './ui/FieldHelp';
 import {useCallback} from 'react';
 import {SEARCH_DESTINATIONS,searchDestination,readSearchTarget,type SearchNavigationResult} from '../shared/searchNavigation';
 import {useMemo} from 'react';
@@ -405,7 +406,7 @@ function App() {
 
 
         <section className={`content-area ${activePage === 'Accueil' ? 'home-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' || activePage === 'Sites' ? 'workspace-content' : ''} ${activePage === 'Projets' ? 'projects-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' ? 'library-workspace-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' && libraryHeaderCollapsed ? 'library-header-collapsed' : ''}`}>
-          {activePage !== 'Accueil' && <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage === 'Prospects' ? 'Prospection' : activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>}
+          {activePage !== 'Accueil' && <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage === 'Prospects' ? 'Prospection' : activePage}</h1><>{activePage==='Prospects'?<FieldHelp text={PAGE_HINTS[activePage]} detail="Trois vues : annuaire prospects, parcours commercial et historique. Cliquer une ligne ouvre sa fiche rapide ; Agrandir permet de travailler sur le même dossier."/>:<p>{PAGE_HINTS[activePage]}</p>}</></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>}
           {message && <div className={`notice ${messageAction?.message === message ? 'is-actionable' : ''}`} role="status">
             {messageAction?.message === message
               ? <button className="notice-action" type="button" onClick={messageAction.run}><span>{message}</span><small>Ouvrir dans l’Explorateur</small></button>
