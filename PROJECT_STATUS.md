@@ -1,4 +1,15 @@
 # AtoumWeb Manager — Suivi du projet
+
+## 15/10/2026 — Reprise graphique : pilote Prospection en attente d’avis humain
+
+`main@c4bb744d` / PR153 / CI1803 verte confirme l’intégration technique01–10, **pas la conformité graphique globale**. Référentiel officiel relu sur `docs/ux-v2-reference-v1@0bb0860e`. Nouvelle branche locale `codex/ux-v2-visual-pilot`, correctifs du rail préservés ; code `78bad55f` puis alias typographique `5c6086d5`.
+
+Travail réel :48 icônes communes,17 destinations sans initiales provisoires, symbole candidat d’après les trois références utilisateur, en-tête allégé avec le vrai chrono unique, tableau Prospection réellement configurable (tri, largeurs, ordre, visibilité, vues personnelles) utilisant les contrôles01D et le magasin workspace existants. Aplats des fiches remplacés par surfaces du thème, température discrète, aides et actions iconifiées. Services, IPC métier, migrations1–70 et données utilisateur inchangés.
+
+[Matrice01–10, registre des écarts et bilan](docs/ux-v2/VISUAL-REPRISE-2026-10-15.md).36 captures avant +36 après sur neuf configurations ; comparateur local `captures/visual-pilot-review/index.html`. Pilote105 assertions et interface réelle840 au code5c6086d5 ; UX-01 192, CRM76, en-tête167, rail125, atelier tableaux126 et galerie42. Suite globale finale1 461/1 461 (164 fichiers,103,90 s),35 restaurations et6 contrôles binaires réussis au code5c6086d5. Aucun push, CI supplémentaire, merge, installation ou modification d’un workspace réel.
+
+**Prochain point obligatoire : validation de la direction graphique du pilote et du master de marque.** SVG/PNG/ICO proposés ne sont pas approuvés ; activation Windows/Squirrel et généralisation03D–10 attendent cet accord. Les huit onglets Client ne sont pas à recréer ; archivage Annuaire non exposé, réserves contractuelles05C et externes conservées. Ne pas déclarer la refonte globale achevée sur la seule convergence technique.
+
 ## 15/10/2026 — Correction visuelle du rail réduit
 
 Après signalement utilisateur, reprise du référentiel 02A/02B et correction locale du sous-menu masqué par l'en-tête. Base `c4bb744d`, branche `codex/fix-v2-collapsed-rail-render`, code `241bf1d6`. Placement réactif sous l'en-tête, libellés alignés, clavier/focus préservés. Typecheck OK ; 1 453 tests Vitest, 840 contrôles de l'application réelle, 125 contrôles atelier et 192 UX-01 réussis sur fixtures temporaires. Neuf captures synchronisées ; [bilan et réserves visuelles](docs/ux-v2/RAIL-REDUIT-RENDU-2026-10-15.md). Aucun déploiement, merge ou changement des données réelles. Logo/pictogrammes provisoires et recette humaine restent ouverts.
