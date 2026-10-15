@@ -736,7 +736,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
               <div className="detail-panel-heading">
                 <div><span className="eyebrow">{detail.type === 'offer' ? 'Offre' : 'Service'}</span><h2>{detail.name}</h2><p className="muted">{detail.category || 'Sans catégorie'}</p></div>
                 <div className="catalog-detail-heading-actions">
-                  <button className="catalog-detail-expand" type="button" aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded?'collapse':'expand'}/></button>
+                  <button className="catalog-detail-expand" type="button" aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded?'record-reduce':'record-expand'}/></button>
                   <button className="close-detail" type="button" aria-label="Fermer la fiche catalogue" onClick={closeDetail}><OperationIcon name="close"/></button>
                 </div>
               </div>

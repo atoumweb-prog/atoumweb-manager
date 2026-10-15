@@ -34,7 +34,7 @@ export function DataTable<T>({ rows, columns, selectedId, getId, sort, onSort, c
 }) {
   const scrollRef=useRef<HTMLDivElement>(null),[available,setAvailable]=useState(0);
   useEffect(()=>{const node=scrollRef.current;if(!node)return;const read=()=>setAvailable(node.clientWidth);read();const observer=new ResizeObserver(read);observer.observe(node);return()=>observer.disconnect();},[]);
-  const adaptive=fitAvailable?adaptiveTableWidths(columns.map(c=>c.id),available,widths):widths;
+  const adaptive=fitAvailable?adaptiveTableWidths(columns.map(c=>c.id),Math.max(0,available-4),widths):widths;
   const [preview, setPreview] = useState<{ id: string; width: number } | null>(null);
   useEffect(() => setPreview(null), [preferenceScope]);
   const widthOf = (id: string) => preview?.id === id ? preview.width : adaptive[id] ?? columnWidth(id, id === 'identity' ? 260 : 180);

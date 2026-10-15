@@ -384,7 +384,7 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
         <div className="detail-panel-heading">
           <div><span className="eyebrow">Pack d’heures</span><h2>{selected.name}</h2><p className="muted">{selected.clientLabel}{selected.projectLabel ? ` · ${selected.projectLabel}` : ''}</p></div>
           <div className="intervention-workbench-heading-actions">
-            <button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} aria-label={detailExpanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button>
+            <button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} aria-label={detailExpanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'record-reduce' : 'record-expand'} size={18} /></button>
             <button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => requestUnsavedExit(() => { setSelectedId(''); setDetailExpanded(false); setMovementHours(''); setMovementReason(''); setMovementMode('manual_correction'); })}><OperationIcon name="close" size={18} /></button>
           </div>
         </div>

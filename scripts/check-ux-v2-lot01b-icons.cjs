@@ -36,7 +36,7 @@ if(!process.versions.electron){
    "const data=window.__iconTest={calls:0,labels:[]};",
    "function Gallery(){return React.createElement('section',{id:'icon-gallery'},",
    "React.createElement('div',{className:'icon-grid'},...names.map(n=>React.createElement('div',{className:'icon-sample','data-icon':n,key:n},React.createElement(OperationIcon,{name:n,size:20}),React.createElement('span',null,n)))),",
-   "React.createElement(AppButton,{id:'icon-action',variant:'quiet','aria-label':'Agrandir la fiche',icon:React.createElement(OperationIcon,{name:'expand',size:20}),onAction:()=>{data.calls++;data.labels.push('expand')} }),",
+   "React.createElement(AppButton,{id:'icon-action',variant:'quiet','aria-label':'Agrandir la fiche',icon:React.createElement(OperationIcon,{name:'record-expand',size:20}),onAction:()=>{data.calls++;data.labels.push('record-expand')} }),",
    "React.createElement(AppButton,{id:'icon-label',variant:'secondary',icon:React.createElement(OperationIcon,{name:'refresh',size:20}),onAction:()=>{data.calls++;data.labels.push('refresh')} },'Actualiser la vue')",
    ");}",
    "createRoot(document.getElementById('root')).render(React.createElement(Gallery));"
@@ -149,7 +149,7 @@ if(!process.versions.electron){
     'AppButton must activate exactly once with Electron Enter');
   check(app.probe.nativeKeys.some(x=>x.key==='Enter'&&x.target==='icon-action'),
     'Trusted Electron Enter must reach React AppButton');
-  check(await get('window.__iconTest.labels[0]==="expand"'),
+  check(await get('window.__iconTest.labels[0]==="record-expand"'),
     'Keyboard Enter invokes correct AppButton action');
   check(await get('document.activeElement?.id==="icon-action"'),
     'Keyboard focus remains on explicit AppButton command');

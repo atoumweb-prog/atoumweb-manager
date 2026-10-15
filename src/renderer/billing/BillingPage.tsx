@@ -335,7 +335,7 @@ export function BillingPage({ onMessage, statisticsDrilldown, onClearStatisticsD
       {selected && <aside className={`panel billing-detail-panel ${expanded ? 'expanded' : ''}`}>
         <div className="detail-panel-heading billing-detail-heading">
           <div><span className="eyebrow">Facturation</span><h2>{selected.description}</h2><p className="muted">{selected.clientLabel}{selected.projectLabel ? ` · ${selected.projectLabel}` : ''}</p></div>
-          <div className="billing-detail-heading-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => invoiceDraft.request(() => { setSelectedId(''); setExpanded(false); })}><OperationIcon name="close" size={18} /></button></div>
+          <div className="billing-detail-heading-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'record-reduce' : 'record-expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => invoiceDraft.request(() => { setSelectedId(''); setExpanded(false); })}><OperationIcon name="close" size={18} /></button></div>
         </div>
 
         <div className="billing-detail-badges">

@@ -1507,7 +1507,7 @@ export function AtoumWebLibraryPage({ onEntityReady, onMessage, initialItemId, i
                 {!selected.archivedAt && <button className="secondary-button" type="button" onClick={() => {if(editingMetadata)metadataGuard.request(()=>{if(selected)setMetadataForm(metadataFromItem(selected));setEditingMetadata(false);});else setEditingMetadata(true);}}>{editingMetadata ? 'Annuler édition' : 'Modifier'}</button>}
                 <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void exportPackage()}><OperationIcon name="package" size={16} /> Exporter archive</button>
                 <button className="secondary-button" type="button" onClick={() => void toggleArchive()}><OperationIcon name="archive" size={16} /> {selected.archivedAt ? 'Réactiver' : 'Archiver'}</button>
-                <button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button>
+                <button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'record-reduce' : 'record-expand'} size={18} /></button>
                 <button className="close-detail" type="button" aria-label="Fermer la fiche composant" title="Fermer" onClick={closeDetail}><OperationIcon name="close" size={18} /></button>
               </div>
             </div>

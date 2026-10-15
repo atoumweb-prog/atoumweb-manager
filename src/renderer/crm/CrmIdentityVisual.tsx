@@ -207,7 +207,7 @@ export function CrmIdentityAssetEditor({
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
-        <OperationIcon name={open ? 'collapse' : 'image'} size={16} />
+        <OperationIcon name={open ? 'chevron-up' : 'image'} size={16} />
         <span>{open ? 'Masquer les visuels' : availableCount ? 'Modifier les visuels' : organizationId ? 'Ajouter un logo' : 'Ajouter un visuel'}</span>
       </button>
     </div>

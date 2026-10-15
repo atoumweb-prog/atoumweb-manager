@@ -396,7 +396,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
       {createOpen && <article className="panel documents-detail-panel">
         <div className="documents-detail-header">
           <div><span className="eyebrow">Nouveau document</span><h2>Importer et classer</h2><p>Le fichier sera copié dans le dossier Documents du client.</p></div>
-          <div className="documents-detail-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire' : 'Agrandir'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" onClick={() => draft.request(() => { setCreateOpen(false); setExpanded(false); })}><OperationIcon name="close" size={18} /></button></div>
+          <div className="documents-detail-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'record-reduce' : 'record-expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" onClick={() => draft.request(() => { setCreateOpen(false); setExpanded(false); })}><OperationIcon name="close" size={18} /></button></div>
         </div>
         <div className="documents-form">
           <label>Client<select value={createClientId} onChange={(event) => setCreateClientId(event.target.value)}>{clients.map((client) => <option key={client.id} value={client.id}>{client.displayName}</option>)}</select></label>
@@ -413,7 +413,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
       {selected && !createOpen && <article className={`panel documents-detail-panel ${expanded ? 'expanded' : ''}`}>
         <div className="documents-detail-header">
           <div><span className="eyebrow">{CATEGORY_LABELS[selected.category]}</span><h2>{selected.title}</h2><p>{selected.clientLabel}</p></div>
-          <div className="documents-detail-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire' : 'Agrandir'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" onClick={() => draft.request(() => { setSelectedId(''); setExpanded(false); setEditing(false); })}><OperationIcon name="close" size={18} /></button></div>
+          <div className="documents-detail-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'record-reduce' : 'record-expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" onClick={() => draft.request(() => { setSelectedId(''); setExpanded(false); setEditing(false); })}><OperationIcon name="close" size={18} /></button></div>
         </div>
 
         <div className="documents-status-row">

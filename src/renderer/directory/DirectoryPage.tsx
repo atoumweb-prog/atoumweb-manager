@@ -456,7 +456,7 @@ function DirectoryKpi({ icon, label, value, helper }: { icon: 'folder' | 'user' 
 }
 
 function DirectoryDetailActions({ expanded, onExpand, onClose }: { expanded: boolean; onExpand: () => void; onClose: () => void }) {
-  return <div className="directory-detail-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={onExpand}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" onClick={onClose}><OperationIcon name="close" size={18} /></button></div>;
+  return <div className="directory-detail-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={onExpand}><OperationIcon name={expanded ? 'record-reduce' : 'record-expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" onClick={onClose}><OperationIcon name="close" size={18} /></button></div>;
 }
 
 function OrganizationEditor({ value, onChange, onSave, busy, includeCoordinates = false }: { value: OrganizationInput; onChange: (value: OrganizationInput) => void; onSave: () => void; busy: boolean; includeCoordinates?: boolean }) {

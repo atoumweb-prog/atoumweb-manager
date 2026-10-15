@@ -80,6 +80,7 @@ module.exports=async ctx=>{
    for(const [width,height]of[[1920,1080],[1510,1030]]){
     win.setSize(width,height);await sleep(100);
     test(await get('(()=>{const r=document.querySelector(".prospect-detail-desk .crm-record-layout"),l=r.querySelector(".crm-record-left").getBoundingClientRect(),c=r.querySelector(".crm-record-work").getBoundingClientRect(),a=r.querySelector(".crm-record-right").getBoundingClientRect();return l.right<=c.left+2&&c.right<=a.left+2&&c.width>l.width&&c.width>a.width})()'),'Three unequal Prospect regions '+width+'/'+theme+'/'+density);
+    test(await get('[...document.querySelectorAll(".prospect-work-accordion.open")].every(e=>e.scrollHeight<=e.clientHeight+2)'), 'Open Prospect content is never vertically clipped '+width+'/'+theme+'/'+density);
     await capture('prospect-'+width,theme,density);
    }
   }
@@ -101,6 +102,7 @@ module.exports=async ctx=>{
    await js(`document.documentElement.dataset.theme=${JSON.stringify(theme)};document.documentElement.dataset.density=${JSON.stringify(density)}`);await sleep(100);
    test(await get('document.querySelector(".aw-brand-logotype img").complete&&document.querySelector(".aw-brand-logotype img").naturalWidth===2048'),'Exact original master decoded in header '+theme+'/'+density);
    test(await get('document.querySelector(".global-timer")===window.__finalTimer&&document.querySelectorAll(".global-timer").length===1'),'True timer instance survives record work '+theme+'/'+density);
+   test(await get('(()=>{const s=document.querySelector(".aw-data-table-scroll");return s.scrollWidth<=s.clientWidth})()'),'No avoidable Client table horizontal scroll '+theme+'/'+density);
    await capture('header-reduced-rail',theme,density);
   }
   const current=assets().find(a=>a.role==='logo');dialog.showMessageBox=async()=>({response:1});test(await removeAsset(null,current.id)===true&&assets().length===count,'Confirmed removal clears persisted shared logo');

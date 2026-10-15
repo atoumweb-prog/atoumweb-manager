@@ -10,8 +10,8 @@
 .crm-record-layout[data-full=true]>.crm-record-side{overflow:auto;background:var(--surface-soft);border:1px solid var(--border);border-radius:12px}
 .crm-record-layout[data-full=true]>.crm-record-right{display:block}
 .crm-record-side[data-folded=true] .crm-record-side-toggle span{writing-mode:vertical-rl}.crm-record-side[data-folded=true] .crm-record-side-toggle{flex-direction:column}
-.app-shell .client-large-view{padding:16px;display:flex;flex-direction:column;gap:12px}.app-shell .prospect-detail-desk{overflow:hidden!important;display:flex;flex-direction:column}
-.crm-record-layout[data-full=true] .prospect-desk-content{overflow:auto;min-height:0;flex:1;padding:16px 0}.crm-record-layout .client-v2-tabs{gap:4px;flex-wrap:wrap}.crm-record-layout .client-v2-tabs button{padding:8px 10px}.crm-record-layout .prospect-desk-tabs{flex-shrink:0;padding:8px 0}
+.app-shell .client-large-view{padding:16px;display:flex;flex-direction:column;gap:12px}.app-shell .prospect-detail-desk{display:flex;flex-direction:column}
+.crm-record-layout[data-full=true] .prospect-desk-content{display:block;overflow:auto;min-height:0;flex:1;padding:16px 0}.crm-record-layout .client-v2-tabs{gap:4px;flex-wrap:wrap}.crm-record-layout .client-v2-tabs button{padding:8px 10px}.crm-record-layout .prospect-desk-tabs{flex-shrink:0;padding:8px 0}
 .crm-record-layout .detail-panel-heading h2{font-size:clamp(20px,1.7vw,26px);line-height:1.2}.crm-record-layout .reference-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.crm-record-layout .client-primary-card{margin-bottom:18px;padding:16px;border:1px solid var(--border);border-radius:12px}.crm-record-layout .contact-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .crm-record-layout:not([data-full=true]) .crm-record-width,.crm-record-layout:not([data-full=true]) .crm-record-side-toggle{display:none}.crm-record-layout:not([data-full=true]) .crm-record-properties{display:none}.crm-record-layout:not([data-full=true]) .crm-record-side-body{padding:0 0 10px}.crm-record-layout:not([data-full=true]) .crm-record-work{padding:0}
 .app-shell .prospects-v2 .pipeline-flow{min-width:0}.app-shell .prospects-v2 .kanban-board{display:grid;grid-template-columns:repeat(6,minmax(230px,1fr));grid-auto-flow:column;gap:12px;overflow-x:auto;padding:2px 2px 14px;scroll-snap-type:x proximity}.app-shell .prospects-v2 .pipeline-conversion-history{margin-top:16px;min-height:0}.pipeline-conversion-history .kanban-cards{display:flex;flex-direction:row;align-items:center;gap:16px}.pipeline-conversion-history p{margin:0}
@@ -22,3 +22,20 @@
 .app-shell .crm-record-side .detail-panel-heading{position:static;inset:auto;margin:0;padding:0;background:transparent;backdrop-filter:none}
 .crm-record-side .detail-heading-actions>*{max-width:100%}.crm-record-side button{white-space:normal}.crm-record-side .client-relationship-trigger{width:100%;text-align:left}
 .crm-record-side .crm-identity-assets{margin:0;padding:10px}.crm-record-side .crm-identity-assets-summary{min-width:0}.crm-record-side .crm-identity-asset-slot{flex-wrap:wrap}
+
+/* A flex/grid row must not squeeze open accordion bodies to the viewport height. */
+.crm-record-layout .prospect-desk-content>.prospect-work-accordion{margin-bottom:16px}
+.crm-record-width input{accent-color:var(--accent-strong)}
+.crm-record-right .crm-record-side-body>button{padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);text-align:left;font:inherit}
+@media(max-width:850px){
+ .crm-record-layout[data-full=true]>.crm-record-left{max-height:200px;overflow:auto}
+ .crm-record-layout[data-full=true]>.crm-record-left .detail-panel-heading{flex-direction:row;align-items:center;gap:12px;flex-wrap:wrap}
+ .crm-record-layout[data-full=true]>.crm-record-left .crm-record-properties{display:none}
+ .crm-record-layout[data-full=true]>.crm-record-left .eyebrow{display:none}
+ .crm-record-layout[data-full=true]>.crm-record-left .crm-identity-avatar-large{width:36px;height:36px;font-size:16px}
+ .crm-record-layout[data-full=true]>.crm-record-left .client-summary-head,.crm-record-layout[data-full=true]>.crm-record-left .prospect-detail-identity-head{display:flex;align-items:center;gap:10px}
+ .crm-record-layout[data-full=true]>.crm-record-left .crm-identity-assets-compact{display:flex;align-items:center;gap:8px}
+ .crm-record-layout[data-full=true]>.crm-record-left .crm-identity-assets-toggle{width:auto}
+}
+
+.crm-record-layout .client-status,.crm-record-layout .status-pill{font-size:var(--ui-font-secondary);line-height:1.35;padding:4px 8px}

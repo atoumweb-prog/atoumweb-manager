@@ -591,7 +591,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
       await refreshSelectedClientData(selected.id);
       onMessage(wasEditing ? 'Contact mis à jour.' : 'Contact ajouté au client.');
     } catch (error) {
-      setContactError(error instanceof Error ? error.message : 'Impossible d’ajouter le contact.');
+      setContactError(error instanceof Error ? error.message.replace(/^Error invoking remote method ['"][^'"]+['"]:\s*(?:Error:\s*)?/i,'') : 'Impossible d’ajouter le contact.');
     } finally {
       setContactSaving(false);
     }

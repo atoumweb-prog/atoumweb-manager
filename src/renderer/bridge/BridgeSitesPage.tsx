@@ -709,7 +709,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
             </div>
             <div className="bridge-detail-actions">
               <button className="primary-button bridge-page-preview-button" type="button" onClick={() => void showPagePreview()}><OperationIcon name="image" size={16} />Visualiser la page</button>
-              <button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button>
+              <button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'record-reduce' : 'record-expand'} size={18} /></button>
               <button className="close-detail" type="button" aria-label="Fermer la fiche" title="Fermer" onClick={closePage}><OperationIcon name="close" size={18} /></button>
             </div>
           </div>
