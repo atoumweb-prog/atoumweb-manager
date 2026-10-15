@@ -1,5 +1,10 @@
 # AtoumWeb Manager
 
+## UX/UI V2 — convergence du 15/10/2026
+
+Le présent arbre réunit le socle UX/UI V2 et les lots04–10 ; le suivi de publication/fusion/CI est consigné dans [PROJECT_STATUS](PROJECT_STATUS.md) et le [bilan de convergence](docs/ux-v2/CONVERGENCE-04-10-2026-10-15.md). Registre SQLite exact1–70, sauvegardes/restaurations et protections de saisie conservées. Les entrées datées ci-dessous décrivent l’historique et leurs anciens lanceurs ne doivent pas servir à choisir la version V2. Un workspace et un profil V2 distincts sont préparés localement pour réunir contrats actuels et temps historiques, sans modifier les bases/profils existants. La recette humaine globale et les validations externes restent distinctes des tests techniques.
+
+
 ## État courant — 09/10/2026
 
 La branche officielle et active est **main** depuis la fusion normale de la PR #79 (8e05a47296d478587b11841e36ca5acb2e936726). Le commit contenant cette documentation ajoute la Bibliothèque contractuelle versionnée et les corrections de la recette manuelle Prospect / Devis. Consulter git log -1 pour son identifiant.

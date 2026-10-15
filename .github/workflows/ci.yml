@@ -198,6 +198,11 @@ jobs:
           node scripts/check-ux-v2-03e-directory.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Setup Python for isolated recovery tests
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Reference recovery isolated regression checks
         run: python scripts/test_reference_workspace.py
 
