@@ -22,7 +22,7 @@ module.exports=async ctx=>{
    await js(`window.__otherHelp=[...document.querySelectorAll('.identity-editor-v2 .field-help')].find(e=>e!==window.__realHelp);if(!window.__otherHelp)throw Error('Second real help missing');window.__realHelp.closest('.field-help-anchor').dispatchEvent(new MouseEvent('mouseover',{bubbles:true}));window.__otherHelp.closest('.field-help-anchor').dispatchEvent(new MouseEvent('mouseover',{bubbles:true}));`);
    await wait('!!document.querySelector(".field-help-short")','successive hover');
    test(await get(`document.querySelectorAll('.field-help-short,.field-help-detail').length===1&&document.querySelector('.field-help-short').id===window.__otherHelp.getAttribute('aria-controls')&&!window.__realHelp.hasAttribute('aria-controls')`),'Successive hover transfers ownership without duplicate '+theme+'/'+density);
-   await js(`window.__otherHelp.focus()`);win.webContents.sendInputEvent({type:'keyDown',keyCode:'Enter'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Enter'});
+   await js(`window.__otherHelp.focus()`);win.webContents.sendInputEvent({type:'keyDown',keyCode:'Enter'});win.webContents.sendInputEvent({type:'char',keyCode:'\r'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Enter'});
    await wait('!!document.querySelector(".field-help-detail[data-open-source=explicit]")','keyboard detail');
    test(await get(`document.querySelectorAll('.field-help-short,.field-help-detail').length===1`),'Keyboard Enter opens only one detail '+theme+'/'+density);
    win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await wait('!document.querySelector(".field-help-short,.field-help-detail")','second Escape');
