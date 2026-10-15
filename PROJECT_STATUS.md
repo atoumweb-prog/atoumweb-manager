@@ -2,7 +2,7 @@
 
 ## 15/10/2026 — Finalisation CRM et master de marque utilisateur : candidat local
 
-Le dossier utilisateur C01–C11 précise les critères de fin : logo original du 9 octobre, aides sans doublon, pictogrammes différenciés, logo d'entreprise persistant et fiches complètes à trois régions. Nouvelle branche locale `codex/ux-v2-final-crm-brand-help`, départ `3e2a1f32`. Les validations graphiques précédentes ne valent pas acceptation de ces nouveaux rendus. [Décisions, audit ciblé et limites de sauvegarde des médias](docs/ux-v2/FINALISATION-CRM-MARQUE-2026-10-15.md). Validations finales et captures en cours ; gate humain avant packaging ou installation. Aucun push, main, migration, workspace réel ou Validation-MSI modifié.
+Le dossier utilisateur C01–C11 précise les critères de fin : logo original du 9 octobre, aides sans doublon, pictogrammes différenciés, logo d'entreprise persistant et fiches complètes à trois régions. Nouvelle branche locale `codex/ux-v2-final-crm-brand-help`, départ `3e2a1f32`. Les validations graphiques précédentes ne valent pas acceptation de ces nouveaux rendus. [Décisions, audit ciblé et limites de sauvegarde des médias](docs/ux-v2/FINALISATION-CRM-MARQUE-2026-10-15.md). Code applicatif `d2963d6864d7c1adf6421a536c702416cedda471` : typecheck OK,1500/1500 Vitest,35 restaurations/6 binaires,580 assertions CRM,825 tableaux,109 aides +52 sur vraie fiche,132 pilote Prospection,214 Annuaire ;468 captures avant/après. Gate humain du logo et des deux fiches encore ouvert avant packaging ou installation. Galerie locale `captures/finalization-20261015/review/index.html`. Aucun push, main, migration, workspace réel ou Validation-MSI modifié.
 
 ## 15/10/2026 — Direction graphique approuvée, généralisation en cours
 

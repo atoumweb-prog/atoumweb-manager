@@ -37,3 +37,81 @@ Premiers contrôles de développement : 129 assertions Client ; 250 assertions d
 Au candidat `4d71bc48`, Vitest 1500/1500 sur 166 fichiers, typecheck OK. La campagne native a passé 32 étapes puis détecté une régression dans 01F : la poignée de colonne recevait la largeur d'aperçu comme point de départ, son effet de nettoyage annulait donc son propre geste avant pointerup. Correction ciblée : point de départ stable, aperçu uniquement sur le tableau ; aucune assertion supprimée ou diminuée. Le contrôle existant 01F « une écriture finale » passe après correction. Les deux étapes suivantes (rail/en-tête) seront exécutées explicitement ; le premier rapport de campagne reste conservé avec son échec.
 
 Compléments : éditeurs visuels Annuaire disponibles près de l'identité, également pendant l'édition des coordonnées ; rechargements des images séquencés, succès ET erreurs anciens ignorés après une réponse plus récente ; synchronisation des deux emplacements existants via l'événement CRM partagé. Recette supplémentaire avec de vraies réponses IPC volontairement retenues. Fenêtres étroites et zoom étendus aux neuf configurations, sans changement de préférence métier.
+
+## Bilan final de validation locale
+
+**Code applicatif : `d2963d6864d7c1adf6421a536c702416cedda471`.** Branche `codex/ux-v2-final-crm-brand-help`. Départ `3e2a1f326f58ecf46f7d25bb041f4cac50e73716`. Les ajouts documentaires et le banc d'aide réelle qui suivent ce commit ne modifient pas `src/`. Aucune publication GitHub ni CI hébergée.
+
+### Résultats réellement obtenus
+
+| Contrôle | Résultat | Référence de preuve locale |
+|---|---|---|
+| Typecheck | OK | `outputs/final-typecheck-d2963d68.log` |
+| Vitest complète, deux workers | **1500/1500**, 166 fichiers, **106,51 s**, aucune erreur RPC | `outputs/final-vitest-d2963d68.log` |
+| Restaurations SQLite | **35/35**, 4,699 s | même log ; `restore.test.ts` |
+| Équivalence binaire | **6/6**, 77 ms | même log ; `restoreBinaryEquality.test.ts` |
+| CRM élargi, identité visuelle, formats, brouillons, largeurs, zoom et contraste | **580 assertions**, zéro erreur console | `outputs/final-visual-d2963d68/crm-final.log` |
+| Rail02A, sauvegarde/rechargement | **117 + 8**, neuf configurations | `outputs/final-visual-d2963d68/02a.log` |
+| En-tête02B, préférences et redémarrage | **158 + 9**, neuf configurations | `outputs/final-visual-d2963d68/02b.log` |
+| Aide partagée, survol/clic/clavier/option/double source | **109**, neuf configurations et vue étroite/zoom | `outputs/final-visual-d2963d68/help.log` |
+| Icônes | **42**, catalogue **56**, anciens49 conservés | `outputs/final-visual-d2963d68/icons.log` |
+| Treize tableaux réels | **825**, dont117 vérifications de capture, zéro mutation métier | `outputs/final-visual-d2963d68/tables.log` |
+| Pilote Prospection, sélection/pipeline/colonnes/UX-01 | **132**, 36 captures | `outputs/final-visual-d2963d68/prospect-pilot.log` |
+| Annuaire et parcours CRM combiné | **214**, dont9 captures ; conflits et réponses tardives injectés | `outputs/final-visual-d2963d68/directory.log` |
+| Aide dans la véritable fiche Prospect en édition | **52**, 18 captures, zéro confirmation UX-01 superflue, même champ/texte/composant après Échap | `outputs/final-real-help-d2963d68.log` |
+
+Ces nombres sont des assertions de banc, incluent les contrôles de capture et ne constituent pas un nombre de parcours métier distincts. Les lignes stderr « TEST… », « OBSOLETE… » et « Injected… » sont des erreurs volontairement injectées et vérifiées, pas des succès supposés malgré une erreur imprévue. Les rapports finaux ont `failed:0` et les contrôles réels affichent `consoleErrors:[]`.
+
+Campagne complémentaire de non-régression : **32 étapes de convergence** réussies au code `4d71bc48` (Contrats/CGV, devis/Abby, UX-01, restauration/relaunch, projets/Bridge sur fixtures, temps, documents Word, statistiques/réglages/sauvegardes). L'étape01F a ensuite révélé le défaut d'annulation du redimensionnement, corrigé sans diminuer ses assertions. Rejeu01F **123 + 14**, 01D126, 01C66, 01E95 et Abby25 au code `b3cdf081`, tous verts. Les dernières modifications de contraste, formats et marque ont été couvertes à nouveau au code final dans les huit bancs du manifeste `outputs/final-visual-d2963d68/manifest.json`. **Le premier rapport de convergence n'est pas présenté comme une campagne entièrement verte** : son échec reste consigné.
+
+Le contrôle 13 tableaux a également signalé une lecture de géométrie trop tôt pendant la bascule native du zoom ; le banc attend maintenant la largeur CSS correspondant effectivement au nouveau viewport Chromium, au lieu d'un sommeil fixe de40 ms. Même assertion sur le débordement, mêmes délais existants, aucune répétition d'action. Diagnostic géométrique ajouté au message d'échec. Rejeu825 vert au candidat final.
+
+### Formats et stockage : corrections et preuves
+
+La capacité existante est la **migration historique34** `crm_identity_assets` et le dossier `crm-identites`, pas un nouveau champ ajouté aux organisations. Aucune migration n'est créée ou modifiée. Sous Windows, `nativeImage.createFromBuffer` décode PNG/JPEG mais refuse les buffers WEBP/GIF/ICO : constat effectué sur le runtime réel, pas déduit d'une simple extension. L'aperçu passe donc par **Chromium dans un monde isolé du renderer appelant** ; seul un petit aperçu PNG revient au processus principal. Aucun DOM modifié, aucune nouvelle fenêtre/instance du chrono, aucun accès réseau ajouté par ce décodeur. Le fichier enregistré conserve son format et ses octets originaux.
+
+La recette native vérifie des fichiers réellement décodables **PNG, JPEG, WEBP, GIF et ICO**, leur aperçu avant confirmation, l'annulation sans écriture et l'enregistrement avec `Buffer.equals` sur **tout** le fichier copié. Contrôles complémentaires : image corrompue refusée, 8 Mo max, chemin interdit/refus d'évasion, annulation/retrait confirmé, rollback ligne+journal, ancien fichier conservé si remplacement échoue, base physique fermée/réouverte, autre workspace sans fuite de fichier, conflit pendant le dialogue, anciens succès et erreurs IPC incapables de remplacer la réponse la plus récente.
+
+Les points d'entrée dans l'identité de gauche et dans l'éditeur historique de l'organisation utilisent **la même source partagée**, pas deux stockages. Logo produit, logo société et photo de contact restent des actifs différents. Les anciennes révisions physiques sont conservées ; aucun nettoyage historique automatique.
+
+### Matrice du dossier utilisateur
+
+| Critère | État technique / réserve |
+|---|---|
+| F01 Client trois zones + huit onglets | PASS ; disposition à valider humainement |
+| F02 Prospect trois zones + sections métier existantes | PASS ; conditions d'accès par étape inchangées ; disposition à valider |
+| F03 Identité, onglet, éditeur et brouillon | PASS dans les parcours testés : tri/filtre, agrandissement Client, replis, largeur, thèmes/densités, erreurs/pending et confirmations ; protections existantes de fermeture du poste Prospect conservées |
+| F04 Fenêtres étroites et zoom | PASS fonctionnel :1920×1080,1510×1030,1280×720 à100/125/150%, neuf configurations ; régions repliables, scroll local |
+| B01 Fidélité du master | PNG original inchangé, cadrage sans reconstruction ; **gate humain encore ouvert** |
+| B02 Logotype de l'en-tête / contraste | PASS technique neuf configurations ; master décodé2048 px, symbole rail réellement44×44 ; accord visuel attendu |
+| I01 Icônes | PASS technique : fiche/rail/en-tête/ouvrir interne distincts ; le mode Compacter n'est pas renommé en plein écran OS |
+| H01 Aide unique | PASS : aucun title natif concurrent, une seule source, court/détail, option off sans masquer le bouton, Entrée/Espace/Échap ; preuve réelle C11 synthétique |
+| A01 Entrée visible d'identité visuelle | PASS Client/Prospect/Annuaire ; logo et avatar différenciés |
+| A02 Enregistrement réel | PASS sur fixtures ; sauvegarde SQLite seule n'emporte pas les images, réserve ci-dessous |
+| T01 Pipeline6 + historique | PASS : six colonnes actives sur une ligne défilable, Conversion hors board, aucune conversion par dépôt |
+| T02 Treize vues | PASS : colonnes obligatoires, ordres, tris et vues conservés ; largeurs explicites intactes ; défauts ajustables au viewport |
+| T03 Ouvrir interne / externe | PASS : pictogrammes différents, callbacks inchangés |
+| U01 Dirty/pending/UX-01 | PASS dans les bancs exécutés ; une seule architecture de protection |
+| U02 SQLite / chrono | PASS : migrations1–70 et intégrité/FK sur TEMP, restaurations35, vrai timer unique inchangé ; aucune base réelle ouverte |
+| V01 Captures / provenance | PASS :360 après +108 avant ; marqueurs de frame vérifiés et empreintes |
+| V02 Accord humain logo et fiches | **ATTENDU — aucun packaging/déploiement final** |
+
+### Galerie et traçabilité
+
+Galerie locale : `captures/finalization-20261015/review/index.html`.
+
+- Avant : worktree détaché TEMP au code3e2a1f32 ;72 captures Client +36 Prospection, mêmes scénarios synthétiques, IDs propres à chaque base TEMP.
+- Après d2963d68 :72 onglets Client +108 scènes CRM/tailles/zooms/en-tête/pipeline +117 tableaux +36 pilote Prospection +9 Annuaire +18 aide dans la vraie fiche = **360**. Empreintes vérifiées dans les manifestes `frames.json` ; pilote contrôlé par le synchroniseur de composition natif et son journal36/36.
+- C11 originale utilisateur présentée séparément : comparaison sémantique avec une fiche synthétique, pas prétention d'identité des données.
+- Le carré coloré en bas à droite est un marqueur de contrôle des captures ; il n'appartient pas à l'interface livrable.
+- ICO **candidat seulement**, sept tailles16/24/32/48/64/128/256, provenance dans `review/brand-proof.json`. Pas de modification de `forge.config.ts`, `windowBranding.ts`, EXE, Setup ou raccourcis de l'installation réelle.
+- Un banc réel permanent est ajouté : `node scripts/check-ux-v2-final-real-help.cjs` ; profil/base/captures TEMP par défaut, export possible par `ATOUMWEB_FINAL_HELP_CAPTURES` vers un nouveau dossier absolu. Aucun workflow modifié.
+
+### Limites et suite autorisée
+
+1. **Avis humain requis** sur le logo, la plaque de contraste et les deux fiches à trois régions. Ce candidat n'est pas une validation visuelle acquise.
+2. Packaging final / ressources Windows de la nouvelle marque / remplacement du lanceur : **pas effectués** avant cet avis. Le lanceur existant reste sur le candidat antérieur.
+3. Sauvegarde/transfert de médias : SQLite seul ne transfère pas `crm-identites`. Révisions conservées dans le workspace pour les restaurations locales ; une purge ou une archive complète nécessite un périmètre distinct. Ce point n'est pas dissimulé par une prétendue sauvegarde complète des images.
+4. Aucun changement de règles commerciales, juridiques, de facturation, de conversion, de chrono ou de restauration. Aucun push/PR/CI/merge, aucune intervention sur Validation-MSI ni sur contrats/temps réels. Les migrations et protections UX-01 restent inchangées.
+
+**CANDIDAT PRÊT POUR VALIDATION VISUELLE — DIFFUSION ET FUSION NON EFFECTUÉES.**
