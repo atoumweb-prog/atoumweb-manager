@@ -1,3 +1,5 @@
+import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {OperationIcon} from '../operations/OperationIcon';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { requestUnsavedExit } from '../unsaved/unsaved';
 import { OperationalActionDetails } from './OperationalActionDetails';
@@ -870,7 +872,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
                 <h3>{productionOverlay === 'resources' ? 'Ressources' : productionOverlay === 'technical' ? 'Technique & bibliothèque' : productionOverlay === 'time' ? 'Temps' : 'Accès sécurisés'}</h3>
                 {selectedNode && <p>{selectedNode.name}</p>}
               </div>
-              <button type="button" className="close-detail" onClick={() => requestUnsavedExit(() => setProductionOverlay(null))}>×</button>
+              <button type="button" className="close-detail" onClick={() => requestUnsavedExit(() => setProductionOverlay(null))} aria-label="Fermer" title="Fermer"><OperationIcon name="close"/></button>
             </header>
             <div className="project-production-overlay-content">
               {productionOverlay === 'resources' && <ProjectResourcesTab projectId={detail.id} nodes={detail.nodes} resourceRootPath={detail.resourceRootPath} onMessage={onMessage} />}
@@ -905,7 +907,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
       <div className="module-toolbar projects-toolbar">
         <div><strong>{filtered.length}</strong><span> projet{filtered.length > 1 ? 's' : ''}</span></div>
         <div className="toolbar-controls project-toolbar-controls">
-          <button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button>
+          <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh"/>Actualiser</button>
           <button className="secondary-button" type="button" onClick={() => setView('templates')}>Modèles de projets</button>
           <select aria-label="État commercial" value={commercialFilter} onChange={(event) => setCommercialFilter(event.target.value as typeof commercialFilter)}>
             <option value="all">Tous les états commerciaux</option>
@@ -927,7 +929,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
         <section className="panel project-create-panel">
           <div className="panel-title">
             <div><span className="eyebrow">Nouveau projet</span><h2>{createMode === 'quote' ? 'Transformer un devis accepté' : 'Projet interne AtoumWeb'}</h2></div>
-            <button className="close-detail" type="button" onClick={resetCreate}>×</button>
+            <button className="close-detail" type="button" onClick={resetCreate} aria-label="Fermer" title="Fermer"><OperationIcon name="close"/></button>
           </div>
           <div className="project-create-grid">
             {createMode === 'quote' && (
@@ -958,17 +960,17 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
       {loading ? <div className="panel"><p className="muted">Chargement des projets…</p></div> : (
         <div className="projects-layout">
           <section className="panel project-list-panel">
-            <table className="project-table">
-              <thead><tr><th>Numéro</th><th>Client / prospect</th><th>Projet</th><th>État commercial</th><th>Statut</th><th>Progression</th><th>Temps estimé</th><th>Cible</th></tr></thead>
-              <tbody>
-                {filtered.map((project) => (
-                  <tr key={project.id} className={selectedId === project.id ? 'selected-row' : ''} onClick={() => void openProject(project.id)}>
-                    <td><strong>{project.number}</strong></td><td>{project.clientLabel}</td><td><strong>{project.name}</strong><small>{project.projectType}</small></td><td><span>{project.commercialState === 'provisional' ? 'Prévisionnel · devis non signé' : project.commercialState === 'frozen' ? 'Confirmé · devis accepté' : 'Historique'}</span></td><td><span className={`project-status status-${project.status}`}>{PROJECT_STATUS_LABELS[project.status]}</span></td><td><div className="project-progress-cell"><span>{project.progressPercent} %</span><i><b style={{ width: `${project.progressPercent}%` }} /></i></div></td><td>{duration(project.estimatedMinutes)}</td><td>{dateLabel(project.targetDate)}</td>
-                  </tr>
-                ))}
-                {filtered.length === 0 && <tr><td colSpan={8}><div className="empty-table">Aucun projet dans cette vue.</div></td></tr>}
-              </tbody>
-            </table>
+            <ConfiguredDataTable<(typeof filtered)[number]> scope="projects-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={project=>project.id} onSelect={project=>void openProject(project.id)} className="project-table" caption="Numéro · Client / prospect · Projet · État commercial · Statut · Progression · Temps estimé · Cible · source complète des résultats filtrés" columns={[
+{id:"identity",label:"Numéro",required:true,sortValue:project=>project.number??null,render:project=><><strong>{project.number}</strong></>},
+{id:"client",label:"Client / prospect",sortValue:project=>project.clientLabel??null,render:project=><>{project.clientLabel}</>},
+{id:"name",label:"Projet",sortValue:project=>project.name??null,render:project=><><strong>{project.name}</strong><small>{project.projectType}</small></>},
+{id:"commercial",label:"État commercial",sortValue:project=>project.commercialState??null,render:project=><><span>{project.commercialState === 'provisional' ? 'Prévisionnel · devis non signé' : project.commercialState === 'frozen' ? 'Confirmé · devis accepté' : 'Historique'}</span></>},
+{id:"status",label:"Statut",sortValue:project=>project.status??null,render:project=><><span className={`project-status status-${project.status}`}>{PROJECT_STATUS_LABELS[project.status]}</span></>},
+{id:"progress",label:"Progression",sortValue:project=>project.progressPercent??null,render:project=><><div className="project-progress-cell"><span>{project.progressPercent} %</span><i><b style={{ width: `${project.progressPercent}%` }} /></i></div></>},
+{id:"estimated",label:"Temps estimé",sortValue:project=>project.estimatedMinutes??null,render:project=><>{duration(project.estimatedMinutes)}</>},
+{id:"target",label:"Cible",sortValue:project=>project.targetDate??null,render:project=><>{dateLabel(project.targetDate)}</>},
+{id:'open',label:'Ouvrir',required:true,render:project=><button type="button" className="link-button" aria-label={'Ouvrir '+String(project.number??project.id)} onClick={event=>{event.stopPropagation();((project:(typeof filtered)[number])=>void openProject(project.id))(project);}}><OperationIcon name="record-open"/></button>}
+]}/>
           </section>
 
         </div>
@@ -1426,7 +1428,7 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
       <div className="project-action-list">
         {(card?.actions ?? []).map((action) => <div key={action.id} className={`project-work-action ${action.done ? 'done' : ''}`}>
           <label><input type="checkbox" checked={action.done} onChange={(event) => toggleWorkAction(action.id, event.target.checked)} /><span>{action.title}</span></label>
-          <button type="button" title="Supprimer l’action" onClick={() => removeWorkAction(action.id)}>×</button>
+          <button type="button" title="Supprimer l’action" onClick={() => removeWorkAction(action.id)}><OperationIcon name="close"/></button>
         </div>)}
         {(card?.actions?.length ?? 0) === 0 && <p className="muted">Aucune action supplémentaire. Ajoute-en seulement quand cette étape en a besoin.</p>}
       </div>
@@ -1830,6 +1832,6 @@ function ProjectTemplatesView({ templates, onBack, onRefresh, onMessage }: { tem
 
 function renderTemplateTree(version: ProjectTemplateVersion, parentId: string | null, onRemove?: (id: string) => Promise<void>, depth = 0) {
   return version.nodes.filter((node) => (node.parentId ?? null) === parentId).sort((a, b) => a.sortOrder - b.sortOrder).map((node) => (
-    <div key={node.id} className="template-tree-branch"><div className={`template-tree-node node-${node.type}`} style={{ marginLeft: `${depth * 15}px` }}><span className="project-node-kind">{node.type.toUpperCase()}</span><div><strong>{node.name}</strong><small>{node.estimatedMinutes ? duration(node.estimatedMinutes) : 'Sans estimation'}</small></div>{onRemove && <button className="icon-button danger-outline" type="button" onClick={() => void onRemove(node.id)}>×</button>}</div>{renderTemplateTree(version, node.id, onRemove, depth + 1)}</div>
+    <div key={node.id} className="template-tree-branch"><div className={`template-tree-node node-${node.type}`} style={{ marginLeft: `${depth * 15}px` }}><span className="project-node-kind">{node.type.toUpperCase()}</span><div><strong>{node.name}</strong><small>{node.estimatedMinutes ? duration(node.estimatedMinutes) : 'Sans estimation'}</small></div>{onRemove && <button className="icon-button danger-outline" type="button" onClick={() => void onRemove(node.id)} aria-label="Retirer" title="Retirer"><OperationIcon name="close"/></button>}</div>{renderTemplateTree(version, node.id, onRemove, depth + 1)}</div>
   ));
 }

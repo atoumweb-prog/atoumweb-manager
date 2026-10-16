@@ -1,3 +1,4 @@
+import {OperationIcon} from '../operations/OperationIcon';
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CatalogItemSummary, CatalogVersion, PriceMode } from '../../shared/commercial';
@@ -130,7 +131,7 @@ export function NeedDraftSelector({ value, onChange }: { value: NeedInput[]; onC
     <label>Rechercher une prestation par besoin<input aria-label="Rechercher une prestation par besoin" value={catalogQuery} onChange={e=>setCatalogQuery(e.target.value)} placeholder="visibilité Google, SEO local…" /></label>
     {value.length > 0 && <div className="need-chip-list">{value.map((need, index) => {
       const item = need.catalogItemId ? catalog.find((candidate) => candidate.id === need.catalogItemId) : null;
-      return <span className="need-chip" key={`${need.catalogItemId ?? 'other'}-${index}`}>{item ? `${item.type === 'offer' ? 'Offre' : 'Service'} · ${item.name}` : `Autre · ${need.otherText}`}<button type="button" aria-label="Retirer" onClick={() => onChange(value.filter((_, i) => i !== index))}>×</button></span>;
+      return <span className="need-chip" key={`${need.catalogItemId ?? 'other'}-${index}`}>{item ? `${item.type === 'offer' ? 'Offre' : 'Service'} · ${item.name}` : `Autre · ${need.otherText}`}<button type="button" aria-label="Retirer" onClick={() => onChange(value.filter((_, i) => i !== index))}><OperationIcon name="close"/></button></span>;
     })}</div>}
     <KindTabs kind={kind} onChange={k=>choiceGuard.request(()=>{setKind(k);setCategory('');setSelectedId('');})}/><div className="need-add-row">
       <label>Catégorie<select value={selectedCategory} onChange={(e) => { choiceGuard.request(()=>{setCategory(e.target.value);setSelectedId('');}); }}>{categories.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>

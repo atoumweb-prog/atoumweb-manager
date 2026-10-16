@@ -9,8 +9,8 @@ if(!process.versions.electron){
  try{
   fs.writeFileSync(path.join(temp,'revision.json'),JSON.stringify({sha:execFileSync('git',['rev-parse','HEAD'],{cwd:repo,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:repo,encoding:'utf8'}).trim()}));
   const build=require('esbuild').buildSync;
-  build({stdin:{contents:"import React from 'react';import {createRoot} from 'react-dom/client';import {TableWorkshop} from './src/renderer/ui/TableWorkshop';import {TABLE_WORKSHOP_RECORDS} from './src/shared/tableWorkshopFixtures';window.__tableFixtures=TABLE_WORKSHOP_RECORDS;createRoot(document.getElementById('root')).render(<TableWorkshop/>);",resolveDir:repo,loader:'tsx'},bundle:true,platform:'browser',outfile:path.join(temp,'fixture.js'),logLevel:'silent'});
-  build({entryPoints:[path.join(repo,'src/main/unsaved.ts')],bundle:true,platform:'node',format:'cjs',external:['electron'],outfile:path.join(temp,'guards.cjs'),logLevel:'silent'});
+  build({stdin:{contents:"import React from 'react';import {createRoot} from 'react-dom/client';import {TableWorkshop} from './src/renderer/ui/TableWorkshop';import {TABLE_WORKSHOP_RECORDS} from './src/shared/tableWorkshopFixtures';window.__tableFixtures=TABLE_WORKSHOP_RECORDS;createRoot(document.getElementById('root')).render(<TableWorkshop/>);",resolveDir:repo,loader:'tsx'},bundle:true,loader:{'.png':'dataurl'},platform:'browser',outfile:path.join(temp,'fixture.js'),logLevel:'silent'});
+  build({entryPoints:[path.join(repo,'src/main/unsaved.ts')],bundle:true,loader:{'.png':'dataurl'},platform:'node',format:'cjs',external:['electron'],outfile:path.join(temp,'guards.cjs'),logLevel:'silent'});
   fs.writeFileSync(path.join(temp,'preload.cjs'),"const {contextBridge,ipcRenderer}=require('electron');contextBridge.exposeInMainWorld('atoumweb',{unsaved:{confirmExit:(labels,pending)=>ipcRenderer.sendSync('unsaved:confirm-exit',labels,pending),publishState:state=>ipcRenderer.sendSync('unsaved:state',state)}});");
   const entry=fs.readFileSync(path.join(repo,'src/renderer/main.tsx'),'utf8'),styles=[...entry.matchAll(/^import '\.\/([^']+\.css)';$/gm)].map(m=>fs.readFileSync(path.join(repo,'src/renderer',m[1]),'utf8')).join('\n');
   fs.writeFileSync(path.join(temp,'index.html'),'<html lang="fr"><head><meta charset="utf-8"><title>AtoumWeb — Atelier 01D TEST</title><style>'+styles+'</style><link rel="stylesheet" href="fixture.css"></head><body><div class="app-shell"><aside class="sidebar">AtoumWeb<br>Atelier UX/UI TEST</aside><main class="main-area"><section class="content-area"><div id="root"></div></section></main></div><script src="fixture.js"></script></body></html>');
@@ -31,7 +31,9 @@ if(!process.versions.electron){
  const open=async id=>{await js('document.querySelector("[data-open-record='+id+']").click()');await sleep(70);};
  const sort=async id=>{await js('document.querySelector("th[data-column-id='+id+'] button").click()');await sleep(70);};
  app.whenReady().then(async()=>{
-  win=new BrowserWindow({show:true,width:1700,height:1100,webPreferences:{preload:path.join(temp,'preload.cjs'),contextIsolation:true,sandbox:true,nodeIntegration:false,backgroundThrottling:false}});G.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));await wait('document.querySelectorAll("tbody tr").length===120');
+  win=new BrowserWindow({show:true,width:1700,height:1100,webPreferences:{preload:path.join(temp,'preload.cjs'),contextIsolation:true,sandbox:true,nodeIntegration:false,backgroundThrottling:false}});G.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));
+  // The hidden Windows launcher may suppress the initial BrowserWindow show.
+  win.show();await wait('document.visibilityState==="visible"');assert(win.isVisible(),'Visible workshop window before compositor and focus checks');await wait('document.querySelectorAll("tbody tr").length===120');
   if(interactive){console.log('Atelier 01D interactif ouvert, uniquement TEMP.');return;}
   const source=await get('JSON.stringify(window.__tableFixtures)');
   assert(await get('Object.keys(window.atoumweb).join(",")==="unsaved"'),'No business API exposed');

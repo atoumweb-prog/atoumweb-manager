@@ -1,10 +1,11 @@
+import { QuoteContractPreparationService } from '../commercial/QuoteContractPreparationService';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { DatabaseService } from '../database/DatabaseService';
 import type { DemoSummary } from '../../shared/workflow';
 
 // Only business records may be removed. Reference data and physical files are never deleted.
-const TABLES = ['organizations','contacts','client_accounts','client_contact_roles','prospects','crm_actions','crm_needs','quotes','quote_lines','quote_contract_clauses','projects','project_blueprint_plans','project_nodes','project_node_sources','project_services','project_prerequisites','project_sites','project_site_pages','project_composed_node_bindings','project_composed_site_bindings','project_composed_prerequisite_sources','file_assets','file_asset_links','technical_items','technical_item_versions','technical_item_assets','service_requests','interventions','time_sessions','time_session_pauses','maintenance_subscriptions','maintenance_periods','maintenance_checks','hour_packs','hour_pack_movements','billing_items','maintenance_overage_decisions','maintenance_report_drafts','hour_pack_shortfall_decisions','activity_events','activity_log','search_documents'];
+const TABLES = ['organizations','contacts','client_accounts','client_contact_roles','prospects','crm_actions','crm_needs','quotes','quote_lines','quote_contract_clauses','quote_contract_preparations','quote_contract_transmissions','quote_document_links','projects','project_blueprint_plans','project_nodes','project_node_sources','project_services','project_prerequisites','project_sites','project_site_pages','project_composed_node_bindings','project_composed_site_bindings','project_composed_prerequisite_sources','file_assets','file_asset_links','technical_items','technical_item_versions','technical_item_assets','service_requests','interventions','time_sessions','time_session_pauses','maintenance_subscriptions','maintenance_periods','maintenance_checks','hour_packs','hour_pack_movements','billing_items','maintenance_overage_decisions','maintenance_report_drafts','hour_pack_shortfall_decisions','activity_events','activity_log','search_documents'];
 const ident=(name:string):string=>'"'+name.replace(/"/g,'""')+'"';
 const recordKey=(table:string)=>table==='maintenance_report_drafts'?'period_id'
   : table==='project_blueprint_plans'?'project_id'
@@ -60,10 +61,12 @@ export class DemoService {
         }
       }
       const deleted=this.summary().total;
+      // Only the already tracked synthetic ledger may be purged, after backup and real-reference checks.
+      this.db.run('UPDATE demo_context SET contract_purge=1 WHERE id=1');
       // Delete children before parents; deferred FKs cover the quote/project and request/intervention cycles.
       for(const table of [...tables].reverse()) this.db.run(`DELETE FROM ${ident(table)} WHERE CAST(${ident(recordKey(table))} AS TEXT) IN (SELECT record_id FROM demo_records WHERE table_name=?)`,[table]);
       if(this.db.all('PRAGMA foreign_key_check').length) throw new Error('Reset annulé : intégrité relationnelle non respectée.');
-      this.db.exec('DELETE FROM demo_records; UPDATE demo_context SET batch_id=NULL; DELETE FROM demo_batches; COMMIT;');
+      this.db.exec('DELETE FROM demo_records; UPDATE demo_context SET batch_id=NULL,contract_purge=0; DELETE FROM demo_batches; COMMIT;');
       return {backupPath,deleted};
     } catch(error) { this.db.exec('ROLLBACK;'); throw error; }
   }
@@ -92,7 +95,9 @@ export class DemoService {
       // Explicit demonstration sample, not a real contract. No fictitious administrative configuration or evidence.
       this.db.run('UPDATE quotes SET contract_parameters_json=NULL WHERE id=?',[quote.id]);
       services.quotes.finalize(quote.id);
-      services.quotes.markSent(quote.id);
+      const version=services.quotes.transmissionState(quote.id);
+      services.quotes.markSent(quote.id,{operationId:randomUUID(),preparationId:version.preparationId,contentHash:version.contentHash!,occurredAt:new Date().toISOString(),channel:'other',provenance:'DEMO — envoi simulé, aucune transmission réelle',confirmed:true});
+      new QuoteContractPreparationService(this.db).recordAcceptance(quote.id,'DEMO — acceptation simulée, aucun accord réel',new Date().toISOString(),'Scénario explicitement synthétique');
       const accepted=services.quotes.accept(quote.id);
       const project=services.projects.transformQuote({quoteId:quote.id,templateVersionId:template.currentVersion!.id,targetDate:new Date(Date.now()+21*86400000).toISOString().slice(0,10)});
       const clientId=accepted.clientAccountId!;

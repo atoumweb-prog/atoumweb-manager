@@ -1,3 +1,4 @@
+import {OperationIcon} from '../operations/OperationIcon';
 import {UnsavedGroup} from '../unsaved/unsaved';
 import { Component, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from 'react';
 import type { ProspectSummary } from '../../shared/crm';
@@ -71,7 +72,7 @@ function ProspectReferenceWindowContent({ prospectId }: { prospectId: string }) 
     <header className="reference-window-header">
       <div><span className="eyebrow">Référence prospect</span><h1>{prospect.displayName}</h1><p>{prospect.organizationIndustry || 'Activité à compléter'}{prospect.organizationCity ? ` · ${prospect.organizationCity}` : ''}</p></div>
     </header>
-    {message && <div className="notice"><span>{message}</span><button type="button" onClick={() => setMessage('')}>×</button></div>}
+    {message && <div className="notice"><span>{message}</span><button type="button" onClick={() => setMessage('')} aria-label="Fermer" title="Fermer"><OperationIcon name="close"/></button></div>}
     <section className="reference-window-identity">
       <ProspectIdentityPanel prospect={prospect} onSaved={() => void load('Informations entreprise / contact mises à jour.')} />
     </section>

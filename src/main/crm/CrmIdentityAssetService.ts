@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, unlinkSync } from 'node:fs';
-import { basename, extname, join, relative, resolve } from 'node:path';
+import { writeFileSync, existsSync, mkdirSync, readFileSync, statSync, realpathSync, unlinkSync } from 'node:fs';
+import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import type {
   CrmIdentityAsset,
   CrmIdentityAssetPreview,
@@ -65,25 +65,37 @@ export class CrmIdentityAssetService {
     if (!mimeType) throw new Error('Format non pris en charge. Utilise JPG, PNG, WEBP, GIF ou ICO.');
 
     const sourceStats = statSync(source);
+    if (sourceStats.size === 0) throw new Error('Image vide.');
     if (sourceStats.size > MAX_IDENTITY_ASSET_BYTES) throw new Error('L’image dépasse 8 Mo.');
 
+    const bytes=readFileSync(source);
+    if(!bytes.length || bytes.length>MAX_IDENTITY_ASSET_BYTES)throw new Error('Image vide ou supérieure à 8 Mo.');
+    const signature = extension === '.png' ? bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))
+      : ['.jpg','.jpeg'].includes(extension) ? bytes[0]===255&&bytes[1]===216&&bytes[2]===255
+      : extension === '.gif' ? ['GIF87a','GIF89a'].includes(bytes.subarray(0,6).toString('ascii'))
+      : extension === '.webp' ? bytes.subarray(0,4).toString('ascii')==='RIFF'&&bytes.subarray(8,12).toString('ascii')==='WEBP'
+      : extension === '.ico' && bytes.subarray(0,4).equals(Buffer.from([0,0,1,0]));
+    if(!signature)throw new Error('Le contenu ne correspond pas au format de l’image.');
     const directory = join(this.workspace.root, 'crm-identites', owner === 'organization' ? 'entreprises' : 'contacts', ownerId);
+    let ancestor=directory;
+    while(!existsSync(ancestor))ancestor=dirname(ancestor);
+    const actualAncestor=realpathSync.native(ancestor),actualRoot=realpathSync.native(this.workspace.root);
+    if(actualAncestor!==actualRoot)this.assertContained(actualAncestor,actualRoot);
     mkdirSync(directory, { recursive: true });
 
-    const destination = join(directory, `${role}${extension}`);
+    this.assertContained(realpathSync.native(directory),actualRoot);
+    // A new immutable path keeps the previous logo intact until SQLite commits.
+    const destination = join(directory, `${role}-${randomUUID()}${extension}`);
     const existing = this.find(owner, ownerId, role);
-    if (existing) {
-      const existingPath = resolve(this.workspace.root, existing.relative_path);
-      if (existingPath !== destination && existsSync(existingPath)) this.safeDelete(existingPath);
-    }
-
-    if (source !== resolve(destination)) copyFileSync(source, destination);
+    writeFileSync(destination,bytes,{flag:'wx'});
     const stats = statSync(destination);
     const now = new Date().toISOString();
     const id = existing?.id ?? randomUUID();
     const organizationId = owner === 'organization' ? ownerId : null;
     const contactId = owner === 'contact' ? ownerId : null;
 
+    this.database.exec('SAVEPOINT crm_identity_import');
+    try {
     if (existing) {
       this.database.run(
         `UPDATE crm_identity_assets
@@ -105,7 +117,16 @@ export class CrmIdentityAssetService {
     }
 
     this.writeActivity(owner, ownerId, role, existing ? 'remplacée' : 'ajoutée');
-    return this.get(id);
+    const asset = this.get(id);
+    this.database.exec('RELEASE SAVEPOINT crm_identity_import');
+    return asset;
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT crm_identity_import');
+      this.database.exec('RELEASE SAVEPOINT crm_identity_import');
+      this.safeDelete(destination);
+      throw error;
+    }
+    // Previous revisions are intentionally retained for existing SQLite backups.
   }
 
   get(id: string): CrmIdentityAsset {
@@ -117,7 +138,7 @@ export class CrmIdentityAssetService {
   preview(id: string): CrmIdentityAssetPreview {
     const asset = this.get(id);
     if (asset.missing) return { available: false, error: 'Le fichier image est introuvable.' };
-    const absolute = resolve(this.workspace.root, asset.relativePath);
+    const absolute = this.assetPath(asset.relativePath);
     const stats = statSync(absolute);
     if (stats.size > MAX_IDENTITY_ASSET_BYTES) return { available: false, error: 'L’image dépasse 8 Mo.' };
     const data = readFileSync(absolute);
@@ -130,10 +151,17 @@ export class CrmIdentityAssetService {
 
   remove(id: string): void {
     const asset = this.get(id);
-    const absolute = resolve(this.workspace.root, asset.relativePath);
-    if (existsSync(absolute)) this.safeDelete(absolute);
-    this.database.run('DELETE FROM crm_identity_assets WHERE id=?', [id]);
-    this.writeActivity(asset.ownerType, asset.ownerId, asset.role, 'supprimée');
+    this.assetPath(asset.relativePath);
+    this.database.exec('SAVEPOINT crm_identity_remove');
+    try {
+      this.database.run('DELETE FROM crm_identity_assets WHERE id=?', [id]);
+      this.writeActivity(asset.ownerType, asset.ownerId, asset.role, 'supprimée');
+      this.database.exec('RELEASE SAVEPOINT crm_identity_remove');
+    } catch (error) {
+      this.database.exec('ROLLBACK TO SAVEPOINT crm_identity_remove');
+      this.database.exec('RELEASE SAVEPOINT crm_identity_remove');
+      throw error;
+    }
   }
 
   private find(owner: CrmIdentityOwnerType, ownerId: string, role: CrmIdentityAssetRole): IdentityAssetRow | undefined {
@@ -148,7 +176,7 @@ export class CrmIdentityAssetService {
     const ownerType: CrmIdentityOwnerType = row.organization_id ? 'organization' : 'contact';
     const ownerId = row.organization_id ?? row.contact_id;
     if (!ownerId) throw new Error('Image d’identité sans propriétaire.');
-    const absolute = resolve(this.workspace.root, row.relative_path);
+    const absolute = this.assetPath(row.relative_path);
     return {
       id: row.id,
       ownerType,
@@ -165,7 +193,7 @@ export class CrmIdentityAssetService {
   }
 
   private requireOwner(owner: CrmIdentityOwnerType, ownerId: string): void {
-    if (!ownerId.trim()) throw new Error('Identité CRM invalide.');
+    if (!['organization','contact'].includes(owner) || basename(ownerId) !== ownerId || /[\\/:]/.test(ownerId) || ['.','..'].includes(ownerId) || !ownerId.trim()) throw new Error('Identité CRM invalide.');
     const table = owner === 'organization' ? 'organizations' : 'contacts';
     const row = this.database.get<{ id: string }>(`SELECT id FROM ${table} WHERE id=?`, [ownerId]);
     if (!row) throw new Error(owner === 'organization' ? 'Entreprise introuvable.' : 'Contact introuvable.');
@@ -180,11 +208,20 @@ export class CrmIdentityAssetService {
     }
   }
 
+  private assertContained(path: string, root = resolve(this.workspace.root)): void {
+    const child = relative(root, resolve(path));
+    if (!child || child === '..' || child.startsWith('..' + sep) || isAbsolute(child)) throw new Error('Chemin image invalide.');
+  }
+
+  private assetPath(path: string): string {
+    const target = resolve(this.workspace.root, path);
+    this.assertContained(target);
+    if (existsSync(target)) this.assertContained(realpathSync.native(target),realpathSync.native(this.workspace.root));
+    return target;
+  }
+
   private safeDelete(path: string): void {
-    const root = resolve(this.workspace.root);
-    const target = resolve(path);
-    if (!target.startsWith(root)) throw new Error('Chemin image invalide.');
-    unlinkSync(target);
+    unlinkSync(this.assetPath(path));
   }
 
   private writeActivity(owner: CrmIdentityOwnerType, ownerId: string, role: CrmIdentityAssetRole, action: string): void {

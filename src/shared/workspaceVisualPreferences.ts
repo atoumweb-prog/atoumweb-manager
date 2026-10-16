@@ -1,3 +1,4 @@
+import {CRM_RECORD_KEYS,normalizeCrmRecordPresentation,defaultCrmRecordPresentation} from './crmRecordPresentation';
 import { layoutKey, readLayout, type VisualPreferenceStore } from './panelLayout';
 import { defaultTableView, readTableView, tableViewKey } from './tableViewPreference';
 import { personalViewsKey, readPersonalViews } from './personalTableViews';
@@ -5,6 +6,7 @@ import { TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES } from './tableWorkshopFixtu
 import {NAVIGATION_PREFERENCE_KEY,normalizeNavigationPreference} from './navigationRail';
 import{HEADER_PREFERENCE_KEY,normalizeHeaderPreference}from'./headerPresentation';
 import {HOME_WIDGET_PREFERENCE_KEY,normalizeHomeWidgets,defaultHomeWidgets} from './homeWidgetPreference';
+import {REAL_TABLE_SCHEMAS} from './realTableSchemas';
 
 /** Workspace-owned presentation adapter. No business command or SQL migration.
  * Pilot schemas are explicitly registered; later module ports must register their own domains. */
@@ -12,6 +14,7 @@ export const VISUAL_SETTINGS_KEY = 'ux_v2_visual_preferences_v1';
 export interface SettingsOwner { getSetting<T>(key: string, fallback: T): T; setSetting(key: string, value: unknown): void }
 const modules = ['dossiers', 'autre-vue'];
 export function normalizeVisualValue(key: string, raw: string): string {
+  if(CRM_RECORD_KEYS.some(allowed=>allowed===key))return JSON.stringify(normalizeCrmRecordPresentation(JSON.parse(raw),key===CRM_RECORD_KEYS[0]?'client':'prospect'));
   if (raw.length > 100_000) throw Error('Préférence trop volumineuse.');
   if(key===layoutKey('directory','list'))return JSON.stringify({version:1,listPercent:readLayout({getItem:()=>raw,setItem(){},removeItem(){}},key,38)});
   if(key===layoutKey('clients','list'))return JSON.stringify({version:1,listPercent:readLayout({getItem:()=>raw,setItem(){},removeItem(){}},key,68)});
@@ -19,6 +22,10 @@ export function normalizeVisualValue(key: string, raw: string): string {
   if(key===HEADER_PREFERENCE_KEY)return JSON.stringify(normalizeHeaderPreference(JSON.parse(raw)));
   if (key === NAVIGATION_PREFERENCE_KEY) return JSON.stringify(normalizeNavigationPreference(JSON.parse(raw)));
   const store: VisualPreferenceStore = { getItem: () => raw, setItem() {}, removeItem() {} };
+  for(const [scope,columns]of Object.entries(REAL_TABLE_SCHEMAS)){
+    if(key===tableViewKey(scope))return JSON.stringify(readTableView(store,key,[],[],columns));
+    if(key===personalViewsKey(scope))return JSON.stringify({version:1,views:readPersonalViews(store,scope,[],[],columns)});
+  }
   for (const module of modules) {
     if (key === layoutKey(`table-demo:${module}`, 'list')) return JSON.stringify({ version: 1, listPercent: readLayout(store, key, 60) });
     if (key === tableViewKey(module)) return JSON.stringify(readTableView(store, key, TABLE_DEMO_STATUSES, TABLE_DEMO_CATEGORIES));
@@ -41,7 +48,7 @@ export class WorkspaceVisualPreferenceStore implements VisualPreferenceStore {
   getItem(key: string): string | null {
     if(key===HOME_WIDGET_PREFERENCE_KEY){normalizeVisualValue(key,JSON.stringify(defaultHomeWidgets()));return this.entries()[key]??null;}
     // Validate keys even when absent. Never expose arbitrary settings/business fields.
-    normalizeVisualValue(key, key===HEADER_PREFERENCE_KEY?'{"version":1,"compact":false}':key === NAVIGATION_PREFERENCE_KEY ? '{"version":1,"railCollapsed":false,"favoriteModuleKeys":[]}' : key.startsWith('atoumweb:layout:') ? '{"version":1,"listPercent":60}' : key.includes(':personal:') ? '{"version":1,"views":[]}' : JSON.stringify(defaultTableView()));
+    normalizeVisualValue(key, CRM_RECORD_KEYS.some(allowed=>allowed===key)?JSON.stringify(defaultCrmRecordPresentation()):key===HEADER_PREFERENCE_KEY?'{"version":1,"compact":false}':key === NAVIGATION_PREFERENCE_KEY ? '{"version":1,"railCollapsed":false,"favoriteModuleKeys":[]}' : key.startsWith('atoumweb:layout:') ? '{"version":1,"listPercent":60}' : key.includes(':personal:') ? '{"version":1,"views":[]}' : JSON.stringify(defaultTableView()));
     return this.entries()[key] ?? null;
   }
   setItem(key: string, raw: string) { const value = normalizeVisualValue(key, raw), entries = this.entries(); entries[key] = value; this.owner.setSetting(VISUAL_SETTINGS_KEY, { version: 1, entries }); }

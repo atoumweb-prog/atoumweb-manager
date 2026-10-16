@@ -17,7 +17,7 @@ describe('04F — migration registry convergence guard', () => {
       (index === 0 || id > ids[index - 1]))).toBe(true);
   });
 
-  it('upgrades a populated schema 66 fixture to 70 without losing legacy settings or foreign-key integrity', () => {
+  it('upgrades a populated schema 66 fixture to 71 without losing legacy settings or foreign-key integrity', () => {
     const database = new NodeSqliteAdapter(':memory:');
     database.exec('PRAGMA foreign_keys = ON;');
     try {
@@ -38,8 +38,8 @@ describe('04F — migration registry convergence guard', () => {
       const before = database.get('SELECT value_json FROM settings WHERE key=?', [
         'lot04-migration-sentinel',
       ]);
-      expect(getPendingMigrations(database).map(migration => migration.id)).toEqual([67, 68, 69, 70]);
-      expect(applyPendingMigrations(database).map(migration => migration.id)).toEqual([67, 68, 69, 70]);
+      expect(getPendingMigrations(database).map(migration => migration.id)).toEqual([67, 68, 69, 70, 71]);
+      expect(applyPendingMigrations(database).map(migration => migration.id)).toEqual([67, 68, 69, 70, 71]);
       expect(database.get('SELECT value_json FROM settings WHERE key=?', [
         'lot04-migration-sentinel',
       ])).toEqual(before);
@@ -49,6 +49,7 @@ describe('04F — migration registry convergence guard', () => {
           { id: 68, name: 'catalog_version_recommendations_v1' },
           { id: 69, name: 'contract_clause_section_review_v1' },
           { id: 70, name: 'catalog_recommendation_details_v1' },
+          { id: 71, name: 'quote_contract_transmission_v1' },
         ]);
       expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
       expect(applyPendingMigrations(database)).toEqual([]);

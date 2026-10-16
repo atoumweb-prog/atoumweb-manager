@@ -1,3 +1,5 @@
+import { activePreparation, assertPreparedContent, contractHash, contractSourceHash } from './quoteTransmission';
+import type { QuoteSendAttestation, QuoteTransmissionState } from '../../shared/quoteTransmission';
 import { OperationalSalesTargetService } from '../operations/OperationalSalesTargetService';
 import { OperationalSalesService } from '../operations/OperationalSalesService';
 import { CommercialRulesService } from './CommercialRulesService';
@@ -57,6 +59,7 @@ interface QuoteRow extends Record<string, unknown> {
   snapshot_locked_at: string | null;
   project_ready_at: string | null;
   finalized_at: string | null;
+  contract_preparation_id: string | null;
   last_extended_at: string | null;
   contract_text_snapshot: string | null;
   contract_snapshot_json: string | null;
@@ -196,8 +199,11 @@ export class QuoteService {
     const lines = this.database
       .all<QuoteLineRow>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY sort_order, created_at', [id])
       .map((line) => ({...this.mapLine(line), parameters:new CommercialRulesService(this.database).parameters(line.id)}));
+    const documentJson=row.contract_snapshot_json??activePreparation(this.database,id)?.snapshot_json;
+    const recipient=documentJson?JSON.parse(documentJson).recipientLabel:null;
     return {
       ...this.mapSummary(row),
+      contractRecipientLabel:typeof recipient==='string'?recipient:null,
       needSummary: row.need_summary,
       estimatedDelay: row.estimated_delay,
       prerequisitesText: row.prerequisites_text,
@@ -429,7 +435,7 @@ export class QuoteService {
         VALUES (?,?,?,?,?,'purchased',?)`,
         [line.id, offer.id, offer.catalogItemId!, offer.catalogVersionId!, componentId, nowIso()],
       );
-      this.contractTerms.syncQuote(offer.quoteId);
+      this.contractTerms.composeQuote(offer.quoteId);
       this.writeActivity(offer.quoteId, 'quote_option_purchased', `Option achetée : ${line.label}`);
       this.database.exec('RELEASE purchase_option;');
       return this.get(offer.quoteId);
@@ -523,7 +529,7 @@ export class QuoteService {
         this.database.run('UPDATE quotes SET contract_parameters_json=? WHERE id=?', [JSON.stringify(parameters), existing.quote_id]);
       }
       this.recalculate(existing.quote_id);
-      this.contractTerms.syncQuote(existing.quote_id);
+      this.contractTerms.composeQuote(existing.quote_id);
       this.writeActivity(existing.quote_id, 'quote_line_removed', 'Ligne et options associées retirées du brouillon');
       this.database.exec('RELEASE remove_quote_line;');
       return this.get(existing.quote_id);
@@ -561,13 +567,56 @@ export class QuoteService {
     return this.get(quoteId);
   }
 
-  markSent(id: string): QuoteDetail {
-    const quote = this.get(id);
-    if (quote.status !== 'draft') throw new Error('Seul un devis brouillon peut être marqué envoyé.');
-    if (!quote.finalizedAt) throw new Error('Finalise le devis avant d’enregistrer son envoi.');
-    const result = this.transition(id, 'sent', 'sent_at', 'Devis marqué envoyé');
-    if (result.prospectId) this.database.run("UPDATE prospects SET stage='quote_sent',updated_at=? WHERE id=? AND stage NOT IN ('won','lost')", [nowIso(), result.prospectId]);
-    return result;
+  transmissionState(id:string):QuoteTransmissionState {
+    const quote=this.get(id),prepared=activePreparation(this.database,id);
+    const sent=this.database.get<{id:string;content_hash:string}>('SELECT id,content_hash FROM quote_contract_transmissions WHERE quote_id=?',[id]);
+    return {preparationId:prepared?.id??null,contentHash:sent?.content_hash??prepared?.content_hash??(quote.contractTextSnapshot!=null&&quote.contractSnapshotJson!=null?contractHash([quote.contractTextSnapshot,quote.contractSnapshotJson]):null),transmissionId:sent?.id??null,legacy:!prepared};
+  }
+
+  resumeDraft(id:string,preparationId:string):QuoteDetail {
+    this.database.exec('SAVEPOINT resume_quote_preparation;');
+    try{
+      const quote=this.get(id),prepared=activePreparation(this.database,id);
+      if(quote.status!=='draft'||!prepared||prepared.id!==preparationId||quote.contractCompiledAt||quote.contractTextSnapshot!=null||quote.contractSnapshotJson!=null||this.transmissionState(id).transmissionId)
+        throw Error('Reprise refusée : préparation absente, périmée ou devis déjà figé. Les devis historiques restent conservés.');
+      this.database.run('UPDATE quotes SET finalized_at=NULL,contract_preparation_id=NULL,updated_at=? WHERE id=?',[nowIso(),id]);
+      this.writeActivity(id,'quote_preparation_resumed','Brouillon repris explicitement avant envoi ; préparation antérieure conservée');
+      this.database.exec('RELEASE resume_quote_preparation;');return this.get(id);
+    }catch(error){this.database.exec('ROLLBACK TO resume_quote_preparation; RELEASE resume_quote_preparation;');throw error;}
+  }
+
+  markSent(id:string,input?:QuoteSendAttestation):QuoteDetail {
+    if(!input||input.confirmed!==true||!input.operationId?.trim()||!input.contentHash||!input.provenance?.trim()||!['abby','other'].includes(input.channel)
+      ||!input.occurredAt||(input.occurredAt!=='now'&&(!Number.isFinite(Date.parse(input.occurredAt))||Date.parse(input.occurredAt)>Date.now())))throw Error('Attestation explicite de l’envoi, date, version et provenance requises.');
+    this.database.exec('SAVEPOINT quote_transmission;');
+    try{
+      const existing=this.database.get<Record<string,unknown>>('SELECT * FROM quote_contract_transmissions WHERE operation_id=?',[input.operationId]);
+      if(existing){
+        if(existing.quote_id!==id||existing.content_hash!==input.contentHash||existing.preparation_id!==input.preparationId||(input.occurredAt!=='now'&&existing.occurred_at!==input.occurredAt)||existing.provenance!==input.provenance.trim()||existing.channel!==input.channel)throw Error('Identifiant d’envoi déjà utilisé pour une autre attestation.');
+        this.database.exec('RELEASE quote_transmission;');return this.get(id);
+      }
+      const quote=this.get(id),prepared=activePreparation(this.database,id),state=this.transmissionState(id);
+      if(quote.status!=='draft'||!quote.finalizedAt)throw Error('Finalise le devis avant l’envoi ; seul un devis préparé non encore envoyé peut être marqué envoyé.');
+      if(state.contentHash!==input.contentHash||state.preparationId!==input.preparationId)throw Error('Version à envoyer périmée ou ambiguë. Rechargez le devis.');
+      if(prepared){
+        if(quote.contractTextSnapshot!=null||quote.contractSnapshotJson!=null||quote.contractCompiledAt!=null||quote.snapshotLockedAt)throw Error('Devis déjà figé ou état ambigu : aucun snapshot existant ne sera remplacé.');
+        assertPreparedContent(prepared);
+        const recipient=JSON.parse(prepared.snapshot_json).recipientLabel;
+        if(typeof recipient!=='string'||recipient!==quote.ownerLabel)throw Error('Le destinataire a changé ou sa version est ambiguë. Reprenez puis préparez le brouillon.');
+        const annexes=JSON.parse(prepared.snapshot_json).documents as Array<{id:string;sha256:string|null;documentId?:string|null;relativePath?:string|null}>|undefined;
+        for(const annex of annexes??[])if(annex.documentId||annex.relativePath)this.preparation.openLinked(annex.id);
+        if(prepared.source_hash!==contractSourceHash(this.database,id))throw Error('Le devis a changé depuis sa préparation. Reprenez puis préparez le brouillon.');
+        this.database.run('UPDATE quotes SET contract_text_snapshot=?,contract_snapshot_json=?,contract_compiled_at=? WHERE id=?',[prepared.text_snapshot,prepared.snapshot_json,prepared.prepared_at,id]);
+      }else if(quote.contractTextSnapshot==null||quote.contractSnapshotJson==null)throw Error('Snapshot historique incomplet : envoi ambigu refusé.');
+      const now=nowIso(),occurredAt=input.occurredAt==='now'?now:input.occurredAt;
+      this.database.run(`INSERT INTO quote_contract_transmissions(id,quote_id,preparation_id,content_hash,operation_id,occurred_at,recorded_at,channel,provenance,legacy) VALUES(?,?,?,?,?,?,?,?,?,?)`,
+        [randomUUID(),id,prepared?.id??null,input.contentHash,input.operationId,occurredAt,now,input.channel,input.provenance.trim(),prepared?0:1]);
+      this.database.run("UPDATE quotes SET status='sent',sent_at=?,updated_at=? WHERE id=?",[occurredAt,now,id]);
+      if(quote.prospectId)this.database.run("UPDATE prospects SET stage='quote_sent',updated_at=? WHERE id=? AND stage NOT IN ('won','lost')",[now,quote.prospectId]);
+      this.writeActivity(id,'quote_sent',`Envoi attesté du devis ${quote.number} — ${input.channel} — ${input.provenance.trim()}`);
+      this.writeActivity(id,'quote_contract_frozen','Version contractuelle transmise figée ; envoi attesté manuellement');
+      this.database.exec('RELEASE quote_transmission;');return this.get(id);
+    }catch(error){this.database.exec('ROLLBACK TO quote_transmission; RELEASE quote_transmission;');throw error;}
   }
 
   finalize(id: string, explicitCanonicalReview=false): QuoteDetail {
@@ -579,8 +628,12 @@ export class QuoteService {
     try {
     const lineIssues = [...new CommercialRulesService(this.database).issues(quote), ...new OperationalSalesService(this.database).issues(quote)];
     if (lineIssues.length) throw Error(lineIssues.join('\n'));
-    this.contractTerms.freezeQuote(id,explicitCanonicalReview);
-    const now = this.get(id).contractCompiledAt ?? nowIso();
+    const artifact=this.contractTerms.compilePreparation(id,explicitCanonicalReview);
+    artifact.json=JSON.stringify({...JSON.parse(artifact.json),recipientLabel:quote.ownerLabel});
+    const now=artifact.preparedAt,preparationId=randomUUID();
+    this.database.run(`INSERT INTO quote_contract_preparations(id,quote_id,protocol_version,text_snapshot,snapshot_json,content_hash,source_hash,prepared_at) VALUES(?,?,1,?,?,?,?,?)`,
+      [preparationId,id,artifact.text,artifact.json,contractHash([artifact.text,artifact.json]),contractSourceHash(this.database,id),now]);
+    this.database.run('UPDATE quotes SET contract_preparation_id=? WHERE id=?',[preparationId,id]);
     this.database.run('UPDATE quotes SET finalized_at=?,updated_at=? WHERE id=?', [now, now, id]);
     if (quote.prospectId) this.database.run("UPDATE prospects SET stage='quote_to_send',updated_at=? WHERE id=? AND stage NOT IN ('won','lost')", [now, quote.prospectId]);
     this.writeActivity(id, 'quote_finalized', `Devis ${quote.number} finalisé et prêt à envoyer`);
@@ -659,6 +712,7 @@ export class QuoteService {
 
   extendValidity(id: string, validUntil: string): QuoteDetail {
     const quote = this.get(id);
+    if(activePreparation(this.database,id)||this.transmissionState(id).transmissionId)throw Error('Créez une révision ou reprenez le brouillon avant de modifier sa validité.');
     const date = new Date(validUntil);
     if (!['draft', 'sent', 'viewed'].includes(quote.status)) throw new Error('La validité de ce devis ne peut plus être prolongée.');
     if (Number.isNaN(date.getTime()) || date.getTime() <= Date.now()) throw new Error('Choisis une nouvelle date de validité future.');
@@ -684,7 +738,10 @@ export class QuoteService {
     this.database.exec('SAVEPOINT quote_acceptance;');
     try {
     this.preparation.assertAcceptance(id);
-    const contract = this.contractTerms.freezeQuote(id);
+    const contract = this.contractTerms.getQuoteBuild(id);
+    const transmission=this.database.get<{content_hash:string}>('SELECT content_hash FROM quote_contract_transmissions WHERE quote_id=?',[id]);
+    if(transmission&&transmission.content_hash!==contractHash([quote.contractTextSnapshot,quote.contractSnapshotJson]))throw Error('La version acceptée ne correspond pas au contrat transmis.');
+    if(activePreparation(this.database,id)&&!transmission)throw Error('Aucune transmission attestée pour cette version.');
 
     let clientId = quote.clientAccountId ?? quote.acceptedClientAccountId ?? null;
     if (!clientId && quote.prospectId) {
@@ -920,7 +977,7 @@ export class QuoteService {
     const quote = this.get(quoteId);
     if (quote.snapshotLockedAt || quote.status === 'accepted') throw new Error('Ce devis est accepté et figé.');
     if (quote.status !== 'draft') throw new Error('Repasse par une copie du devis pour modifier son contenu après envoi.');
-    if (quote.finalizedAt || quote.contractCompiledAt || quote.contractTextSnapshot != null || quote.contractSnapshotJson != null) throw new Error('Ce devis est finalisé et figé. Duplique-le pour modifier son contenu.');
+    if (quote.finalizedAt || quote.contractCompiledAt || quote.contractTextSnapshot != null || quote.contractSnapshotJson != null) throw new Error('Ce devis est finalisé pour envoi ou déjà figé. Reprends explicitement son brouillon si possible, sinon crée une révision.');
   }
 
   private transition(id: string, status: QuoteStatus, timestampColumn: 'sent_at' | 'viewed_at' | 'refused_at' | 'expired_at', summary: string): QuoteDetail {
@@ -992,6 +1049,7 @@ export class QuoteService {
       snapshotLockedAt: row.snapshot_locked_at,
       projectReadyAt: row.project_ready_at,
       finalizedAt: row.finalized_at,
+      contractPreparationId: row.contract_preparation_id,
       lastExtendedAt: row.last_extended_at,
       contractCompiledAt: row.contract_compiled_at,
       contractDocumentId: row.contract_document_id,

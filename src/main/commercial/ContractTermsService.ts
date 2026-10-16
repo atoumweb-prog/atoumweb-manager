@@ -1,3 +1,5 @@
+import { activePreparation, contractHash, contractSourceHash } from './quoteTransmission';
+import type { ContractUpdateProposal } from '../../shared/quoteTransmission';
 import { CatalogService } from './CatalogService';
 import { CommercialRulesService } from './CommercialRulesService';
 import { ContractTypeService } from './ContractTypeService';
@@ -352,9 +354,10 @@ export class ContractTermsService {
 
   getQuoteBuild(quoteId: string): QuoteContractBuild {
     const state = this.quoteState(quoteId);
+    const prepared = activePreparation(this.database,quoteId);
     const frozen = this.hasSnapshot(state);
     const locked = frozen || state.status !== 'draft' || Boolean(state.finalized_at);
-    const snapshotState = frozen ? 'frozen' : locked ? 'historical_missing' : 'draft';
+    const snapshotState = frozen ? 'frozen' : prepared ? 'prepared' : locked ? 'historical_missing' : 'draft';
     const clauses = this.quoteClauses(quoteId);
     const audience = this.resolveQuoteAudience(state);
     const compiledText = this.compile(clauses);
@@ -389,7 +392,7 @@ export class ContractTermsService {
         ? 'Aucune clause dédiée aux particuliers / consommateurs n’est incluse.'
         : 'Aucune clause dédiée aux clients professionnels n’est incluse.');
     }
-    if(snapshotState==='draft')warnings.push(...new ContractTypeService(this.database).orderWarnings(new ContractTypeService(this.database).quoteReferences(quoteId),new Set(clauses.filter(c=>c.enabled&&c.sourceClauseId).map(c=>c.sourceClauseId!))));
+    if(snapshotState==='draft')warnings.push(...new ContractTypeService(this.database).orderWarnings(this.selectedTypes(quoteId),new Set(clauses.filter(c=>c.enabled&&c.sourceClauseId).map(c=>c.sourceClauseId!))));
     return {
       quoteId,
       audience,
@@ -397,10 +400,10 @@ export class ContractTermsService {
       snapshotState,
       clauses,
       compiledText,
-      snapshotText: state.contract_text_snapshot,
-      compiledAt: state.contract_compiled_at,
+      snapshotText: prepared && !frozen ? prepared.text_snapshot : state.contract_text_snapshot,
+      compiledAt: prepared && !frozen ? prepared.prepared_at : state.contract_compiled_at,
       warnings,
-      types: frozen ? (state.contract_snapshot_json ? JSON.parse(state.contract_snapshot_json).types ?? [] : []) : locked ? [] : new ContractTypeService(this.database).quoteReferences(quoteId),
+      types: prepared && !frozen ? JSON.parse(prepared.snapshot_json).types ?? [] : frozen ? (state.contract_snapshot_json ? JSON.parse(state.contract_snapshot_json).types ?? [] : []) : locked ? [] : this.selectedTypes(quoteId),
     };
   }
 
@@ -428,6 +431,11 @@ export class ContractTermsService {
   presentation(quoteId: string): ContractPresentation {
     const build = this.getQuoteBuild(quoteId);
     const row=this.database.get<Record<string,unknown>>('SELECT * FROM quotes WHERE id=?',[quoteId])!;
+    const prepared=activePreparation(this.database,quoteId);
+    if(build.snapshotState==='prepared' && prepared) {
+      const saved=JSON.parse(prepared.snapshot_json).presentation as ContractPresentation;
+      return {...saved,state:'prepared'};
+    }
     const snapshot=row.contract_snapshot_json ? JSON.parse(String(row.contract_snapshot_json)) : null;
     if(build.snapshotState==='frozen' && snapshot?.presentation) return snapshot.presentation as ContractPresentation;
     const clauses:QuoteContractClause[]=build.snapshotState==='frozen' ? snapshot?.clauses ?? [] : build.clauses;
@@ -457,8 +465,17 @@ export class ContractTermsService {
 
   syncQuote(quoteId: string): QuoteContractBuild {
     this.assertQuoteEditable(quoteId);
-    this.syncQuoteInternal(quoteId);
-    this.writeActivity('quote', quoteId, 'quote_contract_synced', 'CGV synchronisées avec les prestations du devis');
+    this.database.exec('SAVEPOINT adopt_contract_terms;');
+    try{
+      const proposal=this.proposeQuoteUpdate(quoteId);
+      if(proposal.changes.length){
+        const types=new ContractTypeService(this.database).quoteReferences(quoteId);
+        this.database.run('UPDATE quotes SET contract_type_references_json=? WHERE id=?',[JSON.stringify(types),quoteId]);
+        this.syncQuoteInternal(quoteId);
+        this.writeActivity('quote', quoteId, 'quote_contract_synced', 'CGV actualisées après commande explicite');
+      }
+      this.database.exec('RELEASE adopt_contract_terms;');
+    }catch(error){this.database.exec('ROLLBACK TO adopt_contract_terms; RELEASE adopt_contract_terms;');throw error;}
     return this.getQuoteBuild(quoteId);
   }
 
@@ -513,14 +530,15 @@ export class ContractTermsService {
     const row = this.database.get<QuoteClauseRow>('SELECT * FROM quote_contract_clauses WHERE id=?', [id]);
     if (!row) throw new Error('Clause du devis introuvable.');
     this.assertQuoteEditable(row.quote_id);
-    if (row.source_kind === 'base') throw new Error('Le socle fixe reprend toujours la version publiée de la Bibliothèque CGV.');
+    if (row.source_kind === 'base') throw new Error('Pour actualiser le socle, comparez puis confirmez les nouvelles versions.');
     if (!row.source_clause_id) throw new Error('Cette clause particulière ne dépend pas d’un modèle réinitialisable.');
     const template = this.getTemplate(row.source_clause_id);
-    if (!template.currentVersion) throw new Error('Aucune version publiée n’est disponible pour cette clause.');
+    const selected=template.versions.find(v=>v.id===row.source_clause_version_id);
+    if (!selected) throw new Error('Version sélectionnée introuvable : aucune substitution automatique.');
     this.database.run(
       `UPDATE quote_contract_clauses
        SET title=?,body=?,source_clause_version_id=?,enabled=1,is_customized=0,updated_at=? WHERE id=?`,
-      [template.title, template.currentVersion.body, template.currentVersion.id, nowIso(), id],
+      [row.title, selected.body, selected.id, nowIso(), id],
     );
     this.writeActivity('quote', row.quote_id, 'quote_contract_clause_reset', `Clause réinitialisée : ${template.title}`);
     return this.getQuoteBuild(row.quote_id);
@@ -561,16 +579,20 @@ export class ContractTermsService {
     return this.getQuoteBuild(quoteId);
   }
 
-  freezeQuote(quoteId: string, explicitCanonicalReview=false): QuoteContractBuild {
-    const state = this.quoteState(quoteId);
-    // A timestamp/JSON (including an empty clause list) is evidence of freezing.
-    // Locked legacy quotes must retain their historical absence, even with instances.
-    if (this.hasSnapshot(state) || state.status !== 'draft' || state.finalized_at) return this.getQuoteBuild(quoteId);
+  /** Compatibility read for historical callers. Only an attested send may freeze a new contract. */
+  freezeQuote(quoteId:string):QuoteContractBuild {
+    const state=this.quoteState(quoteId);
+    if(!this.hasSnapshot(state)&&state.status==='draft'&&!state.finalized_at)throw Error('Le gel contractuel exige un envoi attesté ; préparez le devis sans le figer.');
+    return this.getQuoteBuild(quoteId);
+  }
+
+  compilePreparation(quoteId:string,explicitCanonicalReview=false):{text:string;json:string;preparedAt:string;audience:QuoteContractAudience} {
+    this.assertQuoteEditable(quoteId);
+    const state=this.quoteState(quoteId);
     const payload=new QuoteContractPreparationService(this.database, this.documents).freezePayload(quoteId);
     if(explicitCanonicalReview&&!payload)throw Error('Préparation du devis indispensable pour la validation canonique du contrat.');
     this.database.exec('SAVEPOINT quote_contract_freeze;');
     try {
-    this.syncQuoteInternal(quoteId);
     const clauses = this.quoteClauses(quoteId);
     const audience = this.resolveQuoteAudience(state);
     const included = clauses.filter((clause) => clause.enabled && !clause.isOrphaned);
@@ -610,10 +632,10 @@ export class ContractTermsService {
 
     if(payload && (activeOrphans.length > 0 || included.some(c=>!clean(c.body)||/\[À RENSEIGNER/i.test(c.body)))) throw Error('Clause incluse vide, orpheline ou incomplète : finalisation refusée.');
     const now = nowIso();
-    const types=new ContractTypeService(this.database).quoteReferences(quoteId);
+    const types=this.selectedTypes(quoteId);
     const orderConflicts=new ContractTypeService(this.database).orderWarnings(types,new Set(included.filter(c=>c.sourceClauseId).map(c=>c.sourceClauseId!)));
     if(orderConflicts.length&&!this.database.get("SELECT id FROM activity_log WHERE entity_type='quote' AND entity_id=? AND action='quote_contract_reordered'",[quoteId]))throw Error(orderConflicts.join(' '));
-    const currentPresentation=payload?this.presentation(quoteId):null;
+    const currentPresentation=this.presentation(quoteId);
     const presentation= currentPresentation ? (() => {
       if(!usedCanonical)return {...currentPresentation,state:'frozen' as const,compiledAt:now};
       // Keep commercial/parameter sections, replace only the displayed clause
@@ -625,50 +647,73 @@ export class ContractTermsService {
         text:sections.map(section=>section.title.toUpperCase()+'\n\n'+section.text).join('\n\n'),
       };
     })():null;
-    this.database.run(
-      `UPDATE quotes
-       SET contract_text_snapshot=?,contract_snapshot_json=?,contract_compiled_at=?,contract_audience=?,updated_at=?
-       WHERE id=?`,
-      [compiledText, JSON.stringify({ ...(payload ?? {}), audience, clauses: included, ...(payload ? {compiledAt:now,finalizationAt:now,types,presentation} : {}) }), now, audience, now, quoteId],
-    );
-    this.writeActivity('quote', quoteId, 'quote_contract_frozen', 'Version contractuelle des CGV figée');
+    const snapshotJson=JSON.stringify({ ...(payload ?? {}), audience, clauses: included, allClauses:clauses, compiledAt:now,finalizationAt:now,types,presentation });
     this.database.exec('RELEASE quote_contract_freeze;');
-    return this.getQuoteBuild(quoteId);
+    return {text:compiledText,json:snapshotJson,preparedAt:now,audience};
     } catch(error) {this.database.exec('ROLLBACK TO quote_contract_freeze; RELEASE quote_contract_freeze;');throw error;}
   }
 
+
   copyQuoteCustomizations(sourceQuoteId: string, targetQuoteId: string, lineIds?: Map<string,string>): QuoteContractBuild {
     this.assertQuoteEditable(targetQuoteId);
-    this.syncQuoteInternal(targetQuoteId);
-    const source = this.quoteClauses(sourceQuoteId);
-    const target = this.quoteClauses(targetQuoteId);
-    const targetByKey = new Map(target.map((clause) => [clause.sourceKey, clause]));
-
-    for (const clause of source) {
-      if (clause.sourceKey.startsWith('custom:')) {
-        this.addCustomQuoteClause(targetQuoteId, { title: clause.title, body: clause.body, enabled: clause.enabled });
-        continue;
-      }
-      const targetKey = clause.sourceKey.startsWith('particular-line:') && lineIds ? `particular-line:${lineIds.get(clause.sourceKey.slice('particular-line:'.length))}` : clause.sourceKey;
-      const match = targetByKey.get(targetKey);
-      if (!match) continue;
-      this.database.run(
-        `UPDATE quote_contract_clauses
-         SET enabled=?,title=?,body=?,is_customized=?,updated_at=? WHERE id=?`,
-        [
-          clause.enabled ? 1 : 0,
-          clause.isCustomized ? clause.title : match.title,
-          clause.isCustomized ? clause.body : match.body,
-          clause.isCustomized ? 1 : match.isCustomized ? 1 : 0,
-          nowIso(),
-          match.id,
-        ],
-      );
+    const sourceState=this.quoteState(sourceQuoteId);
+    const sourceTypes=sourceState.contract_snapshot_json?JSON.parse(sourceState.contract_snapshot_json).types??[]:activePreparation(this.database,sourceQuoteId)?JSON.parse(activePreparation(this.database,sourceQuoteId)!.snapshot_json).types??[]:this.selectedTypes(sourceQuoteId);
+    this.database.run('UPDATE quotes SET contract_type_references_json=? WHERE id=?',[JSON.stringify(sourceTypes),targetQuoteId]);
+    const snapshot=sourceState.contract_snapshot_json?JSON.parse(sourceState.contract_snapshot_json):null;
+    const source:QuoteContractClause[]=this.hasSnapshot(sourceState)?snapshot?.allClauses??snapshot?.clauses:this.quoteClauses(sourceQuoteId);
+    if(!Array.isArray(source)||source.some(c=>typeof c.sourceKey!=='string'||typeof c.body!=='string'||typeof c.title!=='string')||(this.hasSnapshot(sourceState)&&!source.length&&!!sourceState.contract_text_snapshot))throw Error('Version contractuelle historique ambiguë : révision refusée sans reconstitution.');
+    this.database.run('DELETE FROM quote_contract_clauses WHERE quote_id=?',[targetQuoteId]);
+    for(const clause of source){
+      const oldLine=clause.sourceKey.startsWith('particular-line:')?clause.sourceKey.slice('particular-line:'.length):null;
+      if(oldLine&&lineIds&&!lineIds.has(oldLine))throw Error('Correspondance de ligne contractuelle absente.');
+      const key=oldLine&&lineIds?'particular-line:'+lineIds.get(oldLine):clause.sourceKey;
+      const now=nowIso();
+      this.database.run(`INSERT INTO quote_contract_clauses
+        (id,quote_id,source_key,source_kind,source_clause_id,source_clause_version_id,source_catalog_item_ids_json,title,body,sort_order,enabled,is_customized,is_orphaned,created_at,updated_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,[randomUUID(),targetQuoteId,key,clause.sourceKind,clause.sourceClauseId??null,clause.sourceClauseVersionId??null,
+          JSON.stringify(clause.sourceCatalogItemIds),clause.title,clause.body,clause.sortOrder,clause.enabled?1:0,clause.isCustomized?1:0,clause.isOrphaned?1:0,now,now]);
     }
     return this.getQuoteBuild(targetQuoteId);
   }
 
-  private syncQuoteInternal(quoteId: string): void {
+  composeQuote(quoteId:string):QuoteContractBuild {
+    this.assertQuoteEditable(quoteId);
+    this.syncQuoteInternal(quoteId,true);
+    return this.getQuoteBuild(quoteId);
+  }
+
+  proposeQuoteUpdate(quoteId:string):ContractUpdateProposal {
+    this.assertQuoteEditable(quoteId);
+    const state=this.quoteState(quoteId),types=new ContractTypeService(this.database).quoteReferences(quoteId),desired=this.desiredClauses(quoteId,state,{lines:this.database.all<QuoteLineSourceRow>('SELECT id,catalog_item_id,catalog_version_id,label,snapshot_json FROM quote_lines WHERE quote_id=? ORDER BY sort_order,created_at',[quoteId]),types}),clauses=this.quoteClauses(quoteId);
+    const before=new Map(clauses.map(c=>[c.sourceKey,c]));
+    const changes:ContractUpdateProposal['changes']=[];
+    const manualOrder=!!this.database.get("SELECT id FROM activity_log WHERE entity_type='quote' AND entity_id=? AND action='quote_contract_reordered' LIMIT 1",[quoteId]);
+    const view=(c:{title:string;body:string;sourceClauseVersionId?:string|null;enabled?:boolean;sortOrder?:number;isOrphaned?:boolean;sourceCatalogItemIds?:string[]})=>({title:c.title,body:c.body,versionId:c.sourceClauseVersionId??null,enabled:c.enabled??true,sortOrder:c.sortOrder,isOrphaned:c.isOrphaned??false,sourceCatalogItemIds:c.sourceCatalogItemIds??[]});
+    for(const [key,next] of desired){
+      const current=before.get(key);
+      if(current?.isCustomized)continue;
+      const projected={...next,sortOrder:manualOrder&&current?current.sortOrder:next.sortOrder,enabled:current?.isOrphaned?true:current?.enabled??true};
+      if(!current||JSON.stringify(view(current))!==JSON.stringify(view(projected)))changes.push({sourceKey:key,before:current?view(current):null,after:view(projected)});
+    }
+    for(const current of clauses)if(!desired.has(current.sourceKey)&&!current.sourceKey.startsWith('custom:')&&!current.isOrphaned)
+      changes.push({sourceKey:current.sourceKey,before:view(current),after:{...view(current),isOrphaned:true,enabled:current.isCustomized?current.enabled:false}});
+    const selected=this.selectedTypes(quoteId);
+    if(JSON.stringify(selected)!==JSON.stringify(types))changes.push({sourceKey:'contract-types',before:{title:'Types sélectionnés',body:JSON.stringify(selected,null,2),versionId:null,enabled:true},after:{title:'Types proposés',body:JSON.stringify(types,null,2),versionId:null,enabled:true}});
+    return {quoteId,token:contractHash({state,source:contractSourceHash(this.database,quoteId),clauses,desired:[...desired],types}),changes};
+  }
+
+  applyQuoteUpdate(quoteId:string,token:string):QuoteContractBuild {
+    this.database.exec('SAVEPOINT explicit_contract_update;');
+    try{
+      const proposal=this.proposeQuoteUpdate(quoteId);
+      if(!token||proposal.token!==token)throw Error('La comparaison contractuelle est périmée. Comparez à nouveau ; aucun changement appliqué.');
+      if(proposal.changes.length)this.syncQuote(quoteId);
+      this.database.exec('RELEASE explicit_contract_update;');
+      return this.getQuoteBuild(quoteId);
+    }catch(error){this.database.exec('ROLLBACK TO explicit_contract_update; RELEASE explicit_contract_update;');throw error;}
+  }
+
+  private syncQuoteInternal(quoteId: string, compositionOnly=false): void {
     const state = this.quoteState(quoteId);
     if (this.hasSnapshot(state) || state.status !== 'draft' || state.finalized_at) {
       throw new Error('Les CGV de ce devis sont figées. Duplique le devis pour les modifier.');
@@ -688,6 +733,7 @@ export class ContractTermsService {
       for (const clause of desired.values()) {
         const row = existingByKey.get(clause.sourceKey);
         if (row) {
+          if(compositionOnly||row.is_customized)continue;
           const reenable = Boolean(row.is_orphaned) && !Boolean(row.is_customized);
           this.database.run(
             `UPDATE quote_contract_clauses SET
@@ -902,13 +948,18 @@ export class ContractTermsService {
       });
     }
     // Types reorder only clauses already applicable; membership never activates an option.
-    const refs=reference?.types ?? new ContractTypeService(this.database).quoteReferences(quoteId);
+    const refs=reference?.types ?? this.selectedTypes(quoteId);
     const ranks=new Map<string,number>();
     for(const type of refs)for(const id of type.moduleIds)if(!ranks.has(id))ranks.set(id,ranks.size);
     let trailing=ranks.size;
     for(const clause of desired.values())if(clause.sourceKind==='catalog'&&clause.sourceClauseId)
       clause.sortOrder=1000+10*(ranks.get(clause.sourceClauseId)??trailing++);
     return desired;
+  }
+
+  private selectedTypes(quoteId:string):ContractTypeReference[]{
+    const row=this.database.get<{contract_type_references_json?:string|null}>('SELECT * FROM quotes WHERE id=?',[quoteId]);
+    return row?.contract_type_references_json?JSON.parse(row.contract_type_references_json):[];
   }
 
   private quoteState(quoteId: string): QuoteStateRow {
@@ -938,6 +989,7 @@ export class ContractTermsService {
   private assertQuoteEditable(quoteId: string): void {
     const state = this.quoteState(quoteId);
     if (this.hasSnapshot(state) || state.status !== 'draft' || state.finalized_at) {
+      if(state.status==='draft'&&!this.hasSnapshot(state)&&activePreparation(this.database,quoteId))throw Error('Devis préparé : reprends explicitement le brouillon avant de modifier les CGV.');
       throw new Error('Les CGV de ce devis sont figées. Duplique le devis pour les modifier.');
     }
   }

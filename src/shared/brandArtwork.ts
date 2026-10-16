@@ -1,0 +1,9 @@
+/** Vector interpretation of the supplied 09/10/2026 references.
+ * Candidate for visual approval, not an approved trace of the source pixels.
+ * No generated raster, original source images are preserved separately. */
+const symbol='<path d="M52 370 241 85 282 144 132 370Z"/><path d="m174 370 98-147 98 147h-58l-40-61-40 61Z"/><path d="m287 201 40-60 153 229h-78Z"/>';
+export const BRAND_ICON_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect x="8" y="8" width="496" height="496" rx="96" fill="#ffda00"/><g fill="#141414" transform="translate(0 20)">${symbol}</g></svg>`;
+const positiveMark=(dark:boolean)=>`<path fill="#ffda00" d="M30 370 241 55 282 116 125 370Z"/><path fill="${dark?'#f7f7f4':'#141414'}" d="M152 370 295 145 456 370 392 370 294 231 210 370Z"/><path fill="#ffda00" d="m230 370 38-57 37 57Zm50-80 27-40 80 120h-50Z"/>`;
+export const brandWordmark=(dark:boolean)=>`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 240"><g transform="translate(0 -20) scale(.5)">${positiveMark(dark)}</g><text x="280" y="128" fill="${dark?'#f7f7f4':'#141414'}" font-family="Arial,sans-serif" font-weight="900" font-size="114" letter-spacing="2">ATOUM</text><text x="284" y="193" fill="${dark?'#ffda00':'#b68700'}" font-family="Arial,sans-serif" font-size="45" font-weight="700" letter-spacing="18">MANAGER</text></svg>`;
+export const BRAND_PRIMARY_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 540">${positiveMark(true)}<text x="256" y="460" text-anchor="middle" fill="#f7f7f4" font-family="Arial,sans-serif" font-weight="900" font-size="90">ATOUM</text><text x="262" y="515" text-anchor="middle" fill="#ffda00" font-family="Arial,sans-serif" font-weight="700" font-size="32" letter-spacing="12">MANAGER</text></svg>`;
+export const svgDataUrl=(svg:string)=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);

@@ -1,3 +1,7 @@
+import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {CATALOG_ADMIN_VIEW} from '../../shared/realTableSchemas';
+import {OperationIcon,type OperationIconName} from '../operations/OperationIcon';
+import './commercial-visual-foundation.css';
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { CatalogContractPanel } from './CatalogContractPanel';
@@ -597,7 +601,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       <div className="module-toolbar catalog-toolbar">
         <div><strong>{filtered.length}</strong><span> élément{filtered.length > 1 ? 's' : ''}</span></div>
         <div className="toolbar-controls catalog-toolbar-controls">
-          <button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button>
+          <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh"/>Actualiser</button>
           <input className="inline-search" placeholder="Rechercher dans le catalogue…" value={query} onChange={(e) => setQuery(e.target.value)} />
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as 'all' | CatalogItemType)}>
             <option value="all">Services + Offres</option><option value="service">Services</option><option value="offer">Offres</option>
@@ -697,19 +701,19 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
             ) : catalogView === 'organized' ? (
               <CatalogOverview items={filtered} formatPrice={formatPrice} onOpen={(id) => void openItem(id)} />
             ) : (
-              <div className="catalog-table-wrap">
-                <table className="catalog-table">
-                  <thead><tr><th>Catégorie</th><th>Nom</th><th>Type</th><th>Prix AtoumWeb</th><th>Prix conseillé</th><th>Mode</th><th>Statut</th><th>Site</th><th>Version</th></tr></thead>
-                  <tbody>
-                    {filtered.map((item) => (
-                      <tr key={item.id} className={selectedId === item.id ? 'selected-row' : ''} onClick={() => void openItem(item.id)}>
-                        <td>{item.category || '—'}</td><td><strong>{item.name}</strong>{item.canonicalCode && <small className="catalog-canonical-code">{item.canonicalCode}</small>}</td><td><span className="status-pill">{item.currentVersion?.commercialKind ? KIND_LABELS[item.currentVersion.commercialKind] : item.type === 'offer' ? 'Offre' : 'Service'}</span></td><td>{formatPrice(item)}</td><td>{item.currentVersion?.recommendedPriceCents != null ? `${(item.currentVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'}</td><td>{item.currentVersion ? PRICE_LABELS[item.currentVersion.priceMode] : '—'}</td><td><span className={`catalog-status catalog-${item.status}`}>{STATUS_LABELS[item.status]}</span></td><td>{item.visiblePublic ? 'Oui' : 'Non'}</td><td>{item.currentVersion ? `v${item.currentVersion.versionNumber} · ${VERSION_STATUS_LABELS[item.currentVersion.status]}` : '—'}</td>
-                      </tr>
-                    ))}
-                    {filtered.length === 0 && <tr><td colSpan={9}><div className="empty-table">Aucune offre ou service pour ces filtres.</div></td></tr>}
-                  </tbody>
-                </table>
-              </div>
+              <ConfiguredDataTable<CatalogItemSummary> scope={CATALOG_ADMIN_VIEW} store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>void openItem(item.id)} className="catalog-table" caption="Administration du catalogue · source complète · tri sur tous les résultats filtrés" columns={[
+                {id:'category',label:'Catégorie',sortValue:item=>item.category||null,render:item=>item.category||'—'},
+                {id:'identity',label:'Nom',required:true,sortValue:item=>item.name,render:item=><><strong>{item.name}</strong>{item.canonicalCode&&<small className="catalog-canonical-code">{item.canonicalCode}</small>}</>},
+                {id:'type',label:'Type',sortValue:item=>item.type,render:item=><span className="status-pill">{item.currentVersion?.commercialKind?KIND_LABELS[item.currentVersion.commercialKind]:item.type==='offer'?'Offre':'Service'}</span>},
+                {id:'price',label:'Prix AtoumWeb',sortValue:item=>item.currentVersion?.priceCents??null,render:item=>formatPrice(item)},
+                {id:'recommendedPrice',label:'Prix conseillé',sortValue:item=>item.currentVersion?.recommendedPriceCents??null,render:item=>item.currentVersion?.recommendedPriceCents!=null?`${(item.currentVersion.recommendedPriceCents/100).toLocaleString('fr-FR')} €`:'—'},
+                {id:'priceMode',label:'Mode',sortValue:item=>item.currentVersion?PRICE_LABELS[item.currentVersion.priceMode]:null,render:item=>item.currentVersion?PRICE_LABELS[item.currentVersion.priceMode]:'—'},
+                {id:'status',label:'Statut',sortValue:item=>STATUS_LABELS[item.status],render:item=><span className={`catalog-status catalog-${item.status}`}>{STATUS_LABELS[item.status]}</span>},
+                {id:'public',label:'Site',sortValue:item=>item.visiblePublic?1:0,render:item=>item.visiblePublic?'Oui':'Non'},
+                {id:'version',label:'Version',sortValue:item=>item.currentVersion?.versionNumber??null,render:item=>item.currentVersion?`v${item.currentVersion.versionNumber} · ${VERSION_STATUS_LABELS[item.currentVersion.status]}`:'—'},
+                {id:'open',label:'Ouvrir',required:true,render:item=><button type="button" className="link-button" aria-label={'Ouvrir '+item.name} onClick={event=>{event.stopPropagation();void openItem(item.id);}}><OperationIcon name="record-open"/></button>},
+              ]}/>
+
             )}
           </div>
 
@@ -732,8 +736,8 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
               <div className="detail-panel-heading">
                 <div><span className="eyebrow">{detail.type === 'offer' ? 'Offre' : 'Service'}</span><h2>{detail.name}</h2><p className="muted">{detail.category || 'Sans catégorie'}</p></div>
                 <div className="catalog-detail-heading-actions">
-                  <button className="catalog-detail-expand" type="button" aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}>{detailExpanded ? '↙' : '⛶'}</button>
-                  <button className="close-detail" type="button" onClick={closeDetail}>×</button>
+                  <button className="catalog-detail-expand" type="button" aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded?'record-reduce':'record-expand'}/></button>
+                  <button className="close-detail" type="button" aria-label="Fermer la fiche catalogue" onClick={closeDetail}><OperationIcon name="close"/></button>
                 </div>
               </div>
               <div className="detail-badges"><span className={`catalog-status catalog-${detail.status}`}>{STATUS_LABELS[detail.status]}</span><span className="status-pill">{detail.visiblePublic ? 'Visible site' : 'Interne'}</span>{detail.currentVersion && <span className="status-pill">v{detail.currentVersion.versionNumber} · {VERSION_STATUS_LABELS[detail.currentVersion.status]}</span>}</div>
@@ -750,7 +754,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                     const next=event.key==='Home'?0:event.key==='End'?CATALOG_EDITOR_TABS.length-1:
                       (index+(event.key==='ArrowRight'?1:-1)+CATALOG_EDITOR_TABS.length)%CATALOG_EDITOR_TABS.length;
                     selectEditorTab(CATALOG_EDITOR_TABS[next].id,true);
-                  }}>{tab.label}</button>)}
+                  }}><OperationIcon name={({identity:'package',pricing:'euro',scope:'file-text',associations:'layers',sales:'users',contracts:'file-check',production:'wrench',history:'clock'} satisfies Record<CatalogEditorTab,OperationIconName>)[tab.id]}/>{tab.label}</button>)}
               </div>
               <div role="tabpanel" id={`catalog-panel-${activeTab}`} aria-labelledby={`catalog-tab-${activeTab}`} className="catalog-editor-tab-panel">
               {activeTab==='identity' && <section className="catalog-detail-section catalog-identity-section">
@@ -848,7 +852,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
               {activeTab==='associations' && detail.type === 'offer' && offerCompositionVersion && (
                 <section className="offer-composition">
                   <div className="offer-composition-heading"><div><span className="eyebrow">Composition</span><strong>Services de l’Offre · v{offerCompositionVersion.versionNumber}</strong></div><span className="status-pill">{VERSION_STATUS_LABELS[offerCompositionVersion.status]}</span></div>
-                  {offerComponents.map((component) => <div className="offer-component-row" key={component.id}><div><strong>{component.serviceName}</strong><span>v{component.serviceVersionNumber} · {(component.quantityMilli / 1000).toLocaleString('fr-FR')} × · {component.isOptional ? 'Optionnel' : 'Inclus'}</span></div>{offerCompositionEditable && <button className="close-detail" type="button" onClick={() => void removeOfferComponent(component.id)}>×</button>}</div>)}
+                  {offerComponents.map((component) => <div className="offer-component-row" key={component.id}><div><strong>{component.serviceName}</strong><span>v{component.serviceVersionNumber} · {(component.quantityMilli / 1000).toLocaleString('fr-FR')} × · {component.isOptional ? 'Optionnel' : 'Inclus'}</span></div>{offerCompositionEditable && <button className="close-detail" type="button" onClick={() => void removeOfferComponent(component.id)} aria-label="Retirer" title="Retirer"><OperationIcon name="close"/></button>}</div>)}
                   {offerComponents.length === 0 && <p className="muted">Aucun Service dans cette Offre.</p>}
                   {offerCompositionEditable ? (
                     <div className="offer-component-editor">

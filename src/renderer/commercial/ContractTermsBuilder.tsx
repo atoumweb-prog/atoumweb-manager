@@ -1,10 +1,11 @@
+import type { ContractUpdateProposal } from '../../shared/quoteTransmission';
 import {mergeContractClauseDrafts} from './contractClauseDraftMerge';
 import {compareClauseField} from './contractClauseFieldDiff';
 import {compareDraftContractClauses} from './contractDraftImpact';
 import {assembleReviewedDraftContract, renderApprovedDraftContract, type NumberedContractSection} from '../../shared/reviewedDraftContract';
 import type {ContractSectionReview} from '../../shared/contractSectionPolicy';
 import {isCurrentContractRequest} from './contractRequestGuard';
-import {useUnsavedDraft} from '../unsaved/unsaved';
+import {useUnsavedDraft,unsavedRegistry} from '../unsaved/unsaved';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CatalogItemSummary, QuoteDetail } from '../../shared/commercial';
 import { commercialAbbyBlock } from '../../shared/commercialAbby';
@@ -34,6 +35,7 @@ function sourceLabel(clause: QuoteContractClause): string {
 }
 
 export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
+  const [updateProposal,setUpdateProposal]=useState<ContractUpdateProposal|null>(null);
   const [build, setBuild] = useState<QuoteContractBuild | null>(null);
   const [templates, setTemplates] = useState<ContractClauseTemplate[]>([]);
   const [catalog, setCatalog] = useState<CatalogItemSummary[]>([]);
@@ -147,9 +149,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     setLoading(true);
     setError('');
     try {
-      const next = editable
-        ? await window.atoumweb.contractTerms.quotes.sync(quoteId)
-        : await window.atoumweb.contractTerms.quotes.get(quoteId);
+      const next = await window.atoumweb.contractTerms.quotes.get(quoteId);
       if(!isCurrent())return;
       setBuildAndDrafts(next);
       const [nextTemplates,nextCatalog]=await Promise.all([
@@ -201,6 +201,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     if(loadedQuoteId.current!==quote.id){
       loadedQuoteId.current=quote.id;
       setBuild(null);
+      setUpdateProposal(null);
       setPresentation(null);
       setBusy(false);
       setDrafts({});
@@ -232,8 +233,20 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     }
   }
 
-  async function sync(): Promise<void> {
-    await run(() => window.atoumweb.contractTerms.quotes.sync(quote.id));
+  async function sync():Promise<void> {
+    if(contractActionPending.current||unsavedRegistry.active('quote:'+quote.id).length){setError('Enregistrez ou annulez les saisies avant de comparer les CGV.');return;}
+    const quoteId=quote.id;
+    contractActionPending.current=true;setBusy(true);setError('');
+    try{const proposal=await window.atoumweb.contractTerms.quotes.proposeUpdate(quoteId);if(currentQuoteId.current===quoteId)setUpdateProposal(proposal);}
+    catch(cause){if(currentQuoteId.current===quoteId)setError(errorMessage(cause));}
+    finally{contractActionPending.current=false;if(currentQuoteId.current===quoteId)setBusy(false);}
+  }
+
+  async function applyUpdate():Promise<void>{
+    if(!updateProposal||updateProposal.quoteId!==quote.id||unsavedRegistry.active('quote:'+quote.id).length){setError('Enregistrez ou annulez les saisies avant d’appliquer les CGV.');return;}
+    if(!window.confirm('Appliquer uniquement les changements comparés ci-dessous ? Les clauses personnalisées sont conservées.'))return;
+    const proposal=updateProposal;
+    if(await run(()=>window.atoumweb.contractTerms.quotes.sync(quote.id,proposal.token)))setUpdateProposal(null);
   }
 
   async function saveClause(clause: QuoteContractClause): Promise<void> {
@@ -340,7 +353,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     try {
       await window.atoumweb.contractTerms.library.publishVersion(versionId);
       await refreshLibrary();
-      if (editable) setBuildAndDrafts(await window.atoumweb.contractTerms.quotes.sync(quote.id));
+      if (editable) setBuildAndDrafts(await window.atoumweb.contractTerms.quotes.get(quote.id));
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -360,7 +373,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     try {
       await window.atoumweb.contractTerms.library.setCatalogLinks(template.id, next);
       await refreshLibrary();
-      if (editable) setBuildAndDrafts(await window.atoumweb.contractTerms.quotes.sync(quote.id));
+      if (editable) setBuildAndDrafts(await window.atoumweb.contractTerms.quotes.get(quote.id));
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -377,7 +390,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
     try {
       await window.atoumweb.contractTerms.library.setAudience(template.id, audience);
       await refreshLibrary();
-      if (editable) setBuildAndDrafts(await window.atoumweb.contractTerms.quotes.sync(quote.id));
+      if (editable) setBuildAndDrafts(await window.atoumweb.contractTerms.quotes.get(quote.id));
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -397,7 +410,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
         template.status === 'active' ? 'inactive' : 'active',
       );
       await refreshLibrary();
-      if (editable) setBuildAndDrafts(await window.atoumweb.contractTerms.quotes.sync(quote.id));
+      if (editable) setBuildAndDrafts(await window.atoumweb.contractTerms.quotes.get(quote.id));
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -419,7 +432,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
           <p className="muted">Le socle AtoumWeb et les clauses liées aux prestations sont assemblés ici, puis copiés dans le champ CGV d’Abby.</p>
         </div>
         <div className="cgv-builder-heading-actions">
-          {editable && <button className="secondary-button" type="button" disabled={busy} onClick={() => void sync()}>↻ Synchroniser</button>}
+          {editable && <button className="secondary-button" type="button" disabled={busy} onClick={() => void sync()}>Comparer les nouvelles versions CGV</button>}
           <button className="secondary-button" type="button" onClick={() => setShowLibrary((value) => !value)}>{showLibrary ? 'Masquer la bibliothèque' : 'Bibliothèque CGV'}</button>
         </div>
       </div>
@@ -429,6 +442,7 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
         <span><strong>{counts.catalog}</strong> prestation(s)</span>
         <span><strong>{counts.custom}</strong> particulière(s)</span>
         <span className="status-pill">{build?.audience === 'professional' ? 'Client professionnel' : 'Client particulier'}</span>
+        {build?.snapshotState === 'prepared' && <span className="status-pill">Préparé — envoi non attesté</span>}
         {build?.snapshotState === 'frozen' && <span className="status-pill">Snapshot figé{build.snapshotText === '' ? ' · vide' : ''}</span>}
         {build?.snapshotState === 'historical_missing' && <span className="status-pill">Absence historique de snapshot</span>}
       </div>
@@ -457,7 +471,14 @@ export function ContractTermsBuilder({ quote }: { quote: QuoteDetail }) {
            </details>}
            <p className="muted">Numérotation fondée sur les classements approuvés. La compilation finale du devis reste inchangée tant que le raccordement métier n'est pas validé.</p>
          </details>}
-      {build?.snapshotState === 'draft' && <p className="muted" role="status">Contrat en préparation : les clauses peuvent encore évoluer tant que le devis reste modifiable. La version contractuelle sera figée lors de la finalisation.</p>}
+      {updateProposal?.quoteId===quote.id&&<section aria-label="Comparaison des CGV">
+        <strong>{updateProposal.changes.length} changement(s) proposé(s)</strong>
+        <p>Les clauses personnalisées ne sont pas remplacées. Aucune modification avant confirmation.</p>
+        {updateProposal.changes.map(change=><details key={change.sourceKey}><summary>{change.after?.title??change.before?.title}</summary><p>Version conservée : {change.before?.versionId??'Aucune'} · incluse : {change.before?.enabled?'Oui':'Non'}</p><p>Ordre : {change.before?.sortOrder??'—'} · rattachement : {change.before?.isOrphaned?'orphelin':'applicable'}</p><pre>{change.before?.body??'Absente'}</pre><p>Version proposée : {change.after?.versionId??'Aucune'} · incluse : {change.after?.enabled?'Oui':'Non'}</p><p>Ordre : {change.after?.sortOrder??'—'} · rattachement : {change.after?.isOrphaned?'orphelin':'applicable'}</p>{JSON.stringify(change.before?.sourceCatalogItemIds)!==JSON.stringify(change.after?.sourceCatalogItemIds)&&<p>Les prestations rattachées changent ; vérifier leur périmètre.</p>}<pre>{change.after?.body??'Absente'}</pre></details>)}
+        <button type="button" disabled={busy||!updateProposal.changes.length} onClick={()=>void applyUpdate()}>Appliquer les changements comparés</button>
+        <button type="button" disabled={busy} onClick={()=>setUpdateProposal(null)}>Annuler la comparaison</button>
+      </section>}
+      {build?.snapshotState === 'draft' && <p className="muted" role="status">Contrat en préparation : les clauses peuvent encore évoluer tant que le devis reste modifiable. La préparation ne vaut pas envoi. La version contractuelle sera figée lors de l’envoi attesté au client.</p>}
       {build?.snapshotState === 'frozen' && <p className="muted" role="status">Contrat figé : le contenu conservé avec ce devis fait foi dans le Manager. Les changements ultérieurs de la bibliothèque ne modifient pas cette version{build.snapshotText === '' ? ', même lorsque son texte est vide' : ''}.</p>}
       {build?.snapshotState === 'historical_missing' && <p className="cgv-warning" role="status">Devis historique sans snapshot contractuel conservé : aucune reconstitution automatique à partir des CGV actuelles. Vérifier les pièces contractuelles originales avant toute utilisation.</p>}
       {build?.warnings.map((warning) => <div className="cgv-warning" key={warning}>{warning}</div>)}

@@ -1,3 +1,4 @@
+import type { QuoteSendAttestation } from '../shared/quoteTransmission';
 import {RECIPE_FLAG} from '../shared/operationalRecipe';
 import type {OperationalRecipeApi} from '../shared/operationalRecipe';
 import { contextBridge, ipcRenderer } from 'electron';
@@ -367,7 +368,8 @@ const api: AtoumWebApi = {
   quotes: {
       get: (quoteId: string) => ipcRenderer.invoke('contract-terms:quotes:get', quoteId),
       presentation: quoteId => ipcRenderer.invoke('contract-terms:quotes:presentation',quoteId),
-      sync: (quoteId: string) => ipcRenderer.invoke('contract-terms:quotes:sync', quoteId),
+      proposeUpdate: (quoteId:string) => ipcRenderer.invoke('contract-terms:quotes:propose-update',quoteId),
+      sync: (quoteId: string,token:string) => ipcRenderer.invoke('contract-terms:quotes:sync', quoteId,token),
       addCustom: (quoteId: string, input: QuoteContractClauseInput) => ipcRenderer.invoke('contract-terms:quotes:add-custom', quoteId, input),
       updateClause: (id: string, input: QuoteContractClauseUpdate) => ipcRenderer.invoke('contract-terms:quotes:update-clause', id, input),
       resetClause: (id: string) => ipcRenderer.invoke('contract-terms:quotes:reset-clause', id),
@@ -406,7 +408,9 @@ const api: AtoumWebApi = {
     updateLine: (lineId: string, input: QuoteLineInput) => ipcRenderer.invoke('quotes:update-line', lineId, input),
     removeLine: (lineId: string) => ipcRenderer.invoke('quotes:remove-line', lineId),
     updateConditions: (quoteId: string, input: Partial<QuoteInput>) => ipcRenderer.invoke('quotes:update-conditions', quoteId, input),
-    markSent: (id: string) => ipcRenderer.invoke('quotes:mark-sent', id),
+    transmissionState:(id:string)=>ipcRenderer.invoke('quotes:transmission-state',id),
+    resumeDraft:(id:string,preparationId:string)=>ipcRenderer.invoke('quotes:resume-draft',id,preparationId),
+    markSent: (id: string,input:QuoteSendAttestation) => ipcRenderer.invoke('quotes:mark-sent', id,input),
     confirmPrincipleAgreement: (id: string) => ipcRenderer.invoke('quotes:principle-agreement:confirm', id),
     revokePrincipleAgreement: (id: string) => ipcRenderer.invoke('quotes:principle-agreement:revoke', id),
     finalize:(id:string,canonicalReview?:boolean)=>ipcRenderer.invoke('quotes:finalize',id,canonicalReview===true),

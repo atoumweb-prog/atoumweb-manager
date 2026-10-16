@@ -85,7 +85,7 @@ if(!process.versions.electron){
    "el('p',null,'Les écrans finaux du Manager V2 ne sont pas encore reconstruits.'))));}",
    "createRoot(document.getElementById('root')).render(el(Demo));"
   ];
-  require('esbuild').buildSync({stdin:{contents:lines.join('\n'),resolveDir:repo,loader:'tsx'},bundle:true,platform:'browser',format:'iife',outfile:path.join(temp,'demo.js'),logLevel:'silent'});
+  require('esbuild').buildSync({stdin:{contents:lines.join('\n'),resolveDir:repo,loader:'tsx'},bundle:true,loader:{'.png':'dataurl'},platform:'browser',format:'iife',outfile:path.join(temp,'demo.js'),logLevel:'silent'});
   const env={...process.env,[ENV]:temp};delete env.ELECTRON_RUN_AS_NODE;
   const run=spawnSync(require('electron'),[__filename,...process.argv.slice(2)],{cwd:repo,env,windowsHide:true,encoding:'utf8',timeout:160000,maxBuffer:2*1024*1024});
   process.stdout.write(run.stdout||'');process.stderr.write(run.stderr||'');

@@ -1,3 +1,4 @@
+import { sendForTest } from '../testSupport/quotePreparationFixture';
 import { QuoteContractPreparationService } from '../commercial/QuoteContractPreparationService';
 import { ContractTermsService } from '../commercial/ContractTermsService';
 import { finalizeForTest, acceptForTest } from '../testSupport/quotePreparationFixture';
@@ -33,7 +34,7 @@ beforeEach(() => {
   quoteId = quotes.create({ prospectId: prospect.id, subject: 'PDF accepté' }).id;
   quotes.addCustomLine(quoteId, { label: 'Site', proposedUnitPriceCents: 10000 });
   finalizeForTest(database,quotes,quoteId);
-  quotes.markSent(quoteId);
+  sendForTest(quotes,quoteId);
   clientId = acceptForTest(database,quotes,quoteId).acceptedClientAccountId!;
 });
 

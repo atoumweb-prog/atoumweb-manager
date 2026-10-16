@@ -311,7 +311,7 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
     <div className="module-toolbar operations-toolbar">
       <div><strong>{filteredPacks.length}</strong><span> pack(s)</span></div>
       <div className="toolbar-controls hour-pack-toolbar-controls">
-        <button className="secondary-button" type="button" onClick={() => void refresh()}>↻ Actualiser</button>
+        <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh"/>Actualiser</button>
         <input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher client, projet, pack…" />
         <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
           <option value="all">Tous les statuts</option>
@@ -324,7 +324,7 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
     {createOpen && <section className="panel operation-create-panel hour-pack-create-panel">
       <div className="panel-title">
         <div><span className="eyebrow">Pack d’heures</span><h2>Nouveau crédit de temps</h2><p className="muted">Choisis un forfait du Catalogue pour récupérer automatiquement ses heures et son tarif, ou utilise une saisie libre.</p></div>
-        <button className="close-detail" type="button" onClick={() => requestUnsavedExit(() => { setCreateOpen(false); resetCreateForm(); })}>×</button>
+        <button className="close-detail" type="button" onClick={() => requestUnsavedExit(() => { setCreateOpen(false); resetCreateForm(); })} aria-label="Fermer" title="Fermer"><OperationIcon name="close"/></button>
       </div>
       <div className="hour-pack-template-picker">
         <label>Modèle depuis Offres & Tarifs
@@ -384,7 +384,7 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
         <div className="detail-panel-heading">
           <div><span className="eyebrow">Pack d’heures</span><h2>{selected.name}</h2><p className="muted">{selected.clientLabel}{selected.projectLabel ? ` · ${selected.projectLabel}` : ''}</p></div>
           <div className="intervention-workbench-heading-actions">
-            <button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} aria-label={detailExpanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'collapse' : 'expand'} size={18} /></button>
+            <button className="operation-detail-expand" type="button" title={detailExpanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} aria-label={detailExpanded ? 'Réduire l’atelier' : 'Agrandir l’atelier'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded ? 'record-reduce' : 'record-expand'} size={18} /></button>
             <button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => requestUnsavedExit(() => { setSelectedId(''); setDetailExpanded(false); setMovementHours(''); setMovementReason(''); setMovementMode('manual_correction'); })}><OperationIcon name="close" size={18} /></button>
           </div>
         </div>

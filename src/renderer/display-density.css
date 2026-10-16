@@ -2,6 +2,8 @@
    Règle absolue : aucun texte fonctionnel ne descend sous 14 px. */
 :root {
   --ui-font-base: 16px;
+  /* Shared 01C/01D/02 components use this name; resolve it to the actual density. */
+  --ui-font-primary: var(--ui-font-base);
   --ui-font-secondary: 15px;
   --ui-font-small: 14px;
   --ui-control-height: 42px;

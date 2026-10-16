@@ -1,10 +1,11 @@
+import {FieldHelp} from './ui/FieldHelp';
 import {useCallback} from 'react';
 import {SEARCH_DESTINATIONS,searchDestination,readSearchTarget,type SearchNavigationResult} from '../shared/searchNavigation';
 import {useMemo} from 'react';
 import { settingsSectionMatches } from '../shared/settingsSearch';
 import { workspaceDisplayFolder } from '../shared/workspacePresentation';
 import { isStatisticsDrilldownRoute, type StatisticsDrilldownRoute } from '../shared/statisticsDrilldown';
-import { defaultNavigationPreference, readNavigationPreference, type NavigationPreference } from '../shared/navigationRail';
+import { NAVIGATION_MODULES, defaultNavigationPreference, readNavigationPreference, type NavigationPreference } from '../shared/navigationRail';
 import type { VisualPreferenceStore } from '../shared/panelLayout';
 import { clearNavigationFavorites, resetRegisteredModuleLayout, saveRailCollapsed, type SupportedLayoutModule } from '../shared/settingsNavigation';
 import {NavigationRail, type NavigationRailControls} from './ui/NavigationRail';
@@ -405,12 +406,12 @@ function App() {
 
 
         <section className={`content-area ${activePage === 'Accueil' ? 'home-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' || activePage === 'Sites' ? 'workspace-content' : ''} ${activePage === 'Projets' ? 'projects-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' ? 'library-workspace-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' && libraryHeaderCollapsed ? 'library-header-collapsed' : ''}`}>
-          {activePage !== 'Accueil' && <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1>{activePage === 'Prospects' ? 'Prospection' : activePage}</h1><p>{PAGE_HINTS[activePage]}</p></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>}
+          {activePage !== 'Accueil' && <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1><OperationIcon name={NAVIGATION_MODULES.find(item=>item.key===activePage)!.icon}/>{activePage === 'Prospects' ? 'Prospection' : activePage}</h1><FieldHelp text={PAGE_HINTS[activePage]} detail={activePage==='Prospects'?"Trois vues : annuaire prospects, parcours commercial et historique. Cliquer une ligne ouvre sa fiche rapide ; Agrandir permet de travailler sur le même dossier.":undefined}/></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>}
           {message && <div className={`notice ${messageAction?.message === message ? 'is-actionable' : ''}`} role="status">
             {messageAction?.message === message
               ? <button className="notice-action" type="button" onClick={messageAction.run}><span>{message}</span><small>Ouvrir dans l’Explorateur</small></button>
               : <span>{message}</span>}
-            <button className="notice-close" type="button" aria-label="Fermer la notification" onClick={closeMessage}>×</button>
+            <button className="notice-close" type="button" aria-label="Fermer la notification" onClick={closeMessage}><OperationIcon name="close"/></button>
           </div>}
 
           {activePage === 'Accueil' && <HomeDashboard onMessage={setMessage} />}

@@ -1,10 +1,12 @@
+import type { QuoteSendAttestation } from '../shared/quoteTransmission';
+import {crmIdentityImagePreview} from './crm/crmIdentityImagePreview';
 import { registerShellVisualPreferences } from './shellVisualPreferencesIpc';
 import {registerUnsavedConfirmationIpc,unsavedWindows} from './unsaved';
 import { restoreQuitGate } from './restoreQuitGate';
 import type { ContractAdministration, QuoteContractParameters, ContractDocumentLinkInput, ContractDocumentRole } from '../shared/quoteContractPreparation';
 import { app, clipboard, dialog, ipcMain, safeStorage, shell } from 'electron';
 import type { BridgeNodeMatchDecisionInput } from '../shared/bridgeSnapshots';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, statSync, writeFileSync } from 'node:fs';
 import {createWorkingContractDocx} from './commercial/workingContractDocx';
 import {extractWorkingDocxText} from './commercial/workingContractDocxImport';
 import { basename, join } from 'node:path';
@@ -263,6 +265,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:contact-methods:archive',(_event,id:string,archived?:boolean)=>database.crm.archiveContactMethod(id,archived));
   ipcMain.handle('crm:identity-assets:list', (_event, owner: CrmIdentityOwnerType, id: string) => database.crmIdentityAssets.list(owner, id));
   ipcMain.handle('crm:identity-assets:import', async (_event, owner: CrmIdentityOwnerType, id: string, role: CrmIdentityAssetRole) => {
+    const previous = database.crmIdentityAssets.list(owner, id).find(asset=>asset.role===role);
     const selection = await dialog.showOpenDialog({
       title: role === 'logo' ? 'Choisir le logo' : role === 'favicon' ? 'Choisir la favicon' : 'Choisir la photo',
       defaultPath: workspace.root,
@@ -270,10 +273,28 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'ico'] }],
     });
     if (selection.canceled || selection.filePaths.length === 0) return null;
-    return database.crmIdentityAssets.importFilePath(owner, id, role, selection.filePaths[0]);
+    const source = selection.filePaths[0];
+    const stats=statSync(source);
+    if(!stats.isFile()||stats.size===0||stats.size>8*1024*1024)throw Error('Image vide ou supérieure à 8 Mo.');
+    const bytes = readFileSync(source);
+    if (!bytes.length || bytes.length > 8 * 1024 * 1024) throw Error('Image vide ou supérieure à 8 Mo.');
+    const preview = await crmIdentityImagePreview(_event.sender,bytes);
+    const confirmation = await dialog.showMessageBox({type:'question',title:'Identité visuelle',message:'Enregistrer ce visuel ?',detail:basename(source)+'\nCe visuel sera partagé par les fiches liées à cette identité.',icon:preview,buttons:['Enregistrer','Annuler'],defaultId:1,cancelId:1});
+    if(confirmation.response!==0)return null;
+    const current = database.crmIdentityAssets.list(owner,id).find(asset=>asset.role===role);
+    if(current?.relativePath!==previous?.relativePath)throw Error('Le visuel a changé dans une autre fenêtre. Actualise la fiche avant de réessayer.');
+    // Re-read once to reject a source changed while the confirmation was open.
+    if(!readFileSync(source).equals(bytes))throw Error('Le fichier choisi a changé. Choisis-le de nouveau.');
+    return database.crmIdentityAssets.importFilePath(owner, id, role, source);
   });
   ipcMain.handle('crm:identity-assets:preview', (_event, assetId: string) => database.crmIdentityAssets.preview(assetId));
-  ipcMain.handle('crm:identity-assets:remove', (_event, assetId: string) => database.crmIdentityAssets.remove(assetId));
+  ipcMain.handle('crm:identity-assets:remove', async (_event, assetId: string) => {
+    const previous=database.crmIdentityAssets.get(assetId);
+    const result=await dialog.showMessageBox({type:'question',title:'Retirer le visuel',message:'Retirer ce visuel de cette identité et de ses fiches liées ?',buttons:['Annuler','Retirer le visuel'],defaultId:0,cancelId:0});
+    if(result.response!==1)return false;
+    if(database.crmIdentityAssets.get(assetId).relativePath!==previous.relativePath)throw Error('Le visuel a changé dans une autre fenêtre. Actualise la fiche.');
+    database.crmIdentityAssets.remove(assetId);return true;
+  });
   ipcMain.handle('crm:prospects:list', (_event, filters?: ProspectFilters) => database.crm.listProspects(filters));
   ipcMain.handle('crm:prospects:create', (_event, input: ProspectInput) => database.crm.createProspect(input));
   ipcMain.handle('crm:prospects:update', (_event, id: string, input: ProspectInput) => database.crm.updateProspect(id, input));
@@ -553,7 +574,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('contract-terms:library:set-catalog-links', (_event, id: string, catalogItemIds: string[]) => database.contractTerms.setCatalogLinks(id, catalogItemIds));
   ipcMain.handle('contract-terms:quotes:presentation', (_event, id: string) => database.contractTerms.presentation(id));
   ipcMain.handle('contract-terms:quotes:get', (_event, quoteId: string) => database.contractTerms.getQuoteBuild(quoteId));
-  ipcMain.handle('contract-terms:quotes:sync', (_event, quoteId: string) => database.contractTerms.syncQuote(quoteId));
+  ipcMain.handle('contract-terms:quotes:propose-update', (_event,quoteId:string)=>database.contractTerms.proposeQuoteUpdate(quoteId));
+  ipcMain.handle('contract-terms:quotes:sync', (_event, quoteId: string,token:string) => database.contractTerms.applyQuoteUpdate(quoteId,token));
   ipcMain.handle('contract-terms:quotes:add-custom', (_event, quoteId: string, input: QuoteContractClauseInput) => database.contractTerms.addCustomQuoteClause(quoteId, input));
   ipcMain.handle('contract-terms:quotes:update-clause', (_event, id: string, input: QuoteContractClauseUpdate) => database.contractTerms.updateQuoteClause(id, input));
   ipcMain.handle('contract-terms:quotes:reset-clause', (_event, id: string) => database.contractTerms.resetQuoteClause(id));
@@ -622,7 +644,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:update-line', (_event, lineId: string, input: QuoteLineInput) => database.quotes.updateLine(lineId, input));
   ipcMain.handle('quotes:remove-line', (_event, lineId: string) => database.quotes.removeLine(lineId));
   ipcMain.handle('quotes:update-conditions', (_event, quoteId: string, input: Partial<QuoteInput>) => database.quotes.updateConditions(quoteId, input));
-  ipcMain.handle('quotes:mark-sent', (_event, id: string) => database.quotes.markSent(id));
+  ipcMain.handle('quotes:transmission-state',(_event,id:string)=>database.quotes.transmissionState(id));
+  ipcMain.handle('quotes:resume-draft',(_event,id:string,preparationId:string)=>database.quotes.resumeDraft(id,preparationId));
+  ipcMain.handle('quotes:mark-sent', (_event, id: string,input:QuoteSendAttestation) => database.quotes.markSent(id,input));
   ipcMain.handle('quotes:principle-agreement:confirm', (_event, id: string) => database.quotes.confirmPrincipleAgreement(id));
   ipcMain.handle('quotes:principle-agreement:revoke', (_event, id: string) => database.quotes.revokePrincipleAgreement(id));
   ipcMain.handle('quotes:finalize',(_event,id:string,canonicalReview?:boolean)=>database.quotes.finalize(id,canonicalReview===true));
@@ -668,9 +692,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
 
   ipcMain.handle('quotes:generate-pdf', async (_event, id: string) => {
     const quote = database.quotes.get(id);
-    const contract = quote.status === 'draft' && !quote.finalizedAt
-      ? database.contractTerms.syncQuote(id)
-      : database.contractTerms.getQuoteBuild(id);
+    const contract = database.contractTerms.getQuoteBuild(id);
     return generateQuotePdf({ ...quote, contractTextSnapshot: contract.snapshotState === 'historical_missing' ? quote.contractTextSnapshot : quoteContractText(contract) }, workspace, database.contractTerms.presentation(id));
   });
 

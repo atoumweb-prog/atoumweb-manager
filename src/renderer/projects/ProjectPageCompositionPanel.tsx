@@ -1,3 +1,4 @@
+import {OperationIcon} from '../operations/OperationIcon';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ProjectNode } from '../../shared/projects';
@@ -653,7 +654,7 @@ export function ProjectPageCompositionPanel({
 
     {(settingsItem || inspected) && inspectorHost && createPortal(
       <div className={`project-page-inspector-workbench ${settingsItem && inspected ? 'both-open' : 'single'} ${settingsPaneCollapsed ? 'settings-collapsed' : ''} ${codePaneCollapsed ? 'code-collapsed' : ''} ${inspectExpanded ? 'expanded' : ''}`}>
-        {inspectExpanded && <button className="project-page-inspector-expanded-close secondary-button" type="button" onClick={() => setInspectExpanded(false)}>↙ Quitter le grand écran</button>}
+        {inspectExpanded && <button className="project-page-inspector-expanded-close secondary-button" type="button" onClick={() => setInspectExpanded(false)}><OperationIcon name="collapse"/>Quitter le grand écran</button>}
         {settingsItem && composition && <section className={`project-page-inspector-pane settings-pane ${settingsPaneCollapsed ? 'collapsed' : ''}`}>
           {settingsPaneCollapsed
             ? <button className="project-page-inspector-pane-restore settings" type="button" title="Afficher Réglages" aria-label="Afficher Réglages" onClick={() => setSettingsPaneCollapsed(false)}>→</button>
@@ -698,7 +699,7 @@ export function ProjectPageCompositionPanel({
                   setInspected(null);
                   setCodePaneCollapsed(false);
                   if (!settingsItemId) setInspectExpanded(false);
-                }}>×</button>
+                }}><OperationIcon name="close"/></button>
               </div>
             </header>
             <div className="project-page-preview-controls project-page-inspector-device-controls">

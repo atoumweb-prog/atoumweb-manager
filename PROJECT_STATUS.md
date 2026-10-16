@@ -1,5 +1,91 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/10/2026 - PR155 / CI1805 : diagnostic minimal du blur 01C
+
+CI1805 valide le focus530 et36 etapes natives puis echoue sur Blur completes moved gesture once. Banc seul instrumente : geometrie avant/apres et oracle boundedSplit reel, sonde700 puis deplacement relatif effectivement different avant blur ; assertions historiques conservees. Ordre des ateliers courts prepare dans convergence-state, memes46 commandes/environnements. Une seule execution locale01C autorisee et tracee dans outputs/pr155-01c-blur/ ; aucun autre test, push, CI, main, installation ou base reelle. Composant de production inchange.
+
+
+## 16/10/2026 - PR155 : correction locale de la preparation du focus natif
+
+CI1804 : typecheck et1532 tests verts, arret final-visual. Reproduction Windows : fenetre/webContents/document focalises, textarea dans le groupe Besoins ferme, checkVisibility=false, activeElement=BODY. La recette confondait montage et visibilite ; premier Tab faussement positif. Correctif exclusivement scripts/fixtures/final-visual-scenarios.cjs : ouvrir le groupe par son summary, verifier sa visibilite, vrai clic souris natif et Tab/Maj+Tab conserves, assertions renforcees. Premier essai corrige :530 controles/135 captures, aucun changement src/migration/workflow. [Diagnostic et protocole cible](docs/ux-v2/PR155-FOCUS-NATIF-2026-10-16.md). Repetitions et recettes residuelles tracees dans les preuves locales, sans relancer la campagne complete. Aucun push, nouvelle CI, merge, installation ou donnees reelles autorise.
+
+
+## 16/10/2026 - Campagne candidate visuelle / EC03 autorisee
+
+Les validations locales existantes sont conservees sans relancer les 41 commandes. Seule l'orchestration CI est completee pour EC01, Prospect A, Client B, EC03 et les recettes visuelles ; sources applicatives et migrations identiques au code teste ead8a16a. [Couverture et protocole unique](docs/ux-v2/CI-CANDIDATE-VISUELLE-EC03-2026-10-16.md). Publication en PR draft et une seule campagne candidate autorisees ; aucune fusion, installation ou donnee reelle. Les resultats heberges seront releves separement des preuves locales.
+
+
+## 16/10/2026 — Clôture de l’investigation UX/UI V2, convergence non exécutée
+
+Main distant `c4bb744dbe58531350a61fb16ad5f8fbe90bd59d`, CI #1803 verte (1 453 tests/162 fichiers), distincte des candidats locaux. Prospect A `03693f86`, Client B `f85fd498`, EC03 `b77a3ce5` conservés. Branche isolée `codex/ux-v2-closure-convergence-audit` : deux assertions natives obsolètes 1–70 corrigées en 1–71 au code `768b32b7`, puis visibilité des bancs Windows corrigée à `ead8a16a`; aucun code de production ou moteur de sauvegarde changé. Typecheck, 1 532/1 532 Vitest (167 fichiers, 35 restaurations, 6 binaires) et 41 commandes Electron/traçabilité réussis au SHA `ead8a16a684c89f2dbb9ec26763574adec3fb3fe`. Réexamen des 57 points : 40 conformes au scénario borné, 16 preuves insuffisantes, une décision métier ; 67 références et 58 sous-lots tracés sans prétendre à une certification exhaustive. [Bilan de clôture](docs/ux-v2/CLOTURE-CONFORMITE-2026-10-16.md), [architecture de sauvegarde](docs/ux-v2/SAUVEGARDE-WORKSPACE-ARCHITECTURE-2026-10-16.md), [ordre Git/CI/migration 71](docs/ux-v2/CONVERGENCE-VISUELLE-EC03-2026-10-16.md). Archivage des identités Annuaire non exposé ; sauvegarde actuelle SQLite seule, logos/fichiers externes hors périmètre. Recette humaine globale différée, variantes graphiques validées non rouvertes. Aucun push/PR/CI hébergée/merge/main/MSI ni base réelle ; autorisations de convergence et migration réelle encore nécessaires. Les entrées ci-dessous sont historiques.
+
+## 16/10/2026 — EC03 : développement autorisé, candidat métier local
+
+Plan EC03 approuvé explicitement. Branche isolée `codex/ec03-explicit-contract-lifecycle` depuis `472cfc59` / code visuel `f85fd498`. Lecture pure, comparaison/adoption volontaire, préparation distincte de l’envoi attesté, reprise explicite avant envoi, registre immuable et révisions reprenant les clauses sélectionnées. Migration additive **71 — quote_contract_transmission_v1**, disponible dans les 194 références vérifiées et les 15 worktrees ; appliquée uniquement sur fixtures. Migrations 1–70 inchangées. [Implémentation, compatibilité et réserves](docs/ux-v2/EC03-IMPLEMENTATION-2026-10-16.md). Tests ciblés et premières recettes Electron verts ; validation complète au SHA final à consigner dans `outputs/ec03-final-20261016/RESULTATS.md`, sans substituer les preuves intermédiaires. Aucun push, CI hébergée, main, installation ou données réelles. Ancienne entrée « plan à valider » ci-dessous conservée pour historique et remplacée par l’accord présent. Logos hors SQLite et avenants après acceptation restent distincts.
+
+
+## 16/10/2026 — EC03 : arbitrage envoi approuvé, plan technique à valider
+
+Option A approuvée : contrat/CGV figés à l’envoi effectif, distinct de la finalisation et de l’acceptation Abby. Lecture seule à l’ouverture ; adoption des nouvelles versions uniquement explicite. [Diagnostic, compatibilité historique, migration additive proposée et tests](docs/ux-v2/EC03-CONTRAT-FIGE-ENVOI-PLAN-2026-10-16.md). Analyse au code `f85fd498` ; 92/92 tests existants des trois services contractuels réussis (13,22 s), ils ne valident pas le protocole futur. Branche documentaire `codex/plan-ec03-sent-contracts` uniquement : aucun moteur, migration, donnée réelle, CI ou main modifié. **Implémentation en attente d’accord sur le plan** ; aucune reconstruction automatique des anciens snapshots. Prospect A et Client B conservés ; sauvegarde des logos hors SQLite toujours distincte.
+
+
+## 16/10/2026 — Client B approuvée : raccordement réel du Résumé
+
+Décision utilisateur : Client B « Espace central élargi » est retenue définitivement ; Client A abandonnée. Branche `codex/ux-v2-client-b-final` depuis `4f0b0a12` : vrais éditeurs prioritaires, suivi commercial responsive, activité récente issue de l’historique existant, coordonnées et gestion secondaires repliables mais montées ; titre administratif retiré. Défauts Client 220/190 px uniquement en l’absence de préférences ; réglages existants et Prospect A préservés. [Implémentation, compatibilité et protocole](docs/ux-v2/CLIENT-B-CLOTURE-2026-10-16.md). Tests ciblés de développement verts ; preuves finales à produire au SHA commité. EC01 conservé ; EC03/moteur contractuel et sauvegarde des logos hors SQLite restent hors périmètre. Aucun main, CI hébergée, installation, migration ou donnée réelle modifié.
+
+## 16/10/2026 — Revue ciblée EC01 / EC02 / EC03
+
+Prospect A reste graphiquement approuvée et inchangée. Branche locale `codex/ux-v2-ec01-client-review` issue de `03693f86` : retour à la ligne de l'en-tête selon sa largeur réelle, avec régression native permanente (270 états). Diagnostic CGV sur fixtures : deux synchronisations en développement StrictMode, une avec React production ; l'ouverture écrit déjà des clauses/journaux, aucun moteur ni historique modifié. Deux propositions Client uniquement TEMP, sans activation définitive. [Cause, protocole, propositions et réserves](docs/ux-v2/EC01-EC02-EC03-REVUE-2026-10-16.md). Validation du candidat final à rattacher au SHA réellement testé dans le bilan local. Aucune fusion, CI hébergée, installation, migration ou donnée réelle. La sauvegarde des logos hors SQLite reste à arbitrer séparément.
+
+## 15/10/2026 — Prospect : variante A validée, deux ajustements de clôture
+
+Décision explicite utilisateur : **A — Synthèse en bandeau** devient la référence ; B est abandonnée, sans généralisation Client. Le statut réel reste dans la synthèse commerciale, retiré de la seule colonne Identité de la fiche complète. Prochaine action : icône horloge partagée et libellé légèrement renforcé, sans nouvelle carte ni nouveau statut, avec le même accès à la relance réelle. Trois groupes initialement fermés, éditeurs montés, brouillons et garde UX-01 inchangés.
+
+Relecture du dossier des 67 captures et de la branche documentaire GitHub `0bb0860e` : les maquettes historiques ne sont pas des décisions supplémentaires. La demande ancienne de deux variantes est remplacée par le choix A explicite. [Décisions, périmètre et protocole de preuve](docs/ux-v2/PROSPECT-A-CLOTURE-2026-10-15.md). Résultats nouveaux et captures à produire après commit, rattachés à son SHA exact ; les anciens résultats ne certifient pas ce candidat. Aucune fusion, publication, installation, migration ou donnée réelle/Validation-MSI.
+
+## 15/10/2026 — Deux compositions Prospect uniquement, choix visuel en attente
+
+L’utilisateur valide l’architecture trois régions mais demande un allègement plus net de la fiche Prospect, particulièrement Noir/Confort/125%. Branche locale `codex/ux-v2-prospect-density-options`, départf66a06d1. Deux propositions réelles sur les mêmes éditeurs : A Synthèse en bandeau, B Action prioritaire. Après schéma transmis par l’utilisateur, trois groupes fermés au départ : Entreprise et contacts, Besoins et qualification, Devis et activités. Les groupes utilisent les disclosures natifs, gardent leurs composants montés et ne créent aucune autre garde. Les liens Associations sont sans cartes, les informations source et visuels restent dans Logo et actions. Titre « Fiche de travail prospect » retiré ; logo/nom/statut prioritaires, référence/provenance dans un volet secondaire ; température/situation/prochaine action regroupées, détails consultables, cadres Devis allégés. Aucun corps métier ni callback supprimé. Un lien de synthèse déplie l’accordéon existant avant de le cibler et rend le focus au bouton.
+
+B est une variante de présentation réservée au banc isolé (attribut DOM), sans nouveau réglage utilisateur ni deuxième architecture UX-01. Les deux propositions partagent la même fiche et le même brouillon. Tests/captures réellement exécutés au HEAD candidat dans le bilan local livré ; ne pas les déduire des résultats f66a06d1. Aucune généralisation Client, fusion, publication GitHub, CI, migration, installation ou données réelles/Validation-MSI. Les demandes transversales du fichier joint restent à reprendre après le choix de densité demandé dans le message principal. **Prochain gate : choix visuel A/B ; aucune option n’est déclarée validée humainement.**
+
+
+## 15/10/2026 — Dernière passe ergonomique CRM, avant avis visuel final
+
+Principe des trois zones accepté par l’utilisateur ; validation du rendu final encore ouverte. Sur `codex/ux-v2-final-crm-brand-help`, code `389a1a70` : adaptation à la largeur effective de la fiche (zoom compris), Identité compacte et Associations repliables sans démontage, huit onglets sur une ligne avec accès clavier/défilement, séparateurs souris/clavier avec une seule écriture en fin de geste. Explications techniques des visuels déplacées dans FieldHelp. Aucun service, migration, règle métier ou protection UX-01 modifié par cette passe.
+
+Contrôles exécutés au code389a1a70 : typecheck OK,1500/1500 Vitest (166 fichiers,96,19s),35 restaurations/6 binaires ;674 assertions du nouveau banc ergonomique et79 aides dans une vraie fiche, aucune erreur console/RPC. Comparaison avant/après sur fixtures identiques : trois tailles × trois zooms × neuf thèmes/densités, huit onglets Client, Prospect, pipeline et Annuaire. Dernière validation répétée et preuves finales rattachées au HEAD documentaire dans le ZIP autonome demandé ; ne pas réutiliser les anciennes captures015ff032 comme preuve de ce candidat.
+
+Sauvegarde : test réel TEMP prouve que `createBackup` conserve l’association SQLite mais pas les fichiers. Copie TEMP du dossier `crm-identites` rétablit les octets correspondants. **Aucune sauvegarde/restauration complète automatique du workspace n’est certifiée.** [Proposition et risques avant toute évolution du moteur](docs/ux-v2/DERNIERE-PASSE-ERGONOMIQUE-2026-10-15.md). Aucun push, CI, merge, installation, lanceur ou donnée réelle/Validation-MSI modifié. Prochain gate : avis visuel sur le ZIP, puis décision distincte concernant la sauvegarde complète.
+
+
+## 15/10/2026 — Finalisation CRM et master de marque utilisateur : candidat local
+
+Le dossier utilisateur C01–C11 précise les critères de fin : logo original du 9 octobre, aides sans doublon, pictogrammes différenciés, logo d'entreprise persistant et fiches complètes à trois régions. Nouvelle branche locale `codex/ux-v2-final-crm-brand-help`, départ `3e2a1f32`. Les validations graphiques précédentes ne valent pas acceptation de ces nouveaux rendus. [Décisions, audit ciblé et limites de sauvegarde des médias](docs/ux-v2/FINALISATION-CRM-MARQUE-2026-10-15.md). Code applicatif `d2963d6864d7c1adf6421a536c702416cedda471` : typecheck OK,1500/1500 Vitest,35 restaurations/6 binaires,580 assertions CRM,825 tableaux,109 aides +52 sur vraie fiche,132 pilote Prospection,214 Annuaire ;468 captures avant/après. Gate humain du logo et des deux fiches encore ouvert avant packaging ou installation. Galerie locale `captures/finalization-20261015/review/index.html`. Aucun push, main, migration, workspace réel ou Validation-MSI modifié.
+
+## 15/10/2026 — Direction graphique approuvée, généralisation en cours
+
+L’utilisateur a validé le pilote, puis demandé explicitement son application aux autres onglets, au pipeline, aux icônes et aux interactions du référentiel. Branche locale `codex/ux-v2-visual-generalization`, départ `b1c3964b` ; main non modifié. Le symbole proposé est approuvé ; les wordmarks restent des approximations typographiques documentées.
+
+Premier incrément : Clients (huit onglets préservés), Annuaire, Catalogue, Devis, Projets, Demandes/Interventions, Temps, Facturation, Dépenses et Documents raccordés aux contrôles existants de colonnes/vues/tri, avec schémas propres et préférences workspace limitées à la présentation. Treize schémas de listes réelles. Colonnes Décision Devis et Actions Temps obligatoires. Les listes compactes et les éditeurs spécialisés restent conservés. Pipeline6+1 iconifié, cartes accessibles par Entrée/Espace via la même garde UX-01 ; aucune transition modifiée. Icône de destination et aide contextuelle commune dans les titres des modules. Boutons de fermeture/retrait iconifiés sans changement de callbacks ; labels conservés/ajoutés. Packaging et fenêtres raccordés au même symbole approuvé, sans modifier les identifiants de l’application ni un exécutable livré.
+
+Validation du jalon : typecheck OK,1487 Vitest/164 fichiers,35 restaurations/6 binaires,35 gates natives au code0b6d598e puis contrôles ciblés sur le code43a2129b. Treize tableaux réels825, CRM205, pipeline132, UX-01 192, Catalogue109 et galerie49 icônes42 ;234 captures synchronisées. Package réel331 contrôles/162 visites sur TEMP, aucun déploiement. [Bilan et traçabilité détaillés](docs/ux-v2/VISUAL-GENERALISATION-2026-10-15.md). Le HEAD a6396f50 ajoute seulement une robustesse de banc Windows après le code43a2129b ; sources applicatives identiques. Les autres dispositions spécialisées04–10 ne sont pas présumées intégralement harmonisées. Aucune donnée réelle/Validation-MSI, service métier, IPC ou migration modifié ; aucune fusion/push/CI hébergée autorisé par cette validation graphique.
+
+## 15/10/2026 — Reprise graphique : pilote Prospection en attente d’avis humain
+
+`main@c4bb744d` / PR153 / CI1803 verte confirme l’intégration technique01–10, **pas la conformité graphique globale**. Référentiel officiel relu sur `docs/ux-v2-reference-v1@0bb0860e`. Nouvelle branche locale `codex/ux-v2-visual-pilot`, correctifs du rail préservés ; code `78bad55f` puis alias typographique `5c6086d5`.
+
+Travail réel :48 icônes communes,17 destinations sans initiales provisoires, symbole candidat d’après les trois références utilisateur, en-tête allégé avec le vrai chrono unique, tableau Prospection réellement configurable (tri, largeurs, ordre, visibilité, vues personnelles) utilisant les contrôles01D et le magasin workspace existants. Aplats des fiches remplacés par surfaces du thème, température discrète, aides et actions iconifiées. Services, IPC métier, migrations1–70 et données utilisateur inchangés.
+
+[Matrice01–10, registre des écarts et bilan](docs/ux-v2/VISUAL-REPRISE-2026-10-15.md).36 captures avant +36 après sur neuf configurations ; comparateur local `captures/visual-pilot-review/index.html`. Pilote105 assertions et interface réelle840 au code5c6086d5 ; UX-01 192, CRM76, en-tête167, rail125, atelier tableaux126 et galerie42. Suite globale finale1 461/1 461 (164 fichiers,103,90 s),35 restaurations et6 contrôles binaires réussis au code5c6086d5. Aucun push, CI supplémentaire, merge, installation ou modification d’un workspace réel.
+
+**Prochain point obligatoire : validation de la direction graphique du pilote et du master de marque.** SVG/PNG/ICO proposés ne sont pas approuvés ; activation Windows/Squirrel et généralisation03D–10 attendent cet accord. Les huit onglets Client ne sont pas à recréer ; archivage Annuaire non exposé, réserves contractuelles05C et externes conservées. Ne pas déclarer la refonte globale achevée sur la seule convergence technique.
+
+## 15/10/2026 — Correction visuelle du rail réduit
+
+Après signalement utilisateur, reprise du référentiel 02A/02B et correction locale du sous-menu masqué par l'en-tête. Base `c4bb744d`, branche `codex/fix-v2-collapsed-rail-render`, code `241bf1d6`. Placement réactif sous l'en-tête, libellés alignés, clavier/focus préservés. Typecheck OK ; 1 453 tests Vitest, 840 contrôles de l'application réelle, 125 contrôles atelier et 192 UX-01 réussis sur fixtures temporaires. Neuf captures synchronisées ; [bilan et réserves visuelles](docs/ux-v2/RAIL-REDUIT-RENDU-2026-10-15.md). Aucun déploiement, merge ou changement des données réelles. Logo/pictogrammes provisoires et recette humaine restent ouverts.
+
+
 ## 15/10/2026 — Convergence04–09 intégrée, candidat10 et nouveau workspace V2
 
 PR148 à152 fusionnées normalement après CI verte ; mainf72ddc9f contient04–09. PR sources conservées. Candidat10 préserve filtres de facturation/cohortes exactes, retour Projet/Devis, UX-01 et contrats05/09. Tests et preuves empaquetées dans le [bilan de convergence](docs/ux-v2/CONVERGENCE-04-10-2026-10-15.md). Validation finale35 recettes/typecheck/1453 tests à relever au SHA du candidat puis en CI.

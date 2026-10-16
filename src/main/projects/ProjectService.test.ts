@@ -1,3 +1,4 @@
+import { sendForTest } from '../testSupport/quotePreparationFixture';
 import { finalizeForTest, acceptForTest } from '../testSupport/quotePreparationFixture';
 import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -65,7 +66,7 @@ function createAcceptedQuote() {
   const quote = quotes.create({ prospectId: prospect.id, subject: 'Création du site vitrine', prerequisitesText: 'Accès hébergement' });
   quotes.addCatalogLine(quote.id, service.versions[0].id);
   finalizeForTest(database,quotes,quote.id);
-  quotes.markSent(quote.id);
+  sendForTest(quotes,quote.id);
   return acceptForTest(database,quotes,quote.id);
 }
 
@@ -76,7 +77,7 @@ function createAcceptedSeededVitrineQuote(extraCatalogVersionId?: string) {
   quotes.addCatalogLine(quote.id, 'atoumweb-vitrine-v1');
   if (extraCatalogVersionId) quotes.addCatalogLine(quote.id, extraCatalogVersionId);
   finalizeForTest(database,quotes,quote.id);
-  quotes.markSent(quote.id);
+  sendForTest(quotes,quote.id);
   return acceptForTest(database,quotes,quote.id);
 }
 
@@ -195,7 +196,7 @@ describe('ProjectService', () => {
     quotes.addCatalogLine(quote.id, 'atoumweb-vitrine-v1');
     quotes.addCatalogLine(quote.id, 'atoumweb-page-v1');
     finalizeForTest(database,quotes,quote.id);
-    quotes.markSent(quote.id);
+    sendForTest(quotes,quote.id);
     const accepted = acceptForTest(database,quotes,quote.id);
 
     const project = projects.transformQuote({ quoteId: accepted.id, targetDate: '2026-12-12' });
@@ -247,7 +248,7 @@ describe('ProjectService', () => {
     const quote = quotes.create({ prospectId: prospect.id, subject: 'Formule site vitrine' });
     quotes.addCatalogLine(quote.id, offerVersion.id);
     finalizeForTest(database,quotes,quote.id);
-    quotes.markSent(quote.id);
+    sendForTest(quotes,quote.id);
     const accepted = acceptForTest(database,quotes,quote.id);
 
     const project = projects.transformQuote({ quoteId: accepted.id });

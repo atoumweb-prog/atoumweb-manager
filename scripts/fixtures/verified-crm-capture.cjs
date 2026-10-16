@@ -3,7 +3,7 @@ const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_pro
 let sequence=0;
 module.exports=async({win,js,test,folder,file,theme,density,scene})=>{
  if(!path.isAbsolute(folder)||/validation-msi/i.test(folder))throw Error('Isolated absolute capture folder required');
- const repo=path.resolve(__dirname,'../..'),git=(...args)=>cp.execFileSync('git',args,{cwd:repo,encoding:'utf8'}).trim();
+ const repo=process.env.ATOUMWEB_CAPTURE_SOURCE_REPO||path.resolve(__dirname,'../..'),git=(...args)=>cp.execFileSync('git',args,{cwd:repo,encoding:'utf8'}).trim();
  if(git('status','--porcelain'))throw Error('Capture final CRM evidence on a committed candidate');
  const sha=git('rev-parse','HEAD'),n=++sequence,color=[32+n*53%193,32+n*89%193,32+n*127%193];
  await js(`if(document.documentElement.dataset.theme!==${JSON.stringify(theme)}||document.documentElement.dataset.density!==${JSON.stringify(density)})throw Error('Wrong capture configuration');let e=document.getElementById('crm-verified-frame');if(!e){e=document.createElement('div');e.id='crm-verified-frame';e.setAttribute('aria-hidden','true');document.body.append(e)}e.style.cssText='position:fixed!important;right:0;bottom:0;width:40px;height:40px;pointer-events:none;z-index:2147483647;background:rgb(${color.join(',')})';`);

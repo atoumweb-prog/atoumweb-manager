@@ -1,3 +1,4 @@
+import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import { useEffect, useMemo, useState } from 'react';
 import {
   BILLING_ITEM_SOURCE_TYPES,
@@ -314,7 +315,16 @@ export function BillingPage({ onMessage, statisticsDrilldown, onClearStatisticsD
             <span className="billing-compact-project">{item.projectLabel || 'Sans projet dédié'}</span>
           </button>)}
           {filtered.length === 0 && <div className="empty-table">Aucun élément de facturation.</div>}
-        </div> : <div className="billing-table-wrap"><table className="billing-table"><thead><tr><th>Client</th><th>Origine</th><th>Description</th><th>Projet</th><th>Montant</th><th>Statut</th><th>Facture</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.id} onClick={() => invoiceDraft.request(() => { setSelectedId(item.id); setExpanded(false); })}><td><button className="billing-row-open" type="button" aria-label={`Ouvrir la facture de ${item.clientLabel} : ${item.description}`} onClick={(event) => { event.stopPropagation(); invoiceDraft.request(() => { setSelectedId(item.id); setExpanded(false); }); }}>{item.clientLabel}</button></td><td><span className="billing-source-pill"><OperationIcon name={SOURCE_ICONS[item.sourceType]} size={15} />{SOURCE_LABELS[item.sourceType]}</span></td><td>{item.description}</td><td>{item.projectLabel || '—'}</td><td>{money(item.expectedAmountCents)}</td><td><span className={`billing-status status-${item.status}`}>{STATUS_LABELS[item.status]}</span></td><td>{item.invoiceFileName ? <span className="billing-pdf-present"><OperationIcon name="file-text" size={14} /> {item.invoiceReference || 'Référence à vérifier'} · {dateLabel(item.invoicedAt)}</span> : <span className="muted">—</span>}</td></tr>)}{filtered.length === 0 && <tr><td colSpan={7}><div className="empty-table">Aucun élément de facturation.</div></td></tr>}</tbody></table></div>}
+        </div> : <div className="billing-table-wrap"><ConfiguredDataTable<(typeof filtered)[number]> scope="billing-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>invoiceDraft.request(() => { setSelectedId(item.id); setExpanded(false); })} className="billing-table" caption="Client · Origine · Description · Projet · Montant · Statut · Facture · source complète des résultats filtrés" columns={[
+{id:"identity",label:"Client",required:true,sortValue:item=>item.clientLabel??null,render:item=><><button className="billing-row-open" type="button" aria-label={`Ouvrir la facture de ${item.clientLabel} : ${item.description}`} onClick={(event) => { event.stopPropagation(); invoiceDraft.request(() => { setSelectedId(item.id); setExpanded(false); }); }}>{item.clientLabel}</button></>},
+{id:"source",label:"Origine",sortValue:item=>item.sourceType??null,render:item=><><span className="billing-source-pill"><OperationIcon name={SOURCE_ICONS[item.sourceType]} size={15} />{SOURCE_LABELS[item.sourceType]}</span></>},
+{id:"description",label:"Description",sortValue:item=>item.description??null,render:item=><>{item.description}</>},
+{id:"project",label:"Projet",sortValue:item=>item.projectLabel??null,render:item=><>{item.projectLabel || '—'}</>},
+{id:"amount",label:"Montant",sortValue:item=>item.expectedAmountCents??null,render:item=><>{money(item.expectedAmountCents)}</>},
+{id:"status",label:"Statut",sortValue:item=>item.status??null,render:item=><><span className={`billing-status status-${item.status}`}>{STATUS_LABELS[item.status]}</span></>},
+{id:"invoice",label:"Facture",render:item=><>{item.invoiceFileName ? <span className="billing-pdf-present"><OperationIcon name="file-text" size={14} /> {item.invoiceReference || 'Référence à vérifier'} · {dateLabel(item.invoicedAt)}</span> : <span className="muted">—</span>}</>},
+{id:'open',label:'Ouvrir',required:true,render:item=><button type="button" className="link-button" aria-label={'Ouvrir '+String(item.clientLabel??item.id)} onClick={event=>{event.stopPropagation();((item:(typeof filtered)[number])=>invoiceDraft.request(() => { setSelectedId(item.id); setExpanded(false); }))(item);}}><OperationIcon name="record-open"/></button>}
+]}/></div>}
       </section>}
 
       {selected && !expanded && <div className="billing-splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la liste et la fiche" tabIndex={0} onPointerDown={beginResize} onDoubleClick={() => setSplitPercent(38)} onKeyDown={(event) => {
@@ -325,7 +335,7 @@ export function BillingPage({ onMessage, statisticsDrilldown, onClearStatisticsD
       {selected && <aside className={`panel billing-detail-panel ${expanded ? 'expanded' : ''}`}>
         <div className="detail-panel-heading billing-detail-heading">
           <div><span className="eyebrow">Facturation</span><h2>{selected.description}</h2><p className="muted">{selected.clientLabel}{selected.projectLabel ? ` · ${selected.projectLabel}` : ''}</p></div>
-          <div className="billing-detail-heading-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => invoiceDraft.request(() => { setSelectedId(''); setExpanded(false); })}><OperationIcon name="close" size={18} /></button></div>
+          <div className="billing-detail-heading-actions"><button className="operation-detail-expand" type="button" title={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={expanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setExpanded((value) => !value)}><OperationIcon name={expanded ? 'record-reduce' : 'record-expand'} size={18} /></button><button className="close-detail" type="button" title="Fermer" aria-label="Fermer" onClick={() => invoiceDraft.request(() => { setSelectedId(''); setExpanded(false); })}><OperationIcon name="close" size={18} /></button></div>
         </div>
 
         <div className="billing-detail-badges">

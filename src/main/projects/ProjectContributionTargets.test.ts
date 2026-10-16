@@ -1,3 +1,4 @@
+import { sendForTest } from '../testSupport/quotePreparationFixture';
 import {mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -116,7 +117,7 @@ describe('Lot 8A.1 — politiques explicites et destinations',()=>{
   expect(()=>f.projects.updateProjectNode(dependent.id,{status:'done'})).toThrow(/cible/);expect(()=>f.projects.completeProjectPhase(dependent.parentId!)).toThrow(/cible/);
  });
  it('D acceptée pending : première affectation opérationnelle historisée sans révision commerciale',()=>{
-  const q=f.createQuote('AW-DEVWP-FONCTION'),p=f.prepare(q.id);finalizeForTest(db,f.quotes,q.id);f.quotes.markSent(q.id);acceptForTest(db,f.quotes,q.id);
+  const q=f.createQuote('AW-DEVWP-FONCTION'),p=f.prepare(q.id);finalizeForTest(db,f.quotes,q.id);sendForTest(f.quotes,q.id);acceptForTest(db,f.quotes,q.id);
   const before=db.all('SELECT * FROM project_commercial_scope_revisions WHERE project_id=?',[p.id]),commercial=db.all('SELECT * FROM quote_lines WHERE quote_id=?',[q.id]);
   const manual=f.sites.create(p.id,{name:'Site manuel'}),scope=f.projects.commercial.scope(p.id),t=scope.targets![0];
   f.projects.commercial.assignTarget(p.id,{lineOrigin:t.lineOrigin,slot:t.slot,unitIndex:1,author:'AtoumWeb test',siteId:manual.id});
@@ -125,7 +126,7 @@ describe('Lot 8A.1 — politiques explicites et destinations',()=>{
   const a=actions(p.id).find(n=>n.operational!.targetRequirement?.target==='site')!;expect(f.time.start({projectNodeId:a.id,category:'development'}).projectNodeId).toBe(a.id);
   expect(()=>f.projects.commercial.assignTarget(p.id,{lineOrigin:t.lineOrigin,slot:t.slot,unitIndex:1,author:'Test',siteId:manual.id})).toThrow(/première affectation/);
  });
- it('B pending ne peut être acceptée sans sa destination de préparation',()=>{const q=f.createQuote('AW-WEB-PAGE-SUP');const p=f.prepare(q.id);finalizeForTest(db,f.quotes,q.id);f.quotes.markSent(q.id);expect(()=>acceptForTest(db,f.quotes,q.id)).toThrow(/Préparation incomplète/);expect(f.projects.getProject(p.id).commercialState).toBe('provisional');});
+ it('B pending ne peut être acceptée sans sa destination de préparation',()=>{const q=f.createQuote('AW-WEB-PAGE-SUP');const p=f.prepare(q.id);finalizeForTest(db,f.quotes,q.id);sendForTest(f.quotes,q.id);expect(()=>acceptForTest(db,f.quotes,q.id)).toThrow(/Préparation incomplète/);expect(f.projects.getProject(p.id).commercialState).toBe('provisional');});
  it('cible après effet structurel utilisée : changement refusé',()=>{const q=f.createQuote();const l=f.add(q.id,'AW-WEB-PAGE-SUP').lines.at(-1)!,p=f.prepare(q.id),manual=f.sites.create(p.id,{name:'Autre'});expect(()=>f.projects.commercial.assignTarget(p.id,{lineOrigin:l.id,slot:'destination',unitIndex:1,author:'Test',siteId:manual.id})).toThrow(/réaffectation|Capacités/);});
  it('ajout seconde base après auto-choix : confirmation explicite requise',()=>{const q=f.createQuote();const l=f.add(q.id,'AW-WEB-PAGE-SUP').lines.at(-1)!,p=f.prepare(q.id);f.add(q.id,'AW-WEB-VITRINE');expect(()=>f.prepare(q.id)).toThrow(/ambiguë/);choose(p.id,l.id,0);expect(f.sites.list(p.id)).toHaveLength(2);});
  it('renommages/ajout/estimation humains et redémarrage préservés',()=>{const q=f.createQuote(),p=f.prepare(q.id),page=f.sites.listPages(p.id)[0],a=actions(p.id)[0];f.projects.updateProjectNode(page.projectNodeId,{name:'Page humaine'});f.projects.updateProjectNode(a.id,{estimatedMinutes:333});f.sites.create(p.id,{name:'Site manuel'});const before=logical();f.prepare(q.id);expect(logical()).toBe(before);expect(f.projects.getProject(p.id).nodes.find(n=>n.id===a.id)!.estimatedMinutes).toBe(333);});
@@ -188,7 +189,7 @@ describe('Lot 8A.1 — politiques explicites et destinations',()=>{
  });
  it('directement accepté : même moteur v2, C sans structure et D pending',()=>{
   for(const code of ['AW-WEB-VITRINE','AW-CONT-ART-SEO','AW-DEVWP-FONCTION']){
-   const q=f.createQuote(code);finalizeForTest(db,f.quotes,q.id);f.quotes.markSent(q.id);acceptForTest(db,f.quotes,q.id);const p=f.projects.transformQuote({quoteId:q.id});
+   const q=f.createQuote(code);finalizeForTest(db,f.quotes,q.id);sendForTest(f.quotes,q.id);acceptForTest(db,f.quotes,q.id);const p=f.projects.transformQuote({quoteId:q.id});
    expect(p.commercialState).toBe('frozen');expect(f.projects.transformQuote({quoteId:q.id}).id).toBe(p.id);expect(f.sites.list(p.id)).toHaveLength(code==='AW-WEB-VITRINE'?1:0);
   }
  });
@@ -212,7 +213,7 @@ describe('Lot 8A.1 — politiques explicites et destinations',()=>{
  });
  it('D pending acceptable même si une action demande sa cible dès la préparation',()=>{
   const code='AW-DEVWP-FONCTION',policy=structuredClone(f.policies.get(code)!);policy.destinationSlots[0].requiredAt='preparation';for(const r of Object.values(policy.actionRequirements))if(r.target!=='none')r.requiredAt='preparation';f.references.activateLink(f.references.link(f.items.get(code)!.versions[0].id,f.models.get(code)!,null,{fixture:true,configuration:policy}));
-  const q=f.createQuote(code),p=f.prepare(q.id);finalizeForTest(db,f.quotes,q.id);f.quotes.markSent(q.id);acceptForTest(db,f.quotes,q.id);expect(f.projects.getProject(p.id).commercialState).toBe('frozen');expect(f.projects.commercial.scope(p.id).targets![0].state).toBe('pending');
+  const q=f.createQuote(code),p=f.prepare(q.id);finalizeForTest(db,f.quotes,q.id);sendForTest(f.quotes,q.id);acceptForTest(db,f.quotes,q.id);expect(f.projects.getProject(p.id).commercialState).toBe('frozen');expect(f.projects.commercial.scope(p.id).targets![0].state).toBe('pending');
  });
  it('prévisualisation sans écriture et jeton périmé : application refusée sans mutation',()=>{
   const q=f.createQuote(),before=logical(),preview=f.projects.commercial.preview({quoteId:q.id});expect(logical()).toBe(before);expect(preview.baseCount).toBe(1);expect(preview.operations.actions.filter(a=>a.action)).toHaveLength(21);expect(preview.destinations[0].siteOwnerOrigin).toBe(q.lines[0].id);

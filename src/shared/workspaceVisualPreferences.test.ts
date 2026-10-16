@@ -5,11 +5,28 @@ import { defaultTableView, tableViewKey } from './tableViewPreference';
 import { layoutKey } from './panelLayout';
 import { personalViewsKey } from './personalTableViews';
 import {HOME_WIDGET_PREFERENCE_KEY,defaultHomeWidgets} from './homeWidgetPreference';
+import {REAL_TABLE_SCHEMAS} from './realTableSchemas';
 function settings(): {owner:SettingsOwner; db:NodeSqliteAdapter} {
   const db=new NodeSqliteAdapter(':memory:'); db.exec('CREATE TABLE settings(key TEXT PRIMARY KEY,value_json TEXT NOT NULL);CREATE TABLE business(id TEXT PRIMARY KEY,note TEXT);INSERT INTO business VALUES(\'preserved\',\'original\')');
   return { db, owner:{getSetting<T>(key:string,fallback:T):T{const row=db.get<{value_json:string}>('SELECT value_json FROM settings WHERE key=?',[key]);return row?JSON.parse(row.value_json) as T:fallback;},setSetting(key,value){db.run('INSERT INTO settings VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json',[key,JSON.stringify(value)]);}} };
 }
 describe('workspace visual adapter with SQLite settings owner',()=>{
+  it.each(Object.keys(REAL_TABLE_SCHEMAS))('real table %s persists presentation only and retains mandatory columns',scope=>{
+    const a=settings(),b=settings();try{
+      const store=new WorkspaceVisualPreferenceStore(a.owner),schema=REAL_TABLE_SCHEMAS[scope],key=tableViewKey(scope);
+      const preference={...defaultTableView(schema),visibleColumnIds:['coordinates'],columnOrder:['coordinates'],widths:{identity:333,private:444},selectedId:'PRIVATE-ID',draft:'PRIVATE-DRAFT',query:'PRIVATE-QUERY'};
+      store.setItem(key,JSON.stringify(preference));
+      const raw=new WorkspaceVisualPreferenceStore(a.owner).getItem(key)!;
+      const saved=JSON.parse(raw);
+      expect(saved.visibleColumnIds).toEqual(expect.arrayContaining(schema.filter(c=>c.required).map(c=>c.id)));
+      expect(saved.columnOrder).toEqual(expect.arrayContaining(schema.map(c=>c.id)));
+      expect(saved.widths).toEqual({identity:333});expect(raw).not.toMatch(/PRIVATE|private|draft|query|selectedId/);
+      store.setItem(personalViewsKey(scope),JSON.stringify({version:1,views:[{id:'personal-test',name:'Mon affichage',preference}]}));
+      expect(store.getItem(personalViewsKey(scope))).not.toMatch(/PRIVATE|private|draft|query|selectedId/);
+      expect(new WorkspaceVisualPreferenceStore(b.owner).getItem(key)).toBeNull();
+      expect(a.db.all('SELECT * FROM business')).toEqual([{id:'preserved',note:'original'}]);
+    }finally{a.db.close();b.db.close();}
+  });
   it('03E persists Directory width separately from Client and discards identity fields',()=>{const a=settings();try{const store=new WorkspaceVisualPreferenceStore(a.owner);store.setItem(layoutKey('clients','list'),'{"version":1,"listPercent":57}');store.setItem(layoutKey('directory','list'),'{"version":1,"listPercent":38,"contactId":"private","draft":"secret"}');expect(JSON.parse(store.getItem(layoutKey('directory','list'))!)).toEqual({version:1,listPercent:38});expect(JSON.parse(store.getItem(layoutKey('clients','list'))!).listPercent).toBe(57);}finally{a.db.close();}});
 
   it('03D persists only Client width, independently per workspace',()=>{const a=settings(),b=settings();try{const key=layoutKey('clients','list'),store=new WorkspaceVisualPreferenceStore(a.owner);store.setItem(key,JSON.stringify({version:1,listPercent:57,clientId:'private',draft:'secret',tab:'contacts'}));expect(JSON.parse(store.getItem(key)!)).toEqual({version:1,listPercent:57});expect(new WorkspaceVisualPreferenceStore(b.owner).getItem(key)).toBeNull();expect(()=>store.setItem(key,'{"version":1,"listPercent":900}')).toThrow();expect(a.db.all('SELECT * FROM business')).toEqual([{id:'preserved',note:'original'}]);}finally{a.db.close();b.db.close();}});

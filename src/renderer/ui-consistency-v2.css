@@ -441,7 +441,7 @@ table td {
   cursor: pointer;
 }
 
-.field-help-detail {
+.field-help-detail, .field-help-short {
   position: fixed;
   display: flex;
   align-items: flex-start;
@@ -722,7 +722,7 @@ table td {
 }
 :root[data-theme='noir'] .prospect-detail-v2 .missing-action > span { color: var(--text); }
 :root[data-theme='noir'] .prospect-detail-v2 .activity-journal :is(span, small, strong, p) { color: var(--text); }
-:root[data-theme='noir'] .prospect-detail-v2 :is(.prospect-work-section, .prospect-quote-panel, .workflow-fields) :is(p, span, strong, label, legend, h2, h3) {
+:root[data-theme='noir'] .prospect-detail-v2 :is(.prospect-work-section, .prospect-quote-panel, .workflow-fields) :is(p, span, strong, label, small, legend, h2, h3) {
   color: var(--text);
 }
 :root[data-theme='noir'] .prospect-detail-v2 :is(.prospect-work-section, .prospect-quote-panel) :is(h2, h3, legend) {
@@ -1646,3 +1646,8 @@ table td {
   outline: 2px solid var(--accent-strong);
   outline-offset: 2px;
 }
+
+.field-help-short{pointer-events:none;padding:8px 12px;max-height:120px;font-size:var(--ui-font-secondary)}
+
+/* Match the legacy Client card rule only in dark mode; preserve business status backgrounds. */
+:root[data-theme='noir'] .client-summary-panel :is(.client-primary-card,.client-status-control,.contact-inline-form,.contact-card,.tab-content-stack,.activity-preview) :is(p,span,strong,label,small,h3){color:var(--text)}

@@ -12,8 +12,8 @@ if(!process.versions.electron){
  app.disableHardwareAcceleration();app.setPath('userData',path.join(temp,'profile'));app.on('window-all-closed',()=>{});
  const answers=[],dialogs=[];dialog.showMessageBoxSync=(...args)=>{const options=args.at(-1);dialogs.push(options);return answers.shift()??0;};
  const base=repo.replaceAll('\\','/'),esbuild=require('esbuild'),checks=[];let database,win;
- esbuild.buildSync({stdin:{contents:['database/DatabaseService','workspace','ipc','unsaved','restoreQuitGate','operations/operationsIpc','referentials/referentialsIpc','backups/businessBackupsIpc','time/timeIpc'].map(p=>`export * from '${base}/src/main/${p}';`).join('\n')+`\nexport { MIGRATIONS as EXPECTED_MIGRATIONS } from '${base}/src/main/database/migrations';`,resolveDir:repo,loader:'ts'},bundle:true,platform:'node',format:'cjs',outfile:path.join(temp,'services.cjs'),external:['electron'],logLevel:'silent'});
- for(const [entry,file,platform]of[['src/preload/preload.ts','preload.js','node'],['src/renderer/main.tsx','ui.js','browser']])esbuild.buildSync({entryPoints:[path.join(repo,entry)],bundle:true,platform,format:platform==='node'?'cjs':undefined,outfile:path.join(temp,file),external:platform==='node'?['electron']:[],logLevel:'silent'});
+ esbuild.buildSync({stdin:{contents:['database/DatabaseService','workspace','ipc','unsaved','restoreQuitGate','operations/operationsIpc','referentials/referentialsIpc','backups/businessBackupsIpc','time/timeIpc'].map(p=>`export * from '${base}/src/main/${p}';`).join('\n')+`\nexport { MIGRATIONS as EXPECTED_MIGRATIONS } from '${base}/src/main/database/migrations';`,resolveDir:repo,loader:'ts'},bundle:true,loader:{'.png':'dataurl'},platform:'node',format:'cjs',outfile:path.join(temp,'services.cjs'),external:['electron'],logLevel:'silent'});
+ for(const [entry,file,platform]of[['src/preload/preload.ts','preload.js','node'],['src/renderer/main.tsx','ui.js','browser']])esbuild.buildSync({entryPoints:[path.join(repo,entry)],bundle:true,loader:{'.png':'dataurl'},platform,format:platform==='node'?'cjs':undefined,outfile:path.join(temp,file),external:platform==='node'?['electron']:[],logLevel:'silent'});
  fs.writeFileSync(path.join(temp,'index.html'),'<html><head><meta charset="utf-8"><link rel="stylesheet" href="ui.css"></head><body><div id="root"></div><script src="ui.js"></script></body></html>');const S=require(path.join(temp,'services.cjs'));
  const check=(name,ok)=>{checks.push({name,passed:!!ok});if(!ok)throw Error(name);};const sleep=ms=>new Promise(r=>setTimeout(r,ms));
  app.whenReady().then(async()=>{
@@ -100,12 +100,12 @@ if(!process.versions.electron){
    const staleSnapshot=originalList();
    let releaseStale,rejectStale,invocations=0;
    database.quotes.list=(...args)=>{invocations++;if(invocations===1)return new Promise((resolve,reject)=>{releaseStale=()=>resolve(staleSnapshot);rejectStale=reject;});return originalList(...args);};
-   await click('↻ Actualiser');
+   await click('Actualiser');
    for(let i=0;i<100&&!releaseStale;i++)await sleep(20);
    check(theme+' obsolete refresh request intercepted',typeof releaseStale==='function');
    const latestSubject='UX06 REFRESH LATEST '+theme;
    const newest=database.quotes.create({clientAccountId:client.id,subject:latestSubject});
-   await click('↻ Actualiser');
+   await click('Actualiser');
    await wait('document.querySelector(".quote-table")?.textContent.includes('+JSON.stringify(latestSubject)+')');
    check(theme+' newer refresh displays newest quote',await js('return document.querySelector(".quote-table").textContent.includes('+JSON.stringify(latestSubject)+')'));
    releaseStale();await sleep(150);
@@ -113,10 +113,10 @@ if(!process.versions.electron){
    database.quotes.list=originalList;
    let rejectOld;let secondCount=0;
    database.quotes.list=(...args)=>{secondCount++;if(secondCount===1)return new Promise((_resolve,reject)=>{rejectOld=reject;});return originalList(...args);};
-   await click('↻ Actualiser');
+   await click('Actualiser');
    for(let i=0;i<100&&!rejectOld;i++)await sleep(20);
    check(theme+' stale failing refresh intercepted',typeof rejectOld==='function');
-   await click('↻ Actualiser');
+   await click('Actualiser');
    await wait('document.querySelector(".quote-table")?.textContent.includes('+JSON.stringify(latestSubject)+')');
    rejectOld(new Error('OBSOLETE QUOTE LIST FAILURE '+theme));await sleep(150);
    check(theme+' stale refresh error not shown to operator',await js('return !document.body.textContent.includes('+JSON.stringify('OBSOLETE QUOTE LIST FAILURE '+theme)+')'));
@@ -244,7 +244,7 @@ if(!process.versions.electron){
  await js('window.dispatchEvent(new CustomEvent("atoumweb:navigate",{detail:{entityType:"quote",entityId:'+JSON.stringify(quote.id)+',title:"TEST"}}))');await wait('!!document.querySelector(".quote-contract-preparation input")');check(theme+' reopening saved value',await value(context)==='Context '+theme);
  await input(context,'ESCAPE '+theme);await js('window.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}))');check(theme+' Escape stay',await value(context)==='ESCAPE '+theme);answers.push(1);await js('window.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}))');await wait('!document.querySelector(".quote-detail-panel")');
  await js('[...document.querySelectorAll("tbody tr")].find(r=>r.textContent.includes('+JSON.stringify(quote.number)+')).click()');await wait('!!document.querySelector(".quote-contract-preparation input")');
- await input(context,'NEIGHBOR '+theme);await js('document.querySelector(".quote-line-actions button[title=Modifier]").click()');await input('.quote-line-editor input','UNSAVED LINE');const count=dialogs.length;await click('Annuler');check(theme+' intentional cancel no extra prompt',dialogs.length===count);check(theme+' cancel preserves neighbor',await value(context)==='NEIGHBOR '+theme);answers.push(1);await js('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:"Prospects"}))');await click('+ Ajouter une entreprise');await input('.prospect-create-v2 label input','TEST NEW '+theme);await click('Fermer');await click('+ Ajouter une entreprise');check(theme+' hiding form preserves value',await value('.prospect-create-v2 label input')==='TEST NEW '+theme);
+ await input(context,'NEIGHBOR '+theme);await js('document.querySelector(".quote-line-actions button[title=Modifier]").click()');await input('.quote-line-editor input','UNSAVED LINE');const count=dialogs.length;await click('Annuler');check(theme+' intentional cancel no extra prompt',dialogs.length===count);check(theme+' cancel preserves neighbor',await value(context)==='NEIGHBOR '+theme);answers.push(1);await js('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:"Prospects"}))');await click('Ajouter une entreprise');await input('.prospect-create-v2 label input','TEST NEW '+theme);await click('Fermer');await click('Ajouter une entreprise');check(theme+' hiding form preserves value',await value('.prospect-create-v2 label input')==='TEST NEW '+theme);
  await js('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:"Clients"}))');check(theme+' prospect navigation stay',await value('.prospect-create-v2 label input')==='TEST NEW '+theme);answers.push(1);await js('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:"Clients"}))');await wait('!document.querySelector(".prospect-create-v2")');check(theme+' prospect not implicitly saved',!database.crm.listProspects().some(p=>p.displayName==='TEST NEW '+theme));
  }
 
@@ -280,7 +280,7 @@ if(!process.versions.electron){
  }
 
  if(process.argv.includes('--lot-c')){
- answers.length=0;await js('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:"Prospects"}))');await click('+ Ajouter une entreprise');await input('.prospect-create-v2 label input','CLOSE '+theme);
+ answers.length=0;await js('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:"Prospects"}))');await click('Ajouter une entreprise');await input('.prospect-create-v2 label input','CLOSE '+theme);
  const restoreMarker=path.join(temp,'profile','pending-database-restore.json'),markerBefore=fs.existsSync(restoreMarker);
  const restoreTicket=S.restoreQuitGate.arm(()=>{fs.writeFileSync(restoreMarker,'unexpected cancelled restore');});
  app.quit();await sleep(100);check(theme+' app quit stay leaves database open',!shutdownCleanup&&database.database.get('SELECT 1 AS n').n===1);
@@ -288,7 +288,7 @@ if(!process.versions.electron){
  check(theme+' native state published',S.unsavedWindows.state(win.id)?.labels.includes('Nouvelle entreprise'));
  win.close();await sleep(120);check(theme+' close stay retains window',!win.isDestroyed());check(theme+' close stay retains field',await value('.prospect-create-v2 label input')==='CLOSE '+theme);
  let beforeLoad=0;win.webContents.on('did-finish-load',()=>{beforeLoad++});win.webContents.reload();await sleep(180);check(theme+' reload stay prevents unload',beforeLoad===0);check(theme+' reload stay keeps field',await value('.prospect-create-v2 label input')==='CLOSE '+theme);
- answers.push(1);win.webContents.reload();await wait('!!document.querySelector(".aw-navigation-rail")&&!document.querySelector(".prospect-create-v2")');check(theme+' reload allowed once',beforeLoad===1);await js('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:"Prospects"}))');await click('+ Ajouter une entreprise');check(theme+' reload discarded only memory',await value('.prospect-create-v2 label input')==='');
+ answers.push(1);win.webContents.reload();await wait('!!document.querySelector(".aw-navigation-rail")&&!document.querySelector(".prospect-create-v2")');check(theme+' reload allowed once',beforeLoad===1);await js('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:"Prospects"}))');await click('Ajouter une entreprise');check(theme+' reload discarded only memory',await value('.prospect-create-v2 label input')==='');
  await input('.prospect-create-v2 label input','WORKSPACE '+theme);let pickerCalls=0;const chosen=S.ensureWorkspace(path.join(temp,'target-'+theme));dialog.showOpenDialog=async()=>{pickerCalls++;return {canceled:false,filePaths:[chosen.root]}};
  const config=path.join(temp,'profile','workspace.json');const prior=fs.existsSync(config)?fs.readFileSync(config,'utf8'):null;let result=await js('return window.atoumweb.workspace.choose()');check(theme+' workspace stay cancels before picker',result.cancelled&&pickerCalls===0);check(theme+' workspace stay preserves bootstrap',(fs.existsSync(config)?fs.readFileSync(config,'utf8'):null)===prior);
  answers.push(1);dialog.showOpenDialog=async()=>({canceled:true,filePaths:[]});result=await js('return window.atoumweb.workspace.choose()');check(theme+' picker cancel preserves draft',result.cancelled&&await value('.prospect-create-v2 label input')==='WORKSPACE '+theme);check(theme+' picker cancel preserves bootstrap',(fs.existsSync(config)?fs.readFileSync(config,'utf8'):null)===prior);
@@ -302,7 +302,7 @@ if(!process.versions.electron){
  detached.close();await sleep(60);check(theme+' detached close stay',!detached.isDestroyed());answers.push(1);detached.close();await sleep(80);check(theme+' detached explicit close',detached.isDestroyed());
  const originalSave=database.quotePreparation.save.bind(database.quotePreparation);database.quotePreparation.save=(...args)=>new Promise(resolve=>setTimeout(()=>resolve(originalSave(...args)),650));
  answers.length=0;answers.push(1);await js('window.dispatchEvent(new CustomEvent("atoumweb:navigate",{detail:{entityType:"quote",entityId:'+JSON.stringify(quote.id)+',title:"TEST"}}))');await wait('!!document.querySelector(".quote-contract-preparation input")');await input(context,'PENDING '+theme);await js('[...document.querySelectorAll("button")].find(b=>b.textContent.trim()==="Enregistrer la préparation").click()');await wait('!!document.querySelector(".quote-contract-preparation fieldset[disabled]")');win.close();await sleep(80);check(theme+' pending save blocks close',!win.isDestroyed()&&dialogs.at(-1).buttons.join('|')==='Rester');await wait('!document.querySelector(".quote-contract-preparation fieldset[disabled]")');check(theme+' save confirmed before clean exit',database.quotePreparation.parameters(quote.id).conclusion.context==='PENDING '+theme);database.quotePreparation.save=originalSave;
- await js('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:"Prospects"}))');await click('+ Ajouter une entreprise');
+ await js('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:"Prospects"}))');await click('Ajouter une entreprise');
  await input('.prospect-create-v2 label input','AFTER APPROVAL '+theme);win.close();await sleep(100);check(theme+' further edit revokes workspace approval',!win.isDestroyed());check(theme+' later draft is retained',await value('.prospect-create-v2 label input')==='AFTER APPROVAL '+theme);answers.push(1);
  const count=dialogs.length;win.close();await sleep(100);check(theme+' approved unchanged close no duplicate prompt',win.isDestroyed()&&dialogs.length===count+1);win=null;
  }

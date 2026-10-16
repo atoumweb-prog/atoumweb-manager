@@ -35,12 +35,12 @@ if(!process.versions.electron){
  assert(owned(temp),'No independent TEMP fixture; launch via Node wrapper');
  app.disableHardwareAcceleration();app.setPath('userData',path.join(temp,'profile'));app.on('window-all-closed',()=>{});
  const base=repo.split(path.sep).join('/'),esbuild=require('esbuild');
- const serviceEntries=['database/DatabaseService','workspace','ipc','operations/operationsIpc','referentials/referentialsIpc','backups/businessBackupsIpc','time/timeIpc'];
+ const serviceEntries=['database/DatabaseService','workspace','ipc','operations/operationsIpc','referentials/referentialsIpc','backups/businessBackupsIpc','time/timeIpc',...(process.env.ATOUMWEB_EC03_ONLY==='1'?['testSupport/quotePreparationFixture']:[])];
  const source=serviceEntries.map(s=>"export * from '"+base+"/src/main/"+s+"';").join('\n');
- esbuild.buildSync({stdin:{contents:source,resolveDir:repo,loader:'ts'},bundle:true,platform:'node',format:'cjs',outfile:path.join(temp,'services.cjs'),external:['electron'],logLevel:'silent'});
+ esbuild.buildSync({stdin:{contents:source,resolveDir:repo,loader:'ts'},bundle:true,loader:{'.png':'dataurl'},platform:'node',format:'cjs',outfile:path.join(temp,'services.cjs'),external:['electron'],logLevel:'silent'});
  for(const entry of [['src/preload/preload.ts','preload.js','node'],['src/renderer/main.tsx','ui.js','browser']]){
   const [file,out,platform]=entry;
-  esbuild.buildSync({entryPoints:[path.join(repo,file)],bundle:true,platform,outfile:path.join(temp,out),logLevel:'silent',...(platform==='node'?{format:'cjs',external:['electron']}:{format:'iife'})});
+  esbuild.buildSync({entryPoints:[path.join(repo,file)],bundle:true,loader:{'.png':'dataurl'},platform,outfile:path.join(temp,out),logLevel:'silent',...(platform==='node'?{format:'cjs',external:['electron']}:{format:'iife'})});
  }
  fs.writeFileSync(path.join(temp,'index.html'),'<html lang="fr"><head><meta charset="utf-8"><link rel="stylesheet" href="ui.css"></head><body><div id="root"></div><script src="ui.js"></script></body></html>');
  const S=require(path.join(temp,'services.cjs'));
@@ -116,7 +116,9 @@ if(!process.versions.electron){
    const dest=path.join(folder,label.replace(/[^a-z0-9_-]/gi,'_')+'.png');
    assert(!fs.existsSync(dest),'Refusing overwrite of '+dest);
    // Await the page title, theme/density, and loaded dashboard before painting.
-   await wait('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label")==='+
+   // A collapsed group need not contain the current route (e.g. Settings).
+   const captureNavigation='(document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label") ?? (document.querySelector(".aw-navigation-rail").dataset.railCollapsed==="true" ? document.querySelector(".content-area .page-heading h1")?.textContent.trim() : null))';
+   await wait(captureNavigation+'==='+
      JSON.stringify(page),'capture current navigation '+label);
    if(page==='Accueil'){
      await wait('!!document.querySelector(".home-dashboard:not(.home-dashboard-loading)")',
@@ -150,7 +152,7 @@ if(!process.versions.electron){
    assert(captured,'COMPOSITOR OUT OF SYNC: refused '+label+
      ' after '+attempts+' frames; no misleading screenshot saved');
    // Confirm DOM did not navigate again while the screenshot was captured.
-   const final=await get('({page:document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label"),'+
+   const final=await get('({page:'+captureNavigation+','+
       'heading:document.querySelector(".page-heading h1")?.textContent.trim()??"Accueil",'+
       'theme:document.documentElement.dataset.theme,'+
       'density:document.documentElement.dataset.density})');
@@ -158,7 +160,7 @@ if(!process.versions.electron){
      'Navigation changed during capture '+label+': '+JSON.stringify(final));
    fs.writeFileSync(dest,captured.toPNG());
    capturesVerified++;
-   console.log('[UXV2 CAPTURE] VERIFIED '+capturesVerified+'/'+(lot03b?9:63)+' '+label+
+   console.log('[UXV2 CAPTURE] VERIFIED '+capturesVerified+'/'+(process.env.ATOUMWEB_VISUAL_PILOT?36:lot03b||process.env.ATOUMWEB_RAIL_RENDER_ONLY==='1'?9:63)+' '+label+
      ' frameAttempt='+attempts);
  };
  app.whenReady().then(async()=>{
@@ -171,14 +173,22 @@ if(!process.versions.electron){
   win=new BrowserWindow({show:captureArg>=0||searchOnly,title:"AtoumWeb Manager — UX 01A VISUAL TEST (TEMP)",width:1510,height:1030,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});
   win.webContents.on('console-message',e=>{if(e.level==='error'||e.level===3)consoleErrors.push(e.message);});
   await win.loadFile(path.join(temp,'index.html'));
+  // windowsHide may suppress the first native show despite BrowserWindow.show.
+  // Visible recipes need a real compositor/focus, independently of capturePage.
+  if(captureArg>=0||searchOnly){win.show();await wait('document.visibilityState==="visible"','visible recipe window');test(win.isVisible(),'Requested visible recipe window is shown');}
   await wait('document.querySelectorAll("[data-nav-module]").length===17','real Manager bootstrap');
   test((await get('document.querySelectorAll("[data-nav-module]").length'))===17,'Seventeen navigation entries');
   test(await get('!!window.atoumweb&&!window.atoumwebOperationalRecipe'),'Real preload without synthetic UI API');
+  if(process.env.ATOUMWEB_EC03_ONLY==='1'){
+    await require('./fixtures/ec03-transmission-scenarios.cjs')({win,db,S,registered,evalUI,get,wait,navigate,test,sleep});
+    test(consoleErrors.length===0,'EC03 no renderer console error');
+    console.log('EC03_RESULT '+JSON.stringify({passed:checks,failed:0,onlyTemp:true,consoleErrors}));return;
+  }
   if(searchOnly){
     await require('./fixtures/02c-search-scenarios.cjs')({win,db,temp,workspace,registered,evalUI,get,wait,navigate,test,sleep});
     test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','02C integrity');
     test(db.database.all('PRAGMA foreign_key_check').length===0,'02C FK');
-    test(db.database.all('SELECT id FROM schema_migrations ORDER BY id').map(row=>row.id).join(',')===Array.from({length:70},(_,index)=>index+1).join(','),'02C exact migrations1–70');
+    test(db.database.all('SELECT id FROM schema_migrations ORDER BY id').map(row=>row.id).join(',')===Array.from({length:71},(_,index)=>index+1).join(','),'02C exact migrations1–71');
     console.log('02C_RESULT '+JSON.stringify({passed:checks,failed:0,consoleErrors,onlyTemp:true}));return;
   }
   if(lot08a){
@@ -220,6 +230,17 @@ if(!process.versions.electron){
     await require('./fixtures/lot03b-real-scenarios.cjs')({win,db,evalUI,get,wait,navigate,test,sleep,saveScreenshot});
     if(captureArg>=0)test(capturesVerified===9,'Nine current 03B screenshots verified by composited-frame sentinel');
     console.log('[UXV2 03B LIVE] PASSED '+checks+' real native assertions; TEMP only');
+    return;
+  }
+  if(process.env.ATOUMWEB_VISUAL_PILOT){
+    await require('./fixtures/visual-pilot-scenarios.cjs')({win,db,evalUI,get,wait,navigate,select,test,sleep,saveScreenshot});
+    if(captureArg>=0)test(capturesVerified===36,'36 visual pilot captures synchronized');
+    console.log('[VISUAL PILOT] PASSED '+checks+' assertions; TEMP only');return;
+  }
+  await require('./fixtures/rail-render-scenarios.cjs')({win, db, evalUI, get, wait, navigate, select, test, sleep, saveScreenshot:process.env.ATOUMWEB_RAIL_RENDER_ONLY==='1'?saveScreenshot:undefined});
+  if(process.env.ATOUMWEB_RAIL_RENDER_ONLY==='1'){
+    if(captureArg>=0)test(capturesVerified===9,'Nine collapsed-rail captures synchronized with compositor');
+    console.log('[RAIL RENDER] PASSED '+checks+' assertions; isolated TEMP only');
     return;
   }
   await require('./fixtures/real-shell-scenarios.cjs')({win, db, preload:path.join(temp,'preload.js'), evalUI, get, wait, navigate, test, sleep});

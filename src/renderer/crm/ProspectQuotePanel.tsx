@@ -160,7 +160,10 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
   async function sendQuote() {
     if (!quote || !recipient.trim()) { setError('Renseigne le destinataire de l’envoi.'); return; }
     await run(async () => {
-      await window.atoumweb.quotes.markSent(quote.id);
+      const state=await window.atoumweb.quotes.transmissionState(quote.id);
+      if(!state.contentHash)throw Error('Version à envoyer absente.');
+      if(!window.confirm(`Confirmer l’envoi effectif de ${quote.number} à ${recipient.trim()} ? Un transfert vers Abby seul ne vaut pas envoi au client.`))throw Error('Envoi non attesté ; devis inchangé.');
+      await window.atoumweb.quotes.markSent(quote.id,{operationId:crypto.randomUUID(),preparationId:state.preparationId,contentHash:state.contentHash,channel:'other',provenance:`${channel} — ${recipient.trim()} — ${sendNote.trim()}`,occurredAt:'now',confirmed:true});
       const action = await window.atoumweb.crm.actions.create({
         ownerType: 'prospect', ownerId: prospect.id, type: 'action', title: `Devis ${quote.number} envoyé`, relatedType: 'quote', relatedId: quote.id,
       });
@@ -243,7 +246,7 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
   return <section className="prospect-work-section prospect-quote-panel">
     <div className="quote-command-header"><div><span className="eyebrow">{panelTitle}</span><strong>{quote.number} · {quote.subject}</strong><small>{subtitle}</small></div><button type="button" className="secondary-button compact-button" onClick={() => openQuote(quote)}>Ouvrir le devis complet</button></div>
 
-    {canEdit && !isFinalized ? <div className="quote-draft-waiting"><strong>Devis en attente d’édition</strong><span>Le brouillon peut encore être modifié ou abandonné. Les lignes, montants, remises et conditions se travaillent dans l’éditeur de devis.</span></div> : <div className="quote-command-summary"><div><span>Montant</span><strong>{money(quote.contractValueCents)}</strong></div><div><span>Envoyé le</span><strong>{date(quote.sentAt)}</strong></div><div><span>Valable jusqu’au</span><strong>{date(quote.validUntil)}</strong></div>{sent && <div><span>Temps restant</span><strong className={remaining != null && remaining <= 7 ? 'quote-expiry-warning' : ''}>{remaining == null ? '—' : remaining < 0 ? 'Expiré' : `${remaining} jour${remaining > 1 ? 's' : ''}`}</strong></div>}</div>}
+    {canEdit && !isFinalized ? <details className="quote-draft-waiting"><summary>À propos de ce brouillon</summary><span>Le brouillon peut encore être modifié ou abandonné. Les lignes, montants, remises et conditions se travaillent dans l’éditeur de devis.</span></details> : <div className="quote-command-summary"><div><span>Montant</span><strong>{money(quote.contractValueCents)}</strong></div><div><span>Envoyé le</span><strong>{date(quote.sentAt)}</strong></div><div><span>Valable jusqu’au</span><strong>{date(quote.validUntil)}</strong></div>{sent && <div><span>Temps restant</span><strong className={remaining != null && remaining <= 7 ? 'quote-expiry-warning' : ''}>{remaining == null ? '—' : remaining < 0 ? 'Expiré' : `${remaining} jour${remaining > 1 ? 's' : ''}`}</strong></div>}</div>}
 
     {sent && <div className="quote-command-summary quote-follow-summary"><div><span>Canal</span><strong>{dispatchChannel}</strong></div><div><span>Destinataire</span><strong>{dispatchRecipient}</strong></div><div><span>Dernière relance</span><strong>{date(latestCompletedFollowUp?.completedAt)}</strong></div><div><span>Prochaine relance</span><strong>{date(latestOpenFollowUp?.dueAt)}</strong></div></div>}
     {sent && latestDispatch?.completionNotes && <p className="muted">Note d’envoi : {latestDispatch.completionNotes}</p>}

@@ -1,3 +1,4 @@
+import { sendForTest } from '../testSupport/quotePreparationFixture';
 import {existsSync,mkdtempSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -18,7 +19,7 @@ const state=()=>db.all<{name:string}>("SELECT name FROM sqlite_master WHERE type
   .map(t=>({table:t.name,rows:db.all('SELECT * FROM '+t.name).map(r=>JSON.stringify(r)).sort()}));
 const pageLine=(quoteId:string,quantity=2000)=>{f.quotes.addCatalogLine(quoteId,f.services[1].currentVersion!.id,{quantityMilli:quantity});return f.quotes.get(quoteId).lines.at(-1)!;};
 const blogLine=(quoteId:string)=>{f.quotes.addCatalogLine(quoteId,f.blogItem.versions[0].id);return f.quotes.get(quoteId).lines.at(-1)!;};
-const send=(id:string)=>{finalizeForTest(db,f.quotes,id);return f.quotes.markSent(id);};
+const send=(id:string)=>{finalizeForTest(db,f.quotes,id);return sendForTest(f.quotes,id);};
 
 describe('Lot 7B — même Projet prévisionnel et révisions commerciales',()=>{
  it('Prospect : 1 Site / 5 Pages sans Client ni plan 58 figé, reprises idempotentes',()=>{

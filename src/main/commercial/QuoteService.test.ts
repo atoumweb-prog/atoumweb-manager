@@ -1,3 +1,4 @@
+import { sendForTest } from '../testSupport/quotePreparationFixture';
 import { mkdtempSync,writeFileSync,rmSync } from 'node:fs';
 import { join,resolve,sep } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -175,7 +176,7 @@ describe('QuoteService', () => {
     const finalized = finalizeForTest(database, quotes, quote.id);
     expect(finalized.finalizedAt).toBeTruthy();
     expect(finalized.status).toBe('draft');
-    const sent = quotes.markSent(quote.id);
+    const sent = sendForTest(quotes,quote.id);
     expect(sent.status).toBe('sent');
     expect(sent.sentAt).toBeTruthy();
     expect(sent.acceptedAt).toBeNull();
@@ -377,7 +378,7 @@ describe('QuoteService', () => {
     const quote = quotes.create({ prospectId: prospect.id, subject: 'Finalisation' });
     quotes.addCustomLine(quote.id, { label: 'Site', proposedUnitPriceCents: 69900 });
 
-    expect(() => quotes.markSent(quote.id)).toThrow(/finalise/i);
+    expect(() => sendForTest(quotes,quote.id)).toThrow(/finalise/i);
 
     const first = finalizeForTest(database,quotes,quote.id);
     const firstFinalizedAt = first.finalizedAt;
@@ -392,7 +393,7 @@ describe('QuoteService', () => {
     expect(Number(finalizationEvents[0]?.count ?? 0)).toBe(1);
     expect(crm.listProspects().find((item) => item.id === prospect.id)?.stage).toBe('quote_to_send');
 
-    const sent = quotes.markSent(quote.id);
+    const sent = sendForTest(quotes,quote.id);
     expect(sent.status).toBe('sent');
     expect(crm.listProspects().find((item) => item.id === prospect.id)?.stage).toBe('quote_sent');
   });
@@ -402,7 +403,7 @@ describe('QuoteService', () => {
     const quote = quotes.create({ prospectId: prospect.id, subject: 'Acceptation' });
     quotes.addCustomLine(quote.id, { label: 'Site', proposedUnitPriceCents: 69900 });
     finalizeForTest(database,quotes,quote.id);
-    quotes.markSent(quote.id);
+    sendForTest(quotes,quote.id);
 
     const accepted = acceptForTest(database,quotes,quote.id);
     const second = acceptForTest(database,quotes,quote.id);
@@ -424,7 +425,7 @@ describe('QuoteService', () => {
     expect(() => quotes.attachContractDocument(quote.id, 'doc-inexistant')).toThrow(/accepté/i);
 
     finalizeForTest(database,quotes,quote.id);
-    quotes.markSent(quote.id);
+    sendForTest(quotes,quote.id);
     const accepted = acceptForTest(database,quotes,quote.id);
     const clientId = accepted.acceptedClientAccountId!;
     const source=join(root,'devis-signe.pdf');writeFileSync(source,'%PDF-1.4\nDocument test isolé');
@@ -443,7 +444,7 @@ describe('QuoteService', () => {
     const quote = quotes.create({ prospectId: prospect.id, subject: 'À dupliquer' });
     quotes.addCustomLine(quote.id, { label: 'Ligne libre', proposedUnitPriceCents: 50000 });
     finalizeForTest(database,quotes,quote.id);
-    quotes.markSent(quote.id);
+    sendForTest(quotes,quote.id);
     quotes.refuse(quote.id);
 
     const copy = quotes.duplicate(quote.id);
@@ -553,7 +554,7 @@ describe('QuoteService', () => {
     const quote = quotes.create({ prospectId: prospect.id, subject: 'Refus sans conversion' });
     quotes.addCustomLine(quote.id, { label: 'Prestation refusée', proposedUnitPriceCents: 15000 });
     finalizeForTest(database,quotes,quote.id);
-    quotes.markSent(quote.id);
+    sendForTest(quotes,quote.id);
     const refused = quotes.refuse(quote.id);
     expect(refused.status).toBe('refused');
     expect(refused.acceptedClientAccountId).toBeFalsy();
@@ -569,7 +570,7 @@ describe('QuoteService', () => {
     const quote = quotes.create({ prospectId: prospect.id, subject: 'Envoi sans signature' });
     quotes.addCustomLine(quote.id, { label: 'Prestation proposée', proposedUnitPriceCents: 20000 });
     finalizeForTest(database,quotes,quote.id);
-    const sent = quotes.markSent(quote.id);
+    const sent = sendForTest(quotes,quote.id);
     expect(sent.status).toBe('sent');
     expect(sent.acceptedClientAccountId).toBeFalsy();
     expect(sent.projectReadyAt).toBeFalsy();
@@ -730,7 +731,7 @@ describe('QuoteService', () => {
     const original = quotes.create({ prospectId: prospect.id, subject: 'Proposition historique' });
     const withLine = quotes.addCustomLine(original.id, { label: 'Prestation figée', quantityMilli: 1500, proposedUnitPriceCents: 20000 });
     finalizeForTest(database,quotes,original.id);
-    quotes.markSent(original.id);
+    sendForTest(quotes,original.id);
     quotes.refuse(original.id);
     const revision = quotes.duplicate(original.id);
     expect(revision.id).not.toBe(original.id);
@@ -751,7 +752,7 @@ describe('QuoteService', () => {
     const first = quotes.create({ prospectId: prospect.id, subject: 'Première proposition' });
     quotes.addCustomLine(first.id, { label: 'Site historique', proposedUnitPriceCents: 69900 });
     finalizeForTest(database,quotes,first.id);
-    quotes.markSent(first.id);
+    sendForTest(quotes,first.id);
     quotes.refuse(first.id);
     const revised = quotes.duplicate(first.id);
     quotes.updateLine(revised.lines[0].id, { label: 'Site revisité', quantityMilli: 1000, proposedUnitPriceCents: 79900 });

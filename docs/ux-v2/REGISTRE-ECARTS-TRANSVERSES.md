@@ -1,5 +1,10 @@
 # Registre des écarts transverses — priorisation UX/UI V2
 
+## Actualisation du 16/10/2026 — priorité sur les constats historiques ci-dessous
+
+Les états de #81/#83 et les risques datés du 09/10 ci-dessous sont conservés pour traçabilité ; ils ne décrivent plus seuls le code actuel. [Clôture des 67 références et 58 sous-lots](CLOTURE-CONFORMITE-2026-10-16.md) : corrections EC01, Client B et EC03 locales vérifiées ; deux attentes natives de migration mises à jour à 71 et visibilité des fenêtres de recette contrôlée explicitement, sans changement métier. UX-01/UX-16 et transactions restent testés. Réserves courantes : sauvegarde complète hors SQLite non implémentée, archivage des identités Annuaire non exposé, validations externes et exhaustives non certifiées, arbitrages sur nouvelles réouvertures/contrepassations. Aucune fusion, CI hébergée ou modification de base réelle pendant cette clôture. Les décisions utilisateur récentes priment sur les propositions anciennes ; pas de nouvelle refonte.
+
+
 **Date : 09/10/2026.** Les sévérités ci-dessous sont des **priorités d'investigation/implémentation**, pas une confirmation que tous les risques décrits ont causé un incident réel. Sources : décisions [DECISIONS](DECISIONS.md), audits 01–10, code inspecté sur `main` du 09/10/2026 ; recontrôler HEAD/IPC/DB avant toute correction.
 
 ## 1. Critères de priorité

@@ -1,3 +1,4 @@
+import {OperationIcon} from '../operations/OperationIcon';
 import type { ReactNode } from 'react';
 
 export type AppNoticeLevel = 'info' | 'success' | 'warning' | 'error';
@@ -27,6 +28,6 @@ export function AppNotice({ level, children, action, onClose, className }: AppNo
     {action && <button className="aw-ui-notice-action" type="button"
       onClick={action.onClick}>{action.label}</button>}
     {onClose && <button className="aw-ui-notice-close" type="button"
-      aria-label="Fermer la notification" onClick={onClose}>×</button>}
+      aria-label="Fermer la notification" onClick={onClose}><OperationIcon name="close"/></button>}
   </div>;
 }

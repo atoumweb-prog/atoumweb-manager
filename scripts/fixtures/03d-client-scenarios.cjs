@@ -32,6 +32,12 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   await click('#client-tab-contacts');await textClick('#client-panel-contacts button','+ Ajouter');
   await input('#client-panel-contacts .contact-inline-form input','TEST03D UNSAVED');
   await js('window.__clientInput=document.querySelector("#client-panel-contacts .contact-inline-form input")');
+  await click('[aria-label="Trier par Client"]');await click('[aria-label="Trier par Client"]');
+  await click('.clients-v2 .aw-table-preferences>summary');
+  test(await get('document.querySelector(".clients-v2 [data-column-toggle=identity]").disabled&&document.querySelector(".clients-v2 [data-column-toggle=open]").disabled'),'Client mandatory identity and open columns cannot be hidden');
+  await click('.clients-v2 [data-column-toggle=coordinates]');
+  test(await get('!document.querySelector(".clients-table th[data-column-id=coordinates]")&&window.__clientInput.isConnected&&window.__clientInput.value==="TEST03D UNSAVED"'),'Client sort and column changes preserve exact mounted draft');
+  await textClick('.clients-v2 .aw-saved-views button','Rétablir la vue standard');await click('.clients-v2 .aw-table-preferences>summary');
   for(const id of ['commercial','contracts','projects','operations','documents','history','summary','contacts']){
    await click('#client-tab-'+id);
    test(await get('window.__clientPanel===document.querySelector(".client-summary-panel")&&window.__clientContacts===document.querySelector("#client-panel-contacts")&&window.__clientInput.value==="TEST03D UNSAVED"'),'Tab '+id+' retains component identity and draft');

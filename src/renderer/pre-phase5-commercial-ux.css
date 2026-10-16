@@ -55,7 +55,7 @@
 /* La limite historique de 420 px amputait les fiches, surtout en grand mode. */
 .prospect-detail-panel:not(.prospect-detail-desk),
 .client-summary-panel:not(.client-large-view) { max-height: calc(100dvh - 120px) !important; }
-.prospect-detail-desk { position: static !important; height: 100% !important; max-height: none !important; overflow-y: auto !important; }
+.prospect-detail-desk { position: static !important; height: 100% !important; max-height: none !important; overflow: hidden !important; }
 .prospect-desk-overlay { padding: clamp(8px, 2vw, 24px); }
 .prospect-desk-shell { width: min(1680px, calc(100vw - 32px)); height: calc(100dvh - 32px); }
 
@@ -94,7 +94,7 @@
 .client-summary-panel .client-tabs-buttons button.active { outline: 2px solid #e6bd6a; }
 .client-large-view {
   position: fixed !important; z-index: 1200; inset: 16px; width: auto !important;
-  box-sizing: border-box; height: calc(100dvh - 32px); max-height: none !important; overflow-y: auto !important;
+  box-sizing: border-box; height: calc(100dvh - 32px); max-height: none !important; overflow: hidden !important;
   padding: clamp(14px, 2vw, 28px); box-shadow: 0 0 0 100vmax rgba(7,16,24,.65), 0 28px 90px rgba(0,0,0,.28);
 }
 @media (max-width: 760px) {

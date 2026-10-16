@@ -1,3 +1,7 @@
+import {CrmRecordLayout} from './CrmRecordLayout';
+import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {CLIENT_DIRECTORY_VIEW} from '../../shared/realTableSchemas';
+import './crm-visual-foundation.css';
 import { layoutKey, readLayout, writeLayout } from '../../shared/panelLayout';
 import { CLIENT_TABS, clientTabKey, clientHistory, readClientSections, type ClientTab } from '../../shared/clientPresentation';
 import './ClientsPageV2.css';
@@ -587,7 +591,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
       await refreshSelectedClientData(selected.id);
       onMessage(wasEditing ? 'Contact mis à jour.' : 'Contact ajouté au client.');
     } catch (error) {
-      setContactError(error instanceof Error ? error.message : 'Impossible d’ajouter le contact.');
+      setContactError(error instanceof Error ? error.message.replace(/^Error invoking remote method ['"][^'"]+['"]:\s*(?:Error:\s*)?/i,'') : 'Impossible d’ajouter le contact.');
     } finally {
       setContactSaving(false);
     }
@@ -602,12 +606,12 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
   }
 
   return (
-    <div className="crm-stack">
+    <div className="crm-stack clients-v2">
       <div className="module-toolbar client-toolbar">
         <div><strong>{filtered.length}</strong><span> client{filtered.length > 1 ? 's' : ''}</span></div>
         <div className="toolbar-controls">
-          <button className="secondary-button" type="button" disabled={loading} onClick={() => void refreshAll()}>{loading ? 'Actualisation…' : '↻ Actualiser'}</button>
-          <input className="inline-search" placeholder="Rechercher un client…" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <button className="secondary-button" type="button" disabled={loading} onClick={() => void refreshAll()}><OperationIcon name="refresh"/>{loading ? 'Actualisation…' : 'Actualiser'}</button>
+          <input aria-label="Rechercher les clients" className="inline-search" placeholder="Rechercher un client…" value={query} onChange={(e) => setQuery(e.target.value)} />
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | ClientStatus)}>
             <option value="all">Tous les statuts</option>
             <option value="active">Actifs</option>
@@ -642,44 +646,73 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
       {loading && clients.length===0 ? <div className="panel"><p className="muted">Chargement des clients…</p></div> : (
         <div className={selected && !largeView ? 'clients-layout with-detail' : 'clients-layout'} style={clientSplitStyle}>
           <div className="panel table-panel">
-            <div className="clients-table-wrap">
-              <table className="clients-table">
-                <thead><tr><th>Client</th><th>Statut</th><th>Contact principal</th><th>Coordonnées</th><th>Prochaine action</th><th /></tr></thead>
-                <tbody>
-                  {filtered.map((client) => (
-                    <tr key={client.id} data-client-id={client.id} className={`client-relationship-${client.relationshipStatus ?? 'neutral'} ${selectedId === client.id ? 'selected-row' : ''}`} onClick={() => openClient(client.id)}>
-                      <td><div className="client-name-cell"><CrmIdentityAvatar organizationId={client.organizationId} contactId={client.primaryContactId} name={client.displayName} /><div><strong>{client.displayName}</strong><small>Client depuis {new Date(client.becameClientAt).toLocaleDateString('fr-FR')}</small></div></div></td>
-                      <td><span className={`client-status status-${client.status}`}>{STATUS_LABELS[client.status ?? 'active']}</span></td>
-                      <td>{client.contactName || '—'}</td>
-                      <td><div className="contact-stack"><span>{client.email || '—'}</span><small>{client.phone || ''}</small></div></td>
-                      <td>{client.nextActionAt ? <><strong>{client.nextActionText || 'Action prévue'}</strong><small>{new Date(client.nextActionAt).toLocaleDateString('fr-FR')}</small></> : <span className="muted">Aucune</span>}</td>
-                      <td><button className="link-button" type="button" onClick={(event) => { event.stopPropagation(); openClient(client.id); }}>Gérer</button></td>
-                    </tr>
-                  ))}
-                  {filtered.length === 0 && <tr><td colSpan={6}><div className="empty-table">Aucun client pour ce filtre.</div></td></tr>}
-                </tbody>
-              </table>
-            </div>
+            <ConfiguredDataTable<ClientSummary> scope={CLIENT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} className="clients-table" rows={filtered} selectedId={selectedId} getId={c=>c.id} onSelect={c=>openClient(c.id)} rowAttributes={c=>({'data-client-id':c.id,className:'client-relationship-'+(c.relationshipStatus??'neutral')})} caption="Clients · source complète des résultats filtrés" columns={[
+              {id:'identity',label:'Client',required:true,sortValue:c=>c.displayName,render:c=><div className="client-name-cell"><CrmIdentityAvatar organizationId={c.organizationId} contactId={c.primaryContactId} name={c.displayName}/><div><strong>{c.displayName}</strong><small>Client depuis {new Date(c.becameClientAt).toLocaleDateString('fr-FR')}</small></div></div>},
+              {id:'status',label:'Statut',sortValue:c=>STATUS_LABELS[c.status??'active'],render:c=><span className={'client-status status-'+c.status}>{STATUS_LABELS[c.status??'active']}</span>},
+              {id:'contact',label:'Contact principal',sortValue:c=>c.contactName??null,render:c=>c.contactName||'—'},
+              {id:'coordinates',label:'Coordonnées',sortValue:c=>c.email||c.phone||null,render:c=><div className="contact-stack"><span>{c.email||'—'}</span><small>{c.phone||''}</small></div>},
+              {id:'nextAction',label:'Prochaine action',sortValue:c=>c.nextActionAt??null,render:c=>c.nextActionAt?<><strong>{c.nextActionText||'Action prévue'}</strong><small>{new Date(c.nextActionAt).toLocaleDateString('fr-FR')}</small></>:<span className="muted">Aucune</span>},
+              {id:'open',label:'Ouvrir',required:true,render:c=><button className="link-button" type="button" aria-label={'Ouvrir '+c.displayName} title={'Ouvrir '+c.displayName} onClick={e=>{e.stopPropagation();openClient(c.id);}}><OperationIcon name="record-open"/></button>},
+            ]}/>
+
           </div>
 
           {clientSplitter}
           {selected && (
             <aside key={selected.id} tabIndex={-1} data-search-entity-type="client" data-search-entity-id={selected.id} ref={sidePanelRef} className={`panel client-summary-panel client-relationship-${selected.relationshipStatus ?? 'neutral'} ${largeView ? 'client-large-view' : ''}`} role={largeView ? 'dialog' : undefined} aria-modal={largeView ? true : undefined} aria-label={largeView ? `Fiche client ${selected.displayName}` : undefined}>
-              <div className="detail-panel-heading">
+<CrmRecordLayout kind="client" full={largeView} identity={<>              <div className="detail-panel-heading">
                 <div>
-                  <span className="eyebrow">Fiche client</span>
                   <div className="client-summary-head"><CrmIdentityAvatar organizationId={selected.organizationId} contactId={selected.primaryContactId} name={selected.displayName} size="large" /><div><h2>{selected.displayName}</h2><span className={`client-status status-${selected.status}`}>{STATUS_LABELS[selected.status ?? 'active']}</span></div></div>
                 </div>
-                <div className="detail-heading-actions"><div className="client-relationship-picker"><button className="secondary-button client-relationship-trigger" type="button" aria-expanded={relationshipMenuOpen} aria-haspopup="true" disabled={relationshipSaving} onClick={() => setRelationshipMenuOpen((value) => !value)}><span className="client-relationship-dot" />Relation client · {RELATION_LABELS[selected.relationshipStatus ?? 'neutral']}</button>{relationshipMenuOpen && <div className="client-relationship-menu" role="group" aria-label="Qualité de la relation client">{RELATION_OPTIONS.map((option) => <button key={option} type="button" className={`client-relationship-choice client-relationship-${option}`} aria-pressed={(selected.relationshipStatus ?? 'neutral') === option} onClick={() => void updateRelationship(selected, option)}><span className="client-relationship-dot" />{RELATION_LABELS[option]}</button>)}</div>}</div><button className="operation-detail-expand client-detail-expand" type="button" title={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setLargeView((value) => !value)}><OperationIcon name={largeView ? 'collapse' : 'expand'} size={18} /></button><button className="close-detail" type="button" aria-label="Fermer la fiche client" onClick={closeClient}>×</button></div>
+                <div className="detail-heading-actions"><div className="client-relationship-picker"><button className="secondary-button client-relationship-trigger" type="button" aria-expanded={relationshipMenuOpen} aria-haspopup="true" disabled={relationshipSaving} onClick={() => setRelationshipMenuOpen((value) => !value)}><span className="client-relationship-dot" />Relation client · {RELATION_LABELS[selected.relationshipStatus ?? 'neutral']}</button>{relationshipMenuOpen && <div className="client-relationship-menu" role="group" aria-label="Qualité de la relation client">{RELATION_OPTIONS.map((option) => <button key={option} type="button" className={`client-relationship-choice client-relationship-${option}`} aria-pressed={(selected.relationshipStatus ?? 'neutral') === option} onClick={() => void updateRelationship(selected, option)}><span className="client-relationship-dot" />{RELATION_LABELS[option]}</button>)}</div>}</div><button className="operation-detail-expand client-detail-expand" type="button" title={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setLargeView((value) => !value)}><OperationIcon name={largeView ? 'record-reduce' : 'record-expand'} size={18} /></button><button className="close-detail" type="button" aria-label="Fermer la fiche client" title="Fermer la fiche client" onClick={closeClient}><OperationIcon name="close"/></button></div>
               </div>
+<div className="crm-record-properties"><strong>Coordonnées essentielles</strong>{selected.contactName&&<SummaryLine label="Contact" value={selected.contactName}/>} {selected.email&&<SummaryLine label="Email" value={selected.email}/>} {selected.phone&&<SummaryLine label="Téléphone" value={selected.phone}/>}<small>Client depuis {new Date(selected.becameClientAt).toLocaleDateString('fr-FR')}</small></div>
+ <CrmIdentityAssetEditor organizationId={selected.organizationId} contactId={selected.primaryContactId} onMessage={onMessage}/>
+</>} context={<><h3>Dossiers associés</h3>
+ {quotes.map(item=><button className="workflow-link" type="button" key={item.id} onClick={()=>openEntity({entityType:'quote',entityId:item.id,title:item.subject})}><OperationIcon name="file-text"/> {item.number} · {item.subject}</button>)}
+ {projects.map(item=><button className="workflow-link" type="button" key={item.id} onClick={()=>openEntity({entityType:'project',entityId:item.id,title:item.name})}><OperationIcon name="folder"/> {item.name}</button>)}
+ <button type="button" onClick={()=>setActiveTab('contracts')}>Contrats ({quotes.filter(q=>q.status==='accepted').length} devis acceptés)</button>
+ <button type="button" onClick={()=>setActiveTab('operations')}>Interventions ({interventions.length})</button>
+ <button type="button" onClick={()=>setActiveTab('documents')}>Documents du client</button>
+ {!quotes.length&&!projects.length&&<p className="muted">Aucun devis ni projet rattaché.</p>}</>}>
               <div role="tablist" aria-label="Rubriques du client" className="client-tabs-preview client-tabs-buttons client-v2-tabs">
-                {CLIENT_TABS.map(([id,label])=><button key={id} id={'client-tab-'+id} role="tab" aria-selected={activeTab===id} aria-controls={'client-panel-'+id} tabIndex={activeTab===id?0:-1} type="button" onClick={()=>setActiveTab(id)} onKeyDown={event=>{const next=clientTabKey(id,event.key);if(next){event.preventDefault();setActiveTab(next);document.getElementById('client-tab-'+next)?.focus();}}}>{label}</button>)}
+                {CLIENT_TABS.map(([id,label])=><button key={id} id={'client-tab-'+id} role="tab" aria-selected={activeTab===id} aria-controls={'client-panel-'+id} tabIndex={activeTab===id?0:-1} type="button" onClick={event=>{setActiveTab(id);event.currentTarget.scrollIntoView({block:'nearest',inline:'nearest'});}} onKeyDown={event=>{const next=clientTabKey(id,event.key);if(next){event.preventDefault();setActiveTab(next);const target=document.getElementById('client-tab-'+next);target?.focus({preventScroll:true});target?.scrollIntoView({block:'nearest',inline:'nearest'});}}}><OperationIcon name={({summary:'user',contacts:'users',commercial:'file-text',contracts:'file-check',projects:'folder',operations:'wrench',documents:'inbox',history:'clock'} as const)[id]}/>{label}</button>)}
               </div>
               <div className="client-summary-scroll">
               {detailLoading&&<p role="status">Actualisation de la fiche…</p>}
               {Object.entries(sectionErrors).map(([zone,error])=><p role="alert" key={zone}>Chargement incomplet — {zone} : {error} <button type="button" onClick={()=>void refreshSelectedClientData(selected.id)}>Réessayer</button></p>)}
-              <section hidden={activeTab!=='summary'} id="client-panel-summary" role="tabpanel" aria-labelledby="client-tab-summary">
-                <section className="client-primary-card"><CrmIdentityAssetEditor organizationId={identity?.organization?.id} contactId={identity?.contact?.id} onMessage={onMessage} /><div className="contact-tab-heading"><h3>Coordonnées</h3>{identity?.organization&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'organization',entityId:identity.organization!.id,title:identity.organization!.name})}>Ouvrir l’organisation dans l’Annuaire</button>}<button className="secondary-button" type="button" onClick={beginCoordinateEdit}>Modifier</button></div>
+              <section hidden={activeTab!=='summary'} id="client-panel-summary" className="client-summary-overview" role="tabpanel" aria-labelledby="client-tab-summary">
+                <section className="client-primary-card client-summary-priority"><h3><OperationIcon name="clock"/> À traiter · Échéances</h3>
+                  {selected.nextActionAt && <SummaryLine label="Prochaine action" value={`${selected.nextActionText || 'Action'} · ${new Date(selected.nextActionAt).toLocaleDateString('fr-FR')}`} />}
+                  {interventions.filter(item=>!['completed','cancelled'].includes(item.status)).map(item=><button className="workflow-link" type="button" key={item.id} onClick={()=>setActiveTab('operations')}>Intervention {item.number} · {item.subject}</button>)}
+                  {!detailLoading&&!sectionErrors.interventions&&!selected.nextActionAt&&!interventions.some(item=>!['completed','cancelled'].includes(item.status))&&<p className="muted">Aucune action ni intervention à suivre.</p>}
+                  {actionEditor?.clientId === selected.id && (
+                    <div className="inline-editor">
+                      <strong>Programmer une action client</strong>
+                      <label>Date<input disabled={actionSaving} type="date" value={actionEditor.date} onChange={(event) => setActionEditor({ ...actionEditor, date: event.target.value })} /></label>
+                      <label>Action<input disabled={actionSaving} value={actionEditor.text} onChange={(event) => setActionEditor({ ...actionEditor, text: event.target.value })} placeholder="Ex. appeler pour faire le point" /></label>
+                      <div className="inline-editor-actions">
+                        {selected.nextActionAt && <button className="secondary-button compact-button" type="button" disabled={actionSaving} onClick={() => void clearAction(selected)}>Retirer l’action</button>}
+                        <button className="secondary-button compact-button" type="button" onClick={() => actionGuard.request(()=>setActionEditor(null))}>Annuler</button>
+                        <button className="primary-button compact-button" type="button" disabled={actionSaving} onClick={() => void saveAction(selected)}>Enregistrer</button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="detail-actions"><button className="secondary-button" type="button" onClick={() => openActionEditor(selected)}>Programmer une action</button></div>
+                </section>
+                <section className="client-primary-card client-summary-commercial"><h3>Prestations et suivi commercial</h3><button className="secondary-button" type="button" onClick={()=>{if(relationEditor&&!relationGuard.request(()=>{}))return;setRelationEditor({value:selected.relationshipNote??'',expected:{status:selected.relationshipStatus??'neutral',note:selected.relationshipNote??null}});}}>Modifier la note de relation</button>{relationEditor&&<fieldset disabled={relationshipSaving}><label>Note de relation<textarea value={relationEditor.value} onChange={event=>setRelationEditor({...relationEditor,value:event.target.value})}/></label><button type="button" onClick={()=>relationGuard.request(()=>setRelationEditor(null))}>Annuler</button><button type="button" onClick={()=>void saveRelationNote()}>Enregistrer la note</button></fieldset>}{selected.relationshipNote&&<SummaryLine label="Note de relation" value={selected.relationshipNote}/>}
+                  {quotes.filter((item) => !['refused', 'expired'].includes(item.status)).map((item) => <button className="workflow-link" type="button" key={item.id} onClick={() => openEntity({ entityType: 'quote', entityId: item.id, title: item.subject })}>Devis {item.number} · {item.subject}</button>)}
+                  {projects.map((item) => <button className="workflow-link" type="button" key={item.id} onClick={() => openEntity({ entityType: 'project', entityId: item.id, title: item.name })}>Projet · {item.name}</button>)}
+                  {subscriptions.filter((item) => item.status === 'active').map((item) => <div className="client-related-item" key={item.id}>Maintenance active · {item.planName}</div>)}
+                  <div className="detail-actions"><button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: 'Devis' }))}>Ouvrir les devis</button><button className="secondary-button" type="button" onClick={() => setActiveTab('contracts')}>Voir les contrats</button><button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: 'Projets' }))}>Ouvrir les projets</button></div>
+                </section>
+                <section className="client-primary-card client-summary-activity"><h3>Activité récente</h3>
+                  {activity.slice(0,3).map(event=><div className="activity-item" key={event.id}><span className="activity-dot"/><div><p>{event.summary}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div></div>)}
+                  {!detailLoading&&!activity.length&&!sectionErrors.activity&&<p className="muted">Aucune activité enregistrée.</p>}
+                  <button type="button" className="link-button" onClick={()=>setActiveTab('history')}>Voir tout l’historique</button>
+                </section>
+                <details className="client-primary-card client-summary-coordinates"><summary>Coordonnées détaillées et édition</summary><div className="contact-tab-heading">{identity?.organization&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'organization',entityId:identity.organization!.id,title:identity.organization!.name})}>Ouvrir l’organisation dans l’Annuaire</button>}<button className="secondary-button" type="button" onClick={beginCoordinateEdit}>Modifier</button></div>
                   {selected.contactName && <SummaryLine label="Contact principal" value={selected.contactName} />}
                   {selected.phone && <SummaryLine label="Téléphone" value={selected.phone} />}
                   {selected.email && <SummaryLine label="Email" value={selected.email} />}
@@ -688,16 +721,9 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
                   <ContactMethodsPanel organizationId={identity?.organization?.id} contactId={identity?.contact?.id} />
                   <button className="secondary-button" type="button" onClick={() => { setActiveTab('contacts'); setShowContactForm(true); }}>Ajouter un contact</button>
                   {editingCoordinates && <fieldset disabled={coordinatesSaving} className="contact-inline-form"><div className="contact-form-grid">{identity?.contact && <><label>Prénom<input value={coordinateDraft.firstName} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, firstName: event.target.value })} /></label><label>Nom<input value={coordinateDraft.lastName} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, lastName: event.target.value })} /></label></>}{identity?.organization && <><label>Site web<input inputMode="url" value={coordinateDraft.website} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, website: event.target.value })} placeholder="exemple.fr" /></label><label>Adresse<input value={coordinateDraft.addressLine1} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, addressLine1: event.target.value })} /></label><label>Complément<input value={coordinateDraft.addressLine2} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, addressLine2: event.target.value })} /></label><label>Code postal<input value={coordinateDraft.postalCode} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, postalCode: event.target.value })} /></label><label>Ville<input value={coordinateDraft.city} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, city: event.target.value })} /></label></>}</div><div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => coordinateGuard.request(()=>setEditingCoordinates(false))}>Annuler</button><button className="primary-button" type="button" disabled={coordinatesSaving||(!identity?.contact && !identity?.organization)} onClick={() => void saveCoordinates()}>Enregistrer</button></div></fieldset>}
-                </section>
-                <section className="client-primary-card"><h3>Relation avec AtoumWeb</h3><button className="secondary-button" type="button" onClick={()=>{if(relationEditor&&!relationGuard.request(()=>{}))return;setRelationEditor({value:selected.relationshipNote??'',expected:{status:selected.relationshipStatus??'neutral',note:selected.relationshipNote??null}});}}>Modifier la note de relation</button>{relationEditor&&<fieldset disabled={relationshipSaving}><label>Note de relation<textarea value={relationEditor.value} onChange={event=>setRelationEditor({...relationEditor,value:event.target.value})}/></label><button type="button" onClick={()=>relationGuard.request(()=>setRelationEditor(null))}>Annuler</button><button type="button" onClick={()=>void saveRelationNote()}>Enregistrer la note</button></fieldset>}{selected.relationshipNote&&<SummaryLine label="Note de relation" value={selected.relationshipNote}/>}
-                  {quotes.filter((item) => !['refused', 'expired'].includes(item.status)).map((item) => <button className="workflow-link" type="button" key={item.id} onClick={() => openEntity({ entityType: 'quote', entityId: item.id, title: item.subject })}>Devis {item.number} · {item.subject}</button>)}
-                  {projects.map((item) => <button className="workflow-link" type="button" key={item.id} onClick={() => openEntity({ entityType: 'project', entityId: item.id, title: item.name })}>Projet · {item.name}</button>)}
-                  {subscriptions.filter((item) => item.status === 'active').map((item) => <div className="client-related-item" key={item.id}>Maintenance active · {item.planName}</div>)}
-                  <div className="detail-actions"><button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: 'Devis' }))}>Ouvrir les devis</button><button className="secondary-button" type="button" onClick={() => setActiveTab('contracts')}>Voir les contrats</button><button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: 'Projets' }))}>Ouvrir les projets</button></div>
-                </section>
-                {(selected.nextActionAt || interventions.some((item) => !['completed', 'cancelled'].includes(item.status))) && <section className="client-primary-card"><h3>Échéances · À suivre</h3>{selected.nextActionAt && <SummaryLine label="Prochaine action" value={`${selected.nextActionText || 'Action'} · ${new Date(selected.nextActionAt).toLocaleDateString('fr-FR')}`} />}{interventions.filter((item) => !['completed', 'cancelled'].includes(item.status)).map((item) => <div className="client-related-item" key={item.id}>Intervention {item.number} · {item.subject}</div>)}</section>}
+                </details>
               </section>
-              <section hidden={activeTab!=='summary'}>
+              <section hidden={activeTab!=='summary'} className="client-summary-management"><details open={archiveCandidateId===selected.id || undefined}><summary>Gestion de la relation client</summary>
                   <div className="client-status-control">
                     <label>Statut du client
                       <select value={selected.status} onChange={(event) => void updateStatus(selected, event.target.value as ClientStatus)}>
@@ -717,24 +743,10 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
                     </div>
                   )}
 
-                  <p className="client-since">Client depuis {new Date(selected.becameClientAt).toLocaleDateString('fr-FR')}</p>
                   {selected.notes && <div className="client-notes"><strong>Notes</strong><p>{selected.notes}</p></div>}
 
-                  {actionEditor?.clientId === selected.id && (
-                    <div className="inline-editor">
-                      <strong>Programmer une action client</strong>
-                      <label>Date<input disabled={actionSaving} type="date" value={actionEditor.date} onChange={(event) => setActionEditor({ ...actionEditor, date: event.target.value })} /></label>
-                      <label>Action<input disabled={actionSaving} value={actionEditor.text} onChange={(event) => setActionEditor({ ...actionEditor, text: event.target.value })} placeholder="Ex. appeler pour faire le point" /></label>
-                      <div className="inline-editor-actions">
-                        {selected.nextActionAt && <button className="secondary-button compact-button" type="button" disabled={actionSaving} onClick={() => void clearAction(selected)}>Retirer l’action</button>}
-                        <button className="secondary-button compact-button" type="button" onClick={() => actionGuard.request(()=>setActionEditor(null))}>Annuler</button>
-                        <button className="primary-button compact-button" type="button" disabled={actionSaving} onClick={() => void saveAction(selected)}>Enregistrer</button>
-                      </div>
-                    </div>
-                  )}
 
-                  <div className="detail-actions"><button className="secondary-button" type="button" onClick={() => openActionEditor(selected)}>Programmer une action</button></div>
-              </section>
+              </details></section>
 
               <section hidden={activeTab!=='contacts'} id="client-panel-contacts" role="tabpanel" aria-labelledby="client-tab-contacts"><div className="tab-content-stack">
                   <div className="contact-tab-heading"><strong>{contacts.length} contact{contacts.length > 1 ? 's' : ''}</strong><button className="secondary-button compact-button" type="button" onClick={() => {if(showContactForm){contactGuard.request(()=>setShowContactForm(false));return;}setEditingContactId(null);setContactDraft(EMPTY_CONTACT_DRAFT);setShowContactForm(true);}}>{showContactForm ? 'Fermer' : '+ Ajouter'}</button></div>
@@ -787,6 +799,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
               <section hidden={activeTab!=='documents'} id="client-panel-documents" role="tabpanel" aria-labelledby="client-tab-documents"><ClientDocumentsPanel clientId={selected.id}/></section>
               <section hidden={activeTab!=='history'} id="client-panel-history" role="tabpanel" aria-labelledby="client-tab-history"><ActivityList activity={activity}/></section>
               </div>
+</CrmRecordLayout>
             </aside>
           )}
         </div>

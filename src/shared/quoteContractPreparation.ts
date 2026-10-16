@@ -8,7 +8,7 @@ export interface ContractInformation { state: InformationState; value: string; r
 export type ContractAdministration = Record<AdminContractKey, ContractInformation>;
 export const DOCUMENT_ROLES = ['accepted_pdf','withdrawal_form','early_request','early_acknowledgement','acceptance','data_processing','rights','licenses','image_permission','other'] as const;
 export type ContractDocumentRole = typeof DOCUMENT_ROLES[number];
-export interface ContractDocumentLink {
+export interface ContractDocumentLink { transmissionId?:string|null;
   id: string; quoteId: string; documentId: string | null; role: ContractDocumentRole;
   sha256: string | null; statement: string | null; occurredAt: string | null; attachedAt: string; provenance: string; supersedesId: string | null;
   replacementReason: string | null; relativePath: string | null; fileName: string | null;
@@ -33,7 +33,7 @@ export interface QuoteContractParameters {
   rsvp: { applicable: boolean; mode: 'minimal'; sensitiveEnabled: false; sensitiveRoute: 'disabled' | 'direct_caterer'; roles: string };
 }
 export interface ContractIssue { code: string; severity: 'blocking' | 'warning'; message: string; }
-export interface QuoteContractPreparation { parameters: QuoteContractParameters | null; state: 'draft' | 'frozen' | 'historical_missing'; issues: ContractIssue[]; defaults?:{facts:ContractDefaultFact[];includedBenefits:string[];marriage:boolean}; documents: ContractDocumentLink[]; snapshot: Record<string, unknown> | null; }
+export interface QuoteContractPreparation { parameters: QuoteContractParameters | null; state: 'draft' | 'prepared' | 'frozen' | 'historical_missing'; issues: ContractIssue[]; defaults?:{facts:ContractDefaultFact[];includedBenefits:string[];marriage:boolean}; documents: ContractDocumentLink[]; snapshot: Record<string, unknown> | null; }
 export interface QuoteContractPreparationApi {
   get(id: string): Promise<QuoteContractPreparation>;
   save(id: string, parameters: QuoteContractParameters, expected?: {parameters: QuoteContractParameters|null}): Promise<QuoteContractPreparation>;

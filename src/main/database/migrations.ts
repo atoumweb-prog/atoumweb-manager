@@ -1,3 +1,4 @@
+import { QUOTE_TRANSMISSION_MIGRATION } from './quoteTransmissionMigration';
 import { CONTRACT_SECTION_REVIEW_MIGRATION } from './contractSectionReviewMigration';
 import { CONTRACT_TYPES_MIGRATION } from './contractTypesMigration';
 import { CATALOG_CATEGORY_ADMIN_MIGRATION } from './catalogCategoryAdminMigration';
@@ -255,6 +256,7 @@ export const MIGRATIONS: Migration[] = [
   CATALOG_RECOMMENDATIONS_MIGRATION,
   CONTRACT_SECTION_REVIEW_MIGRATION,
   CATALOG_RECOMMENDATION_DETAILS_MIGRATION,
+  QUOTE_TRANSMISSION_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

@@ -1,3 +1,4 @@
+import type { ContractUpdateProposal } from './quoteTransmission';
 import type {ContractSectionKey,ContractSectionReview} from './contractSectionPolicy';
 import type { ContractPresentation } from './contractPresentation';
 import type { ContractTypeReference } from './contractTypes';
@@ -120,7 +121,7 @@ export interface QuoteContractBuild {
   quoteId: string;
   audience: QuoteContractAudience;
   locked: boolean;
-  snapshotState: 'draft' | 'frozen' | 'historical_missing';
+  snapshotState: 'draft' | 'prepared' | 'frozen' | 'historical_missing';
   clauses: QuoteContractClause[];
   compiledText: string;
   snapshotText?: string | null;
@@ -131,7 +132,7 @@ export interface QuoteContractBuild {
 
 /** Never substitute the current compilation for an empty or absent historical snapshot. */
 export function quoteContractText(build: QuoteContractBuild): string {
-  if (build.snapshotState === 'frozen') return build.snapshotText ?? '';
+  if (build.snapshotState === 'frozen' || build.snapshotState === 'prepared') return build.snapshotText ?? '';
   if (build.snapshotState === 'historical_missing') return '';
   return build.compiledText;
 }
@@ -173,7 +174,8 @@ export interface ContractTermsApi {
   quotes: {
     get(quoteId: string): Promise<QuoteContractBuild>;
     presentation(quoteId: string): Promise<ContractPresentation>;
-    sync(quoteId: string): Promise<QuoteContractBuild>;
+    proposeUpdate(quoteId:string):Promise<ContractUpdateProposal>;
+    sync(quoteId: string,token:string): Promise<QuoteContractBuild>;
     addCustom(quoteId: string, input: QuoteContractClauseInput): Promise<QuoteContractBuild>;
     updateClause(id: string, input: QuoteContractClauseUpdate): Promise<QuoteContractBuild>;
     resetClause(id: string): Promise<QuoteContractBuild>;

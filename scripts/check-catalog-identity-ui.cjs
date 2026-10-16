@@ -306,7 +306,7 @@ app.whenReady().then(async () => {
       window.items.find(x=>x.id==='test-seo').currentVersion.commercialParameters={
         clientNeed:'Visibilité Google',benefits:'Être trouvé localement',keywords:'SEO de proximité',
       };
-      await click('↻ Actualiser');await click('Vue organisée');
+      await click('Actualiser');await click('Vue organisée');
       const mainGroups=[...document.querySelectorAll('.catalog-overview-featured-group h4')].map(h=>h.textContent.trim());
       assert('04B quatre rubriques prioritaires',JSON.stringify(mainGroups)===JSON.stringify(['Site vitrine','Site e-commerce','Site mariage','Maintenance WordPress']));
       assert('04B maintenance conserve son item service',window.items.find(x=>x.id==='test-maint').type==='service');

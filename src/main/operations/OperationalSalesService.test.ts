@@ -1,3 +1,4 @@
+import { sendForTest } from '../testSupport/quotePreparationFixture';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
 import { applyPendingMigrations } from '../database/migrations';
@@ -29,7 +30,7 @@ function sold(policy:OperationalSalePolicy, draft=false, code='AW-TEST-OPERATION
   const q=quotes.addCatalogLine(quotes.create({clientAccountId:clientId,subject:'TEST vente 8B'}).id,item.versions[0].id);
   new CommercialRulesService(db).setParameters(q.lines[0].id,{serviceStartDate:'2026-10-15',periodAlignment:'anniversary',setupEstimateMinutes:60});return quotes.get(q.id);
 }
-function accept(id:string) {finalizeForTest(db,quotes,id);quotes.markSent(id);return acceptForTest(db,quotes,id);}
+function accept(id:string) {finalizeForTest(db,quotes,id);sendForTest(quotes,id);return acceptForTest(db,quotes,id);}
 it('pack accepté : crédit 300 min, intervention 45 min, solde 255 et rejeu sans doublon',()=>{
   const q=accept(sold({schemaVersion:1,kind:'hour_pack',cadence:'once',billingPeriod:'once',creditMinutes:300,validityMonths:12}).id);
   const sale=new OperationalSalesService(db).list(q.id)[0],packId=String(sale.hour_pack_id),ops=new OperationsService(db),packs=new HourPackService(db);

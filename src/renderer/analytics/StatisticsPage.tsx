@@ -1,3 +1,4 @@
+import {OperationIcon} from '../operations/OperationIcon';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   AnalyticsCommercialSnapshot,
@@ -644,7 +645,7 @@ function MetricDetailModal({ metric, onClose }: { metric: AnalyticsFinancialMetr
           <span className="phase7-statistics-metric-icon" aria-hidden="true">{meta.icon}</span>
           <div><span className="eyebrow">{meta.kicker}</span><h3>{metric.label}</h3></div>
         </div>
-        <button className="phase7-statistics-modal-close" type="button" onClick={onClose} aria-label="Fermer">×</button>
+        <button className="phase7-statistics-modal-close" type="button" onClick={onClose} aria-label="Fermer"><OperationIcon name="close"/></button>
       </div>
 
       {metric.available && metric.currentCents != null

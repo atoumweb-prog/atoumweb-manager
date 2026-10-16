@@ -33,7 +33,7 @@ if(!process.versions.electron){
    "React.createElement('div',{id:'error'},React.createElement(AppNotice,{level:'error'},'Service refusé (fixture)')));}",
    "createRoot(document.getElementById('root')).render(React.createElement(Demo));"
   ].join('\n');
-  require('esbuild').buildSync({stdin:{contents:source,resolveDir:root,loader:'tsx'},bundle:true,
+  require('esbuild').buildSync({stdin:{contents:source,resolveDir:root,loader:'tsx'},bundle:true,loader:{'.png':'dataurl'},
    platform:'browser',format:'iife',outfile:path.join(temp,'demo.js'),logLevel:'silent'});
   const env={...process.env,[envKey]:temp};delete env.ELECTRON_RUN_AS_NODE;
   const child=spawnSync(require('electron'),[__filename],{cwd:root,env,windowsHide:true,timeout:90000,encoding:'utf8',maxBuffer:1024*1024});

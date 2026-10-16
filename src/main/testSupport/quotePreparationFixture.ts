@@ -32,10 +32,19 @@ export function prepareQuoteForTest(db:DatabaseAdapter,id:string):void {
   if(!db.get("SELECT t.id FROM contract_clause_templates t JOIN contract_clause_versions v ON v.id=t.current_version_id WHERE t.scope='base' AND t.status='active' AND v.status='published'")){
     const terms=new ContractTermsService(db),clause=terms.createTemplate({code:'TEST-LOT5-SOCLE',title:'Socle fixture',scope:'base',audience:'all'},{body:'Texte exclusivement destiné au test du cycle de devis.'});terms.publishVersion(clause.versions[0].id);
   }
+  const terms=new ContractTermsService(db);
+  const proposal=terms.proposeQuoteUpdate(id);
+  terms.applyQuoteUpdate(id,proposal.token);
 }
 export function finalizeForTest(db:DatabaseAdapter,quotes:QuoteService,id:string){prepareQuoteForTest(db,id);return quotes.finalize(id);}
 export function acceptForTest(db:DatabaseAdapter,quotes:QuoteService,id:string){
   const row=db.get<Record<string,unknown>>('SELECT * FROM quotes WHERE id=?',[id])!;
   if(row.status!=='accepted'&&row.contract_snapshot_json&&JSON.parse(String(row.contract_snapshot_json)).parameters)new QuoteContractPreparationService(db).recordAcceptance(id,'Acceptation explicite fixture','2026-09-01T00:00:00Z','Test automatisé isolé');
   return quotes.accept(id);
+}
+
+/** Real new send protocol exercised by fixtures; never bypasses the service. */
+export function sendForTest(quotes:QuoteService,id:string){
+  const state=quotes.transmissionState(id);
+  return quotes.markSent(id,{operationId:crypto.randomUUID(),preparationId:state.preparationId,contentHash:state.contentHash??'unprepared-fixture',occurredAt:new Date().toISOString(),channel:'abby',provenance:'Transmission explicitement attestée par la fixture isolée',confirmed:true});
 }
