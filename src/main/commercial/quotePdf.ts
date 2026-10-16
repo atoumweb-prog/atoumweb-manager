@@ -132,7 +132,7 @@ export function buildQuoteHtml(quote: QuoteDetail, presentation?:ContractPresent
     <div class="meta"><h1>DEVIS</h1><strong>${escapeHtml(quote.number)}</strong><span>Créé le ${escapeHtml(date(quote.createdAt))}</span><span>Valable jusqu’au ${escapeHtml(date(quote.validUntil))}</span></div>
   </header>
   <section class="recipient">
-    <span>Destinataire</span><br /><strong>${escapeHtml(quote.ownerLabel)}</strong>
+    <span>Destinataire</span><br /><strong>${escapeHtml(quote.contractRecipientLabel??quote.ownerLabel)}</strong>
     <h2>${escapeHtml(quote.subject)}</h2>
     ${quote.needSummary ? `<p>${escapeHtml(quote.needSummary)}</p>` : ''}
   </section>

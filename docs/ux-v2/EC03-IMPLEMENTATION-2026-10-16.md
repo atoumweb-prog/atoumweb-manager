@@ -15,6 +15,8 @@
 
 L’ancien point d’entrée `freezeQuote` ne peut plus geler un brouillon : il conserve uniquement la lecture de compatibilité des états déjà verrouillés. Aucun chemin IPC de consultation ne l’appelle pour écrire.
 
+Le destinataire du document est conservé dans le nouvel artefact : un renommage avant envoi impose une reprise explicite ; après envoi, le PDF et son aperçu conservent le nom transmis, tandis que la fiche CRM garde son nom courant. Aucune identité ancienne absente du snapshot n’est inventée.
+
 ## Migration 71 — quote_contract_transmission_v1
 
 Disponibilité vérifiée après fetch : 194 références locales/distantes, 116 versions distinctes de fichiers du registre ; aucun identifiant supérieur ou égal à 71. Contrôle complémentaire des modifications SQLite non commitées dans les 15 worktrees : seul ce chantier introduit 71. Aucune base utilisateur inspectée. Cette réservation est locale et devra être reconfirmée avant publication si d’autres travaux surviennent.
@@ -56,7 +58,7 @@ Le registre UX-01 reste unique. Comparaison/application et transitions de prépa
 
 ## Validation et preuves reproductibles
 
-Tests permanents ajoutés dans `src/main/commercial/QuoteTransmission.test.ts` : 27 scénarios, couvrant aussi les injections paramétrées. Les tests historiques n’ont pas été supprimés : ceux qui inspectent le contrat définitif attestent désormais l’envoi avant de l’inspecter ; les tests de finalisation vérifient toujours la préparation. Les attentes du registre ajoutent 71 tout en vérifiant les anciens identifiants/noms.
+Tests permanents ajoutés dans `src/main/commercial/QuoteTransmission.test.ts` : 28 scénarios, couvrant aussi les injections paramétrées. Les tests historiques n’ont pas été supprimés : ceux qui inspectent le contrat définitif attestent désormais l’envoi avant de l’inspecter ; les tests de finalisation vérifient toujours la préparation. Les attentes du registre ajoutent 71 tout en vérifiant les anciens identifiants/noms.
 
 Banc réel React + preload + IPC + SQLite :
 
@@ -70,7 +72,7 @@ Neuf parcours thème × densité : comparaison/annulation, refus du brouillon lo
 
 Autres commandes : typecheck, suite Vitest complète à deux workers, banc Builder, Bibliothèque contractuelle avec `--output`, préparation contractuelle et UX-01 (base, `--lot-b`, `--lot-c`, `--abby`, `--review`, `--lot-accept`, séparément). Les modes ayant un arrêt anticipé sont lancés séparément pour ne pas annoncer des scénarios ignorés.
 
-Les résultats de développement (135 tests ciblés, puis 47 après extension ; parcours natif 194 assertions) sont intermédiaires, pas la preuve d’un HEAD final. **La validation complète du commit final est obligatoire après commit**. Ses SHA, durées, compteurs, résultats et liens de journaux seront consignés dans le bilan local `outputs/ec03-final-20261016/RESULTATS.md` ; les logs antérieurs dans `outputs/ec03-plan-20261016` ne doivent pas être substitués à cette validation.
+Les résultats de développement (135 tests ciblés, puis 47 après extension ; parcours natif 194 assertions) sont intermédiaires, pas la preuve d’un HEAD final. Le premier checkpoint `c564a1e0` a réussi 1 531 tests et toutes ses recettes, puis a été complété pour préserver le destinataire documentaire lors d’un renommage CRM. Ses preuves sont conservées séparément dans `outputs/ec03-checkpoint-c564a1e0-20261016`. **La validation complète du nouveau commit final est obligatoire après commit**. Ses SHA, durées, compteurs, résultats et liens de journaux seront consignés dans le bilan local `outputs/ec03-final-20261016/RESULTATS.md` ; les logs antérieurs dans `outputs/ec03-plan-20261016` ne doivent pas être substitués à cette validation.
 
 ## Réserves et publication
 

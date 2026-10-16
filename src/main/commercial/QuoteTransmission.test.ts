@@ -94,6 +94,16 @@ describe('EC03 — préparation / envoi / acceptation',()=>{
     expect(Date.parse(sent.sentAt!)).toBeGreaterThanOrEqual(before);expect(Date.parse(sent.sentAt!)).toBeLessThanOrEqual(Date.now());
     const state=dump();expect(quotes.markSent(id,input).sentAt).toBe(sent.sentAt);expect(dump()).toEqual(state);
   });
+  it('refuse un destinataire changé avant envoi et conserve ensuite son nom sur le document transmis',()=>{
+    const original=quotes.get(id).ownerLabel;quotes.finalize(id);const input=attestation();
+    const rename=(name:string)=>db.run('UPDATE organizations SET name=? WHERE id=(SELECT organization_id FROM prospects WHERE id=(SELECT prospect_id FROM quotes WHERE id=?))',[name,id]);
+    rename('Nouveau destinataire avant envoi');const before=dump();
+    expect(()=>quotes.markSent(id,input)).toThrow(/destinataire a changé/);expect(dump()).toEqual(before);
+    rename(original);const sent=quotes.markSent(id,input);rename('Nouvelle dénomination après envoi');
+    const current=quotes.get(id);expect(current.ownerLabel).toBe('Nouvelle dénomination après envoi');
+    expect(current.contractRecipientLabel).toBe(original);expect(current.contractSnapshotJson).toBe(sent.contractSnapshotJson);
+    const html=buildQuoteHtml(current,terms.presentation(id));expect(html).toContain(original);expect(html).not.toContain('Nouvelle dénomination après envoi');
+  });
   it('lie la preuve à la transmission exacte et annule son insertion si le journal échoue',()=>{
     quotes.finalize(id);quotes.markSent(id,attestation());const before=preparation.links(id),run=db.run.bind(db);let injected=0;
     const spy=vi.spyOn(db,'run').mockImplementation((sql,args)=>{if(sql.includes('INSERT INTO activity_log')){injected++;throw Error('Journal preuve indisponible');}return run(sql,args);});

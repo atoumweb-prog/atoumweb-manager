@@ -306,6 +306,8 @@ export interface QuoteSummary {
 }
 
 export interface QuoteDetail extends QuoteSummary {
+  /** Exact document recipient from preparation/transmission; absent for legacy evidence. */
+  contractRecipientLabel?:string|null;
   needSummary?: string | null;
   estimatedDelay?: string | null;
   prerequisitesText?: string | null;

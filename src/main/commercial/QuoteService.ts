@@ -199,8 +199,11 @@ export class QuoteService {
     const lines = this.database
       .all<QuoteLineRow>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY sort_order, created_at', [id])
       .map((line) => ({...this.mapLine(line), parameters:new CommercialRulesService(this.database).parameters(line.id)}));
+    const documentJson=row.contract_snapshot_json??activePreparation(this.database,id)?.snapshot_json;
+    const recipient=documentJson?JSON.parse(documentJson).recipientLabel:null;
     return {
       ...this.mapSummary(row),
+      contractRecipientLabel:typeof recipient==='string'?recipient:null,
       needSummary: row.need_summary,
       estimatedDelay: row.estimated_delay,
       prerequisitesText: row.prerequisites_text,
@@ -598,6 +601,8 @@ export class QuoteService {
       if(prepared){
         if(quote.contractTextSnapshot!=null||quote.contractSnapshotJson!=null||quote.contractCompiledAt!=null||quote.snapshotLockedAt)throw Error('Devis déjà figé ou état ambigu : aucun snapshot existant ne sera remplacé.');
         assertPreparedContent(prepared);
+        const recipient=JSON.parse(prepared.snapshot_json).recipientLabel;
+        if(typeof recipient!=='string'||recipient!==quote.ownerLabel)throw Error('Le destinataire a changé ou sa version est ambiguë. Reprenez puis préparez le brouillon.');
         const annexes=JSON.parse(prepared.snapshot_json).documents as Array<{id:string;sha256:string|null;documentId?:string|null;relativePath?:string|null}>|undefined;
         for(const annex of annexes??[])if(annex.documentId||annex.relativePath)this.preparation.openLinked(annex.id);
         if(prepared.source_hash!==contractSourceHash(this.database,id))throw Error('Le devis a changé depuis sa préparation. Reprenez puis préparez le brouillon.');
@@ -624,6 +629,7 @@ export class QuoteService {
     const lineIssues = [...new CommercialRulesService(this.database).issues(quote), ...new OperationalSalesService(this.database).issues(quote)];
     if (lineIssues.length) throw Error(lineIssues.join('\n'));
     const artifact=this.contractTerms.compilePreparation(id,explicitCanonicalReview);
+    artifact.json=JSON.stringify({...JSON.parse(artifact.json),recipientLabel:quote.ownerLabel});
     const now=artifact.preparedAt,preparationId=randomUUID();
     this.database.run(`INSERT INTO quote_contract_preparations(id,quote_id,protocol_version,text_snapshot,snapshot_json,content_hash,source_hash,prepared_at) VALUES(?,?,1,?,?,?,?,?)`,
       [preparationId,id,artifact.text,artifact.json,contractHash([artifact.text,artifact.json]),contractSourceHash(this.database,id),now]);

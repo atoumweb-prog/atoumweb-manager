@@ -75,7 +75,7 @@ export function QuoteClientPreview({ quote, onClose }: { quote: QuoteDetail; onC
 
           <section className="quote-document-recipient">
             <span>Destinataire</span>
-            <strong>{quote.ownerLabel}</strong>
+            <strong>{quote.contractRecipientLabel??quote.ownerLabel}</strong>
             <h1>{quote.subject}</h1>
             {quote.needSummary && <p>{quote.needSummary}</p>}
           </section>
