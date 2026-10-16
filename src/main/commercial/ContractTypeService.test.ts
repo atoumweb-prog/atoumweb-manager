@@ -1,3 +1,4 @@
+import { sendForTest } from '../testSupport/quotePreparationFixture';
 import {afterEach,beforeEach,describe,it,expect} from 'vitest';
 import {NodeSqliteAdapter} from '../database/NodeSqliteAdapter';
 import {applyPendingMigrations, MIGRATIONS, ensureMigrationTable} from '../database/migrations';
@@ -97,9 +98,9 @@ describe('ContractTypeService and one contract presentation',()=>{
   it('freezes presentation, module versions, parameters and type version across library changes and acceptance',()=>{
     clause('BASE','base');const m=clause('WEB'),i=item('Site');terms.setCatalogLinks(m.id,[i.id]);const t=publishedType([m.id]);types.setCatalog(i.versions[0].id,[t.id]);catalog.publishVersion(i.versions[0].id);
     const q=quotes.create({prospectId:prospect().id,subject:'Contrat lisible'});quotes.addCatalogLine(q.id,i.versions[0].id);
-    const frozen=finalizeForTest(db,quotes,q.id),p=terms.presentation(q.id),json=frozen.contractSnapshotJson;
+    finalizeForTest(db,quotes,q.id);const frozen=sendForTest(quotes,q.id),p=terms.presentation(q.id),json=frozen.contractSnapshotJson;
     const v=terms.createVersion(m.id,{body:'NOUVEAU TEXTE'});terms.publishVersion(v.id);const tv=types.createVersion(t.id,{name:'Nouveau type',description:'',moduleIds:[]});types.publish(tv.versions[0].id);
-    quotes.markSent(q.id);acceptForTest(db,quotes,q.id);
+    acceptForTest(db,quotes,q.id);
     expect(terms.presentation(q.id)).toEqual(p);expect(quotes.get(q.id).contractSnapshotJson).toBe(json);expect(p.types[0].versionId).toBe(t.currentVersionId);
     expect(p.text).toContain('Texte WEB.');expect(p.text).not.toContain('NOUVEAU TEXTE');expect(buildQuoteHtml(quotes.get(q.id),p)).not.toContain('NOUVEAU TEXTE');
     const html=contractPresentationHtml(p);for(const section of p.sections)expect(html).toContain(section.title);
@@ -123,7 +124,7 @@ describe('ContractTypeService and one contract presentation',()=>{
     terms.setCatalogLinks(a.id,[one.id,two.id]);terms.setCatalogLinks(b.id,[one.id,two.id]);catalog.publishVersion(one.versions[0].id);catalog.publishVersion(two.versions[0].id);
     const q=quotes.create({prospectId:prospect().id,subject:'Ordres incompatibles'});quotes.addCatalogLine(q.id,one.versions[0].id);quotes.addCatalogLine(q.id,two.versions[0].id);
     const build=terms.syncQuote(q.id);expect(build.warnings.some(w=>w.includes('Ordres contractuels incompatibles'))).toBe(true);expect(()=>finalizeForTest(db,quotes,q.id)).toThrow(/Ordres contractuels/);
-    terms.reorderQuoteClauses(q.id,terms.getQuoteBuild(q.id).clauses.map(c=>c.id));expect(finalizeForTest(db,quotes,q.id).contractCompiledAt).toBeTruthy();
+    terms.reorderQuoteClauses(q.id,terms.getQuoteBuild(q.id).clauses.map(c=>c.id));finalizeForTest(db,quotes,q.id);expect(sendForTest(quotes,q.id).contractCompiledAt).toBeTruthy();
   });
   it('reads a complete contract base without creating a dossier or including available options',()=>{
     clause('BASE-ALL','base');const professional=terms.createTemplate({code:'BASE-PRO',title:'Professionnels',scope:'base',audience:'professional'},{body:'Socle professionnel'});terms.publishVersion(professional.versions[0].id);

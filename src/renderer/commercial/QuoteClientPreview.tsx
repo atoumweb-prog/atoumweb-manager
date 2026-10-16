@@ -31,9 +31,6 @@ export function QuoteClientPreview({ quote, onClose }: { quote: QuoteDetail; onC
     let active = true;
     const load = async () => {
       try {
-        const build = quote.status === 'draft' && !quote.finalizedAt
-          ? await window.atoumweb.contractTerms.quotes.sync(quote.id)
-          : await window.atoumweb.contractTerms.quotes.get(quote.id);
         const next=await window.atoumweb.contractTerms.quotes.presentation(quote.id);
         if (active) setPresentation(next);
       } catch {

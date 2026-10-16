@@ -1,3 +1,4 @@
+import { sendForTest } from '../testSupport/quotePreparationFixture';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -92,12 +93,12 @@ describe('Lot 8A — actions et références opérationnelles',()=>{
  });
  it('acceptation : même Projet activé, actions figées et synchronisation commerciale refusée',()=>{
    const q=f.createQuote(),p=f.prepare(q.id),initial=actions(p.id).map(n=>n.operational);
-   finalizeForTest(db,f.quotes,q.id);f.quotes.markSent(q.id);acceptForTest(db,f.quotes,q.id);
+   finalizeForTest(db,f.quotes,q.id);sendForTest(f.quotes,q.id);acceptForTest(db,f.quotes,q.id);
    expect(f.projects.transformQuote({quoteId:q.id}).id).toBe(p.id);expect(f.projects.getProject(p.id).commercialState).toBe('frozen');
    expect(()=>f.projects.commercial.sync(p.id)).toThrow(/prévisionnel/);expect(actions(p.id).map(n=>n.operational)).toEqual(initial);
  });
  it.each(['AW-WEB-VITRINE','AW-CONT-PACK4-SEO'])('conversion directe après acceptation %s conserve aussi les actions, sans second Projet',code=>{
-   const q=f.createQuote(code);finalizeForTest(db,f.quotes,q.id);f.quotes.markSent(q.id);acceptForTest(db,f.quotes,q.id);
+   const q=f.createQuote(code);finalizeForTest(db,f.quotes,q.id);sendForTest(f.quotes,q.id);acceptForTest(db,f.quotes,q.id);
    const p=f.projects.transformQuote({quoteId:q.id});expect(actions(p.id)).toHaveLength(code==='AW-WEB-VITRINE'?21:4);
    const before=state();expect(f.projects.transformQuote({quoteId:q.id}).id).toBe(p.id);expect(state()).toEqual(before);
  });

@@ -160,7 +160,10 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
   async function sendQuote() {
     if (!quote || !recipient.trim()) { setError('Renseigne le destinataire de l’envoi.'); return; }
     await run(async () => {
-      await window.atoumweb.quotes.markSent(quote.id);
+      const state=await window.atoumweb.quotes.transmissionState(quote.id);
+      if(!state.contentHash)throw Error('Version à envoyer absente.');
+      if(!window.confirm(`Confirmer l’envoi effectif de ${quote.number} à ${recipient.trim()} ? Un transfert vers Abby seul ne vaut pas envoi au client.`))throw Error('Envoi non attesté ; devis inchangé.');
+      await window.atoumweb.quotes.markSent(quote.id,{operationId:crypto.randomUUID(),preparationId:state.preparationId,contentHash:state.contentHash,channel:'other',provenance:`${channel} — ${recipient.trim()} — ${sendNote.trim()}`,occurredAt:'now',confirmed:true});
       const action = await window.atoumweb.crm.actions.create({
         ownerType: 'prospect', ownerId: prospect.id, type: 'action', title: `Devis ${quote.number} envoyé`, relatedType: 'quote', relatedId: quote.id,
       });

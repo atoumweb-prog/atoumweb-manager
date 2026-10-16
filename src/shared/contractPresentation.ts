@@ -5,7 +5,7 @@ import type { QuoteDetail } from './commercial';
 
 export interface ContractSection { id: string; title: string; text: string }
 export interface ContractPresentation {
-  schemaVersion: 1; state: 'draft' | 'frozen' | 'historical_missing'; compiledAt: string | null;
+  schemaVersion: 1; state: 'draft' | 'prepared' | 'frozen' | 'historical_missing'; compiledAt: string | null;
   sections: ContractSection[]; text: string; types: ContractTypeReference[];
   template?: { referenceName:string; referenceCode:string|null; catalogueVersion:number; audience:'professional'|'consumer'; inclusions?:string[]; exclusions?:string[] };
   modules: { code: string; title: string; version: number | null; source: string }[];

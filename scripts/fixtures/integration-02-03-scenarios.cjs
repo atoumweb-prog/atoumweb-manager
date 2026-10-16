@@ -76,7 +76,7 @@ module.exports=async context=>{
   const projectId=project.id;
   const fixture=path.join(temp,'quote-fixture.cjs');
   require('esbuild').buildSync({entryPoints:[path.join(__dirname,'../../src/main/testSupport/quotePreparationFixture.ts')],outfile:fixture,bundle:true,platform:'node',format:'cjs',external:['electron'],logLevel:'silent'});
-  require(fixture).finalizeForTest(db.database,db.quotes,q.id);db.quotes.markSent(q.id);
+  require(fixture).finalizeForTest(db.database,db.quotes,q.id);require(fixture).sendForTest(db.quotes,q.id);
   db.quotePreparation.recordAcceptance(q.id,'Acceptation explicite TEMP','2026-10-13T12:00:00Z','Recette de convergence synthétique');
   const accepted=await get(`window.atoumweb.quotes.accept(${JSON.stringify(q.id)})`);
   const second=await get(`window.atoumweb.quotes.accept(${JSON.stringify(q.id)})`);
@@ -121,7 +121,7 @@ module.exports=async context=>{
   const activeOrg=db.crm.createOrganization({name:'CONVERGENCE E73'}),active=db.crm.createProspect({organizationId:activeOrg.id});
   db.crm.changeProspectStage(active.id,'qualifying');db.workflow.saveNeed('prospect',active.id,{otherText:'TEMP'});
   const agreed=db.quotes.create({prospectId:active.id,subject:'CONVERGENCE AGREED'});db.quotes.addCustomLine(agreed.id,{label:'TEMP',proposedUnitPriceCents:100});
-  require(fixture).finalizeForTest(db.database,db.quotes,agreed.id);db.quotes.markSent(agreed.id);db.quotes.confirmPrincipleAgreement(agreed.id);
+  require(fixture).finalizeForTest(db.database,db.quotes,agreed.id);require(fixture).sendForTest(db.quotes,agreed.id);db.quotes.confirmPrincipleAgreement(agreed.id);
   await navigate('Accueil');await wait('document.querySelectorAll("[data-home-source][data-source-status=ready]").length===9','combined Home sources');
   test(await get('document.querySelectorAll("[data-home-pipeline]").length===7&&document.querySelector("[data-home-pipeline=finalization] strong").textContent==="1"&&document.querySelector("[data-home-pipeline=conversions] strong").textContent==="1"'),'C06/C09 Home reuses real six+one projection including current E73 and archived historical Conversion');
   await click('[data-home-pipeline=conversions]');await wait('!!document.querySelector(".history-prospect-row")','Home Conversion navigation');

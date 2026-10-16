@@ -42,7 +42,7 @@ export function ContractReadPanel({presentation,commercial='',unsaved=false,copy
     catch {setMessage('Copie impossible. Le texte reste sélectionnable.');}
   }
   return <section className="contract-read-panel" aria-label="Contrat & CGV">
-    <header><h3>{presentation.template?'Aperçu du contrat type':'Contrat & CGV'}</h3><span>{presentation.template?'Consultation seule — aucun devis créé':presentation.state==='frozen'?'Snapshot contractuel figé':presentation.state==='historical_missing'?'Absence historique conservée':'Assemblage courant — non figé'}{presentation.compiledAt?` · ${new Date(presentation.compiledAt).toLocaleString('fr-FR')}`:''}</span></header>
+    <header><h3>{presentation.template?'Aperçu du contrat type':'Contrat & CGV'}</h3><span>{presentation.template?'Consultation seule — aucun devis créé':presentation.state==='prepared'?'Préparé — envoi non attesté':presentation.state==='frozen'?'Snapshot contractuel figé':presentation.state==='historical_missing'?'Absence historique conservée':'Assemblage courant — non figé'}{presentation.compiledAt?` · ${new Date(presentation.compiledAt).toLocaleString('fr-FR')}`:''}</span></header>
     <p className="muted">Lecture et copies depuis les valeurs enregistrées. Le contrat fait partie du devis. Aucune validation juridique globale des clauses n’est supposée.</p>
     {unsaved&&<p role="status" className="cgv-warning">Des modifications ne sont pas enregistrées. La lecture et les copies portent sur la dernière version enregistrée.</p>}
     {copy&&<div className="contract-toolbar">

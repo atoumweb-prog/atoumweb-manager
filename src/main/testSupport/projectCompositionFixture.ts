@@ -1,3 +1,4 @@
+import {sendForTest} from './quotePreparationFixture';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import { quoteOptionsFixture } from './quoteOptionsFixture';
 import { finalizeForTest, acceptForTest } from './quotePreparationFixture';
@@ -39,7 +40,7 @@ export function projectCompositionFixture(db: DatabaseAdapter, workspace: Worksp
   link('fixture-l7-page',f.services[1].currentVersion!.id,page.id,'addon','per_unit','extend_base');
   link('fixture-l7-blog',blogItem.versions[0].id,blog.id,'addon','once','extend_base');
   link('fixture-l7-seo',f.services[2].currentVersion!.id,seo.id,'addon','once','extend_base');
-  const accept = (id:string) => {finalizeForTest(db,f.quotes,id);f.quotes.markSent(id);return acceptForTest(db,f.quotes,id);};
+  const accept = (id:string) => {finalizeForTest(db,f.quotes,id);sendForTest(f.quotes,id);return acceptForTest(db,f.quotes,id);};
   const convert = (id:string) => {accept(id);return projects.transformQuote({quoteId:id});};
   return {...f,sites,projects,engine,base,page,blog,seo,blogItem,convert,accept,link};
 }

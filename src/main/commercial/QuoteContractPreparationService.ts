@@ -1,3 +1,4 @@
+import { activePreparation, contractHash } from './quoteTransmission';
 import {draftFingerprint} from '../../shared/draftSection';
 import { deriveQuoteContractDefaults } from '../../shared/quoteContractDefaults';
 import { CommercialRulesService } from './CommercialRulesService';
@@ -32,6 +33,8 @@ export class QuoteContractPreparationService {
   }
   parameters(id:string):QuoteContractParameters|null {
     const row=this.quote(id);
+    const prepared=activePreparation(this.db,id);
+    if(prepared && row.contract_snapshot_json==null)return JSON.parse(prepared.snapshot_json).parameters??null;
     const frozen=row.contract_compiled_at!=null||row.contract_text_snapshot!=null||row.contract_snapshot_json!=null;
     if(frozen)return row.contract_snapshot_json==null?null:(JSON.parse(String(row.contract_snapshot_json)).parameters as QuoteContractParameters|undefined)??null;
     if(row.contract_parameters_json==null)return null;
@@ -44,12 +47,13 @@ export class QuoteContractPreparationService {
   }
   get(id: string): QuoteContractPreparation {
     const row = this.quote(id);
-    const snapshot = row.contract_snapshot_json == null ? null : JSON.parse(String(row.contract_snapshot_json)) as Record<string,unknown>;
+    const prepared=activePreparation(this.db,id);
+    const snapshot = row.contract_snapshot_json == null ? prepared?JSON.parse(prepared.snapshot_json):null : JSON.parse(String(row.contract_snapshot_json)) as Record<string,unknown>;
     const frozen = row.contract_compiled_at != null || row.contract_text_snapshot != null || row.contract_snapshot_json != null;
     const locked = frozen || row.status !== 'draft' || row.finalized_at != null;
     const parameters = this.parameters(id);
     const defaults=!locked&&row.contract_parameters_json?this.defaults(id,JSON.parse(String(row.contract_parameters_json))):null;
-    return { parameters,...(defaults?{defaults:{facts:defaults.facts,includedBenefits:defaults.includedBenefits,marriage:defaults.marriage}}:{}), state: frozen ? 'frozen' : locked ? 'historical_missing' : 'draft', snapshot, documents: this.links(id), issues: locked ? parameters ? [{code:'LEGAL_REVIEW',severity:'warning',message:'Snapshot conservé ; sa complétude technique ne démontre pas une conformité juridique.'}] : [{code:'HISTORICAL_PARAMETERS_MISSING',severity:'warning',message:'Absence historique de paramètres structurés conservée ; aucun recalcul.'}] : this.issues(id,parameters) };
+    return { parameters,...(defaults?{defaults:{facts:defaults.facts,includedBenefits:defaults.includedBenefits,marriage:defaults.marriage}}:{}), state: frozen ? 'frozen' : prepared ? 'prepared' : locked ? 'historical_missing' : 'draft', snapshot, documents: this.links(id), issues: locked ? parameters ? [{code:'LEGAL_REVIEW',severity:'warning',message:'Snapshot conservé ; sa complétude technique ne démontre pas une conformité juridique.'}] : [{code:'HISTORICAL_PARAMETERS_MISSING',severity:'warning',message:'Absence historique de paramètres structurés conservée ; aucun recalcul.'}] : this.issues(id,parameters) };
   }
   save(id: string, parameters: QuoteContractParameters,expected?:{parameters:QuoteContractParameters|null}): QuoteContractPreparation {
     this.assertEditable(id);
@@ -61,7 +65,7 @@ export class QuoteContractPreparationService {
     return this.get(id);
   }
   links(id: string): ContractDocumentLink[] {
-    return this.db.all<Record<string,unknown>>('SELECT * FROM quote_document_links WHERE quote_id=? ORDER BY attached_at,id',[id]).map(r=>({id:String(r.id),quoteId:String(r.quote_id),documentId:r.document_id as string|null,role:r.role as ContractDocumentLink['role'],sha256:r.sha256 as string|null,statement:r.statement as string|null,occurredAt:r.occurred_at as string|null,attachedAt:String(r.attached_at),provenance:String(r.provenance),supersedesId:r.supersedes_id as string|null,replacementReason:r.replacement_reason as string|null,relativePath:r.relative_path as string|null,fileName:r.file_name as string|null}));
+    return this.db.all<Record<string,unknown>>('SELECT * FROM quote_document_links WHERE quote_id=? ORDER BY attached_at,id',[id]).map(r=>({transmissionId:r.transmission_id as string|null,id:String(r.id),quoteId:String(r.quote_id),documentId:r.document_id as string|null,role:r.role as ContractDocumentLink['role'],sha256:r.sha256 as string|null,statement:r.statement as string|null,occurredAt:r.occurred_at as string|null,attachedAt:String(r.attached_at),provenance:String(r.provenance),supersedesId:r.supersedes_id as string|null,replacementReason:r.replacement_reason as string|null,relativePath:r.relative_path as string|null,fileName:r.file_name as string|null}));
   }
   attach(id: string, input: ContractDocumentLinkInput): QuoteContractPreparation {
     const quote = this.quote(id);
@@ -89,7 +93,7 @@ export class QuoteContractPreparationService {
         this.db.run('INSERT INTO quote_document_links(id,quote_id,document_id,role,sha256,attached_at,provenance) VALUES(?,?,?,?,?,?,?)',[supersedesId,id,oldId,'accepted_pdf',oldHash,String(quote.contract_document_attached_at ?? new Date().toISOString()),'Ancien rattachement conservé lors du remplacement explicite ; empreinte constatée à cette date, non preuve d’intégrité historique']);
       }
     }
-    this.db.run('INSERT INTO quote_document_links(id,quote_id,document_id,role,sha256,attached_at,provenance,supersedes_id,replacement_reason) VALUES(?,?,?,?,?,?,?,?,?)',[randomUUID(),id,input.documentId,input.role,sha256,new Date().toISOString(),input.provenance,supersedesId,input.replacementReason?.trim()||null]);
+    this.db.run('INSERT INTO quote_document_links(id,quote_id,document_id,role,sha256,attached_at,provenance,supersedes_id,replacement_reason,transmission_id) VALUES(?,?,?,?,?,?,?,?,?,(SELECT id FROM quote_contract_transmissions WHERE quote_id=?))',[randomUUID(),id,input.documentId,input.role,sha256,new Date().toISOString(),input.provenance,supersedesId,input.replacementReason?.trim()||null,id]);
     this.log(id,'quote_document_link_added',`Preuve/annexe rattachée : ${input.role}${supersedesId ? ' ; remplacement explicite, ancienne preuve conservée' : ''}`);
     return this.get(id);
   }
@@ -105,7 +109,7 @@ export class QuoteContractPreparationService {
       return this.attach(id,{documentId:doc.id,role,provenance});
     }
     const file=this.documents.importQuoteEvidence(id,path);
-    this.db.run('INSERT INTO quote_document_links(id,quote_id,role,sha256,attached_at,provenance,relative_path,file_name) VALUES(?,?,?,?,?,?,?,?)',[randomUUID(),id,role,file.sha256,new Date().toISOString(),provenance,file.relativePath,file.fileName]);
+    this.db.run('INSERT INTO quote_document_links(id,quote_id,role,sha256,attached_at,provenance,relative_path,file_name,transmission_id) VALUES(?,?,?,?,?,?,?,?,(SELECT id FROM quote_contract_transmissions WHERE quote_id=?))',[randomUUID(),id,role,file.sha256,new Date().toISOString(),provenance,file.relativePath,file.fileName,id]);
     this.log(id,'quote_document_link_added',`Preuve/annexe du prospect conservée dans le dossier du devis : ${role}`);
     return this.get(id);
   }
@@ -113,9 +117,15 @@ export class QuoteContractPreparationService {
     const quote=this.quote(id);
     if (!['sent','viewed'].includes(String(quote.status))) throw Error('La preuve d’acceptation doit concerner un devis envoyé.');
     if (!present(statement)||!present(provenance)||Number.isNaN(new Date(occurredAt).getTime())||new Date(occurredAt).getTime()>Date.now()) throw Error('Déclaration, date réelle et provenance de l’acceptation requises.');
-    this.db.run("INSERT INTO quote_document_links(id,quote_id,role,statement,occurred_at,attached_at,provenance) VALUES(?,?,'acceptance',?,?,?,?)",[randomUUID(),id,statement.trim(),new Date(occurredAt).toISOString(),new Date().toISOString(),provenance.trim()]);
+    this.db.exec('SAVEPOINT quote_acceptance_evidence;');
+    try{
+      const transmission=this.db.get<{content_hash:string}>('SELECT content_hash FROM quote_contract_transmissions WHERE quote_id=?',[id]);
+      if(transmission&&transmission.content_hash!==contractHash([quote.contract_text_snapshot,quote.contract_snapshot_json]))throw Error('La version contractuelle ne correspond plus à l’envoi attesté.');
+    this.db.run("INSERT INTO quote_document_links(id,quote_id,role,statement,occurred_at,attached_at,provenance,transmission_id) VALUES(?,?,'acceptance',?,?,?,?,(SELECT id FROM quote_contract_transmissions WHERE quote_id=?))",[randomUUID(),id,statement.trim(),new Date(occurredAt).toISOString(),new Date().toISOString(),provenance.trim(),id]);
     this.log(id,'quote_acceptance_evidence_recorded','Attestation explicite d’acceptation enregistrée ; ne vaut pas PDF signé');
+    this.db.exec('RELEASE quote_acceptance_evidence;');
     return this.get(id);
+    }catch(error){this.db.exec('ROLLBACK TO quote_acceptance_evidence; RELEASE quote_acceptance_evidence;');throw error;}
   }
   openLinked(linkId: string): string {
     const row = this.db.get<{document_id:string|null;sha256:string|null;relative_path:string|null}>('SELECT document_id,sha256,relative_path FROM quote_document_links WHERE id=?',[linkId]);
@@ -127,8 +137,10 @@ export class QuoteContractPreparationService {
   }
   assertAcceptance(id: string): void {
     const row = this.quote(id);
-    if (!row.contract_parameters_json || !row.contract_snapshot_json || !JSON.parse(String(row.contract_snapshot_json)).parameters) return; // explicit legacy path, no invented evidence
-    const links = this.links(id).filter(l=>l.role==='acceptance'||l.role==='accepted_pdf');
+    const transmission=this.db.get<{id:string;content_hash:string;legacy:number}>('SELECT id,content_hash,legacy FROM quote_contract_transmissions WHERE quote_id=?',[id]);
+    if(transmission&&transmission.content_hash!==contractHash([row.contract_text_snapshot,row.contract_snapshot_json]))throw Error('La preuve ne correspond pas au contrat transmis.');
+    if ((!transmission||transmission.legacy) && (!row.contract_parameters_json || !row.contract_snapshot_json || !JSON.parse(String(row.contract_snapshot_json)).parameters)) return; // explicit legacy path, no invented evidence
+    const links = this.links(id).filter(l=>(l.role==='acceptance'||l.role==='accepted_pdf')&&(!transmission||l.transmissionId===transmission.id));
     if (!links.length) throw Error('Joins une preuve de validation explicite avant acceptation ; aucun effet du silence.');
     for (const link of links) if (link.documentId||link.relativePath) this.openLinked(link.id);
   }

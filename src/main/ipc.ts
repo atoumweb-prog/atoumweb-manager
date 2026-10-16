@@ -1,3 +1,4 @@
+import type { QuoteSendAttestation } from '../shared/quoteTransmission';
 import {crmIdentityImagePreview} from './crm/crmIdentityImagePreview';
 import { registerShellVisualPreferences } from './shellVisualPreferencesIpc';
 import {registerUnsavedConfirmationIpc,unsavedWindows} from './unsaved';
@@ -573,7 +574,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('contract-terms:library:set-catalog-links', (_event, id: string, catalogItemIds: string[]) => database.contractTerms.setCatalogLinks(id, catalogItemIds));
   ipcMain.handle('contract-terms:quotes:presentation', (_event, id: string) => database.contractTerms.presentation(id));
   ipcMain.handle('contract-terms:quotes:get', (_event, quoteId: string) => database.contractTerms.getQuoteBuild(quoteId));
-  ipcMain.handle('contract-terms:quotes:sync', (_event, quoteId: string) => database.contractTerms.syncQuote(quoteId));
+  ipcMain.handle('contract-terms:quotes:propose-update', (_event,quoteId:string)=>database.contractTerms.proposeQuoteUpdate(quoteId));
+  ipcMain.handle('contract-terms:quotes:sync', (_event, quoteId: string,token:string) => database.contractTerms.applyQuoteUpdate(quoteId,token));
   ipcMain.handle('contract-terms:quotes:add-custom', (_event, quoteId: string, input: QuoteContractClauseInput) => database.contractTerms.addCustomQuoteClause(quoteId, input));
   ipcMain.handle('contract-terms:quotes:update-clause', (_event, id: string, input: QuoteContractClauseUpdate) => database.contractTerms.updateQuoteClause(id, input));
   ipcMain.handle('contract-terms:quotes:reset-clause', (_event, id: string) => database.contractTerms.resetQuoteClause(id));
@@ -642,7 +644,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:update-line', (_event, lineId: string, input: QuoteLineInput) => database.quotes.updateLine(lineId, input));
   ipcMain.handle('quotes:remove-line', (_event, lineId: string) => database.quotes.removeLine(lineId));
   ipcMain.handle('quotes:update-conditions', (_event, quoteId: string, input: Partial<QuoteInput>) => database.quotes.updateConditions(quoteId, input));
-  ipcMain.handle('quotes:mark-sent', (_event, id: string) => database.quotes.markSent(id));
+  ipcMain.handle('quotes:transmission-state',(_event,id:string)=>database.quotes.transmissionState(id));
+  ipcMain.handle('quotes:resume-draft',(_event,id:string,preparationId:string)=>database.quotes.resumeDraft(id,preparationId));
+  ipcMain.handle('quotes:mark-sent', (_event, id: string,input:QuoteSendAttestation) => database.quotes.markSent(id,input));
   ipcMain.handle('quotes:principle-agreement:confirm', (_event, id: string) => database.quotes.confirmPrincipleAgreement(id));
   ipcMain.handle('quotes:principle-agreement:revoke', (_event, id: string) => database.quotes.revokePrincipleAgreement(id));
   ipcMain.handle('quotes:finalize',(_event,id:string,canonicalReview?:boolean)=>database.quotes.finalize(id,canonicalReview===true));
@@ -688,9 +692,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
 
   ipcMain.handle('quotes:generate-pdf', async (_event, id: string) => {
     const quote = database.quotes.get(id);
-    const contract = quote.status === 'draft' && !quote.finalizedAt
-      ? database.contractTerms.syncQuote(id)
-      : database.contractTerms.getQuoteBuild(id);
+    const contract = database.contractTerms.getQuoteBuild(id);
     return generateQuotePdf({ ...quote, contractTextSnapshot: contract.snapshotState === 'historical_missing' ? quote.contractTextSnapshot : quoteContractText(contract) }, workspace, database.contractTerms.presentation(id));
   });
 

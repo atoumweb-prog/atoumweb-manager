@@ -1,3 +1,4 @@
+import type { QuoteSendAttestation, QuoteTransmissionState } from './quoteTransmission';
 import type { QuoteLineParameters } from './commercialRules';
 import type { QuoteContractAudience } from './contractTerms';
 export const CATALOG_ITEM_TYPES = ['service', 'offer'] as const;
@@ -293,6 +294,7 @@ export interface QuoteSummary {
   expiredAt?: string | null;
   snapshotLockedAt?: string | null;
   finalizedAt?: string | null;
+  contractPreparationId?: string | null;
   lastExtendedAt?: string | null;
   projectReadyAt?: string | null;
   contractCompiledAt?: string | null;
@@ -346,7 +348,9 @@ export interface QuoteApi {
   updateLine(lineId: string, input: QuoteLineInput): Promise<QuoteDetail>;
   removeLine(lineId: string): Promise<QuoteDetail>;
   updateConditions(quoteId: string, input: Partial<QuoteInput>): Promise<QuoteDetail>;
-  markSent(id: string): Promise<QuoteDetail>;
+  transmissionState(id:string):Promise<QuoteTransmissionState>;
+  resumeDraft(id:string,preparationId:string):Promise<QuoteDetail>;
+  markSent(id: string,input:QuoteSendAttestation): Promise<QuoteDetail>;
   confirmPrincipleAgreement(id: string): Promise<QuoteDetail>;
   revokePrincipleAgreement(id: string): Promise<QuoteDetail>;
   finalize(id: string, canonicalReview?: boolean): Promise<QuoteDetail>;

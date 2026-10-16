@@ -1,3 +1,4 @@
+import {sendForTest} from '../src/main/testSupport/quotePreparationFixture';
 // Binary source reads only. SQLite opens exclusively the temporary copy; no Manager initialization.
 import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync,existsSync,mkdirSync} from 'node:fs';
@@ -62,10 +63,10 @@ try {
   const availableBefore=f.projects.getProject(projectId).prerequisites.map(p=>p.label);
   assert(!availableBefore.some(label=>label.includes('SEO')));
   f.quotes.selectOfferOption(quote.lines[0].id,seo.id,{quantityMilli:1000});f.projects.commercial.sync(projectId);take('8 — Option SEO achetée : prérequis, aucune Page inventée',8);
-  finalizeForTest(db,f.quotes,quote.id);f.quotes.markSent(quote.id);const sentOriginal=f.quotes.get(quote.id),oldIds=f.sites.listPages(projectId).map(p=>p.projectNodeId).sort();
+  finalizeForTest(db,f.quotes,quote.id);sendForTest(f.quotes,quote.id);const sentOriginal=f.quotes.get(quote.id),oldIds=f.sites.listPages(projectId).map(p=>p.projectNodeId).sort();
   quote=f.quotes.duplicate(quote.id,true);assert.equal(quote.projectId,projectId);f.projects.commercial.prepare({quoteId:quote.id});assert.deepEqual(f.sites.listPages(projectId).map(p=>p.projectNodeId).sort(),oldIds);
   assert.deepEqual(f.quotes.get(sentOriginal.id),sentOriginal);take('9 — Révision commerciale explicite, identités conservées',8);
-  finalizeForTest(db,f.quotes,quote.id);f.quotes.markSent(quote.id);acceptForTest(db,f.quotes,quote.id);take('10 — Acceptation : même Projet, Client rattaché, périmètre figé',8);
+  finalizeForTest(db,f.quotes,quote.id);sendForTest(f.quotes,quote.id);acceptForTest(db,f.quotes,quote.id);take('10 — Acceptation : même Projet, Client rattaché, périmètre figé',8);
   assert.equal(f.projects.getProject(projectId).resourceRootPath,master);assert.equal(f.projects.getProject(projectId).acceptedQuoteId,quote.id);
   const whole=()=>hash(db.all<{name:string}>("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").map(t=>({name:t.name,rows:db.all('SELECT * FROM '+quoted(t.name)).map(r=>JSON.stringify(r)).sort()})));
   const acceptedState=whole();f.quotes.accept(quote.id);assert.equal(f.projects.transformQuote({quoteId:quote.id}).id,projectId);f.sites.applyBlueprint(projectId);assert.equal(whole(),acceptedState);

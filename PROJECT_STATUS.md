@@ -1,4 +1,8 @@
 # AtoumWeb Manager — Suivi du projet
+## 16/10/2026 — EC03 : développement autorisé, candidat métier local
+
+Plan EC03 approuvé explicitement. Branche isolée `codex/ec03-explicit-contract-lifecycle` depuis `472cfc59` / code visuel `f85fd498`. Lecture pure, comparaison/adoption volontaire, préparation distincte de l’envoi attesté, reprise explicite avant envoi, registre immuable et révisions reprenant les clauses sélectionnées. Migration additive **71 — quote_contract_transmission_v1**, disponible dans les 194 références vérifiées et les 15 worktrees ; appliquée uniquement sur fixtures. Migrations 1–70 inchangées. [Implémentation, compatibilité et réserves](docs/ux-v2/EC03-IMPLEMENTATION-2026-10-16.md). Tests ciblés et premières recettes Electron verts ; validation complète au SHA final à consigner dans `outputs/ec03-final-20261016/RESULTATS.md`, sans substituer les preuves intermédiaires. Aucun push, CI hébergée, main, installation ou données réelles. Ancienne entrée « plan à valider » ci-dessous conservée pour historique et remplacée par l’accord présent. Logos hors SQLite et avenants après acceptation restent distincts.
+
 
 ## 16/10/2026 — EC03 : arbitrage envoi approuvé, plan technique à valider
 

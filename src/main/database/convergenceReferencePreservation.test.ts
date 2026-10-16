@@ -23,13 +23,13 @@ function protectedRows(db:NodeSqliteAdapter) {
   return ['contract_clause_templates','contract_clause_versions','time_sessions','time_session_pauses'].map(table=>db.all('SELECT * FROM '+table+' ORDER BY id'));
 }
 describe('convergence 04+05 — références contractuelles et temps historiques',()=>{
-  it('has the exact final registry 1–70 and preserves published/draft texts, IDs, timestamps and seconds from 66',()=>{
+  it('has the exact final registry 1–71 and preserves published/draft texts, IDs, timestamps and seconds from 66',()=>{
     const db=fixture66();try {
       const before=protectedRows(db);const ledger=db.all('SELECT * FROM schema_migrations ORDER BY id');
-      expect(MIGRATIONS.map(m=>m.id)).toEqual(Array.from({length:70},(_,i)=>i+1));
+      expect(MIGRATIONS.map(m=>m.id)).toEqual(Array.from({length:71},(_,i)=>i+1));
       expect(applyPendingMigrations(db).map(m=>({id:m.id,name:m.name}))).toEqual([
         {id:67,name:'catalog_category_registry_v1'},{id:68,name:'catalog_version_recommendations_v1'},
-        {id:69,name:'contract_clause_section_review_v1'},{id:70,name:'catalog_recommendation_details_v1'},
+        {id:69,name:'contract_clause_section_review_v1'},{id:70,name:'catalog_recommendation_details_v1'},{id:71,name:'quote_contract_transmission_v1'},
       ]);
       expect(protectedRows(db)).toEqual(before);expect(db.all('SELECT * FROM schema_migrations WHERE id<=66 ORDER BY id')).toEqual(ledger);
       expect(applyPendingMigrations(db)).toEqual([]);expect(protectedRows(db)).toEqual(before);
@@ -43,7 +43,7 @@ describe('convergence 04+05 — références contractuelles et temps historiques
       expect(()=>applyPendingMigrations(db)).toThrow(/injected_missing_table/);
       expect(db.get('SELECT id FROM schema_migrations WHERE id=70')).toBeUndefined();expect(protectedRows(db)).toEqual(before);
       const ledger=db.all('SELECT * FROM schema_migrations ORDER BY id');migration.sql=sql;
-      expect(applyPendingMigrations(db).map(m=>m.id)).toEqual([70]);
+      expect(applyPendingMigrations(db).map(m=>m.id)).toEqual([70,71]);
       expect(db.all('SELECT * FROM schema_migrations WHERE id<70 ORDER BY id')).toEqual(ledger);expect(protectedRows(db)).toEqual(before);
       expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
     }finally{migration.sql=sql;db.close();}

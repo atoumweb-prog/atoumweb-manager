@@ -247,7 +247,7 @@ if(!process.versions.electron){
       await js('document.querySelector(".contract-reading-scroll").scrollTop=400');check(theme+' scroll works',await js('document.querySelector(".contract-reading-scroll").scrollTop>0'));
       await js('document.querySelector(".contract-read-panel").scrollIntoView({block:"start"})');await shot('contrat-'+theme);
       await click('Prévisualiser côté client');await wait('!!document.querySelector(".quote-client-preview")');check(theme+' same client contract sections',await js('document.querySelector(".quote-client-preview .contract-reading-scroll").textContent.includes("Texte adapté '+theme+'")'));await shot('client-'+theme);await click('Fermer');
-      const frozen=S.finalizeForTest(db,database.quotes,q.id),frozenBefore=frozen.contractSnapshotJson;database.quotes.markSent(q.id);S.acceptForTest(db,database.quotes,q.id);
+      S.finalizeForTest(db,database.quotes,q.id);const frozen=S.sendForTest(database.quotes,q.id),frozenBefore=frozen.contractSnapshotJson;S.acceptForTest(db,database.quotes,q.id);
       const newer=database.contractTerms.createVersion(module.id,{body:'NOUVEAU TEXTE APRES ACCEPTATION '+theme});database.contractTerms.publishVersion(newer.id);
       check(theme+' snapshot unchanged',database.quotes.get(q.id).contractSnapshotJson===frozenBefore&&database.contractTerms.presentation(q.id).text.includes('Texte adapté '+theme));
       const acceptedQuote=database.quotes.get(q.id);
@@ -264,7 +264,7 @@ if(!process.versions.electron){
       check('05B three themes times three densities produce nine independent captures',densityScreens.length===9);
       console.log('[05B 3x3 CAPTURES] '+JSON.stringify(densityScreens.map(name=>({name,sha256:sha(path.join(output,name))}))));
     }
-    check('Fixture exact migrations 1–70',db.all('SELECT id FROM schema_migrations ORDER BY id').map(r=>r.id).join(',')===Array.from({length:70},(_,i)=>i+1).join(','));check('Fixture integrity',db.get('PRAGMA integrity_check').integrity_check==='ok');check('Fixture FK',db.all('PRAGMA foreign_key_check').length===0);check('No renderer errors',errors.length===0);
+    check('Fixture exact migrations 1–71',db.all('SELECT id FROM schema_migrations ORDER BY id').map(r=>r.id).join(',')===Array.from({length:71},(_,i)=>i+1).join(','));check('Fixture integrity',db.get('PRAGMA integrity_check').integrity_check==='ok');check('Fixture FK',db.all('PRAGMA foreign_key_check').length===0);check('No renderer errors',errors.length===0);
     process.stdout.write(JSON.stringify({checks:checks.length,errors})+'\n');
   }).catch(async e=>{errors.push(e.stack||String(e));process.stderr.write(e.stack+'\n');process.stderr.write('Renderer console errors: '+JSON.stringify(errors)+'\n');if(win){try{process.stderr.write('Renderer body on failure: '+String(await win.webContents.executeJavaScript('document.body?.innerText||""')).slice(0,3200)+'\n');}catch(debugError){process.stderr.write('Cannot inspect renderer: '+String(debugError)+'\n');}fs.writeFileSync(path.join(output,'failed-screen.png'),(await win.webContents.capturePage()).toPNG());fs.writeFileSync(path.join(output,'failed-screen.txt'),await win.webContents.executeJavaScript('document.body.innerText'));}process.exitCode=1;}).finally(()=>{fs.writeFileSync(path.join(output,'controle-ui.json'),JSON.stringify({checks,errors,temporaryWorkspace:true,shellOpening:'Real IPC handoff intercepted at OS boundary only'},null,2));win?.destroy();dry?.close();database?.close();app.exit(process.exitCode||0);});
 }

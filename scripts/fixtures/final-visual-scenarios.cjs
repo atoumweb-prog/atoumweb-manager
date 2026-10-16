@@ -67,7 +67,7 @@ module.exports=async context=>{
  // Explicit pre-existing TEST helper supplies legal fixture facts; no actual signature simulated by the UI.
  const fixture=path.join(temp,'final-quote-fixture.cjs');require('esbuild').buildSync({entryPoints:[path.join(__dirname,'../../src/main/testSupport/quotePreparationFixture.ts')],outfile:fixture,bundle:true,platform:'node',format:'cjs',external:['electron'],logLevel:'silent'});
  const full=db.quotes.get(quote.id);db.quotes.updateLine(full.lines[0].id,{label:full.lines[0].label,proposedUnitPriceCents:10000});
- require(fixture).finalizeForTest(db.database,db.quotes,quote.id);db.quotes.markSent(quote.id);
+ require(fixture).finalizeForTest(db.database,db.quotes,quote.id);require(fixture).sendForTest(db.quotes,quote.id);
  db.quotePreparation.recordAcceptance(quote.id,'Acceptation explicite TEMP finale',new Date(Date.now()-60000).toISOString(),'Fixture technique, aucune signature réelle');
  const accepted=await get(`window.atoumweb.quotes.accept(${JSON.stringify(quote.id)})`),again=await get(`window.atoumweb.quotes.accept(${JSON.stringify(quote.id)})`);
  const linked=db.database.get('SELECT id,client_account_id,source_quote_id FROM projects WHERE id=?',[project.id]);

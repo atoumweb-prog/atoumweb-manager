@@ -5,7 +5,7 @@ import {compareClauseField} from '../renderer/commercial/contractClauseFieldDiff
 export interface ContractImportReview {
   originalText:string;
   importedText:string;
-  quoteState:'draft'|'frozen'|'historical_missing';
+  quoteState:'draft'|'prepared'|'frozen'|'historical_missing';
 }
 export interface ContractImportResult {
   mayProposeDraft:boolean;
