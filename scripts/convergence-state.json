@@ -2,6 +2,60 @@
   "phase": "visual-ec03-candidate",
   "nativeChecks": [
     [
+      "panels",
+      [
+        "scripts/check-ux-v2-lot01c-workshop.cjs"
+      ]
+    ],
+    [
+      "table-pilot",
+      [
+        "scripts/check-ux-v2-lot01d-workshop.cjs"
+      ]
+    ],
+    [
+      "controls",
+      [
+        "scripts/check-ux-v2-lot01b-controls.cjs"
+      ]
+    ],
+    [
+      "icons",
+      [
+        "scripts/check-ux-v2-lot01b-icons.cjs"
+      ]
+    ],
+    [
+      "notices",
+      [
+        "scripts/check-ux-v2-lot01b-notices.cjs"
+      ]
+    ],
+    [
+      "help",
+      [
+        "scripts/check-ux-v2-lot01b-help.cjs"
+      ]
+    ],
+    [
+      "rail-workshop",
+      [
+        "scripts/check-ux-v2-lot02a-workshop.cjs"
+      ]
+    ],
+    [
+      "header-workshop",
+      [
+        "scripts/check-ux-v2-lot02b-workshop.cjs"
+      ]
+    ],
+    [
+      "workspace-preferences-and-escape",
+      [
+        "scripts/check-ux-v2-lot01f-workshop.cjs"
+      ]
+    ],
+    [
       "catalogue-editor",
       [
         "scripts/check-catalog-identity-ui.cjs",
@@ -207,24 +261,6 @@
       ]
     ],
     [
-      "workspace-preferences-and-escape",
-      [
-        "scripts/check-ux-v2-lot01f-workshop.cjs"
-      ]
-    ],
-    [
-      "rail-workshop",
-      [
-        "scripts/check-ux-v2-lot02a-workshop.cjs"
-      ]
-    ],
-    [
-      "header-workshop",
-      [
-        "scripts/check-ux-v2-lot02b-workshop.cjs"
-      ]
-    ],
-    [
       "ec01-shell",
       [
         "scripts/check-ux-v2-ec01-shell.cjs"
@@ -243,18 +279,6 @@
       "tables",
       [
         "scripts/check-visual-generalization.cjs"
-      ]
-    ],
-    [
-      "panels",
-      [
-        "scripts/check-ux-v2-lot01c-workshop.cjs"
-      ]
-    ],
-    [
-      "table-pilot",
-      [
-        "scripts/check-ux-v2-lot01d-workshop.cjs"
       ]
     ],
     [
@@ -281,30 +305,6 @@
         "scripts/check-operational-recipe-ui.cjs",
         "--output",
         "{out}/operational-preview"
-      ]
-    ],
-    [
-      "controls",
-      [
-        "scripts/check-ux-v2-lot01b-controls.cjs"
-      ]
-    ],
-    [
-      "icons",
-      [
-        "scripts/check-ux-v2-lot01b-icons.cjs"
-      ]
-    ],
-    [
-      "notices",
-      [
-        "scripts/check-ux-v2-lot01b-notices.cjs"
-      ]
-    ],
-    [
-      "help",
-      [
-        "scripts/check-ux-v2-lot01b-help.cjs"
       ]
     ]
   ]

@@ -6,7 +6,8 @@ if(!process.versions.electron){
  try{
   const build=require('esbuild').buildSync;
   build({stdin:{contents:"import React from 'react';import {createRoot} from 'react-dom/client';import {RecordWorkshop} from './src/renderer/ui/RecordWorkshop';createRoot(document.getElementById('root')).render(<RecordWorkshop/>);",resolveDir:repo,loader:'tsx'},bundle:true,loader:{'.png':'dataurl'},platform:'browser',outfile:path.join(temp,'fixture.js'),logLevel:'silent'});
-  build({entryPoints:[path.join(repo,'src/main/unsaved.ts')],bundle:true,loader:{'.png':'dataurl'},platform:'node',format:'cjs',external:['electron'],outfile:path.join(temp,'guards.cjs'),logLevel:'silent'});
+  build({entryPoints:[path.join(repo,'src/shared/panelLayout.ts')],bundle:true,platform:'node',format:'cjs',outfile:path.join(temp,'panel-layout.cjs'),logLevel:'silent'});
+ build({entryPoints:[path.join(repo,'src/main/unsaved.ts')],bundle:true,loader:{'.png':'dataurl'},platform:'node',format:'cjs',external:['electron'],outfile:path.join(temp,'guards.cjs'),logLevel:'silent'});
   fs.writeFileSync(path.join(temp,'preload.cjs'),"const {contextBridge,ipcRenderer}=require('electron');contextBridge.exposeInMainWorld('atoumweb',{unsaved:{confirmExit:(labels,pending)=>ipcRenderer.sendSync('unsaved:confirm-exit',labels,pending),publishState:state=>ipcRenderer.sendSync('unsaved:state',state)}});");
   const main=fs.readFileSync(path.join(repo,'src/renderer/main.tsx'),'utf8'),styles=[...main.matchAll(/^import '\.\/([^']+\.css)';$/gm)].map(m=>fs.readFileSync(path.join(repo,'src/renderer',m[1]),'utf8')).join('\n');
   fs.writeFileSync(path.join(temp,'index.html'),'<html lang="fr"><head><meta charset="utf-8"><style>'+styles+'</style><link rel="stylesheet" href="fixture.css"></head><body><div class="app-shell"><aside class="sidebar">AtoumWeb — atelier TEST</aside><main class="main-area"><section class="content-area"><div id="root"></div></section></main></div><script src="fixture.js"></script></body></html>');
@@ -18,6 +19,7 @@ if(!process.versions.electron){
  const {app,BrowserWindow,dialog}=require('electron'),temp=process.env.ATOUMWEB_01C_TEMP;
  if(!temp||path.dirname(path.resolve(temp))!==path.resolve(os.tmpdir())||!path.basename(temp).startsWith('atoumweb-uxv2-01c-'))throw Error('TEMP fixture required');
  app.disableHardwareAcceleration();app.setPath('userData',path.join(temp,'profile'));
+ const {boundedSplit}=require(path.join(temp,'panel-layout.cjs'));
  const G=require(path.join(temp,'guards.cjs'));G.registerUnsavedConfirmationIpc();let quitCleaned=false;G.registerGuardedShutdown(()=>{quitCleaned=true;});
  const answers=[],dialogs=[];if(!interactive)dialog.showMessageBoxSync=(...args)=>{dialogs.push(args.at(-1));return answers.shift()??0;};
  let win,checks=0;const sleep=ms=>new Promise(r=>setTimeout(r,ms)),assert=(ok,msg)=>{if(!ok)throw Error(msg);checks++;};
@@ -26,7 +28,7 @@ if(!process.versions.electron){
  const click=async label=>{await js('[...document.querySelectorAll("button")].find(e=>e.textContent.trim()==='+JSON.stringify(label)+').click()');await sleep(70);};
  const input=async value=>{await js('const e=document.querySelector("#workshop-note");Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(e,'+JSON.stringify(value)+');e.dispatchEvent(new Event("input",{bubbles:true}));');await sleep(70);};
  app.whenReady().then(async()=>{
-  win=new BrowserWindow({show:true,width:1500,height:1000,title:'AtoumWeb — Atelier 01C TEST',webPreferences:{preload:path.join(temp,'preload.cjs'),contextIsolation:true,sandbox:true,nodeIntegration:false,backgroundThrottling:false}});G.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));
+  win=new BrowserWindow({show:true,width:Number(process.env.ATOUMWEB_01C_DIAGNOSTIC_WIDTH||1500),height:1000,title:'AtoumWeb — Atelier 01C TEST',webPreferences:{preload:path.join(temp,'preload.cjs'),contextIsolation:true,sandbox:true,nodeIntegration:false,backgroundThrottling:false}});G.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));
   // The hidden Windows launcher may suppress the initial BrowserWindow show.
   win.show();await wait('document.visibilityState==="visible"');assert(win.isVisible(),'Visible workshop window before compositor and focus checks');await wait('!!document.querySelector("h1")');
   if(interactive){console.log('Atelier interactif ouvert, uniquement TEMP. Fermer la fenêtre pour terminer.');return;}
@@ -59,7 +61,26 @@ if(!process.versions.electron){
   await js('window.dispatchEvent(new PointerEvent("pointercancel"));window.dispatchEvent(new PointerEvent("pointerup"));');await sleep(60);
   assert(await get('window.dragWrites.length===0'),'Canceled pointer gesture never writes');
   assert(await get('document.querySelector(".aw-record-split").style.gridTemplateColumns')===beforeCancel,'Canceled gesture restores prior visual width');
-  await js('document.querySelector(".aw-record-separator").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}));window.dispatchEvent(new PointerEvent("pointermove",{clientX:700}));window.dispatchEvent(new Event("blur"));window.dispatchEvent(new PointerEvent("pointerup"));');await sleep(60);
+  const geometry=()=>get('(()=>{const e=document.querySelector(".aw-record-split"),r=e.getBoundingClientRect();return {left:r.left,width:r.width,listWidth:document.querySelector(".aw-record-list").getBoundingClientRect().width,percent:parseFloat(e.style.gridTemplateColumns),writes:window.dragWrites.length};})()');
+  const probeBefore=await geometry(),probeExpected=boundedSplit((700-probeBefore.left)/probeBefore.width*100,probeBefore.width,66);
+  await js('document.querySelector(".aw-record-separator").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}));window.dispatchEvent(new PointerEvent("pointermove",{clientX:700}));');
+  const probePreview=await geometry();
+  await js('window.dispatchEvent(new Event("blur"));window.dispatchEvent(new PointerEvent("pointerup"));');await sleep(60);
+  const probeAfter=await geometry();
+  console.log('BLUR_GEOMETRY '+JSON.stringify({phase:'legacy-700',before:probeBefore,expectedPercent:probeExpected,preview:probePreview,after:probeAfter}));
+  assert(probeAfter.writes===(Math.abs(probeExpected-probeBefore.percent)>0.0001?1:0),'Legacy fixed coordinate writes only for an effective movement');
+  await js('window.dragWrites=[]');
+  const blurBefore=await geometry(),min=boundedSplit(0,blurBefore.width,66),max=boundedSplit(100,blurBefore.width,66);
+  const requestedPercent=blurBefore.percent>(min+max)/2?min+(max-min)/3:min+2*(max-min)/3;
+  const clientX=blurBefore.left+blurBefore.width*requestedPercent/100,expectedPercent=boundedSplit(requestedPercent,blurBefore.width,66);
+  assert(Math.abs(expectedPercent-blurBefore.percent)>0.01,'Blur fixture requests an effective bounded width change');
+  await js('document.querySelector(".aw-record-separator").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true}));window.dispatchEvent(new PointerEvent("pointermove",{clientX:'+clientX+'}));');
+  const blurPreview=await geometry();
+  assert(blurPreview.writes===0,'Blur fixture has no write before gesture end');
+  await js('window.dispatchEvent(new Event("blur"));window.dispatchEvent(new PointerEvent("pointerup"));');await sleep(60);
+  const blurAfter=await geometry();
+  console.log('BLUR_GEOMETRY '+JSON.stringify({phase:'relative-moved',before:blurBefore,clientX,expectedPercent,preview:blurPreview,after:blurAfter}));
+  assert(Math.abs(blurAfter.percent-expectedPercent)<0.0001&&Math.abs(blurAfter.listWidth-blurBefore.listWidth)>0.1,'Blur fixture actually changes the rendered width to the bounded target');
   assert(await get('window.dragWrites.length===1'),'Blur completes moved gesture once');
   await js('Storage.prototype.setItem=window.dragSetItem');
   const saved=await get('localStorage.getItem("atoumweb:layout:prospection:records:v1")');assert(!!saved&&!saved.includes('Pending'),'Mouse resize writes only visual preference');
@@ -71,13 +92,13 @@ if(!process.versions.electron){
   await js('const e=document.querySelector("select");Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,"value").set.call(e,"interventions");e.dispatchEvent(new Event("change",{bubbles:true}));');await sleep(80);await click('Réinitialiser les largeurs');assert(await get('localStorage.getItem("atoumweb:layout:prospection:records:v1")')===savedAgain,'Reset other module is independent');
   await js('const e=document.querySelector("select");Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,"value").set.call(e,"prospection");e.dispatchEvent(new Event("change",{bubbles:true}));');await sleep(80);await click('TEST — Toutes les Fleurs');assert(await get('localStorage.getItem("atoumweb:layout:prospection:records:v1")')===savedAgain,'Module roundtrip restores preference');
   win.webContents.reload();await wait('!!document.querySelector("h1")&&!document.querySelector(".aw-record-pane")');await click('TEST — Toutes les Fleurs');assert(await get('localStorage.getItem("atoumweb:layout:prospection:records:v1")')===savedAgain,'Reload preserves layout without reopening old record');
-  const captures=path.join(repo,'outputs','ux-v2-lot01c-reference');fs.mkdirSync(captures,{recursive:true});
+  const captures=path.join(repo,'outputs','ux-v2-lot01c-reference');if(!process.argv.includes('--no-capture-files'))fs.mkdirSync(captures,{recursive:true});
   let frame=0;for(const theme of ['atoumweb','noir','blanc'])for(const [density,font]of [['compact',14],['comfort',16],['comfort_plus',18]]){
    await js('document.documentElement.dataset.theme='+JSON.stringify(theme)+';document.documentElement.dataset.density='+JSON.stringify(density));await sleep(80);
    assert(await get('parseFloat(getComputedStyle(document.body).fontSize)')===font,'Font '+theme+'/'+density);assert(await get('document.querySelector(".aw-record-split").scrollWidth<=document.querySelector(".aw-record-split").clientWidth+1'),'No overflow '+theme+'/'+density);
    const rgb=[40+(++frame)*15,60+frame*10,80+frame*5];await js('let e=document.querySelector("#frame-marker");if(!e){e=document.createElement("div");e.id="frame-marker";document.body.appendChild(e);}e.style.cssText="position:fixed;right:0;bottom:0;width:20px;height:20px;z-index:99999;background:rgb('+rgb.join(',')+')";await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));');
    let shot,verified=false;for(let i=0;i<8;i++){await sleep(70);shot=await win.webContents.capturePage();const size=shot.getSize(),bitmap=shot.toBitmap(),offset=((size.height-8)*size.width+size.width-8)*4;if(bitmap[offset]===rgb[2]&&bitmap[offset+1]===rgb[1]&&bitmap[offset+2]===rgb[0]){verified=true;break;}}
-   assert(verified,'Capture compositor freshness '+theme+'/'+density);fs.writeFileSync(path.join(captures,theme+'-'+density+'.png'),shot.toPNG());
+   assert(verified,'Capture compositor freshness '+theme+'/'+density);if(!process.argv.includes('--no-capture-files'))fs.writeFileSync(path.join(captures,theme+'-'+density+'.png'),shot.toPNG());
   }
   for(const zoom of [1,1.25,1.5]){win.setSize(900,700);win.webContents.setZoomFactor(zoom);await sleep(150);assert(await get('document.querySelector(".aw-record-split").classList.contains("is-narrow")'),'Narrow fallback '+zoom);assert(await get('[...document.querySelectorAll(".aw-record-pane-actions button")].every(e=>{const r=e.getBoundingClientRect();return r.width>0&&r.right<=innerWidth;})'),'Essential actions reachable '+zoom);}
   await click('Réinitialiser les largeurs');assert(await get('localStorage.getItem("atoumweb:layout:prospection:records:v1")===null'),'Reset removes own preference only');
@@ -95,7 +116,7 @@ if(!process.versions.electron){
   await js('Storage.prototype.removeItem=window.oldRemove');await click('Réinitialiser les largeurs');
   assert(await get('!document.querySelector(".aw-record-layout-tools [role=alert]")'),'Successful visual reset clears failure');
   assert(await get('document.querySelector("#workshop-note").value==="Erreur visuelle sans perte"'),'Successful visual reset never discards draft');
-  console.log(JSON.stringify({checks,failed:0,captures:9,onlyTemp:true,quitCleaned}));win.destroy();app.exit(0);
+  console.log(JSON.stringify({checks,failed:0,captures:process.argv.includes('--no-capture-files')?0:9,onlyTemp:true,quitCleaned}));win.destroy();app.exit(0);
  }).catch(e=>{console.error(e.stack);win?.destroy();app.exit(1);});
  app.on('window-all-closed',()=>{if(interactive)app.quit();});
 }

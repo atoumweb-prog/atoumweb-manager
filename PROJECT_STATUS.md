@@ -1,5 +1,10 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/10/2026 - PR155 / CI1805 : diagnostic minimal du blur 01C
+
+CI1805 valide le focus530 et36 etapes natives puis echoue sur Blur completes moved gesture once. Banc seul instrumente : geometrie avant/apres et oracle boundedSplit reel, sonde700 puis deplacement relatif effectivement different avant blur ; assertions historiques conservees. Ordre des ateliers courts prepare dans convergence-state, memes46 commandes/environnements. Une seule execution locale01C autorisee et tracee dans outputs/pr155-01c-blur/ ; aucun autre test, push, CI, main, installation ou base reelle. Composant de production inchange.
+
+
 ## 16/10/2026 - PR155 : correction locale de la preparation du focus natif
 
 CI1804 : typecheck et1532 tests verts, arret final-visual. Reproduction Windows : fenetre/webContents/document focalises, textarea dans le groupe Besoins ferme, checkVisibility=false, activeElement=BODY. La recette confondait montage et visibilite ; premier Tab faussement positif. Correctif exclusivement scripts/fixtures/final-visual-scenarios.cjs : ouvrir le groupe par son summary, verifier sa visibilite, vrai clic souris natif et Tab/Maj+Tab conserves, assertions renforcees. Premier essai corrige :530 controles/135 captures, aucun changement src/migration/workflow. [Diagnostic et protocole cible](docs/ux-v2/PR155-FOCUS-NATIF-2026-10-16.md). Repetitions et recettes residuelles tracees dans les preuves locales, sans relancer la campagne complete. Aucun push, nouvelle CI, merge, installation ou donnees reelles autorise.
