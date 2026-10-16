@@ -59,7 +59,8 @@ export function auditKnownWorkspaceFileReferences(databaseFile: string, inventor
       if (!present) {skippedTables.push(table);continue;}
       const columns = new Set(db.prepare('PRAGMA table_info("'+table+'")').all().map(row => String(row.name)));
       if (!columns.has('id') || !columns.has(column)) {skippedTables.push(table);continue;}
-      const rows = db.prepare('SELECT id,"'+column+'" AS file_path FROM "'+table+'" WHERE "'+column+'" IS NOT NULL').all();
+      // Stream instead of materializing every asset row in memory.
+      const rows = db.prepare('SELECT id,"'+column+'" AS file_path FROM "'+table+'" WHERE "'+column+'" IS NOT NULL').iterate();
       for (const row of rows) {
         if (typeof row.file_path !== 'string' || !row.file_path.trim()) continue;
         checked++;

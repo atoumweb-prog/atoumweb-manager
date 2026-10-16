@@ -1,5 +1,5 @@
 import {backup, DatabaseSync} from 'node:sqlite';
-import {existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
+import {existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join, dirname} from 'node:path';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
@@ -125,4 +125,45 @@ describe('EC04 — archive et restauration isolées, jamais raccordées à la pr
     })).rejects.toThrow(/DISK FULL/);
     expect(existsSync(destination)).toBe(false);
   });
+
+  it('refuse un lien symbolique cassé comme destination, sans le remplacer', async () => {
+    const dangling = join(base, 'archives', 'dangling.awbackup');
+    symlinkSync(join(base, 'does-not-exist'), dangling, 'file');
+    await expect(createOfflineWorkspaceArchive({
+      workspaceRoot: root, destinationPath: dangling,
+      snapshotDatabase: async file => { await backup(db, file); },
+    })).rejects.toThrow(/destination déjà existante/);
+    expect(existsSync(destination)).toBe(false);
+  });
+
+  it('rejette un manifeste forgé avec collision de dossiers Windows', async () => {
+    save('clients/A/first.txt', 'one');
+    save('clients/B/second.txt', 'two');
+    await makeArchive();
+    const raw = readFileSync(destination).toString('latin1');
+    const forged = raw.replace('workspace/clients/B/second.txt', 'workspace/clients/a/second.txt');
+    expect(forged).not.toBe(raw);
+    const target = join(base, 'archives', 'case-forged.awbackup');
+    writeFileSync(target, Buffer.from(forged, 'latin1'));
+    await expect(verifyOfflineWorkspaceArchive(target)).rejects.toThrow(/collision de dossiers Windows/);
+  });
+
+  it('refuse la création lorsque SQLite référence un fichier client absent', async () => {
+    db.exec('CREATE TABLE client_documents(id TEXT PRIMARY KEY,relative_path TEXT);');
+    db.prepare('INSERT INTO client_documents VALUES (?,?)').run('doc-1', 'clients/c1/Documents/missing.pdf');
+    await expect(makeArchive()).rejects.toThrow(/référence\(s\) fichier invalides/);
+    expect(existsSync(destination)).toBe(false);
+  });
+
+  it('archive le fichier référencé sans prétendre certifier toute la couverture', async () => {
+    db.exec('CREATE TABLE client_documents(id TEXT PRIMARY KEY,relative_path TEXT);');
+    const ref = 'clients/c1/Documents/brief.pdf';
+    db.prepare('INSERT INTO client_documents VALUES (?,?)').run('doc-2', ref);
+    save(ref, 'CLIENT PDF');
+    const manifest = await makeArchive();
+    expect(manifest.files.some(file => file.path === 'workspace/' + ref)).toBe(true);
+    expect(manifest.referencesVerified).toBe(false);
+    expect(manifest.consistencyCertified).toBe(false);
+  });
+
 });

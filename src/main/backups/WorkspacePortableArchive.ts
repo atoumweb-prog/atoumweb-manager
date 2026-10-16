@@ -12,16 +12,19 @@ import {createHash, randomUUID} from 'node:crypto';
 import {DatabaseSync} from 'node:sqlite';
 import {
   existsSync, lstatSync, mkdirSync, mkdtempSync, realpathSync,
-  renameSync, rmSync, linkSync,
+  renameSync, rmSync, linkSync, readdirSync, writeFileSync, unlinkSync,
 } from 'node:fs';
 import {open as openFile, type FileHandle} from 'node:fs/promises';
 import {dirname, isAbsolute, join, relative, resolve, sep} from 'node:path';
 import {tmpdir} from 'node:os';
 import {checkedWorkspaceRelativePath, inventoryWorkspaceFiles, WORKSPACE_FILE_ROOTS} from './WorkspaceFileInventory';
+import {auditKnownWorkspaceFileReferences} from './WorkspaceFileReferenceAudit';
 
 const MAGIC = Buffer.from('ATOUM-EC04-B1\n', 'ascii');
 const MAX_MANIFEST = 32 * 1024 * 1024;
 const MAX_ENTRIES = 200000;
+// Prototype hard limit until disk-space preflight and quotas are implemented.
+const MAX_TOTAL_BYTES = 64 * 1024 ** 3;
 const CHUNK = 256 * 1024;
 const DB_ENTRY = 'database/atoumweb-manager.sqlite';
 const SHA256_RE = /^[0-9a-f]{64}$/;
@@ -52,7 +55,8 @@ function exactInside(root: string, target: string): boolean {
 function readMigrationLedger(databasePath: string): Ec04Migration[] {
   const db = new DatabaseSync(databasePath, {readOnly: true});
   try {
-    if (db.prepare('PRAGMA integrity_check').all().some(row => row.integrity_check !== 'ok')) {
+    const integrity = db.prepare('PRAGMA integrity_check').all();
+    if (integrity.length !== 1 || integrity[0].integrity_check !== 'ok') {
       throw Error('EC04 : intégrité SQLite incorrecte.');
     }
     if (db.prepare('PRAGMA foreign_key_check').all().length) throw Error('EC04 : FK SQLite invalides.');
@@ -130,6 +134,7 @@ function validateManifest(value: unknown): Ec04ArchiveManifest {
     throw Error('EC04 : version ou structure de manifeste incompatible.');
   }
   const seen = new Set<string>();
+  const canonicalDirs = new Map<string, string>();
   let total = 0;
   for (const entry of m.files) {
     if (!entry || typeof entry !== 'object') throw Error('EC04 : entrée invalide.');
@@ -140,8 +145,16 @@ function validateManifest(value: unknown): Ec04ArchiveManifest {
     const key = entry.path.normalize('NFC').toLowerCase();
     if (seen.has(key)) throw Error('EC04 : collision Windows dans l’archive.');
     seen.add(key);
+    const segments = entry.path.split('/');
+    for (let n = 1; n < segments.length; n++) {
+      const actual = segments.slice(0, n).join('/');
+      const folded = actual.normalize('NFC').toLowerCase();
+      const previous = canonicalDirs.get(folded);
+      if (previous && previous !== actual) throw Error('EC04 : collision de dossiers Windows dans l’archive.');
+      canonicalDirs.set(folded, actual);
+    }
     total += entry.sizeBytes;
-    if (!Number.isSafeInteger(total)) throw Error('EC04 : archive trop grande.');
+    if (!Number.isSafeInteger(total) || total > MAX_TOTAL_BYTES) throw Error('EC04 : archive trop grande.');
   }
   if (m.files[0].path !== DB_ENTRY || m.files.slice(1).some(entry => entry.path === DB_ENTRY)) {
     throw Error('EC04 : entrée SQLite absente ou dupliquée.');
@@ -160,11 +173,22 @@ function validateManifest(value: unknown): Ec04ArchiveManifest {
   return m as Ec04ArchiveManifest;
 }
 
+function existingPath(path: string): boolean {
+  // existsSync misses dangling symlinks. Never replace one.
+  try { lstatSync(path); return true; }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+    throw error;
+  }
+}
 function ensureNewDestination(destination: string): string {
   const target = resolve(destination);
-  if (existsSync(target)) throw Error('EC04 : destination déjà existante — aucun écrasement.');
+  if (existingPath(target)) throw Error('EC04 : destination déjà existante — aucun écrasement.');
   const parent = dirname(target);
-  if (!lstatSync(parent).isDirectory()) throw Error('EC04 : dossier de destination absent.');
+  const parentStat = lstatSync(parent);
+  if (!parentStat.isDirectory() || parentStat.isSymbolicLink()) {
+    throw Error('EC04 : dossier de destination non sûr.');
+  }
   return target;
 }
 
@@ -188,6 +212,13 @@ export async function createOfflineWorkspaceArchive(input: Ec04CreateInput): Pro
       throw Error('EC04 : instantané SQLite autonome manquant.');
     }
     const migrations = readMigrationLedger(snapshotFile);
+    // Reject mismatches from known SQLite -> file links; coverage is still partial.
+    const references = auditKnownWorkspaceFileReferences(snapshotFile, first);
+    if (references.issues.length) {
+      const firstIssue = references.issues[0];
+      throw Error(`EC04 : ${references.issues.length} référence(s) fichier invalides, ` +
+        `dont ${firstIssue.table}.${firstIssue.column} (${firstIssue.problem}).`);
+    }
     const db = await hashFile(snapshotFile);
     const entries: Ec04ArchiveEntry[] = [{...db, path: DB_ENTRY}, ...first.files.map(file => ({
       path: 'workspace/' + file.relativePath, sizeBytes: file.sizeBytes, sha256: file.sha256,
@@ -283,17 +314,19 @@ export async function verifyOfflineWorkspaceArchive(archivePath: string): Promis
   finally { rmSync(tmp, {recursive: true, force: true}); }
 }
 
-/** Only allows a genuinely NEW workspace, never overwrites an existing one. */
+/**
+ * Reserve the new destination with mkdir(EXCLUSIVE) before installing bytes.
+ * rename(stage,destination) can overwrite an EMPTY directory on POSIX.
+ * On interruption, an INCOMPLETE marker remains; never claim success.
+ */
 export async function restoreOfflineArchiveToNewWorkspace(archivePath: string, newWorkspaceRoot: string): Promise<Ec04ArchiveManifest> {
   const destination = ensureNewDestination(newWorkspaceRoot);
   const staging = mkdtempSync(join(dirname(destination), '.ec04-restore-'));
   try {
     const manifest = await unpackAndCheck(archivePath, staging);
-    // Move only validated content. The temporary root contains database/ and workspace/.
-    // Convert into the canonical workspace layout before atomic promotion.
-    renameSync(join(staging, 'database', 'atoumweb-manager.sqlite'), join(staging, 'data-atoumweb-manager.sqlite'));
+    // Convert to canonical workspace paths while the staging tree is private.
     const data = join(staging, 'data'); mkdirSync(data);
-    renameSync(join(staging, 'data-atoumweb-manager.sqlite'), join(data, 'atoumweb-manager.sqlite'));
+    renameSync(join(staging, 'database', 'atoumweb-manager.sqlite'), join(data, 'atoumweb-manager.sqlite'));
     rmSync(join(staging, 'database'), {recursive: true});
     const filesRoot = join(staging, 'workspace');
     if (existsSync(filesRoot)) {
@@ -303,9 +336,14 @@ export async function restoreOfflineArchiveToNewWorkspace(archivePath: string, n
       }
       rmSync(filesRoot, {recursive: true});
     }
-    // Atomic rename inside the parent directory; existing destination still refused.
-    if (existsSync(destination)) throw Error('EC04 : destination devenue occupée.');
-    renameSync(staging, destination);
+    // EEXIST refusal even for an empty destination directory.
+    mkdirSync(destination, {mode: 0o700});
+    const incomplete = join(destination, '.EC04-RESTORE-INCOMPLETE');
+    writeFileSync(incomplete,
+      'Restauration EC04 incomplète. Ne pas ouvrir comme workspace.\n', {flag: 'wx'});
+    // If a move fails, preserve incomplete destination for explicit recovery.
+    for (const name of readdirSync(staging)) renameSync(join(staging, name), join(destination, name));
+    unlinkSync(incomplete);
     return manifest;
   } finally { if (existsSync(staging)) rmSync(staging, {recursive: true, force: true}); }
 }
