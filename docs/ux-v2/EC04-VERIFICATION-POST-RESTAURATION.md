@@ -15,3 +15,7 @@ La nouvelle fonction en lecture seule verifyRestoredWorkspaceAgainstManifest per
 Validation locale sur fixtures synthétiques seulement : TypeScript isolé OK, tests de fumée Node OK (copie exacte, marqueur, modification de PDF, fichier supplémentaire, WAL inattendu, SQLite absent). Deux tests Vitest ajoutés ; pas encore exécutés dans la CI Windows du projet.
 
 Limites inchangées : la cohérence de la **source** dépend de la future barrière globale d'écritures, la couverture des références externes reste partielle, et le prototype n'est ni chiffré ni approuvé pour une sauvegarde de production. La fonction n'authentifie pas la provenance de l'archive.
+
+## Optimisation de la vérification sans extraction totale
+
+La vérification autonome d'une archive B1 traite désormais chaque ressource métier par lecture séquentielle et SHA-256, **sans écrire une deuxième copie temporaire de tous les fichiers**. Seul le fichier SQLite est matérialisé provisoirement pour permettre les contrôles d'intégrité et de migrations. La restauration complète continue à extraire tous les fichiers dans le staging privé. Le format et les garanties restent inchangés ; cette optimisation ne constitue pas un test de production.

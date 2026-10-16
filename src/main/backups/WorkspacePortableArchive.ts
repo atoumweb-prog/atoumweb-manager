@@ -261,7 +261,7 @@ export async function createOfflineWorkspaceArchive(input: Ec04CreateInput): Pro
   } finally { rmSync(stage, {recursive: true, force: true}); }
 }
 
-async function unpackAndCheck(archivePath: string, stagingPath: string | null): Promise<Ec04ArchiveManifest> {
+async function unpackAndCheck(archivePath: string, stagingPath: string | null, materializeAllFiles = true): Promise<Ec04ArchiveManifest> {
   const file = await openFile(archivePath, 'r');
   try {
     const stat = await file.stat();
@@ -288,7 +288,9 @@ async function unpackAndCheck(archivePath: string, stagingPath: string | null): 
     let position = header.length + length;
     for (const entry of manifest.files) {
       let target: FileHandle | null = null;
-      if (stagingPath) {
+      // Verification needs only a temporary SQLite file. Other payloads are
+      // streamed through SHA-256 without a second full extraction on disk.
+      if (stagingPath && (materializeAllFiles || entry.path === DB_ENTRY)) {
         const path = join(stagingPath, ...entry.path.split('/'));
         mkdirSync(dirname(path), {recursive: true});
         target = await openFile(path, 'wx');
@@ -310,7 +312,7 @@ async function unpackAndCheck(archivePath: string, stagingPath: string | null): 
 /** Integrity only. An untrusted archive's SHA256 does not prove its origin. */
 export async function verifyOfflineWorkspaceArchive(archivePath: string): Promise<Ec04ArchiveManifest> {
   const tmp = mkdtempSync(join(tmpdir(), 'atoum-ec04-check-'));
-  try { return await unpackAndCheck(archivePath, tmp); }
+  try { return await unpackAndCheck(archivePath, tmp, false); }
   finally { rmSync(tmp, {recursive: true, force: true}); }
 }
 
