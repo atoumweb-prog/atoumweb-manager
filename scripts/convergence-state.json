@@ -1,5 +1,5 @@
 {
-  "phase": "final-04-10",
+  "phase": "visual-ec03-candidate",
   "nativeChecks": [
     [
       "catalogue-editor",
@@ -49,26 +49,9 @@
       ]
     ],
     [
-      "ux01",
-      [
-        "scripts/check-unsaved-inputs-ui.cjs",
-        "--lot-b",
-        "--lot-c",
-        "--review"
-      ]
-    ],
-    [
       "restore-roundtrip",
       [
         "scripts/check-restore-quit-roundtrip.cjs"
-      ]
-    ],
-    [
-      "shell",
-      [
-        "scripts/check-ux-v2-lot01a-real-ui.cjs",
-        "--captures",
-        "{out}/shell-captures"
       ]
     ],
     [
@@ -239,6 +222,89 @@
       "header-workshop",
       [
         "scripts/check-ux-v2-lot02b-workshop.cjs"
+      ]
+    ],
+    [
+      "ec01-shell",
+      [
+        "scripts/check-ux-v2-ec01-shell.cjs"
+      ]
+    ],
+    [
+      "ec03-transmission",
+      [
+        "scripts/check-ux-v2-lot01a-real-ui.cjs"
+      ],
+      {
+        "ATOUMWEB_EC03_ONLY": "1"
+      }
+    ],
+    [
+      "tables",
+      [
+        "scripts/check-visual-generalization.cjs"
+      ]
+    ],
+    [
+      "panels",
+      [
+        "scripts/check-ux-v2-lot01c-workshop.cjs"
+      ]
+    ],
+    [
+      "table-pilot",
+      [
+        "scripts/check-ux-v2-lot01d-workshop.cjs"
+      ]
+    ],
+    [
+      "real-help",
+      [
+        "scripts/check-ux-v2-final-real-help.cjs"
+      ]
+    ],
+    [
+      "client-b",
+      [
+        "scripts/check-ux-v2-client-b.cjs"
+      ]
+    ],
+    [
+      "prospect-a",
+      [
+        "scripts/check-ux-v2-prospect-density.cjs"
+      ]
+    ],
+    [
+      "operational-preview",
+      [
+        "scripts/check-operational-recipe-ui.cjs",
+        "--output",
+        "{out}/operational-preview"
+      ]
+    ],
+    [
+      "controls",
+      [
+        "scripts/check-ux-v2-lot01b-controls.cjs"
+      ]
+    ],
+    [
+      "icons",
+      [
+        "scripts/check-ux-v2-lot01b-icons.cjs"
+      ]
+    ],
+    [
+      "notices",
+      [
+        "scripts/check-ux-v2-lot01b-notices.cjs"
+      ]
+    ],
+    [
+      "help",
+      [
+        "scripts/check-ux-v2-lot01b-help.cjs"
       ]
     ]
   ]

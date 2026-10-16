@@ -1,5 +1,10 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/10/2026 - Campagne candidate visuelle / EC03 autorisee
+
+Les validations locales existantes sont conservees sans relancer les 41 commandes. Seule l'orchestration CI est completee pour EC01, Prospect A, Client B, EC03 et les recettes visuelles ; sources applicatives et migrations identiques au code teste ead8a16a. [Couverture et protocole unique](docs/ux-v2/CI-CANDIDATE-VISUELLE-EC03-2026-10-16.md). Publication en PR draft et une seule campagne candidate autorisees ; aucune fusion, installation ou donnee reelle. Les resultats heberges seront releves separement des preuves locales.
+
+
 ## 16/10/2026 — Clôture de l’investigation UX/UI V2, convergence non exécutée
 
 Main distant `c4bb744dbe58531350a61fb16ad5f8fbe90bd59d`, CI #1803 verte (1 453 tests/162 fichiers), distincte des candidats locaux. Prospect A `03693f86`, Client B `f85fd498`, EC03 `b77a3ce5` conservés. Branche isolée `codex/ux-v2-closure-convergence-audit` : deux assertions natives obsolètes 1–70 corrigées en 1–71 au code `768b32b7`, puis visibilité des bancs Windows corrigée à `ead8a16a`; aucun code de production ou moteur de sauvegarde changé. Typecheck, 1 532/1 532 Vitest (167 fichiers, 35 restaurations, 6 binaires) et 41 commandes Electron/traçabilité réussis au SHA `ead8a16a684c89f2dbb9ec26763574adec3fb3fe`. Réexamen des 57 points : 40 conformes au scénario borné, 16 preuves insuffisantes, une décision métier ; 67 références et 58 sous-lots tracés sans prétendre à une certification exhaustive. [Bilan de clôture](docs/ux-v2/CLOTURE-CONFORMITE-2026-10-16.md), [architecture de sauvegarde](docs/ux-v2/SAUVEGARDE-WORKSPACE-ARCHITECTURE-2026-10-16.md), [ordre Git/CI/migration 71](docs/ux-v2/CONVERGENCE-VISUELLE-EC03-2026-10-16.md). Archivage des identités Annuaire non exposé ; sauvegarde actuelle SQLite seule, logos/fichiers externes hors périmètre. Recette humaine globale différée, variantes graphiques validées non rouvertes. Aucun push/PR/CI hébergée/merge/main/MSI ni base réelle ; autorisations de convergence et migration réelle encore nécessaires. Les entrées ci-dessous sont historiques.
