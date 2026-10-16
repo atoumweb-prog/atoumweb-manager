@@ -1,7 +1,7 @@
 'use strict';
 module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
  const fs=require('node:fs'),path=require('node:path');
- const folder=process.env.ATOUMWEB_EC01_OUTPUT||path.resolve('outputs/ec01-shell');fs.mkdirSync(folder,{recursive:true});
+ const folder=process.env.ATOUMWEB_EC01_OUTPUT||path.resolve('outputs/ec01-shell-'+Date.now());fs.mkdirSync(folder,{recursive:true});
  const rows=[];
  await js('window.__ec01Timer=document.querySelector(".global-timer");window.__ec01Logo=document.querySelector(".aw-brand-logotype")');
  for(const theme of ['atoumweb','noir','blanc'])for(const density of ['compact','comfort','comfort_plus']){
@@ -16,7 +16,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
    test(geometry.overflow===0,'Shell no horizontal overflow '+page+' '+zoom+' '+reduced);
    test(geometry.controls.every(r=>r.width>0&&r.right<=geometry.viewport+1&&r.left>=geometry.header.left),'Header controls within available width '+page+' '+zoom+' '+reduced);
    test(geometry.sameTimer&&geometry.sameLogo&&geometry.timers===1,'Logo and unique real timer stay mounted '+page+' '+zoom+' '+reduced);
-   if(zoom===1.5&&page==='Réglages'&&density==='comfort')await win.webContents.capturePage().then(image=>fs.writeFileSync(path.join(folder,'shell-'+theme+(reduced?'-reduced':'-expanded')+'.png'),image.toPNG()));
+   if(zoom===1.5&&page==='Réglages'&&density==='comfort')await require('./verified-crm-capture.cjs')({win,js,test,folder,file:'shell-'+theme+(reduced?'-reduced':'-expanded')+'.png',theme,density,scene:'shell-'+(reduced?'reduced':'expanded')});
   }
  }
  }
