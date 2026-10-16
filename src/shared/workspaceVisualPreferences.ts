@@ -14,7 +14,7 @@ export const VISUAL_SETTINGS_KEY = 'ux_v2_visual_preferences_v1';
 export interface SettingsOwner { getSetting<T>(key: string, fallback: T): T; setSetting(key: string, value: unknown): void }
 const modules = ['dossiers', 'autre-vue'];
 export function normalizeVisualValue(key: string, raw: string): string {
-  if(CRM_RECORD_KEYS.some(allowed=>allowed===key))return JSON.stringify(normalizeCrmRecordPresentation(JSON.parse(raw)));
+  if(CRM_RECORD_KEYS.some(allowed=>allowed===key))return JSON.stringify(normalizeCrmRecordPresentation(JSON.parse(raw),key===CRM_RECORD_KEYS[0]?'client':'prospect'));
   if (raw.length > 100_000) throw Error('Préférence trop volumineuse.');
   if(key===layoutKey('directory','list'))return JSON.stringify({version:1,listPercent:readLayout({getItem:()=>raw,setItem(){},removeItem(){}},key,38)});
   if(key===layoutKey('clients','list'))return JSON.stringify({version:1,listPercent:readLayout({getItem:()=>raw,setItem(){},removeItem(){}},key,68)});

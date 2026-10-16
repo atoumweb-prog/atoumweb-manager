@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/10/2026 — Client B approuvée : raccordement réel du Résumé
+
+Décision utilisateur : Client B « Espace central élargi » est retenue définitivement ; Client A abandonnée. Branche `codex/ux-v2-client-b-final` depuis `4f0b0a12` : vrais éditeurs prioritaires, suivi commercial responsive, activité récente issue de l’historique existant, coordonnées et gestion secondaires repliables mais montées ; titre administratif retiré. Défauts Client 220/190 px uniquement en l’absence de préférences ; réglages existants et Prospect A préservés. [Implémentation, compatibilité et protocole](docs/ux-v2/CLIENT-B-CLOTURE-2026-10-16.md). Tests ciblés de développement verts ; preuves finales à produire au SHA commité. EC01 conservé ; EC03/moteur contractuel et sauvegarde des logos hors SQLite restent hors périmètre. Aucun main, CI hébergée, installation, migration ou donnée réelle modifié.
+
 ## 16/10/2026 — Revue ciblée EC01 / EC02 / EC03
 
 Prospect A reste graphiquement approuvée et inchangée. Branche locale `codex/ux-v2-ec01-client-review` issue de `03693f86` : retour à la ligne de l'en-tête selon sa largeur réelle, avec régression native permanente (270 états). Diagnostic CGV sur fixtures : deux synchronisations en développement StrictMode, une avec React production ; l'ouverture écrit déjà des clauses/journaux, aucun moteur ni historique modifié. Deux propositions Client uniquement TEMP, sans activation définitive. [Cause, protocole, propositions et réserves](docs/ux-v2/EC01-EC02-EC03-REVUE-2026-10-16.md). Validation du candidat final à rattacher au SHA réellement testé dans le bilan local. Aucune fusion, CI hébergée, installation, migration ou donnée réelle. La sauvegarde des logos hors SQLite reste à arbitrer séparément.
