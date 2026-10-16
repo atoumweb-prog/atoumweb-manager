@@ -1,0 +1,1620 @@
+{
+  "schemaVersion": 1,
+  "testedSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+  "testedTree": "995d5ad06b67158dc34769b3dca8f5807054cfe2",
+  "referenceSha": "0bb0860ee7618af92a53d8711b4a06edbbadc4d6",
+  "historicalAuditSha": "03693f861c86ad77780d6f400b744cf7761cec15",
+  "matrix67Counts": {
+    "preuve insuffisante": 16,
+    "conforme": 50,
+    "décision métier nécessaire": 1
+  },
+  "reexamined57Counts": {
+    "preuve insuffisante": 16,
+    "conforme": 40,
+    "décision métier nécessaire": 1
+  },
+  "sublots58Counts": {
+    "preuve insuffisante": 20,
+    "conforme": 35,
+    "décision métier nécessaire": 3
+  },
+  "jobs": [
+    {
+      "name": "typecheck",
+      "args": [
+        "C:\\DEV\\01_PROJETS\\AtoumWeb\\manager-integration-02e-03c\\node_modules\\typescript\\bin\\tsc",
+        "--noEmit"
+      ],
+      "exitCode": 0,
+      "seconds": 30.795,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/typecheck.log",
+      "assertions_comptees": null,
+      "nature": "TypeScript",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "logBytes": 0
+    },
+    {
+      "name": "vitest",
+      "args": [
+        "scripts/run-tests.cjs",
+        "--maxWorkers=2"
+      ],
+      "exitCode": 0,
+      "seconds": 231.496,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/vitest.log",
+      "assertions_comptees": null,
+      "nature": "Vitest complet",
+      "logSha256": "7fcb32eeaf451a8118c0c69a5697608c83a1cad1831bae3abf5daab4fa8b5f44",
+      "logBytes": 58708
+    },
+    {
+      "name": "catalogue-native",
+      "args": [
+        "scripts/check-catalog-recommendations-native.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 1.997,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/catalogue-native.log",
+      "assertions_comptees": 7,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "522e13ccdeef9e652e6aa98076b3dca4fcb8e0d7caf37047a3b2fbb17274d07c",
+      "logBytes": 911
+    },
+    {
+      "name": "catalogue-editor",
+      "args": [
+        "scripts/check-catalog-identity-ui.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 28.895,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/catalogue-editor.log",
+      "assertions_comptees": 109,
+      "nature": "Electron/React réel ; API/IPC métier simulé, aucune base métier réelle dans ce banc",
+      "logSha256": "b6292c0da17683b8f0cc5d0f71fb31e7c696292b7f51904c70ede07d79fb8413",
+      "logBytes": 12587
+    },
+    {
+      "name": "catalogue-guidance",
+      "args": [
+        "scripts/check-catalog-guidance-ui.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 0.861,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/catalogue-guidance.log",
+      "assertions_comptees": 10,
+      "nature": "Electron/React réel ; API/IPC métier simulé, aucune base métier réelle dans ce banc",
+      "logSha256": "f32cf994bcaa32dc26dcb96f8991bbb0409a23f2dc96824f633a0b049e46d0ed",
+      "logBytes": 412
+    },
+    {
+      "name": "catalogue-associations",
+      "args": [
+        "scripts/check-catalog-recommendations-ui.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 1.614,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/catalogue-associations.log",
+      "assertions_comptees": 16,
+      "nature": "Electron/React réel ; API/IPC métier simulé, aucune base métier réelle dans ce banc",
+      "logSha256": "78ea0058e90ee356139f0f2ae0d74b5dd58c85814e8a23c5aa946c7af012cb61",
+      "logBytes": 669
+    },
+    {
+      "name": "prospect-recommendations",
+      "args": [
+        "scripts/check-prospect-catalog-recommendations-ui.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 1,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/prospect-recommendations.log",
+      "assertions_comptees": 9,
+      "nature": "Electron/React réel ; API/IPC métier simulé, aucune base métier réelle dans ce banc",
+      "logSha256": "cbe94a50fa1646517801a3318009033b911355179e4587676a2294d6608eb42a",
+      "logBytes": 513
+    },
+    {
+      "name": "quote-recommendations",
+      "args": [
+        "scripts/check-quote-catalog-recommendations-ui.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 1.161,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/quote-recommendations.log",
+      "assertions_comptees": 10,
+      "nature": "Electron/React réel ; API/IPC métier simulé, aucune base métier réelle dans ce banc",
+      "logSha256": "4adbd56f23f7aff3243ac8a356f5ca3a4264a28e7b2e06b6c27e422913371f87",
+      "logBytes": 596
+    },
+    {
+      "name": "reuse",
+      "args": [
+        "scripts/check-guided-reuse-ui.cjs",
+        "--output",
+        "C:\\DEV\\01_PROJETS\\AtoumWeb\\manager-convergence-final-checks\\outputs\\closure-uxv2-20261016\\verified\\reuse"
+      ],
+      "exitCode": 0,
+      "seconds": 11.971,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/reuse.log",
+      "assertions_comptees": 63,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "02abf8dce33823eba8ef772beee5a8d2f365dcde1235fd35245ce438a2fe969d",
+      "logBytes": 28
+    },
+    {
+      "name": "composition",
+      "args": [
+        "scripts/check-ux-v2-07a-composition.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 9.972,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/composition.log",
+      "assertions_comptees": 65,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "58a69caf83f19f824213533db59624ca59cf84c5ba2fc33b01fdb201607d8d22",
+      "logBytes": 885
+    },
+    {
+      "name": "provisional",
+      "args": [
+        "scripts/check-project-provisional-ui.cjs",
+        "--output",
+        "C:\\DEV\\01_PROJETS\\AtoumWeb\\manager-convergence-final-checks\\outputs\\closure-uxv2-20261016\\verified\\provisional"
+      ],
+      "exitCode": 0,
+      "seconds": 5.419,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/provisional.log",
+      "assertions_comptees": 60,
+      "nature": "Electron/React réel ; API/IPC métier simulé, aucune base métier réelle dans ce banc",
+      "logSha256": "a9e1bab8e5b1488fb73e75e994e4a2d7528a3c8438633a098681bcb82db19cec",
+      "logBytes": 4077
+    },
+    {
+      "name": "project-operational",
+      "args": [
+        "scripts/check-project-operational-ui.cjs",
+        "--output",
+        "C:\\DEV\\01_PROJETS\\AtoumWeb\\manager-convergence-final-checks\\outputs\\closure-uxv2-20261016\\verified\\operational"
+      ],
+      "exitCode": 0,
+      "seconds": 8.325,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/project-operational.log",
+      "assertions_comptees": 69,
+      "nature": "Electron/React réel ; API/IPC métier simulé, aucune base métier réelle dans ce banc",
+      "logSha256": "83e660b841eea53628e95d5463b646079d5af16fa38fb3b38a6e796a408852ea",
+      "logBytes": 4404
+    },
+    {
+      "name": "blueprints",
+      "args": [
+        "scripts/check-project-blueprint-origins-ui.cjs",
+        "--output",
+        "C:\\DEV\\01_PROJETS\\AtoumWeb\\manager-convergence-final-checks\\outputs\\closure-uxv2-20261016\\verified\\blueprints"
+      ],
+      "exitCode": 0,
+      "seconds": 1.5,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/blueprints.log",
+      "assertions_comptees": 24,
+      "nature": "Electron/React réel ; API/IPC métier simulé, aucune base métier réelle dans ce banc",
+      "logSha256": "fcb8efa00599d55374a9ba3fefc0c79d7a014b2834d32fcc36eb72bc8b2e6eb6",
+      "logBytes": 1470
+    },
+    {
+      "name": "operations",
+      "args": [
+        "scripts/check-ux-v2-lot01a-real-ui.cjs",
+        "--lot08a"
+      ],
+      "exitCode": 0,
+      "seconds": 6.126,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/operations.log",
+      "assertions_comptees": 108,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "db9445157906be3943949fd4fe66f2b38527ce808f243dc375188acf74d5bec0",
+      "logBytes": 4431
+    },
+    {
+      "name": "billing",
+      "args": [
+        "scripts/check-ux-v2-lot01a-real-ui.cjs",
+        "--lot09b"
+      ],
+      "exitCode": 0,
+      "seconds": 5.022,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/billing.log",
+      "assertions_comptees": 85,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "121ae6ea10cee1ce7fc88194b1a454215f219f29913b6f9e2993dcd95aa59929",
+      "logBytes": 814
+    },
+    {
+      "name": "expenses",
+      "args": [
+        "scripts/check-ux-v2-lot01a-real-ui.cjs",
+        "--lot09c"
+      ],
+      "exitCode": 0,
+      "seconds": 4.435,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/expenses.log",
+      "assertions_comptees": 67,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "f2ef38402619bc9e2ec1ba4b6da0aee53b3bf84a7037b3c451931bc273ac02d2",
+      "logBytes": 1936
+    },
+    {
+      "name": "documents",
+      "args": [
+        "scripts/check-ux-v2-lot01a-real-ui.cjs",
+        "--lot09d"
+      ],
+      "exitCode": 0,
+      "seconds": 4.175,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/documents.log",
+      "assertions_comptees": 73,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "c311e065083afce0f04ead4e5b53f4389c585854e3834fed4c8078ed7580695a",
+      "logBytes": 282
+    },
+    {
+      "name": "word",
+      "args": [
+        "scripts/check-ux-v2-lot01a-real-ui.cjs",
+        "--lot09e"
+      ],
+      "exitCode": 0,
+      "seconds": 4.907,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/word.log",
+      "assertions_comptees": 70,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP ; ouverture Word/shell contrôlée, pas de recette Microsoft Word manuel",
+      "logSha256": "8389bde111bcf1b4b0d3c4d7abf5d07809a3315d1c916f79ff54b8cd21712953",
+      "logBytes": 716
+    },
+    {
+      "name": "statistics",
+      "args": [
+        "scripts/check-ux-v2-lot10-ui.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 5.511,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/statistics.log",
+      "assertions_comptees": 59,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "d53bb2da846105c68f920f85c10745249a43f7c8bbbe63200209148b77adfa88",
+      "logBytes": 182
+    },
+    {
+      "name": "coverage",
+      "args": [
+        "scripts/check-ux-v2-lot10-coverage.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 0.096,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/coverage.log",
+      "assertions_comptees": null,
+      "nature": "Validation structurelle du registre, pas 102 tests fonctionnels",
+      "logSha256": "242e0b9c37adf121254880f23fea10bd59db12d955cd8cb109a43f168deb42d6",
+      "logBytes": 244
+    },
+    {
+      "name": "preferences",
+      "args": [
+        "scripts/check-ux-v2-lot01f-workshop.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 17.175,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/preferences.log",
+      "assertions_comptees": 137,
+      "nature": "Atelier isolé ; IPC préférences/UX-01 réels et SQLite TEMP, pas de mutation métier",
+      "logSha256": "f77faf59ab29ddb790a3ee08d5a62517d0e0d8ebea79b1383d37ffbff2243db5",
+      "logBytes": 939
+    },
+    {
+      "name": "rail",
+      "args": [
+        "scripts/check-ux-v2-lot02a-workshop.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 18.062,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/rail.log",
+      "assertions_comptees": 125,
+      "nature": "Atelier isolé ; IPC préférences/UX-01 réels et SQLite TEMP, pas de mutation métier",
+      "logSha256": "e55c6bf308bc780c760d217954e1f69cd564087dc014d67feaf3971841853511",
+      "logBytes": 312
+    },
+    {
+      "name": "header",
+      "args": [
+        "scripts/check-ux-v2-lot02b-workshop.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 17.202,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/header.log",
+      "assertions_comptees": 167,
+      "nature": "Atelier isolé ; IPC préférences/UX-01 réels et SQLite TEMP, pas de mutation métier",
+      "logSha256": "4c484a33842dd3e280aa471570447ea7cb03cd153f32a3e2ce7a576d8dcc239e",
+      "logBytes": 312
+    },
+    {
+      "name": "shell",
+      "args": [
+        "scripts/check-ux-v2-ec01-shell.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 42.463,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/shell.log",
+      "assertions_comptees": 825,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "8a3bc16df37a6f2aa90f5cf73dad2a481d746dac2338c44e55d3361b82bde10f",
+      "logBytes": 225
+    },
+    {
+      "name": "search",
+      "args": [
+        "scripts/check-ux-v2-lot01a-real-ui.cjs",
+        "--search-only"
+      ],
+      "exitCode": 0,
+      "seconds": 21.566,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/search.log",
+      "assertions_comptees": 93,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "55e08a008ad6ba16e71c225266a9e3a7964fa22a970ee1a55195b2600629e0f1",
+      "logBytes": 1929
+    },
+    {
+      "name": "home",
+      "args": [
+        "scripts/check-ux-v2-02d-home.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 5.937,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/home.log",
+      "assertions_comptees": 56,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "7a23b6d136c13f7df17d105e49d5da18d08803b0135b8a608c6ce28778b6eb93",
+      "logBytes": 3346
+    },
+    {
+      "name": "journeys",
+      "args": [
+        "scripts/check-ux-v2-02e-journeys.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 11.253,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/journeys.log",
+      "assertions_comptees": 68,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "0937bfdabffcc3f62dcef2681900a1b0fe16da8a4036672dcca0b3aea393762f",
+      "logBytes": 400
+    },
+    {
+      "name": "crm",
+      "args": [
+        "scripts/check-ux-v2-lot01a-real-ui.cjs",
+        "--lot03b"
+      ],
+      "exitCode": 0,
+      "seconds": 9.686,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/crm.log",
+      "assertions_comptees": 76,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "6232492ae9e4c72b9a06fa1e186ad75ef4fa9c620b32289ca59d17bd739e1b7c",
+      "logBytes": 2766
+    },
+    {
+      "name": "ux01",
+      "args": [
+        "scripts/check-unsaved-inputs-ui.cjs",
+        "--lot-b",
+        "--lot-c",
+        "--review"
+      ],
+      "exitCode": 0,
+      "seconds": 28.559,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/ux01.log",
+      "assertions_comptees": 192,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "36a9741340216e18a7b78718d89df575f8f901abbea2f108c0f21f3477dfab0b",
+      "logBytes": 13414
+    },
+    {
+      "name": "restore-roundtrip",
+      "args": [
+        "scripts/check-restore-quit-roundtrip.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 4.119,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/restore-roundtrip.log",
+      "assertions_comptees": 12,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "8ee5e75536aa6bbeaa95fdc38fb3cd8a9e7f9ea13e8def93c3fd8d32e5b05666",
+      "logBytes": 4262
+    },
+    {
+      "name": "ec03",
+      "args": [
+        "scripts/check-ux-v2-lot01a-real-ui.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 32.916,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified/ec03.log",
+      "assertions_comptees": 194,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "bc2837f4bff450880771457c8b8227449165abd2f6773e4ed531165ffdcee1f7",
+      "logBytes": 3042
+    },
+    {
+      "name": "tables",
+      "args": [
+        "scripts/check-visual-generalization.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 46.224,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified-extra/tables.log",
+      "assertions_comptees": 709,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "3c801090eaf20d0ba8255144426968be59da8b2e53629d799a32f6b07ac01e69",
+      "logBytes": 305
+    },
+    {
+      "name": "panels",
+      "args": [
+        "scripts/check-ux-v2-lot01c-workshop.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 7.136,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified-extra/panels.log",
+      "assertions_comptees": 67,
+      "nature": "Atelier Electron/React ; IPC UX-01 réel, données fictives sans SQLite",
+      "logSha256": "cd3e668cec81621b05ec5d68d5b05b372efe9cfdac08d2e0ec50b4990672f1b5",
+      "logBytes": 98
+    },
+    {
+      "name": "table-pilot",
+      "args": [
+        "scripts/check-ux-v2-lot01d-workshop.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 11.513,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified-extra/table-pilot.log",
+      "assertions_comptees": 127,
+      "nature": "Atelier Electron/React ; IPC UX-01 réel, données fictives sans SQLite",
+      "logSha256": "23dbbb9ab418da8fcff5ce271c45a83e2941936e2dbc450197acfe5f506b6da9",
+      "logBytes": 183
+    },
+    {
+      "name": "real-help",
+      "args": [
+        "scripts/check-ux-v2-final-real-help.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 11.796,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified-extra/real-help.log",
+      "assertions_comptees": 80,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "767e031c57ae6f3c504612d67d3168ace9465dca769ec392fd7acd699ba1a60b",
+      "logBytes": 365
+    },
+    {
+      "name": "client-b",
+      "args": [
+        "scripts/check-ux-v2-client-b.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 13.816,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified-extra/client-b.log",
+      "assertions_comptees": 366,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "e491a488a4b50cbed7629944478837f9fb2a0c911d40caaba7460e965151f917",
+      "logBytes": 275
+    },
+    {
+      "name": "prospect-a",
+      "args": [
+        "scripts/check-ux-v2-prospect-density.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 5.635,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified-extra/prospect-a.log",
+      "assertions_comptees": 97,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "d7988797d4751464a85225a8e6a8ccc7e20b33b5bbbe5f30adb0ac411e09a79d",
+      "logBytes": 367
+    },
+    {
+      "name": "project-navigation",
+      "args": [
+        "scripts/check-ux-v2-07ab-navigation-native.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 2.93,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified-extra/project-navigation.log",
+      "assertions_comptees": 27,
+      "nature": "Electron/React + preload/IPC et services réels, SQLite TEMP",
+      "logSha256": "330bc21e6d35fb3d0bc695b245e5fc41ade97add4751152d8026b10a46f1e942",
+      "logBytes": 807
+    },
+    {
+      "name": "operational-preview",
+      "args": [
+        "scripts/check-operational-recipe-ui.cjs",
+        "--output",
+        "C:\\DEV\\01_PROJETS\\AtoumWeb\\manager-convergence-final-checks\\outputs\\closure-uxv2-20261016\\verified-extra\\operational-preview"
+      ],
+      "exitCode": 0,
+      "seconds": 68.075,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified-extra/operational-preview.log",
+      "assertions_comptees": 484,
+      "nature": "Electron et cinq IPC réels ; SQLite TEMP, staging isolé et matérialisation refusée",
+      "logSha256": "83fd56bcf97fdeffe80970e37d548f83ef8160e9a2280be4b4676652fc1afd76",
+      "logBytes": 4775
+    },
+    {
+      "name": "controls",
+      "args": [
+        "scripts/check-ux-v2-lot01b-controls.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 1.123,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified-extra/controls.log",
+      "assertions_comptees": 40,
+      "nature": "Composant Electron/React isolé ; aucune opération de service métier",
+      "logSha256": "3d405308d5af61eac1ccc085b3bc0936cc9fd85d38388dfb61adb2b21b82f2af",
+      "logBytes": 963
+    },
+    {
+      "name": "icons",
+      "args": [
+        "scripts/check-ux-v2-lot01b-icons.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 1.449,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified-extra/icons.log",
+      "assertions_comptees": 42,
+      "nature": "Composant Electron/React isolé ; aucune opération de service métier",
+      "logSha256": "5474992570367681f3f7306d7423ef468ce29e5690770b4096a5dbebc6817d90",
+      "logBytes": 1695
+    },
+    {
+      "name": "notices",
+      "args": [
+        "scripts/check-ux-v2-lot01b-notices.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 0.695,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified-extra/notices.log",
+      "assertions_comptees": 30,
+      "nature": "Composant Electron/React isolé ; aucune opération de service métier",
+      "logSha256": "4204d843c4558ff49b27ef319d11f96e64ccda79d2c1301835c98c98eb867c7d",
+      "logBytes": 568
+    },
+    {
+      "name": "help",
+      "args": [
+        "scripts/check-ux-v2-lot01b-help.cjs"
+      ],
+      "exitCode": 0,
+      "seconds": 30.561,
+      "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "log": "outputs/closure-uxv2-20261016/verified-extra/help.log",
+      "assertions_comptees": 109,
+      "nature": "Composant Electron/React isolé ; aucune opération de service métier",
+      "logSha256": "7ed50c190f36eef02baf0aee411871ab9c48b3ba9750fbc909024bca37849d75",
+      "logBytes": 714
+    }
+  ],
+  "previousEvidence": {
+    "ec03": "outputs/ec03-final-20261016/checks.json",
+    "clientB": "outputs/client-b-final-20261016/final/tests.json",
+    "historical67": "captures/conformite-globale-20261016/donnees.json"
+  },
+  "noRealData": true,
+  "noHostedCI": true,
+  "noPush": true,
+  "noMainMerge": true,
+  "schemaAudit": {
+    "sha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+    "onlyMemory": true,
+    "milliseconds": 142.98090000000002,
+    "migrations": [
+      {
+        "id": 1,
+        "name": "foundation_system_tables"
+      },
+      {
+        "id": 2,
+        "name": "phase_1_crm_core"
+      },
+      {
+        "id": 3,
+        "name": "phase_1_unique_client_identity"
+      },
+      {
+        "id": 4,
+        "name": "phase_1_crm_actions_followups"
+      },
+      {
+        "id": 5,
+        "name": "phase_2_catalog"
+      },
+      {
+        "id": 6,
+        "name": "phase_2_quotes"
+      },
+      {
+        "id": 7,
+        "name": "phase_3_projects_core"
+      },
+      {
+        "id": 8,
+        "name": "phase_3_project_resources"
+      },
+      {
+        "id": 9,
+        "name": "phase_3_project_technical_library"
+      },
+      {
+        "id": 10,
+        "name": "phase_3_time_sessions"
+      },
+      {
+        "id": 11,
+        "name": "phase_4_requests_interventions"
+      },
+      {
+        "id": 12,
+        "name": "phase_4_maintenance"
+      },
+      {
+        "id": 13,
+        "name": "phase_4_hour_packs"
+      },
+      {
+        "id": 14,
+        "name": "phase_4_billing_handoff"
+      },
+      {
+        "id": 15,
+        "name": "phase_4_maintenance_overage_decisions"
+      },
+      {
+        "id": 16,
+        "name": "phase_4_maintenance_report_drafts"
+      },
+      {
+        "id": 17,
+        "name": "phase_4_hour_pack_shortfall_decisions"
+      },
+      {
+        "id": 18,
+        "name": "stabilisation_catalogue_besoins_demo"
+      },
+      {
+        "id": 19,
+        "name": "stabilisation_commercial_relationship_documents"
+      },
+      {
+        "id": 20,
+        "name": "prospect_workflow_v2_qualification"
+      },
+      {
+        "id": 21,
+        "name": "prospect_recipe_action_context"
+      },
+      {
+        "id": 22,
+        "name": "phase_6_global_technical_library"
+      },
+      {
+        "id": 23,
+        "name": "phase_6_global_library_categories"
+      },
+      {
+        "id": 24,
+        "name": "phase_6_global_library_assets"
+      },
+      {
+        "id": 25,
+        "name": "phase_6_business_backup_records"
+      },
+      {
+        "id": 26,
+        "name": "phase_6_backup_policies_intervention_links"
+      },
+      {
+        "id": 27,
+        "name": "project_v2_blueprints_and_work_cards"
+      },
+      {
+        "id": 28,
+        "name": "project_v2_seed_site_vitrine_blueprint"
+      },
+      {
+        "id": 29,
+        "name": "project_v2_link_web_service_blueprint"
+      },
+      {
+        "id": 30,
+        "name": "project_v2_secure_node_secrets"
+      },
+      {
+        "id": 31,
+        "name": "catalog_v2_service_nature"
+      },
+      {
+        "id": 32,
+        "name": "billing_invoice_pdf_link"
+      },
+      {
+        "id": 33,
+        "name": "expenses_tracking"
+      },
+      {
+        "id": 34,
+        "name": "crm_identity_assets"
+      },
+      {
+        "id": 35,
+        "name": "time_pause_reasons"
+      },
+      {
+        "id": 36,
+        "name": "bridge_snapshot_v1"
+      },
+      {
+        "id": 37,
+        "name": "bridge_snapshot_sections_repair"
+      },
+      {
+        "id": 38,
+        "name": "atoumweb_library_vertical_and_code_snippets"
+      },
+      {
+        "id": 39,
+        "name": "bridge_occurrence_returns_v1"
+      },
+      {
+        "id": 40,
+        "name": "atoumweb_component_families_variants_v1"
+      },
+      {
+        "id": 41,
+        "name": "bridge_node_match_human_decisions"
+      },
+      {
+        "id": 42,
+        "name": "bridge_node_match_reconsideration_history"
+      },
+      {
+        "id": 43,
+        "name": "atoumweb_multi_component_compositions_v1"
+      },
+      {
+        "id": 44,
+        "name": "quote_contract_terms_builder_v1"
+      },
+      {
+        "id": 45,
+        "name": "quote_contract_document"
+      },
+      {
+        "id": 46,
+        "name": "contract_clause_audience"
+      },
+      {
+        "id": 47,
+        "name": "project_sites_pages_v1"
+      },
+      {
+        "id": 48,
+        "name": "project_page_compositions_v1"
+      },
+      {
+        "id": 49,
+        "name": "project_page_composition_local_settings_v1"
+      },
+      {
+        "id": 50,
+        "name": "project_blueprint_sites_pages_v1"
+      },
+      {
+        "id": 51,
+        "name": "project_blueprint_sites_pages_legacy_compatibility"
+      },
+      {
+        "id": 52,
+        "name": "project_page_exports_v1"
+      },
+      {
+        "id": 53,
+        "name": "catalog_identity_v1"
+      },
+      {
+        "id": 54,
+        "name": "catalog_import_v1_provenance"
+      },
+      {
+        "id": 55,
+        "name": "contract_library_import_v1_review_provenance"
+      },
+      {
+        "id": 56,
+        "name": "quote_contract_parameters_and_evidence_v1"
+      },
+      {
+        "id": 57,
+        "name": "explicit_quote_option_purchases"
+      },
+      {
+        "id": 58,
+        "name": "sold_blueprint_compositions_v1"
+      },
+      {
+        "id": 59,
+        "name": "provisional_projects_commercial_revisions"
+      },
+      {
+        "id": 60,
+        "name": "versioned_operational_actions_and_time_snapshots"
+      },
+      {
+        "id": 61,
+        "name": "explicit_project_contribution_targets"
+      },
+      {
+        "id": 62,
+        "name": "explicit_operational_association_lifecycle"
+      },
+      {
+        "id": 63,
+        "name": "versioned_commercial_rules_and_line_parameters"
+      },
+      {
+        "id": 64,
+        "name": "accepted_operational_sales_provenance"
+      },
+      {
+        "id": 65,
+        "name": "subscription_addons_and_variable_routine_estimates"
+      },
+      {
+        "id": 66,
+        "name": "versioned_contract_types"
+      },
+      {
+        "id": 67,
+        "name": "catalog_category_registry_v1"
+      },
+      {
+        "id": 68,
+        "name": "catalog_version_recommendations_v1"
+      },
+      {
+        "id": 69,
+        "name": "contract_clause_section_review_v1"
+      },
+      {
+        "id": 70,
+        "name": "catalog_recommendation_details_v1"
+      },
+      {
+        "id": 71,
+        "name": "quote_contract_transmission_v1"
+      }
+    ],
+    "tableCount": 132,
+    "references": [
+      {
+        "table": "atoumweb_technical_assets",
+        "column": "asset_role",
+        "type": "TEXT"
+      },
+      {
+        "table": "atoumweb_technical_assets",
+        "column": "relative_path",
+        "type": "TEXT"
+      },
+      {
+        "table": "backup_intervention_links",
+        "column": "backup_record_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "backup_locations",
+        "column": "backup_record_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "backup_locations",
+        "column": "path_or_reference",
+        "type": "TEXT"
+      },
+      {
+        "table": "backup_records",
+        "column": "backup_type",
+        "type": "TEXT"
+      },
+      {
+        "table": "backup_records",
+        "column": "backup_at",
+        "type": "TEXT"
+      },
+      {
+        "table": "billing_items",
+        "column": "invoice_document_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_assets",
+        "column": "snapshot_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_assets",
+        "column": "asset_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_assets",
+        "column": "local_path",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_dependencies",
+        "column": "snapshot_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_node_logical_assignments",
+        "column": "snapshot_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_node_match_history",
+        "column": "before_page_snapshot_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_node_match_history",
+        "column": "after_page_snapshot_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_nodes",
+        "column": "page_snapshot_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_nodes",
+        "column": "asset_ids_json",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_objects",
+        "column": "relative_path",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_occurrence_returns",
+        "column": "assets_json",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_occurrence_returns",
+        "column": "package_relative_path",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_page_snapshots",
+        "column": "snapshot_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_page_snapshots",
+        "column": "external_page_snapshot_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_page_snapshots",
+        "column": "storage_format",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_page_snapshots",
+        "column": "asset_ids_json",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_relations",
+        "column": "snapshot_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_sites",
+        "column": "last_snapshot_at",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_snapshot_sections",
+        "column": "snapshot_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_snapshots",
+        "column": "external_snapshot_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_snapshots",
+        "column": "snapshot_type",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_snapshots",
+        "column": "fingerprint_profile",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_snapshots",
+        "column": "asset_count",
+        "type": "INTEGER"
+      },
+      {
+        "table": "bridge_snapshots",
+        "column": "package_relative_path",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_sources",
+        "column": "snapshot_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "bridge_sources",
+        "column": "page_snapshot_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "client_documents",
+        "column": "relative_path",
+        "type": "TEXT"
+      },
+      {
+        "table": "contacts",
+        "column": "avatar_asset_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "contract_library_import_runs",
+        "column": "document_sources_json",
+        "type": "TEXT"
+      },
+      {
+        "table": "crm_identity_assets",
+        "column": "relative_path",
+        "type": "TEXT"
+      },
+      {
+        "table": "expenses",
+        "column": "receipt_relative_path",
+        "type": "TEXT"
+      },
+      {
+        "table": "file_asset_links",
+        "column": "file_asset_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "file_assets",
+        "column": "relative_path",
+        "type": "TEXT"
+      },
+      {
+        "table": "maintenance_subscriptions",
+        "column": "plan_name_snapshot",
+        "type": "TEXT"
+      },
+      {
+        "table": "maintenance_subscriptions",
+        "column": "frequency_snapshot",
+        "type": "TEXT"
+      },
+      {
+        "table": "maintenance_subscriptions",
+        "column": "included_interventions_snapshot",
+        "type": "INTEGER"
+      },
+      {
+        "table": "maintenance_subscriptions",
+        "column": "included_minutes_snapshot",
+        "type": "INTEGER"
+      },
+      {
+        "table": "maintenance_subscriptions",
+        "column": "catalog_price_cents_snapshot",
+        "type": "INTEGER"
+      },
+      {
+        "table": "maintenance_subscriptions",
+        "column": "carryover_mode_snapshot",
+        "type": "TEXT"
+      },
+      {
+        "table": "operational_sales",
+        "column": "policy_snapshot_json",
+        "type": "TEXT"
+      },
+      {
+        "table": "operational_sales",
+        "column": "parameters_snapshot_json",
+        "type": "TEXT"
+      },
+      {
+        "table": "project_action_instances",
+        "column": "initial_snapshot_json",
+        "type": "TEXT"
+      },
+      {
+        "table": "project_node_secrets",
+        "column": "secret_ciphertext",
+        "type": "TEXT"
+      },
+      {
+        "table": "project_page_exports",
+        "column": "package_path",
+        "type": "TEXT"
+      },
+      {
+        "table": "project_services",
+        "column": "snapshot_json",
+        "type": "TEXT"
+      },
+      {
+        "table": "project_site_pages",
+        "column": "desired_path",
+        "type": "TEXT"
+      },
+      {
+        "table": "project_template_site_pages",
+        "column": "desired_path",
+        "type": "TEXT"
+      },
+      {
+        "table": "projects",
+        "column": "resource_root_path",
+        "type": "TEXT"
+      },
+      {
+        "table": "quote_contract_preparations",
+        "column": "text_snapshot",
+        "type": "TEXT"
+      },
+      {
+        "table": "quote_contract_preparations",
+        "column": "snapshot_json",
+        "type": "TEXT"
+      },
+      {
+        "table": "quote_document_links",
+        "column": "document_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "quote_document_links",
+        "column": "relative_path",
+        "type": "TEXT"
+      },
+      {
+        "table": "quote_document_links",
+        "column": "file_name",
+        "type": "TEXT"
+      },
+      {
+        "table": "quote_lines",
+        "column": "snapshot_json",
+        "type": "TEXT"
+      },
+      {
+        "table": "quotes",
+        "column": "snapshot_locked_at",
+        "type": "TEXT"
+      },
+      {
+        "table": "quotes",
+        "column": "contract_text_snapshot",
+        "type": "TEXT"
+      },
+      {
+        "table": "quotes",
+        "column": "contract_snapshot_json",
+        "type": "TEXT"
+      },
+      {
+        "table": "quotes",
+        "column": "contract_document_id",
+        "type": "TEXT"
+      },
+      {
+        "table": "quotes",
+        "column": "contract_document_attached_at",
+        "type": "TEXT"
+      },
+      {
+        "table": "technical_item_assets",
+        "column": "file_asset_id",
+        "type": "TEXT"
+      }
+    ],
+    "integrity": [
+      {
+        "integrity_check": "ok"
+      }
+    ],
+    "foreignKeys": []
+  },
+  "gitEvidence": {
+    "refs": {
+      "main": {
+        "sha": "c4bb744dbe58531350a61fb16ad5f8fbe90bd59d",
+        "tree": "710a062c6ec0dbe6f65fd2dae2e967b375cdf4cb",
+        "mainAncestor": true,
+        "commitsOverMain": 0,
+        "filesOverMain": 0
+      },
+      "base": {
+        "sha": "f66a06d11c13d8f0d4a0eb7a2eed2780f08e215b",
+        "tree": "d4cd84de38391b5b392fba71f4aad7a94bf8e8e3",
+        "mainAncestor": true,
+        "commitsOverMain": 23,
+        "filesOverMain": 139
+      },
+      "prospect": {
+        "sha": "03693f861c86ad77780d6f400b744cf7761cec15",
+        "tree": "f3523f795c59eb9d0d338bf5c29bf68a90e734e4",
+        "mainAncestor": true,
+        "commitsOverMain": 27,
+        "filesOverMain": 145
+      },
+      "ec01": {
+        "sha": "4f0b0a1234f06727ac0e219a2d401fbef7d8ce28",
+        "tree": "111f3372361392887c4813784ec8310ef8118fe0",
+        "mainAncestor": true,
+        "commitsOverMain": 30,
+        "filesOverMain": 148
+      },
+      "client": {
+        "sha": "f85fd498ff9bbe8bc04242144d10efb737e91716",
+        "tree": "0f681e02c08f0ebd2c6852f109f8c356b2f5d65b",
+        "mainAncestor": true,
+        "commitsOverMain": 31,
+        "filesOverMain": 152
+      },
+      "ec03": {
+        "sha": "b77a3ce5015661ce2b12ac9b9e83459f3f2d8f26",
+        "tree": "3e9b851c1944a751eb0427911f30f70cf35304ef",
+        "mainAncestor": true,
+        "commitsOverMain": 34,
+        "filesOverMain": 197
+      }
+    },
+    "simulations": [
+      {
+        "candidate": "base",
+        "status": 0,
+        "tree": "d4cd84de38391b5b392fba71f4aad7a94bf8e8e3",
+        "expected": "d4cd84de38391b5b392fba71f4aad7a94bf8e8e3",
+        "equal": true
+      },
+      {
+        "candidate": "prospect",
+        "status": 0,
+        "tree": "f3523f795c59eb9d0d338bf5c29bf68a90e734e4",
+        "expected": "f3523f795c59eb9d0d338bf5c29bf68a90e734e4",
+        "equal": true
+      },
+      {
+        "candidate": "ec01",
+        "status": 0,
+        "tree": "111f3372361392887c4813784ec8310ef8118fe0",
+        "expected": "111f3372361392887c4813784ec8310ef8118fe0",
+        "equal": true
+      },
+      {
+        "candidate": "client",
+        "status": 0,
+        "tree": "0f681e02c08f0ebd2c6852f109f8c356b2f5d65b",
+        "expected": "0f681e02c08f0ebd2c6852f109f8c356b2f5d65b",
+        "equal": true
+      },
+      {
+        "candidate": "ec03",
+        "status": 0,
+        "tree": "3e9b851c1944a751eb0427911f30f70cf35304ef",
+        "expected": "3e9b851c1944a751eb0427911f30f70cf35304ef",
+        "equal": true
+      }
+    ],
+    "historicalCount": 53,
+    "historicalChanged": [],
+    "migrationScan": [
+      {
+        "ref": "refs/heads/codex/ec03-explicit-contract-lifecycle",
+        "hits": [
+          "refs/heads/codex/ec03-explicit-contract-lifecycle:src/main/database/catalogMigrationConvergence04F.test.ts:52:          { id: 71, name: 'quote_contract_transmission_v1' },",
+          "refs/heads/codex/ec03-explicit-contract-lifecycle:src/main/database/convergenceReferencePreservation.test.ts:32:        {id:69,name:'contract_clause_section_review_v1'},{id:70,name:'catalog_recommendation_details_v1'},{id:71,name:'quote_contract_transmission_v1'},",
+          "refs/heads/codex/ec03-explicit-contract-lifecycle:src/main/database/migrations.test.ts:305:    expect(MIGRATIONS.at(-1)).toMatchObject({id:71,name:'quote_contract_transmission_v1'});",
+          "refs/heads/codex/ec03-explicit-contract-lifecycle:src/main/database/quoteTransmissionMigration.ts:5:  id: 71,"
+        ]
+      },
+      {
+        "ref": "refs/heads/codex/ux-v2-closure-convergence-audit",
+        "hits": [
+          "refs/heads/codex/ux-v2-closure-convergence-audit:src/main/database/catalogMigrationConvergence04F.test.ts:52:          { id: 71, name: 'quote_contract_transmission_v1' },",
+          "refs/heads/codex/ux-v2-closure-convergence-audit:src/main/database/convergenceReferencePreservation.test.ts:32:        {id:69,name:'contract_clause_section_review_v1'},{id:70,name:'catalog_recommendation_details_v1'},{id:71,name:'quote_contract_transmission_v1'},",
+          "refs/heads/codex/ux-v2-closure-convergence-audit:src/main/database/migrations.test.ts:305:    expect(MIGRATIONS.at(-1)).toMatchObject({id:71,name:'quote_contract_transmission_v1'});",
+          "refs/heads/codex/ux-v2-closure-convergence-audit:src/main/database/quoteTransmissionMigration.ts:5:  id: 71,"
+        ]
+      }
+    ],
+    "pr154": {
+      "baseRefName": "codex/ux-v2-final-crm-brand-help",
+      "headRefName": "codex/ux-v2-prospect-a-approved",
+      "headRefOid": "03693f861c86ad77780d6f400b744cf7761cec15",
+      "isDraft": true,
+      "number": 154,
+      "state": "OPEN",
+      "statusCheckRollup": [],
+      "url": "https://github.com/atoumweb-prog/atoumweb-manager/pull/154"
+    },
+    "mainRuns": [
+      {
+        "conclusion": "success",
+        "databaseId": 38685281188,
+        "headSha": "c4bb744dbe58531350a61fb16ad5f8fbe90bd59d",
+        "status": "completed",
+        "url": "https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38685281188"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 38683452435,
+        "headSha": "f72ddc9f253117d5166c1fcee94cbca1b3b72c89",
+        "status": "completed",
+        "url": "https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38683452435"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 38681984318,
+        "headSha": "b40b9e712a11ffdca98f6d0e0c8bf47a798bd016",
+        "status": "completed",
+        "url": "https://github.com/atoumweb-prog/atoumweb-manager/actions/runs/38681984318"
+      }
+    ]
+  },
+  "sourceTrees": {
+    "b77a3ce5015661ce2b12ac9b9e83459f3f2d8f26": "8314fa475f2826f1f007939760b6e07920572aba",
+    "ead8a16a684c89f2dbb9ec26763574adec3fb3fe": "8314fa475f2826f1f007939760b6e07920572aba"
+  },
+  "changedSinceEc03": [
+    "scripts/check-ux-v2-lot01a-real-ui.cjs",
+    "scripts/check-ux-v2-lot01c-workshop.cjs",
+    "scripts/check-ux-v2-lot01d-workshop.cjs",
+    "scripts/fixtures/07a-composition-scenarios.cjs"
+  ],
+  "worktreeMigrationCheck": {
+    "count": 15,
+    "errors": 0,
+    "changedFileCount": 0
+  },
+  "evidenceAliases": {
+    "ec03-library": {
+      "manifest": "outputs/ec03-final-20261016/checks.json",
+      "sha": "b77a3ce5015661ce2b12ac9b9e83459f3f2d8f26",
+      "entry": "electron-library",
+      "origin": "preuve antérieure sur le même code applicatif, non rejouée dans les 43 commandes"
+    },
+    "ec03-builder": {
+      "manifest": "outputs/ec03-final-20261016/checks.json",
+      "sha": "b77a3ce5015661ce2b12ac9b9e83459f3f2d8f26",
+      "entry": "electron-builder",
+      "origin": "preuve antérieure sur le même code applicatif, non rejouée dans les 43 commandes"
+    },
+    "ux01-abby": {
+      "manifest": "outputs/ec03-final-20261016/checks.json",
+      "sha": "b77a3ce5015661ce2b12ac9b9e83459f3f2d8f26",
+      "entry": "ux01-abby",
+      "origin": "preuve antérieure sur le même code applicatif, non rejouée dans les 43 commandes"
+    }
+  },
+  "preservedWorkshopCaptures": [
+    {
+      "recipe": "panels",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/panels/atoumweb-comfort.png",
+      "sha256": "0130d0fc1d0794976218eae71e992927c4b076caf9838027fb5686e5cc54b76f",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "panels",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/panels/atoumweb-comfort_plus.png",
+      "sha256": "baca9243d543d04bff708e7ba9c28455aefa5ab9d4786b3a1d416245d5ad1bcb",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "panels",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/panels/atoumweb-compact.png",
+      "sha256": "c113ba1cb84d33f47edcecd5240c0ee8b6c84897715181e4d5a943e5b1ff3fae",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "panels",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/panels/blanc-comfort.png",
+      "sha256": "6f53ce48ce280252ea0440040a9a95ef5c00fa5617f21f3f809c79356e004203",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "panels",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/panels/blanc-comfort_plus.png",
+      "sha256": "e790f922a13203d7fc15388c5c8bcb8b2f6be0ac07ea6134bef2a5fea761c789",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "panels",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/panels/blanc-compact.png",
+      "sha256": "1287d5b3fd90530aab305db9987d34139fdff2631123f56f3be46aec3cbbbd76",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "panels",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/panels/noir-comfort.png",
+      "sha256": "a9f96eda6c50699f25cc0ce298c4ca3ca04f25644173d83ba5212f96cd31dd52",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "panels",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/panels/noir-comfort_plus.png",
+      "sha256": "bd5d861bb047bd05c2681c834bdcf9715f6a682930ce685de2082fa20121ca79",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "panels",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/panels/noir-compact.png",
+      "sha256": "ff5030528e409047c855c3780dd3110f54c931887b71159f11f261fc76f2795d",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "table-pilot",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/table-pilot/atoumweb-comfort.png",
+      "sha256": "72c90fe75796db0a0fde3f4648c85a33743ecfa09e7013c74bae832708756953",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "table-pilot",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/table-pilot/atoumweb-comfort_plus.png",
+      "sha256": "0929398e428a739bd5768611b0ea4897baafb346593c001eb2b79073bd9c04db",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "table-pilot",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/table-pilot/atoumweb-compact.png",
+      "sha256": "66f07614efd2d371cdf9e04cf2e88ef8d1e2520eec14f018f6af1e983be06997",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "table-pilot",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/table-pilot/blanc-comfort.png",
+      "sha256": "e23ccce6a164843db0b6af8a3ef8aea63957f46e9371a0c905de991453e39b29",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "table-pilot",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/table-pilot/blanc-comfort_plus.png",
+      "sha256": "9b7caa0c8b8093d885271d2f020633e331f7a59a398c5d81e5b8bb79f0e722d2",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "table-pilot",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/table-pilot/blanc-compact.png",
+      "sha256": "b9957edb82c7a4ccf90806a4e29e00c376111023ad81458423dca6aeb5fda577",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "table-pilot",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/table-pilot/noir-comfort.png",
+      "sha256": "5e30196a11a0926888a0f22c2f2d3aecc750d1b56530534d2f1c6ee753128276",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "table-pilot",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/table-pilot/noir-comfort_plus.png",
+      "sha256": "ba8ca5928da4b4f4fdaf3fb2e265a7a7ac3264cbf1b9862a441c6cd7f5fcb8e9",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    },
+    {
+      "recipe": "table-pilot",
+      "file": "outputs/closure-uxv2-20261016/verified-extra/captures/table-pilot/noir-compact.png",
+      "sha256": "13f089212d65f144752e56507f55014491a380ad5b55054e987d7821541eee0c",
+      "codeSha": "ead8a16a684c89f2dbb9ec26763574adec3fb3fe",
+      "source": "frame marker verified by native assertion"
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "docs/ux-v2/CLOTURE-CONFORMITE-2026-10-16.md",
+      "sha256": "f7ed9041ad4690f7b0bd06367f8bf1808581363dc4f4f19070a2af41ff5473d3"
+    },
+    {
+      "file": "docs/ux-v2/MATRICE-67-CLOTURE-2026-10-16.csv",
+      "sha256": "2d728ea3fdf21726ed83cf020b2b853a6f153fe59f7d61a8f68229ebb107c42f"
+    },
+    {
+      "file": "docs/ux-v2/MATRICE-SOUS-LOTS-CLOTURE-2026-10-16.csv",
+      "sha256": "c2361d9dea259c2a65735d9b4695a42807aa5741aebffc470bd95e3e7d0cca5a"
+    },
+    {
+      "file": "docs/ux-v2/SAUVEGARDE-WORKSPACE-ARCHITECTURE-2026-10-16.md",
+      "sha256": "af63a8d1a47d7180103e5c638c71863465d5d8c23a3c015a7c06e9cda363eb64"
+    },
+    {
+      "file": "docs/ux-v2/CONVERGENCE-VISUELLE-EC03-2026-10-16.md",
+      "sha256": "7c882caa32b5bed7f80a4eb0f5952c58130c54f1f19c8f8f025c46462561127f"
+    }
+  ]
+}
