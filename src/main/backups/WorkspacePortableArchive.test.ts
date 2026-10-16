@@ -1,9 +1,9 @@
 import {backup, DatabaseSync} from 'node:sqlite';
-import {existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync} from 'node:fs';
+import {appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join, dirname} from 'node:path';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
-import {createOfflineWorkspaceArchive, restoreOfflineArchiveToNewWorkspace, verifyOfflineWorkspaceArchive} from './WorkspacePortableArchive';
+import {createOfflineWorkspaceArchive, restoreOfflineArchiveToNewWorkspace, verifyOfflineWorkspaceArchive, verifyRestoredWorkspaceAgainstManifest} from './WorkspacePortableArchive';
 
 let base: string;
 let root: string;
@@ -164,6 +164,46 @@ describe('EC04 — archive et restauration isolées, jamais raccordées à la pr
     expect(manifest.files.some(file => file.path === 'workspace/' + ref)).toBe(true);
     expect(manifest.referencesVerified).toBe(false);
     expect(manifest.consistencyCertified).toBe(false);
+  });
+
+
+  it('revérifie le workspace restauré et refuse tampering, fichier supplémentaire et marqueur', async () => {
+    db.exec('CREATE TABLE client_documents(id TEXT PRIMARY KEY, relative_path TEXT);');
+    const path = 'clients/c1/Documents/contrat.pdf';
+    db.prepare('INSERT INTO client_documents VALUES (?,?)').run('doc-1', path);
+    save(path, 'PDF initial');
+    const manifest = await makeArchive();
+    const target = join(base, 'new-verified-workspace');
+    await restoreOfflineArchiveToNewWorkspace(destination, target);
+    const status = await verifyRestoredWorkspaceAgainstManifest(target, manifest);
+    expect(status.verifiedFiles).toBe(2);
+    expect(status.referencesChecked).toBe(1);
+    expect(status.totalBytes).toBe(manifest.files.reduce((total, item) => total + item.sizeBytes, 0));
+    const restored = join(target, ...path.split('/'));
+    writeFileSync(restored, 'PDF modifié');
+    await expect(verifyRestoredWorkspaceAgainstManifest(target, manifest)).rejects.toThrow(/fichiers restaurés/);
+    writeFileSync(restored, 'PDF initial');
+    writeFileSync(join(target, 'clients', 'nouveau.txt'), 'unexpected');
+    await expect(verifyRestoredWorkspaceAgainstManifest(target, manifest)).rejects.toThrow(/fichiers restaurés/);
+    rmSync(join(target, 'clients', 'nouveau.txt'));
+    const marker = join(target, '.EC04-RESTORE-INCOMPLETE');
+    writeFileSync(marker, 'crash');
+    await expect(verifyRestoredWorkspaceAgainstManifest(target, manifest)).rejects.toThrow(/restauration interrompue/);
+    rmSync(marker);
+    await expect(verifyRestoredWorkspaceAgainstManifest(target, manifest)).resolves.toMatchObject({referencesChecked:1});
+  });
+
+  it('refuse les modifications SQLite et les fichiers WAL inattendus après restauration', async () => {
+    const manifest = await makeArchive();
+    const target = join(base, 'new-sqlite-verified-workspace');
+    await restoreOfflineArchiveToNewWorkspace(destination, target);
+    const sqlite = join(target, 'data', 'atoumweb-manager.sqlite');
+    const wal = sqlite + '-wal';
+    writeFileSync(wal, 'stray WAL');
+    await expect(verifyRestoredWorkspaceAgainstManifest(target, manifest)).rejects.toThrow(/fichiers inattendus/);
+    rmSync(wal);
+    appendFileSync(sqlite, 'unexpected');
+    await expect(verifyRestoredWorkspaceAgainstManifest(target, manifest)).rejects.toThrow(/SQLite restauré différent/);
   });
 
 });

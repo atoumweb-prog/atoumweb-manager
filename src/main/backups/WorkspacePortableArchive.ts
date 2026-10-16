@@ -314,6 +314,62 @@ export async function verifyOfflineWorkspaceArchive(archivePath: string): Promis
   finally { rmSync(tmp, {recursive: true, force: true}); }
 }
 
+/** This validates the installed bytes, not the original backup's quiescence.
+ * The known SQLite/file links are checked but coverage remains incomplete.
+ */
+export async function verifyRestoredWorkspaceAgainstManifest(
+  workspaceRoot: string, untrustedManifest: Ec04ArchiveManifest,
+): Promise<{verifiedFiles: number; totalBytes: number; referencesChecked: number}> {
+  return verifyRestoredWorkspaceInternal(workspaceRoot, untrustedManifest, false);
+}
+
+async function verifyRestoredWorkspaceInternal(
+  workspaceRoot: string, untrustedManifest: Ec04ArchiveManifest, allowIncompleteMarker: boolean,
+): Promise<{verifiedFiles: number; totalBytes: number; referencesChecked: number}> {
+  const manifest = validateManifest(untrustedManifest);
+  const root = resolve(workspaceRoot);
+  if (!allowIncompleteMarker && existingPath(join(root, '.EC04-RESTORE-INCOMPLETE'))) {
+    throw Error('EC04 : restauration interrompue ou incomplète.');
+  }
+  const dataDir = join(root, 'data');
+  const dataStat = lstatSync(dataDir);
+  if (!dataStat.isDirectory() || dataStat.isSymbolicLink()) {
+    throw Error('EC04 : dossier de base SQLite non sûr.');
+  }
+  const dataFiles = readdirSync(dataDir);
+  if (dataFiles.length !== 1 || dataFiles[0] !== 'atoumweb-manager.sqlite') {
+    throw Error('EC04 : dossier SQLite avec fichiers inattendus ou annexes.');
+  }
+  const dbPath = join(dataDir, dataFiles[0]);
+  const dbStat = lstatSync(dbPath);
+  if (!dbStat.isFile() || dbStat.isSymbolicLink()) throw Error('EC04 : fichier SQLite non sûr.');
+  const expectedDb = manifest.files[0];
+  const actualDb = await hashFile(dbPath);
+  if (actualDb.sizeBytes !== expectedDb.sizeBytes || actualDb.sha256 !== expectedDb.sha256) {
+    throw Error('EC04 : contenu SQLite restauré différent du manifeste.');
+  }
+  const ledger = readMigrationLedger(dbPath);
+  if (JSON.stringify(ledger) !== JSON.stringify(manifest.migrations)) {
+    throw Error('EC04 : migrations SQLite restaurées différentes.');
+  }
+  const actual = await inventoryWorkspaceFiles(root);
+  const expected = manifest.files.slice(1).map(entry => ({
+    relativePath: entry.path.slice('workspace/'.length),
+    sizeBytes: entry.sizeBytes, sha256: entry.sha256,
+  }));
+  if (JSON.stringify(actual.files) !== JSON.stringify(expected)) {
+    throw Error('EC04 : fichiers restaurés absents, modifiés ou supplémentaires.');
+  }
+  const audit = auditKnownWorkspaceFileReferences(dbPath, actual);
+  if (audit.issues.length) {
+    throw Error('EC04 : ' + audit.issues.length + ' référence(s) fichier cassées après restauration.');
+  }
+  return {
+    verifiedFiles: manifest.files.length, totalBytes: actualDb.sizeBytes + actual.totalBytes,
+    referencesChecked: audit.checked,
+  };
+}
+
 /**
  * Reserve the new destination with mkdir(EXCLUSIVE) before installing bytes.
  * rename(stage,destination) can overwrite an EMPTY directory on POSIX.
@@ -343,6 +399,8 @@ export async function restoreOfflineArchiveToNewWorkspace(archivePath: string, n
       'Restauration EC04 incomplète. Ne pas ouvrir comme workspace.\n', {flag: 'wx'});
     // If a move fails, preserve incomplete destination for explicit recovery.
     for (const name of readdirSync(staging)) renameSync(join(staging, name), join(destination, name));
+    // Verify the final installed filesystem BEFORE removing the incomplete marker.
+    await verifyRestoredWorkspaceInternal(destination, manifest, true);
     unlinkSync(incomplete);
     return manifest;
   } finally { if (existsSync(staging)) rmSync(staging, {recursive: true, force: true}); }
