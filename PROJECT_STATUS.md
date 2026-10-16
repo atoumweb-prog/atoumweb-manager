@@ -1,5 +1,10 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/10/2026 — EC03 : arbitrage envoi approuvé, plan technique à valider
+
+Option A approuvée : contrat/CGV figés à l’envoi effectif, distinct de la finalisation et de l’acceptation Abby. Lecture seule à l’ouverture ; adoption des nouvelles versions uniquement explicite. [Diagnostic, compatibilité historique, migration additive proposée et tests](docs/ux-v2/EC03-CONTRAT-FIGE-ENVOI-PLAN-2026-10-16.md). Analyse au code `f85fd498` ; 92/92 tests existants des trois services contractuels réussis (13,22 s), ils ne valident pas le protocole futur. Branche documentaire `codex/plan-ec03-sent-contracts` uniquement : aucun moteur, migration, donnée réelle, CI ou main modifié. **Implémentation en attente d’accord sur le plan** ; aucune reconstruction automatique des anciens snapshots. Prospect A et Client B conservés ; sauvegarde des logos hors SQLite toujours distincte.
+
+
 ## 16/10/2026 — Client B approuvée : raccordement réel du Résumé
 
 Décision utilisateur : Client B « Espace central élargi » est retenue définitivement ; Client A abandonnée. Branche `codex/ux-v2-client-b-final` depuis `4f0b0a12` : vrais éditeurs prioritaires, suivi commercial responsive, activité récente issue de l’historique existant, coordonnées et gestion secondaires repliables mais montées ; titre administratif retiré. Défauts Client 220/190 px uniquement en l’absence de préférences ; réglages existants et Prospect A préservés. [Implémentation, compatibilité et protocole](docs/ux-v2/CLIENT-B-CLOTURE-2026-10-16.md). Tests ciblés de développement verts ; preuves finales à produire au SHA commité. EC01 conservé ; EC03/moteur contractuel et sauvegarde des logos hors SQLite restent hors périmètre. Aucun main, CI hébergée, installation, migration ou donnée réelle modifié.
