@@ -173,6 +173,9 @@ if(!process.versions.electron){
   win=new BrowserWindow({show:captureArg>=0||searchOnly,title:"AtoumWeb Manager — UX 01A VISUAL TEST (TEMP)",width:1510,height:1030,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});
   win.webContents.on('console-message',e=>{if(e.level==='error'||e.level===3)consoleErrors.push(e.message);});
   await win.loadFile(path.join(temp,'index.html'));
+  // windowsHide may suppress the first native show despite BrowserWindow.show.
+  // Visible recipes need a real compositor/focus, independently of capturePage.
+  if(captureArg>=0||searchOnly){win.show();await wait('document.visibilityState==="visible"','visible recipe window');test(win.isVisible(),'Requested visible recipe window is shown');}
   await wait('document.querySelectorAll("[data-nav-module]").length===17','real Manager bootstrap');
   test((await get('document.querySelectorAll("[data-nav-module]").length'))===17,'Seventeen navigation entries');
   test(await get('!!window.atoumweb&&!window.atoumwebOperationalRecipe'),'Real preload without synthetic UI API');

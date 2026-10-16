@@ -26,7 +26,9 @@ if(!process.versions.electron){
  const click=async label=>{await js('[...document.querySelectorAll("button")].find(e=>e.textContent.trim()==='+JSON.stringify(label)+').click()');await sleep(70);};
  const input=async value=>{await js('const e=document.querySelector("#workshop-note");Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(e,'+JSON.stringify(value)+');e.dispatchEvent(new Event("input",{bubbles:true}));');await sleep(70);};
  app.whenReady().then(async()=>{
-  win=new BrowserWindow({show:true,width:1500,height:1000,title:'AtoumWeb — Atelier 01C TEST',webPreferences:{preload:path.join(temp,'preload.cjs'),contextIsolation:true,sandbox:true,nodeIntegration:false,backgroundThrottling:false}});G.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));await wait('!!document.querySelector("h1")');
+  win=new BrowserWindow({show:true,width:1500,height:1000,title:'AtoumWeb — Atelier 01C TEST',webPreferences:{preload:path.join(temp,'preload.cjs'),contextIsolation:true,sandbox:true,nodeIntegration:false,backgroundThrottling:false}});G.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));
+  // The hidden Windows launcher may suppress the initial BrowserWindow show.
+  win.show();await wait('document.visibilityState==="visible"');assert(win.isVisible(),'Visible workshop window before compositor and focus checks');await wait('!!document.querySelector("h1")');
   if(interactive){console.log('Atelier interactif ouvert, uniquement TEMP. Fermer la fenêtre pour terminer.');return;}
   await click('TEST — Toutes les Fleurs');assert(await get('document.querySelector(".aw-record-pane h2").textContent.includes("Fleurs")'),'First selection opens correct pane');
   await click('Notes');await input('Brouillon conservé');await js('document.querySelector(".aw-record-pane-body").scrollTop=80;document.querySelector("#workshop-note").dataset.identity="same-node"');

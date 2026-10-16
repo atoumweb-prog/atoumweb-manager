@@ -31,7 +31,9 @@ if(!process.versions.electron){
  const open=async id=>{await js('document.querySelector("[data-open-record='+id+']").click()');await sleep(70);};
  const sort=async id=>{await js('document.querySelector("th[data-column-id='+id+'] button").click()');await sleep(70);};
  app.whenReady().then(async()=>{
-  win=new BrowserWindow({show:true,width:1700,height:1100,webPreferences:{preload:path.join(temp,'preload.cjs'),contextIsolation:true,sandbox:true,nodeIntegration:false,backgroundThrottling:false}});G.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));await wait('document.querySelectorAll("tbody tr").length===120');
+  win=new BrowserWindow({show:true,width:1700,height:1100,webPreferences:{preload:path.join(temp,'preload.cjs'),contextIsolation:true,sandbox:true,nodeIntegration:false,backgroundThrottling:false}});G.bindUnsavedWindow(win);await win.loadFile(path.join(temp,'index.html'));
+  // The hidden Windows launcher may suppress the initial BrowserWindow show.
+  win.show();await wait('document.visibilityState==="visible"');assert(win.isVisible(),'Visible workshop window before compositor and focus checks');await wait('document.querySelectorAll("tbody tr").length===120');
   if(interactive){console.log('Atelier 01D interactif ouvert, uniquement TEMP.');return;}
   const source=await get('JSON.stringify(window.__tableFixtures)');
   assert(await get('Object.keys(window.atoumweb).join(",")==="unsaved"'),'No business API exposed');
