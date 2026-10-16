@@ -33,3 +33,13 @@
 .aw-workspace-header.is-compact .aw-brand-logotype{max-width:140px}
 .aw-workspace-header.is-compact .aw-brand-logotype img{height:32px}
 @media(max-width:1050px){.aw-brand-logotype{max-width:130px}.aw-brand-logotype img{height:32px}}
+
+/* Use the space left by the rail, rather than the outer window width.
+   Reflow the existing nodes: no hidden commands and no remounted timer. */
+.app-shell .aw-workspace-header{container-type:inline-size;container-name:workspace-header}
+@container workspace-header (max-width:650px){
+ .app-shell .aw-header-primary{flex-wrap:wrap}
+ .app-shell .aw-header-context{flex:1 1 calc(100% - 60px)}
+ .app-shell .aw-header-context small{max-width:100%}
+ .app-shell .aw-header-timer{flex:1 1 220px;min-width:160px}
+}

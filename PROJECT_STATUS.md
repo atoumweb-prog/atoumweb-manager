@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/10/2026 — Revue ciblée EC01 / EC02 / EC03
+
+Prospect A reste graphiquement approuvée et inchangée. Branche locale `codex/ux-v2-ec01-client-review` issue de `03693f86` : retour à la ligne de l'en-tête selon sa largeur réelle, avec régression native permanente (270 états). Diagnostic CGV sur fixtures : deux synchronisations en développement StrictMode, une avec React production ; l'ouverture écrit déjà des clauses/journaux, aucun moteur ni historique modifié. Deux propositions Client uniquement TEMP, sans activation définitive. [Cause, protocole, propositions et réserves](docs/ux-v2/EC01-EC02-EC03-REVUE-2026-10-16.md). Validation du candidat final à rattacher au SHA réellement testé dans le bilan local. Aucune fusion, CI hébergée, installation, migration ou donnée réelle. La sauvegarde des logos hors SQLite reste à arbitrer séparément.
+
 ## 15/10/2026 — Prospect : variante A validée, deux ajustements de clôture
 
 Décision explicite utilisateur : **A — Synthèse en bandeau** devient la référence ; B est abandonnée, sans généralisation Client. Le statut réel reste dans la synthèse commerciale, retiré de la seule colonne Identité de la fiche complète. Prochaine action : icône horloge partagée et libellé légèrement renforcé, sans nouvelle carte ni nouveau statut, avec le même accès à la relance réelle. Trois groupes initialement fermés, éditeurs montés, brouillons et garde UX-01 inchangés.
