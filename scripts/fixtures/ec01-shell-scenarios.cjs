@@ -20,8 +20,10 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   }
  }
  }
+ win.show();win.focus();win.webContents.focus();
  await js('document.querySelector("#header-options-trigger").focus();document.querySelector("#header-options-trigger").click()');
  await wait('!!document.querySelector("#header-options-panel.is-open")&&document.querySelector("#header-options-panel").contains(document.activeElement)','Options opened and focus moved to its controls');
+ await wait('!!document.querySelector("#header-options-panel .field-help-short")','Focused automatic help is rendered before sending Escape');
  win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(100);
  test(await get('!!document.querySelector("#header-options-panel.is-open")&&!document.querySelector(".field-help-short,.field-help-detail")'),'First Escape closes only the focused contextual help');
  win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(100);
