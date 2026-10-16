@@ -84,13 +84,33 @@ module.exports=async context=>{
  await navigate('Accueil');await click('#header-search-trigger');await input('.global-search input','TEST 03B Prospection Dijon');
  await wait(`!!document.querySelector('[data-search-type="prospect"][data-search-id="${qualification.id}"]')`,'qualification exact search');await click(`[data-search-type="prospect"][data-search-id="${qualification.id}"]`);
  await textClick('.prospect-detail-panel button','Ouvrir la fiche de travail');await wait('!!document.querySelector(".start-qualification-button")','qualification explicit start');await click('.start-qualification-button');
- await wait('!!document.querySelector(".qualification-panel-v2 textarea")','qualification editor');
+ // Prospect A keeps this group mounted but folded: DOM presence / client rects
+ // are not proof that a control can receive native keyboard focus.
+ const qualificationSelector='.prospect-desk-overlay .qualification-panel-v2 textarea';
+ await wait('!!document.querySelector('+JSON.stringify(qualificationSelector)+')','qualification editor');
+ const group='.prospect-desk-overlay details[data-group="needs"]';
+ if(!await get('document.querySelector('+JSON.stringify(group)+').open'))await click(group+' > summary');
+ await wait('document.querySelector('+JSON.stringify(qualificationSelector)+').checkVisibility()','disclosed qualification editor');
  const beforeQualification=db.crm.listProspects().find(p=>p.id===qualification.id).projectSummary;
- await input('.qualification-panel-v2 textarea','FINAL QUALIFICATION DRAFT');
- await js('window.__finalQualification=document.querySelector(".qualification-panel-v2 textarea")');
+ await js(`window.__finalQualification=document.querySelector(${JSON.stringify(qualificationSelector)});const e=window.__finalQualification;Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(e,'FINAL QUALIFICATION DRAFT');e.dispatchEvent(new Event('input',{bubbles:true}));e.scrollIntoView({block:'center'});`);
+ // Acquire genuine Windows/webContents focus, then a native pointer click.
+ // Never assign document focus to manufacture the keyboard assertion.
+ win.show();win.focus();win.webContents.focus();
+ await wait('document.hasFocus()&&document.visibilityState==="visible"','native qualification window focus');
+ const point=await get('(()=>{const r=window.__finalQualification.getBoundingClientRect();return {x:Math.round(r.left+r.width/2),y:Math.round(r.top+r.height/2)};})()');
+ win.webContents.sendInputEvent({type:'mouseMove',...point});
+ win.webContents.sendInputEvent({type:'mouseDown',...point,button:'left',clickCount:1});
+ win.webContents.sendInputEvent({type:'mouseUp',...point,button:'left',clickCount:1});
+ await wait('document.activeElement===window.__finalQualification','native pointer focuses qualification textarea');
+ const focusEvidence=async phase=>{const dom=await get(`(()=>{const describe=e=>e?({tag:e.tagName,label:e.getAttribute('aria-label'),className:e.className,tabIndex:e.tabIndex}):null;return {hasFocus:document.hasFocus(),visibility:document.visibilityState,active:describe(document.activeElement),sameTextarea:document.activeElement===window.__finalQualification,textareaVisible:window.__finalQualification.checkVisibility(),focusables:[...document.querySelectorAll('.prospect-desk-overlay button,.prospect-desk-overlay textarea,.prospect-desk-overlay input,.prospect-desk-overlay select,.prospect-desk-overlay [tabindex]')].filter(e=>e.checkVisibility()&&!e.disabled&&e.tabIndex>=0).map(describe)};})()`);console.log('FINAL_FOCUS_EVIDENCE '+JSON.stringify({phase,windowFocused:win.isFocused(),webContentsFocused:win.webContents.isFocused(),windowVisible:win.isVisible(),...dom}));return dom;};
+ const startFocus=await focusEvidence('before-tab');
+ test(win.isFocused()&&win.webContents.isFocused()&&startFocus.hasFocus&&startFocus.textareaVisible&&startFocus.sameTextarea,'Visible qualification textarea owns native focus before keyboard test');
  win.webContents.sendInputEvent({type:'keyDown',keyCode:'Tab'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Tab'});await sleep(70);
+ await focusEvidence('after-tab');
  test(await get('document.activeElement!==window.__finalQualification&&document.querySelector(".prospect-desk-overlay").contains(document.activeElement)'),'Native Tab advances within actual qualification desk');
+ test(await get('document.activeElement===document.querySelectorAll(".prospect-desk-overlay .qualification-panel-v2 textarea")[1]'),'Native Tab reaches the next visible qualification textarea');
  win.webContents.sendInputEvent({type:'keyDown',keyCode:'Tab',modifiers:['shift']});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Tab',modifiers:['shift']});await sleep(70);
+ await focusEvidence('after-shift-tab');
  test(await get('document.activeElement===window.__finalQualification'),'Native Shift-Tab returns to same qualification textarea');
  await observe('qualification-dirty','.qualification-panel-v2');
  const save=db.crm.updateProspectQualificationBriefIfUnchanged.bind(db.crm),originalDialog=dialog.showMessageBoxSync;let rejectSave,confirmations=0;

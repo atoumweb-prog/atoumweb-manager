@@ -1,5 +1,10 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/10/2026 - PR155 : correction locale de la preparation du focus natif
+
+CI1804 : typecheck et1532 tests verts, arret final-visual. Reproduction Windows : fenetre/webContents/document focalises, textarea dans le groupe Besoins ferme, checkVisibility=false, activeElement=BODY. La recette confondait montage et visibilite ; premier Tab faussement positif. Correctif exclusivement scripts/fixtures/final-visual-scenarios.cjs : ouvrir le groupe par son summary, verifier sa visibilite, vrai clic souris natif et Tab/Maj+Tab conserves, assertions renforcees. Premier essai corrige :530 controles/135 captures, aucun changement src/migration/workflow. [Diagnostic et protocole cible](docs/ux-v2/PR155-FOCUS-NATIF-2026-10-16.md). Repetitions et recettes residuelles tracees dans les preuves locales, sans relancer la campagne complete. Aucun push, nouvelle CI, merge, installation ou donnees reelles autorise.
+
+
 ## 16/10/2026 - Campagne candidate visuelle / EC03 autorisee
 
 Les validations locales existantes sont conservees sans relancer les 41 commandes. Seule l'orchestration CI est completee pour EC01, Prospect A, Client B, EC03 et les recettes visuelles ; sources applicatives et migrations identiques au code teste ead8a16a. [Couverture et protocole unique](docs/ux-v2/CI-CANDIDATE-VISUELLE-EC03-2026-10-16.md). Publication en PR draft et une seule campagne candidate autorisees ; aucune fusion, installation ou donnee reelle. Les resultats heberges seront releves separement des preuves locales.
