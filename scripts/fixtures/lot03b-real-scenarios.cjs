@@ -21,6 +21,9 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       'const target=elements.find(e=>e.textContent.includes('+JSON.stringify(label)+'));'+
       'if(!target)throw Error("Commande absente: "+'+JSON.stringify(label)+');target.click();return true;');
     await sleep(110);
+    // Business regression operates the disclosed editors; the separate visual
+    // recipe proves that these same groups start folded and retain drafts.
+    await js("document.querySelectorAll('.prospect-detail-desk details.prospect-section-group:not([open])').forEach(e=>e.querySelector(':scope>summary').click())");
   };
   const recordCount = table => db.database.get('SELECT count(*) AS n FROM '+table).n;
   const prospectStage = id => db.crm.listProspects({includeArchived:true}).find(p=>p.id===id);

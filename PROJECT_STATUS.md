@@ -1,5 +1,18 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/10/2026 — Prospect : variante A validée, deux ajustements de clôture
+
+Décision explicite utilisateur : **A — Synthèse en bandeau** devient la référence ; B est abandonnée, sans généralisation Client. Le statut réel reste dans la synthèse commerciale, retiré de la seule colonne Identité de la fiche complète. Prochaine action : icône horloge partagée et libellé légèrement renforcé, sans nouvelle carte ni nouveau statut, avec le même accès à la relance réelle. Trois groupes initialement fermés, éditeurs montés, brouillons et garde UX-01 inchangés.
+
+Relecture du dossier des 67 captures et de la branche documentaire GitHub `0bb0860e` : les maquettes historiques ne sont pas des décisions supplémentaires. La demande ancienne de deux variantes est remplacée par le choix A explicite. [Décisions, périmètre et protocole de preuve](docs/ux-v2/PROSPECT-A-CLOTURE-2026-10-15.md). Résultats nouveaux et captures à produire après commit, rattachés à son SHA exact ; les anciens résultats ne certifient pas ce candidat. Aucune fusion, publication, installation, migration ou donnée réelle/Validation-MSI.
+
+## 15/10/2026 — Deux compositions Prospect uniquement, choix visuel en attente
+
+L’utilisateur valide l’architecture trois régions mais demande un allègement plus net de la fiche Prospect, particulièrement Noir/Confort/125%. Branche locale `codex/ux-v2-prospect-density-options`, départf66a06d1. Deux propositions réelles sur les mêmes éditeurs : A Synthèse en bandeau, B Action prioritaire. Après schéma transmis par l’utilisateur, trois groupes fermés au départ : Entreprise et contacts, Besoins et qualification, Devis et activités. Les groupes utilisent les disclosures natifs, gardent leurs composants montés et ne créent aucune autre garde. Les liens Associations sont sans cartes, les informations source et visuels restent dans Logo et actions. Titre « Fiche de travail prospect » retiré ; logo/nom/statut prioritaires, référence/provenance dans un volet secondaire ; température/situation/prochaine action regroupées, détails consultables, cadres Devis allégés. Aucun corps métier ni callback supprimé. Un lien de synthèse déplie l’accordéon existant avant de le cibler et rend le focus au bouton.
+
+B est une variante de présentation réservée au banc isolé (attribut DOM), sans nouveau réglage utilisateur ni deuxième architecture UX-01. Les deux propositions partagent la même fiche et le même brouillon. Tests/captures réellement exécutés au HEAD candidat dans le bilan local livré ; ne pas les déduire des résultats f66a06d1. Aucune généralisation Client, fusion, publication GitHub, CI, migration, installation ou données réelles/Validation-MSI. Les demandes transversales du fichier joint restent à reprendre après le choix de densité demandé dans le message principal. **Prochain gate : choix visuel A/B ; aucune option n’est déclarée validée humainement.**
+
+
 ## 15/10/2026 — Dernière passe ergonomique CRM, avant avis visuel final
 
 Principe des trois zones accepté par l’utilisateur ; validation du rendu final encore ouverte. Sur `codex/ux-v2-final-crm-brand-help`, code `389a1a70` : adaptation à la largeur effective de la fiche (zoom compris), Identité compacte et Associations repliables sans démontage, huit onglets sur une ligne avec accès clavier/défilement, séparateurs souris/clavier avec une seule écriture en fin de geste. Explications techniques des visuels déplacées dans FieldHelp. Aucun service, migration, règle métier ou protection UX-01 modifié par cette passe.

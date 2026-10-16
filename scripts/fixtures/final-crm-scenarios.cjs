@@ -105,6 +105,7 @@ module.exports=async ctx=>{
   await js(`document.querySelector('[data-record-id="${prospect.id}"]').click()`);await wait('!!document.querySelector(".prospect-detail-v2")','Prospect');await click('[aria-label="Agrandir la fiche"]');await wait('!!document.querySelector(".prospect-detail-desk .crm-record-layout")','three-zone prospect');
   await wait('!!document.querySelector(".prospect-detail-desk .crm-identity-avatar img")','same organization logo');
   test(await get('!!document.querySelector(".prospect-detail-desk .crm-identity-avatar img")'),'Prospect shares exact organization logo persisted from Client');
+  await js("document.querySelectorAll('.prospect-detail-desk details.prospect-section-group:not([open])').forEach(e=>e.querySelector(':scope>summary').click())");await sleep(80);
   await js('window.__finalProspect=document.querySelector(".prospect-detail-desk");window.__finalAccordion=document.querySelector(".prospect-work-accordion")');
   const snapshot=()=>JSON.stringify(db.database.all("SELECT name FROM sqlite_master WHERE type='table' AND name<>'settings' ORDER BY name").map(({name})=>[name,db.database.all('SELECT * FROM "'+name+'" ORDER BY rowid')]));
   const baseline=snapshot();
