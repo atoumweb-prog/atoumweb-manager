@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import {windowBrandIcon} from './windowBranding';
 import { registerBusinessBackupsIpcHandlers } from './backups/businessBackupsIpc';
 import { WorkspaceMutationGate } from './backups/WorkspaceMutationGate';
+import { WorkspaceIncompleteError } from './backups/WorkspaceIncompleteGuard';
 import { DatabaseService } from './database/DatabaseService';
 import { registerIpcHandlers } from './ipc';
 import { registerOperationsIpcHandlers } from './operations/operationsIpc';
@@ -137,6 +138,9 @@ app.whenReady().then(async () => {
 }).catch((error) => {
   console.error('Échec du démarrage AtoumWeb Manager', error);
   if (error instanceof DatabaseRestoreError) dialog.showErrorBox('Restauration refusée — AtoumWeb Manager', error.message);
+  else if (error instanceof WorkspaceIncompleteError) {
+    dialog.showErrorBox('Workspace EC04 incomplet — ouverture refusée', error.message);
+  }
   recipeWindow?.dispose();recipeWindow=null;
   app.quit();
 });

@@ -1,6 +1,7 @@
 import { app } from 'electron';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { assertWorkspaceNotIncomplete, WorkspaceIncompleteError } from './backups/WorkspaceIncompleteGuard';
 
 interface WorkspaceBootstrapConfig {
   workspaceRoot: string;
@@ -45,6 +46,8 @@ export function createWorkspacePaths(root: string): WorkspacePaths {
 
 export function ensureWorkspace(root: string): WorkspacePaths {
   const paths = createWorkspacePaths(root);
+  // Reject incomplete EC04 workspaces BEFORE creating any folder.
+  assertWorkspaceNotIncomplete(paths.root);
 
   [
     paths.root,
@@ -57,7 +60,8 @@ export function ensureWorkspace(root: string): WorkspacePaths {
     paths.atoumWebLibraryDirectory,
     paths.bridgeDirectory,
   ].forEach((directory) => mkdirSync(directory, { recursive: true }));
-
+  // Recheck after initialization so a concurrent marker cannot be ignored.
+  assertWorkspaceNotIncomplete(paths.root);
   return paths;
 }
 
@@ -74,8 +78,11 @@ export function resolveWorkspace(): WorkspacePaths {
     if (typeof config.workspaceRoot === 'string' && config.workspaceRoot.trim().length > 0) {
       return ensureWorkspace(config.workspaceRoot);
     }
-  } catch {
-    // Un fichier de bootstrap invalide ne doit pas empêcher le démarrage.
+  } catch (error) {
+    // An incomplete workspace is a hard safety stop, NEVER a reason to
+    // silently fall back to a different workspace (possibly empty).
+    if (error instanceof WorkspaceIncompleteError) throw error;
+    // An invalid bootstrap JSON still uses the historical default fallback.
   }
 
   return ensureWorkspace(defaultRoot);
@@ -83,6 +90,8 @@ export function resolveWorkspace(): WorkspacePaths {
 
 export function saveWorkspaceRoot(root: string): WorkspacePaths {
   const paths = ensureWorkspace(root);
+  // Recheck immediately before persisting the selection in workspace.json.
+  assertWorkspaceNotIncomplete(paths.root);
   mkdirSync(app.getPath('userData'), { recursive: true });
   const config: WorkspaceBootstrapConfig = { workspaceRoot: paths.root };
   writeFileSync(bootstrapFilePath(), JSON.stringify(config, null, 2), 'utf8');
