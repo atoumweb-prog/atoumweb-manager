@@ -52,6 +52,34 @@ function exactInside(root: string, target: string): boolean {
   return delta === '' || (delta !== '..' && !delta.startsWith('..' + sep) && !isAbsolute(delta));
 }
 
+/**
+ * The Manager ledger is a sequence of ID/NAME pairs, not a dense list of
+ * numbers. Gaps may be valid as long as IDs rise strictly and are unique.
+ * The actual app schema/migration compatibility is validated separately.
+ */
+export function validateEc04MigrationLedger(value: unknown): Ec04Migration[] {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 1000) {
+    throw Error('EC04 : registre de migrations invalide.');
+  }
+  const ledger: Ec04Migration[] = [];
+  const names = new Set<string>();
+  let previous = 0;
+  for (const row of value) {
+    if (!row || typeof row !== 'object') throw Error('EC04 : migration invalide.');
+    const item = row as Partial<Ec04Migration>;
+    if (!Number.isSafeInteger(item.id) || typeof item.id !== 'number' ||
+        item.id < 1 || item.id <= previous ||
+        typeof item.name !== 'string' || !item.name.trim() ||
+        names.has(item.name)) {
+      throw Error('EC04 : migration invalide (id/nom/ordre/doublon).');
+    }
+    ledger.push({id:item.id,name:item.name});
+    names.add(item.name);
+    previous = item.id;
+  }
+  return ledger;
+}
+
 function readMigrationLedger(databasePath: string): Ec04Migration[] {
   const db = new DatabaseSync(databasePath, {readOnly: true});
   try {
@@ -61,11 +89,7 @@ function readMigrationLedger(databasePath: string): Ec04Migration[] {
     }
     if (db.prepare('PRAGMA foreign_key_check').all().length) throw Error('EC04 : FK SQLite invalides.');
     const ledger = db.prepare('SELECT id,name FROM schema_migrations ORDER BY id').all();
-    if (!ledger.length || ledger.length > 1000 || ledger.some((row, i) =>
-      row.id !== i + 1 || typeof row.name !== 'string' || !row.name.trim())) {
-      throw Error('EC04 : registre de migrations SQLite invalide.');
-    }
-    return ledger.map(row => ({id: Number(row.id), name: String(row.name)}));
+    return validateEc04MigrationLedger(ledger);
   } finally { db.close(); }
 }
 
@@ -166,10 +190,8 @@ function validateManifest(value: unknown): Ec04ArchiveManifest {
       parent = key.lastIndexOf('/', parent - 1);
     }
   }
-  if (!m.migrations.length || m.migrations.length > 1000 || m.migrations.some((item, i) =>
-    !item || item.id !== i + 1 || typeof item.name !== 'string' || !item.name.trim())) {
-    throw Error('EC04 : migrations invalides.');
-  }
+  // Same semantics for archive and SQLite; never infer id from array position.
+  validateEc04MigrationLedger(m.migrations);
   return m as Ec04ArchiveManifest;
 }
 

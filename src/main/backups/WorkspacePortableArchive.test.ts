@@ -206,4 +206,25 @@ describe('EC04 — archive et restauration isolées, jamais raccordées à la pr
     await expect(verifyRestoredWorkspaceAgainstManifest(target, manifest)).rejects.toThrow(/SQLite restauré différent/);
   });
 
+  it('accepts a legitimate non-consecutive SQLite migration ledger, preserving exact IDs and names',async()=>{
+    db.exec("INSERT INTO schema_migrations VALUES (3,'migration_3'); INSERT INTO schema_migrations VALUES (71,'migration_71');");
+    save('clients/c1/note.txt','nonconsecutive');
+    const manifest=await makeArchive();
+    expect(manifest.migrations).toEqual([
+      {id:1,name:'test_v1'},{id:3,name:'migration_3'},{id:71,name:'migration_71'},
+    ]);
+    expect((await verifyOfflineWorkspaceArchive(destination)).migrations).toEqual(manifest.migrations);
+    const restored=join(base,'restored-nonconsecutive');
+    await restoreOfflineArchiveToNewWorkspace(destination,restored);
+    await expect(verifyRestoredWorkspaceAgainstManifest(restored,manifest)).resolves.toBeDefined();
+  });
+
+  it('rejects duplicate migration names, invalid IDs and out-of-order IDs in the fixture',async()=>{
+    db.exec("INSERT INTO schema_migrations VALUES (71,'test_v1');");
+    await expect(makeArchive()).rejects.toThrow(/migration invalide/);
+    db.exec("DELETE FROM schema_migrations WHERE id=71");
+    db.exec("INSERT INTO schema_migrations VALUES (0,'wrong-id');");
+    await expect(makeArchive()).rejects.toThrow(/migration invalide/);
+  });
+
 });
