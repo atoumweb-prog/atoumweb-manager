@@ -251,8 +251,10 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       filters: [{ name: 'Diagnostic Bridge JSON', extensions: ['json'] }],
     });
     if (selection.canceled || !selection.filePath) return { cancelled: true };
-    writeFileSync(selection.filePath, `${JSON.stringify(diagnostic, null, 2)}\n`, 'utf8');
-    return { cancelled: false, path: selection.filePath };
+    return guardedMutation(() => {
+      writeFileSync(selection.filePath, `${JSON.stringify(diagnostic, null, 2)}\n`, 'utf8');
+      return { cancelled: false, path: selection.filePath };
+    });
   });
 
   ipcMain.handle('crm:directory:save-existing',(_event,...args:Parameters<typeof database.crm.saveExistingDirectoryIdentities>)=> guardedMutation(() => database.crm.saveExistingDirectoryIdentities(...args)));
@@ -440,7 +442,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('expenses:get', (_event, id: string) => database.expenses.get(id));
   ipcMain.handle('expenses:list-receipt-versions', (_event, id: string) => database.expenses.listReceiptVersions(id));
   ipcMain.handle('expenses:open-receipt-version', async (_event, id: string, relativePath: string) => {
-    const error = await shell.openPath(database.expenses.prepareReceiptVersionPreview(id, relativePath));
+    // Creating a temporary verified copy must complete before an EC04 snapshot.
+    const preview = await guardedMutation(() => database.expenses.prepareReceiptVersionPreview(id, relativePath));
+    const error = await shell.openPath(preview);
     if (error) throw new Error(error);
   });
   ipcMain.handle('expenses:create', (_event, input: ExpenseInput) =>guardedMutation(()=>database.expenses.create(input)));
@@ -519,9 +523,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       clauseId,versionId,status:version.status,body:version.body}};
   };
   ipcMain.handle('contract-terms:word:export',async(_event,clauseId:string,versionId:string)=>{
-    const {template,source}=clauseDraft(clauseId,versionId);
-    const manifest=prepareWordDraftManifest(source);
-    const bytes=makeWordDraftDocx(source,manifest,template.title);
+    const {template}=clauseDraft(clauseId,versionId);
     const suggested=template.code.replace(/[^A-Za-z0-9._-]/g,'-')+'-brouillon.docx';
     const selection=await dialog.showSaveDialog({
       title:'Exporter un brouillon contractuel éditable pour Word',
@@ -529,24 +531,30 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       filters:[{name:'Document Word (.docx)',extensions:['docx']}],
     });
     if(selection.canceled||!selection.filePath)return {cancelled:true};
-    // Recheck source after async dialog; data must remain the source of export.
-    clauseDraft(clauseId,versionId);
-    const path=selection.filePath.toLowerCase().endsWith('.docx')?selection.filePath:selection.filePath+'.docx';
-    writeFileSync(path,bytes);
-    return {cancelled:false,fileName:basename(path)};
+    return guardedMutation(() => {
+      // Re-read the draft AFTER the dialog and any EC04 pause.
+      const latest=clauseDraft(clauseId,versionId);
+      const currentManifest=prepareWordDraftManifest(latest.source);
+      const currentBytes=makeWordDraftDocx(latest.source,currentManifest,latest.template.title);
+      const path=selection.filePath.toLowerCase().endsWith('.docx')?selection.filePath:selection.filePath+'.docx';
+      writeFileSync(path,currentBytes);
+      return {cancelled:false,fileName:basename(path)};
+    });
   });
   ipcMain.handle('contract-terms:word:pdf',async(_event,clauseId:string,versionId:string)=>{
-    const {template,source}=clauseDraft(clauseId,versionId);
+    const {template}=clauseDraft(clauseId,versionId);
     const selection=await dialog.showSaveDialog({
       title:'Exporter un PDF de travail — NON OFFICIEL',
       defaultPath:template.code.replace(/[^A-Za-z0-9._-]/g,'-')+'-TRAVAIL-NON-SIGNE.pdf',
       filters:[{name:'PDF de travail, non signé',extensions:['pdf']}],
     });
     if(selection.canceled||!selection.filePath)return {cancelled:true};
-    clauseDraft(clauseId,versionId);
-    const path=selection.filePath.toLowerCase().endsWith('.pdf')?selection.filePath:selection.filePath+'.pdf';
-    await saveWordDraftWorkingPdf(source,template.title,path);
-    return {cancelled:false,fileName:basename(path)};
+    return guardedMutation(async () => {
+      const latest=clauseDraft(clauseId,versionId);
+      const path=selection.filePath.toLowerCase().endsWith('.pdf')?selection.filePath:selection.filePath+'.pdf';
+      await saveWordDraftWorkingPdf(latest.source,latest.template.title,path);
+      return {cancelled:false,fileName:basename(path)};
+    });
   });
   ipcMain.handle('contract-terms:word:import',async(_event,clauseId:string,versionId:string)=>{
     const {source}=clauseDraft(clauseId,versionId);
@@ -623,8 +631,14 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       filters:[{name:'Document Word DOCX',extensions:['docx']}],
     });
     if(selection.canceled||!selection.filePath)return false;
-    writeFileSync(selection.filePath,createWorkingContractDocx(presentation.text),{flag:'wx'});
-    return true;
+    return guardedMutation(() => {
+      const current=database.contractTerms.presentation(quoteId);
+      if(!current.text.trim()||current.state==='historical_missing') {
+        throw new Error('Le contrat n’est plus disponible pour export.');
+      }
+      writeFileSync(selection.filePath,createWorkingContractDocx(current.text),{flag:'wx'});
+      return true;
+    });
   });
   ipcMain.handle('contract-terms:copy-text', async (_event, text: string) => {
     await clipboard.writeText(text);
