@@ -117,8 +117,8 @@ async function bootstrap(): Promise<void> {
   const ec04MutationGate = new WorkspaceMutationGate();
   registerIpcHandlers(database, workspace, ec04MutationGate);
   registerOperationsIpcHandlers(database, ec04MutationGate);
-  registerReferentialsIpcHandlers(database);
-  registerBusinessBackupsIpcHandlers(database);
+  registerReferentialsIpcHandlers(database, ec04MutationGate);
+  registerBusinessBackupsIpcHandlers(database, ec04MutationGate);
   registerTimeCorrectionIpcHandler(database, ec04MutationGate);
   ipcMain.removeHandler('app:open-prospect-reference');
   ipcMain.handle('app:open-prospect-reference', (_event, prospectId: string) => openProspectReferenceWindow(prospectId));
