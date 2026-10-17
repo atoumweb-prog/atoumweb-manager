@@ -116,10 +116,10 @@ async function bootstrap(): Promise<void> {
   // Shared gate for the first guarded IPC routes. Full backup remains unavailable.
   const ec04MutationGate = new WorkspaceMutationGate();
   registerIpcHandlers(database, workspace, ec04MutationGate);
-  registerOperationsIpcHandlers(database);
+  registerOperationsIpcHandlers(database, ec04MutationGate);
   registerReferentialsIpcHandlers(database);
   registerBusinessBackupsIpcHandlers(database);
-  registerTimeCorrectionIpcHandler(database);
+  registerTimeCorrectionIpcHandler(database, ec04MutationGate);
   ipcMain.removeHandler('app:open-prospect-reference');
   ipcMain.handle('app:open-prospect-reference', (_event, prospectId: string) => openProspectReferenceWindow(prospectId));
   createMainWindow();
