@@ -25,7 +25,7 @@ export interface Ec04ReferenceAudit {
   readonly coverageComplete: false;
 }
 
-const REFS = [
+const REFS: Array<{table:string;column:string;roots:readonly string[];key?:string;prefix?:string}> = [
   {table:'crm_identity_assets', column:'relative_path', roots:['crm-identites']},
   {table:'client_documents', column:'relative_path', roots:['clients']},
   {table:'quote_document_links', column:'relative_path', roots:['clients','projets-internes']},
@@ -33,8 +33,11 @@ const REFS = [
   {table:'file_assets', column:'relative_path', roots:['clients','projets-internes','projets-previsionnels']},
   {table:'atoumweb_technical_assets', column:'relative_path', roots:['bibliotheque-atoumweb']},
   {table:'bridge_assets', column:'local_path', roots:['bridge']},
+  {table:'bridge_snapshots', column:'package_relative_path', roots:['bridge'], prefix:'bridge'},
+  {table:'bridge_objects', column:'relative_path', roots:['bridge'], prefix:'bridge', key:'object_ref'},
+  {table:'bridge_occurrence_returns', column:'package_relative_path', roots:['bridge']},
   {table:'project_page_exports', column:'package_path', roots:['exports']},
-] as const;
+];
 
 /** Classify rather than follow/relocate paths, retaining warnings for user review. */
 function classify(input: string): {relativePath?: string; problem?: Ec04ReferenceProblem} {
@@ -54,13 +57,13 @@ export function auditKnownWorkspaceFileReferences(databaseFile: string, inventor
   const skippedTables: string[] = [];
   let checked = 0, matchingFiles = 0;
   try {
-    for (const {table,column,roots} of REFS) {
+    for (const {table,column,roots,key='id',prefix=''} of REFS) {
       const present = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table);
       if (!present) {skippedTables.push(table);continue;}
       const columns = new Set(db.prepare('PRAGMA table_info("'+table+'")').all().map(row => String(row.name)));
-      if (!columns.has('id') || !columns.has(column)) {skippedTables.push(table);continue;}
+      if (!columns.has(key) || !columns.has(column)) {skippedTables.push(table);continue;}
       // Stream instead of materializing every asset row in memory.
-      const rows = db.prepare('SELECT id,"'+column+'" AS file_path FROM "'+table+'" WHERE "'+column+'" IS NOT NULL').iterate();
+      const rows = db.prepare('SELECT "'+key+'" AS id,"'+column+'" AS file_path FROM "'+table+'" WHERE "'+column+'" IS NOT NULL').iterate();
       for (const row of rows) {
         if (typeof row.file_path !== 'string' || !row.file_path.trim()) continue;
         checked++;
@@ -68,9 +71,10 @@ export function auditKnownWorkspaceFileReferences(databaseFile: string, inventor
         const classification = classify(path);
         let problem = classification.problem;
         if (!problem && classification.relativePath) {
-          const first = classification.relativePath.split('/')[0];
+          const normalized = prefix ? prefix+'/'+classification.relativePath : classification.relativePath;
+          const first = normalized.split('/')[0];
           if (!roots.some(root => root === first)) problem = 'unexpected-root';
-          else if (!paths.has(classification.relativePath.normalize('NFC').toLowerCase())) problem = 'missing-file';
+          else if (!paths.has(normalized.normalize('NFC').toLowerCase())) problem = 'missing-file';
         }
         if (problem) issues.push({table,column,recordId:String(row.id),originalPath:path,problem});
         else matchingFiles++;

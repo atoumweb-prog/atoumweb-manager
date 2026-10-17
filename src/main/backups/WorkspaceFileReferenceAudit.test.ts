@@ -39,3 +39,13 @@ describe('EC04 read-only SQLite file-reference audit',()=>{
     expect(db.prepare('SELECT relative_path FROM crm_identity_assets WHERE id=?').get('b')?.relative_path).toBe('crm-identites/entreprises/org/missing.png');
   });
 });
+
+ it('checks Bridge-owned package/object paths with their actual key and base directory',()=>{
+   db.exec('CREATE TABLE bridge_snapshots(id TEXT PRIMARY KEY,package_relative_path TEXT);CREATE TABLE bridge_objects(object_ref TEXT PRIMARY KEY,relative_path TEXT);CREATE TABLE bridge_occurrence_returns(id TEXT PRIMARY KEY,package_relative_path TEXT)');
+   db.exec("INSERT INTO bridge_snapshots VALUES ('snap','packages/site/snap.zip');INSERT INTO bridge_objects VALUES ('obj','objects/sha256/aa/obj');INSERT INTO bridge_occurrence_returns VALUES ('return','bridge/occurrence-returns/return.zip')");
+   const paths=['bridge/packages/site/snap.zip','bridge/objects/sha256/aa/obj','bridge/occurrence-returns/return.zip'];
+   const all={...inventory,files:paths.map(relativePath=>({relativePath,sizeBytes:1,sha256:'x'}))};
+   const good=auditKnownWorkspaceFileReferences(file,all);expect(good.checked).toBe(3);expect(good.matchingFiles).toBe(3);expect(good.issues).toEqual([]);
+   const missing=auditKnownWorkspaceFileReferences(file,inventory);expect(missing.issues).toHaveLength(3);expect(missing.issues.find(x=>x.table==='bridge_objects')?.recordId).toBe('obj');
+   expect(missing.issues.every(x=>x.problem==='missing-file')).toBe(true);expect(missing.coverageComplete).toBe(false);
+ });
