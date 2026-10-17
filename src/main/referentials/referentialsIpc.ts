@@ -49,22 +49,30 @@ export function registerReferentialsIpcHandlers(database: DatabaseService, gate?
   ipcMain.handle('referentials:library:assets:list', (_event, versionId: string) =>
     mutate(() => database.atoumWebTechnicalAssets.list(versionId)));
   ipcMain.handle('referentials:library:assets:import', async (_event, versionId: string, role: AtoumWebTechnicalAssetRole) => {
+    // versionDirectory creates missing directories. Only that operation is
+    // gated; waiting for the user's choice must not hold the writer lease.
+    const defaultPath = await mutate(() => database.atoumWebTechnicalAssets.versionDirectory(versionId));
     const selection = await dialog.showOpenDialog({
       title: 'Ajouter des fichiers à la Bibliothèque AtoumWeb',
-      defaultPath: database.atoumWebTechnicalAssets.versionDirectory(versionId),
+      defaultPath,
       properties: ['openFile', 'multiSelections'],
     });
-    if (selection.canceled || selection.filePaths.length === 0) return database.atoumWebTechnicalAssets.list(versionId);
+    if (selection.canceled || selection.filePaths.length === 0) {
+      return mutate(() => database.atoumWebTechnicalAssets.list(versionId));
+    }
     return mutate(() => database.atoumWebTechnicalAssets.importFilePaths(versionId, selection.filePaths, role));
   });
   ipcMain.handle('referentials:library:assets:preview', (_event, assetId: string) =>
     mutate(() => database.atoumWebTechnicalAssets.preview(assetId)));
   ipcMain.handle('referentials:library:assets:open-file', async (_event, assetId: string) => {
-    const error = await shell.openPath(database.atoumWebTechnicalAssets.absolutePath(assetId));
+    // absolutePath calls get/map, which may update missing_at.
+    const path = await mutate(() => database.atoumWebTechnicalAssets.absolutePath(assetId));
+    const error = await shell.openPath(path);
     return { ok: !error, error: error || null };
   });
   ipcMain.handle('referentials:library:assets:open-folder', async (_event, versionId: string) => {
-    const error = await shell.openPath(database.atoumWebTechnicalAssets.versionDirectory(versionId));
+    const path = await mutate(() => database.atoumWebTechnicalAssets.versionDirectory(versionId));
+    const error = await shell.openPath(path);
     return { ok: !error, error: error || null };
   });
 

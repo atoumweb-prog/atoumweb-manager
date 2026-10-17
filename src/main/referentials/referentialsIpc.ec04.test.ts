@@ -40,4 +40,23 @@ describe('EC04 shared gate - AtoumWeb library and composition exports',()=>{
     await lease.release(); await pending;
     expect(events).toEqual(['version-1']);
   });
+  it('protects asset path resolution and folder creation but not external app opening',async()=>{
+    const gate=new WorkspaceMutationGate(),observed:string[]=[];
+    const database={
+      atoumWebTechnicalAssets:{
+        absolutePath:(id:string)=>{observed.push('get:'+id);return '/tmp/a.png';},
+        versionDirectory:(id:string)=>{observed.push('mkdir:'+id);return '/tmp/item';},
+      },
+    } as unknown as DatabaseService;
+    registerReferentialsIpcHandlers(database,gate);
+    const lease=await gate.acquire();
+    const file=handlers.get('referentials:library:assets:open-file')!(null,'a') as Promise<unknown>;
+    const folder=handlers.get('referentials:library:assets:open-folder')!(null,'v') as Promise<unknown>;
+    await Promise.resolve();
+    expect(observed).toEqual([]);
+    await lease.release();
+    await Promise.all([file,folder]);
+    expect(observed).toEqual(['get:a','mkdir:v']);
+  });
+
 });

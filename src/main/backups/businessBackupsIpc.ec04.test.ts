@@ -39,4 +39,29 @@ describe('EC04 gated business backup registry',()=>{
     await expect(pending).rejects.toThrow(/Emplacement modifié/);
     expect(relocated).toBe(false);
   });
+  it('queues list/get/overview and alert list because local missing flags may update SQLite',async()=>{
+    const gate=new WorkspaceMutationGate(),observed:string[]=[];
+    const backup={
+      list:()=>{observed.push('list');return [];},
+      get:(id:string)=>{observed.push('get:'+id);return {id};},
+      overview:()=>{observed.push('overview');return {totalRecords:0};},
+    };
+    const database={
+      businessBackups:backup,
+      businessBackupAlerts:{listAlerts:()=>{observed.push('alerts');return [];}},
+    } as unknown as DatabaseService;
+    registerBusinessBackupsIpcHandlers(database,gate);
+    const lease=await gate.acquire();
+    const pending=[
+      handlers.get('business-backups:list')!(null) as Promise<unknown>,
+      handlers.get('business-backups:get')!(null,'b1') as Promise<unknown>,
+      handlers.get('business-backups:overview')!(null) as Promise<unknown>,
+      handlers.get('business-backup-alerts:list')!(null) as Promise<unknown>,
+    ];
+    expect(observed).toEqual([]);
+    await lease.release();
+    await Promise.all(pending);
+    expect(observed).toEqual(['list','get:b1','overview','alerts']);
+  });
+
 });
