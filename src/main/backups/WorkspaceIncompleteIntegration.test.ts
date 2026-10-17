@@ -11,7 +11,7 @@ vi.mock('electron',()=>({
     throw Error('Unexpected electron.getPath '+key);
   }},
 }));
-import {ensureWorkspace,resolveWorkspace,saveWorkspaceRoot} from '../workspace';
+import {ensureWorkspace,resolveWorkspace,saveWorkspaceRoot,WorkspaceAccessError} from '../workspace';
 import {WorkspaceIncompleteError} from './WorkspaceIncompleteGuard';
 
 let base:string;
@@ -73,4 +73,22 @@ describe('EC04 incomplete markers at actual Manager workspace entrypoints',()=>{
     expect(()=>resolveWorkspace()).toThrow(WorkspaceIncompleteError);
     expect(existsSync(join(def,'data'))).toBe(false);
   });
+  it('refuses an explicit workspace that is a file instead of silently opening defaults',()=>{
+    const blocked=join(base,'not-a-directory');
+    writeFileSync(blocked,'not a workspace');
+    const config=join(electronPaths.userData,'workspace.json');
+    const contents=JSON.stringify({workspaceRoot:blocked});
+    writeFileSync(config,contents);
+    expect(()=>resolveWorkspace()).toThrow(WorkspaceAccessError);
+    expect(readFileSync(config,'utf8')).toBe(contents);
+    expect(existsSync(join(electronPaths.documents,'AtoumWeb Manager'))).toBe(false);
+  });
+
+  it('refuses unreadable bootstrap location instead of opening a blank workspace',()=>{
+    const path=join(electronPaths.userData,'workspace.json');
+    mkdirSync(path); // readFileSync on a directory fails on Windows and POSIX
+    expect(()=>resolveWorkspace()).toThrow(WorkspaceAccessError);
+    expect(existsSync(join(electronPaths.documents,'AtoumWeb Manager'))).toBe(false);
+  });
+
 });

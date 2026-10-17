@@ -13,7 +13,7 @@ import { registerOperationsIpcHandlers } from './operations/operationsIpc';
 import { registerReferentialsIpcHandlers } from './referentials/referentialsIpc';
 import { applyPendingDatabaseRestore, DatabaseRestoreError } from './restore';
 import { registerTimeCorrectionIpcHandler } from './time/timeIpc';
-import { resolveWorkspace } from './workspace';
+import { resolveWorkspace, WorkspaceAccessError } from './workspace';
 
 let mainWindow: BrowserWindow | null = null;
 let recipeWindow:ReturnType<typeof createOperationalRecipeWindow>|null=null;
@@ -140,6 +140,8 @@ app.whenReady().then(async () => {
   if (error instanceof DatabaseRestoreError) dialog.showErrorBox('Restauration refusée — AtoumWeb Manager', error.message);
   else if (error instanceof WorkspaceIncompleteError) {
     dialog.showErrorBox('Workspace EC04 incomplet — ouverture refusée', error.message);
+  } else if (error instanceof WorkspaceAccessError) {
+    dialog.showErrorBox('Workspace inaccessible — ouverture refusée', error.message);
   }
   recipeWindow?.dispose();recipeWindow=null;
   app.quit();

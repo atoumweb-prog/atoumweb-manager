@@ -1,5 +1,5 @@
 import { app } from 'electron';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { assertWorkspaceNotIncomplete, WorkspaceIncompleteError } from './backups/WorkspaceIncompleteGuard';
 
@@ -21,6 +21,18 @@ export interface WorkspacePaths {
 }
 
 const BOOTSTRAP_FILENAME = 'workspace.json';
+
+/** Reading the recorded workspace must not silently fall back after IO failure. */
+export class WorkspaceAccessError extends Error {
+  constructor(readonly location: string, cause: unknown) {
+    super(
+      'Impossible de charger le workspace AtoumWeb Manager : ' + location +
+      '. Le Manager refuse de démarrer plutôt que d’ouvrir un autre dossier par erreur.',
+      {cause},
+    );
+    this.name = 'WorkspaceAccessError';
+  }
+}
 
 function bootstrapFilePath(): string {
   return join(app.getPath('userData'), BOOTSTRAP_FILENAME);
@@ -46,45 +58,53 @@ export function createWorkspacePaths(root: string): WorkspacePaths {
 
 export function ensureWorkspace(root: string): WorkspacePaths {
   const paths = createWorkspacePaths(root);
-  // Reject incomplete EC04 workspaces BEFORE creating any folder.
-  assertWorkspaceNotIncomplete(paths.root);
-
-  [
-    paths.root,
-    paths.dataDirectory,
-    paths.backupsDirectory,
-    paths.clientsDirectory,
-    paths.internalDirectory,
-    paths.expensesDirectory,
-    paths.exportsDirectory,
-    paths.atoumWebLibraryDirectory,
-    paths.bridgeDirectory,
-  ].forEach((directory) => mkdirSync(directory, { recursive: true }));
-  // Recheck after initialization so a concurrent marker cannot be ignored.
-  assertWorkspaceNotIncomplete(paths.root);
-  return paths;
+  try {
+    // Reject incomplete EC04 workspaces BEFORE creating any folder.
+    assertWorkspaceNotIncomplete(paths.root);
+    [
+      paths.root,
+      paths.dataDirectory,
+      paths.backupsDirectory,
+      paths.clientsDirectory,
+      paths.internalDirectory,
+      paths.expensesDirectory,
+      paths.exportsDirectory,
+      paths.atoumWebLibraryDirectory,
+      paths.bridgeDirectory,
+    ].forEach((directory) => mkdirSync(directory, { recursive: true }));
+    // Recheck after initialization so a concurrent marker cannot be ignored.
+    assertWorkspaceNotIncomplete(paths.root);
+    return paths;
+  } catch (error) {
+    if (error instanceof WorkspaceIncompleteError) throw error;
+    throw new WorkspaceAccessError(paths.root, error);
+  }
 }
 
 export function resolveWorkspace(): WorkspacePaths {
   const configPath = bootstrapFilePath();
   const defaultRoot = join(app.getPath('documents'), 'AtoumWeb Manager');
 
-  if (!existsSync(configPath)) {
+  let raw: string;
+  try {
+    raw = readFileSync(configPath, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return ensureWorkspace(defaultRoot);
+    // Unreadable configuration is NOT an invalid JSON document.
+    throw new WorkspaceAccessError(configPath, error);
+  }
+
+  let config: WorkspaceBootstrapConfig | null;
+  try {
+    config = JSON.parse(raw) as WorkspaceBootstrapConfig | null;
+  } catch {
+    // Historical behavior: malformed JSON (not a filesystem failure) falls back.
     return ensureWorkspace(defaultRoot);
   }
-
-  try {
-    const config = JSON.parse(readFileSync(configPath, 'utf8')) as WorkspaceBootstrapConfig;
-    if (typeof config.workspaceRoot === 'string' && config.workspaceRoot.trim().length > 0) {
-      return ensureWorkspace(config.workspaceRoot);
-    }
-  } catch (error) {
-    // An incomplete workspace is a hard safety stop, NEVER a reason to
-    // silently fall back to a different workspace (possibly empty).
-    if (error instanceof WorkspaceIncompleteError) throw error;
-    // An invalid bootstrap JSON still uses the historical default fallback.
+  if (config && typeof config.workspaceRoot === 'string' && config.workspaceRoot.trim()) {
+    // Initialization errors from an EXPLICIT selection must propagate.
+    return ensureWorkspace(config.workspaceRoot);
   }
-
   return ensureWorkspace(defaultRoot);
 }
 
