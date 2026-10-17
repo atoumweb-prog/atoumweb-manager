@@ -12,7 +12,7 @@ import {createHash, randomUUID} from 'node:crypto';
 import {DatabaseSync} from 'node:sqlite';
 import {
   existsSync, lstatSync, mkdirSync, mkdtempSync, realpathSync,
-  renameSync, rmSync, linkSync, readdirSync, writeFileSync, unlinkSync,
+  renameSync, rmSync, rmdirSync, linkSync, readdirSync, writeFileSync, unlinkSync,
 } from 'node:fs';
 import {open as openFile, type FileHandle} from 'node:fs/promises';
 import {dirname, isAbsolute, join, relative, resolve, sep} from 'node:path';
@@ -397,8 +397,18 @@ export async function restoreOfflineArchiveToNewWorkspace(archivePath: string, n
     // EEXIST refusal even for an empty destination directory.
     mkdirSync(destination, {mode: 0o700});
     const incomplete = join(destination, '.EC04-RESTORE-INCOMPLETE');
-    writeFileSync(incomplete,
-      'Restauration EC04 incomplète. Ne pas ouvrir comme workspace.\n', {flag: 'wx'});
+    // Do not leave an apparently usable empty workspace if the marker fails.
+    // Remove ONLY the exclusively created, still-empty destination.
+    try {
+      writeFileSync(incomplete,
+        'Restauration EC04 incomplète. Ne pas ouvrir comme workspace.\n', {flag: 'wx'});
+    } catch (error) {
+      try { rmdirSync(destination); }
+      catch (cleanup) {
+        throw new AggregateError([error, cleanup], 'EC04 : marqueur de restauration impossible et dossier non nettoyé.');
+      }
+      throw error;
+    }
     // If a move fails, preserve incomplete destination for explicit recovery.
     for (const name of readdirSync(staging)) renameSync(join(staging, name), join(destination, name));
     // Verify the final installed filesystem BEFORE removing the incomplete marker.

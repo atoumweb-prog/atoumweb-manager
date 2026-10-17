@@ -178,4 +178,26 @@ describe('EC04 restored-copy relocation integration (offline fixtures)',()=>{
     })).rejects.toThrow(/empreinte SQLite relocalisée incorrecte/);
   });
 
+  it('refuses creating the migrated copy INSIDE the logical original workspace',async()=>{
+    await restoreFixture();
+    const activeOriginalTarget=join(root,'unsafe-migration-target');
+    const preserved=readFileSync(join(root,...asset.split('/')),'utf8');
+    await expect(createRelocatedWorkspaceCopy({
+      restoredWorkspaceRoot:restored,originalWorkspaceRoot:root,
+      newWorkspaceRoot:activeOriginalTarget,originalManifest:manifest,
+    })).rejects.toThrow(/ancien workspace/);
+    expect(existsSync(activeOriginalTarget)).toBe(false);
+    expect(readFileSync(join(root,...asset.split('/')),'utf8')).toBe(preserved);
+    await expect(verifyRestoredWorkspaceAgainstManifest(restored,manifest)).resolves.toBeDefined();
+  });
+
+  it('refuses creating the migrated copy AT an ancestor of the logical original workspace',async()=>{
+    await restoreFixture();
+    await expect(createRelocatedWorkspaceCopy({
+      restoredWorkspaceRoot:restored,originalWorkspaceRoot:root,
+      newWorkspaceRoot:dirname(root),originalManifest:manifest,
+    })).rejects.toThrow(/imbriquée/);
+    expect(existsSync(root)).toBe(true);
+  });
+
 });

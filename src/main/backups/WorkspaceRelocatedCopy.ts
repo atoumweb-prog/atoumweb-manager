@@ -226,6 +226,17 @@ export async function createRelocatedWorkspaceCopy(
       within(from, to) || within(to, from)) {
     throw Error('EC04 : cible non absolue, imbriquée ou identique à la source.');
   }
+  // The verified source may be a temporary B1 restoration, while the logical
+  // original workspace is still ACTIVE elsewhere. Never create a relocated
+  // copy within (or above) that original workspace either.
+  // On a POSIX test host, Windows paths are non-native and do not compare
+  // lexically to a POSIX destination; the relocation plan checks those paths.
+  if (isAbsolute(input.originalWorkspaceRoot)) {
+    const original = resolve(input.originalWorkspaceRoot);
+    if (within(original, to) || within(to, original)) {
+      throw Error('EC04 : destination imbriquée dans l’ancien workspace — opération refusée.');
+    }
+  }
   if (existsIncludingDanglingLink(to)) throw Error('EC04 : destination existante — écrasement interdit.');
   const srcStat = lstatSync(from), parStat = lstatSync(parent);
   if (!srcStat.isDirectory() || srcStat.isSymbolicLink() ||
