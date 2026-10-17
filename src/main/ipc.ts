@@ -131,22 +131,19 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     return { appVersion: app.getVersion(), workspacePath: workspace.root, databasePath: workspace.databaseFile, theme, displayDensity, showHoverHelp, database: database.health() };
   });
 
-  ipcMain.handle('settings:set-theme', (_event, value: unknown): ThemeName => {
+  ipcMain.handle('settings:set-theme', (_event, value: unknown): ThemeName | Promise<ThemeName> => {
     if (!isThemeName(value)) throw new Error('Thème invalide.');
-    database.setSetting('theme', value);
-    return value;
+    return guardedMutation(() => {database.setSetting('theme', value); return value;});
   });
 
-  ipcMain.handle('settings:set-display-density', (_event, value: unknown): DisplayDensity => {
+  ipcMain.handle('settings:set-display-density', (_event, value: unknown): DisplayDensity | Promise<DisplayDensity> => {
     if (!isDisplayDensity(value)) throw new Error('Densité d’affichage invalide.');
-    database.setSetting('display_density', value);
-    return value;
+    return guardedMutation(() => {database.setSetting('display_density', value); return value;});
   });
 
-  ipcMain.handle('settings:set-show-hover-help', (_event, enabled: unknown): boolean => {
+  ipcMain.handle('settings:set-show-hover-help', (_event, enabled: unknown): boolean | Promise<boolean> => {
     const value = Boolean(enabled);
-    database.setSetting('show_hover_help', value);
-    return value;
+    return guardedMutation(() => {database.setSetting('show_hover_help', value); return value;});
   });
 
   ipcMain.handle('workspace:choose', async (): Promise<WorkspaceChangeResult> => {
@@ -220,7 +217,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     if (selection.canceled || selection.filePaths.length === 0) return null;
     return database.bridgeSnapshots.inspectPackage(selection.filePaths[0]);
   });
-  ipcMain.handle('bridge:import', (_event, packagePath: string) => database.bridgeSnapshots.importPackage(packagePath));
+  ipcMain.handle('bridge:import', (_event, packagePath: string) => guardedMutation(() => database.bridgeSnapshots.importPackage(packagePath)));
   ipcMain.handle('bridge:sites:list', () => database.bridgeSnapshots.listSites());
   ipcMain.handle('bridge:sites:get', (_event, id: string) => database.bridgeSnapshots.getSite(id));
   ipcMain.handle('bridge:pages:list', (_event, snapshotId: string, search?: string | null) => database.bridgeSnapshots.listPages(snapshotId, search));
@@ -233,7 +230,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('bridge:pages:review-node-matches', (_event, beforePageSnapshotId: string, afterPageSnapshotId: string) =>
     database.bridgeSnapshots.reviewPageNodeMatches(beforePageSnapshotId, afterPageSnapshotId));
   ipcMain.handle('bridge:pages:decide-node-match', (_event, input: BridgeNodeMatchDecisionInput) =>
-    database.bridgeSnapshots.decideNodeMatch(input));
+    guardedMutation(() => database.bridgeSnapshots.decideNodeMatch(input)));
   ipcMain.handle('bridge:export-diagnostic', async (_event, snapshotId: string) => {
     const diagnostic = database.bridgeSnapshots.buildDiagnostic(snapshotId);
     const site = diagnostic.site as { name?: string } | undefined;
@@ -250,24 +247,24 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     return { cancelled: false, path: selection.filePath };
   });
 
-  ipcMain.handle('crm:directory:save-existing',(_event,...args:Parameters<typeof database.crm.saveExistingDirectoryIdentities>)=>database.crm.saveExistingDirectoryIdentities(...args));
-  ipcMain.handle('crm:directory:save-organization',(_event,...args:Parameters<typeof database.crm.saveDirectoryOrganization>)=>database.crm.saveDirectoryOrganization(...args));
-  ipcMain.handle('crm:directory:save-contact',(_event,...args:Parameters<typeof database.crm.saveDirectoryContact>)=>database.crm.saveDirectoryContact(...args));
+  ipcMain.handle('crm:directory:save-existing',(_event,...args:Parameters<typeof database.crm.saveExistingDirectoryIdentities>)=> guardedMutation(() => database.crm.saveExistingDirectoryIdentities(...args)));
+  ipcMain.handle('crm:directory:save-organization',(_event,...args:Parameters<typeof database.crm.saveDirectoryOrganization>)=> guardedMutation(() => database.crm.saveDirectoryOrganization(...args)));
+  ipcMain.handle('crm:directory:save-contact',(_event,...args:Parameters<typeof database.crm.saveDirectoryContact>)=> guardedMutation(() => database.crm.saveDirectoryContact(...args)));
   ipcMain.handle('crm:directory:verification',(_event,...args:Parameters<typeof database.crm.directoryVerification>)=>database.crm.directoryVerification(...args));
-  ipcMain.handle('crm:directory:verify',(_event,...args:Parameters<typeof database.crm.verifyDirectoryIdentity>)=>database.crm.verifyDirectoryIdentity(...args));
+  ipcMain.handle('crm:directory:verify',(_event,...args:Parameters<typeof database.crm.verifyDirectoryIdentity>)=> guardedMutation(() => database.crm.verifyDirectoryIdentity(...args)));
   ipcMain.handle('crm:organizations:list', (_event, includeArchived?: boolean) => database.crm.listDirectoryOrganizations(includeArchived));
   ipcMain.handle('crm:organizations:get', (_event, id: string) => database.crm.getDirectoryOrganization(id));
-  ipcMain.handle('crm:organizations:create', (_event, input: OrganizationInput) => database.crm.createOrganization(input));
-  ipcMain.handle('crm:organizations:update', (_event, id: string, input: OrganizationInput) => database.crm.updateOrganization(id, input));
+  ipcMain.handle('crm:organizations:create', (_event, input: OrganizationInput) => guardedMutation(() => database.crm.createOrganization(input)));
+  ipcMain.handle('crm:organizations:update', (_event, id: string, input: OrganizationInput) => guardedMutation(() => database.crm.updateOrganization(id, input)));
   ipcMain.handle('crm:contacts:list', (_event, includeArchived?: boolean) => database.crm.listDirectoryContacts(includeArchived));
   ipcMain.handle('crm:contacts:get', (_event, id: string) => database.crm.getDirectoryContact(id));
-  ipcMain.handle('crm:contacts:create', (_event, input: ContactInput) => database.crm.createContact(input));
-  ipcMain.handle('crm:contacts:create-and-attach-primary-prospect', (_event, prospectId: string, input: ContactInput) => database.crm.createAndAttachPrimaryProspectContact(prospectId, input));
-  ipcMain.handle('crm:contacts:create-and-attach-decision-prospect', (_event, prospectId: string, input: ContactInput) => database.crm.createAndAttachDecisionProspectContact(prospectId, input));
-  ipcMain.handle('crm:contacts:update', (_event, id: string, input: ContactInput) => database.crm.updateContact(id, input));
+  ipcMain.handle('crm:contacts:create', (_event, input: ContactInput) => guardedMutation(() => database.crm.createContact(input)));
+  ipcMain.handle('crm:contacts:create-and-attach-primary-prospect', (_event, prospectId: string, input: ContactInput) => guardedMutation(() => database.crm.createAndAttachPrimaryProspectContact(prospectId, input)));
+  ipcMain.handle('crm:contacts:create-and-attach-decision-prospect', (_event, prospectId: string, input: ContactInput) => guardedMutation(() => database.crm.createAndAttachDecisionProspectContact(prospectId, input)));
+  ipcMain.handle('crm:contacts:update', (_event, id: string, input: ContactInput) => guardedMutation(() => database.crm.updateContact(id, input)));
   ipcMain.handle('crm:contact-methods:list',(_event,owner:'organization'|'contact',id:string,includeArchived?:boolean)=>database.crm.listContactMethods(owner,id,includeArchived));
-  ipcMain.handle('crm:contact-methods:save',(_event,input:ContactMethodInput,id?:string)=>database.crm.saveContactMethod(input,id));
-  ipcMain.handle('crm:contact-methods:archive',(_event,id:string,archived?:boolean)=>database.crm.archiveContactMethod(id,archived));
+  ipcMain.handle('crm:contact-methods:save',(_event,input:ContactMethodInput,id?:string)=> guardedMutation(() => database.crm.saveContactMethod(input,id)));
+  ipcMain.handle('crm:contact-methods:archive',(_event,id:string,archived?:boolean)=> guardedMutation(() => database.crm.archiveContactMethod(id,archived)));
   ipcMain.handle('crm:identity-assets:list', (_event, owner: CrmIdentityOwnerType, id: string) => database.crmIdentityAssets.list(owner, id));
   ipcMain.handle('crm:identity-assets:import', async (_event, owner: CrmIdentityOwnerType, id: string, role: CrmIdentityAssetRole) => {
     const previous = database.crmIdentityAssets.list(owner, id).find(asset=>asset.role===role);
@@ -305,36 +302,36 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     });
   });
   ipcMain.handle('crm:prospects:list', (_event, filters?: ProspectFilters) => database.crm.listProspects(filters));
-  ipcMain.handle('crm:prospects:create', (_event, input: ProspectInput) => database.crm.createProspect(input));
-  ipcMain.handle('crm:prospects:update', (_event, id: string, input: ProspectInput) => database.crm.updateProspect(id, input));
-  ipcMain.handle('crm:prospects:update-qualification',(_event,id:string,input:Partial<ProspectInput>)=>{
+  ipcMain.handle('crm:prospects:create', (_event, input: ProspectInput) => guardedMutation(() => database.crm.createProspect(input)));
+  ipcMain.handle('crm:prospects:update', (_event, id: string, input: ProspectInput) => guardedMutation(() => database.crm.updateProspect(id, input)));
+  ipcMain.handle('crm:prospects:update-qualification',(_event,id:string,input:Partial<ProspectInput>)=>guardedMutation(()=>{
     if (Object.prototype.hasOwnProperty.call(input,'decisionMakerContactId')) {
       database.workflow.setDecisionMaker(id,input.decisionMakerContactId?.trim() || null);
     }
     return database.crm.updateProspectQualification(id,input);
-  });
-  ipcMain.handle('crm:prospects:update-missing-information-if-unchanged', (_event, id: string, expected: string | null, next: string | null) => database.crm.updateProspectMissingInformationIfUnchanged(id, expected, next));
-  ipcMain.handle('crm:prospects:update-project-brief-if-unchanged', (_event, id: string, expected: ProspectProjectBrief, next: ProspectProjectBrief) => database.crm.updateProspectProjectBriefIfUnchanged(id, expected, next));
-  ipcMain.handle('crm:prospects:update-qualification-brief-if-unchanged', (_event, id: string, expected: ProspectQualificationBrief, next: ProspectQualificationBrief) => database.crm.updateProspectQualificationBriefIfUnchanged(id, expected, next));
-  ipcMain.handle('crm:prospects:change-stage', (_event, id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification?: boolean) => database.crm.changeProspectStage(id, stage, lostReason, Boolean(allowIncompleteQualification)));
-  ipcMain.handle('crm:prospects:set-next-action', (_event, id: string, at: string | null, text: string | null) => database.crm.setProspectNextAction(id, at, text));
-  ipcMain.handle('crm:prospects:convert-to-client', (_event, id: string) => database.crm.convertProspectToClient(id));
+  }));
+  ipcMain.handle('crm:prospects:update-missing-information-if-unchanged', (_event, id: string, expected: string | null, next: string | null) => guardedMutation(() => database.crm.updateProspectMissingInformationIfUnchanged(id, expected, next)));
+  ipcMain.handle('crm:prospects:update-project-brief-if-unchanged', (_event, id: string, expected: ProspectProjectBrief, next: ProspectProjectBrief) => guardedMutation(() => database.crm.updateProspectProjectBriefIfUnchanged(id, expected, next)));
+  ipcMain.handle('crm:prospects:update-qualification-brief-if-unchanged', (_event, id: string, expected: ProspectQualificationBrief, next: ProspectQualificationBrief) => guardedMutation(() => database.crm.updateProspectQualificationBriefIfUnchanged(id, expected, next)));
+  ipcMain.handle('crm:prospects:change-stage', (_event, id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification?: boolean) => guardedMutation(() => database.crm.changeProspectStage(id, stage, lostReason, Boolean(allowIncompleteQualification))));
+  ipcMain.handle('crm:prospects:set-next-action', (_event, id: string, at: string | null, text: string | null) => guardedMutation(() => database.crm.setProspectNextAction(id, at, text)));
+  ipcMain.handle('crm:prospects:convert-to-client', (_event, id: string) => guardedMutation(() => database.crm.convertProspectToClient(id)));
   ipcMain.handle('crm:prospects:research:list', (_event, id: string) => database.crm.listProspectResearchSnapshots(id));
-  ipcMain.handle('crm:prospects:research:save', (_event, id: string, input: ProspectResearchSnapshotInput) => database.crm.saveProspectResearchSnapshot(id, input));
+  ipcMain.handle('crm:prospects:research:save', (_event, id: string, input: ProspectResearchSnapshotInput) => guardedMutation(() => database.crm.saveProspectResearchSnapshot(id, input)));
   ipcMain.handle('crm:clients:list', (_event, filters?: ClientFilters) => database.crm.listClients(filters));
-  ipcMain.handle('crm:clients:create', (_event, input: ClientInput) => database.crm.createClient(input));
-  ipcMain.handle('crm:clients:update-relationship-if-unchanged', (_event,id:string,expected:Parameters<typeof database.crm.updateClientRelationshipIfUnchanged>[1],next:Parameters<typeof database.crm.updateClientRelationshipIfUnchanged>[2])=>database.crm.updateClientRelationshipIfUnchanged(id,expected,next));
-  ipcMain.handle('crm:clients:update', (_event, id: string, input: ClientInput) => database.crm.updateClient(id, input));
-  ipcMain.handle('crm:clients:archive', (_event, id: string) => database.crm.archiveClient(id));
-  ipcMain.handle('crm:clients:reactivate', (_event, id: string, status: Exclude<ClientStatus, 'archived'>) => database.crm.reactivateClient(id, status));
+  ipcMain.handle('crm:clients:create', (_event, input: ClientInput) => guardedMutation(() => database.crm.createClient(input)));
+  ipcMain.handle('crm:clients:update-relationship-if-unchanged', (_event,id:string,expected:Parameters<typeof database.crm.updateClientRelationshipIfUnchanged>[1],next:Parameters<typeof database.crm.updateClientRelationshipIfUnchanged>[2])=> guardedMutation(() => database.crm.updateClientRelationshipIfUnchanged(id,expected,next)));
+  ipcMain.handle('crm:clients:update', (_event, id: string, input: ClientInput) => guardedMutation(() => database.crm.updateClient(id, input)));
+  ipcMain.handle('crm:clients:archive', (_event, id: string) => guardedMutation(() => database.crm.archiveClient(id)));
+  ipcMain.handle('crm:clients:reactivate', (_event, id: string, status: Exclude<ClientStatus, 'archived'>) => guardedMutation(() => database.crm.reactivateClient(id, status)));
   ipcMain.handle('crm:clients:list-contacts', (_event, id: string) => database.clientContacts.list(id));
-  ipcMain.handle('crm:clients:add-contact', (_event, id: string, input: ContactInput, role: ClientContactRole, makePrimary?: boolean) => database.clientContacts.add(id, input, role, makePrimary));
-  ipcMain.handle('crm:clients:set-primary-contact', (_event, id: string, contactId: string) => database.clientContacts.setPrimary(id, contactId));
+  ipcMain.handle('crm:clients:add-contact', (_event, id: string, input: ContactInput, role: ClientContactRole, makePrimary?: boolean) => guardedMutation(() => database.clientContacts.add(id, input, role, makePrimary)));
+  ipcMain.handle('crm:clients:set-primary-contact', (_event, id: string, contactId: string) => guardedMutation(() => database.clientContacts.setPrimary(id, contactId)));
   ipcMain.handle('crm:actions:list', (_event, filters?: CrmActionFilters) => database.actions.list(filters));
-  ipcMain.handle('crm:actions:create', (_event, input: CrmActionInput) => database.actions.create(input));
-  ipcMain.handle('crm:actions:complete', (_event, id: string,input?:CompleteActionInput) => database.actions.complete(id,input));
-  ipcMain.handle('crm:actions:cancel', (_event, id: string) => database.actions.cancel(id));
-  ipcMain.handle('crm:actions:reopen', (_event, id: string) => database.actions.reopen(id));
+  ipcMain.handle('crm:actions:create', (_event, input: CrmActionInput) => guardedMutation(() => database.actions.create(input)));
+  ipcMain.handle('crm:actions:complete', (_event, id: string,input?:CompleteActionInput) => guardedMutation(() => database.actions.complete(id,input)));
+  ipcMain.handle('crm:actions:cancel', (_event, id: string) => guardedMutation(() => database.actions.cancel(id)));
+  ipcMain.handle('crm:actions:reopen', (_event, id: string) => guardedMutation(() => database.actions.reopen(id)));
   ipcMain.handle('crm:activity:list', (_event, entityType: string, entityId: string) => database.crm.listActivity(entityType, entityId));
   ipcMain.handle('crm:search:global', (_event, query: string): SearchResult[] => {
     const normalized = query.trim();
@@ -384,7 +381,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       ...documentResults,
     ].slice(0, 30);
   });
-  ipcMain.handle('crm:search:rebuild', () => database.crm.rebuildSearchIndex());
+  ipcMain.handle('crm:search:rebuild', () => guardedMutation(() => database.crm.rebuildSearchIndex()));
 
   ipcMain.handle('client-documents:list',(_event,clientId:string,includeArchived?:boolean)=>database.clientDocuments.list(clientId,includeArchived));
   ipcMain.handle('client-documents:import',async(_event,clientId:string,input:ClientDocumentInput)=>{const selection=await dialog.showOpenDialog({title:'Importer des documents client',properties:['openFile','multiSelections']});return selection.canceled?database.clientDocuments.list(clientId):guardedMutation(()=>database.clientDocuments.importPaths(clientId,selection.filePaths,input));});
@@ -461,27 +458,27 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
 
   ipcMain.handle('catalog:list', (_event, filters?: CatalogFilters) => database.catalog.list(filters));
   ipcMain.handle('catalog:get-item', (_event, id: string) => database.catalog.getItem(id));
-  ipcMain.handle('catalog:assign-canonical-code', (_event, id: string, code: string) => database.catalog.assignCanonicalCode(id, code));
-  ipcMain.handle('catalog:create', (_event, input: CatalogItemInput, firstVersion: CatalogVersionInput) => database.catalog.create(input, firstVersion));
-  ipcMain.handle('catalog:create-version', (_event, itemId: string, input: CatalogVersionInput, requestId?: string) => database.catalog.createVersion(itemId, input, requestId));
-  ipcMain.handle('catalog:save-draft-version', (_event, versionId: string, expected: CatalogVersion, input: CatalogVersionInput) => database.catalog.saveDraftVersion(versionId, expected, input));
-  ipcMain.handle('catalog:publish-version', (_event, versionId: string, expected?: CatalogVersion) => database.catalog.publishVersion(versionId, expected));
-  ipcMain.handle('catalog:set-status', (_event, itemId: string, status: CatalogItemStatus) => database.catalog.setStatus(itemId, status));
-  ipcMain.handle('catalog:set-visible-public', (_event, itemId: string, visible: boolean) => database.catalog.setVisiblePublic(itemId, visible));
+  ipcMain.handle('catalog:assign-canonical-code', (_event, id: string, code: string) => guardedMutation(() => database.catalog.assignCanonicalCode(id, code)));
+  ipcMain.handle('catalog:create', (_event, input: CatalogItemInput, firstVersion: CatalogVersionInput) => guardedMutation(() => database.catalog.create(input, firstVersion)));
+  ipcMain.handle('catalog:create-version', (_event, itemId: string, input: CatalogVersionInput, requestId?: string) => guardedMutation(() => database.catalog.createVersion(itemId, input, requestId)));
+  ipcMain.handle('catalog:save-draft-version', (_event, versionId: string, expected: CatalogVersion, input: CatalogVersionInput) => guardedMutation(() => database.catalog.saveDraftVersion(versionId, expected, input)));
+  ipcMain.handle('catalog:publish-version', (_event, versionId: string, expected?: CatalogVersion) => guardedMutation(() => database.catalog.publishVersion(versionId, expected)));
+  ipcMain.handle('catalog:set-status', (_event, itemId: string, status: CatalogItemStatus) => guardedMutation(() => database.catalog.setStatus(itemId, status)));
+  ipcMain.handle('catalog:set-visible-public', (_event, itemId: string, visible: boolean) => guardedMutation(() => database.catalog.setVisiblePublic(itemId, visible)));
   ipcMain.handle('catalog:list-recommendations', (_event, versionId: string) => database.catalogRecommendations.list(versionId));
-  ipcMain.handle('catalog:replace-recommendations', (_event, versionId: string, targetVersionIds: string[], expectedTargetVersionIds?: string[], details?: import('../shared/commercial').CatalogRecommendationDetails[], expectedDetails?: import('../shared/commercial').CatalogRecommendationDetails[]) => database.catalogRecommendations.replace(versionId, targetVersionIds, expectedTargetVersionIds, details, expectedDetails));
+  ipcMain.handle('catalog:replace-recommendations', (_event, versionId: string, targetVersionIds: string[], expectedTargetVersionIds?: string[], details?: import('../shared/commercial').CatalogRecommendationDetails[], expectedDetails?: import('../shared/commercial').CatalogRecommendationDetails[]) => guardedMutation(() => database.catalogRecommendations.replace(versionId, targetVersionIds, expectedTargetVersionIds, details, expectedDetails)));
   ipcMain.handle('catalog:list-offer-components', (_event, offerVersionId: string) => database.catalog.listOfferComponents(offerVersionId));
   ipcMain.handle('catalog:production-blueprints', (_event, versionId: string) => database.catalog.listProductionBlueprints(versionId));
-  ipcMain.handle('catalog:set-offer-components', (_event, offerVersionId: string, components: OfferComponentInput[]) => database.catalog.setOfferComponents(offerVersionId, components));
+  ipcMain.handle('catalog:set-offer-components', (_event, offerVersionId: string, components: OfferComponentInput[]) => guardedMutation(() => database.catalog.setOfferComponents(offerVersionId, components)));
 
   // E95: never infer a category link from a similar display name.
   ipcMain.handle('catalog-categories:list', () => database.catalogCategories.list());
   ipcMain.handle('catalog-categories:list-legacy', () => database.catalogCategories.listLegacy());
-  ipcMain.handle('catalog-categories:create', (_event, name: string) => database.catalogCategories.create(name));
-  ipcMain.handle('catalog-categories:rename', (_event, id: string, name: string, revision: number, expectedItemIds: string[]) => database.catalogCategories.rename(id, name, revision, expectedItemIds));
-  ipcMain.handle('catalog-categories:set-status', (_event, id: string, status: CatalogCategoryStatus, revision: number) => database.catalogCategories.setStatus(id, status, revision));
-  ipcMain.handle('catalog-categories:assign', (_event, input: CatalogCategoryAssignment) => database.catalogCategories.assign(input));
-  ipcMain.handle('catalog-categories:reconcile-legacy', (_event, rawValue: string, categoryId: string, expectedItemIds: string[]) => database.catalogCategories.reconcileLegacy(rawValue, categoryId, expectedItemIds));
+  ipcMain.handle('catalog-categories:create', (_event, name: string) => guardedMutation(() => database.catalogCategories.create(name)));
+  ipcMain.handle('catalog-categories:rename', (_event, id: string, name: string, revision: number, expectedItemIds: string[]) => guardedMutation(() => database.catalogCategories.rename(id, name, revision, expectedItemIds)));
+  ipcMain.handle('catalog-categories:set-status', (_event, id: string, status: CatalogCategoryStatus, revision: number) => guardedMutation(() => database.catalogCategories.setStatus(id, status, revision)));
+  ipcMain.handle('catalog-categories:assign', (_event, input: CatalogCategoryAssignment) => guardedMutation(() => database.catalogCategories.assign(input)));
+  ipcMain.handle('catalog-categories:reconcile-legacy', (_event, rawValue: string, categoryId: string, expectedItemIds: string[]) => guardedMutation(() => database.catalogCategories.reconcileLegacy(rawValue, categoryId, expectedItemIds)));
 
   ipcMain.handle('contract-types:list', (_event, archived?: boolean) => database.contractTypes.list(archived));
   ipcMain.handle('contract-types:get', (_event, id: string) => database.contractTypes.get(id));
