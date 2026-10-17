@@ -104,23 +104,31 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   registerUnsavedConfirmationIpc();
   registerShellVisualPreferences(database);
   ipcMain.handle('workflow:needs', (_event, owner, id) => database.workflow.needs(owner,id));
-  ipcMain.handle('workflow:save-need', (_event, owner, id, input, needId) => database.workflow.saveNeed(owner,id,input,needId));
-  ipcMain.handle('workflow:remove-need', (_event, owner, id, needId) => database.workflow.removeNeed(owner,id,needId));
+  ipcMain.handle('workflow:save-need', (_event, owner, id, input, needId) => guardedMutation(() => database.workflow.saveNeed(owner,id,input,needId)));
+  ipcMain.handle('workflow:remove-need', (_event, owner, id, needId) => guardedMutation(() => database.workflow.removeNeed(owner,id,needId)));
   ipcMain.handle('workflow:identity', (_event, owner, id) => database.workflow.identity(owner,id));
-  ipcMain.handle('workflow:archive-prospect', (_event, id, archived) => database.workflow.archiveProspect(id,Boolean(archived)));
+  ipcMain.handle('workflow:archive-prospect', (_event, id, archived) => guardedMutation(() => database.workflow.archiveProspect(id,Boolean(archived))));
   ipcMain.handle('workflow:dashboard', () => database.workflow.dashboard());
-  ipcMain.handle('workflow:begin-demo-capture', (_event, label: string) => database.demo.beginCapture(label));
-  ipcMain.handle('workflow:end-demo-capture', (_event, batch: string) => database.demo.endCapture(batch));
-  ipcMain.handle('workflow:create-demo', (_event, scenario) => database.demo.create(scenario,database));
+  ipcMain.handle('workflow:begin-demo-capture', (_event, label: string) => guardedMutation(() => database.demo.beginCapture(label)));
+  ipcMain.handle('workflow:end-demo-capture', (_event, batch: string) => guardedMutation(() => database.demo.endCapture(batch)));
+  ipcMain.handle('workflow:create-demo', (_event, scenario) => guardedMutation(() => database.demo.create(scenario,database)));
   ipcMain.handle('workflow:demo-summary', () => database.demo.summary());
   ipcMain.handle('workflow:reset-demo', async () => {
     const summary=database.demo.summary();
     if(!summary.total) return {cancelled:true};
     const confirmation=await dialog.showMessageBox({type:'warning',title:'Réinitialiser les données de test',message:'Supprimer uniquement les données marquées demo ?',detail:summary.counts.map(row=>row.table+' : '+row.count).join('\n')+'\n\nCatalogue, prix, modèles, paramètres et fichiers physiques conservés. Une sauvegarde SQLite sera créée avant suppression.',buttons:['Annuler','Sauvegarder et supprimer les données demo'],defaultId:0,cancelId:0});
     if(confirmation.response!==1) return {cancelled:true};
-    const result=await database.demo.reset(()=>database.createBackup('manual'));
-    database.crm.rebuildSearchIndex();
-    return {cancelled:false,...result};
+    return guardedMutation(async () => {
+      // Keep the mandatory SQLite backup, removal and reindex under one permit.
+      // A concurrent window must not change the confirmed demo scope.
+      const current=database.demo.summary();
+      if(JSON.stringify(current)!==JSON.stringify(summary)) {
+        throw new Error('Les données de démonstration ont changé. Actualise avant de réinitialiser.');
+      }
+      const result=await database.demo.reset(()=>database.createBackup('manual'));
+      database.crm.rebuildSearchIndex();
+      return {cancelled:false,...result};
+    });
   });
   ipcMain.handle('app:get-bootstrap', (): BootstrapState => {
     const storedTheme = database.getSetting<unknown>('theme', 'atoumweb');
@@ -719,43 +727,43 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
 
   ipcMain.handle('projects:templates:list', () => database.projects.listTemplates());
   ipcMain.handle('projects:templates:get', (_event, id: string) => database.projects.getTemplate(id));
-  ipcMain.handle('projects:templates:create', (_event, input: ProjectTemplateInput) => database.projects.createTemplate(input));
-  ipcMain.handle('projects:templates:create-version', (_event, templateId: string, description?: string | null) => database.projects.createTemplateVersion(templateId, description));
-  ipcMain.handle('projects:templates:publish-version', (_event, versionId: string) => database.projects.publishTemplateVersion(versionId));
-  ipcMain.handle('projects:templates:add-node', (_event, versionId: string, input: ProjectTemplateNodeInput) => database.projects.addTemplateNode(versionId, input));
-  ipcMain.handle('projects:templates:remove-node', (_event, nodeId: string) => database.projects.removeTemplateNode(nodeId));
+  ipcMain.handle('projects:templates:create', (_event, input: ProjectTemplateInput) => guardedMutation(() => database.projects.createTemplate(input)));
+  ipcMain.handle('projects:templates:create-version', (_event, templateId: string, description?: string | null) => guardedMutation(() => database.projects.createTemplateVersion(templateId, description)));
+  ipcMain.handle('projects:templates:publish-version', (_event, versionId: string) => guardedMutation(() => database.projects.publishTemplateVersion(versionId)));
+  ipcMain.handle('projects:templates:add-node', (_event, versionId: string, input: ProjectTemplateNodeInput) => guardedMutation(() => database.projects.addTemplateNode(versionId, input)));
+  ipcMain.handle('projects:templates:remove-node', (_event, nodeId: string) => guardedMutation(() => database.projects.removeTemplateNode(nodeId)));
   ipcMain.handle('projects:templates:configure-sites', (_event, versionId: string, sites: ProjectTemplateSiteInput[]) =>
-    database.projects.configureTemplateSites(versionId, sites));
+    guardedMutation(() => database.projects.configureTemplateSites(versionId, sites)));
 
   ipcMain.handle('projects:list', (_event, filters?: ProjectFilters) => database.projects.listProjects(filters));
   ipcMain.handle('projects:get', (_event, id: string) => database.projects.getProject(id));
-  ipcMain.handle('projects:transform-quote', (_event, input: TransformQuoteToProjectInput) => database.projects.transformQuote(input));
-  ipcMain.handle('projects:prepare-quote', (_event, input: TransformQuoteToProjectInput) => database.projects.commercial.prepare(input));
+  ipcMain.handle('projects:transform-quote', (_event, input: TransformQuoteToProjectInput) => guardedMutation(() => database.projects.transformQuote(input)));
+  ipcMain.handle('projects:prepare-quote', (_event, input: TransformQuoteToProjectInput) => guardedMutation(() => database.projects.commercial.prepare(input)));
   ipcMain.handle('projects:preview-quote', (_event, input: TransformQuoteToProjectInput) => database.projects.commercial.preview(input));
-  ipcMain.handle('projects:sync-commercial', (_event, id: string) => database.projects.commercial.sync(id));
+  ipcMain.handle('projects:sync-commercial', (_event, id: string) => guardedMutation(() => database.projects.commercial.sync(id)));
   ipcMain.handle('projects:preview-restart', (_event, id: string) => database.projects.commercial.restartPreview(id));
-  ipcMain.handle('projects:restart', (_event, id: string, reviewedSHA256: string) => database.projects.commercial.restart(id, reviewedSHA256));
-  ipcMain.handle('projects:assign-target', (_event,id:string,input:import('../shared/contributionTargets').ContributionTargetInput)=>database.projects.commercial.assignTarget(id,input));
+  ipcMain.handle('projects:restart', (_event, id: string, reviewedSHA256: string) => guardedMutation(() => database.projects.commercial.restart(id, reviewedSHA256)));
+  ipcMain.handle('projects:assign-target', (_event,id:string,input:import('../shared/contributionTargets').ContributionTargetInput)=> guardedMutation(() => database.projects.commercial.assignTarget(id,input)));
   ipcMain.handle('projects:commercial-scope', (_event, id: string) => database.projects.commercial.scope(id));
-  ipcMain.handle('projects:resolve-scope-conflict', (_event, id: string, conflictId: string, decision: import('../shared/projects').ProjectConflictDecision) => database.projects.commercial.resolveConflict(id,conflictId,decision));
-  ipcMain.handle('projects:create-internal', (_event, input: InternalProjectInput) => database.projects.createInternal(input));
-  ipcMain.handle('projects:change-status', (_event, id: string, status: ProjectStatus) => database.projects.changeProjectStatus(id, status));
+  ipcMain.handle('projects:resolve-scope-conflict', (_event, id: string, conflictId: string, decision: import('../shared/projects').ProjectConflictDecision) => guardedMutation(() => database.projects.commercial.resolveConflict(id,conflictId,decision)));
+  ipcMain.handle('projects:create-internal', (_event, input: InternalProjectInput) => guardedMutation(() => database.projects.createInternal(input)));
+  ipcMain.handle('projects:change-status', (_event, id: string, status: ProjectStatus) => guardedMutation(() => database.projects.changeProjectStatus(id, status)));
   ipcMain.handle('projects:completion-review', (_event, id: string) => database.projectCompletion.review(id));
   ipcMain.handle('projects:sites:list', (_event, projectId: string, includeArchived?: boolean) => database.projectSites.list(projectId, Boolean(includeArchived)));
-  ipcMain.handle('projects:sites:create', (_event, projectId: string, input: ProjectSiteInput) => database.projectSites.create(projectId, input));
-  ipcMain.handle('projects:sites:update', (_event, id: string, input: Partial<ProjectSiteInput>) => database.projectSites.update(id, input));
-  ipcMain.handle('projects:sites:set-archived', (_event, id: string, archived: boolean) => database.projectSites.setArchived(id, archived));
+  ipcMain.handle('projects:sites:create', (_event, projectId: string, input: ProjectSiteInput) => guardedMutation(() => database.projectSites.create(projectId, input)));
+  ipcMain.handle('projects:sites:update', (_event, id: string, input: Partial<ProjectSiteInput>) => guardedMutation(() => database.projectSites.update(id, input)));
+  ipcMain.handle('projects:sites:set-archived', (_event, id: string, archived: boolean) => guardedMutation(() => database.projectSites.setArchived(id, archived)));
   ipcMain.handle('projects:sites:list-pages', (_event, projectId: string) => database.projectSites.listPages(projectId));
   ipcMain.handle('projects:sites:link-page', (_event, siteId: string, projectNodeId: string, input?: ProjectSitePageInput) =>
-    database.projectSites.linkPage(siteId, projectNodeId, input));
-  ipcMain.handle('projects:sites:unlink-page', (_event, projectNodeId: string) => database.projectSites.unlinkPage(projectNodeId));
+    guardedMutation(() => database.projectSites.linkPage(siteId, projectNodeId, input)));
+  ipcMain.handle('projects:sites:unlink-page', (_event, projectNodeId: string) => guardedMutation(() => database.projectSites.unlinkPage(projectNodeId)));
   ipcMain.handle('projects:sites:apply-blueprint', (_event, projectId: string, templateVersionId?: string | null) =>
-    database.projectSites.applyBlueprint(projectId, templateVersionId));
-  ipcMain.handle('projects:add-node', (_event, projectId: string, input: ProjectNodeInput) => database.projects.addProjectNode(projectId, input));
-  ipcMain.handle('projects:update-node', (_event, nodeId: string, input: Partial<ProjectNodeInput>) => database.projects.updateProjectNode(nodeId, input));
-  ipcMain.handle('projects:move-node', (_event, nodeId: string, input: MoveProjectNodeInput) => database.projectNodes.move(nodeId, input));
-  ipcMain.handle('projects:set-node-pause', (_event, nodeId: string, paused: boolean, reason?: string | null) => database.projects.setProjectNodePause(nodeId, paused, reason));
-  ipcMain.handle('projects:complete-phase', (_event, nodeId: string) => database.projects.completeProjectPhase(nodeId));
+    guardedMutation(() => database.projectSites.applyBlueprint(projectId, templateVersionId)));
+  ipcMain.handle('projects:add-node', (_event, projectId: string, input: ProjectNodeInput) => guardedMutation(() => database.projects.addProjectNode(projectId, input)));
+  ipcMain.handle('projects:update-node', (_event, nodeId: string, input: Partial<ProjectNodeInput>) => guardedMutation(() => database.projects.updateProjectNode(nodeId, input)));
+  ipcMain.handle('projects:move-node', (_event, nodeId: string, input: MoveProjectNodeInput) => guardedMutation(() => database.projectNodes.move(nodeId, input)));
+  ipcMain.handle('projects:set-node-pause', (_event, nodeId: string, paused: boolean, reason?: string | null) => guardedMutation(() => database.projects.setProjectNodePause(nodeId, paused, reason)));
+  ipcMain.handle('projects:complete-phase', (_event, nodeId: string) => guardedMutation(() => database.projects.completeProjectPhase(nodeId)));
   ipcMain.handle('projects:secrets:list', (_event, projectId: string, projectNodeId?: string | null) =>
     database.projects.listProjectSecrets(projectId, projectNodeId));
 
@@ -772,7 +780,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     const secret = input.secret?.trim();
     if (!secret) throw new Error('Mot de passe ou clé requis.');
     const secretCiphertext = safeStorage.encryptString(secret).toString('base64');
-    return database.projects.saveProjectSecret({
+    return guardedMutation(() => database.projects.saveProjectSecret({
       projectId: input.projectId,
       projectNodeId: input.projectNodeId ?? null,
       label: input.label,
@@ -780,7 +788,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       secretCiphertext,
       url: input.url ?? null,
       notes: input.notes ?? null,
-    });
+    }));
   });
 
   ipcMain.handle('projects:secrets:reveal', (_event, id: string) => {
@@ -790,16 +798,15 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     return { id: stored.id, secret };
   });
 
-  ipcMain.handle('projects:secrets:remove', (_event, id: string) => {
-    database.projects.removeProjectSecret(id);
-  });
+  ipcMain.handle('projects:secrets:remove', (_event, id: string) =>
+    guardedMutation(() => database.projects.removeProjectSecret(id)));
 
-  ipcMain.handle('projects:add-prerequisite', (_event, projectId: string, input: ProjectPrerequisiteInput) => database.projects.addPrerequisite(projectId, input));
-  ipcMain.handle('projects:update-prerequisite-status', (_event, id: string, status: ProjectPrerequisiteStatus) => database.projects.updatePrerequisiteStatus(id, status));
+  ipcMain.handle('projects:add-prerequisite', (_event, projectId: string, input: ProjectPrerequisiteInput) => guardedMutation(() => database.projects.addPrerequisite(projectId, input)));
+  ipcMain.handle('projects:update-prerequisite-status', (_event, id: string, status: ProjectPrerequisiteStatus) => guardedMutation(() => database.projects.updatePrerequisiteStatus(id, status)));
 
   ipcMain.handle('projects:resources:list', (_event, projectId: string) => database.projectResources.list(projectId));
   ipcMain.handle('projects:resources:import-files', async (_event, projectId: string, folder: ProjectResourceFolder, contentRole: ProjectResourceRole = 'other') => {
-    const defaultPath = database.projectResources.projectResourceRoot(projectId);
+    const defaultPath = await guardedMutation(() => database.projectResources.projectResourceRoot(projectId));
     const selection = await dialog.showOpenDialog({
       title: 'Ajouter des fichiers au projet',
       defaultPath,
@@ -817,7 +824,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     return { ok: !error, error: error || null };
   });
   ipcMain.handle('projects:resources:open-folder', async (_event, projectId: string) => {
-    const error = await shell.openPath(database.projectResources.projectResourceRoot(projectId));
+    const resourceFolder = await guardedMutation(() => database.projectResources.projectResourceRoot(projectId));
+    const error = await shell.openPath(resourceFolder);
     return { ok: !error, error: error || null };
   });
   ipcMain.handle('projects:resources:relocalize', async (_event, id: string) => {
@@ -833,13 +841,13 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
 
   ipcMain.handle('projects:technical:list', (_event, projectId: string, search?: string | null) => database.projectTechnicalLibrary.list(projectId, search));
   ipcMain.handle('projects:technical:get', (_event, id: string) => database.projectTechnicalLibrary.get(id));
-  ipcMain.handle('projects:technical:create', (_event, projectId: string, item: ProjectTechnicalItemInput, version: ProjectTechnicalVersionInput) => database.projectTechnicalLibrary.create(projectId, item, version));
-  ipcMain.handle('projects:technical:create-version', (_event, itemId: string, version: ProjectTechnicalVersionInput) => database.projectTechnicalLibrary.createVersion(itemId, version));
-  ipcMain.handle('projects:technical:mark-stable', (_event, versionId: string) => database.projectTechnicalLibrary.markStable(versionId));
-  ipcMain.handle('projects:technical:link-resource', (_event, versionId: string, resourceId: string) => database.projectTechnicalLibrary.linkResource(versionId, resourceId));
-  ipcMain.handle('projects:technical:unlink-resource', (_event, versionId: string, resourceId: string) => database.projectTechnicalLibrary.unlinkResource(versionId, resourceId));
-  ipcMain.handle('projects:technical:prepare-reuse', (_event, itemId: string, versionId?: string | null) => database.projectReuseExport.prepare(itemId, versionId));
-  ipcMain.handle('projects:technical:archive', (_event, itemId: string) => database.projectTechnicalLibrary.archive(itemId));
+  ipcMain.handle('projects:technical:create', (_event, projectId: string, item: ProjectTechnicalItemInput, version: ProjectTechnicalVersionInput) => guardedMutation(() => database.projectTechnicalLibrary.create(projectId, item, version)));
+  ipcMain.handle('projects:technical:create-version', (_event, itemId: string, version: ProjectTechnicalVersionInput) => guardedMutation(() => database.projectTechnicalLibrary.createVersion(itemId, version)));
+  ipcMain.handle('projects:technical:mark-stable', (_event, versionId: string) => guardedMutation(() => database.projectTechnicalLibrary.markStable(versionId)));
+  ipcMain.handle('projects:technical:link-resource', (_event, versionId: string, resourceId: string) => guardedMutation(() => database.projectTechnicalLibrary.linkResource(versionId, resourceId)));
+  ipcMain.handle('projects:technical:unlink-resource', (_event, versionId: string, resourceId: string) => guardedMutation(() => database.projectTechnicalLibrary.unlinkResource(versionId, resourceId)));
+  ipcMain.handle('projects:technical:prepare-reuse', (_event, itemId: string, versionId?: string | null) => guardedMutation(() => database.projectReuseExport.prepare(itemId, versionId)));
+  ipcMain.handle('projects:technical:archive', (_event, itemId: string) => guardedMutation(() => database.projectTechnicalLibrary.archive(itemId)));
 
   ipcMain.handle('time:active', () => database.time.active());
   ipcMain.handle('time:start', (_event, input: StartTimeSessionInput) => guardedMutation(() => database.time.start(input)));
