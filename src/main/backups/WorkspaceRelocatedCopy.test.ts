@@ -123,4 +123,14 @@ describe('EC04 restored-copy relocation integration (offline fixtures)',()=>{
     await expect(run()).rejects.toThrow(/fichiers restaurés/);
     expect(existsSync(migrated)).toBe(false);
   });
+  it('keeps an INCOMPLETE marker if an expected Resources subfolder is a file',async()=>{
+    const bad=join(root,'projets-internes','i1','Ressources','01 Identité');
+    writeFileSync(bad,'not a directory');
+    await restoreFixture();
+    await expect(run()).rejects.toThrow(/dossier Ressources incompatible/);
+    expect(existsSync(join(migrated,'.EC04-RELOCATION-INCOMPLETE'))).toBe(true);
+    expect(readFileSync(bad,'utf8')).toBe('not a directory');
+    await expect(verifyRestoredWorkspaceAgainstManifest(restored,manifest)).resolves.toBeDefined();
+  });
+
 });

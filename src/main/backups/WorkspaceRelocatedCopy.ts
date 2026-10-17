@@ -10,7 +10,7 @@
 import {createHash} from 'node:crypto';
 import {
   constants, copyFileSync, existsSync, lstatSync, mkdirSync,
-  realpathSync, writeFileSync, unlinkSync,
+  realpathSync, rmdirSync, writeFileSync, unlinkSync,
 } from 'node:fs';
 import {createReadStream} from 'node:fs';
 import {dirname, isAbsolute, join, relative, resolve, sep} from 'node:path';
@@ -59,7 +59,22 @@ function existsIncludingDanglingLink(path: string): boolean {
   catch (e) { if ((e as NodeJS.ErrnoException).code === 'ENOENT') return false; throw e; }
 }
 
-function safeSourceFile(path: string): void {
+function safeSourceFile(path: string, allowedRoot: string): void {
+  if (!within(allowedRoot, path)) throw Error('EC04 : chemin source hors workspace.');
+  let cursor = resolve(allowedRoot);
+  const rootStat = lstatSync(cursor);
+  if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) {
+    throw Error('EC04 : racine source non sûre.');
+  }
+  const segments = relative(allowedRoot, path).split(sep);
+  // Reject symlinks in EVERY parent segment, not only the leaf file.
+  for (const segment of segments.slice(0, -1)) {
+    cursor = join(cursor, segment);
+    const st = lstatSync(cursor);
+    if (!st.isDirectory() || st.isSymbolicLink()) {
+      throw Error('EC04 : dossier parent source non sûr.');
+    }
+  }
   const st = lstatSync(path);
   if (!st.isFile() || st.isSymbolicLink()) throw Error('EC04 : source non sûre ou lien symbolique.');
 }
@@ -119,11 +134,21 @@ export async function createRelocatedWorkspaceCopy(
   // Exclusive creation: do not overwrite even an existing EMPTY directory.
   mkdirSync(to, {mode:0o700});
   const incomplete = join(to, '.EC04-RELOCATION-INCOMPLETE');
-  writeFileSync(incomplete, 'Copie EC04 en préparation. Ne pas ouvrir ce workspace.\n', {flag:'wx'});
+  // A failed marker creation must never leave behind an apparently valid
+  // empty workspace. Remove ONLY the newly created empty directory.
+  try {
+    writeFileSync(incomplete, 'Copie EC04 en préparation. Ne pas ouvrir ce workspace.\n', {flag:'wx'});
+  } catch (error) {
+    try { rmdirSync(to); }
+    catch (cleanup) {
+      throw new AggregateError([error, cleanup], 'EC04 : marqueur impossible et dossier non nettoyé.');
+    }
+    throw error;
+  }
   try {
     const newData = join(to, 'data');
     mkdirSync(newData);
-    safeSourceFile(sourceDb);
+    safeSourceFile(sourceDb, from);
     const newDbPath = join(newData, 'atoumweb-manager.sqlite');
     copyFileSync(sourceDb, newDbPath, constants.COPYFILE_EXCL);
     if (await sha256File(newDbPath) !== initialDb.sha256 ||
@@ -138,7 +163,7 @@ export async function createRelocatedWorkspaceCopy(
       const src = resolve(from, ...rel.split('/'));
       const dest = resolve(to, ...rel.split('/'));
       if (!within(from, src) || !within(to, dest)) throw Error('EC04 : chemin sortant du workspace.');
-      safeSourceFile(src);
+      safeSourceFile(src, from);
       mkdirSync(dirname(dest), {recursive:true});
       copyFileSync(src, dest, constants.COPYFILE_EXCL);
       if (await sha256File(dest) !== asset.sha256) throw Error('EC04 : fichier copié altéré.');
@@ -188,7 +213,7 @@ export async function createRelocatedWorkspaceCopy(
     // Recheck all copied file payloads after directory creation / SQLite work.
     for (const asset of assets) {
       const path = join(to, ...asset.path.split('/').slice(1));
-      safeSourceFile(path);
+      safeSourceFile(path, to);
       if (await sha256File(path) !== asset.sha256) throw Error('EC04 : ressource modifiée après migration.');
     }
     const afterSqliteSha256 = await sha256File(newDbPath);
