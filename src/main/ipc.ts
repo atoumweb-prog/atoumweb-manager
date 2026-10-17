@@ -93,9 +93,14 @@ import type { AnalyticsPeriodInput } from '../shared/analytics';
 import { generateQuotePdf } from './commercial/quotePdf';
 import type { DatabaseService } from './database/DatabaseService';
 import { scheduleDatabaseRestore, validateRestoreSource } from './restore';
+import { runWorkspaceMutationIfAvailable } from './backups/WorkspaceMutationIpcBoundary';
+import type { WorkspaceMutationGate } from './backups/WorkspaceMutationGate';
 import { saveWorkspaceRoot, type WorkspacePaths } from './workspace';
 
-export function registerIpcHandlers(database: DatabaseService, workspace: WorkspacePaths): void {
+export function registerIpcHandlers(database: DatabaseService, workspace: WorkspacePaths, ec04MutationGate?: WorkspaceMutationGate): void {
+  // Coverage is intentionally partial; this gate is NOT connected to a full workspace backup.
+  const guardedMutation = <T>(work: () => T): T | Promise<T> =>
+    runWorkspaceMutationIfAvailable(ec04MutationGate, work);
   registerUnsavedConfirmationIpc();
   registerShellVisualPreferences(database);
   ipcMain.handle('workflow:needs', (_event, owner, id) => database.workflow.needs(owner,id));
@@ -281,19 +286,23 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     const preview = await crmIdentityImagePreview(_event.sender,bytes);
     const confirmation = await dialog.showMessageBox({type:'question',title:'Identité visuelle',message:'Enregistrer ce visuel ?',detail:basename(source)+'\nCe visuel sera partagé par les fiches liées à cette identité.',icon:preview,buttons:['Enregistrer','Annuler'],defaultId:1,cancelId:1});
     if(confirmation.response!==0)return null;
-    const current = database.crmIdentityAssets.list(owner,id).find(asset=>asset.role===role);
-    if(current?.relativePath!==previous?.relativePath)throw Error('Le visuel a changé dans une autre fenêtre. Actualise la fiche avant de réessayer.');
-    // Re-read once to reject a source changed while the confirmation was open.
-    if(!readFileSync(source).equals(bytes))throw Error('Le fichier choisi a changé. Choisis-le de nouveau.');
-    return database.crmIdentityAssets.importFilePath(owner, id, role, source);
+    return guardedMutation(() => {
+      const current = database.crmIdentityAssets.list(owner,id).find(asset=>asset.role===role);
+      if(current?.relativePath!==previous?.relativePath)throw Error('Le visuel a changé dans une autre fenêtre. Actualise la fiche avant de réessayer.');
+      // Re-check after any wait for the EC04 writer gate.
+      if(!readFileSync(source).equals(bytes))throw Error('Le fichier choisi a changé. Choisis-le de nouveau.');
+      return database.crmIdentityAssets.importFilePath(owner, id, role, source);
+    });
   });
   ipcMain.handle('crm:identity-assets:preview', (_event, assetId: string) => database.crmIdentityAssets.preview(assetId));
   ipcMain.handle('crm:identity-assets:remove', async (_event, assetId: string) => {
     const previous=database.crmIdentityAssets.get(assetId);
     const result=await dialog.showMessageBox({type:'question',title:'Retirer le visuel',message:'Retirer ce visuel de cette identité et de ses fiches liées ?',buttons:['Annuler','Retirer le visuel'],defaultId:0,cancelId:0});
     if(result.response!==1)return false;
-    if(database.crmIdentityAssets.get(assetId).relativePath!==previous.relativePath)throw Error('Le visuel a changé dans une autre fenêtre. Actualise la fiche.');
-    database.crmIdentityAssets.remove(assetId);return true;
+    return guardedMutation(() => {
+      if(database.crmIdentityAssets.get(assetId).relativePath!==previous.relativePath)throw Error('Le visuel a changé dans une autre fenêtre. Actualise la fiche.');
+      database.crmIdentityAssets.remove(assetId);return true;
+    });
   });
   ipcMain.handle('crm:prospects:list', (_event, filters?: ProspectFilters) => database.crm.listProspects(filters));
   ipcMain.handle('crm:prospects:create', (_event, input: ProspectInput) => database.crm.createProspect(input));
@@ -378,10 +387,10 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:search:rebuild', () => database.crm.rebuildSearchIndex());
 
   ipcMain.handle('client-documents:list',(_event,clientId:string,includeArchived?:boolean)=>database.clientDocuments.list(clientId,includeArchived));
-  ipcMain.handle('client-documents:import',async(_event,clientId:string,input:ClientDocumentInput)=>{const selection=await dialog.showOpenDialog({title:'Importer des documents client',properties:['openFile','multiSelections']});return selection.canceled?database.clientDocuments.list(clientId):database.clientDocuments.importPaths(clientId,selection.filePaths,input);});
-  ipcMain.handle('client-documents:update',(_event,id:string,input:ClientDocumentInput)=>database.clientDocuments.update(id,input));
-  ipcMain.handle('client-documents:archive',(_event,id:string,archived?:boolean)=>database.clientDocuments.archive(id,archived));
-  ipcMain.handle('client-documents:delete',async(_event,id:string)=>{const doc=database.clientDocuments.get(id);const answer=await dialog.showMessageBox({type:'warning',title:'Suppression définitive',message:`Supprimer définitivement « ${doc.title} » ?`,detail:'Le fichier physique et ses métadonnées seront supprimés. Cette action est irréversible.',buttons:['Annuler','Supprimer définitivement'],defaultId:0,cancelId:0});if(answer.response!==1)return{cancelled:true};database.clientDocuments.deletePermanently(id);return{cancelled:false};});
+  ipcMain.handle('client-documents:import',async(_event,clientId:string,input:ClientDocumentInput)=>{const selection=await dialog.showOpenDialog({title:'Importer des documents client',properties:['openFile','multiSelections']});return selection.canceled?database.clientDocuments.list(clientId):guardedMutation(()=>database.clientDocuments.importPaths(clientId,selection.filePaths,input));});
+  ipcMain.handle('client-documents:update',(_event,id:string,input:ClientDocumentInput)=>guardedMutation(()=>database.clientDocuments.update(id,input)));
+  ipcMain.handle('client-documents:archive',(_event,id:string,archived?:boolean)=>guardedMutation(()=>database.clientDocuments.archive(id,archived)));
+  ipcMain.handle('client-documents:delete',async(_event,id:string)=>{const doc=database.clientDocuments.get(id);const answer=await dialog.showMessageBox({type:'warning',title:'Suppression définitive',message:`Supprimer définitivement « ${doc.title} » ?`,detail:'Le fichier physique et ses métadonnées seront supprimés. Cette action est irréversible.',buttons:['Annuler','Supprimer définitivement'],defaultId:0,cancelId:0});if(answer.response!==1)return{cancelled:true};return guardedMutation(()=>{database.clientDocuments.deletePermanently(id);return{cancelled:false};});});
   ipcMain.handle('client-documents:open-file',async(_event,id:string)=>{const error=await shell.openPath(database.clientDocuments.verifiedPath(id));if(error)throw Error(error);});
   ipcMain.handle('client-documents:open-folder',async(_event,clientId:string)=>{const path=database.clientDocuments.clientRoot(clientId);const error=await shell.openPath(path);if(error)throw Error(error);});
 
@@ -399,18 +408,21 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     });
     if (selection.canceled || selection.filePaths.length === 0) return null;
 
-    const before = new Set(database.clientDocuments.list(item.clientAccountId, true).map((document) => document.id));
-    const reference = input.reference?.trim();
-    const title = reference ? `Facture ${reference}` : `Facture · ${item.description}`;
-    const imported = database.clientDocuments.importPaths(item.clientAccountId, [selection.filePaths[0]], {
-      category: 'invoice',
-      title,
-      notes: `Facture Abby rattachée à la facturation « ${item.description} ».`,
+    return guardedMutation(() => {
+      const currentItem = database.billingHandoff.get(id);
+      const before = new Set(database.clientDocuments.list(currentItem.clientAccountId, true).map((document) => document.id));
+      const reference = input.reference?.trim();
+      const title = reference ? `Facture ${reference}` : `Facture · ${currentItem.description}`;
+      const imported = database.clientDocuments.importPaths(currentItem.clientAccountId, [selection.filePaths[0]], {
+        category: 'invoice',
+        title,
+        notes: `Facture Abby rattachée à la facturation « ${currentItem.description} ».`,
+      });
+      const document = imported.find((candidate) => !before.has(candidate.id));
+      if (!document) throw new Error('La facture PDF n’a pas pu être identifiée après import.');
+      database.clientDocuments.fingerprint(document.id);
+      return database.billingHandoff.attachInvoice(id, document.id, input);
     });
-    const document = imported.find((candidate) => !before.has(candidate.id));
-    if (!document) throw new Error('La facture PDF n’a pas pu être identifiée après import.');
-    database.clientDocuments.fingerprint(document.id);
-    return database.billingHandoff.attachInvoice(id, document.id, input);
   });
   ipcMain.handle('billing:open-invoice', async (_event, id: string) => {
     const item = database.billingHandoff.get(id);
@@ -426,9 +438,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     const error = await shell.openPath(database.expenses.prepareReceiptVersionPreview(id, relativePath));
     if (error) throw new Error(error);
   });
-  ipcMain.handle('expenses:create', (_event, input: ExpenseInput) => database.expenses.create(input));
-  ipcMain.handle('expenses:update', (_event, id: string, input: ExpenseInput) => database.expenses.update(id, input));
-  ipcMain.handle('expenses:change-status', (_event, id: string, status: ExpenseStatus) => database.expenses.changeStatus(id, status));
+  ipcMain.handle('expenses:create', (_event, input: ExpenseInput) =>guardedMutation(()=>database.expenses.create(input)));
+  ipcMain.handle('expenses:update', (_event, id: string, input: ExpenseInput) =>guardedMutation(()=>database.expenses.update(id, input)));
+  ipcMain.handle('expenses:change-status', (_event, id: string, status: ExpenseStatus) =>guardedMutation(()=>database.expenses.changeStatus(id, status)));
   ipcMain.handle('expenses:import-receipt', async (_event, id: string) => {
     const expense = database.expenses.get(id);
     const selection = await dialog.showOpenDialog({
@@ -440,7 +452,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       ],
     });
     if (selection.canceled || selection.filePaths.length === 0) return null;
-    return database.expenses.importReceipt(id, selection.filePaths[0]);
+    return guardedMutation(()=>database.expenses.importReceipt(id, selection.filePaths[0]));
   });
   ipcMain.handle('expenses:open-receipt', async (_event, id: string) => {
     const error = await shell.openPath(database.expenses.absoluteReceiptPath(id));
@@ -785,12 +797,12 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       properties: ['openFile', 'multiSelections'],
     });
     if (selection.canceled || selection.filePaths.length === 0) return database.projectResources.list(projectId);
-    return database.projectResources.importFilePaths(projectId, selection.filePaths, folder, contentRole);
+    return guardedMutation(()=>database.projectResources.importFilePaths(projectId, selection.filePaths, folder, contentRole));
   });
-  ipcMain.handle('projects:resources:update-status', (_event, id: string, status: ProjectResourceStatus) => database.projectResources.updateStatus(id, status));
-  ipcMain.handle('projects:resources:update-role', (_event, id: string, role: ProjectResourceRole) => database.projectResources.updateRole(id, role));
-  ipcMain.handle('projects:resources:link-node', (_event, id: string, nodeId: string) => database.projectResources.linkToNode(id, nodeId));
-  ipcMain.handle('projects:resources:unlink-node', (_event, id: string, nodeId: string) => database.projectResources.unlinkFromNode(id, nodeId));
+  ipcMain.handle('projects:resources:update-status', (_event, id: string, status: ProjectResourceStatus) =>guardedMutation(()=>database.projectResources.updateStatus(id, status)));
+  ipcMain.handle('projects:resources:update-role', (_event, id: string, role: ProjectResourceRole) =>guardedMutation(()=>database.projectResources.updateRole(id, role)));
+  ipcMain.handle('projects:resources:link-node', (_event, id: string, nodeId: string) =>guardedMutation(()=>database.projectResources.linkToNode(id, nodeId)));
+  ipcMain.handle('projects:resources:unlink-node', (_event, id: string, nodeId: string) =>guardedMutation(()=>database.projectResources.unlinkFromNode(id, nodeId)));
   ipcMain.handle('projects:resources:open-file', async (_event, id: string) => {
     const error = await shell.openPath(database.projectResources.absolutePath(id));
     return { ok: !error, error: error || null };
@@ -807,7 +819,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       properties: ['openFile'],
     });
     if (selection.canceled || selection.filePaths.length === 0) return null;
-    return database.projectResources.relocalize(id, selection.filePaths[0]);
+    return guardedMutation(()=>database.projectResources.relocalize(id, selection.filePaths[0]));
   });
 
   ipcMain.handle('projects:technical:list', (_event, projectId: string, search?: string | null) => database.projectTechnicalLibrary.list(projectId, search));

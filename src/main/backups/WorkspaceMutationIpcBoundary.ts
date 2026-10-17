@@ -12,3 +12,12 @@ export function guardIpcMutation<TArgs extends unknown[], TResult>(
 ): (...args: TArgs) => Promise<TResult> {
   return (...args: TArgs) => gate.runMutation(() => handler(...args));
 }
+
+/** Optional boundary for incremental migration: older isolated fixtures retain
+ * their synchronous return shape when no gate was supplied. */
+export function runWorkspaceMutationIfAvailable<T>(
+  gate: WorkspaceMutationGate | undefined,
+  work: () => T,
+): T | Promise<T> {
+  return gate ? gate.runMutation(work) : work();
+}

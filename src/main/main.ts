@@ -5,6 +5,7 @@ import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { join } from 'node:path';
 import {windowBrandIcon} from './windowBranding';
 import { registerBusinessBackupsIpcHandlers } from './backups/businessBackupsIpc';
+import { WorkspaceMutationGate } from './backups/WorkspaceMutationGate';
 import { DatabaseService } from './database/DatabaseService';
 import { registerIpcHandlers } from './ipc';
 import { registerOperationsIpcHandlers } from './operations/operationsIpc';
@@ -112,7 +113,9 @@ async function bootstrap(): Promise<void> {
 
   database = new DatabaseService(workspace);
   await database.initialize();
-  registerIpcHandlers(database, workspace);
+  // Shared gate for the first guarded IPC routes. Full backup remains unavailable.
+  const ec04MutationGate = new WorkspaceMutationGate();
+  registerIpcHandlers(database, workspace, ec04MutationGate);
   registerOperationsIpcHandlers(database);
   registerReferentialsIpcHandlers(database);
   registerBusinessBackupsIpcHandlers(database);
