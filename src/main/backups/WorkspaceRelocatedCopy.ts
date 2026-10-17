@@ -10,12 +10,13 @@
 import {createHash} from 'node:crypto';
 import {
   constants, copyFileSync, existsSync, lstatSync, mkdirSync,
-  realpathSync, rmdirSync, writeFileSync, unlinkSync,
+  readFileSync, realpathSync, rmdirSync, statSync, writeFileSync, unlinkSync,
 } from 'node:fs';
 import {createReadStream} from 'node:fs';
 import {dirname, isAbsolute, join, relative, resolve, sep} from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
 import {planProjectResourceRelocations} from './WorkspaceRelocationPlan';
+import {inventoryWorkspaceFiles} from './WorkspaceFileInventory';
 import {inspectWorkspacePortabilityRisks} from './WorkspacePortabilityPreflight';
 import {verifyRestoredWorkspaceAgainstManifest, type Ec04ArchiveManifest} from './WorkspacePortableArchive';
 
@@ -100,6 +101,121 @@ function checkDb(dbPath: string): void {
  * resource subfolders per project. On ANY failure the destination is either
  * absent or retains an INCOMPLETE marker and must not be used by the app.
  */
+
+/**
+ * Read-only verification of a relocated COPY against both the unchanged B1
+ * source and the explicit relocation receipt. Unlike B1 verification, its
+ * SQLite digest MUST differ from the original manifest when roots change.
+ * It does not authenticate the receipt or certify application bootability.
+ */
+async function verifyRelocatedWorkspaceInternal(
+  input: Ec04RelocatedCopyRequest,
+  receipt: Ec04RelocationReceipt,
+  allowIncompleteMarker: boolean,
+): Promise<void> {
+  const from = resolve(input.restoredWorkspaceRoot);
+  const to = resolve(input.newWorkspaceRoot);
+  const marker = join(to, '.EC04-RELOCATION-INCOMPLETE');
+  if (existsIncludingDanglingLink(marker) !== allowIncompleteMarker) {
+    throw Error('EC04 : marqueur de migration incohérent.');
+  }
+  if (receipt.format !== 'ec04-relocated-copy-v1' ||
+      receipt.originManifestId !== input.originalManifest.id ||
+      receipt.beforeSqliteSha256 !== input.originalManifest.files[0]?.sha256 ||
+      receipt.crossPcCertified !== false ||
+      receipt.fullReferenceCoverage !== false ||
+      receipt.portableSecretsCertified !== false) {
+    throw Error('EC04 : reçu de relocalisation incompatible.');
+  }
+  await verifyRestoredWorkspaceAgainstManifest(from, input.originalManifest);
+  const originalDb = join(from, 'data', 'atoumweb-manager.sqlite');
+  const copiedDb = join(to, 'data', 'atoumweb-manager.sqlite');
+  safeSourceFile(copiedDb, to);
+  if (existsIncludingDanglingLink(copiedDb + '-wal') ||
+      existsIncludingDanglingLink(copiedDb + '-shm')) {
+    throw Error('EC04 : journal SQLite inattendu dans le workspace relocalisé.');
+  }
+  if (await sha256File(copiedDb) !== receipt.afterSqliteSha256) {
+    throw Error('EC04 : empreinte SQLite relocalisée incorrecte.');
+  }
+  checkDb(copiedDb);
+  const plan = planProjectResourceRelocations(originalDb, input.originalWorkspaceRoot, to);
+  if (plan.unavailableSchema.length || plan.proposals.some(p => p.status !== 'proposed')) {
+    throw Error('EC04 : plan source non relocalisable.');
+  }
+  const expectedAssets = input.originalManifest.files.slice(1);
+  if (receipt.relocatedProjects !== plan.proposals.length ||
+      receipt.recreatedResourceFolders !== plan.proposals.length * EC04_RESOURCE_FOLDERS.length ||
+      receipt.copiedAssetFiles !== expectedAssets.length) {
+    throw Error('EC04 : compteurs du reçu de relocalisation incorrects.');
+  }
+  const db = new DatabaseSync(copiedDb, {readOnly: true});
+  try {
+    const ledger = db.prepare('SELECT id,name FROM schema_migrations ORDER BY id').all();
+    if (JSON.stringify(ledger.map(row => ({id:Number(row.id),name:String(row.name)}))) !==
+        JSON.stringify(input.originalManifest.migrations)) {
+      throw Error('EC04 : migrations du workspace relocalisé différentes du manifeste.');
+    }
+    const rows = db.prepare('SELECT id,resource_root_path FROM projects WHERE resource_root_path IS NOT NULL').all();
+    if (rows.length !== plan.proposals.length || rows.some(row =>
+        !plan.proposals.some(p => p.projectId === row.id &&
+          p.destinationPath === row.resource_root_path))) {
+      throw Error('EC04 : chemin projet relocalisé incorrect.');
+    }
+  } finally { db.close(); }
+
+  for (const p of plan.proposals) {
+    if (!p.destinationPath || !within(to, resolve(p.destinationPath))) {
+      throw Error('EC04 : chemin de projet hors workspace.');
+    }
+    for (const folder of EC04_RESOURCE_FOLDERS) {
+      const target = join(p.destinationPath, folder);
+      if (!within(to, target)) throw Error('EC04 : dossier Ressources hors workspace.');
+      let cursor = to;
+      for (const segment of relative(to, target).split(sep)) {
+        cursor = join(cursor, segment);
+        let stat: ReturnType<typeof lstatSync>;
+        try { stat = lstatSync(cursor); }
+        catch { throw Error('EC04 : dossier Ressources absent ou non sûr.'); }
+        if (!stat.isDirectory() || stat.isSymbolicLink()) {
+          throw Error('EC04 : dossier Ressources absent ou non sûr.');
+        }
+      }
+    }
+  }
+  // Independent inventory catches EXTRA files, missing files, replaced parent
+  // directories, junctions, Windows-case collisions and altered file hashes.
+  const inventory = await inventoryWorkspaceFiles(to);
+  const expected = expectedAssets.map(e => ({
+    relativePath:e.path.slice('workspace/'.length),
+    sizeBytes:e.sizeBytes, sha256:e.sha256,
+  })).sort((a,b)=>a.relativePath.localeCompare(b.relativePath));
+  const found = inventory.files.map(e => ({
+    relativePath:e.relativePath,sizeBytes:e.sizeBytes,sha256:e.sha256,
+  })).sort((a,b)=>a.relativePath.localeCompare(b.relativePath));
+  if (JSON.stringify(found) !== JSON.stringify(expected)) {
+    throw Error('EC04 : inventaire des fichiers relocalisés différent du manifeste.');
+  }
+}
+
+/** Post-migration check on an OFFLINE, non-production relocated copy. */
+export async function verifyRelocatedWorkspaceCopy(
+  input: Ec04RelocatedCopyRequest,
+): Promise<Ec04RelocationReceipt> {
+  const to = resolve(input.newWorkspaceRoot);
+  const file = join(to, '.EC04-RELOCATION-RECEIPT.json');
+  safeSourceFile(file, to);
+  if (statSync(file).size > 16 * 1024) throw Error('EC04 : reçu de migration trop volumineux.');
+  let receipt: Ec04RelocationReceipt;
+  try { receipt = JSON.parse(readFileSync(file,'utf8')) as Ec04RelocationReceipt; }
+  catch { throw Error('EC04 : reçu de relocalisation illisible.'); }
+  if (!receipt || typeof receipt !== 'object') {
+    throw Error('EC04 : structure de reçu de relocalisation incorrecte.');
+  }
+  await verifyRelocatedWorkspaceInternal(input, receipt, false);
+  return receipt;
+}
+
 export async function createRelocatedWorkspaceCopy(
   input: Ec04RelocatedCopyRequest,
 ): Promise<Ec04RelocationReceipt> {
@@ -227,6 +343,7 @@ export async function createRelocatedWorkspaceCopy(
     // Receipt acknowledges intentional DB hash change. It is NOT the B1
     // manifest and DOES NOT authenticate a restored application.
     writeFileSync(join(to, '.EC04-RELOCATION-RECEIPT.json'), JSON.stringify(receipt,null,2), {flag:'wx'});
+    await verifyRelocatedWorkspaceInternal(input, receipt, true);
     unlinkSync(incomplete);
     return receipt;
   } catch (e) {

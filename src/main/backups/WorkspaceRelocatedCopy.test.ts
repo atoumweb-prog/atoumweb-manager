@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {dirname,join} from 'node:path';
 import {afterEach,beforeEach,describe,expect,it} from 'vitest';
 import {createOfflineWorkspaceArchive,restoreOfflineArchiveToNewWorkspace,verifyRestoredWorkspaceAgainstManifest} from './WorkspacePortableArchive';
-import {createRelocatedWorkspaceCopy,EC04_RESOURCE_FOLDERS} from './WorkspaceRelocatedCopy';
+import {createRelocatedWorkspaceCopy,verifyRelocatedWorkspaceCopy,EC04_RESOURCE_FOLDERS} from './WorkspaceRelocatedCopy';
 import {ProjectResourceService} from '../projects/ProjectResourceService';
 import type {DatabaseAdapter} from '../database/DatabaseAdapter';
 
@@ -131,6 +131,51 @@ describe('EC04 restored-copy relocation integration (offline fixtures)',()=>{
     expect(existsSync(join(migrated,'.EC04-RELOCATION-INCOMPLETE'))).toBe(true);
     expect(readFileSync(bad,'utf8')).toBe('not a directory');
     await expect(verifyRestoredWorkspaceAgainstManifest(restored,manifest)).resolves.toBeDefined();
+  });
+
+  it('verifies the relocated copy independently after successful migration',async()=>{
+    await restoreFixture();
+    const receipt=await run();
+    const verified=await verifyRelocatedWorkspaceCopy({
+      restoredWorkspaceRoot:restored,originalWorkspaceRoot:root,
+      newWorkspaceRoot:migrated,originalManifest:manifest,
+    });
+    expect(verified).toEqual(receipt);
+    expect(existsSync(join(migrated,'.EC04-RELOCATION-INCOMPLETE'))).toBe(false);
+  });
+
+  it('rejects any unexpected file in an owned tree after migration',async()=>{
+    await restoreFixture();
+    await run();
+    const untracked=join(migrated,'projets-internes','i1','Ressources','stray.txt');
+    writeFileSync(untracked,'unexpected');
+    await expect(verifyRelocatedWorkspaceCopy({
+      restoredWorkspaceRoot:restored,originalWorkspaceRoot:root,
+      newWorkspaceRoot:migrated,originalManifest:manifest,
+    })).rejects.toThrow(/inventaire des fichiers relocalisés/);
+  });
+
+  it('rejects a required folder deleted after migration',async()=>{
+    await restoreFixture();
+    await run();
+    rmSync(join(migrated,'projets-internes','i1','Ressources','07 Archives'),{recursive:true});
+    await expect(verifyRelocatedWorkspaceCopy({
+      restoredWorkspaceRoot:restored,originalWorkspaceRoot:root,
+      newWorkspaceRoot:migrated,originalManifest:manifest,
+    })).rejects.toThrow(/dossier Ressources absent ou non sûr/);
+  });
+
+  it('rejects a forged post-migration SQLite checksum in the receipt',async()=>{
+    await restoreFixture();
+    await run();
+    const receiptFile=join(migrated,'.EC04-RELOCATION-RECEIPT.json');
+    const receipt=JSON.parse(readFileSync(receiptFile,'utf8'));
+    receipt.afterSqliteSha256='f'.repeat(64);
+    writeFileSync(receiptFile,JSON.stringify(receipt));
+    await expect(verifyRelocatedWorkspaceCopy({
+      restoredWorkspaceRoot:restored,originalWorkspaceRoot:root,
+      newWorkspaceRoot:migrated,originalManifest:manifest,
+    })).rejects.toThrow(/empreinte SQLite relocalisée incorrecte/);
   });
 
 });
