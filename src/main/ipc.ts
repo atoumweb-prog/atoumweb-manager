@@ -392,17 +392,17 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('client-documents:archive',(_event,id:string,archived?:boolean)=>guardedMutation(()=>database.clientDocuments.archive(id,archived)));
   ipcMain.handle('client-documents:delete',async(_event,id:string)=>{const doc=database.clientDocuments.get(id);const answer=await dialog.showMessageBox({type:'warning',title:'Suppression définitive',message:`Supprimer définitivement « ${doc.title} » ?`,detail:'Le fichier physique et ses métadonnées seront supprimés. Cette action est irréversible.',buttons:['Annuler','Supprimer définitivement'],defaultId:0,cancelId:0});if(answer.response!==1)return{cancelled:true};return guardedMutation(()=>{database.clientDocuments.deletePermanently(id);return{cancelled:false};});});
   ipcMain.handle('client-documents:open-file',async(_event,id:string)=>{const error=await shell.openPath(database.clientDocuments.verifiedPath(id));if(error)throw Error(error);});
-  ipcMain.handle('client-documents:open-folder',async(_event,clientId:string)=>{const path=database.clientDocuments.clientRoot(clientId);const error=await shell.openPath(path);if(error)throw Error(error);});
+  ipcMain.handle('client-documents:open-folder',async(_event,clientId:string)=>{const path=await guardedMutation(()=>database.clientDocuments.clientRoot(clientId));const error=await shell.openPath(path);if(error)throw Error(error);});
 
   ipcMain.handle('billing:list', (_event, filters?: BillingItemFilters) => database.billingHandoff.list(filters));
   ipcMain.handle('billing:get', (_event, id: string) => database.billingHandoff.get(id));
-  ipcMain.handle('billing:change-status', (_event, id: string, status: BillingItemStatus) => database.billingHandoff.changeStatus(id, status));
-  ipcMain.handle('billing:update-invoice-metadata', (_event, id: string, input: BillingInvoiceInput) => database.billingHandoff.updateInvoiceMetadata(id, input));
+  ipcMain.handle('billing:change-status', (_event, id: string, status: BillingItemStatus) => guardedMutation(() => database.billingHandoff.changeStatus(id, status)));
+  ipcMain.handle('billing:update-invoice-metadata', (_event, id: string, input: BillingInvoiceInput) => guardedMutation(() => database.billingHandoff.updateInvoiceMetadata(id, input)));
   ipcMain.handle('billing:import-invoice', async (_event, id: string, input: BillingInvoiceInput = {}) => {
     const item = database.billingHandoff.get(id);
     const selection = await dialog.showOpenDialog({
       title: `Importer la facture PDF · ${item.clientLabel}`,
-      defaultPath: database.clientDocuments.clientRoot(item.clientAccountId),
+      defaultPath: await guardedMutation(() => database.clientDocuments.clientRoot(item.clientAccountId)),
       properties: ['openFile'],
       filters: [{ name: 'Factures PDF', extensions: ['pdf'] }],
     });
@@ -485,22 +485,22 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
 
   ipcMain.handle('contract-types:list', (_event, archived?: boolean) => database.contractTypes.list(archived));
   ipcMain.handle('contract-types:get', (_event, id: string) => database.contractTypes.get(id));
-  ipcMain.handle('contract-types:create', (_event, code: string, input: import('../shared/contractTypes').ContractTypeVersionInput) => database.contractTypes.create(code,input));
-  ipcMain.handle('contract-types:create-version', (_event, id: string, input: import('../shared/contractTypes').ContractTypeVersionInput) => database.contractTypes.createVersion(id,input));
-  ipcMain.handle('contract-types:update-draft', (_event, id: string, input: import('../shared/contractTypes').ContractTypeVersionInput) => database.contractTypes.updateDraft(id,input));
-  ipcMain.handle('contract-types:publish', (_event, id: string) => database.contractTypes.publish(id));
-  ipcMain.handle('contract-types:status', (_event, id: string, status: ContractClauseStatus) => database.contractTypes.setStatus(id,status));
+  ipcMain.handle('contract-types:create', (_event, code: string, input: import('../shared/contractTypes').ContractTypeVersionInput) => guardedMutation(() => database.contractTypes.create(code,input)));
+  ipcMain.handle('contract-types:create-version', (_event, id: string, input: import('../shared/contractTypes').ContractTypeVersionInput) => guardedMutation(() => database.contractTypes.createVersion(id,input)));
+  ipcMain.handle('contract-types:update-draft', (_event, id: string, input: import('../shared/contractTypes').ContractTypeVersionInput) => guardedMutation(() => database.contractTypes.updateDraft(id,input)));
+  ipcMain.handle('contract-types:publish', (_event, id: string) => guardedMutation(() => database.contractTypes.publish(id)));
+  ipcMain.handle('contract-types:status', (_event, id: string, status: ContractClauseStatus) => guardedMutation(() => database.contractTypes.setStatus(id,status)));
   ipcMain.handle('contract-types:catalog', (_event, id: string) => database.contractTypes.catalog(id));
-  ipcMain.handle('contract-types:set-catalog', (_event, id: string, ids: string[]) => database.contractTypes.setCatalog(id,ids));
-  ipcMain.handle('contract-types:initialize', () => database.contractTypes.initialize());
+  ipcMain.handle('contract-types:set-catalog', (_event, id: string, ids: string[]) => guardedMutation(() => database.contractTypes.setCatalog(id,ids)));
+  ipcMain.handle('contract-types:initialize', () => guardedMutation(() => database.contractTypes.initialize()));
   ipcMain.handle('contract-terms:section:get', (_event, versionId:string) => database.contractSectionReviews.get(versionId));
-  ipcMain.handle('contract-terms:section:propose', (_event, versionId:string, sectionKey:import('../shared/contractSectionPolicy').ContractSectionKey, rankInSection:number, reason:string) => database.contractSectionReviews.propose(versionId,sectionKey,rankInSection,reason));
-  ipcMain.handle('contract-terms:section:approve', (_event, versionId:string, reviewer:string) => database.contractSectionReviews.approve(versionId,reviewer));
+  ipcMain.handle('contract-terms:section:propose', (_event, versionId:string, sectionKey:import('../shared/contractSectionPolicy').ContractSectionKey, rankInSection:number, reason:string) => guardedMutation(() => database.contractSectionReviews.propose(versionId,sectionKey,rankInSection,reason)));
+  ipcMain.handle('contract-terms:section:approve', (_event, versionId:string, reviewer:string) => guardedMutation(() => database.contractSectionReviews.approve(versionId,reviewer)));
   ipcMain.handle('contract-terms:library:list', (_event, includeArchived?: boolean) => database.contractTerms.listTemplates(Boolean(includeArchived)));
   ipcMain.handle('contract-terms:library:get', (_event, id: string) => database.contractTerms.getTemplate(id));
-  ipcMain.handle('contract-terms:library:create', (_event, input: ContractClauseTemplateInput, firstVersion: ContractClauseVersionInput) => database.contractTerms.createTemplate(input, firstVersion));
-  ipcMain.handle('contract-terms:library:create-version', (_event, clauseId: string, input: ContractClauseVersionInput) => database.contractTerms.createVersion(clauseId, input));
-  ipcMain.handle('contract-terms:library:publish-version', (_event, versionId: string) => database.contractTerms.publishVersion(versionId));
+  ipcMain.handle('contract-terms:library:create', (_event, input: ContractClauseTemplateInput, firstVersion: ContractClauseVersionInput) => guardedMutation(() => database.contractTerms.createTemplate(input, firstVersion)));
+  ipcMain.handle('contract-terms:library:create-version', (_event, clauseId: string, input: ContractClauseVersionInput) => guardedMutation(() => database.contractTerms.createVersion(clauseId, input)));
+  ipcMain.handle('contract-terms:library:publish-version', (_event, versionId: string) => guardedMutation(() => database.contractTerms.publishVersion(versionId)));
   // Short-lived in-memory review only: never trust a renderer-supplied Word body.
   const wordSessions=new Map<string,{manifest:WordDraftManifest;text:string;expiresAt:number}>();
   const clauseDraft=(clauseId:string,versionId:string)=>{
@@ -570,7 +570,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('contract-terms:word:cancel',(_event,sessionId:string)=>{
     wordSessions.delete(sessionId);
   });
-  ipcMain.handle('contract-terms:word:approve',(_event,sessionId:string)=>{
+  ipcMain.handle('contract-terms:word:approve',(_event,sessionId:string)=>guardedMutation(()=>{
+    // Recheck session after waiting for an EC04 capture; an expired or
+    // cancelled review must never create a new contract draft.
     const session=wordSessions.get(sessionId);
     if(!session||Date.now()>session.expiresAt){
       wordSessions.delete(sessionId);
@@ -579,20 +581,20 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     const result=database.contractTerms.createReviewedWordDraft(session.manifest,session.text);
     wordSessions.delete(sessionId);
     return result;
-  });
+  }));
 
-  ipcMain.handle('contract-terms:library:set-status', (_event, id: string, status: ContractClauseStatus) => database.contractTerms.setTemplateStatus(id, status));
-  ipcMain.handle('contract-terms:library:set-audience', (_event, id: string, audience: ContractClauseAudience) => database.contractTerms.setTemplateAudience(id, audience));
-  ipcMain.handle('contract-terms:library:set-catalog-links', (_event, id: string, catalogItemIds: string[]) => database.contractTerms.setCatalogLinks(id, catalogItemIds));
+  ipcMain.handle('contract-terms:library:set-status', (_event, id: string, status: ContractClauseStatus) => guardedMutation(() => database.contractTerms.setTemplateStatus(id, status)));
+  ipcMain.handle('contract-terms:library:set-audience', (_event, id: string, audience: ContractClauseAudience) => guardedMutation(() => database.contractTerms.setTemplateAudience(id, audience)));
+  ipcMain.handle('contract-terms:library:set-catalog-links', (_event, id: string, catalogItemIds: string[]) => guardedMutation(() => database.contractTerms.setCatalogLinks(id, catalogItemIds)));
   ipcMain.handle('contract-terms:quotes:presentation', (_event, id: string) => database.contractTerms.presentation(id));
   ipcMain.handle('contract-terms:quotes:get', (_event, quoteId: string) => database.contractTerms.getQuoteBuild(quoteId));
-  ipcMain.handle('contract-terms:quotes:propose-update', (_event,quoteId:string)=>database.contractTerms.proposeQuoteUpdate(quoteId));
-  ipcMain.handle('contract-terms:quotes:sync', (_event, quoteId: string,token:string) => database.contractTerms.applyQuoteUpdate(quoteId,token));
-  ipcMain.handle('contract-terms:quotes:add-custom', (_event, quoteId: string, input: QuoteContractClauseInput) => database.contractTerms.addCustomQuoteClause(quoteId, input));
-  ipcMain.handle('contract-terms:quotes:update-clause', (_event, id: string, input: QuoteContractClauseUpdate) => database.contractTerms.updateQuoteClause(id, input));
-  ipcMain.handle('contract-terms:quotes:reset-clause', (_event, id: string) => database.contractTerms.resetQuoteClause(id));
-  ipcMain.handle('contract-terms:quotes:remove-custom', (_event, id: string) => database.contractTerms.removeCustomQuoteClause(id));
-  ipcMain.handle('contract-terms:quotes:reorder', (_event, quoteId: string, clauseIds: string[]) => database.contractTerms.reorderQuoteClauses(quoteId, clauseIds));
+  ipcMain.handle('contract-terms:quotes:propose-update', (_event,quoteId:string)=> guardedMutation(() => database.contractTerms.proposeQuoteUpdate(quoteId)));
+  ipcMain.handle('contract-terms:quotes:sync', (_event, quoteId: string,token:string) => guardedMutation(() => database.contractTerms.applyQuoteUpdate(quoteId,token)));
+  ipcMain.handle('contract-terms:quotes:add-custom', (_event, quoteId: string, input: QuoteContractClauseInput) => guardedMutation(() => database.contractTerms.addCustomQuoteClause(quoteId, input)));
+  ipcMain.handle('contract-terms:quotes:update-clause', (_event, id: string, input: QuoteContractClauseUpdate) => guardedMutation(() => database.contractTerms.updateQuoteClause(id, input)));
+  ipcMain.handle('contract-terms:quotes:reset-clause', (_event, id: string) => guardedMutation(() => database.contractTerms.resetQuoteClause(id)));
+  ipcMain.handle('contract-terms:quotes:remove-custom', (_event, id: string) => guardedMutation(() => database.contractTerms.removeCustomQuoteClause(id)));
+  ipcMain.handle('contract-terms:quotes:reorder', (_event, quoteId: string, clauseIds: string[]) => guardedMutation(() => database.contractTerms.reorderQuoteClauses(quoteId, clauseIds)));
   ipcMain.handle('contract-terms:preview-reference', (_event,typeId:string,typeVersionId:string,versionId:string,audience:import('../shared/contractTerms').QuoteContractAudience) => database.contractTerms.previewReference(typeId,typeVersionId,versionId,audience));
   ipcMain.handle('contract-terms:import-docx-text',async()=>{
     const selection=await dialog.showOpenDialog({
@@ -624,51 +626,51 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   });
 
   ipcMain.handle('quote-preparation:get', (_event,id:string)=>database.quotePreparation.get(id));
-  ipcMain.handle('quote-preparation:save', (_event,id:string,input:QuoteContractParameters,expected?:{parameters:QuoteContractParameters|null})=>database.quotePreparation.save(id,input,expected));
+  ipcMain.handle('quote-preparation:save', (_event,id:string,input:QuoteContractParameters,expected?:{parameters:QuoteContractParameters|null})=> guardedMutation(() => database.quotePreparation.save(id,input,expected)));
   ipcMain.handle('quote-preparation:administration', ()=>database.quotePreparation.administration());
-  ipcMain.handle('quote-preparation:save-administration', (_event,input:ContractAdministration,expected?:ContractAdministration)=>database.quotePreparation.saveAdministration(input,expected));
-  ipcMain.handle('quote-preparation:attach', (_event,id:string,input:ContractDocumentLinkInput)=>{
+  ipcMain.handle('quote-preparation:save-administration', (_event,input:ContractAdministration,expected?:ContractAdministration)=> guardedMutation(() => database.quotePreparation.saveAdministration(input,expected)));
+  ipcMain.handle('quote-preparation:attach', (_event,id:string,input:ContractDocumentLinkInput)=>guardedMutation(()=>{
     if(input.role==='accepted_pdf')database.quotes.attachContractDocument(id,input.documentId,undefined,input.replacementReason);
     else database.quotePreparation.attach(id,input);
     return database.quotePreparation.get(id);
-  });
-  ipcMain.handle('quote-preparation:record-acceptance', (_event,id:string,statement:string,occurredAt:string,provenance:string)=>database.quotePreparation.recordAcceptance(id,statement,occurredAt,provenance));
+  }));
+  ipcMain.handle('quote-preparation:record-acceptance', (_event,id:string,statement:string,occurredAt:string,provenance:string)=> guardedMutation(() => database.quotePreparation.recordAcceptance(id,statement,occurredAt,provenance)));
   ipcMain.handle('quote-preparation:open-document', async (_event,id:string)=>{const error=await shell.openPath(database.quotePreparation.openLinked(id));if(error)throw Error(error);});
   ipcMain.handle('quote-preparation:import-document', async (_event,id:string,role:ContractDocumentRole,provenance:string)=>{
     database.quotes.get(id);
     const selection=await dialog.showOpenDialog({title:'Rattacher une annexe / preuve au devis',properties:['openFile']});
     if(selection.canceled)return null;
-    return database.quotePreparation.importPath(id,role,provenance,selection.filePaths[0]);
+    return guardedMutation(() => database.quotePreparation.importPath(id,role,provenance,selection.filePaths[0]));
   });
-  ipcMain.handle('quotes:set-line-parameters',(_event,lineId:string,parameters:import('../shared/commercialRules').QuoteLineParameters)=>database.quotes.setLineParameters(lineId,parameters));
+  ipcMain.handle('quotes:set-line-parameters',(_event,lineId:string,parameters:import('../shared/commercialRules').QuoteLineParameters)=> guardedMutation(() => database.quotes.setLineParameters(lineId,parameters)));
   ipcMain.handle('quotes:preparation-issues',(_event,id:string)=>database.quotes.preparationIssues(id));
-  ipcMain.handle('quotes:assign-operational-target',(_event,id:string,input:{projectId:string;siteId?:string|null;contextNodeId?:string|null;author:string})=>database.quotes.assignOperationalTarget(id,input));
+  ipcMain.handle('quotes:assign-operational-target',(_event,id:string,input:{projectId:string;siteId?:string|null;contextNodeId?:string|null;author:string})=> guardedMutation(() => database.quotes.assignOperationalTarget(id,input)));
   ipcMain.handle('quotes:operational-sales-for-client',(_event,id:string)=>database.quotes.operationalSalesForClient(id));
   ipcMain.handle('quotes:operational-sales',(_event,id:string)=>database.quotes.operationalSales(id));
   ipcMain.handle('quotes:list', (_event, filters?: QuoteFilters) => database.quotes.list(filters));
   ipcMain.handle('quotes:get', (_event, id: string) => database.quotes.get(id));
-  ipcMain.handle('quotes:create-with-lines', (_event, input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>) => database.quotes.createWithLines(input,lines));
-  ipcMain.handle('quotes:create', (_event, input: QuoteInput) => database.quotes.create(input));
-  ipcMain.handle('quotes:add-catalog-line', (_event, quoteId: string, catalogVersionId: string, input?: Partial<QuoteLineInput>) => database.quotes.addCatalogLine(quoteId, catalogVersionId, input));
-  ipcMain.handle('quotes:select-offer-option', (_event, offerLineId: string, componentId: string, input?: Partial<QuoteLineInput>) => database.quotes.selectOfferOption(offerLineId, componentId, input));
-  ipcMain.handle('quotes:deselect-offer-option', (_event, offerLineId: string, componentId: string) => database.quotes.deselectOfferOption(offerLineId, componentId));
-  ipcMain.handle('quotes:add-custom-line', (_event, quoteId: string, input: QuoteLineInput) => database.quotes.addCustomLine(quoteId, input));
-  ipcMain.handle('quotes:update-line', (_event, lineId: string, input: QuoteLineInput) => database.quotes.updateLine(lineId, input));
-  ipcMain.handle('quotes:remove-line', (_event, lineId: string) => database.quotes.removeLine(lineId));
-  ipcMain.handle('quotes:update-conditions', (_event, quoteId: string, input: Partial<QuoteInput>) => database.quotes.updateConditions(quoteId, input));
+  ipcMain.handle('quotes:create-with-lines', (_event, input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>) => guardedMutation(() => database.quotes.createWithLines(input,lines)));
+  ipcMain.handle('quotes:create', (_event, input: QuoteInput) => guardedMutation(() => database.quotes.create(input)));
+  ipcMain.handle('quotes:add-catalog-line', (_event, quoteId: string, catalogVersionId: string, input?: Partial<QuoteLineInput>) => guardedMutation(() => database.quotes.addCatalogLine(quoteId, catalogVersionId, input)));
+  ipcMain.handle('quotes:select-offer-option', (_event, offerLineId: string, componentId: string, input?: Partial<QuoteLineInput>) => guardedMutation(() => database.quotes.selectOfferOption(offerLineId, componentId, input)));
+  ipcMain.handle('quotes:deselect-offer-option', (_event, offerLineId: string, componentId: string) => guardedMutation(() => database.quotes.deselectOfferOption(offerLineId, componentId)));
+  ipcMain.handle('quotes:add-custom-line', (_event, quoteId: string, input: QuoteLineInput) => guardedMutation(() => database.quotes.addCustomLine(quoteId, input)));
+  ipcMain.handle('quotes:update-line', (_event, lineId: string, input: QuoteLineInput) => guardedMutation(() => database.quotes.updateLine(lineId, input)));
+  ipcMain.handle('quotes:remove-line', (_event, lineId: string) => guardedMutation(() => database.quotes.removeLine(lineId)));
+  ipcMain.handle('quotes:update-conditions', (_event, quoteId: string, input: Partial<QuoteInput>) => guardedMutation(() => database.quotes.updateConditions(quoteId, input)));
   ipcMain.handle('quotes:transmission-state',(_event,id:string)=>database.quotes.transmissionState(id));
-  ipcMain.handle('quotes:resume-draft',(_event,id:string,preparationId:string)=>database.quotes.resumeDraft(id,preparationId));
-  ipcMain.handle('quotes:mark-sent', (_event, id: string,input:QuoteSendAttestation) => database.quotes.markSent(id,input));
-  ipcMain.handle('quotes:principle-agreement:confirm', (_event, id: string) => database.quotes.confirmPrincipleAgreement(id));
-  ipcMain.handle('quotes:principle-agreement:revoke', (_event, id: string) => database.quotes.revokePrincipleAgreement(id));
-  ipcMain.handle('quotes:finalize',(_event,id:string,canonicalReview?:boolean)=>database.quotes.finalize(id,canonicalReview===true));
-  ipcMain.handle('quotes:extend-validity',(_event,id:string,validUntil:string)=>database.quotes.extendValidity(id,validUntil));
-  ipcMain.handle('quotes:mark-viewed', (_event, id: string) => database.quotes.markViewed(id));
-  ipcMain.handle('quotes:accept', (_event, id: string) => database.quotes.accept(id));
-  ipcMain.handle('quotes:refuse', (_event, id: string) => database.quotes.refuse(id));
-  ipcMain.handle('quotes:expire', (_event, id: string) => database.quotes.expire(id));
-  ipcMain.handle('quotes:duplicate', (_event, id: string) => database.quotes.duplicate(id));
-  ipcMain.handle('quotes:commercial-revision', (_event, id: string) => database.quotes.duplicate(id,true));
+  ipcMain.handle('quotes:resume-draft',(_event,id:string,preparationId:string)=> guardedMutation(() => database.quotes.resumeDraft(id,preparationId)));
+  ipcMain.handle('quotes:mark-sent', (_event, id: string,input:QuoteSendAttestation) => guardedMutation(() => database.quotes.markSent(id,input)));
+  ipcMain.handle('quotes:principle-agreement:confirm', (_event, id: string) => guardedMutation(() => database.quotes.confirmPrincipleAgreement(id)));
+  ipcMain.handle('quotes:principle-agreement:revoke', (_event, id: string) => guardedMutation(() => database.quotes.revokePrincipleAgreement(id)));
+  ipcMain.handle('quotes:finalize',(_event,id:string,canonicalReview?:boolean)=> guardedMutation(() => database.quotes.finalize(id,canonicalReview===true)));
+  ipcMain.handle('quotes:extend-validity',(_event,id:string,validUntil:string)=> guardedMutation(() => database.quotes.extendValidity(id,validUntil)));
+  ipcMain.handle('quotes:mark-viewed', (_event, id: string) => guardedMutation(() => database.quotes.markViewed(id)));
+  ipcMain.handle('quotes:accept', (_event, id: string) => guardedMutation(() => database.quotes.accept(id)));
+  ipcMain.handle('quotes:refuse', (_event, id: string) => guardedMutation(() => database.quotes.refuse(id)));
+  ipcMain.handle('quotes:expire', (_event, id: string) => guardedMutation(() => database.quotes.expire(id)));
+  ipcMain.handle('quotes:duplicate', (_event, id: string) => guardedMutation(() => database.quotes.duplicate(id)));
+  ipcMain.handle('quotes:commercial-revision', (_event, id: string) => guardedMutation(() => database.quotes.duplicate(id,true)));
   ipcMain.handle('quotes:import-contract-document', async (_event, id: string, abbyReference?: string | null) => {
     const quote = database.quotes.get(id);
     if (quote.status !== 'accepted') throw new Error('Le devis doit être accepté avant d’importer le document contractuel.');
@@ -676,22 +678,30 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     if (!clientId) throw new Error('Client introuvable pour ce devis.');
     const selection = await dialog.showOpenDialog({
       title: `Importer le devis contractuel Abby · ${quote.number}`,
-      defaultPath: database.clientDocuments.clientRoot(clientId),
+      defaultPath: await guardedMutation(() => database.clientDocuments.clientRoot(clientId)),
       properties: ['openFile'],
       filters: [{ name: 'Devis / contrat PDF', extensions: ['pdf'] }],
     });
     if (selection.canceled || selection.filePaths.length === 0) return null;
     let replacementReason: string|undefined;
     if(quote.contractDocumentId){const answer=await dialog.showMessageBox({type:'question',title:'Remplacer le PDF contractuel',message:'Confirmer un nouveau PDF actif ? L’ancien reste relié au devis et protégé.',buttons:['Annuler','Conserver l’ancien et rattacher le nouveau'],defaultId:0,cancelId:0});if(answer.response!==1)return null;replacementReason='Remplacement confirmé explicitement dans le dialogue d’import';}
-    const before = new Set(database.clientDocuments.list(clientId, true).map((document) => document.id));
-    const imported = database.clientDocuments.importPaths(clientId, [selection.filePaths[0]], {
-      category: 'contract',
-      title: `Devis contractuel ${quote.number}`,
-      notes: `Document Abby accepté rattaché au devis ${quote.number}.`,
+    return guardedMutation(() => {
+      const current = database.quotes.get(id);
+      if (current.status !== 'accepted') throw new Error('Le devis a changé : actualise la fiche.');
+      const currentClientId = current.acceptedClientAccountId ?? current.clientAccountId;
+      if (currentClientId !== clientId || current.contractDocumentId !== quote.contractDocumentId) {
+        throw new Error('Le devis ou son PDF contractuel a changé pendant la confirmation. Actualise la fiche.');
+      }
+      const before = new Set(database.clientDocuments.list(clientId, true).map((document) => document.id));
+      const imported = database.clientDocuments.importPaths(clientId, [selection.filePaths[0]], {
+        category: 'contract',
+        title: `Devis contractuel ${current.number}`,
+        notes: `Document Abby accepté rattaché au devis ${current.number}.`,
+      });
+      const document = imported.find((candidate) => !before.has(candidate.id));
+      if (!document) throw new Error('Le document contractuel n’a pas pu être identifié après import.');
+      return database.quotes.attachContractDocument(id, document.id, abbyReference, replacementReason);
     });
-    const document = imported.find((candidate) => !before.has(candidate.id));
-    if (!document) throw new Error('Le document contractuel n’a pas pu être identifié après import.');
-    return database.quotes.attachContractDocument(id, document.id, abbyReference, replacementReason);
   });
   ipcMain.handle('quotes:open-contract-document', async (_event, id: string) => {
     const quote = database.quotes.get(id);
@@ -700,13 +710,15 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     const error = await shell.openPath(link?database.quotePreparation.openLinked(link.id):database.clientDocuments.verifiedPath(quote.contractDocumentId));
     if (error) throw new Error(error);
   });
-  ipcMain.handle('quotes:update-abby-reference', (_event, id: string, abbyReference?: string | null) => database.quotes.updateAbbyReference(id, abbyReference));
+  ipcMain.handle('quotes:update-abby-reference', (_event, id: string, abbyReference?: string | null) => guardedMutation(() => database.quotes.updateAbbyReference(id, abbyReference)));
 
-  ipcMain.handle('quotes:generate-pdf', async (_event, id: string) => {
-    const quote = database.quotes.get(id);
-    const contract = database.contractTerms.getQuoteBuild(id);
-    return generateQuotePdf({ ...quote, contractTextSnapshot: contract.snapshotState === 'historical_missing' ? quote.contractTextSnapshot : quoteContractText(contract) }, workspace, database.contractTerms.presentation(id));
-  });
+  ipcMain.handle('quotes:generate-pdf', async (_event, id: string) =>
+    guardedMutation(() => {
+      // Export doesn't acknowledge an actual send or mutate frozen clauses.
+      const quote = database.quotes.get(id);
+      const contract = database.contractTerms.getQuoteBuild(id);
+      return generateQuotePdf({ ...quote, contractTextSnapshot: contract.snapshotState === 'historical_missing' ? quote.contractTextSnapshot : quoteContractText(contract) }, workspace, database.contractTerms.presentation(id));
+    }));
 
   ipcMain.handle('projects:templates:list', () => database.projects.listTemplates());
   ipcMain.handle('projects:templates:get', (_event, id: string) => database.projects.getTemplate(id));
