@@ -818,7 +818,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('projects:add-prerequisite', (_event, projectId: string, input: ProjectPrerequisiteInput) => guardedMutation(() => database.projects.addPrerequisite(projectId, input)));
   ipcMain.handle('projects:update-prerequisite-status', (_event, id: string, status: ProjectPrerequisiteStatus) => guardedMutation(() => database.projects.updatePrerequisiteStatus(id, status)));
 
-  ipcMain.handle('projects:resources:list', (_event, projectId: string) => database.projectResources.list(projectId));
+  // ProjectResourceService.list() may UPDATE file_assets.missing_at while mapping.
+  ipcMain.handle('projects:resources:list', (_event, projectId: string) =>
+    guardedMutation(() => database.projectResources.list(projectId)));
   ipcMain.handle('projects:resources:import-files', async (_event, projectId: string, folder: ProjectResourceFolder, contentRole: ProjectResourceRole = 'other') => {
     const defaultPath = await guardedMutation(() => database.projectResources.projectResourceRoot(projectId));
     const selection = await dialog.showOpenDialog({
@@ -826,7 +828,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       defaultPath,
       properties: ['openFile', 'multiSelections'],
     });
-    if (selection.canceled || selection.filePaths.length === 0) return database.projectResources.list(projectId);
+    if (selection.canceled || selection.filePaths.length === 0) {
+      return guardedMutation(() => database.projectResources.list(projectId));
+    }
     return guardedMutation(()=>database.projectResources.importFilePaths(projectId, selection.filePaths, folder, contentRole));
   });
   ipcMain.handle('projects:resources:update-status', (_event, id: string, status: ProjectResourceStatus) =>guardedMutation(()=>database.projectResources.updateStatus(id, status)));
@@ -834,7 +838,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('projects:resources:link-node', (_event, id: string, nodeId: string) =>guardedMutation(()=>database.projectResources.linkToNode(id, nodeId)));
   ipcMain.handle('projects:resources:unlink-node', (_event, id: string, nodeId: string) =>guardedMutation(()=>database.projectResources.unlinkFromNode(id, nodeId)));
   ipcMain.handle('projects:resources:open-file', async (_event, id: string) => {
-    const error = await shell.openPath(database.projectResources.absolutePath(id));
+    // absolutePath(id) calls get() which can update missing_at: do it under the gate.
+    const path = await guardedMutation(() => database.projectResources.absolutePath(id));
+    const error = await shell.openPath(path);
     return { ok: !error, error: error || null };
   });
   ipcMain.handle('projects:resources:open-folder', async (_event, projectId: string) => {
@@ -843,14 +849,21 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     return { ok: !error, error: error || null };
   });
   ipcMain.handle('projects:resources:relocalize', async (_event, id: string) => {
-    const resource = database.projectResources.get(id);
+    const resource = await guardedMutation(() => database.projectResources.get(id));
     const selection = await dialog.showOpenDialog({
       title: `Relocaliser ${resource.fileName}`,
       defaultPath: workspace.root,
       properties: ['openFile'],
     });
     if (selection.canceled || selection.filePaths.length === 0) return null;
-    return guardedMutation(()=>database.projectResources.relocalize(id, selection.filePaths[0]));
+    return guardedMutation(() => {
+      const current = database.projectResources.get(id);
+      if (current.relativePath !== resource.relativePath ||
+          current.checksumSha256 !== resource.checksumSha256) {
+        throw new Error('La ressource a changé dans une autre fenêtre. Actualise avant de relocaliser.');
+      }
+      return database.projectResources.relocalize(id, selection.filePaths[0]);
+    });
   });
 
   ipcMain.handle('projects:technical:list', (_event, projectId: string, search?: string | null) => database.projectTechnicalLibrary.list(projectId, search));
