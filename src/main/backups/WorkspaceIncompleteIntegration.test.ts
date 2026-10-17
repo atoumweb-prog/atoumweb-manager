@@ -59,11 +59,11 @@ describe('EC04 incomplete markers at actual Manager workspace entrypoints',()=>{
     expect(resolveWorkspace().root).toBe(initial);
   });
 
-  it('retains the legacy fallback for malformed bootstrap JSON',()=>{
-    writeFileSync(join(electronPaths.userData,'workspace.json'),'{ invalid json');
-    const result=resolveWorkspace();
-    expect(result.root).toBe(join(electronPaths.documents,'AtoumWeb Manager'));
-    expect(existsSync(result.dataDirectory)).toBe(true);
+  it.each(['{ invalid json','{}','null','{"workspaceRoot":"relative-folder"}'])('refuses invalid existing bootstrap without silent fallback: %s',raw=>{
+    const config=join(electronPaths.userData,'workspace.json');writeFileSync(config,raw);
+    expect(()=>resolveWorkspace()).toThrow(/Impossible de charger/);
+    expect(readFileSync(config,'utf8')).toBe(raw);
+    expect(existsSync(join(electronPaths.documents,'AtoumWeb Manager'))).toBe(false);
   });
 
   it('also refuses an incomplete DEFAULT workspace',()=>{

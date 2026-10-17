@@ -27,3 +27,7 @@ screenshots/
 # Python diagnostic/test bytecode
 __pycache__/
 *.pyc
+
+# Backup implementation is source code; keep actual workspace backups ignored.
+!src/main/backups/
+!src/main/backups/*.ts

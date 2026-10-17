@@ -39,9 +39,9 @@ describe('EC04 write-pause coordinator (fake writer port only)', () => {
     unblock();await first;
     expect(coordinator.busy).toBe(false);
   });
-  it('fails closed if the pause provider returns an invalid lease', async () => {
+  it.each([null, undefined, {}, {release:42}])('fails closed if the pause provider returns an invalid lease %j', async invalid => {
     let called = false;
-    const coordinator = new Ec04CaptureCoordinator({acquire:async()=>({} as never)},
+    const coordinator = new Ec04CaptureCoordinator({acquire:async()=>(invalid as never)},
       async()=>{called=true;return sample;});
     await expect(coordinator.create(dummy)).rejects.toThrow(/suspension des écritures/);
     expect(called).toBe(false);

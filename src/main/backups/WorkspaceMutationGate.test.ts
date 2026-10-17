@@ -138,3 +138,15 @@ describe('EC04: nested mutations and deadlock prevention', () => {
     expect(executed).toBe(true);
   });
 });
+
+ it('counts sync writes, cleans failures and refuses writes during drain and pause',async()=>{
+   const gate=new WorkspaceMutationGate();
+   expect(gate.runSynchronousMutation(()=>{expect(gate.activeMutations).toBe(1);return 7;})).toBe(7);
+   expect(()=>gate.runSynchronousMutation(()=>{throw Error('fixture');})).toThrow('fixture');
+   expect(gate.activeMutations).toBe(0);
+   const held=deferred(),work=gate.runMutation(()=>held.promise),pause=gate.acquire();
+   expect(()=>gate.runSynchronousMutation(()=>99)).toThrow(/suspendue/);
+   held.resolve();await work;const lease=await pause;
+   expect(()=>gate.runSynchronousMutation(()=>99)).toThrow(/suspendue/);
+   await lease.release();expect(gate.runSynchronousMutation(()=>99)).toBe(99);
+ });

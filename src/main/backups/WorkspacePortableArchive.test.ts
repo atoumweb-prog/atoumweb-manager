@@ -1,5 +1,5 @@
 import {backup, DatabaseSync} from 'node:sqlite';
-import {appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync} from 'node:fs';
+import {appendFileSync, linkSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join, dirname} from 'node:path';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
@@ -128,7 +128,7 @@ describe('EC04 — archive et restauration isolées, jamais raccordées à la pr
 
   it('refuse un lien symbolique cassé comme destination, sans le remplacer', async () => {
     const dangling = join(base, 'archives', 'dangling.awbackup');
-    symlinkSync(join(base, 'does-not-exist'), dangling, 'file');
+    symlinkSync(join(base, 'does-not-exist'), dangling, process.platform === 'win32' ? 'junction' : 'file');
     await expect(createOfflineWorkspaceArchive({
       workspaceRoot: root, destinationPath: dangling,
       snapshotDatabase: async file => { await backup(db, file); },
@@ -228,3 +228,27 @@ describe('EC04 — archive et restauration isolées, jamais raccordées à la pr
   });
 
 });
+
+ it('normalizes a private WAL snapshot and repeatedly verifies without new sidecars or source changes',async()=>{
+   db.exec('PRAGMA journal_mode=WAL');
+   db.exec("INSERT INTO clients VALUES ('wal-client')");
+   const before=readFileSync(join(root,'data','atoumweb-manager.sqlite'));
+   const manifest=await makeArchive(),restored=join(base,'wal-restored');
+   await restoreOfflineArchiveToNewWorkspace(destination,restored);
+   await verifyRestoredWorkspaceAgainstManifest(restored,manifest);
+   await verifyRestoredWorkspaceAgainstManifest(restored,manifest);
+   expect(existsSync(join(restored,'data','atoumweb-manager.sqlite-wal'))).toBe(false);
+   expect(existsSync(join(restored,'data','atoumweb-manager.sqlite-shm'))).toBe(false);
+   expect(readFileSync(join(root,'data','atoumweb-manager.sqlite')).equals(before)).toBe(true);
+   expect(db.prepare('PRAGMA journal_mode').get()?.journal_mode).toBe('wal');
+   expect(db.prepare('SELECT count(*) AS n FROM clients').get()?.n).toBe(2);
+ });
+
+ it('refuses a hardlinked snapshot before any normalization of the source database',async()=>{
+   db.exec('PRAGMA journal_mode=WAL');const source=join(root,'data','atoumweb-manager.sqlite'),before=readFileSync(source);
+   await expect(createOfflineWorkspaceArchive({workspaceRoot:root,destinationPath:destination,
+     snapshotDatabase:async file=>{linkSync(source,file);}})).rejects.toThrow(/lien physique/);
+   expect(readFileSync(source).equals(before)).toBe(true);
+   expect(db.prepare('PRAGMA journal_mode').get()?.journal_mode).toBe('wal');
+   expect(existsSync(destination)).toBe(false);
+ });

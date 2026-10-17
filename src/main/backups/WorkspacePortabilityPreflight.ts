@@ -1,10 +1,10 @@
+import {openReadOnlyWorkspaceSnapshot} from './WorkspaceSnapshotDatabase';
 /**
  * EC04 diagnostic only. A valid snapshot does not imply cross-PC portability.
  * Reads a SQLite snapshot with a read-only connection: never touches source DB.
  * In particular, Windows safeStorage/DPAPI encrypted strings cannot simply be
  * decrypted on another machine. Never persist decrypted secrets in an archive.
  */
-import {DatabaseSync} from 'node:sqlite';
 import {isAbsolute, relative, resolve, sep, win32} from 'node:path';
 
 export type Ec04PortabilityRisk =
@@ -38,7 +38,7 @@ function pathWithin(parent: string, child: string, windows: boolean): boolean {
 export function inspectWorkspacePortabilityRisks(
   sqliteSnapshot: string, workspaceRoot: string,
 ): Ec04PortabilityPreflight {
-  const db = new DatabaseSync(sqliteSnapshot, {readOnly: true});
+  const db = openReadOnlyWorkspaceSnapshot(sqliteSnapshot);
   const findings: Ec04PortabilityFinding[] = [];
   const unavailableSchema: string[] = [];
   let inspectedProjects = 0, encryptedSecretCount = 0;

@@ -67,7 +67,7 @@ describe('EC04 — inventaire en lecture seule des fichiers du workspace', () =>
     mkdirSync(join(workspace, 'bridge'), {recursive: true});
     const destination = join(outside, 'secret.txt');
     writeFileSync(destination, 'CONFIDENTIEL');
-    symlinkSync(destination, join(workspace, 'bridge', 'shortcut.txt'), 'file');
+    symlinkSync(process.platform === 'win32' ? outside : destination, join(workspace, 'bridge', 'shortcut.txt'), process.platform === 'win32' ? 'junction' : 'file');
     await expect(inventoryWorkspaceFiles(workspace)).rejects.toThrow(/lien symbolique/);
   });
 

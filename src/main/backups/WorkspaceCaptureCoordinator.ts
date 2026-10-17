@@ -36,10 +36,11 @@ export class Ec04CaptureCoordinator {
     this.inFlight = true;
     let lease: Ec04WritePauseLease | undefined;
     try {
-      lease = await this.writerPause.acquire();
-      if (!lease || typeof lease.release !== 'function') {
+      const candidate = await this.writerPause.acquire();
+      if (!candidate || typeof candidate.release !== 'function') {
         throw Error('EC04 : impossible de garantir la suspension des écritures.');
       }
+      lease = candidate;
       return await this.capture(input);
     } finally {
       try { await lease?.release(); }

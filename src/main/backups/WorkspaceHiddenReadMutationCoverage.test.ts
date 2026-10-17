@@ -35,3 +35,10 @@ describe('EC04 IPC sources: hidden writes in backup and library readers',()=>{
     }
   });
 });
+
+ it('serializes implicit legacy document hash backfill in quote views and document opening',()=>{
+   const code=readFileSync(join(root,'src/main/ipc.ts'),'utf8');
+   for(const name of ['quote-preparation:get','quote-preparation:open-document','quotes:open-contract-document']){
+     expect(handler(code,name),name).toContain('guardedMutation(');
+   }
+ });

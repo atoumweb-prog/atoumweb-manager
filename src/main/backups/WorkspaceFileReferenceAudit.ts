@@ -1,10 +1,10 @@
+import {openReadOnlyWorkspaceSnapshot} from './WorkspaceSnapshotDatabase';
 /**
  * EC04 read-only audit of selected, known SQLite -> physical file references.
  * Incomplete by design: unlisted columns, paths embedded in JSON histories,
  * external project roots and secrets still require separate verification.
  * No writes, fixes or migration. Never use this alone to certify a backup.
  */
-import {DatabaseSync} from 'node:sqlite';
 import {isAbsolute as posixAbsolute, win32} from 'node:path';
 import {checkedWorkspaceRelativePath, type WorkspaceFileInventory} from './WorkspaceFileInventory';
 
@@ -48,7 +48,7 @@ function classify(input: string): {relativePath?: string; problem?: Ec04Referenc
 }
 
 export function auditKnownWorkspaceFileReferences(databaseFile: string, inventory: WorkspaceFileInventory): Ec04ReferenceAudit {
-  const db = new DatabaseSync(databaseFile, {readOnly:true});
+  const db = openReadOnlyWorkspaceSnapshot(databaseFile);
   const paths = new Set(inventory.files.map(file => file.relativePath.normalize('NFC').toLowerCase()));
   const issues: Ec04ReferenceIssue[] = [];
   const skippedTables: string[] = [];

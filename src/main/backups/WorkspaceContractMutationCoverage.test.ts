@@ -50,7 +50,11 @@ describe('EC04 source guard: quote and contract IPC mutations', () => {
       'quotes:preparation-issues','quotes:transmission-state','quotes:get']) {
       // The contract presentation route is named contract-terms:quotes:presentation,
       // which must remain a read-only API; no implicit attestation here.
-      expect(handler(name), name).not.toContain('guardedMutation(');
+      // Preparation may backfill a legacy DOCUMENT hash via openLinked;
+      // gating that auxiliary write never authorizes a contract transition.
+      if(name==='quote-preparation:get')expect(handler(name),name).toContain('guardedMutation(');
+      else expect(handler(name), name).not.toContain('guardedMutation(');
+      expect(handler(name),name).not.toMatch(/\.(markSent|accept|finalize|save)\(/);
     }
   });
   it('keeps attested sending, acceptance and PDF export as distinct routes', () => {

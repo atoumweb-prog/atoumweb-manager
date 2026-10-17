@@ -50,6 +50,25 @@ export class WorkspaceMutationGate implements Ec04WritePauseProvider {
     }
   }
 
+  /** Synchronous IPC cannot wait for the pause: refuse before any side effect.
+   * Only synchronous work is permitted; async writers must use runMutation. */
+  runSynchronousMutation<T>(work: () => T): T {
+    if (this.state !== 'open' && !this.mutationContext.getStore()?.active) {
+      throw new Error('EC04 : écriture temporairement suspendue pendant la capture.');
+    }
+    this.mutations += 1;
+    const current = {active:true};
+    try { return this.mutationContext.run(current, work); }
+    finally {
+      current.active = false;
+      this.mutations -= 1;
+      if (this.mutations === 0) {
+        const waiting = [...this.drainWaiters];this.drainWaiters.clear();
+        for (const resolve of waiting) resolve();
+      }
+    }
+  }
+
   /** Rejects overlapping pauses; times out rather than freezing app mutations. */
   async acquire(timeoutMs = 30_000): Promise<Ec04WritePauseLease> {
     if (this.mutationContext.getStore()?.active) {

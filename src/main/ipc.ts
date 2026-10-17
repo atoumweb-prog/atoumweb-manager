@@ -102,7 +102,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   const guardedMutation = <T>(work: () => T): T | Promise<T> =>
     runWorkspaceMutationIfAvailable(ec04MutationGate, work);
   registerUnsavedConfirmationIpc();
-  registerShellVisualPreferences(database);
+  registerShellVisualPreferences(database, ec04MutationGate);
   ipcMain.handle('workflow:needs', (_event, owner, id) => database.workflow.needs(owner,id));
   ipcMain.handle('workflow:save-need', (_event, owner, id, input, needId) => guardedMutation(() => database.workflow.saveNeed(owner,id,input,needId)));
   ipcMain.handle('workflow:remove-need', (_event, owner, id, needId) => guardedMutation(() => database.workflow.removeNeed(owner,id,needId)));
@@ -644,7 +644,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     await clipboard.writeText(text);
   });
 
-  ipcMain.handle('quote-preparation:get', (_event,id:string)=>database.quotePreparation.get(id));
+  ipcMain.handle('quote-preparation:get', (_event,id:string)=>guardedMutation(()=>database.quotePreparation.get(id)));
   ipcMain.handle('quote-preparation:save', (_event,id:string,input:QuoteContractParameters,expected?:{parameters:QuoteContractParameters|null})=> guardedMutation(() => database.quotePreparation.save(id,input,expected)));
   ipcMain.handle('quote-preparation:administration', ()=>database.quotePreparation.administration());
   ipcMain.handle('quote-preparation:save-administration', (_event,input:ContractAdministration,expected?:ContractAdministration)=> guardedMutation(() => database.quotePreparation.saveAdministration(input,expected)));
@@ -654,7 +654,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     return database.quotePreparation.get(id);
   }));
   ipcMain.handle('quote-preparation:record-acceptance', (_event,id:string,statement:string,occurredAt:string,provenance:string)=> guardedMutation(() => database.quotePreparation.recordAcceptance(id,statement,occurredAt,provenance)));
-  ipcMain.handle('quote-preparation:open-document', async (_event,id:string)=>{const error=await shell.openPath(database.quotePreparation.openLinked(id));if(error)throw Error(error);});
+  ipcMain.handle('quote-preparation:open-document', async (_event,id:string)=>{const path=await guardedMutation(()=>database.quotePreparation.openLinked(id));const error=await shell.openPath(path);if(error)throw Error(error);});
   ipcMain.handle('quote-preparation:import-document', async (_event,id:string,role:ContractDocumentRole,provenance:string)=>{
     database.quotes.get(id);
     const selection=await dialog.showOpenDialog({title:'Rattacher une annexe / preuve au devis',properties:['openFile']});
@@ -726,7 +726,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     const quote = database.quotes.get(id);
     if (!quote.contractDocumentId) throw new Error('Aucun document contractuel n’est rattaché à ce devis.');
     const link=database.quotePreparation.links(id).find(l=>l.role==='accepted_pdf'&&l.documentId===quote.contractDocumentId);
-    const error = await shell.openPath(link?database.quotePreparation.openLinked(link.id):database.clientDocuments.verifiedPath(quote.contractDocumentId));
+    const path = await guardedMutation(()=>link?database.quotePreparation.openLinked(link.id):database.clientDocuments.verifiedPath(quote.contractDocumentId!));
+    const error = await shell.openPath(path);
     if (error) throw new Error(error);
   });
   ipcMain.handle('quotes:update-abby-reference', (_event, id: string, abbyReference?: string | null) => guardedMutation(() => database.quotes.updateAbbyReference(id, abbyReference)));

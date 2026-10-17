@@ -1,10 +1,10 @@
+import {openReadOnlyWorkspaceSnapshot} from './WorkspaceSnapshotDatabase';
 /**
  * EC04: read-only project resource-root relocation PROPOSALS, never updates.
  * A proposal is not a validated restoration or permission to rewrite SQLite.
  * Only workspace-owned Ressources paths can be proposed. Existing external
  * roots, OS-bound secrets and paths absent from the inventory need review.
  */
-import {DatabaseSync} from 'node:sqlite';
 import {relative, win32, posix} from 'node:path';
 import {checkedWorkspaceRelativePath} from './WorkspaceFileInventory';
 
@@ -86,7 +86,7 @@ export function planProjectResourceRelocations(
   if (!targetPlatform || !sourcePlatform || unsafeRoot(sourceWorkspace) || unsafeRoot(newWorkspace)) {
     throw new Error('EC04 : workspace source ou destination non absolu ou non sûr.');
   }
-  const db = new DatabaseSync(sqliteSnapshot, {readOnly:true});
+  const db = openReadOnlyWorkspaceSnapshot(sqliteSnapshot);
   try {
     const schema = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='projects'").get();
     const columns = schema ? new Set(db.prepare('PRAGMA table_info("projects")').all().map(row=>String(row.name))) : new Set<string>();

@@ -1,3 +1,4 @@
+import {openReadOnlyWorkspaceSnapshot} from './WorkspaceSnapshotDatabase';
 /**
  * EC04 experimental offline relocation: produce a NEW copy of an already
  * restored, manifest-verified B1 workspace. Never edit either source or the
@@ -87,7 +88,7 @@ async function sha256File(path: string): Promise<string> {
 }
 
 function checkDb(dbPath: string): void {
-  const db = new DatabaseSync(dbPath, {readOnly: true});
+  const db = openReadOnlyWorkspaceSnapshot(dbPath);
   try {
     const integrity = db.prepare('PRAGMA integrity_check').get();
     if (integrity?.integrity_check !== 'ok') throw Error('EC04 : SQLite relocalisé non intègre.');
@@ -149,7 +150,7 @@ async function verifyRelocatedWorkspaceInternal(
       receipt.copiedAssetFiles !== expectedAssets.length) {
     throw Error('EC04 : compteurs du reçu de relocalisation incorrects.');
   }
-  const db = new DatabaseSync(copiedDb, {readOnly: true});
+  const db = openReadOnlyWorkspaceSnapshot(copiedDb);
   try {
     const ledger = db.prepare('SELECT id,name FROM schema_migrations ORDER BY id').all();
     if (JSON.stringify(ledger.map(row => ({id:Number(row.id),name:String(row.name)}))) !==

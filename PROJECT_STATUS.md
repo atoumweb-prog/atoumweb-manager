@@ -1,5 +1,10 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 18/10/2026 - EC04 : validation MSI isolee avant convergence
+
+Worktree dedie atoumweb-manager-ec04-validation, branche feature/ec04-workspace-file-inventory-v1 depuis990d850e, main376eef94. Corrections demontrees : erreur masquee du bail invalide, fixtures de liens Windows, contournement preferences synchrones et empreinte documentaire legacy, refus du bootstrap corrompu, snapshots WAL creant des annexes a la lecture. Aucune migration ajoutee : registre1-71 conserve. Normalisation DELETE seulement de la copie privee, refus des liens avant conversion et diagnostics WAL fail-closed. Audit170 fichiers/1032sites candidats, limites hors IPC explicites ; capture globale toujours inaccessible et B1 non chiffre/non certifie. [Audit ecritures](docs/ux-v2/EC04-MSI-AUDIT-ECRITURES-2026-10-18.md). Typecheck/cibles et recette native de developpement verts ; campagne finale au commit fige et bilan dans la passation. Aucun main, installateur, workspace reel ou CI hebergee.
+
+
 ## 16/10/2026 - PR155 / CI1805 : diagnostic minimal du blur 01C
 
 CI1805 valide le focus530 et36 etapes natives puis echoue sur Blur completes moved gesture once. Banc seul instrumente : geometrie avant/apres et oracle boundedSplit reel, sonde700 puis deplacement relatif effectivement different avant blur ; assertions historiques conservees. Ordre des ateliers courts prepare dans convergence-state, memes46 commandes/environnements. Une seule execution locale01C autorisee et tracee dans outputs/pr155-01c-blur/ ; aucun autre test, push, CI, main, installation ou base reelle. Composant de production inchange.

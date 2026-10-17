@@ -1,6 +1,6 @@
 import { app } from 'electron';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { isAbsolute, join, resolve } from 'node:path';
 import { assertWorkspaceNotIncomplete, WorkspaceIncompleteError } from './backups/WorkspaceIncompleteGuard';
 
 interface WorkspaceBootstrapConfig {
@@ -97,15 +97,14 @@ export function resolveWorkspace(): WorkspacePaths {
   let config: WorkspaceBootstrapConfig | null;
   try {
     config = JSON.parse(raw) as WorkspaceBootstrapConfig | null;
-  } catch {
-    // Historical behavior: malformed JSON (not a filesystem failure) falls back.
-    return ensureWorkspace(defaultRoot);
+  } catch (error) {
+    throw new WorkspaceAccessError(configPath, error);
   }
-  if (config && typeof config.workspaceRoot === 'string' && config.workspaceRoot.trim()) {
+  if (config && typeof config.workspaceRoot === 'string' && config.workspaceRoot.trim() && isAbsolute(config.workspaceRoot)) {
     // Initialization errors from an EXPLICIT selection must propagate.
     return ensureWorkspace(config.workspaceRoot);
   }
-  return ensureWorkspace(defaultRoot);
+  throw new WorkspaceAccessError(configPath, new Error('Configuration workspace absente, relative ou invalide.'));
 }
 
 export function saveWorkspaceRoot(root: string): WorkspacePaths {

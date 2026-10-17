@@ -1,3 +1,4 @@
+import {openReadOnlyWorkspaceSnapshot} from './WorkspaceSnapshotDatabase';
 /**
  * EC04-02/03/04 experimental core: read-only capture -> verifiable container ->
  * restore into a NEW workspace only. NO IPC, menu or automatic production call.
@@ -81,7 +82,7 @@ export function validateEc04MigrationLedger(value: unknown): Ec04Migration[] {
 }
 
 function readMigrationLedger(databasePath: string): Ec04Migration[] {
-  const db = new DatabaseSync(databasePath, {readOnly: true});
+  const db = openReadOnlyWorkspaceSnapshot(databasePath);
   try {
     const integrity = db.prepare('PRAGMA integrity_check').all();
     if (integrity.length !== 1 || integrity[0].integrity_check !== 'ok') {
@@ -233,6 +234,17 @@ export async function createOfflineWorkspaceArchive(input: Ec04CreateInput): Pro
     if (!existsSync(snapshotFile) || existsSync(snapshotFile + '-wal') || existsSync(snapshotFile + '-shm')) {
       throw Error('EC04 : instantané SQLite autonome manquant.');
     }
+    const snapshotStat = lstatSync(snapshotFile);
+    if (!snapshotStat.isFile() || snapshotStat.isSymbolicLink() || snapshotStat.nlink !== 1) {
+      throw Error('EC04 : instantané privé requis, lien physique ou symbolique refusé.');
+    }
+    // Change ONLY this private backup copy, before hashing/serializing it.
+    // A WAL header otherwise permits read-only verification to create sidecars.
+    const snapshot = new DatabaseSync(snapshotFile);
+    try {
+      const mode = snapshot.prepare('PRAGMA journal_mode=DELETE').get();
+      if (mode?.journal_mode !== 'delete') throw Error('EC04 : instantané SQLite non autonome.');
+    } finally { snapshot.close(); }
     const migrations = readMigrationLedger(snapshotFile);
     // Reject mismatches from known SQLite -> file links; coverage is still partial.
     const references = auditKnownWorkspaceFileReferences(snapshotFile, first);
