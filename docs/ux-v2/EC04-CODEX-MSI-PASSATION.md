@@ -1,3 +1,17 @@
+# Actualisation MSI - 18 octobre 2026
+
+**GO technique local pour proposer la convergence du socle EXPERIMENTAL NON EXPOSE. NO-GO pour activation ou sauvegarde quotidienne de production.** Aucune fusion autorisee/executée.
+
+La passation historique ci-dessous reste conservee. Sa demande de validation Windows a ete executee sur un worktree dedie, uniquement TEMP. [Bilan MSI et limites](EC04-MSI-VALIDATION-2026-10-18.md), [audit des ecritures](EC04-MSI-AUDIT-ECRITURES-2026-10-18.md). Le dernier commit de cette branche identifie le candidat final ; les preuves de preparation et la campagne finale sont distinguees dans le bilan. Aucune CI EC04 n'a ete declenchee : un push seul sur cette branche ne correspond pas aux filtres du workflow, aucune PR n'est ouverte.
+
+Corrections nouvelles : bail invalide ne masquant plus le refus initial ; jonctions pour les fixtures Windows sans privilege ; preferences synchrones et trois lectures documentaires a empreinte legacy encadrees ; bootstrap corrompu/invalide refuse sans ouverture de secours ; normalisation du SEUL snapshot prive en DELETE avant empreinte, liens physiques/symboliques refuses, lecteurs d'audit refusant WAL avant ouverture ; audit de trois references Bridge selon leurs bases et cle reelles. Migrations historiques inchangees.
+
+Validation de preparation au code `cf59ca432ec97df8e77f989344a839a1d1da0622` : typecheck vert, 1660/1660 Vitest (194 fichiers,116 s),36 controles natifs (23 capture/incidents +13 reprise), 71 migrations exactes et133 tables sur fixture. La seule modification non commitee pendant cette preparation etait l'ajout de l'etape CI native. Une campagne typecheck/Vitest/natif supplementaire est executee apres le commit documentaire final pour satisfaire la correspondance exacte du SHA ; son resultat et son empreinte sont consignes lors de la publication. Aucun resultat heberge n'est suppose.
+
+**Reserves determinantes :** couverture des references toujours partielle ; appels directs aux services, arret et outils hors processus non verrouilles universellement ; B1 non chiffre/non authentifie ; DPAPI valide seulement sur cet utilisateur Windows, pas sur un autre PC ; disque physique distinct et refus NTFS reels non certifies. Aucun bouton/IPC de capture globale active, aucun installateur, aucune base reelle. Details des limites et operations restantes dans le bilan.
+
+---
+
 # EC04 — PASSATION CODEX MSI — VALIDATION NATIVE AVANT CONVERGENCE
 
 **Statut : candidat EXPÉRIMENTAL, non certifié, non fusionné.** Cette passation est destinée à Codex sur le poste Windows MSI. Aucun installateur, aucun workspace réel, aucune base utilisateur ne doivent être touchés.
