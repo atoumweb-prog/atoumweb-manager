@@ -481,3 +481,11 @@ jobs:
         run: |
           node scripts/check-convergence-native.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # EC04 stays experimental: only isolated fixture data, no full-backup IPC/UI.
+      - name: EC04 native archive relocation and restart - Windows TEMP
+        if: ${{ github.head_ref == 'feature/ec04-workspace-file-inventory-v1' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+        shell: pwsh
+        run: |
+          node scripts/check-ec04-workspace-native.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

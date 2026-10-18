@@ -9,22 +9,26 @@ import type {
   InterventionBackupRecordInput,
 } from '../../shared/businessBackupAlerts';
 import type { DatabaseService } from '../database/DatabaseService';
+import { runWorkspaceMutationIfAvailable } from './WorkspaceMutationIpcBoundary';
+import type { WorkspaceMutationGate } from './WorkspaceMutationGate';
 
-export function registerBusinessBackupsIpcHandlers(database: DatabaseService): void {
+export function registerBusinessBackupsIpcHandlers(database: DatabaseService, gate?: WorkspaceMutationGate): void {
+  const mutate = <T>(fn: () => T): T | Promise<T> => runWorkspaceMutationIfAvailable(gate, fn);
+  // list/get -> mapLocation may UPDATE missing_at in SQLite.
   ipcMain.handle('business-backups:list', (_event, filters?: BusinessBackupFilters) =>
-    database.businessBackups.list(filters));
+    mutate(() => database.businessBackups.list(filters)));
   ipcMain.handle('business-backups:get', (_event, id: string) =>
-    database.businessBackups.get(id));
+    mutate(() => database.businessBackups.get(id)));
   ipcMain.handle('business-backups:create', (_event, input: BusinessBackupRecordInput) =>
-    database.businessBackups.create(input));
+    mutate(() => database.businessBackups.create(input)));
   ipcMain.handle('business-backups:add-location', (_event, recordId: string, input: BusinessBackupLocationInput) =>
-    database.businessBackups.addLocation(recordId, input));
+    mutate(() => database.businessBackups.addLocation(recordId, input)));
   ipcMain.handle('business-backups:verify-location', (_event, locationId: string) =>
-    database.businessBackups.verifyLocation(locationId));
+    mutate(() => database.businessBackups.verifyLocation(locationId)));
   ipcMain.handle('business-backups:mark-stable', (_event, recordId: string) =>
-    database.businessBackups.markStable(recordId));
+    mutate(() => database.businessBackups.markStable(recordId)));
   ipcMain.handle('business-backups:overview', (_event, filters?: Pick<BusinessBackupFilters, 'clientAccountId' | 'projectId'>) =>
-    database.businessBackups.overview(filters));
+    mutate(() => database.businessBackups.overview(filters)));
 
   ipcMain.handle('business-backups:relocalize', async (_event, locationId: string) => {
     const current = database.businessBackups.absoluteLocalPath(locationId);
@@ -34,11 +38,16 @@ export function registerBusinessBackupsIpcHandlers(database: DatabaseService): v
       properties: ['openFile', 'openDirectory'],
     });
     if (selection.canceled || selection.filePaths.length === 0) {
-      const record = database.businessBackups.list().find((candidate) => candidate.locations.some((location) => location.id === locationId));
+      const record = await mutate(() => database.businessBackups.list().find((candidate) => candidate.locations.some((location) => location.id === locationId)));
       if (!record) throw new Error('Sauvegarde liée à cet emplacement introuvable.');
       return record;
     }
-    return database.businessBackups.relocalizePath(locationId, selection.filePaths[0]);
+    return mutate(() => {
+      if (database.businessBackups.absoluteLocalPath(locationId) !== current) {
+        throw new Error('Emplacement modifié dans une autre fenêtre. Actualise avant de relocaliser.');
+      }
+      return database.businessBackups.relocalizePath(locationId, selection.filePaths[0]);
+    });
   });
 
   ipcMain.handle('business-backups:open-location', async (_event, locationId: string) => {
@@ -54,17 +63,19 @@ export function registerBusinessBackupsIpcHandlers(database: DatabaseService): v
   ipcMain.handle('business-backup-alerts:get-policy', (_event, input: { clientAccountId?: string | null; projectId?: string | null }) =>
     database.businessBackupAlerts.getPolicy(input));
   ipcMain.handle('business-backup-alerts:update-policy', (_event, input: BusinessBackupPolicyInput) =>
-    database.businessBackupAlerts.updatePolicy(input));
+    mutate(() => database.businessBackupAlerts.updatePolicy(input)));
+  // listAlerts -> projectAlerts -> backups.overview -> mapLocation may write.
   ipcMain.handle('business-backup-alerts:list', () =>
-    database.businessBackupAlerts.listAlerts());
+    mutate(() => database.businessBackupAlerts.listAlerts()));
   ipcMain.handle('business-backup-alerts:review-intervention', (_event, interventionId: string) =>
-    database.businessBackupAlerts.reviewIntervention(interventionId));
+    mutate(() => database.businessBackupAlerts.reviewIntervention(interventionId)));
   ipcMain.handle('business-backup-alerts:record-intervention', (_event, input: InterventionBackupRecordInput) =>
-    database.businessBackupAlerts.recordForIntervention(input));
+    mutate(() => database.businessBackupAlerts.recordForIntervention(input)));
   ipcMain.handle('business-backup-alerts:link-existing', (
     _event,
     interventionId: string,
     backupRecordId: string,
     role: 'pre_intervention' | 'post_intervention' | 'reference',
-  ) => database.businessBackupAlerts.linkExisting(interventionId, backupRecordId, role));
+  ) =>
+    mutate(() => database.businessBackupAlerts.linkExisting(interventionId, backupRecordId, role)));
 }

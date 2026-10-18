@@ -5,13 +5,15 @@ import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { join } from 'node:path';
 import {windowBrandIcon} from './windowBranding';
 import { registerBusinessBackupsIpcHandlers } from './backups/businessBackupsIpc';
+import { WorkspaceMutationGate } from './backups/WorkspaceMutationGate';
+import { WorkspaceIncompleteError } from './backups/WorkspaceIncompleteGuard';
 import { DatabaseService } from './database/DatabaseService';
 import { registerIpcHandlers } from './ipc';
 import { registerOperationsIpcHandlers } from './operations/operationsIpc';
 import { registerReferentialsIpcHandlers } from './referentials/referentialsIpc';
 import { applyPendingDatabaseRestore, DatabaseRestoreError } from './restore';
 import { registerTimeCorrectionIpcHandler } from './time/timeIpc';
-import { resolveWorkspace } from './workspace';
+import { resolveWorkspace, WorkspaceAccessError } from './workspace';
 
 let mainWindow: BrowserWindow | null = null;
 let recipeWindow:ReturnType<typeof createOperationalRecipeWindow>|null=null;
@@ -112,11 +114,13 @@ async function bootstrap(): Promise<void> {
 
   database = new DatabaseService(workspace);
   await database.initialize();
-  registerIpcHandlers(database, workspace);
-  registerOperationsIpcHandlers(database);
-  registerReferentialsIpcHandlers(database);
-  registerBusinessBackupsIpcHandlers(database);
-  registerTimeCorrectionIpcHandler(database);
+  // Shared gate for the first guarded IPC routes. Full backup remains unavailable.
+  const ec04MutationGate = new WorkspaceMutationGate();
+  registerIpcHandlers(database, workspace, ec04MutationGate);
+  registerOperationsIpcHandlers(database, ec04MutationGate);
+  registerReferentialsIpcHandlers(database, ec04MutationGate);
+  registerBusinessBackupsIpcHandlers(database, ec04MutationGate);
+  registerTimeCorrectionIpcHandler(database, ec04MutationGate);
   ipcMain.removeHandler('app:open-prospect-reference');
   ipcMain.handle('app:open-prospect-reference', (_event, prospectId: string) => openProspectReferenceWindow(prospectId));
   createMainWindow();
@@ -134,6 +138,11 @@ app.whenReady().then(async () => {
 }).catch((error) => {
   console.error('Échec du démarrage AtoumWeb Manager', error);
   if (error instanceof DatabaseRestoreError) dialog.showErrorBox('Restauration refusée — AtoumWeb Manager', error.message);
+  else if (error instanceof WorkspaceIncompleteError) {
+    dialog.showErrorBox('Workspace EC04 incomplet — ouverture refusée', error.message);
+  } else if (error instanceof WorkspaceAccessError) {
+    dialog.showErrorBox('Workspace inaccessible — ouverture refusée', error.message);
+  }
   recipeWindow?.dispose();recipeWindow=null;
   app.quit();
 });

@@ -9,6 +9,7 @@ vi.mock('electron', () => ({
   BrowserWindow: {fromWebContents: () => ({id:1}), getAllWindows: () => [{isDestroyed: () => false, webContents: {send: mocks.send}}]},
   dialog: {showMessageBoxSync: mocks.choice},
 }));
+import { WorkspaceMutationGate } from './backups/WorkspaceMutationGate';
 import { registerShellVisualPreferences } from './shellVisualPreferencesIpc';
 let values: Map<string, unknown>, writes: string[], refuse: boolean;
 beforeEach(() => {
@@ -35,3 +36,16 @@ describe('workspace-owned shell presentation IPC', () => {
   it('refuses invalid preference schemas without changing neighbors',()=>{expect(call('set',HEADER_PREFERENCE_KEY,'{"version":99}').ok).toBe(false);expect(writes).toEqual([]);});
   it('reset confirmation defaults to cancel and itself mutates nothing',()=>{expect(call('confirm-reset')).toEqual({ok:true,value:false});expect(mocks.choice.mock.calls[0][1]).toMatchObject({defaultId:0,cancelId:0});expect(writes).toEqual([]);});
 });
+
+ it('refuses sync writes during capture without broadcasting and resumes after release',async()=>{
+   const gate=new WorkspaceMutationGate();
+   registerShellVisualPreferences({getSetting<T>(_key:string,fallback:T){return fallback;},setSetting(key){writes.push(key);}},gate);
+   const lease=await gate.acquire();
+   expect(call('set',HEADER_PREFERENCE_KEY,'{"version":1,"compact":true}')).toMatchObject({ok:false});
+   expect(call('remove',HEADER_PREFERENCE_KEY)).toMatchObject({ok:false});
+   expect(call('get',HEADER_PREFERENCE_KEY)).toEqual({ok:true,value:null});
+   expect(writes).toEqual([]);expect(mocks.send).not.toHaveBeenCalled();
+   await lease.release();
+   expect(call('set',HEADER_PREFERENCE_KEY,'{"version":1,"compact":true}').ok).toBe(true);
+   expect(writes).toEqual([VISUAL_SETTINGS_KEY]);expect(gate.activeMutations).toBe(0);
+ });
