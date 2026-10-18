@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NodeSqliteAdapter } from '../database/NodeSqliteAdapter';
-import { applyPendingMigrations } from '../database/migrations';
+import { applyPendingMigrations, MIGRATIONS } from '../database/migrations';
 import { createWorkspacePaths } from '../workspace';
 import { CrmService } from './CrmService';
 import { CrmIdentityAssetService } from './CrmIdentityAssetService';
@@ -104,7 +104,16 @@ describe('CrmIdentityAssetService', () => {
     expect(()=>assets.importFilePath('organization',org.id,'logo',source)).toThrow(/contenu/);expect(assets.list('organization',org.id)).toEqual([]);
   });
   it('reopens the actual on-disk database and resolves the same stored image after restart',()=>{
-    database.close();database=new NodeSqliteAdapter(join(root,'persistent.sqlite'));database.exec('PRAGMA foreign_keys=ON');applyPendingMigrations(database);crm=new CrmService(database);assets=new CrmIdentityAssetService(database,createWorkspacePaths(root));
+    // beforeEach applied every real migration in memory. Export that full schema
+    // once instead of repeating hundreds of synchronous DDL commits on Windows.
+    // The image import and both reopen checks still use the actual on-disk DB.
+    const file=join(root,'persistent.sqlite');
+    database.run('VACUUM INTO ?', [file]);
+    database.close();database=new NodeSqliteAdapter(file);database.exec('PRAGMA foreign_keys=ON');
+    expect(database.all('SELECT id, name FROM schema_migrations ORDER BY id')).toEqual(
+      MIGRATIONS.map(({id,name})=>({id,name})),
+    );
+    crm=new CrmService(database);assets=new CrmIdentityAssetService(database,createWorkspacePaths(root));
     const org=crm.createOrganization({name:'REOPEN'}),source=join(root,'logo.png');writeFileSync(source,png('persisted'));
     const first=assets.importFilePath('organization',org.id,'logo',source);database.close();database=new NodeSqliteAdapter(join(root,'persistent.sqlite'));database.exec('PRAGMA foreign_keys=ON');assets=new CrmIdentityAssetService(database,createWorkspacePaths(root));
     expect(assets.get(first.id)).toEqual(first);expect(assets.preview(first.id).dataUrl).toContain(png('persisted').toString('base64'));

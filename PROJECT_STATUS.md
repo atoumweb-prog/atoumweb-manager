@@ -1,5 +1,10 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 18/10/2026 — EC04 : convergence GitHub autorisée, aucune fusion
+
+PR draft #156 créée depuis ae33cccf sur main376eef94 ; simulation sans conflit/arbre identique. CI1808 : typecheck et4 contrôles Python verts,1659/1660 Vitest,35 restaurations vertes ; timeout du seul test de réouverture logo CRM (5258ms/5000ms), banc natif EC04 non exécuté. Correction fixture uniquement : export du vrai schéma migré en mémoire vers SQLite disque, import/réouverture/assertions conservés et registre71 explicitement vérifié. Ciblés43/43 verts ; validation complète du nouveau HEAD confiée à la CI automatique. [Bilan vivant de convergence](docs/ux-v2/EC04-CONVERGENCE-2026-10-18.md), résultats finaux/SHA dans la PR. Aucun service, migration, interface, données réelles ou installateur modifié. EC04 expérimental non exposé ; production/activation NO-GO. Main et toute fusion restent soumis à autorisation humaine.
+
+
 ## 18/10/2026 - EC04 : validation MSI isolee avant convergence
 
 Worktree dedie atoumweb-manager-ec04-validation, branche feature/ec04-workspace-file-inventory-v1 depuis990d850e, main376eef94. Corrections demontrees : erreur masquee du bail invalide, fixtures de liens Windows, contournement preferences synchrones et empreinte documentaire legacy, refus du bootstrap corrompu, snapshots WAL creant des annexes a la lecture. Aucune migration ajoutee : registre1-71 conserve. Normalisation DELETE seulement de la copie privee, refus des liens avant conversion et diagnostics WAL fail-closed. Audit170 fichiers/1032sites candidats, limites hors IPC explicites ; capture globale toujours inaccessible et B1 non chiffre/non certifie. [Audit ecritures](docs/ux-v2/EC04-MSI-AUDIT-ECRITURES-2026-10-18.md). Preparation au code cf59ca43 : typecheck,1660/1660 Vitest (194 fichiers),36 controles natifs et reprise en2 processus verts. Campagne finale au commit documentaire fige : resultats au SHA publie dans la passation et le compte rendu de livraison. GO revue/convergence du socle experimental NON expose ; NO-GO activation/production. Aucun main, installateur, workspace reel ou CI hebergee.

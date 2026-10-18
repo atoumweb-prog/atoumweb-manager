@@ -1,3 +1,5 @@
+> Mise à jour convergence du18/10 : PR draft [#156](https://github.com/atoumweb-prog/atoumweb-manager/pull/156) ouverte après autorisation. CI1808 échoue sur une fixture CRM historique ; correctif de préparation du schéma uniquement, assertions et délais conservés. [Rapport de convergence](EC04-CONVERGENCE-2026-10-18.md). Les preuves MSI ci-dessous restent rattachées à leurs SHA historiques ; le bilan final de la PR donnera les résultats hébergés du nouveau HEAD. Aucune fusion/activation autorisée.
+
 # Actualisation MSI - 18 octobre 2026
 
 **GO technique local pour proposer la convergence du socle EXPERIMENTAL NON EXPOSE. NO-GO pour activation ou sauvegarde quotidienne de production.** Aucune fusion autorisee/executée.
