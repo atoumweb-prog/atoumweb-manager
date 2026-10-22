@@ -123,3 +123,5 @@
 :root[data-theme='noir'] .aw-manager-shell .home-widget .home-card{background:transparent;}
 @container home (max-width:850px){.home-widget .home-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.home-widget .home-time-card{grid-template-columns:1fr;}.home-widget .home-pipeline-items{grid-template-columns:repeat(auto-fit,minmax(110px,1fr));}}
 @container home (max-width:620px){.home-widget-today,.home-widget-watch,.home-widget-time,.home-widget-actions{grid-column:1/-1;}}
+
+.home-dashboard .home-time-donut{border-radius:50%;padding:0;background:conic-gradient(var(--accent-strong) var(--home-time-progress),#687f9c 0);}

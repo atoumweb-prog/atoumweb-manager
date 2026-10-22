@@ -65,4 +65,6 @@
 .app-shell .aw-header-search .global-search>svg{color:var(--accent);}
 .app-shell .aw-header-primary{gap:12px;}
 .app-shell .aw-header-timer{flex:0 1 300px;}
-@container workspace-header (max-width:1100px){.app-shell .aw-header-date{display:none;}}
+@container workspace-header (max-width:1100px){.app-shell .aw-header-primary{flex-wrap:wrap;}.app-shell .aw-header-date{flex:0 1 auto;}}
+
+.aw-manager-shell .aw-header-primary .aw-header-timer{flex:0 1 280px;}
