@@ -161,7 +161,7 @@ kpis:<div className="home-kpi-grid">
     </div>,
 today:<article className="home-card home-today-card">
         <div className="home-card-title"><div><OperationIcon name="calendar" size={20} /><strong>Aujourd’hui</strong><span>{has("entries")?todayEntries.length:"—"}</span></div><button type="button" onClick={() => openPage('Prospects')} aria-label="Ouvrir les actions">›</button></div>
-        <div className="home-today-scroll">
+        <div className="home-today-scroll" tabIndex={0} aria-label="Dossiers du jour">
           {todayEntries.map((entry, index) => <button className="home-today-item" type="button" key={`${entry.target.entityType}-${entry.target.entityId}-${index}`} onClick={() => openEntity(entry.target)}>
             <span className="home-today-dot" />
             <span className="home-today-icon"><OperationIcon name={targetIcon(entry.target)} size={17} /></span>
@@ -200,7 +200,7 @@ time:<article className="home-card home-time-card">
         </div>
         <button className="home-billing-row" title="Éléments prêts à facturer, hors factures Abby émises" type="button" onClick={() => openPage('Facturation')}><OperationIcon name="receipt" size={20} /><span><small>Montant à facturer</small><strong>{has("billing")?money(readyAmount):"—"}</strong></span><em>{has("billing")?`${readyBilling.length} élément${readyBilling.length>1?"s":""}`:"Nombre indisponible"}</em><b>›</b></button>
       </article>,
-watch:<article className={`home-card home-watch-card ${alerts.length||resources.alerts?.status!=='ready' ? 'has-alerts' : 'is-clear'}`}>
+watch:<article tabIndex={0} aria-label="Liste des alertes opérationnelles" className={`home-card home-watch-card ${alerts.length||resources.alerts?.status!=='ready' ? 'has-alerts' : 'is-clear'}`}>
         <div className="home-watch-copy">
           <span className="home-watch-icon"><OperationIcon name={alerts.length ? 'alert' : 'check-circle'} size={25} /></span>
           <div><span className="eyebrow">À surveiller</span><strong>{alerts.length ? `${alerts.length} alerte${alerts.length > 1 ? 's' : ''} connue${alerts.length > 1 ? 's' : ''}` : resources.alerts?.status==='ready'?'Aucune alerte opérationnelle signalée':'Alertes non confirmées'}</strong>{resources.alerts?.status!=='ready'&&<small>Actualisation non confirmée ; consultez le détail des sources.</small>}</div>

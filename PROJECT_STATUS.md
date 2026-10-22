@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 22/10/2026 — Corrections de l’Accueil après recette réelle du portable
+
+En-tête réel : cloche d’alertes et engrenage Réglages remplacent compactage/burger ; ancien réglage compact non appliqué au vrai shell. Indicateurs encadrés, repli à droite, listes à hauteur naturelle/plafond viewport et défilement. [Décisions, protocole ciblé et limites](docs/ux-v2/ACCUEIL-ADAPTATIF-2026-10-22.md). Aucune règle métier/migration/donnée réelle. Une configuration standard et un redimensionnement, pas de matrice exhaustive ; anciens bancs dépendants du compactage à adapter avant convergence. Nouvelle recette portable distincte prévue, sans remplacer une application ouverte.
+
 ## 22/10/2026 — Portable de recette du pilote
 
 Utilisateur demande un exécutable pour vérifier connexions et responsive. Portable Windows x64 construit au code `139d7e71621e659b98e40b2d18bf5a74406589f4`, sans installateur, dans `C:/DEV/03_LIVRAISONS/AtoumWeb/Manager-Pilote-20261022-139d7e71`. Lanceur obligatoire avec Profil/Workspace propres ;7 prospects,1 client,2 devis,1 projet et1 session synthétiques, aucune copie des données réelles. Contrôle du vrai package sur une copie TEMP :19 assertions,5 modules, intégrité/FK/migrations71 et chrono unique verts. Préparation du profil exécutée. ZIP dans Downloads `AtoumWeb-Pilote-139d7e71.zip`,161911754 octets,86 fichiers,CRC OK ; manifeste hashes EXE/ASAR et validation inclus. Cette note documentaire ne change pas le code empaqueté. Pas de CI/main/installation ou campagne multiconfiguration ; responsive étendu à contrôler par l’utilisateur. Les anciennes recettes restent intactes.
