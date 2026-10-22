@@ -200,7 +200,6 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   const [saving, setSaving] = useState(false);
   const [selectedId, applySelectedId] = useState<string | null>(initialId ?? null);
   const [prospectSplitPercent, setProspectSplitPercent] = useState(66);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deskStartTab,setDeskStartTab]=useState<'commercial'|'reference'>('commercial');
   const [deskModeId, applyDeskModeId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -213,8 +212,6 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   const selectionRef=useRef({selectedId,deskModeId});selectionRef.current={selectedId,deskModeId};
   const [dropStage, setDropStage] = useState<ProspectStage | null>(null);
   const [historySearch, setHistorySearch] = useState('');
-  const [scheduleDateForId, setScheduleDateForId] = useState<string | null>(null);
-  const [scheduleDate, setScheduleDate] = useState('');
 
   async function refresh() {
     const generation=++refreshGeneration.current;
@@ -356,7 +353,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
         });
       }
       if (draft.firstActionText.trim() || draft.firstActionDate) await window.atoumweb.crm.actions.create({ ownerType: 'prospect', ownerId: prospect.id, type: 'action', title: draft.firstActionText.trim() || 'Première prise de contact', dueAt: draft.firstActionDate ? new Date(`${draft.firstActionDate}T09:00:00`).toISOString() : null });
-      setDraft(EMPTY_DRAFT); setShowForm(false); await refresh(); setSelectedId(prospect.id); setExpandedId(prospect.id); onMessage('Prospect créé. Il reste en « Nouveau contact » jusqu’au démarrage de la prospection.');
+      setDraft(EMPTY_DRAFT); setShowForm(false); await refresh(); setSelectedId(prospect.id); onMessage('Prospect créé. Il reste en « Nouveau contact » jusqu’au démarrage de la prospection.');
     } catch (e) { setFormError(cleanBusinessError(e, 'Création impossible.')); }
     finally { setSaving(false); }
   }
@@ -402,38 +399,6 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     if (prospect.stage === 'new' && !(await changeStage(prospect, 'qualifying'))) return;
     setSelectedId(prospect.id);
     setDeskModeId(prospect.id);
-  }
-
-  async function scheduleAt(prospect: ProspectSummary, dueAt: Date) {
-    try {
-      const quoteFollowUp = isQuoteFollowUpStage(prospect.stage);
-      const latestQuote = latestQuotesByProspect.get(prospect.id) ?? null;
-      await window.atoumweb.crm.actions.create({
-        ownerType: 'prospect',
-        ownerId: prospect.id,
-        type: quoteFollowUp ? 'follow_up' : 'action',
-        title: quoteFollowUp && latestQuote ? `Relancer pour le devis ${latestQuote.number}` : quoteFollowUp ? 'Relancer le prospect' : 'Rappeler le prospect',
-        dueAt: dueAt.toISOString(),
-        relatedType: quoteFollowUp && latestQuote ? 'quote' : null,
-        relatedId: quoteFollowUp && latestQuote ? latestQuote.id : null,
-      });
-      setScheduleDateForId(null);
-      setScheduleDate('');
-      await refresh();
-      onMessage(quoteFollowUp ? 'Relance du devis programmée.' : 'Rappel programmé.');
-    } catch (e) { onMessage(cleanBusinessError(e, 'Programmation impossible.')); }
-  }
-
-  async function scheduleQuick(prospect: ProspectSummary, days: number) {
-    const dueAt = new Date();
-    dueAt.setDate(dueAt.getDate() + days);
-    dueAt.setHours(9, 0, 0, 0);
-    await scheduleAt(prospect, dueAt);
-  }
-
-  async function scheduleExact(prospect: ProspectSummary) {
-    if (!scheduleDate) { onMessage('Choisis une date pour programmer le rappel.'); return; }
-    await scheduleAt(prospect, new Date(`${scheduleDate}T09:00:00`));
   }
 
   async function archive(prospect: ProspectSummary) { if(!requestUnsavedExit(()=>{},'prospect:'+prospect.id))return;await window.atoumweb.workflow.archiveProspect(prospect.id, true); setSelectedId(null); setDeskModeId(null); await refresh(); onMessage('Prospect archivé.'); }
@@ -511,43 +476,16 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   /></div> : null;
 
   const renderProspectCard = (prospect: ProspectSummary, draggable = true) => {
-    const expanded = expandedId === prospect.id;
-    const itemActions = actions.filter((a) => a.ownerId === prospect.id && a.status === 'open');
-    const quoteFollowUp = isQuoteFollowUpStage(prospect.stage);
-    const nextAction = nextOpenAction(itemActions);
-    const nextFollowUp = nextOpenAction(itemActions.filter((item) => item.type === 'follow_up'));
-    const followUpDueAt = nextFollowUp?.dueAt ? new Date(nextFollowUp.dueAt) : null;
-    const followUpTimestamp = followUpDueAt?.getTime() ?? Number.NaN;
-    const nowTimestamp = Date.now();
-    const tomorrowStart = new Date();
-    tomorrowStart.setHours(24, 0, 0, 0);
-    const followUpUrgency = Number.isFinite(followUpTimestamp) && followUpTimestamp < tomorrowStart.getTime()
-      ? (followUpTimestamp < nowTimestamp ? 'overdue' : 'today')
-      : null;
-    const latestQuote = latestQuotesByProspect.get(prospect.id) ?? null;
-    const quoteRemaining = daysRemaining(latestQuote?.validUntil);
-    const showQuoteFocus = Boolean(latestQuote && QUOTE_VISIBLE_STAGES.includes(prospect.stage ?? 'new'));
-    const group = latestQuote?.principleAgreementAt && ['quote_sent','follow_up','waiting','negotiation'].includes(prospect.stage ?? 'new')
-      ? PIPELINE_GROUPS.find((item) => item.id === 'finalization')
-      : PIPELINE_GROUPS.find((item) => item.stages.includes(prospect.stage ?? 'new'));
+    const nextAction = nextOpenAction(actions.filter(action => action.ownerId === prospect.id && action.status === 'open'));
+    const group = PIPELINE_GROUPS.find(item => item.stages.includes(prospect.stage ?? 'new'));
     const openCard = () => {if(!setSelectedId(prospect.id))return;setDeskStartTab('commercial');setDeskModeId(prospect.id);};
-    return <article data-prospect-id={prospect.id} className={`prospect-card stacked-card prospect-temperature-${prospect.temperature ?? 'neutral'} ${expanded ? 'expanded-card' : 'collapsed-card'} ${selectedId === prospect.id ? 'selected-prospect' : ''}`} key={prospect.id}>
-      <div className="prospect-card-head card-drag-handle" role="button" tabIndex={0} aria-label={'Ouvrir '+prospect.displayName} aria-expanded={expanded} draggable={draggable} onDragStart={(e) => { if (!draggable) return; setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onDragEnd={() => { setDraggingId(null); setDropStage(null); }} onClick={openCard} onKeyDown={event=>{if(event.target===event.currentTarget&&['Enter',' '].includes(event.key)){event.preventDefault();openCard();}}}>
+    return <article data-prospect-id={prospect.id} className={`prospect-card stacked-card prospect-temperature-${prospect.temperature ?? 'neutral'} collapsed-card ${selectedId === prospect.id ? 'selected-prospect' : ''}`} key={prospect.id}>
+      <div className="prospect-card-head card-drag-handle" role="button" tabIndex={0} aria-label={'Ouvrir '+prospect.displayName} draggable={draggable} onDragStart={(e) => { if (!draggable) return; setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onDragEnd={() => { setDraggingId(null); setDropStage(null); }} onClick={openCard} onKeyDown={event=>{if(event.target===event.currentTarget&&['Enter',' '].includes(event.key)){event.preventDefault();openCard();}}}>
         <div className="prospect-card-identity"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} /><strong>{prospect.displayName}</strong></div>
         {group && <span className="pipeline-state-icon" title={group.label}><OperationIcon name={group.icon}/></span>}
       </div>
-      <button type="button" className="pipeline-card-summary" aria-expanded={expanded} onClick={()=>{if(setSelectedId(prospect.id))setExpandedId(id=>id===prospect.id?null:prospect.id);}}>{expanded?'Masquer le résumé':'Voir le résumé'}</button>
-      {!expanded&&<div className="prospection-card-preview"><span>{nextAction?.title||'Aucune action programmée'}</span>{nextAction?.dueAt&&<time className={new Date(nextAction.dueAt).getTime()<Date.now()?'is-overdue':''}>{formatDate(nextAction.dueAt)}{new Date(nextAction.dueAt).getTime()<Date.now()?' · En retard':''}</time>}</div>}
-      <div className="prospect-card-body">
-        {group && <span className="prospect-card-step">Étape {group.step} · {group.label}</span>}
-        {followUpUrgency && <span className={`prospect-card-relaunch ${followUpUrgency}`}>{followUpUrgency === 'overdue' ? `Relance en retard · ${formatDate(nextFollowUp?.dueAt)}` : 'Relance à faire aujourd’hui'}</span>}
-        <small>{prospect.secondaryLabel || 'Interlocuteur à préciser'}</small>
-        {showQuoteFocus && latestQuote ? <div className="prospect-card-quote-focus"><span>{quoteCardState(prospect, latestQuote)}</span><strong>{latestQuote.number} · {latestQuote.subject}</strong><div className="prospect-card-quote-meta"><b>{formatMoney(latestQuote.contractValueCents)}</b>{latestQuote.sentAt && <span>Envoyé {formatDate(latestQuote.sentAt)}</span>}{latestQuote.validUntil && <span>Valide jusqu’au {formatDate(latestQuote.validUntil)}</span>}{quoteFollowUp && quoteRemaining != null && <span>{quoteRemaining < 0 ? `J+${Math.abs(quoteRemaining)} · relance dépassée` : `J-${quoteRemaining} avant échéance`}</span>}</div></div> : <><p>{prospect.primaryNeed || 'Besoin à préciser'}</p>{prospect.estimatedValueCents != null && <small>Estimation : {(prospect.estimatedValueCents / 100).toLocaleString('fr-FR')} €</small>}</>}
-        {nextAction && <div className="card-action-line next-action-line"><span>Prochaine action</span><strong>{nextAction.title}</strong><small>{formatDate(nextAction.dueAt)}</small></div>}
-        <div className="quick-followups"><button type="button" onClick={() => void scheduleQuick(prospect, 1)}>{quoteFollowUp ? 'Relance demain' : 'Rappel demain'}</button><button type="button" onClick={() => void scheduleQuick(prospect, 7)}>{quoteFollowUp ? 'Relance +7 jours' : 'Rappel +7 jours'}</button><button type="button" onClick={() => { setScheduleDateForId((id) => id === prospect.id ? null : prospect.id); setScheduleDate(''); }}>Programmer…</button></div>
-        {scheduleDateForId === prospect.id && <div className="quick-date-scheduler"><input aria-label="Date du rappel" type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} /><button type="button" className="secondary-button" onClick={() => void scheduleExact(prospect)}>Programmer</button></div>}
-        <span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>
-      </div>
+      <button type="button" className="pipeline-card-summary" aria-haspopup="dialog" onClick={openCard}>Ouvrir la fiche</button>
+      <div className="prospection-card-preview"><span>{nextAction?.title||'Aucune action programmée'}</span>{nextAction?.dueAt&&<time className={new Date(nextAction.dueAt).getTime()<Date.now()?'is-overdue':''}>{formatDate(nextAction.dueAt)}{new Date(nextAction.dueAt).getTime()<Date.now()?' · En retard':''}</time>}</div>
     </article>;
   };
 
@@ -616,7 +554,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
             {id:'city',label:'Ville',sortValue:p=>p.organizationCity??null,render:p=>p.organizationCity||'—'},
             {id:'contact',label:'Contact',sortValue:p=>p.secondaryLabel??null,render:p=>p.secondaryLabel||'À identifier'},
             {id:'status',label:'Statut',sortValue:p=>directoryStatus(p).label,render:p=><span className={'prospect-directory-status prospect-directory-status-'+directoryStatus(p).tone} title={p.stage==='new'&&!prospectReadiness(p).ready?'À compléter : '+prospectReadiness(p).missing.join(', '):directoryStatus(p).label}>{directoryStatus(p).label}</span>},
-            {id:'open',label:'Ouvrir',required:true,render:p=><button type="button" className="link-button pilot-icon-button" title={'Ouvrir '+p.displayName} aria-label={'Ouvrir '+p.displayName} onClick={e=>{e.stopPropagation();setSelectedId(p.id);}}><OperationIcon name="record-open"/></button>},
+            {id:'open',label:'Ouvrir',fixedWidth:76,required:true,render:p=><button type="button" className="link-button pilot-icon-button" title={'Ouvrir '+p.displayName} aria-label={'Ouvrir '+p.displayName} onClick={e=>{e.stopPropagation();setSelectedId(p.id);}}><OperationIcon name="record-open"/></button>},
           ]}/>
 
         </div>

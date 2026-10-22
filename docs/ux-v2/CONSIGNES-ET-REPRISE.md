@@ -34,6 +34,8 @@ Mise à jour :22/10/2026. Synthèse des décisions de cette conversation ; pas u
 - Réserve : premier démarrage instrumenté du portable avec erreur Electron startupData ; non reproduite au suivant sur le même binaire. Cause non établie, consignée dans VALIDATION.json.
 - Portable :C:/DEV/03_LIVRAISONS/AtoumWeb/Manager-Pilote-20261022-42b12a93/LANCER-LE-MANAGER.cmd. ZIP :C:/Users/AtoumWeb/Downloads/AtoumWeb-Pilote-42b12a93.zip.
 - Captures réelles :outputs/prospection-corrections-standard/index.html. Bilan :docs/ux-v2/PROSPECTION-CORRECTIONS-RECETTE-2026-10-22.md.
+- Ajustement local suivant (non empaqueté) : bouton « Ouvrir la fiche » vers la grande fenêtre de travail à la place du résumé déplié ; cartes compactes et colonne Ouvrir de l’annuaire fixée à76px. Portable42b12a93 inchangé.
+- Galerie demandée pour analyse ChatGPT :69 PNG réels des sources locales dans outputs/prospection-galerie-20261022/index.html ; ZIP Downloads/Prospection-modele-actuel-20261022.zip. Données TEMP, limites dans LIRE-MOI (états devis envoyé/accepté et Projet non représentés). Aucun nouveau portable.
 - Validation visuelle utilisateur encore attendue ; ne pas déclarer l’ergonomie approuvée parce que les tests passent. Refonte Client mise de côté ; aucune généralisation autorisée par défaut.
 
 ## Phrase pour un nouveau chat

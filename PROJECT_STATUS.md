@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 22/10/2026 — Galerie du modèle Prospection pour revue externe
+
+Demande utilisateur : disposer des captures du modèle en cours pour les transmettre à ChatGPT puis faire corriger l’interface.69 PNG réels capturés sur les sources locales, données synthétiques TEMP uniquement ; galerie outputs/prospection-galerie-20261022/index.html et ZIP Downloads/Prospection-modele-actuel-20261022.zip vérifié CRC. Capture ciblée via le banc existant, sans relancer les campagnes validées ni construire de portable. Rubriques longues en portions successives ; contrôles visuels ponctuels et aucune erreur console signalée. Périmètre exact et états conditionnels non couverts explicités dans LIRE-MOI.txt. Aucun changement produit supplémentaire ; prochaine action : retour de l’analyse utilisateur/ChatGPT.
+
+## 22/10/2026 — Ajustement ciblé des cartes et de la colonne Ouvrir
+
+Demande utilisateur sur deux captures : remplacer le résumé déplié du parcours par une grande fenêtre de travail modifiable et réduire la colonne Ouvrir. Cartes compactes, bouton « Ouvrir la fiche » vers le bureau existant, aucune expansion interne ; colonne Ouvrir fixée à76px sur le seul annuaire Prospection, même avec une ancienne largeur mémorisée. Éditeurs et gardes existants conservés. Portable42b12a93 inchangé ; aucune reconstruction demandée. Typecheck, syntaxe du scénario natif adapté et diff --check réussis ; scénario natif non réexécuté, validation visuelle du changement encore attendue.
+
 ## 22/10/2026 — Consignes de reprise et maîtrise des coûts
 
 Synthèse courte des décisions utilisateur dans [CONSIGNES-ET-REPRISE](docs/ux-v2/CONSIGNES-ET-REPRISE.md), référencée par AGENTS.md. Évite les reprises de validation et les campagnes/livraisons répétées ; dernier portable42b12a93 inchangé. Documentation seulement, aucun test applicatif nécessaire.
