@@ -62,3 +62,7 @@ Protocole réduit : typecheck et `node scripts/check-shell-home-simplification.c
 ### Rectification de palette validée
 
 La composition de référence ne remplace pas la palette officielle : suppression des surcharges marine/jaune du shell Noir. Les variables de styles.css restent la source unique (canvas #0e1115, surface #161a20, sidebar #080a0d, accent #c6a46c). Disposition, indicateurs colorés par fonction, autres thèmes et comportements inchangés. Une assertion native contrôle cet héritage dans la seule configuration standard. Cette décision remplace la ligne précédente « Noir gris éloigné de l’image ».
+
+### Dernier arbitrage utilisateur — Accueil bleu nuit approuvé
+
+L’utilisateur retient explicitement la vue et les couleurs de [cette référence](references/2026-10-22/accueil-reference-definitive.png), ainsi que le style d’icônes. Cette décision remplace la rectification précédente de la palette pour l’Accueil. Application limitée au shell quand l’Accueil est présent, en thème Noir ; aucune généralisation aux autres pages. Les icônes vectorielles fonctionnelles et le logo original sont conservés ; aucun compteur de notification, statistique, étape commerciale ou module n’est inventé pour imiter l’illustration. Données affichées issues des services actuels. Référence de présentation, pas certification pixel pour pixel. Noir/Confort/1920×1080/100% reste l’unique configuration de cette passe ; aucune installation ou modification de base réelle.

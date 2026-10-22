@@ -122,3 +122,8 @@
 @container home (max-width:620px){.home-widget-today,.home-widget-watch,.home-widget-time,.home-widget-actions{grid-column:1/-1;}}
 
 .home-dashboard .home-time-donut{border-radius:50%;padding:0;background:conic-gradient(var(--accent-strong) var(--home-time-progress),#687f9c 0);}
+
+/* Latest user approval: blue-night Home reference only; other pages retain their theme. */
+:root[data-theme='noir'] .aw-manager-shell:has(.home-dashboard){--canvas:#031321;--surface:#071b2d;--surface-soft:#10283d;--sidebar:#041321;--sidebar-text:#e9f2ff;--muted:#a9c2df;--border:#25445d;--accent:#ffd326;--accent-strong:#ffda39;--text:#f0f5fc;}
+:root[data-theme='noir'] .aw-manager-shell:has(.home-dashboard) .home-widget:not(.home-widget-kpis){background:linear-gradient(120deg,#0b2131,#04172a);box-shadow:inset 0 1px 0 #ffffff0b;}
+:root[data-theme='noir'] .aw-manager-shell:has(.home-dashboard) .home-widget .home-card{background:transparent;}

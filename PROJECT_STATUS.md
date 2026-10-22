@@ -2,7 +2,7 @@
 
 ## 22/10/2026 — Correction de la composition Accueil selon référence
 
-Palette : décision utilisateur ultérieure de conserver les couleurs officielles Noir ; surcharge marine/jaune retirée, sans changer la composition. Première simplification jugée insuffisamment fidèle : reprise de la composition Today/Watch, cartes colorées, pipeline compact, projets récents et rail/en-tête. Nouveau protocole demandé : Noir, Confort,1920×1080,100% uniquement ; typecheck et recette ciblée, aucune nouvelle suite complète. Sources métier/services/IPC/migrations/CRM inchangés ; préférences personnelles conservées. [Audit des écarts et protocole](docs/ux-v2/RECETTE-VISUELLE-2026-10-22.md). Validation visuelle attendue ; aucune publication, fusion ou installation.
+Dernier arbitrage utilisateur : référence Accueil bleu nuit/jaune et style des icônes explicitement retenus, remplaçant le retour provisoire à la palette Noir. Application limitée à l’Accueil, pas aux autres pages. Première simplification jugée insuffisamment fidèle : reprise de la composition Today/Watch, cartes colorées, pipeline compact, projets récents et rail/en-tête. Nouveau protocole demandé : Noir, Confort,1920×1080,100% uniquement ; typecheck et recette ciblée, aucune nouvelle suite complète. Sources métier/services/IPC/migrations/CRM inchangés ; préférences personnelles conservées. [Audit des écarts et protocole](docs/ux-v2/RECETTE-VISUELLE-2026-10-22.md). Validation visuelle attendue ; aucune publication, fusion ou installation.
 
 ## 22/10/2026 — Reprise visuelle ciblée : Accueil et shell
 
