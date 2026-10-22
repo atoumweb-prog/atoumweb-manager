@@ -43,8 +43,9 @@ export function ConfiguredDataTable<T>({scope,columns,rows,selectedId,getId,onSe
  const ordered=options.columnOrder.map(id=>columns.find(c=>c.id===id)).filter((c):c is TableColumn<T>=>!!c);
  const visible=normalizeTableColumns(options.visibleColumnIds,schema);
  return <section className="aw-configured-table" data-table-scope={scope}>
-  <details className="aw-table-preferences"><summary><OperationIcon name="columns"/> Colonnes et vues <span>{rows.length} résultats · source complète</span></summary>
-   <TableColumnManager columns={ordered} visible={visible} onToggle={id=>update({...latest.current,visibleColumnIds:visible.includes(id)?visible.filter(c=>c!==id):[...visible,id]})} onMove={(id,target)=>update({...latest.current,columnOrder:moveColumn(latest.current.columnOrder,id,target,schema)})} onReset={()=>update({...latest.current,visibleColumnIds:schema.map(c=>c.id),columnOrder:schema.map(c=>c.id),widths:{}})}/>
+  <details className="aw-table-preferences"><summary><OperationIcon name="columns"/> Colonnes et vues <span>{views.find(view=>view.id===viewId)?.name||'Vue standard'} · {rows.length} résultats</span></summary>
+   {defaultVisibleColumnIds&&<p className="muted">Les changements sont enregistrés automatiquement dans la vue active. Dupliquer la vue permet de l’enregistrer sous un autre nom ; Rétablir retrouve la présentation compacte.</p>}
+   <TableColumnManager columns={ordered} visible={visible} onToggle={id=>update({...latest.current,visibleColumnIds:visible.includes(id)?visible.filter(c=>c!==id):[...visible,id]})} onMove={(id,target)=>update({...latest.current,columnOrder:moveColumn(latest.current.columnOrder,id,target,schema)})} onReset={()=>update({...latest.current,visibleColumnIds:initialView().visibleColumnIds,columnOrder:schema.map(c=>c.id),widths:{}})}/>
    <SavedViewPicker views={views} selected={viewId} onSelect={choose} onCreate={(name,duplicate)=>edit(duplicate?'duplicate':'create',name)} onRename={name=>edit('rename',name)} onDelete={()=>edit('delete')} onReset={()=>{try{const next=initialView();writeTableView(store,key,next,schema);setViewId('standard');apply(next);setError('');}catch{setError('Réinitialisation non mémorisée ; fiche conservée.');}}}/>
   </details>
   {error&&<p role="alert">{error}</p>}

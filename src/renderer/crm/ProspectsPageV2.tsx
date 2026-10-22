@@ -1,3 +1,4 @@
+import {readLayout,writeLayout,layoutKey} from '../../shared/panelLayout';
 import {ProspectDialog} from './ProspectDialog';
 import {ProspectValue} from './ProspectValue';
 import {ProspectRelatedRecords} from './ProspectRelatedRecords';
@@ -202,7 +203,10 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [selectedId, applySelectedId] = useState<string | null>(initialId ?? null);
-  const [prospectSplitPercent, setProspectSplitPercent] = useState(66);
+  const splitKey=layoutKey('prospection','directory');
+  const [prospectSplitPercent, applyProspectSplitPercent] = useState(()=>{try{return Math.max(40,Math.min(74,readLayout(window.atoumweb.visualPreferences,splitKey,66)));}catch{return 66;}});
+  function setProspectSplitPercent(value:number|((before:number)=>number)){applyProspectSplitPercent(before=>{const next=Math.max(40,Math.min(74,typeof value==='number'?value:value(before)));try{writeLayout(window.atoumweb.visualPreferences,splitKey,next);}catch{/* Keep current layout usable. */}return next;});}
+  const [deskAction,setDeskAction]=useState(false);
   const [deskStartTab,setDeskStartTab]=useState<'commercial'|'reference'>('commercial');
   const [deskModeId, applyDeskModeId] = useState<string | null>(null);
   const [quickDateFor,setQuickDateFor]=useState<ProspectSummary|null>(null),[quickDate,setQuickDate]=useState(''),[quickSaving,setQuickSaving]=useState(false),[quickError,setQuickError]=useState('');
@@ -482,7 +486,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     mode="panel"
     onRefresh={(message) => { void refresh(); if (message) onMessage(message); }}
     onClose={() => {if(setSelectedId(null))requestAnimationFrame(()=>document.querySelector<HTMLElement>(`tr[data-record-id="${selected?.id}"]`)?.focus({preventScroll:true}));}}
-    onOpenDesk={(tab='commercial') => {setDeskStartTab(tab);setDeskModeId(selected.id);}}
+    onOpenDesk={(tab='commercial',action=false) => {setDeskStartTab(tab);setDeskAction(action);setDeskModeId(selected.id);}}
     onTemperature={(temperature) => void updateTemperature(selected, temperature)}
     onStart={() => void startProspecting(selected)}
     onLost={(code, reason) => void markLost(selected, code, reason)}
@@ -493,9 +497,9 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     const nextAction = nextOpenAction(actions.filter(action => action.ownerId === prospect.id && action.status === 'open'));
     const signal=latestQuotesByProspect.get(prospect.id)?.principleAgreementAt;
     const group = signal&&isQuoteFollowUpStage(prospect.stage)?PIPELINE_GROUPS.find(item=>item.id==='finalization'):PIPELINE_GROUPS.find(item => item.stages.includes(prospect.stage ?? 'new'));
-    const openCard = () => {if(!setSelectedId(prospect.id))return;setDeskStartTab('commercial');setDeskModeId(prospect.id);};
+    const openCard = () => {if(!setSelectedId(prospect.id))return;setDeskStartTab('commercial');setDeskAction(false);setDeskModeId(prospect.id);};
     return <article data-prospect-id={prospect.id} className={`prospect-card stacked-card prospect-temperature-${prospect.temperature ?? 'neutral'} collapsed-card ${selectedId === prospect.id ? 'selected-prospect' : ''}`} key={prospect.id}>
-      <div className="prospect-card-head card-drag-handle" role="button" tabIndex={0} aria-label={'Ouvrir '+prospect.displayName} draggable={draggable} onDragStart={(e) => { if (!draggable) return; setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onDragEnd={() => { setDraggingId(null); setDropStage(null); }} onClick={openCard} onKeyDown={event=>{if(event.target===event.currentTarget&&['Enter',' '].includes(event.key)){event.preventDefault();openCard();}}}>
+      <div className="prospect-card-head card-drag-handle" title={prospect.displayName} role="button" tabIndex={0} aria-label={'Ouvrir '+prospect.displayName} draggable={draggable} onDragStart={(e) => { if (!draggable) return; setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onDragEnd={() => { setDraggingId(null); setDropStage(null); }} onClick={openCard} onKeyDown={event=>{if(event.target===event.currentTarget&&['Enter',' '].includes(event.key)){event.preventDefault();openCard();}}}>
         <div className="prospect-card-identity"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} /><strong>{prospect.displayName}</strong></div>
         {group && <span className="pipeline-state-icon" title={group.label}><OperationIcon name={group.icon}/></span>}
       </div>
@@ -564,7 +568,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
       {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}>
         <div className="panel table-panel prospect-directory-table-panel">
           <ConfiguredDataTable<ProspectSummary> fitAvailable defaultVisibleColumnIds={['identity','next_action','due','status','open']} scope={PROSPECT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} rows={directoryFiltered} selectedId={selectedId} getId={p=>p.id} onSelect={p=>setSelectedId(p.id)} className="prospect-directory-table" caption="Annuaire prospects · source complète · tri sur tous les résultats filtrés" columns={[
-            {id:'identity',label:'Entreprise',required:true,sortValue:p=>p.displayName,render:p=><div className="client-name-cell"><CrmIdentityAvatar organizationId={p.organizationId} contactId={p.contactId} name={p.displayName}/><div><strong>{p.displayName}</strong><small><span className={'prospect-temperature-dot '+(p.temperature??'neutral')} title={TEMPERATURE_LABELS[p.temperature??'neutral']} aria-label={'Niveau d’intérêt : '+TEMPERATURE_LABELS[p.temperature??'neutral']}/> {SOURCE_LABELS[p.source??'other']}</small></div></div>},
+            {id:'identity',label:'Entreprise',required:true,sortValue:p=>p.displayName,render:p=><div className="client-name-cell"><CrmIdentityAvatar organizationId={p.organizationId} contactId={p.contactId} name={p.displayName}/><div><strong title={p.displayName}>{p.displayName}</strong><small><span className={'prospect-temperature-dot '+(p.temperature??'neutral')} title={TEMPERATURE_LABELS[p.temperature??'neutral']} aria-label={'Niveau d’intérêt : '+TEMPERATURE_LABELS[p.temperature??'neutral']}/> {SOURCE_LABELS[p.source??'other']}</small></div></div>},
             {id:'next_action',label:'Prochaine action',sortValue:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.title??null,render:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.title||<span className="muted">Aucune action programmée</span>},
             {id:'due',label:'Échéance',sortValue:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.dueAt??null,render:p=>{const a=nextOpenAction(actions.filter(a=>a.ownerId===p.id)),date=a?.dueAt;return <span className={date&&new Date(date).getTime()<Date.now()?'prospection-due-overdue':''}>{date?formatDate(date):'—'}</span>;}},
             {id:'industry',label:'Activité',sortValue:p=>p.organizationIndustry??null,render:p=>p.organizationIndustry||<span className="muted">À compléter</span>},
@@ -600,7 +604,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
 
     {(view === 'history' || view === 'conversions') && <>{view === 'conversions' && <div className="module-toolbar prospect-toolbar"><strong>Clients acquis · {historicalConversions.length}</strong><button className="secondary-button" type="button" onClick={() => setView('pipeline')}>Retour au parcours commercial</button></div>}<HistoryView prospects={historyVisible} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected && historyVisible.some((item) => item.id === selected.id) ? selected : null} activity={activity} onClose={() => {if(setSelectedId(null))requestAnimationFrame(()=>document.querySelector<HTMLElement>(`tr[data-record-id="${selected?.id}"]`)?.focus({preventScroll:true}));}} /></>}
     {quickDateFor&&<ProspectDialog label="Programmer un rappel" className="prospect-action-dialog" onClose={()=>quickDateGuard.request(()=>{quickDateGuard.discard();setQuickDateFor(null);})}><div className="inline-editor"><h2>Rappel — {quickDateFor.displayName}</h2><label>Date du rappel<input type="date" value={quickDate} onChange={event=>setQuickDate(event.target.value)}/></label>{quickError&&<p role="alert" className="form-error">{quickError}</p>}<div className="inline-editor-actions"><button type="button" className="secondary-button" onClick={()=>quickDateGuard.request(()=>{quickDateGuard.discard();setQuickDateFor(null);})}>Annuler la saisie</button><button type="button" className="primary-button" disabled={!quickDate||quickSaving} onClick={()=>void scheduleQuick(quickDateFor,0,quickDate)}>Programmer le rappel</button></div></div></ProspectDialog>}
-    {deskProspect && <ProspectDialog className="prospect-desk-dialog prospect-desk-overlay" label={`Fiche de travail ${deskProspect.displayName}`} onClose={()=>setDeskModeId(null)}><div className="prospect-desk-shell"><ProspectDetailV2 prospect={deskProspect} actions={actions.filter((item) => item.ownerId === deskProspect.id)} activity={selectedId === deskProspect.id ? activity : []} mode="desk" initialTab={deskStartTab} onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setDeskModeId(null)} onTemperature={(temperature) => void updateTemperature(deskProspect, temperature)} onStart={() => void startProspecting(deskProspect)} onLost={(code, reason) => void markLost(deskProspect, code, reason)} onArchive={() => void archive(deskProspect)} /></div></ProspectDialog>}
+    {deskProspect && <ProspectDialog className="prospect-desk-dialog prospect-desk-overlay" label={`Fiche de travail ${deskProspect.displayName}`} onClose={()=>setDeskModeId(null)}><div className="prospect-desk-shell"><ProspectDetailV2 prospect={deskProspect} actions={actions.filter((item) => item.ownerId === deskProspect.id)} activity={selectedId === deskProspect.id ? activity : []} mode="desk" initialTab={deskStartTab} initialAction={deskAction} onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setDeskModeId(null)} onTemperature={(temperature) => void updateTemperature(deskProspect, temperature)} onStart={() => void startProspecting(deskProspect)} onLost={(code, reason) => void markLost(deskProspect, code, reason)} onArchive={() => void archive(deskProspect)} /></div></ProspectDialog>}
   </div>;
 }
 
@@ -630,14 +634,15 @@ function ProspectWorkAccordion({ title, summary, defaultOpen = false, children, 
 }
 
 function ProspectDetailV2(props:Parameters<typeof ProspectDetailV2Inner>[0]){return <UnsavedGroup name={'prospect:'+props.prospect.id+'/'+props.mode}><ProspectDetailV2Inner {...props}/></UnsavedGroup>;}
-function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, onClose, onOpenDesk, initialTab='commercial', onTemperature, onStart, onLost, onArchive }: {
+function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, onClose, onOpenDesk, initialTab='commercial', initialAction=false, onTemperature, onStart, onLost, onArchive }: {
   prospect: ProspectSummary;
   actions: CrmAction[];
   activity: ActivityEvent[];
   mode: 'panel' | 'desk';
   onRefresh: (message?: string) => void;
   onClose: () => void;
-  onOpenDesk?: (tab?:'commercial'|'reference') => void;
+  onOpenDesk?: (tab?:'commercial'|'reference',action?:boolean) => void;
+  initialAction?:boolean;
   initialTab?:'commercial'|'reference';
   onTemperature: (value: ProspectTemperature) => void;
   onStart: () => void;
@@ -646,6 +651,8 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
 }) {
   const [lossOpen, setLossOpen] = useState(false);
   const [archiveOpen,setArchiveOpen]=useState(false);
+  const [quickContact,setQuickContact]=useState<{role:string;email:string;phone:string}>({role:'',email:'',phone:''});
+  useEffect(()=>{if(mode!=='panel')return;let current=true;const load=async()=>{try{const identity=await window.atoumweb.workflow.identity('prospect',prospect.id);const methods=identity.contact?await window.atoumweb.crm.contactMethods.list('contact',identity.contact.id):[];if(current)setQuickContact({role:identity.contact?.jobTitle||'',email:(methods.find(method=>method.type==='email'&&method.isPrimary)||methods.find(method=>method.type==='email'))?.value||'',phone:(methods.find(method=>method.type==='phone'&&method.isPrimary)||methods.find(method=>method.type==='phone'))?.value||''});}catch{if(current)setQuickContact({role:'',email:'',phone:''});}};void load();window.addEventListener('atoumweb:changed',load);return()=>{current=false;window.removeEventListener('atoumweb:changed',load);};},[prospect.id,mode]);
   const [deskTab, applyDeskTab] = useState<'commercial' | 'reference'>(initialTab);
   function setDeskTab(tab:'commercial'|'reference'){if(tab!==deskTab)requestUnsavedExit(()=>applyDeskTab(tab),'prospect:'+prospect.id+'/'+mode);}
   const [identityFocus, setIdentityFocus] = useState<{ target: 'decision' | 'contact'; sequence: number } | null>(null);
@@ -666,6 +673,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
   }
 
 
+  useEffect(()=>{if(mode==='desk'&&initialAction){const timer=window.setTimeout(()=>{showSection(`prospect-followup-section-${prospect.id}`);},50);return()=>window.clearTimeout(timer);}},[]);
   if (mode === 'panel') {
     return <aside data-prospect-id={prospect.id} className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-panel prospect-temperature-${prospect.temperature ?? 'neutral'}`}>
       <div className="detail-panel-heading">
@@ -673,8 +681,8 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
         <div className="detail-heading-actions">{onOpenDesk && <button className="secondary-button open-desk-button" type="button" aria-label="Agrandir la fiche" title="Agrandir la fiche" onClick={()=>onOpenDesk?.()}><OperationIcon name="record-expand"/></button>}<button className="close-detail" type="button" aria-label="Fermer la fiche prospect" title="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button></div>
       </div>
       <div className="prospect-compact-scroll" tabIndex={0} role="region" aria-label="Contenu défilable de la fiche rapide">
-        <section className="prospection-quick-next"><span><OperationIcon name="calendar"/>Prochaine action{nextAction?.dueAt&&<time>{formatDate(nextAction.dueAt)}{new Date(nextAction.dueAt).getTime()<Date.now()?' · En retard':''}</time>}</span><h3>{nextAction?.title||'Aucune action programmée'}</h3>{onOpenDesk&&<button type="button" className="primary-button" onClick={()=>onOpenDesk?.()}>{nextAction?'Consulter l’action':'Programmer une action'}<span aria-hidden="true">›</span></button>}</section>
-        <section className="prospection-quick-contact"><h3>Contact principal</h3><strong>{prospect.secondaryLabel||'Contact à identifier'}</strong><p>{prospect.organizationIndustry||'Activité à préciser'}{prospect.organizationCity?' · '+prospect.organizationCity:''}</p></section>
+        <section className="prospection-quick-next"><span><OperationIcon name="calendar"/>Prochaine action{nextAction?.dueAt&&<time>{formatDate(nextAction.dueAt)}{new Date(nextAction.dueAt).getTime()<Date.now()?' · En retard':''}</time>}</span><h3>{nextAction?.title||'Aucune action programmée'}</h3>{onOpenDesk&&<button type="button" className="primary-button" onClick={()=>onOpenDesk?.('commercial',true)}>{nextAction?'Consulter l’action':'Programmer une action'}<span aria-hidden="true">›</span></button>}</section>
+        <section className="prospection-quick-contact"><h3>Contact principal</h3><strong>{prospect.secondaryLabel||'Contact à identifier'}</strong>{quickContact.role&&<p>{quickContact.role}</p>}{quickContact.email&&<p><ProspectValue value={quickContact.email} kind="email"/></p>}{quickContact.phone&&<p><ProspectValue value={quickContact.phone} kind="phone"/></p>}</section>
         <section className="prospection-quick-activity"><h3>Dernière activité</h3>{activity.length?<><p>{humanActivity([...activity].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0].summary)}</p><small>{formatDate([...activity].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0].createdAt)}</small></>:<p>Aucune activité enregistrée</p>}</section>
         <details className="prospection-quick-more"><summary>Informations et préparation</summary>
         {prospect.stage === 'new' && <div className={`prospect-readiness-card ${readiness.ready ? 'ready' : 'incomplete'}`}><div><span>Préparation</span><strong>{readiness.ready ? 'Prêt pour démarchage' : 'À compléter avant ou pendant le premier contact'}</strong>{!readiness.ready && <small>Manque : {readiness.missing.join(', ')}</small>}</div><button className="primary-button" type="button" onClick={onStart}>Démarrer la prospection</button></div>}
@@ -691,7 +699,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
         </details><details className="prospection-quick-more"><summary>Associations</summary><ProspectRelatedRecords prospect={prospect}/></details>
         <div className="prospect-compact-actions">
           {prospect.stage !== 'new' && <button type="button" className="secondary-button" title="Ouvrir la référence prospect" aria-label="Ouvrir la référence prospect" onClick={()=>onOpenDesk?.('reference')}><OperationIcon name="external-link"/><span>Référence</span></button>}
-          {onOpenDesk && <button type="button" className="primary-button" onClick={()=>onOpenDesk?.()}>Ouvrir la fiche de travail</button>}
+          {onOpenDesk && <button type="button" className="secondary-button" onClick={()=>onOpenDesk?.()}>Ouvrir la fiche de travail</button>}
         </div>
       </div>
     </aside>;

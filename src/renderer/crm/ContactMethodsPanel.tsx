@@ -112,7 +112,7 @@ export function ContactMethodsPanel({
   function group(title: string, values: ContactMethod[]) {
     if (!values.length) return null;
     const sorted = [...values].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || (a.label ?? '').localeCompare(b.label ?? '', 'fr'));
-    return <div className="contact-method-group"><strong>{title}</strong>{sorted.map((item) => <div className="contact-method-row" key={item.id}><span><b>{item.type === 'email' ? 'Email' : 'Téléphone'}</b> · <ProspectValue value={item.type==='phone'?formatPhone(item.value):item.value} kind={item.type==='phone'?'phone':'email'}/>{item.label ? ` · ${item.label}` : ''}{item.isPrimary ? ' · Principal' : ''}</span><button className="secondary-button compact-button" type="button" onClick={() => void archive(item.id)}>Archiver</button></div>)}</div>;
+    return <div className="contact-method-group"><strong>{title}</strong>{sorted.map((item) => <div className="contact-method-row" key={item.id}><span><b>{item.type === 'email' ? 'Email' : 'Téléphone'}</b> · <ProspectValue value={item.type==='phone'?formatPhone(item.value):item.value} kind={item.type==='phone'?'phone':'email'}/>{item.label && !(item.isPrimary&&item.label.trim().toLocaleLowerCase('fr')==='principal') ? ` · ${item.label}` : ''}{item.isPrimary ? ' · Principal' : ''}</span><button className="secondary-button compact-button" type="button" onClick={() => void archive(item.id)}>Archiver</button></div>)}</div>;
   }
 
   if ((!allowOrganization || !organizationId) && owners.length === 0) return null;
