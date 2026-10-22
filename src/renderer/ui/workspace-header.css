@@ -43,3 +43,14 @@
  .app-shell .aw-header-context small{max-width:100%}
  .app-shell .aw-header-timer{flex:1 1 220px;min-width:160px}
 }
+
+/* One rail control, one brand and one search affordance in the real shell. */
+.app-shell .aw-header-context{flex:0 0 auto;min-width:0;}
+.app-shell .aw-header-primary{justify-content:flex-end;}
+.app-shell .aw-header-secondary:not(.is-open){display:none;}
+.app-shell .aw-header-workspace-label{color:var(--muted);overflow-wrap:anywhere;}
+@container workspace-header (min-width:900px){
+ .app-shell .aw-workspace-header:not(.is-compact) .aw-header-search:not(.is-open){display:block;flex:1 1 420px;}
+ .app-shell .aw-workspace-header:not(.is-compact) .aw-header-primary:has(.aw-header-search:not(.is-open)) #header-search-trigger{display:none;}
+ .app-shell .aw-header-timer{flex:0 1 380px;}
+}

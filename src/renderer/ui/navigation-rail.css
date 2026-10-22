@@ -11,3 +11,14 @@
 .aw-navigation-rail.is-collapsed .aw-rail-flyout .aw-rail-active-mark{position:static;margin-left:auto;font-size:inherit}
 
 .aw-brand-symbol{display:block;width:44px;height:44px;flex-shrink:0;border-radius:9px;object-fit:contain}
+
+/* 22/10: compact headings and optional details without losing destinations. */
+.aw-rail-group-heading{width:100%;justify-content:space-between;font-weight:700;color:var(--sidebar-text);}
+.aw-rail-group-heading svg{width:16px!important;height:16px!important;}
+.aw-rail-group>[hidden]{display:none!important;}
+.aw-rail-brand .aw-brand-logotype{max-width:210px;}
+.aw-rail-row .aw-rail-pin{opacity:0;}
+.aw-rail-row:hover .aw-rail-pin,.aw-rail-row:focus-within .aw-rail-pin,.aw-rail-pin[aria-pressed=true]{opacity:1;}
+@media(hover:none){.aw-rail-row .aw-rail-pin{opacity:1;}}
+
+.aw-manager-shell .aw-navigation-rail:not(.is-collapsed){width:clamp(220px,18vw,270px);}

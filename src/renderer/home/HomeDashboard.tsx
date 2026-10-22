@@ -164,17 +164,17 @@ today:<article className="home-card home-today-card">
             <span className="home-today-copy"><strong>{entry.target.title}</strong><small>{entry.target.subtitle || entry.target.status || 'Action du jour'}</small></span>
             <span className="home-today-open">›</span>
           </button>)}
-          {todayEntries.length === 0 && <div className="home-empty-state"><OperationIcon name="check-circle" size={30} /><strong>{has("entries")?"Aucun dossier du jour signalé":"Dossiers du jour indisponibles"}</strong><span>{resources.entries?.status==="ready"?"Source : suivi des dossiers, dernière lecture confirmée.":"Actualisation non confirmée ; consultez le détail des sources."}</span></div>}
+          {todayEntries.length === 0 && <div className="home-empty-state"><OperationIcon name="check-circle" size={30} /><strong>{has("entries")?"Aucun dossier du jour signalé":"Dossiers du jour indisponibles"}</strong>{resources.entries?.status!=="ready"&&<span>Actualisation non confirmée ; consultez le détail des sources.</span>}</div>}
         </div>
       </article>,
 pipeline:<article className="home-card home-pipeline-card">
         <div className="home-card-title"><div><OperationIcon name="chart" size={20} /><strong>Pipeline commercial</strong></div><button type="button" onClick={() => openProspectPipeline()} aria-label="Ouvrir le pipeline commercial">›</button></div>
         <div className="home-pipeline-items">
           {pipeline.map((item, index) => <button type="button" key={item.key} data-home-pipeline={item.key} className={`home-pipeline-item tone-${item.tone}`} onClick={() => item.historical?window.dispatchEvent(new CustomEvent('atoumweb:open-prospects-view',{detail:'conversions'})):openProspectPipeline()} title={`${item.label} · ${pipelineReady?item.count:'indisponible'} prospect${item.count > 1 ? 's' : ''}`}>
-            <span className="home-pipeline-step"><i />Étape {index + 1}</span>
+            <span className="home-pipeline-step" aria-hidden="true"><i /></span>
             <strong>{pipelineReady?item.count:"—"}</strong>
             <span className="home-pipeline-label">{item.label}</span>
-            <small>{item.historical?'Historique · ':''}{pipelineReady?item.count:"—"} prospect{item.count > 1 ? 's' : ''}</small>
+            {item.historical&&<small>Historique</small>}
           </button>)}
         </div>
         <div className="home-pipeline-bar" aria-label="Répartition du pipeline">
@@ -199,7 +199,7 @@ time:<article className="home-card home-time-card">
 watch:<article className={`home-card home-watch-card ${alerts.length||resources.alerts?.status!=='ready' ? 'has-alerts' : 'is-clear'}`}>
         <div className="home-watch-copy">
           <span className="home-watch-icon"><OperationIcon name={alerts.length ? 'alert' : 'check-circle'} size={25} /></span>
-          <div><span className="eyebrow">À surveiller</span><strong>{alerts.length ? `${alerts.length} alerte${alerts.length > 1 ? 's' : ''} connue${alerts.length > 1 ? 's' : ''}` : resources.alerts?.status==='ready'?'Aucune alerte opérationnelle signalée':'Alertes non confirmées'}</strong><small>{resources.alerts?.status==='ready'?'Source : alertes opérationnelles, dernière lecture confirmée.':'Actualisation non confirmée ; consultez le détail des sources.'}</small></div>
+          <div><span className="eyebrow">À surveiller</span><strong>{alerts.length ? `${alerts.length} alerte${alerts.length > 1 ? 's' : ''} connue${alerts.length > 1 ? 's' : ''}` : resources.alerts?.status==='ready'?'Aucune alerte opérationnelle signalée':'Alertes non confirmées'}</strong>{resources.alerts?.status!=='ready'&&<small>Actualisation non confirmée ; consultez le détail des sources.</small>}</div>
         </div>
         {alerts.map(alert=><button className="home-watch-action" type="button" key={alert.id} data-home-alert={alert.id} onClick={() => {
           const target = alertTarget(alert);
@@ -217,24 +217,32 @@ actions:<article className="home-card home-actions-card">
         </div>
       </article>
   };
+  const widgetOpen:Record<HomeWidgetKey,()=>void>={today:()=>openPage('Prospects'),kpis:()=>openProspectPipeline(),pipeline:()=>openProspectPipeline(),time:()=>openPage('Gestion des temps'),watch:()=>openPage('Interventions & Maintenance'),actions:()=>{}};
+  function renderWidget(key:HomeWidgetKey){
+    const folded=preference.collapsed?.includes(key)??false;
+    return <div key={key} data-home-widget={key} className={'home-widget home-widget-'+key} hidden={preference.hidden.includes(key)}>
+      <div className="home-widget-heading"><button type="button" className="home-widget-fold" aria-expanded={!folded} aria-controls={'home-content-'+key} aria-label={`${folded?'Déplier':'Replier'} ${widgetLabels[key]}`} onClick={()=>persist({...preference,collapsed:folded?(preference.collapsed??[]).filter(value=>value!==key):[...(preference.collapsed??[]),key]})}><OperationIcon name={folded?'chevron-down':'chevron-up'}/><strong>{widgetLabels[key]}</strong>{key==='today'&&has('entries')&&<span>{todayEntries.length}</span>}</button>{!['kpis','actions'].includes(key)&&<button type="button" className="home-widget-open" onClick={widgetOpen[key]} aria-label={key==='today'?'Ouvrir les actions':key==='pipeline'?'Ouvrir le pipeline commercial':key==='time'?'Ouvrir la gestion des temps':'Ouvrir les opérations'}>Voir tout <span aria-hidden="true">›</span></button>}</div>
+      <div id={'home-content-'+key} className="home-widget-content" hidden={folded}>{widgets[key]}</div>
+    </div>;
+  }
   return <section className="home-dashboard" aria-busy={loading}>
-   <header className="home-heading"><div><h1>Accueil</h1><p>Vue rapide de l’activité AtoumWeb</p></div><AppButton onAction={load}>Actualiser l’Accueil</AppButton></header>
+   <header className="home-heading"><div><h1>Accueil</h1></div><AppButton aria-label="Actualiser l’Accueil" title="Actualiser" icon={<OperationIcon name="refresh"/>} onAction={load}/></header>
    {failed.length>0&&<AppNotice level="error" action={{label:'Réessayer',onClick:()=>void load()}}>Sources indisponibles : {failed.map(key=>sourceLabels[key]).join(', ')}. Les dernières données confirmées, si disponibles, peuvent être anciennes.</AppNotice>}
 
    {resources.alerts?.status!=='ready'&&<AppNotice level="warning">La source des alertes n’est pas confirmée pour cette actualisation. {has("alerts")?"Les alertes précédemment connues restent affichées.":"La situation des alertes reste inconnue."}</AppNotice>}
-   {alerts.filter(alert=>alert.severity==='critical').length>0&&<div className="home-critical-alerts" role="alert"><strong>Alertes critiques — toujours accessibles</strong>{alerts.filter(alert=>alert.severity==='critical').map(alert=><button type="button" key={alert.id} data-home-critical={alert.id} onClick={()=>{const target=alertTarget(alert);if(target)openEntity(target);else openPage('Interventions & Maintenance');}}>{alert.title} · Ouvrir le dossier</button>)}</div>}
+   {alerts.filter(alert=>alert.severity==='critical').length>0&&<div className="home-critical-alerts" role="alert"><strong>À traiter en priorité</strong>{alerts.filter(alert=>alert.severity==='critical').map(alert=><button type="button" key={alert.id} data-home-critical={alert.id} onClick={()=>{const target=alertTarget(alert);if(target)openEntity(target);else openPage('Interventions & Maintenance');}}>{alert.title} · Ouvrir le dossier</button>)}</div>}
    {preferenceError&&<AppNotice level="error">{preferenceError} La disposition standard reste accessible.</AppNotice>}
-   <div data-home-widget="today" className="home-widget home-widget-today">{widgets.today}</div>
-   <details className="home-source-status"><summary>{loading?'Actualisation en cours':failed.length?'Chargement partiel':`${Object.keys(sourceLabels).length} sources chargées`} · Détail des sources</summary>{(Object.keys(sourceLabels) as (keyof HomeData)[]).map(key=><p key={key} data-home-source={key} data-source-status={resources[key]?.status??'loading'}><strong>{sourceLabels[key]}</strong> : {resources[key]?.status==='ready'?'Chargé':resources[key]?.status==='error'?'Indisponible':'En cours'}{resources[key]?.loadedAt&&<> · Dernière lecture {new Date(resources[key]!.loadedAt!).toLocaleTimeString('fr-FR')}{resources[key]?.status!=='ready'?' (données anciennes)':''}</>}{resources[key]?.error&&<> · {resources[key]!.error}</>}</p>)}</details>
-   <details className="home-widget-settings"><summary>Personnaliser l’Accueil</summary><p>Aujourd’hui et les alertes critiques restent accessibles. Seule la présentation est mémorisée.</p>{preference.order.map((key,index)=><div key={key} data-widget-setting={key} onDragOver={event=>event.preventDefault()} onDrop={event=>{event.preventDefault();const source=event.dataTransfer.getData('text/plain');if((HOME_WIDGET_KEYS as readonly string[]).includes(source))persist(dropHomeWidget(preference,source as HomeWidgetKey,key));}}><label><input type="checkbox" checked={!preference.hidden.includes(key)} disabled={key==='today'} onChange={()=>persist({...preference,hidden:preference.hidden.includes(key)?preference.hidden.filter(value=>value!==key):[...preference.hidden,key]})}/>{widgetLabels[key]}</label><button type="button" draggable={key!=='today'} aria-label={'Déplacer '+widgetLabels[key]} onDragStart={event=>{event.dataTransfer.setData('text/plain',key);event.dataTransfer.effectAllowed='move';}}>↕</button><AppButton aria-label={'Monter '+widgetLabels[key]} disabled={index<=1} onAction={()=>persist(moveHomeWidget(preference,key,-1))}>↑</AppButton><AppButton aria-label={'Descendre '+widgetLabels[key]} disabled={index===0||index===preference.order.length-1} onAction={()=>persist(moveHomeWidget(preference,key,1))}>↓</AppButton></div>)}<AppButton onAction={resetWidgets}>Réinitialiser l’Accueil</AppButton></details>
-   <div className="home-widgets">{preference.order.filter(key=>key!=="today").map(key=><div key={key} data-home-widget={key} className={'home-widget home-widget-'+key} hidden={preference.hidden.includes(key)}>{widgets[key]}</div>)}</div>
+   {renderWidget('today')}
+
+   <details className="home-widget-settings"><summary>Personnaliser l’Accueil</summary><details className="home-source-status"><summary>{loading?'Actualisation en cours':failed.length?'Chargement partiel':`${Object.keys(sourceLabels).length} sources chargées`} · Détail des sources</summary>{(Object.keys(sourceLabels) as (keyof HomeData)[]).map(key=><p key={key} data-home-source={key} data-source-status={resources[key]?.status??'loading'}><strong>{sourceLabels[key]}</strong> : {resources[key]?.status==='ready'?'Chargé':resources[key]?.status==='error'?'Indisponible':'En cours'}{resources[key]?.loadedAt&&<> · Dernière lecture {new Date(resources[key]!.loadedAt!).toLocaleTimeString('fr-FR')}{resources[key]?.status!=='ready'?' (données anciennes)':''}</>}{resources[key]?.error&&<> · {resources[key]!.error}</>}</p>)}</details><p>Aujourd’hui et les alertes critiques restent accessibles. Seule la présentation est mémorisée.</p>{preference.order.map((key,index)=><div key={key} data-widget-setting={key} onDragOver={event=>event.preventDefault()} onDrop={event=>{event.preventDefault();const source=event.dataTransfer.getData('text/plain');if((HOME_WIDGET_KEYS as readonly string[]).includes(source))persist(dropHomeWidget(preference,source as HomeWidgetKey,key));}}><label><input type="checkbox" checked={!preference.hidden.includes(key)} disabled={key==='today'} onChange={()=>persist({...preference,hidden:preference.hidden.includes(key)?preference.hidden.filter(value=>value!==key):[...preference.hidden,key]})}/>{widgetLabels[key]}</label><button type="button" draggable={key!=='today'} aria-label={'Déplacer '+widgetLabels[key]} onDragStart={event=>{event.dataTransfer.setData('text/plain',key);event.dataTransfer.effectAllowed='move';}}>↕</button><AppButton aria-label={'Monter '+widgetLabels[key]} disabled={index<=1} onAction={()=>persist(moveHomeWidget(preference,key,-1))}>↑</AppButton><AppButton aria-label={'Descendre '+widgetLabels[key]} disabled={index===0||index===preference.order.length-1} onAction={()=>persist(moveHomeWidget(preference,key,1))}>↓</AppButton></div>)}<AppButton onAction={resetWidgets}>Réinitialiser l’Accueil</AppButton></details>
+   <div className="home-widgets">{preference.order.filter(key=>key!=="today").map(renderWidget)}</div>
   </section>;
 }
 
 function HomeKpi({ icon, tone, label, value, helper, onClick }: { icon: OperationIconName; tone: string; label: string; value: number|string; helper: string; onClick: () => void }) {
   return <button type="button" className={`home-kpi-card tone-${tone}`} onClick={onClick} title={`${label} : ${value}. ${helper}`}>
     <span className="home-kpi-icon"><OperationIcon name={icon} size={28} /></span>
-    <span className="home-kpi-copy"><strong title={label}>{label}</strong><b>{value}</b><small title={helper}>{helper}</small></span>
+    <span className="home-kpi-copy"><strong title={label}>{label}</strong><b>{value}</b></span>
     <span className="home-kpi-open">›</span>
   </button>;
 }

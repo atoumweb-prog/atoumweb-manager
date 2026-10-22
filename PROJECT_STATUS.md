@@ -1,5 +1,10 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 22/10/2026 — Reprise visuelle ciblée : Accueil et shell
+
+Utilisateur autorise les corrections visibles de l'Accueil, du rail et de l'en-tête, avec adaptation aux fenêtres et zooms de PC. Branche locale `codex/ux-v2-shell-home-simplification` depuis main921f0066. Doublons/annotations retirés, détails à la demande, repli des six blocs et cinq groupes, préférences visuelles existantes étendues sans données métier. [Registre, décisions et protocole](docs/ux-v2/RECETTE-VISUELLE-2026-10-22.md). Validation visuelle humaine encore attendue ; preuves techniques finales rattachées au SHA propre dans le bilan. Aucune migration/service/prix/contrat ou fiche CRM modifié ; aucune publication/CI hébergée/installation/fusion. EC04 reste non exposé. La recette portable921f0066 déjà livrée reste inchangée.
+
+
 ## 18/10/2026 — EC04 : convergence GitHub autorisée, aucune fusion
 
 PR draft #156 créée depuis ae33cccf sur main376eef94 ; simulation sans conflit/arbre identique. CI1808 : typecheck et4 contrôles Python verts,1659/1660 Vitest,35 restaurations vertes ; timeout du seul test de réouverture logo CRM (5258ms/5000ms), banc natif EC04 non exécuté. Correction fixture uniquement : export du vrai schéma migré en mémoire vers SQLite disque, import/réouverture/assertions conservés et registre71 explicitement vérifié. Ciblés43/43 verts ; validation complète du nouveau HEAD confiée à la CI automatique. [Bilan vivant de convergence](docs/ux-v2/EC04-CONVERGENCE-2026-10-18.md), résultats finaux/SHA dans la PR. Aucun service, migration, interface, données réelles ou installateur modifié. EC04 expérimental non exposé ; production/activation NO-GO. Main et toute fusion restent soumis à autorisation humaine.
