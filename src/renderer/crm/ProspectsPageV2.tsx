@@ -530,12 +530,13 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     const group = latestQuote?.principleAgreementAt && ['quote_sent','follow_up','waiting','negotiation'].includes(prospect.stage ?? 'new')
       ? PIPELINE_GROUPS.find((item) => item.id === 'finalization')
       : PIPELINE_GROUPS.find((item) => item.stages.includes(prospect.stage ?? 'new'));
-    const openCard = () => { if(!setSelectedId(prospect.id))return;setExpandedId((id) => id === prospect.id ? null : prospect.id); };
+    const openCard = () => {if(!setSelectedId(prospect.id))return;setDeskStartTab('commercial');setDeskModeId(prospect.id);};
     return <article data-prospect-id={prospect.id} className={`prospect-card stacked-card prospect-temperature-${prospect.temperature ?? 'neutral'} ${expanded ? 'expanded-card' : 'collapsed-card'} ${selectedId === prospect.id ? 'selected-prospect' : ''}`} key={prospect.id}>
       <div className="prospect-card-head card-drag-handle" role="button" tabIndex={0} aria-label={'Ouvrir '+prospect.displayName} aria-expanded={expanded} draggable={draggable} onDragStart={(e) => { if (!draggable) return; setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onDragEnd={() => { setDraggingId(null); setDropStage(null); }} onClick={openCard} onKeyDown={event=>{if(event.target===event.currentTarget&&['Enter',' '].includes(event.key)){event.preventDefault();openCard();}}}>
         <div className="prospect-card-identity"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} /><strong>{prospect.displayName}</strong></div>
         {group && <span className="pipeline-state-icon" title={group.label}><OperationIcon name={group.icon}/></span>}
       </div>
+      <button type="button" className="pipeline-card-summary" aria-expanded={expanded} onClick={()=>{if(setSelectedId(prospect.id))setExpandedId(id=>id===prospect.id?null:prospect.id);}}>{expanded?'Masquer le résumé':'Voir le résumé'}</button>
       {!expanded&&<div className="prospection-card-preview"><span>{nextAction?.title||'Aucune action programmée'}</span>{nextAction?.dueAt&&<time className={new Date(nextAction.dueAt).getTime()<Date.now()?'is-overdue':''}>{formatDate(nextAction.dueAt)}{new Date(nextAction.dueAt).getTime()<Date.now()?' · En retard':''}</time>}</div>}
       <div className="prospect-card-body">
         {group && <span className="prospect-card-step">Étape {group.step} · {group.label}</span>}
@@ -635,11 +636,11 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
           <button className="secondary-button" onClick={() => setView('directory')}>Annuaire prospects</button>
         </div>
       </div>
-      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}><div className="pipeline-flow"><div className="kanban-board" tabIndex={0} aria-label="Pipeline actif : six étapes, défilement horizontal">{PIPELINE_GROUPS.map((group) => {
+      {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className="prospects-layout pipeline-layout"><div className="pipeline-flow"><div className="kanban-board" tabIndex={0} aria-label="Parcours commercial : six étapes">{PIPELINE_GROUPS.map((group) => {
         const groupProspects = pipelineProjection.columns.find((column) => column.id === group.id)?.prospects ?? [];
         const targetStage = group.stages[0];
         return <section className={`kanban-column pipeline-step-column ${targetStage && dropStage === targetStage ? 'drag-over' : ''}`} key={group.id} onDragOver={(e) => { if (targetStage && draggingId) e.preventDefault(); }} onDragEnter={() => { if (targetStage && draggingId) setDropStage(targetStage); }} onDrop={(e) => { if (!targetStage || !draggingId) return; e.preventDefault(); void handleGroupDrop(group.stages); }}><header><OperationIcon name={group.icon}/><div><small>Étape {group.step}</small><strong>{group.label}</strong></div><span>{groupProspects.length}</span></header><div className="kanban-cards stacked-cards">{groupProspects.map((prospect) => renderProspectCard(prospect))}{groupProspects.length === 0 && <div className="kanban-empty">Aucun dossier</div>}</div></section>;
-      })}</div><div className="pipeline-conversion-history"><button className="secondary-button" type="button" onClick={()=>setView('conversions')}><OperationIcon name="check-circle"/>Clients acquis · {historicalConversions.length}</button></div></div>{prospectSplitter}{selected && !deskProspect && detail}</div>}
+      })}</div><div className="pipeline-conversion-history"><button className="secondary-button" type="button" onClick={()=>setView('conversions')}><OperationIcon name="check-circle"/>Clients acquis · {historicalConversions.length}</button></div></div></div>}
     </>}
 
     {(view === 'history' || view === 'conversions') && <>{view === 'conversions' && <div className="module-toolbar prospect-toolbar"><strong>Clients acquis · {historicalConversions.length}</strong><button className="secondary-button" type="button" onClick={() => setView('pipeline')}>Retour au parcours commercial</button></div>}<HistoryView prospects={historyVisible} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected && historyVisible.some((item) => item.id === selected.id) ? selected : null} activity={activity} onClose={() => setSelectedId(null)} /></>}
