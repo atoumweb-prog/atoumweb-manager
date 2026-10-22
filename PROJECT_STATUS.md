@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 22/10/2026 — Consignes de reprise et maîtrise des coûts
+
+Synthèse courte des décisions utilisateur dans [CONSIGNES-ET-REPRISE](docs/ux-v2/CONSIGNES-ET-REPRISE.md), référencée par AGENTS.md. Évite les reprises de validation et les campagnes/livraisons répétées ; dernier portable42b12a93 inchangé. Documentation seulement, aucun test applicatif nécessaire.
+
 ## 22/10/2026 — Corrections regroupées de la recette Prospection
 
 Utilisateur autorise tous les points relevés dans les captures : historique compact/détail borné, Clients acquis compact, référence interne et fenêtre séparée harmonisées, contraste et commandes Enregistrer/Annuler, informations manquantes regroupées, dates uniquement enregistrées, relances compactes et commandes explicites, journal unique, intérêt lisible et archivage confirmé. Liens web/email et copie téléphone sur clic explicite ; nouveau canal IPC limité aux protocoles HTTP(S)/mailto, aucune écriture métier associée. [Bilan et contrôles ciblés](docs/ux-v2/PROSPECTION-CORRECTIONS-RECETTE-2026-10-22.md). Typecheck,2 tests de destinations et41 contrôles natifs ciblés ; Noir/Confort/1920×1080/100% uniquement, bases TEMP. Aucun service métier/migration modifié, aucune donnée réelle, CI, fusion, activation B1 ou installateur. Ajustement demandé pendant la passe : parcours pleine largeur, six étapes visibles au standard, ouverture directe de la fiche cliquée et résumé à la demande ; plus de panneau latéral comprimant le parcours. Nouveau portable distinct prévu ; validation visuelle finale utilisateur.
