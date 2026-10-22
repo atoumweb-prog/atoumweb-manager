@@ -141,3 +141,5 @@
 .app-shell .prospects-v2 .pipeline-layout .prospect-toolbar{flex-wrap:wrap;}
 
 .app-shell .prospects-v2 .prospect-directory-table .client-name-cell strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
+.prospect-project-disclosure>summary{cursor:pointer;padding:12px 0;font-weight:600;color:var(--muted);}
