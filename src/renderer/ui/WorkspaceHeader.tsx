@@ -3,7 +3,7 @@ import {OperationIcon} from '../operations/OperationIcon';
 import{useEffect,useRef,useState,type ReactNode}from'react';
 import{readHeaderPreference,writeHeaderPreference,HEADER_PREFERENCE_KEY}from'../../shared/headerPresentation';
 import type{VisualPreferenceStore}from'../../shared/panelLayout';
-import{AppButton}from'./AppButton';
+import{AppButton}from'./AppButton';import{FieldHelp}from'./FieldHelp';
 import './workspace-header.css';
 /** Presentation slot only: the caller owns the unique timer and all business commands. */
 export function WorkspaceHeader({store,moduleLabel,recordLabel,railCollapsed,onToggleRail,onBack,timer,timerDialogOpen,libraryCollapsed,onToggleLibrary,search,clock,workspaceLabel,environmentBanner}:{store:VisualPreferenceStore;moduleLabel:string;recordLabel?:string;railCollapsed:boolean;onToggleRail:()=>void;onBack?:()=>void;timer:ReactNode;timerDialogOpen:boolean;libraryCollapsed:boolean;onToggleLibrary:()=>void;search?:ReactNode|((close:()=>void)=>ReactNode);clock?:ReactNode;workspaceLabel?:string;environmentBanner?:ReactNode}){
@@ -43,7 +43,7 @@ export function WorkspaceHeader({store,moduleLabel,recordLabel,railCollapsed,onT
    <AppButton data-shell-presentation id="header-mode" aria-expanded={!compact} aria-label={compact?'Développer l’en-tête':'Compacter l’en-tête'} title={compact?'Développer l’en-tête':'Compacter l’en-tête'} icon={<OperationIcon name={compact?'header-expand':'header-compact'}/>} onAction={toggle}/>
    <AppButton id="header-options-trigger" aria-controls="header-options-panel" aria-expanded={optionsOpen} aria-label="Options de l’en-tête" title="Affichage de l’en-tête" icon={<OperationIcon name="menu"/>} disabled={timerDialogOpen||searchOpen} onAction={()=>{if(optionsOpen)closeOptions();else setOptionsOpen(true);}}/>
   </div>
-  <section id="header-options-panel" className={`aw-header-secondary ${optionsOpen?'is-open':''}`} aria-label="Repères secondaires" onKeyDown={event=>{if(event.key==='Escape'&&optionsOpen){event.preventDefault();event.stopPropagation();closeOptions();}}}>{clock ?? <time dateTime={now.toISOString()}>Heure locale : {now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</time>}{workspaceLabel&&<><span className="aw-header-workspace-label">{workspaceLabel}</span></>}{moduleLabel==='Bibliothèque AtoumWeb'&&<AppButton data-shell-presentation id="header-library" aria-pressed={libraryCollapsed} onAction={onToggleLibrary}>{libraryCollapsed?'Afficher':'Replier'} le bandeau Bibliothèque</AppButton>}</section>
+  <section id="header-options-panel" className={`aw-header-secondary ${optionsOpen?'is-open':''}`} aria-label="Repères secondaires" onKeyDown={event=>{if(event.key==='Escape'&&optionsOpen){event.preventDefault();event.stopPropagation();closeOptions();}}}>{clock ?? <time dateTime={now.toISOString()}>Heure locale : {now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</time>}{workspaceLabel?<span className="aw-header-workspace-label">{workspaceLabel}</span>:<FieldHelp text="Les commandes restent accessibles." detail="Aucun raccourci global ajouté. Tab, Entrée, Espace et Escape agissent dans leur couche."/>}{moduleLabel==='Bibliothèque AtoumWeb'&&<AppButton data-shell-presentation id="header-library" aria-pressed={libraryCollapsed} onAction={onToggleLibrary}>{libraryCollapsed?'Afficher':'Replier'} le bandeau Bibliothèque</AppButton>}</section>
   {environmentBanner}
   {error&&<p role="alert" className="aw-header-error">{error}</p>}
  </header>;

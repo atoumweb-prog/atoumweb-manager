@@ -20,7 +20,7 @@ Branche `codex/ux-v2-shell-home-simplification`, départ main `921f0066fb780634b
 
 ## Architecture conservée
 
-Aucun service/IPC/moteur métier/contrat/prix/migration modifié. Les17 routes et le pipeline6+1 restent leurs références existantes. GlobalTimer conserve son instance et tous ses dialogues, confirmations UX-01 et gardes de navigation existants. Fiche Prospect A et Client B non modifiées.
+Aucun service/IPC/moteur métier/contrat/prix/migration modifié. Les17 routes et le pipeline6+1 restent leurs références existantes. GlobalTimer conserve son instance et tous ses dialogues, confirmations UX-01 et gardes de navigation existants. Fiche Prospect A et Client B non modifiées. L’aide pédagogique imbriquée de l’atelier02B est conservée uniquement en démonstration ; le texte sans utilité est retiré du vrai en-tête, sans supprimer la régression clavier historique de cet atelier.
 
 Les champs optionnels `collapsed` (Accueil) et `collapsedGroups` (rail) utilisent les clés de préférences visuelles existantes. Normalisation en liste blanche, compatibilité des anciennes valeurs et exclusion de toute identité/note/brouillon. Réduire le rail ne réinitialise pas les groupes. Masquer/replier un bloc ne le démonte pas ; les commandes pour le retrouver restent disponibles. La source « Aujourd'hui » ne peut pas être masquée via hidden ; son contenu peut être replié depuis son en-tête visible. Les alertes critiques restent indépendantes de cette présentation.
 
