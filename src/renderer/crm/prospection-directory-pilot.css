@@ -65,3 +65,36 @@
 .app-shell .prospects-v2 .prospection-card-preview time{color:var(--muted);}
 .app-shell .prospects-v2 .prospection-card-preview time.is-overdue{color:#ff7187;font-weight:600;}
 @media(max-width:1100px){.app-shell .prospects-v2[data-prospect-view=directory] .prospect-directory-filters{grid-template-columns:repeat(2,minmax(0,1fr));}}
+
+/* Two scroll owners: table and quick content. No cropped third page scroll. */
+.app-shell .content-area:has(>.prospects-v2){display:flex;flex-direction:column;min-height:0;overflow:hidden;padding:16px 20px;}
+.app-shell .content-area>.prospects-v2{display:flex;flex-direction:column;flex:1 1 0;min-height:0;overflow:hidden;container-type:inline-size;container-name:prospection-work;gap:10px;}
+.prospects-v2>.prospection-pilot-heading,.prospects-v2>.prospect-view-switch,.prospects-v2>.prospection-overview,.prospects-v2>.prospect-directory-filters,.prospects-v2>.prospection-pilot-results{flex:0 0 auto;}
+.app-shell .prospects-v2 .prospection-pilot-heading{min-height:42px;margin:0;}
+.app-shell .prospects-v2 .prospection-pilot-heading h1{margin:0;font-size:28px;display:flex;align-items:center;gap:8px;}
+.prospection-overview>summary{cursor:pointer;color:var(--muted);font-size:14px;margin-bottom:8px;}
+.app-shell .prospects-v2 .prospection-pilot-counts>button{padding:8px 14px;gap:4px;}
+.app-shell .prospects-v2 .prospection-pilot-counts>button strong{font-size:24px;}
+.app-shell .prospects-v2>.prospects-layout{position:relative;flex:1 1 0;min-height:0;overflow:hidden;align-items:stretch;}
+.app-shell .prospects-v2>.prospects-layout.with-detail{grid-template-columns:minmax(680px,1fr) 8px clamp(340px,calc(100% - var(--prospect-list-percent,66%)),480px)!important;align-items:stretch!important;}
+.app-shell .prospects-v2 .prospect-directory-table-panel,.app-shell .prospects-v2 .prospect-directory-table-panel>.aw-configured-table{display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;}
+.app-shell .prospects-v2 .aw-table-preferences{flex:0 0 auto;padding:8px 12px;}
+.app-shell .prospects-v2 .aw-table-preferences[open]{max-height:35dvh;overflow:auto;}
+.app-shell .prospects-v2 .aw-configured-table .aw-data-table-scroll{flex:1 1 0;min-height:0;height:auto;max-height:none;overflow:auto;scrollbar-gutter:stable;overscroll-behavior:contain;}
+.app-shell .prospects-v2 .prospect-directory-table{max-width:none;min-width:0;}
+.app-shell .prospects-v2 .prospect-directory-table :is(th,td,td strong,td small,th button){word-break:normal;overflow-wrap:normal;hyphens:none;}
+.app-shell .prospects-v2 .prospect-directory-table th{white-space:nowrap;}
+.app-shell .prospects-v2 .prospect-detail-v2:not(.prospect-detail-desk){display:flex;flex-direction:column;position:relative;top:auto;min-height:0;height:100%;max-height:none;overflow:hidden;}
+.app-shell .prospects-v2 .prospect-detail-v2:not(.prospect-detail-desk)>.detail-panel-heading{flex:0 0 auto;}
+.app-shell .prospects-v2 .prospect-detail-v2:not(.prospect-detail-desk)>.prospect-compact-scroll{flex:1 1 0;min-height:0;max-height:none;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;align-content:start;}
+.app-shell .prospects-v2 .prospect-detail-v2:not(.prospect-detail-desk) .prospect-compact-actions{padding-bottom:6px;}
+.app-shell .prospects-v2>.prospect-create-v2{flex:0 1 auto;min-height:80px;max-height:50%;overflow:auto;}
+.app-shell .prospects-v2>.history-view-stack{flex:1;min-height:0;overflow:auto;}
+@container prospection-work (max-width:1100px){
+ .app-shell .prospects-v2>.prospects-layout.with-detail{grid-template-columns:minmax(0,1fr)!important;}
+ .app-shell .prospects-v2>.prospects-layout>.prospect-splitter{display:none;}
+ .app-shell .prospects-v2 .prospects-layout.with-detail .prospect-side-panel-boundary>.prospect-detail-v2:not(.prospect-detail-desk){position:absolute;inset:0 0 0 auto;width:min(420px,100%);z-index:5;box-shadow:-12px 0 24px #0005;}
+}
+
+.app-shell .prospects-v2 .pipeline-flow{min-height:0;overflow:auto;}
+.app-shell .prospects-v2 .prospection-pilot-heading>div{display:flex;align-items:center;gap:8px;}

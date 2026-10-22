@@ -242,7 +242,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     const closeOnOutside = (event: PointerEvent) => {
       const target = event.target as Node | null;
       if (!target || sidePanelRef.current?.contains(target)) return;
-      if(target instanceof Element&&target.closest('button,a,input,select,textarea,tr'))return;
+      if(target instanceof Element&&target.closest('button,a,input,select,textarea,tr,.aw-data-table-scroll,.prospect-splitter,.aw-table-preferences'))return;
       requestUnsavedExit(()=>applySelectedId(null),'prospect:'+selectedId+'/panel');
     };
     document.addEventListener('pointerdown', closeOnOutside);
@@ -549,7 +549,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   };
 
   return <div className="crm-stack prospects-v2" data-prospect-view={view}>
-    <header className="prospection-pilot-heading"><div><p>Gérer les entreprises et les actions commerciales</p></div>{view==='directory'&&<button type="button" className="primary-button" onClick={()=>setShowForm(value=>!value)}><OperationIcon name={showForm?'close':'plus'}/>{showForm?'Fermer la création':'Entreprise'}</button>}</header>
+    <header className="page-heading prospection-pilot-heading"><div><h1>Prospection</h1><FieldHelp text="Annuaire, parcours commercial et historique. Une ligne ouvre la fiche rapide ; Agrandir ouvre le même dossier."/></div>{view==='directory'&&<button type="button" className="primary-button" onClick={()=>setShowForm(value=>!value)}><OperationIcon name={showForm?'close':'plus'}/>{showForm?'Fermer la création':'Entreprise'}</button>}</header>
     <div className="prospect-view-switch" role="tablist">
       <button className={view === 'directory' ? 'active' : ''} onClick={() => setView('directory')}><OperationIcon name="contact"/>Annuaire prospects <span>{directory.length}</span></button>
       <button className={view === 'pipeline' ? 'active' : ''} onClick={() => { setView('pipeline'); setPipelineFilter('all'); }}><OperationIcon name="layers"/>Parcours commercial <span>{pipelineActive.length}</span></button>
@@ -557,12 +557,12 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     </div>
 
     {view === 'directory' && <>
-      <div className="prospection-pilot-counts" aria-label="Filtres rapides des prospects">{([
+      <details className="prospection-overview" open><summary>Indicateurs</summary><div className="prospection-pilot-counts" aria-label="Filtres rapides des prospects">{([
         ['all','Tous les prospects',directory.length,'users'],
         ['qualifying','À qualifier',directory.filter(p=>p.stage==='qualifying').length,'search'],
         ['relaunch','À relancer',directory.filter(p=>followUpBuckets.relaunch.has(p.id)).length,'clock'],
         ['quote_to_prepare','Devis à préparer',directory.filter(p=>p.stage==='quote_to_prepare').length,'file-text']
-      ] as const).map(([filter,label,count,icon])=><button type="button" key={filter} data-prospect-filter={filter} aria-pressed={directoryStatusFilter===filter} onClick={()=>setDirectoryStatusFilter(filter)}><strong>{count}</strong><OperationIcon name={icon}/><span>{label}</span></button>)}</div>
+      ] as const).map(([filter,label,count,icon])=><button type="button" key={filter} data-prospect-filter={filter} aria-pressed={directoryStatusFilter===filter} onClick={()=>setDirectoryStatusFilter(filter)}><strong>{count}</strong><OperationIcon name={icon}/><span>{label}</span></button>)}</div></details>
       <div className="prospect-directory-filters">
         <input aria-label="Rechercher les prospects" value={directorySearch} onChange={(e) => setDirectorySearch(e.target.value)} placeholder="Rechercher une entreprise, un contact…" />
         <select aria-label="Filtrer par activité" value={directoryIndustry} onChange={(e) => setDirectoryIndustry(e.target.value)}><option value="">Tous les métiers</option>{directoryIndustries.map((value) => <option key={value} value={value}>{value}</option>)}</select>
@@ -605,7 +605,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
       </div>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="form-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Ajouter à l’annuaire'}</button></div></form>}
       {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}>
         <div className="panel table-panel prospect-directory-table-panel">
-          <ConfiguredDataTable<ProspectSummary> scope={PROSPECT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} rows={directoryFiltered} selectedId={selectedId} getId={p=>p.id} onSelect={p=>setSelectedId(p.id)} className="prospect-directory-table" caption="Annuaire prospects · source complète · tri sur tous les résultats filtrés" columns={[
+          <ConfiguredDataTable<ProspectSummary> fitAvailable={false} scope={PROSPECT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} rows={directoryFiltered} selectedId={selectedId} getId={p=>p.id} onSelect={p=>setSelectedId(p.id)} className="prospect-directory-table" caption="Annuaire prospects · source complète · tri sur tous les résultats filtrés" columns={[
             {id:'identity',label:'Entreprise',required:true,sortValue:p=>p.displayName,render:p=><div className="client-name-cell"><CrmIdentityAvatar organizationId={p.organizationId} contactId={p.contactId} name={p.displayName}/><div><strong>{p.displayName}</strong><small><span className={'prospect-temperature-dot '+(p.temperature??'neutral')} title={TEMPERATURE_LABELS[p.temperature??'neutral']} aria-label={'Température : '+TEMPERATURE_LABELS[p.temperature??'neutral']}/> {SOURCE_LABELS[p.source??'other']}</small></div></div>},
             {id:'next_action',label:'Prochaine action',sortValue:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.title??null,render:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.title||<span className="muted">Aucune action programmée</span>},
             {id:'due',label:'Échéance',sortValue:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.dueAt??null,render:p=>{const a=nextOpenAction(actions.filter(a=>a.ownerId===p.id)),date=a?.dueAt;return <span className={date&&new Date(date).getTime()<Date.now()?'prospection-due-overdue':''}>{date?formatDate(date):'—'}</span>;}},
@@ -705,7 +705,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
         <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large" /><div><span className="eyebrow">{prospect.stage === 'new' ? 'Fiche annuaire' : 'Fiche de travail'}</span><h2>{prospect.displayName}</h2><div className="prospect-header-meta"><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>{prospect.organizationIndustry && <span className="status-pill">{prospect.organizationIndustry}</span>}{prospect.organizationCity && <span className="status-pill">{prospect.organizationCity}</span>}</div></div></div>
         <div className="detail-heading-actions">{onOpenDesk && <button className="secondary-button open-desk-button" type="button" aria-label="Agrandir la fiche" title="Agrandir la fiche" onClick={onOpenDesk}><OperationIcon name="record-expand"/></button>}<button className="close-detail" type="button" aria-label="Fermer la fiche prospect" title="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button></div>
       </div>
-      <div className="prospect-compact-scroll">
+      <div className="prospect-compact-scroll" tabIndex={0} role="region" aria-label="Contenu défilable de la fiche rapide">
         <section className="prospection-quick-next"><span><OperationIcon name="calendar"/>Prochaine action{nextAction?.dueAt&&<time>{formatDate(nextAction.dueAt)}</time>}</span><h3>{nextAction?.title||'Aucune action programmée'}</h3>{onOpenDesk&&<button type="button" className="primary-button" onClick={onOpenDesk}>{nextAction?'Consulter l’action':'Programmer une action'}<span aria-hidden="true">›</span></button>}</section>
         <section className="prospection-quick-contact"><h3>Contact principal</h3><strong>{prospect.secondaryLabel||'Contact à identifier'}</strong><p>{prospect.organizationIndustry||'Activité à préciser'}{prospect.organizationCity?' · '+prospect.organizationCity:''}</p></section>
         <section className="prospection-quick-activity"><h3>Dernière activité</h3>{activity.length?<><p>{humanActivity([...activity].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0].summary)}</p><small>{formatDate([...activity].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0].createdAt)}</small></>:<p>Aucune activité enregistrée</p>}</section>

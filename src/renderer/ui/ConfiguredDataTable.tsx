@@ -9,8 +9,8 @@ import {SavedViewPicker} from './SavedViewPicker';
 import {OperationIcon} from '../operations/OperationIcon';
 
 /** Ports the tested 01D controls to real lists. No entities or selection in storage. */
-export function ConfiguredDataTable<T>({scope,columns,rows,selectedId,getId,onSelect,store,caption,className,rowAttributes}:{
- scope:string;columns:readonly TableColumn<T>[];rows:readonly T[];selectedId:string|null;
+export function ConfiguredDataTable<T>({scope,columns,rows,selectedId,getId,onSelect,store,caption,className,rowAttributes,fitAvailable=true}:{
+ fitAvailable?:boolean;scope:string;columns:readonly TableColumn<T>[];rows:readonly T[];selectedId:string|null;
  getId:(row:T)=>string;onSelect?:(row:T)=>void;store:VisualPreferenceStore;caption:string;className?:string;
  rowAttributes?:(row:T)=>{className?:string;[key:`data-${string}`]:string|undefined};
 }){
@@ -47,6 +47,6 @@ export function ConfiguredDataTable<T>({scope,columns,rows,selectedId,getId,onSe
    <SavedViewPicker views={views} selected={viewId} onSelect={choose} onCreate={(name,duplicate)=>edit(duplicate?'duplicate':'create',name)} onRename={name=>edit('rename',name)} onDelete={()=>edit('delete')} onReset={()=>{try{const next=defaultTableView(schema);writeTableView(store,key,next,schema);setViewId('standard');apply(next);setError('');}catch{setError('Réinitialisation non mémorisée ; fiche conservée.');}}}/>
   </details>
   {error&&<p role="alert">{error}</p>}
-  <DataTable fitAvailable className={className} rowAttributes={rowAttributes} rows={sortTableRows(rows,columns,options.sort,getId)} columns={ordered.filter(c=>visible.includes(c.id))} selectedId={selectedId} getId={getId} onRowActivate={onSelect} sort={options.sort} onSort={id=>update({...latest.current,sort:nextTableSort(latest.current.sort,id)})} widths={options.widths} onWidth={(id,width)=>update({...latest.current,widths:{...latest.current.widths,[id]:width}})} caption={caption} preferenceScope={scope+':'+viewId}/>
+  <DataTable fitAvailable={fitAvailable} className={className} rowAttributes={rowAttributes} rows={sortTableRows(rows,columns,options.sort,getId)} columns={ordered.filter(c=>visible.includes(c.id))} selectedId={selectedId} getId={getId} onRowActivate={onSelect} sort={options.sort} onSort={id=>update({...latest.current,sort:nextTableSort(latest.current.sort,id)})} widths={options.widths} onWidth={(id,width)=>update({...latest.current,widths:{...latest.current.widths,[id]:width}})} caption={caption} preferenceScope={scope+':'+viewId}/>
  </section>;
 }

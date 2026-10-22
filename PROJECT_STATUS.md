@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 22/10/2026 — Prospection : lisibilité et défilement après recette
+
+Table écrasée et défilements imbriqués signalés par l’utilisateur. Tableau/fiche bornés dans la hauteur utile, colonnes lisibles défilantes, fiche rapide limitée à480px et corps défilant, protection de la sélection lors des interactions avec les scrollbars. Indicateurs repliables, titre unique. Accueil/en-tête validés conservés ; aucun changement métier/IPC/migration/donnée réelle. [Décisions et protocole ciblé](docs/ux-v2/PROSPECTION-DEFILEMENT-2026-10-22.md). Contrôle limité à une configuration standard et aux interactions de Prospection, nouveau portable distinct prévu. Pas de CI/push/main/installateur.
+
 ## 22/10/2026 — Corrections de l’Accueil après recette réelle du portable
 
 En-tête réel : cloche d’alertes et engrenage Réglages remplacent compactage/burger ; ancien réglage compact non appliqué au vrai shell. Indicateurs encadrés, repli à droite, listes à hauteur naturelle/plafond viewport et défilement. [Décisions, protocole ciblé et limites](docs/ux-v2/ACCUEIL-ADAPTATIF-2026-10-22.md). Aucune règle métier/migration/donnée réelle. Une configuration standard et un redimensionnement, pas de matrice exhaustive ; anciens bancs dépendants du compactage à adapter avant convergence. Nouvelle recette portable distincte prévue, sans remplacer une application ouverte.
