@@ -29,11 +29,11 @@ Six colonnes a hauteur selon contenu, cartes compactes, conversion distincte. Ou
 
 ## Résultat final et régression
 
-Code local : `c51aaebec315ce7ed8c8d0c3784de167d7f66cad`, branche `codex/prospection-ux-six-lots`. Les six lots sont implémentés successivement ; la validation ergonomique par l'utilisateur reste attendue. Le portable `42b12a93` n'a pas été reconstruit. Aucun main, push, CI hébergée, installateur ou workspace réel modifié.
+Code local : `e40dd1298616b8a635873d7b328d32f4e2f6473c`, branche `codex/prospection-ux-six-lots`. Les six lots sont implémentés successivement ; la validation ergonomique par l'utilisateur reste attendue. Le portable `42b12a93` n'a pas été reconstruit. Aucun main, push, CI hébergée, installateur ou workspace réel modifié.
 
 - Suite complète : **1 666/1 666 tests, 195 fichiers**, puis **85/85 tests ciblés** après les raccordements finaux (préférences, protection des brouillons, CRM et identités).
 - TypeScript et build Vite de production vérifiés. Les avertissements Vite sur l'API CJS, le dossier de sortie et la taille du chunk sont conservés ; aucun échec de compilation.
-- **118 contrôles Electron** cumulés sur les passages réussis : lots 01 à 06 (26, 10, 12, 10, 11, 13), parcours final (23), états de devis (13). Chaque passage inclut les gardes du banc, intégrité/FK et registre 1–71 ; uniquement des bases TEMP. Aucune erreur console dans les passages réussis.
+- **118 contrôles Electron** retenus sur les passages réussis : lots 01 à 06 (26, 10, 12, 10, 11, 13), parcours final (23), états de devis (13). Chaque passage inclut les gardes du banc, intégrité/FK et registre 1–71 ; uniquement des bases TEMP. Aucune erreur console dans les passages réussis.
 - Annuaire : neuf combinaisons 1920×1080, 1440×900, 1366×768 × zoom 100/125/150 %. Tableau standard contenu, volet contenu, sélection après tri, filtres et vues personnelles persistantes. La présentation personnalisée peut volontairement dépasser la largeur ; aucune préférence utilisateur écrasée pour imposer le nouveau défaut.
 - Parcours réel : création restant Nouveau contact ; planification d'action, compte rendu et suite sauvegardés ; association du même Contact existant, sans nouvelle personne ; fermeture conservant la sélection ; restauration des cinq colonnes standard et conservation d'une vue nommée après navigation.
 - Clavier natif : Tab/Maj+Tab restent dans le dialogue actif ; Échap avec « Rester » conserve le formulaire sale et ne ferme plus le bureau de fond. Défaut découvert puis corrigé dans `ProspectDialog`.
@@ -55,7 +55,7 @@ Code local : `c51aaebec315ce7ed8c8d0c3784de167d7f66cad`, branche `codex/prospect
 | PRO-03.1 / 03.5 | Identité et synthèse commerciale en haut, panneaux à la demande et deux onglets pleine largeur, conformément au dernier choix utilisateur remplaçant les trois colonnes permanentes. Groupe pertinent ouvert au premier accès et repli mémorisé ; éditeurs montés. |
 | PRO-03.2 | Progression de qualification accompagnée de la liste réelle des éléments manquants, mêmes règles de passage et dérogation explicite existante. |
 | PRO-03.3 | Résumé des prestations retenues, catalogue repliable, précisions et contrôle avant devis distincts. Sélectionner/enregistrer ne crée ni devis ni Projet. |
-| PRO-03.4 | Modification du brouillon prioritaire, validation/envoi/retour distincts et garde contractuelle conservée. Préparation prévisionnelle de Projet conservée sans nouveau démarrage automatique. Voir la limite métier acceptation/conversion ci-dessous. |
+| PRO-03.4 | Modification du brouillon prioritaire, validation/envoi/retour distincts et garde contractuelle conservée. Préparation prévisionnelle de Projet conservée dans un groupe replié à la demande, sans nouveau démarrage automatique. Voir la limite métier acceptation/conversion ci-dessous. |
 | PRO-04.1–04.2 | Confirmations lisibles ; éditeurs Planifier / Compte rendu / Suite dans un même composant dédié, actions proches et vocabulaire d'annulation distinct. Aucun canal, destinataire, résultat, note ou récurrence retiré. |
 | PRO-04.3–04.4 | Journal unique et complet à la demande, historique avec issue/date/tri, lien Client réel ; perte motivée et archivage indépendants. |
 | PRO-05.1–05.4 | Six rubriques, lecture/édition/versionnement conservés, sept groupes de contrôles repliables et comptes calculés sur les critères réels. Protection des réponses tardives et conflits observés ; fermeture gardée. Même thème utilisateur enregistré dans les deux accès. |
@@ -73,7 +73,7 @@ Code local : `c51aaebec315ce7ed8c8d0c3784de167d7f66cad`, branche `codex/prospect
 - Avant : `outputs/prospection-galerie-20261022` (69 captures de référence).
 - Après : `outputs/prospection-ux-lots/lot-01` à `lot-06`, `lot-final`, `lot-states` (49 PNG).
 - Galerie comparative : `C:/Users/AtoumWeb/Downloads/Prospection-refonte-six-lots-20261022/index.html` ; 11 vues avant et les 49 captures après, avec manifeste.
-- Commits des lots : `54e9e7f7`, `b3fbc959`, `3d5499ac`, `0eb3fcf3`, `999c9cb4`, `a5a6db9a` ; raccordements et régression finale `c51aaebe`. Baseline locale préservée dans `50b749b0`.
+- Commits des lots : `54e9e7f7`, `b3fbc959`, `3d5499ac`, `0eb3fcf3`, `999c9cb4`, `a5a6db9a` ; raccordements et régression `c51aaebe`, préparation prévisionnelle à la demande et captures de devis cadrées `e40dd129`. Baseline locale préservée dans `50b749b0`.
 - PR préparée localement dans `PROSPECTION-PR-PREPAREE.md`, pas publiée. La branche hérite aussi du pilote Accueil/shell et Prospection déjà livré, encore absent de `origin/main` : une PR directe vers main inclurait ces travaux antérieurs. La base et l'autorisation de publication/CI doivent donc être décidées explicitement.
 
 ## Fichiers touches depuis la baseline

@@ -27,7 +27,7 @@ Mise à jour :22/10/2026. Synthèse des décisions de cette conversation ; pas u
 ## État utile pour reprendre
 
 - Depot local : C:/DEV/01_PROJETS/AtoumWeb/atoumweb-manager-ec04-validation.
-- Branche courante : codex/prospection-ux-six-lots ; baseline50b749b0, code finalc51aaebec315ce7ed8c8d0c3784de167d7f66cad. Commits documentaires possibles apres sans changement de code.
+- Branche courante : codex/prospection-ux-six-lots ; baseline50b749b0, code finale40dd1298616b8a635873d7b328d32f4e2f6473c. Commits documentaires possibles apres sans changement de code.
 - Autorisation du22/10 : appliquer les six lots UX sequentiellement sans validation intermediaire. Disposition confirmee : logo/nom et synthese commerciale en haut, Identite/logo et Associations a la demande, deux onglets pleine largeur. Remplace la mention de trois colonnes permanentes du cahier.
 - Realise : annuaire5 colonnes par defaut, vues existantes preservees et volet adaptatif ; creation en dialogue et contacts reutilisables ; groupe metier pertinent ouvert, besoins/catalogue restructures ; actions/compte rendu/suite en dialogue ; confirmations lisibles et historique filtre ; reference avec controles repliables et conflit observe protege ; pipeline compact avec rappels et alternative clavier.
 - Bilan : docs/ux-v2/PROSPECTION-SIX-LOTS-2026-10-22.md ; cahier utilisateur copie dans PROSPECTION-CAHIER-UX-2026-10-22.md. Tous les points sont evalues avec adaptations/limites explicites.
