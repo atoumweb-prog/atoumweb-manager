@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 22/10/2026 — Portable de recette du pilote
+
+Utilisateur demande un exécutable pour vérifier connexions et responsive. Portable Windows x64 construit au code `139d7e71621e659b98e40b2d18bf5a74406589f4`, sans installateur, dans `C:/DEV/03_LIVRAISONS/AtoumWeb/Manager-Pilote-20261022-139d7e71`. Lanceur obligatoire avec Profil/Workspace propres ;7 prospects,1 client,2 devis,1 projet et1 session synthétiques, aucune copie des données réelles. Contrôle du vrai package sur une copie TEMP :19 assertions,5 modules, intégrité/FK/migrations71 et chrono unique verts. Préparation du profil exécutée. ZIP dans Downloads `AtoumWeb-Pilote-139d7e71.zip`,161911754 octets,86 fichiers,CRC OK ; manifeste hashes EXE/ASAR et validation inclus. Cette note documentaire ne change pas le code empaqueté. Pas de CI/main/installation ou campagne multiconfiguration ; responsive étendu à contrôler par l’utilisateur. Les anciennes recettes restent intactes.
+
 ## 22/10/2026 — Pilote ergonomique Prospection
 
 Suite aux13 visuels, branche locale `codex/ux-v2-prospection-visual-pilot` depuis01909b4b. Compteurs filtrants, colonnes action/échéance, fiche rapide hiérarchisée, pipeline compact avec échéances et conversion séparée ; historique conservé. Prospect A et moteurs métier/IPC/migrations inchangés. Garde historique de non-affichage du placeholder Prospects préservé. [Périmètre, contrôles et réserves](docs/ux-v2/PROSPECTION-PILOTE-2026-10-22.md). Validation limitée à Noir/Confort/1920×1080/100%, typecheck,12 unitaires ciblés et22 natifs ; résultats définitifs au SHA propre dans le bilan local. Client en attente ; aucune fusion/publication/CI/installation/donnée réelle. Remplacement des commandes d’en-tête par cloche/réglages encore à traiter séparément.
