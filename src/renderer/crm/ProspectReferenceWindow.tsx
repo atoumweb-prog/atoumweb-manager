@@ -1,4 +1,5 @@
 import './prospect-workspace-pilot.css';
+import './prospection-ux.css';
 import {OperationIcon} from '../operations/OperationIcon';
 import {UnsavedGroup} from '../unsaved/unsaved';
 import { Component, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from 'react';

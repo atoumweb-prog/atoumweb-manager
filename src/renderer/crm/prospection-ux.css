@@ -106,3 +106,20 @@
 .app-shell .prospects-v2 .prospect-workspace-header .prospect-temperature-control select{width:auto;max-width:150px;}
 @media(max-width:1100px){.app-shell .prospects-v2 .prospect-workspace-header>.prospect-focus-summary{grid-template-columns:1fr 1fr;}.prospect-history-toolbar input{max-width:100%;}}
 @media(max-height:650px){.app-shell .prospects-v2 .prospect-workspace-header>.prospect-focus-summary{display:flex;flex-wrap:wrap;}}
+
+:is(.prospect-workspace,.prospect-reference-pilot) .research-checks-stack{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;}
+:is(.prospect-workspace,.prospect-reference-pilot) .research-check-counts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:16px;padding:8px 0;color:var(--muted);}
+:is(.prospect-workspace,.prospect-reference-pilot) details.research-check-card{padding:0!important;min-width:0;}
+:is(.prospect-workspace,.prospect-reference-pilot) .research-check-card>summary{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px;cursor:pointer;}
+.research-check-card>summary small{display:block;margin-top:5px;color:var(--muted);font-weight:400;}
+.research-check-editor-body{padding:0 14px 14px;}
+:is(.prospect-workspace,.prospect-reference-pilot) .research-checklist .research-check-row{display:grid;grid-template-columns:minmax(0,1fr) 140px;gap:8px;align-items:center;padding:8px 0;}
+.research-check-row>input{grid-column:1/-1;}
+:is(.prospect-workspace,.prospect-reference-pilot) .research-reading:has(.research-reading-check){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+:is(.prospect-workspace,.prospect-reference-pilot) .research-reading-source,.research-missing{grid-column:1/-1;}
+:is(.prospect-workspace,.prospect-reference-pilot) .research-reading-check{padding:12px;margin:0;}
+:is(.prospect-workspace,.prospect-reference-pilot) .research-tabs{position:static!important;}
+:is(.prospect-workspace,.prospect-reference-pilot) .research-heading{gap:10px;flex-wrap:wrap;}
+:is(.prospect-workspace,.prospect-reference-pilot) .research-heading h3{margin:0;font-size:18px;}
+:is(.prospect-workspace,.prospect-reference-pilot) .research-conflict{padding:12px;border:1px solid var(--accent);color:var(--text);background:var(--surface-soft);}
+@media(max-width:1050px){:is(.prospect-workspace,.prospect-reference-pilot) .research-checks-stack,:is(.prospect-workspace,.prospect-reference-pilot) .research-reading:has(.research-reading-check){grid-template-columns:1fr;}}

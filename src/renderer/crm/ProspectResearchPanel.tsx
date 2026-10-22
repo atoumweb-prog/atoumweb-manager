@@ -1,6 +1,6 @@
 import {ProspectValue} from './ProspectValue';
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   ProspectResearchCheckStatus,
   ProspectResearchChecklistItem,
@@ -235,11 +235,11 @@ function StructuredCheckEditor({ title, help, value, onChange }: {
   function updateItem(index: number, patch: Partial<ProspectResearchChecklistItem>) {
     onChange({ ...value, items: value.items.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item) });
   }
-  return <section className="research-check-card">
-    <div className="research-check-card-head">
-      <div><strong>{title}</strong><FieldHelp text={help} /></div>
+  return <details className="research-check-card">
+    <summary className="research-check-card-head">
+      <div><strong>{title}</strong><small>{value.items.filter(item=>item.status==='ok').length}/{value.items.length} critères OK</small></div>
       <span className={`research-status research-status-${value.overallStatus}`}>{statusLabel(value.overallStatus)}</span>
-    </div>
+    </summary><div className="research-check-editor-body"><p className="muted">{help}</p>
     <label>État global<CheckSelect value={value.overallStatus} onChange={(overallStatus) => onChange({ ...value, overallStatus })} /></label>
     <div className="research-checklist">
       {value.items.map((item, index) => <div className="research-check-row" key={item.key}>
@@ -254,7 +254,7 @@ function StructuredCheckEditor({ title, help, value, onChange }: {
       <label>URL contrôlée<input inputMode="url" value={displayWebUrl(value.url)} onChange={(event) => onChange({ ...value, url: event.target.value })} placeholder="exemple.fr" /></label>
       <label>Source<input value={value.source ?? ''} onChange={(event) => onChange({ ...value, source: event.target.value })} /></label>
     </div>
-  </section>;
+  </div></details>;
 }
 
 function factMap(snapshot: ProspectResearchSnapshot): Map<string, string> {
@@ -292,19 +292,22 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
   const [history, setHistory] = useState<ProspectResearchSnapshot[]>([]);
   const [draft, setDraft] = useState<ProspectResearchSnapshotInput>(() => emptySnapshot(prospect));
   const [busy, setBusy] = useState(false);
+  const sequence=useRef(0),baselineVersion=useRef<string|null>(null),[loaded,setLoaded]=useState(false),[loadError,setLoadError]=useState(''),[conflict,setConflict]=useState(false);
   const [compare, setCompare] = useState(false);
   const [editing,setEditing]=useState(!browseFirst);
-  const guard=useUnsavedDraft('Connaissance de l’entreprise',draft,{pending:busy,discard:setDraft});
+  const guard=useUnsavedDraft('Connaissance de l’entreprise',draft,{pending:busy,ready:loaded,discard:setDraft});
 
 
   async function load() {
-    const snapshots = await window.atoumweb.crm.prospects.research.list(prospect.id);
-    setHistory(snapshots);
-    const next=snapshots[0] ? hydrateSnapshot(prospect, snapshots[0]) : emptySnapshot(prospect);
-    if(!guard.dirty){guard.initial(next);setDraft(next);}
+    const current=++sequence.current;
+    try{const snapshots=await window.atoumweb.crm.prospects.research.list(prospect.id);if(current!==sequence.current)return;
+      setHistory(snapshots);const next=snapshots[0]?hydrateSnapshot(prospect,snapshots[0]):emptySnapshot(prospect);
+      if(!guard.dirty){baselineVersion.current=snapshots[0]?.id??null;guard.initial(next);setDraft(next);setConflict(false);}else if((snapshots[0]?.id??null)!==baselineVersion.current)setConflict(true);
+      setLoaded(true);setLoadError('');
+    }catch(error){if(current===sequence.current)setLoadError(error instanceof Error?error.message:'Lecture impossible.');}
   }
-
-  useEffect(() => { void load(); }, [prospect.id]);
+  useEffect(()=>{void load();return()=>{sequence.current++;};},[prospect.id]);
+  useEffect(()=>{const changed=()=>{if(!busy)void load();};window.addEventListener('atoumweb:changed',changed);window.addEventListener('focus',changed);return()=>{window.removeEventListener('atoumweb:changed',changed);window.removeEventListener('focus',changed);};},[prospect.id,busy,guard.dirty]);
 
   const differences = useMemo(() => {
     if (history.length < 2) return [];
@@ -332,10 +335,14 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
   }
 
   async function save() {
+    if(busy||!loaded||conflict)return;
     setBusy(true);
     try {
+      const current=await window.atoumweb.crm.prospects.research.list(prospect.id);
+      if((current[0]?.id??null)!==baselineVersion.current){setConflict(true);return;}
       await window.atoumweb.crm.prospects.research.save(prospect.id, draft);
       guard.saved();await load();if(browseFirst)setEditing(false);
+      window.dispatchEvent(new Event('atoumweb:changed'));
       onChanged?.('Nouvelle version de la connaissance entreprise enregistrée.');
     } catch (error) {
       onChanged?.(error instanceof Error ? error.message : 'Enregistrement impossible.');
@@ -346,6 +353,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
 
   const legal = mergeCheck({ overallStatus: 'review', items: LEGAL_ITEMS.map((item) => ({ ...item })), observations: '', talkingPoint: '', source: 'Site public', url: '' }, draft.legalNotices);
 
+  if(!loaded)return <section className="prospect-research-panel"><p role="status">{loadError||'Chargement de la référence…'}</p>{loadError&&<button type="button" onClick={()=>void load()}>Réessayer</button>}</section>;
   return <section className="prospect-work-section prospect-research-panel" data-browse-first={browseFirst} data-editing={editing}>
     <div className="research-heading">
       <div>
@@ -353,10 +361,12 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
         <h3>Connaissance entreprise</h3>
         <p className="muted">Informations collectées pour préparer les échanges.</p>
       </div>
-      {browseFirst&&<>{editing&&<button type="button" className="primary-button research-save-primary" disabled={busy} onClick={()=>void save()}>{busy?'Enregistrement…':'Enregistrer'}</button>}<button type="button" className="secondary-button research-edit-toggle" disabled={busy} onClick={()=>{if(editing){guard.discard();setEditing(false);}else{setOpen(true);setEditing(true);}}}>{editing?'Annuler':'Modifier la référence'}</button></>}
+      {browseFirst&&<>{editing&&<button type="button" className="primary-button research-save-primary" disabled={busy||!loaded||conflict} onClick={()=>void save()}>{busy?'Enregistrement…':'Enregistrer'}</button>}<button type="button" className="secondary-button research-edit-toggle" disabled={busy} onClick={()=>{if(editing){guard.discard();setEditing(false);}else{setOpen(true);setEditing(true);}}}>{editing?'Annuler':'Modifier la référence'}</button></>}
       <button type="button" className="secondary-button" onClick={() => setOpen((value) => !value)}>{open ? 'Réduire' : 'Afficher'}</button>
     </div>
 
+    {conflict&&<div className="research-conflict" role="alert"><strong>Une version plus récente existe.</strong><p>Votre saisie reste conservée. Relisez la dernière version avant d'enregistrer.</p><button className="secondary-button" type="button" onClick={()=>guard.request(()=>{guard.discard();setConflict(false);void load();})}>Recharger la dernière version</button></div>}
+    {loadError&&<p role="alert">{loadError}</p>}
     {open && <>
       <div className="research-company-strip">
         <div><small>Activité</small><strong>{prospect.organizationIndustry || 'À compléter'}</strong></div>
@@ -432,7 +442,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
           </fieldset>
         </div>}
 
-        {tab === 'checks' && <div className="research-checks-stack">
+        {tab === 'checks' && <div className="research-checks-stack"><div className="research-check-counts" role="status">{CHECK_OPTIONS.map(option=>{const all=[...legal.items,...(Object.keys(AUDIT_DEFINITIONS) as AuditKey[]).flatMap(key=>(draft.audits?.[key]??createAudit(key)).items)];return <span key={option.value}>{option.label} : {all.filter(item=>item.status===option.value).length}</span>;})}</div>
           <StructuredCheckEditor title="Mentions légales" help="Vérifier identité, adresse, immatriculation, coordonnées, publication, hébergeur, cohérence et accès au lien." value={legal} onChange={(value) => setDraft({ ...draft, legalNotices: value })} />
           {(Object.keys(AUDIT_DEFINITIONS) as AuditKey[]).map((key) => <StructuredCheckEditor key={key} title={AUDIT_DEFINITIONS[key].title} help={AUDIT_DEFINITIONS[key].help} value={draft.audits?.[key] ?? createAudit(key)} onChange={(value) => updateAudit(key, value)} />)}
         </div>}
