@@ -280,9 +280,10 @@ function factMap(snapshot: ProspectResearchSnapshot): Map<string, string> {
   ]);
 }
 
-export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged }: {
+export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirst = false, onChanged }: {
   prospect: ProspectSummary;
   defaultOpen?: boolean;
+  browseFirst?: boolean;
   onChanged?: (message?: string) => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -291,6 +292,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
   const [draft, setDraft] = useState<ProspectResearchSnapshotInput>(() => emptySnapshot(prospect));
   const [busy, setBusy] = useState(false);
   const [compare, setCompare] = useState(false);
+  const [editing,setEditing]=useState(!browseFirst);
   const guard=useUnsavedDraft('Connaissance de l’entreprise',draft,{pending:busy,discard:setDraft});
 
 
@@ -332,7 +334,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
     setBusy(true);
     try {
       await window.atoumweb.crm.prospects.research.save(prospect.id, draft);
-      guard.saved();await load();
+      guard.saved();await load();if(browseFirst)setEditing(false);
       onChanged?.('Nouvelle version de la connaissance entreprise enregistrée.');
     } catch (error) {
       onChanged?.(error instanceof Error ? error.message : 'Enregistrement impossible.');
@@ -343,13 +345,14 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
 
   const legal = mergeCheck({ overallStatus: 'review', items: LEGAL_ITEMS.map((item) => ({ ...item })), observations: '', talkingPoint: '', source: 'Site public', url: '' }, draft.legalNotices);
 
-  return <section className="prospect-work-section prospect-research-panel">
+  return <section className="prospect-work-section prospect-research-panel" data-browse-first={browseFirst} data-editing={editing}>
     <div className="research-heading">
       <div>
         <span className="eyebrow">Référence prospect</span>
         <h3>Connaissance entreprise</h3>
-        <p className="muted">Une information de référence, modifiable et versionnée, sans mélanger la préparation avec le suivi commercial.</p>
+        <p className="muted">Informations collectées pour préparer les échanges.</p>
       </div>
+      {browseFirst&&<button type="button" className="secondary-button research-edit-toggle" disabled={busy} onClick={()=>{if(editing)guard.request(()=>setEditing(false));else{setOpen(true);setEditing(true);}}}>{editing?'Terminer la modification':'Modifier'}</button>}
       <button type="button" className="secondary-button" onClick={() => setOpen((value) => !value)}>{open ? 'Réduire' : 'Afficher'}</button>
     </div>
 
@@ -372,7 +375,8 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
         ] as Array<[ResearchTab, string]>).map(([key, label]) => <button type="button" key={key} className={tab === key ? 'active' : ''} onClick={() => setTab(key)}>{label}</button>)}
       </div>
 
-      <div className="research-tab-content">
+      {browseFirst&&!editing&&tab!=='history'&&<ResearchReading tab={tab} draft={draft} notes={prospect.organizationNotes}/>}
+      <div className="research-tab-content" hidden={browseFirst&&!editing&&tab!=='history'}>
         {tab === 'company' && <div className="research-grid research-grid-single-row">
           <fieldset className="research-card">
             <legend>Activité & offre de l’entreprise</legend>
@@ -467,7 +471,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
         </div>}
       </div>
 
-      {tab !== 'history' && <div className="research-save-bar">
+      {tab !== 'history' && (!browseFirst||editing) && <div className="research-save-bar">
         <div className="research-save-meta">
           <label>Date de vérification<input type="date" value={(draft.checkedAt ?? '').slice(0, 10)} onChange={(event) => setDraft({ ...draft, checkedAt: event.target.value })} disabled={busy} /></label>
           <label>Source générale<input value={draft.source ?? ''} onChange={(event) => setDraft({ ...draft, source: event.target.value })} disabled={busy} /></label>
@@ -477,4 +481,18 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, onChanged 
       </div>}
     </>}
   </section>;
+}
+
+/** Read-only projection of the same draft; editing and versioning still use the existing service. */
+function ResearchReading({tab,draft,notes}:{tab:ResearchTab;draft:ProspectResearchSnapshotInput;notes?:string|null}){
+ const facts=(items:Array<[string,string|number|null|undefined]>)=><dl className="research-reading-facts">{items.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value==null||value===''?'Non renseigné':value}</dd></div>)}</dl>;
+ const check=(title:string,value:ProspectResearchStructuredCheck)=><details className="research-reading-check" key={title}><summary>{title}<span>{statusLabel(value.overallStatus)}</span></summary>{facts(value.items.map(item=>[item.label,statusLabel(item.status)]))}{facts([['Observations',value.observations],['Point à évoquer',value.talkingPoint],['Source',value.source],['URL',value.url]])}</details>;
+ return <section className="research-reading" aria-label="Lecture de la référence">
+  {tab==='company'&&<div className="research-reading-columns"><section><h3>Activité et offre de l’entreprise</h3>{facts([['Services proposés',csv(draft.services)],['Produits principaux',csv(draft.products)],['Clientèles visées',csv(draft.customerSegments)],['Points différenciants',csv(draft.differentiators)]])}</section><section><h3>Notes source</h3><p>{notes||'Aucune note source.'}</p></section></div>}
+  {tab==='visibility'&&<div className="research-reading-columns"><section><h3>Google Business</h3>{facts([['Présence',draft.googleBusiness?.presence==='present'?'Présent':draft.googleBusiness?.presence==='absent'?'Absent':'À vérifier'],['URL',draft.googleBusiness?.url],['Catégorie',draft.googleBusiness?.category],['Note',draft.googleBusiness?.rating],['Nombre d’avis',draft.googleBusiness?.reviewCount],['Horaires',statusLabel(draft.googleBusiness?.hoursStatus)],['Photos',statusLabel(draft.googleBusiness?.photosStatus)],['Site lié',statusLabel(draft.googleBusiness?.websiteLinkedStatus)],['Coordonnées',statusLabel(draft.googleBusiness?.contactConsistencyStatus)],['Observations',draft.googleBusiness?.notes]])}</section><section><h3>Site web</h3>{facts([['Présence',draft.website?.presence==='present'?'Présent':draft.website?.presence==='absent'?'Absent':'À vérifier'],['URL',draft.website?.url],['CMS',draft.website?.cms],['Hébergeur',draft.website?.hosting],...(['httpsStatus','responsiveStatus','ecommerceStatus','bookingStatus','contactFormStatus','blogStatus'] as WebsiteStatusKey[]).map((k,i):[string,string]=>[['HTTPS','Responsive','E-commerce','Réservation','Formulaire','Blog'][i],statusLabel(draft.website?.[k])]),['Observations',draft.website?.notes]])}</section></div>}
+  {tab==='checks'&&<>{check('Mentions légales',mergeCheck({overallStatus:'review',items:LEGAL_ITEMS},draft.legalNotices))}{(Object.keys(AUDIT_DEFINITIONS) as AuditKey[]).map(k=>check(AUDIT_DEFINITIONS[k].title,mergeCheck(createAudit(k),draft.audits?.[k])))}</>}
+  {tab==='opportunities'&&<>{!draft.opportunities?.length&&<p>Aucune opportunité renseignée.</p>}{draft.opportunities?.map((item,i)=><section key={i}><h3>{item.service||item.finding||'Opportunité'}</h3>{facts([['Constat',item.finding],['Priorité',item.priority==='high'?'Forte':item.priority==='low'?'Faible':'Moyenne'],['Retenue',item.keep?'Oui':'Non'],['Note',item.note]])}</section>)}</>}
+  {tab==='conversation'&&facts([['Points forts',draft.conversation?.strengths],['Problèmes observés',draft.conversation?.issues],['Points à évoquer',draft.conversation?.talkingPoints],['Angle d’approche',draft.conversation?.approach],['Notes pendant l’appel',draft.conversation?.callNotes]])}
+  <footer className="research-reading-source">{facts([['Date de vérification',displayDate(draft.checkedAt)],['Source',draft.source],['URL source',draft.sourceUrl]])}</footer>
+ </section>;
 }

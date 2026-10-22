@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 22/10/2026 — Fiches Prospection : travail et référence
+
+Application autorisée des recommandations issues des deux maquettes : identité compacte en haut, zone centrale prioritaire, associations facultatives repliables et trois groupes métier conservés. Référence en lecture par défaut, modification explicite et versionnement existant conservé ; six rubriques réelles. Liens Annuaire centralisés dans Associations pour cette fiche seulement. Styles limités au bureau Prospection ; Accueil/en-tête, Client, services et migrations inchangés. [Décisions et vérifications](docs/ux-v2/PROSPECTION-FICHES-2026-10-22.md). Une configuration standard uniquement, données synthétiques TEMP ; aucune donnée réelle/CI/push/main/installateur. Prochaine étape : recette visuelle utilisateur.
+
 ## 22/10/2026 — Prospection : lisibilité et défilement après recette
 
 Table écrasée et défilements imbriqués signalés par l’utilisateur. Tableau/fiche bornés dans la hauteur utile, colonnes lisibles défilantes, fiche rapide limitée à480px et corps défilant, protection de la sélection lors des interactions avec les scrollbars. Indicateurs repliables, titre unique. Accueil/en-tête validés conservés ; aucun changement métier/IPC/migration/donnée réelle. [Décisions et protocole ciblé](docs/ux-v2/PROSPECTION-DEFILEMENT-2026-10-22.md). Contrôle limité à une configuration standard et aux interactions de Prospection, nouveau portable distinct prévu. Pas de CI/push/main/installateur.

@@ -1,4 +1,3 @@
-import {CrmRecordLayout} from './CrmRecordLayout';
 import {ProspectRelatedRecords} from './ProspectRelatedRecords';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import {PROSPECT_DIRECTORY_VIEW} from '../../shared/prospectTablePresentation';
@@ -7,6 +6,7 @@ import {AppButton} from '../ui/AppButton';
 import './prospect-visual-pilot.css';
 import './prospection-directory-pilot.css';
 import './prospect-density-options.css';
+import './prospect-workspace-pilot.css';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';
@@ -731,27 +731,25 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
   }
 
   return <aside data-prospect-composition="balanced" className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-desk prospect-temperature-${prospect.temperature ?? 'neutral'}`}>
-<CrmRecordLayout kind="prospect" full identity={<>    <div className="detail-panel-heading">
-      <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large" /><div><h2>{prospect.displayName}</h2></div></div>
-      <div className="detail-heading-actions"><button className="close-detail" type="button" aria-label="Fermer la fiche prospect" title="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button></div>
-    </div>
-
-<details className="prospect-secondary-actions"><summary>Logo et actions</summary><div><button className="secondary-button" type="button" title="Ouvrir la référence dans une fenêtre" aria-label="Ouvrir la référence dans une fenêtre" onClick={() => void window.atoumweb.app.openProspectReferenceWindow(prospect.id)}><OperationIcon name="external-link"/><span>Référence</span></button>{prospect.source && <span className="status-pill">{SOURCE_LABELS[prospect.source]}{prospect.source === 'other' && prospect.sourceDetail ? ` · ${prospect.sourceDetail}` : ''}</span>}<CrmIdentityAssetEditor organizationId={prospect.organizationId} contactId={prospect.contactId} onMessage={onRefresh}/></div></details>
-<div className="crm-record-properties"><strong>Informations essentielles</strong><p>{prospect.secondaryLabel||'Interlocuteur à préciser'}</p><p>{prospect.organizationIndustry||'Activité à compléter'}</p><p>{prospect.organizationCity||'Ville à compléter'}</p><p>{prospect.organizationWebsite||prospect.existingUrl||'Site à renseigner'}</p></div>
-</>} context={<ProspectRelatedRecords prospect={prospect}/>}>
+<div className="prospect-workspace">
+    <header className="prospect-workspace-header">
+      <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large"/><div><h2>{prospect.displayName}</h2><p>{[prospect.organizationIndustry,prospect.organizationCity].filter(Boolean).join(' · ') || 'Informations entreprise à compléter'}</p></div></div>
+      <div className="prospect-workspace-tools">
+        <details className="prospect-workspace-identity"><summary>Identité et logo</summary><div><p>{prospect.organizationWebsite||prospect.existingUrl||'Site à renseigner'}</p>{prospect.source&&<p>{SOURCE_LABELS[prospect.source]}{prospect.source==='other'&&prospect.sourceDetail?' · '+prospect.sourceDetail:''}</p>}<CrmIdentityAssetEditor organizationId={prospect.organizationId} contactId={prospect.contactId} onMessage={onRefresh}/><button type="button" className="secondary-button" onClick={()=>void window.atoumweb.app.openProspectReferenceWindow(prospect.id)}><OperationIcon name="external-link"/>Référence dans une fenêtre</button></div></details>
+        <details className="prospect-workspace-associations"><summary><OperationIcon name="folder"/>Associations</summary><div><ProspectRelatedRecords prospect={prospect}/></div></details>
+        <button className="close-detail" type="button" aria-label="Fermer la fiche prospect" title="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button>
+      </div>
+    </header>
     <div className="prospect-desk-tabs" role="tablist" aria-label="Fiche prospect">
       <button type="button" className={deskTab === 'commercial' ? 'active' : ''} onClick={() => setDeskTab('commercial')}><OperationIcon name="file-text"/>Fiche de travail</button>
       <button type="button" className={deskTab === 'reference' ? 'active' : ''} onClick={() => setDeskTab('reference')}><OperationIcon name="contact"/>Référence prospect</button>
     </div>
 
-    <div className="prospect-desk-content">
+    <div className="prospect-desk-content" tabIndex={0} role="region" aria-label="Contenu de la fiche prospect">
       {deskTab === 'reference' ? <>
-        <div className="reference-tab-intro"><div><strong>Connaissance entreprise</strong><span>Informations préparées dans l’annuaire, accessibles et modifiables sans quitter le suivi commercial.</span></div></div>
-        <ProspectWorkAccordion title="Entreprise & contacts" summary={prospect.secondaryLabel || 'Contact à compléter'} defaultOpen>
-          <div id={`prospect-identity-${prospect.id}`} className="prospect-target-section"><ProspectIdentityPanel prospect={prospect} focusRequest={identityFocus} onSaved={() => onRefresh('Informations du prospect mises à jour.')} /></div>
-        </ProspectWorkAccordion>
-        <ProspectWorkAccordion title="Connaissance entreprise" summary={prospect.organizationIndustry || 'Activité à compléter'} defaultOpen>
-          <ProspectResearchPanel prospect={prospect} defaultOpen onChanged={onRefresh} />
+        <ProspectResearchPanel prospect={prospect} defaultOpen browseFirst onChanged={onRefresh}/>
+        <ProspectWorkAccordion title="Identité et coordonnées" summary="Modifier les informations entreprise et contacts">
+          <ProspectIdentityPanel directoryLinks={false} prospect={prospect} focusRequest={identityFocus} onSaved={()=>onRefresh('Informations du prospect mises à jour.')}/>
         </ProspectWorkAccordion>
       </> : <>
         <section className="prospect-focus-summary" aria-label="Synthèse commerciale">
@@ -761,28 +759,14 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
         </section>
         {prospect.stage === 'need_identified' && !prospect.primaryNeed && <div className="prospect-missing-actions" aria-label="Informations à compléter"><div className="missing-action"><span>Le besoin reste à préciser.</span><button type="button" className="secondary-button" onClick={()=>showSection(`prospect-need-section-${prospect.id}`)}>Renseigner le besoin</button></div></div>}
         {prospect.stage === 'new' && <button className="primary-button start-qualification-button" onClick={onStart}>Démarrer la prospection</button>}
+        <section className="prospect-immediate-summary" aria-label="Résumé immédiat"><div><span>Besoin / projet</span><p>{prospect.primaryNeed||prospect.projectSummary||'Besoin à préciser'}</p></div><div><span>Contact principal</span><strong>{prospect.secondaryLabel||'Contact à identifier'}</strong></div><div><span>Dernière activité</span><p>{activity.length?humanActivity([...activity].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0].summary):'Aucune activité enregistrée'}</p></div></section>
         <details className="prospect-section-group" data-group="identity"><summary>Entreprise et contacts<OperationIcon name="chevron-down"/></summary><div className="prospect-section-group-body">
-        <ProspectWorkAccordion title="Informations prioritaires" summary={`${prospect.secondaryLabel || 'Interlocuteur à préciser'} · ${prospect.primaryNeed || 'Besoin à préciser'}`}>
-          <section className="prospect-commercial-priority">
-            <div className="work-section-heading"><div><span className="eyebrow">Conversation commerciale</span><strong>Synthèse immédiate</strong></div><button type="button" className="secondary-button compact-button" onClick={() => setDeskTab('reference')}>Voir la référence prospect</button></div>
-            <div className="reference-summary-grid">
-              <div><span>Interlocuteur</span><strong>{prospect.secondaryLabel || 'À préciser'}</strong></div>
-              <div><span>Décideur</span><strong>{prospect.decisionMakerName || prospect.decisionMakerDetails || 'À qualifier'}</strong></div>
-              <div><span>Besoin</span><strong>{prospect.primaryNeed || prospect.projectSummary || 'À préciser'}</strong></div>
-              <div><span>Prochaine action</span><strong>{nextAction?.title || 'À programmer'}</strong>{nextAction?.dueAt && <small>{formatDate(nextAction.dueAt)}</small>}</div>
-            </div>
-
-          </section>
-        </ProspectWorkAccordion>
-
-        <ProspectWorkAccordion title="Entreprise & interlocuteurs" summary={prospect.secondaryLabel || 'Contact à compléter'}>
-          <div id={`prospect-identity-${prospect.id}`} className="prospect-target-section"><ProspectIdentityPanel prospect={prospect} focusRequest={identityFocus} onSaved={() => onRefresh('Informations du prospect mises à jour.')} /></div>
-        </ProspectWorkAccordion>
-
+          <div id={`prospect-identity-${prospect.id}`} className="prospect-target-section"><ProspectIdentityPanel directoryLinks={false} prospect={prospect} focusRequest={identityFocus} onSaved={()=>onRefresh('Informations du prospect mises à jour.')}/></div>
         </div></details>
+
         <details className="prospect-section-group" data-group="needs"><summary>Besoins et qualification<OperationIcon name="chevron-down"/></summary><div className="prospect-section-group-body"><div className="reference-summary-grid"><div><span>Besoin</span><strong>{prospect.primaryNeed||prospect.projectSummary||'À préciser'}</strong></div><div><span>Décideur</span><strong>{prospect.decisionMakerName||prospect.decisionMakerDetails||'À qualifier'}</strong></div></div>
         {prospect.stage === 'qualifying' && <ProspectWorkAccordion title="Qualification" summary={prospect.decisionMakerName || prospect.decisionMakerDetails || 'Décideur à préciser'} defaultOpen>
-          <ProspectQualificationPanelV2 prospect={prospect} onSaved={onRefresh} onGoTo={(target) => { if (target === 'decision' || target === 'contact') setIdentityFocus({ target, sequence: Date.now() }); else document.getElementById(`prospect-${target}-${prospect.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} />
+          <ProspectQualificationPanelV2 prospect={prospect} onSaved={onRefresh} onGoTo={(target) => { if (target === 'decision' || target === 'contact') {showSection(`prospect-identity-${prospect.id}`);setIdentityFocus({ target, sequence: Date.now() });} else document.getElementById(`prospect-${target}-${prospect.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} />
         </ProspectWorkAccordion>}
 
         {prospect.stage === 'need_identified' && <ProspectWorkAccordion sectionId={`prospect-need-section-${prospect.id}`} title="Besoin / projet" summary={prospect.primaryNeed || prospect.projectSummary || 'Besoin à préciser'} defaultOpen>
@@ -812,7 +796,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
         </div></details>
       </>}
     </div>
-</CrmRecordLayout>
+</div>
   </aside>;
 }
 

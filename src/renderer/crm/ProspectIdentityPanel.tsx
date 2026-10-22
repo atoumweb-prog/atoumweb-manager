@@ -51,7 +51,7 @@ function cleanError(error: unknown): string {
     .trim();
 }
 
-export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { prospect: ProspectSummary; onSaved: () => void; focusRequest?: { target: 'decision' | 'contact'; sequence: number } | null }) {
+export function ProspectIdentityPanel({ prospect, onSaved, focusRequest, directoryLinks = true }: { directoryLinks?: boolean; prospect: ProspectSummary; onSaved: () => void; focusRequest?: { target: 'decision' | 'contact'; sequence: number } | null }) {
   const identityBaseline=useRef<WorkflowIdentity|null>(null);
   const [identity, setIdentity] = useState<WorkflowIdentity | null>(null);
   const [decision, setDecision] = useState<DecisionDraft>(() => decisionFromIdentity(prospect));
@@ -247,7 +247,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
   }));
 
   return <section className="prospect-work-section identity-panel-v2">
-    <div className="identity-directory-links">{identity.organization&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'organization',entityId:identity.organization!.id,title:identity.organization!.name})}>Ouvrir l’organisation dans l’Annuaire</button>}{identity.contact&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'contact',entityId:identity.contact!.id,title:identity.contact!.firstName+' '+identity.contact!.lastName})}>Ouvrir le contact dans l’Annuaire</button>}</div>
+    {directoryLinks&&<div className="identity-directory-links">{identity.organization&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'organization',entityId:identity.organization!.id,title:identity.organization!.name})}>Ouvrir l’organisation dans l’Annuaire</button>}{identity.contact&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'contact',entityId:identity.contact!.id,title:identity.contact!.firstName+' '+identity.contact!.lastName})}>Ouvrir le contact dans l’Annuaire</button>}</div>}
     <div className="work-section-heading"><div><span className="eyebrow">Entreprise & interlocuteur</span><strong>{identity.organization?.industry || identity.contact?.jobTitle || 'Informations principales'}</strong></div><button className="secondary-button compact-button" type="button" onClick={() => setEditing((value) => !value)}>{editing ? 'Fermer' : 'Modifier'}</button></div>
     {!editing && <div className="identity-summary-grid">
       {identity.organization && <><div><span>Société</span><strong>{identity.organization.name}</strong></div><div><span>Activité</span><strong>{identity.organization.industry || 'À préciser'}</strong></div>{identity.organization.website && <div><span>Site web</span><strong>{displayWebUrl(identity.organization.website)}</strong></div>}{address && <div className="identity-wide"><span>Adresse</span><strong>{address}</strong></div>}{identity.organization.notes && <div className="identity-wide"><span>Description</span><strong>{identity.organization.notes}</strong></div>}</>}
