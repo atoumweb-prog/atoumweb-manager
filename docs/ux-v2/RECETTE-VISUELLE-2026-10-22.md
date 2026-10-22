@@ -58,3 +58,7 @@ La première simplification ne reproduisait pas suffisamment la composition four
 La disposition personnelle non standard garde son ordre. La disposition standard est présentée dans l’ordre de la référence sans réécrire la préférence persistée. Le logo original reste inchangé : pas de redessin ou recoloration de ses pixels. Aucune cloche avec chiffre fictif ni facture/montant inventé n’est ajouté pour imiter les données de l’image. Aucun moteur, IPC, prix, contrat, migration ou fiche CRM modifié.
 
 Protocole réduit : typecheck et `node scripts/check-shell-home-simplification.cjs --standard` : une seule fenêtre/thème/densité/zoom, repli des six blocs, montage du chrono et des contenus, accès aux réglages, géométrie standard, absence d’écriture métier, intégrité/FK/registre 71. Aucune suite Vitest complète ni matrice multiconfiguration relancée. Capture et rapport SHA dans `outputs/shell-reference-standard/`. Recette visuelle utilisateur attendue, portable et main inchangés.
+
+### Rectification de palette validée
+
+La composition de référence ne remplace pas la palette officielle : suppression des surcharges marine/jaune du shell Noir. Les variables de styles.css restent la source unique (canvas #0e1115, surface #161a20, sidebar #080a0d, accent #c6a46c). Disposition, indicateurs colorés par fonction, autres thèmes et comportements inchangés. Une assertion native contrôle cet héritage dans la seule configuration standard. Cette décision remplace la ligne précédente « Noir gris éloigné de l’image ».
