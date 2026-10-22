@@ -131,6 +131,7 @@ function visualCall(op: string, key: string, value?: string): string | null | bo
 const api: AtoumWebApi = {
   unsaved:{confirmExit:(labels,pending)=>ipcRenderer.sendSync('unsaved:confirm-exit',labels,pending),publishState:state=>ipcRenderer.sendSync('unsaved:state',state)},
   app: {
+    openExternalUrl: (url: string) => ipcRenderer.invoke('app:open-external-url',url),
     getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap'),
     openProspectReferenceWindow: (id: string) => ipcRenderer.invoke('app:open-prospect-reference', id),
   },

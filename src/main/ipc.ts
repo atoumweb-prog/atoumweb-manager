@@ -1,3 +1,4 @@
+import {prospectExternalUrl} from '../shared/prospectExternalUrl';
 import type { QuoteSendAttestation } from '../shared/quoteTransmission';
 import {crmIdentityImagePreview} from './crm/crmIdentityImagePreview';
 import { registerShellVisualPreferences } from './shellVisualPreferencesIpc';
@@ -130,6 +131,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       return {cancelled:false,...result};
     });
   });
+  ipcMain.handle('app:open-external-url',async (_event,value:unknown)=>{await shell.openExternal(prospectExternalUrl(value));});
   ipcMain.handle('app:get-bootstrap', (): BootstrapState => {
     const storedTheme = database.getSetting<unknown>('theme', 'atoumweb');
     const storedDensity = database.getSetting<unknown>('display_density', 'comfort');

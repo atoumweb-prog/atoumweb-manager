@@ -110,7 +110,8 @@ function humanActivity(summary: string) {
     .replace(/\blost\b/g, 'Perdu');
 }
 
-export function ProspectActionsPanel({ prospect, actions, onChanged }: {
+export function ProspectActionsPanel({ prospect, actions, onChanged, showJournal = true }: {
+  showJournal?: boolean;
   prospect: ProspectSummary;
   actions: CrmAction[];
   onChanged: (message?: string) => void;
@@ -312,9 +313,9 @@ export function ProspectActionsPanel({ prospect, actions, onChanged }: {
       </div>}
 
       {openActions.length === 0 ? <p className="muted">Aucune action en cours.</p> : <div className="work-items">{openActions.map((action) => <div className="work-item action-work-item" key={action.id}>
-        <button className="work-check" type="button" title="Terminer" onClick={() => completeGuard.request(() => { const opening = completingId !== action.id; setCompletingId(opening ? action.id : null); if (opening) { setOutcome('prospect_reached'); setCompletionNotes(''); resetNext(); } })}>✓</button>
-        <div className="work-item-main"><strong>{action.title}</strong><small>{action.type === 'follow_up' ? 'Rappel / relance' : 'Action'} · {date(action.dueAt)} · {contactLabel(action.targetContactId)}{reasonLabel(action.reasonCode, action.reasonText) ? ` · ${reasonLabel(action.reasonCode, action.reasonText)}` : ''}{action.notes ? ` · ${action.notes}` : ''}</small></div>
-        <button className="secondary-button compact-button" type="button" disabled={busy} onClick={() => void cancelAction(action)}>Annuler</button>
+        <button className="work-check" type="button" title="Action effectuée : saisir le compte rendu" aria-label="Action effectuée : saisir le compte rendu" onClick={() => completeGuard.request(() => { const opening = completingId !== action.id; setCompletingId(opening ? action.id : null); if (opening) { setOutcome('prospect_reached'); setCompletionNotes(''); resetNext(); } })}>✓ Effectuée</button>
+        <div className="work-item-main"><strong>{action.title}</strong><small>{action.type === 'follow_up' ? 'Rappel / relance' : 'Action'} · {date(action.dueAt)}{action.dueAt&&new Date(action.dueAt).getTime()<Date.now()?' · En retard':''} · {contactLabel(action.targetContactId)}{reasonLabel(action.reasonCode, action.reasonText) ? ` · ${reasonLabel(action.reasonCode, action.reasonText)}` : ''}{action.notes ? ` · ${action.notes}` : ''}</small></div>
+        <button className="secondary-button compact-button" type="button" disabled={busy} onClick={() => void cancelAction(action)}>Annuler l’action</button>
         {completingId === action.id && <div className="inline-editor action-completion-editor">
           <strong>Terminer : {action.title}</strong>
           <div className="action-editor-grid">
@@ -339,13 +340,13 @@ export function ProspectActionsPanel({ prospect, actions, onChanged }: {
       {error && <p className="form-error" role="alert">{error}</p>}
     </section>
 
-    <details className="activity-journal">
+    {showJournal&&<details className="activity-journal">
       <summary><span>Historique du dossier · {journal.length} événement{journal.length > 1 ? 's' : ''}</span><small>Dernière activité : {latestJournalDate}</small></summary>
       <div className="activity-journal-content">
         {visibleJournal.map((event) => <div className="activity-item" key={event.id}><span className="activity-dot" /><div><p>{humanActivity(event.summary)}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div></div>)}
         {journal.length === 0 && <p className="muted">Aucune activité.</p>}
         {journal.length > 10 && <button type="button" className="secondary-button compact-button" onClick={(event) => { event.preventDefault(); setShowAllJournal((value) => !value); }}>{showAllJournal ? 'Afficher les 10 plus récents' : `Afficher les ${journal.length} événements`}</button>}
       </div>
-    </details>
+    </details>}
   </>;
 }

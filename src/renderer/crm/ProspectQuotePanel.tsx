@@ -228,7 +228,7 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
     setRefuseOpen(false); setRefusalOther('');
   }
 
-  if (!quote) return <section className="prospect-work-section prospect-quote-panel"><div className="work-section-heading"><div><span className="eyebrow">Devis à préparer</span><strong>Devis en attente d’édition</strong></div></div><p className="muted">Le besoin a été validé. Ouvre l’éditeur de devis pour construire le brouillon ; aucune information de suivi n’est affichée tant que le devis n’existe pas réellement.</p></section>;
+  if (!quote) return <section className="prospect-work-section prospect-quote-panel"><div className="work-section-heading"><div><span className="eyebrow">Devis</span><strong>Aucun devis lié</strong></div></div><p className="muted">Aucun devis n’a encore été créé pour ce prospect.</p></section>;
 
   const panelTitle = canEdit && !isFinalized
     ? 'Devis à préparer'

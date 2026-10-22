@@ -61,7 +61,7 @@ export function ProspectLinkedContactsPanel({
   return <div className="linked-contacts-panel">
     <div className="work-section-heading">
       <div><span className="eyebrow">Autres contacts liés</span><strong>{otherContacts.length} contact{otherContacts.length > 1 ? 's' : ''}</strong></div>
-      <button className="secondary-button compact-button" type="button" onClick={() => setOpen((value) => !value)}>{open ? 'Fermer' : '+ Contact'}</button>
+      <button className="secondary-button compact-button" type="button" onClick={() => setOpen((value) => !value)}>{open ? 'Fermer l’ajout' : 'Ajouter un contact'}</button>
     </div>
     {open && <div className="inline-editor linked-contact-editor">
       <strong>Ajouter un contact de l’entreprise</strong>

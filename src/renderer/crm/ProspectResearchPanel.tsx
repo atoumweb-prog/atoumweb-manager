@@ -1,3 +1,4 @@
+import {ProspectValue} from './ProspectValue';
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useState } from 'react';
 import type {
@@ -352,7 +353,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
         <h3>Connaissance entreprise</h3>
         <p className="muted">Informations collectées pour préparer les échanges.</p>
       </div>
-      {browseFirst&&<button type="button" className="secondary-button research-edit-toggle" disabled={busy} onClick={()=>{if(editing)guard.request(()=>setEditing(false));else{setOpen(true);setEditing(true);}}}>{editing?'Terminer la modification':'Modifier'}</button>}
+      {browseFirst&&<>{editing&&<button type="button" className="primary-button research-save-primary" disabled={busy} onClick={()=>void save()}>{busy?'Enregistrement…':'Enregistrer'}</button>}<button type="button" className="secondary-button research-edit-toggle" disabled={busy} onClick={()=>{if(editing){guard.discard();setEditing(false);}else{setOpen(true);setEditing(true);}}}>{editing?'Annuler':'Modifier la référence'}</button></>}
       <button type="button" className="secondary-button" onClick={() => setOpen((value) => !value)}>{open ? 'Réduire' : 'Afficher'}</button>
     </div>
 
@@ -360,8 +361,8 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
       <div className="research-company-strip">
         <div><small>Activité</small><strong>{prospect.organizationIndustry || 'À compléter'}</strong></div>
         <div><small>Ville</small><strong>{prospect.organizationCity || 'À compléter'}</strong></div>
-        <div><small>Site</small><strong>{prospect.organizationWebsite || prospect.existingUrl || 'À vérifier'}</strong></div>
-        <div><small>Dernière vérification</small><strong>{history[0] ? displayDate(history[0].checkedAt) : 'Jamais'}</strong></div>
+        <div><small>Site</small><strong>{prospect.organizationWebsite||prospect.existingUrl?<ProspectValue value={(prospect.organizationWebsite||prospect.existingUrl)!} kind="web"/>:'À vérifier'}</strong></div>
+        <div><small>Dernière vérification</small><strong>{history[0] ? displayDate(history[0].checkedAt) : 'Aucune vérification enregistrée'}</strong></div>
       </div>
 
       <div className="research-tabs" role="tablist" aria-label="Connaissance entreprise">
@@ -372,10 +373,10 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
           ['opportunities', 'Opportunités'],
           ['conversation', 'Conversation'],
           ['history', 'Historique'],
-        ] as Array<[ResearchTab, string]>).map(([key, label]) => <button type="button" key={key} className={tab === key ? 'active' : ''} onClick={() => setTab(key)}>{label}</button>)}
+        ] as Array<[ResearchTab, string]>).map(([key, label]) => <button type="button" key={key} className={tab === key ? 'active' : ''} onClick={event => {setTab(key);const scroller=event.currentTarget.closest('.prospect-desk-content,.prospect-reference-pilot');if(scroller)scroller.scrollTop=0;}}>{label}</button>)}
       </div>
 
-      {browseFirst&&!editing&&tab!=='history'&&<ResearchReading tab={tab} draft={draft} notes={prospect.organizationNotes}/>}
+      {browseFirst&&!editing&&tab!=='history'&&<ResearchReading tab={tab} draft={draft} notes={prospect.organizationNotes} hasSnapshot={history.length>0}/>}
       <div className="research-tab-content" hidden={browseFirst&&!editing&&tab!=='history'}>
         {tab === 'company' && <div className="research-grid research-grid-single-row">
           <fieldset className="research-card">
@@ -477,15 +478,15 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
           <label>Source générale<input value={draft.source ?? ''} onChange={(event) => setDraft({ ...draft, source: event.target.value })} disabled={busy} /></label>
           <label>URL source<input inputMode="url" value={displayWebUrl(draft.sourceUrl)} onChange={(event) => setDraft({ ...draft, sourceUrl: event.target.value })} placeholder="exemple.fr" disabled={busy} /></label>
         </div>
-        <button type="button" className="primary-button" disabled={busy} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer une nouvelle version'}</button>
+        <button hidden={browseFirst} type="button" className="primary-button" disabled={busy} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer une nouvelle version'}</button>
       </div>}
     </>}
   </section>;
 }
 
 /** Read-only projection of the same draft; editing and versioning still use the existing service. */
-function ResearchReading({tab,draft,notes}:{tab:ResearchTab;draft:ProspectResearchSnapshotInput;notes?:string|null}){
- const facts=(items:Array<[string,string|number|null|undefined]>)=><dl className="research-reading-facts">{items.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value==null||value===''?'Non renseigné':value}</dd></div>)}</dl>;
+function ResearchReading({tab,draft,notes,hasSnapshot}:{tab:ResearchTab;draft:ProspectResearchSnapshotInput;notes?:string|null;hasSnapshot:boolean}){
+ const facts=(items:Array<[string,string|number|null|undefined]>)=>{const missing=items.filter(([,value])=>value==null||value===''||value==='À vérifier');const known=items.filter(item=>!missing.includes(item));return <><dl className="research-reading-facts">{known.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{typeof value==='string'&&/^https?:\/\//i.test(value)?<ProspectValue value={value} kind="web"/>:value}</dd></div>)}</dl>{!!missing.length&&<details className="research-missing"><summary>Informations à compléter · {missing.length}</summary><p>{missing.map(([label])=>label).join(' · ')}</p></details>}</>;};
  const check=(title:string,value:ProspectResearchStructuredCheck)=><details className="research-reading-check" key={title}><summary>{title}<span>{statusLabel(value.overallStatus)}</span></summary>{facts(value.items.map(item=>[item.label,statusLabel(item.status)]))}{facts([['Observations',value.observations],['Point à évoquer',value.talkingPoint],['Source',value.source],['URL',value.url]])}</details>;
  return <section className="research-reading" aria-label="Lecture de la référence">
   {tab==='company'&&<div className="research-reading-columns"><section><h3>Activité et offre de l’entreprise</h3>{facts([['Services proposés',csv(draft.services)],['Produits principaux',csv(draft.products)],['Clientèles visées',csv(draft.customerSegments)],['Points différenciants',csv(draft.differentiators)]])}</section><section><h3>Notes source</h3><p>{notes||'Aucune note source.'}</p></section></div>}
@@ -493,6 +494,6 @@ function ResearchReading({tab,draft,notes}:{tab:ResearchTab;draft:ProspectResear
   {tab==='checks'&&<>{check('Mentions légales',mergeCheck({overallStatus:'review',items:LEGAL_ITEMS},draft.legalNotices))}{(Object.keys(AUDIT_DEFINITIONS) as AuditKey[]).map(k=>check(AUDIT_DEFINITIONS[k].title,mergeCheck(createAudit(k),draft.audits?.[k])))}</>}
   {tab==='opportunities'&&<>{!draft.opportunities?.length&&<p>Aucune opportunité renseignée.</p>}{draft.opportunities?.map((item,i)=><section key={i}><h3>{item.service||item.finding||'Opportunité'}</h3>{facts([['Constat',item.finding],['Priorité',item.priority==='high'?'Forte':item.priority==='low'?'Faible':'Moyenne'],['Retenue',item.keep?'Oui':'Non'],['Note',item.note]])}</section>)}</>}
   {tab==='conversation'&&facts([['Points forts',draft.conversation?.strengths],['Problèmes observés',draft.conversation?.issues],['Points à évoquer',draft.conversation?.talkingPoints],['Angle d’approche',draft.conversation?.approach],['Notes pendant l’appel',draft.conversation?.callNotes]])}
-  <footer className="research-reading-source">{facts([['Date de vérification',displayDate(draft.checkedAt)],['Source',draft.source],['URL source',draft.sourceUrl]])}</footer>
+  <footer className="research-reading-source">{hasSnapshot?facts([['Date de vérification',displayDate(draft.checkedAt)],['Source',draft.source],['URL source',draft.sourceUrl]]):<p>Aucune vérification enregistrée. Utiliser « Modifier la référence » pour préparer la première.</p>}</footer>
  </section>;
 }

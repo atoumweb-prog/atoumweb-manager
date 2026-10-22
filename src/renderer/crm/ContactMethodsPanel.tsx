@@ -1,3 +1,4 @@
+import {ProspectValue} from './ProspectValue';
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useState } from 'react';
 import type { ContactMethod, ContactMethodType } from '../../shared/crm';
@@ -111,7 +112,7 @@ export function ContactMethodsPanel({
   function group(title: string, values: ContactMethod[]) {
     if (!values.length) return null;
     const sorted = [...values].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || (a.label ?? '').localeCompare(b.label ?? '', 'fr'));
-    return <div className="contact-method-group"><strong>{title}</strong>{sorted.map((item) => <div className="contact-method-row" key={item.id}><span><b>{item.type === 'email' ? 'Email' : 'Téléphone'}</b> · {item.type === 'phone' ? formatPhone(item.value) : item.value}{item.label ? ` · ${item.label}` : ''}{item.isPrimary ? ' · Principal' : ''}</span><button className="secondary-button compact-button" type="button" onClick={() => void archive(item.id)}>Archiver</button></div>)}</div>;
+    return <div className="contact-method-group"><strong>{title}</strong>{sorted.map((item) => <div className="contact-method-row" key={item.id}><span><b>{item.type === 'email' ? 'Email' : 'Téléphone'}</b> · <ProspectValue value={item.type==='phone'?formatPhone(item.value):item.value} kind={item.type==='phone'?'phone':'email'}/>{item.label ? ` · ${item.label}` : ''}{item.isPrimary ? ' · Principal' : ''}</span><button className="secondary-button compact-button" type="button" onClick={() => void archive(item.id)}>Archiver</button></div>)}</div>;
   }
 
   if ((!allowOrganization || !organizationId) && owners.length === 0) return null;
@@ -120,7 +121,7 @@ export function ContactMethodsPanel({
     ...owners,
   ];
   return <details className="contact-methods-panel" open={false}>
-    <summary><span><strong>{summaryLabel}</strong><small>{emailCount} email{emailCount > 1 ? 's' : ''} · {phoneCount} téléphone{phoneCount > 1 ? 's' : ''}</small></span><span className="details-hint">Afficher / modifier</span></summary>
+    <summary><span><strong>{summaryLabel}</strong><small>{emailCount} email{emailCount > 1 ? 's' : ''} · {phoneCount} téléphone{phoneCount > 1 ? 's' : ''}</small></span><span className="details-hint">Modifier les coordonnées</span></summary>
     <div className="contact-methods-content">
       {allowOrganization && group(organizationLabel, organizationItems)}
       {owners.map((item) => <div key={item.id}>{group(item.label, contactItems[item.id] ?? [])}</div>)}

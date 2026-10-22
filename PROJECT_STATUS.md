@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 22/10/2026 — Corrections regroupées de la recette Prospection
+
+Utilisateur autorise tous les points relevés dans les captures : historique compact/détail borné, Clients acquis compact, référence interne et fenêtre séparée harmonisées, contraste et commandes Enregistrer/Annuler, informations manquantes regroupées, dates uniquement enregistrées, relances compactes et commandes explicites, journal unique, intérêt lisible et archivage confirmé. Liens web/email et copie téléphone sur clic explicite ; nouveau canal IPC limité aux protocoles HTTP(S)/mailto, aucune écriture métier associée. [Bilan et contrôles ciblés](docs/ux-v2/PROSPECTION-CORRECTIONS-RECETTE-2026-10-22.md). Typecheck,2 tests de destinations et38 contrôles natifs ciblés ; Noir/Confort/1920×1080/100% uniquement, bases TEMP. Aucun service métier/migration modifié, aucune donnée réelle, CI, fusion, activation B1 ou installateur. Nouveau portable distinct prévu ; validation visuelle finale utilisateur.
+
 ## 22/10/2026 — Fiches Prospection : travail et référence
 
 Application autorisée des recommandations issues des deux maquettes : identité compacte en haut, zone centrale prioritaire, associations facultatives repliables et trois groupes métier conservés. Référence en lecture par défaut, modification explicite et versionnement existant conservé ; six rubriques réelles. Liens Annuaire centralisés dans Associations pour cette fiche seulement. Styles limités au bureau Prospection ; Accueil/en-tête, Client, services et migrations inchangés. [Décisions et vérifications](docs/ux-v2/PROSPECTION-FICHES-2026-10-22.md). Une configuration standard uniquement, données synthétiques TEMP ; aucune donnée réelle/CI/push/main/installateur. Prochaine étape : recette visuelle utilisateur.

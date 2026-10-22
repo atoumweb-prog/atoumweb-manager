@@ -1,3 +1,4 @@
+import './prospect-workspace-pilot.css';
 import {OperationIcon} from '../operations/OperationIcon';
 import {UnsavedGroup} from '../unsaved/unsaved';
 import { Component, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from 'react';
@@ -68,14 +69,12 @@ function ProspectReferenceWindowContent({ prospectId }: { prospectId: string }) 
   if (loadError) return <div className="reference-window-shell"><div className="panel fatal-card"><span className="eyebrow">Référence prospect</span><h1>Chargement impossible</h1><p>{loadError}</p><button className="secondary-button" type="button" onClick={() => void load()}>Réessayer</button></div></div>;
   if (!prospect) return <div className="reference-window-shell"><h1>Prospect introuvable</h1><p className="muted">Cette fiche n’est plus disponible dans le workspace actif.</p></div>;
 
-  return <div className={`reference-window-shell prospect-detail-v2 prospect-temperature-${prospect.temperature??'neutral'}`}>
+  return <div className={`reference-window-shell prospect-reference-pilot prospect-detail-v2 prospect-temperature-${prospect.temperature??'neutral'}`}>
     <header className="reference-window-header">
       <div><span className="eyebrow">Référence prospect</span><h1>{prospect.displayName}</h1><p>{prospect.organizationIndustry || 'Activité à compléter'}{prospect.organizationCity ? ` · ${prospect.organizationCity}` : ''}</p></div>
     </header>
     {message && <div className="notice"><span>{message}</span><button type="button" onClick={() => setMessage('')} aria-label="Fermer" title="Fermer"><OperationIcon name="close"/></button></div>}
-    <section className="reference-window-identity">
-      <ProspectIdentityPanel prospect={prospect} onSaved={() => void load('Informations entreprise / contact mises à jour.')} />
-    </section>
-    <ProspectResearchPanel prospect={prospect} defaultOpen onChanged={(next) => void load(next)} />
+    <ProspectResearchPanel prospect={prospect} defaultOpen browseFirst onChanged={(next)=>void load(next)}/>
+    <details className="reference-window-identity"><summary>Identité et coordonnées</summary><ProspectIdentityPanel prospect={prospect} onSaved={()=>void load('Informations entreprise / contact mises à jour.')}/></details>
   </div>;
 }

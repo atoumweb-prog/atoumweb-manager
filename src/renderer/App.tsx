@@ -121,7 +121,7 @@ function App() {
       if(error){visibleEntity.current=null;pending.resolve({status:'failed',message:error});setMessage(error);return;}
       visibleEntity.current=id?{type,id}:null;
       pending.resolve({status:'opened'});
-      setMessage((pending.result.title||'Fiche')+' : fiche chargée.');
+      if(type==='prospect'||activePage==='Prospects')setMessage('');else setMessage((pending.result.title||'Fiche')+' : fiche chargée.');
       if(id){
         const epoch=navigationEpoch.current;
         requestAnimationFrame(()=>{
