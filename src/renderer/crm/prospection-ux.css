@@ -85,3 +85,24 @@
 .prospect-workspace .qualification-progress-note{padding:10px;border-left:3px solid var(--accent);color:var(--text);line-height:1.5;}
 @media(max-width:1100px){.prospect-workspace-header>.prospect-focus-summary{grid-template-columns:1fr 1fr;}.prospect-workspace-header .prospect-focus-next{grid-column:1/-1;}.prospect-workspace-header h2{font-size:20px;}.prospect-workspace-header .prospect-workspace-tools{gap:6px;}.prospect-workspace-header{padding:10px;}}
 @media(max-height:650px){.prospect-workspace-header>.prospect-focus-summary{display:flex;flex-wrap:wrap;}.prospect-workspace-header .prospect-focus-next>span{display:none;}.prospect-workspace-header .prospect-focus-next{display:flex;flex:1;justify-content:space-between;}.prospect-workspace-header h2{font-size:18px;}.prospect-workspace-header .prospect-detail-identity-head p{display:none;}}
+
+.prospect-action-dialog{width:min(860px,calc(100vw - 24px));overflow:auto;}
+.app-shell .prospects-v2 .prospect-action-dialog>.inline-editor{padding:18px;margin:0;background:var(--surface);border:0;color:var(--text);display:block;}
+.prospect-action-dialog :is(.action-editor-grid,.action-followup-grid){display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.prospect-action-dialog .span-all,.prospect-action-dialog .span-2{grid-column:1/-1;}
+.prospect-action-dialog .inline-editor-actions{position:sticky;bottom:0;padding:12px 0;background:var(--surface);z-index:3;border-top:1px solid var(--border);}
+.prospect-action-dialog .check-option{display:flex;align-items:center;gap:8px;margin:14px 0;}
+.prospect-action-dialog input[type=checkbox]{width:18px!important;height:18px!important;flex:0 0 18px;}
+.app-shell .prospects-v2 .prospect-workspace :is(.prospect-loss-editor,.prospect-archive-confirmation){background:var(--surface-soft)!important;color:var(--text)!important;padding:16px;border:1px solid var(--border);border-radius:8px;}
+.app-shell .prospects-v2 .prospect-workspace :is(.prospect-loss-editor,.prospect-archive-confirmation) :is(strong,p,label){color:var(--text)!important;line-height:1.5;}
+.app-shell .prospects-v2 .prospect-workspace :is(.prospect-loss-editor,.prospect-archive-confirmation) :is(input,select,textarea){background:var(--surface)!important;color:var(--text)!important;}
+.app-shell .prospects-v2 .prospect-workspace .activity-item p{font-size:14px;color:var(--text);}
+.prospect-history-toolbar{flex-wrap:wrap;align-items:end;}
+.prospect-history-toolbar label{display:grid;gap:4px;font-size:13px;color:var(--muted);}
+.prospect-history-toolbar input{width:auto;}
+.app-shell .prospects-v2 .prospect-workspace-header>.prospect-focus-summary{display:grid;grid-template-columns:minmax(180px,.7fr) minmax(160px,.7fr) minmax(300px,1.6fr);gap:12px;margin:0!important;padding:6px 0!important;border:0!important;border-top:1px solid var(--border)!important;background:transparent!important;}
+.app-shell .prospects-v2 .prospect-workspace-header .prospect-focus-next{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;}
+.app-shell .prospects-v2 .prospect-workspace-header .prospect-temperature-control label{display:flex;align-items:center;gap:8px;}
+.app-shell .prospects-v2 .prospect-workspace-header .prospect-temperature-control select{width:auto;max-width:150px;}
+@media(max-width:1100px){.app-shell .prospects-v2 .prospect-workspace-header>.prospect-focus-summary{grid-template-columns:1fr 1fr;}.prospect-history-toolbar input{max-width:100%;}}
+@media(max-height:650px){.app-shell .prospects-v2 .prospect-workspace-header>.prospect-focus-summary{display:flex;flex-wrap:wrap;}}

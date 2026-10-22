@@ -1,3 +1,4 @@
+import {ProspectDialog} from './ProspectDialog';
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useState } from 'react';
 import type { ActivityEvent, CrmAction, ProspectSummary } from '../../shared/crm';
@@ -293,10 +294,10 @@ export function ProspectActionsPanel({ prospect, actions, onChanged, showJournal
 
   return <>
     <section className="prospect-work-section prospect-actions-panel">
-      <div className="work-section-heading"><div><span className="eyebrow">Actions & relances</span><strong>{openActions.length} en cours</strong></div><button className="secondary-button compact-button" type="button" onClick={() => setCreateOpen((value) => !value)}>{createOpen ? 'Fermer' : '+ Action'}</button></div>
+      <div className="work-section-heading"><div><span className="eyebrow">Actions & relances</span><strong>{openActions.length} en cours</strong></div><button className="secondary-button compact-button" type="button" onClick={() => {if(createOpen)actionGuard.request(()=>{actionGuard.discard();setCreateOpen(false);});else setCreateOpen(true);}}>{createOpen ? 'Planification ouverte' : '+ Action'}</button></div>
 
-      {createOpen && <div className="inline-editor">
-        <strong>Programmer une action</strong>
+      {createOpen && <ProspectDialog label="Planifier une action" className="prospect-action-dialog" onClose={()=>actionGuard.request(()=>{actionGuard.discard();setCreateOpen(false);})}><div className="inline-editor">
+        <strong>1. Planifier une action</strong>{error&&<p role="alert" className="form-error">{error}</p>}
         <div className="action-editor-grid">
           <label>Action<select value={preset} onChange={(e) => selectPreset(e.target.value)} disabled={busy}>{presets.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
           <label>À qui ?<select value={targetContactId} onChange={(e) => setTargetContactId(e.target.value)} disabled={busy}><option value="">Prospect / entreprise</option>{contactOptions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
@@ -309,15 +310,15 @@ export function ProspectActionsPanel({ prospect, actions, onChanged, showJournal
         </div>
         {quoteContext && latestQuote && <small className="muted">Lié à {latestQuote.number} · {latestQuote.subject}</small>}
         <details><summary>Options avancées</summary><label>Récurrence<select value={recurrence} onChange={(e) => setRecurrence(e.target.value as typeof recurrence)} disabled={busy}>{RECURRENCES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label></details>
-        <div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => {actionGuard.discard();setCreateOpen(false);}}>Annuler</button><button className="primary-button" type="button" disabled={busy} onClick={() => void createAction()}>Enregistrer l’action</button></div>
-      </div>}
+        <div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => {actionGuard.discard();setCreateOpen(false);}}>Annuler la saisie</button><button className="primary-button" type="button" disabled={busy} onClick={() => void createAction()}>Enregistrer l’action</button></div>
+      </div></ProspectDialog>}
 
       {openActions.length === 0 ? <p className="muted">Aucune action en cours.</p> : <div className="work-items">{openActions.map((action) => <div className="work-item action-work-item" key={action.id}>
         <button className="work-check" type="button" title="Action effectuée : saisir le compte rendu" aria-label="Action effectuée : saisir le compte rendu" onClick={() => completeGuard.request(() => { const opening = completingId !== action.id; setCompletingId(opening ? action.id : null); if (opening) { setOutcome('prospect_reached'); setCompletionNotes(''); resetNext(); } })}>✓ Effectuée</button>
         <div className="work-item-main"><strong>{action.title}</strong><small>{action.type === 'follow_up' ? 'Rappel / relance' : 'Action'} · {date(action.dueAt)}{action.dueAt&&new Date(action.dueAt).getTime()<Date.now()?' · En retard':''} · {contactLabel(action.targetContactId)}{reasonLabel(action.reasonCode, action.reasonText) ? ` · ${reasonLabel(action.reasonCode, action.reasonText)}` : ''}{action.notes ? ` · ${action.notes}` : ''}</small></div>
-        <button className="secondary-button compact-button" type="button" disabled={busy} onClick={() => void cancelAction(action)}>Annuler l’action</button>
-        {completingId === action.id && <div className="inline-editor action-completion-editor">
-          <strong>Terminer : {action.title}</strong>
+        <button className="secondary-button compact-button" type="button" disabled={busy} onClick={() => void cancelAction(action)}>Annuler l’action programmée</button>
+        {completingId === action.id && <ProspectDialog label="Compte rendu et prochaine action" className="prospect-action-dialog" onClose={()=>completeGuard.request(()=>{completeGuard.discard();setCompletingId(null);})}><div className="inline-editor action-completion-editor">
+          <strong>2. Compte rendu : {action.title}</strong>{error&&<p role="alert" className="form-error">{error}</p>}
           <div className="action-editor-grid">
             <label>Canal<select value={channel} onChange={(e) => setChannel(e.target.value)} disabled={busy}>{CHANNELS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
             <label className="span-2">Résultat<select value={outcome} onChange={(e) => selectOutcome(e.target.value, action)} disabled={busy}>{OUTCOMES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
@@ -325,7 +326,7 @@ export function ProspectActionsPanel({ prospect, actions, onChanged, showJournal
           </div>
           {outcome === 'categorical_refusal' && <p className="form-error">Le prospect sera classé « Perdu » avec le motif « Refus catégorique ». Aucune relance ne sera créée automatiquement.</p>}
           {outcome !== 'categorical_refusal' && <label className="check-option"><input type="checkbox" checked={programNext} onChange={(e) => setProgramNext(e.target.checked)} disabled={busy} />Programmer une suite</label>}
-          {programNext && outcome !== 'categorical_refusal' && <div className="action-followup-grid">
+          {programNext && outcome !== 'categorical_refusal' && <div className="action-followup-grid"><h3 className="span-all">3. Programmer la suite</h3>
             <label className="span-2">Action suivante<input value={nextTitle} onChange={(e) => setNextTitle(e.target.value)} placeholder="Ex. rappeler le décisionnaire" disabled={busy} /></label>
             <label>À qui ?<select value={nextTargetContactId} onChange={(e) => setNextTargetContactId(e.target.value)} disabled={busy}><option value="">Prospect / entreprise</option>{contactOptions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
             <label>Pourquoi ?<select value={nextReasonCode} onChange={(e) => setNextReasonCode(e.target.value)} disabled={busy}>{GENERAL_REASONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
@@ -334,10 +335,10 @@ export function ProspectActionsPanel({ prospect, actions, onChanged, showJournal
             <label>Heure <small>(facultative)</small><input type="time" value={nextTime} onChange={(e) => setNextTime(e.target.value)} disabled={busy} /></label>
             <label className="span-all">Contexte / note<input value={nextNotes} onChange={(e) => setNextNotes(e.target.value)} placeholder="Ex. le décisionnaire revient jeudi matin" disabled={busy} /></label>
           </div>}
-          <div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => {completeGuard.discard();setCompletingId(null);}}>Annuler</button><button className="primary-button" type="button" disabled={busy} onClick={() => void completeAction(action)}>{outcome === 'categorical_refusal' ? 'Terminer et classer comme perdu' : programNext ? 'Terminer et programmer la suite' : 'Terminer l’action'}</button></div>
-        </div>}
+          <div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => {completeGuard.discard();setCompletingId(null);}}>Annuler la saisie</button><button className="primary-button" type="button" disabled={busy} onClick={() => void completeAction(action)}>{outcome === 'categorical_refusal' ? 'Terminer et classer comme perdu' : programNext ? 'Terminer et programmer la suite' : 'Terminer l’action'}</button></div>
+        </div></ProspectDialog>}
       </div>)}</div>}
-      {error && <p className="form-error" role="alert">{error}</p>}
+      {error && !createOpen && !completingId && <p className="form-error" role="alert">{error}</p>}
     </section>
 
     {showJournal&&<details className="activity-journal">
