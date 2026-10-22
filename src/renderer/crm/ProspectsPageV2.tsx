@@ -8,6 +8,7 @@ import './prospect-visual-pilot.css';
 import './prospection-directory-pilot.css';
 import './prospect-density-options.css';
 import './prospect-workspace-pilot.css';
+import './prospection-ux.css';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';
@@ -467,7 +468,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     activity={activity}
     mode="panel"
     onRefresh={(message) => { void refresh(); if (message) onMessage(message); }}
-    onClose={() => setSelectedId(null)}
+    onClose={() => {if(setSelectedId(null))requestAnimationFrame(()=>document.querySelector<HTMLElement>(`tr[data-record-id="${selected?.id}"]`)?.focus({preventScroll:true}));}}
     onOpenDesk={(tab='commercial') => {setDeskStartTab(tab);setDeskModeId(selected.id);}}
     onTemperature={(temperature) => void updateTemperature(selected, temperature)}
     onStart={() => void startProspecting(selected)}
@@ -503,7 +504,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
         ['qualifying','À qualifier',directory.filter(p=>p.stage==='qualifying').length,'search'],
         ['relaunch','À relancer',directory.filter(p=>followUpBuckets.relaunch.has(p.id)).length,'clock'],
         ['quote_to_prepare','Devis à préparer',directory.filter(p=>p.stage==='quote_to_prepare').length,'file-text']
-      ] as const).map(([filter,label,count,icon])=><button type="button" key={filter} data-prospect-filter={filter} aria-pressed={directoryStatusFilter===filter} onClick={()=>setDirectoryStatusFilter(filter)}><strong>{count}</strong><OperationIcon name={icon}/><span>{label}</span></button>)}</div></details>
+      ] as const).map(([filter,label,count,icon])=><button type="button" key={filter} data-prospect-filter={filter} title={filter==='relaunch'?'Rappels ouverts dus au plus tard aujourd�hui, retards inclus. Compteurs non additifs.':filter==='all'?'Tous les dossiers non archiv�s. Compteurs non additifs.':'Dossiers non archiv�s correspondant � cette situation. Compteurs non additifs.'} aria-pressed={directoryStatusFilter===filter} onClick={()=>setDirectoryStatusFilter(value=>value===filter?'follow':filter)}><strong>{count}</strong><OperationIcon name={icon}/><span>{label}</span></button>)}</div></details>
       <div className="prospect-directory-filters">
         <input aria-label="Rechercher les prospects" value={directorySearch} onChange={(e) => setDirectorySearch(e.target.value)} placeholder="Rechercher une entreprise, un contact…" />
         <select aria-label="Filtrer par activité" value={directoryIndustry} onChange={(e) => setDirectoryIndustry(e.target.value)}><option value="">Tous les métiers</option>{directoryIndustries.map((value) => <option key={value} value={value}>{value}</option>)}</select>
@@ -527,7 +528,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
         </select>
         <button type="button" className="secondary-button" aria-label="Effacer les filtres" onClick={()=>{setDirectorySearch('');setDirectoryIndustry('');setDirectoryCity('');setDirectoryStatusFilter('all');}}>Effacer les filtres</button><AppButton variant="quiet" aria-label="Actualiser les prospects" title="Actualiser les prospects" icon={<OperationIcon name="refresh"/>} onAction={refresh}/>
       </div>
-      <p className="prospection-pilot-results" role="status">{directoryFiltered.length} résultat{directoryFiltered.length>1?'s':''}{directoryStatusFilter!=='all'?' · filtre : '+({follow:'À suivre',prepare:'À préparer',ready:'Prêt pour démarchage',relaunch:'À relancer',overdue:'Relance en retard',...STAGE_LABELS}[directoryStatusFilter]):''}</p>
+      <p className="prospection-pilot-results" role="status"><span>{[directorySearch.trim(),directoryIndustry,directoryCity,directoryStatusFilter!=='all'?directoryStatusFilter:''].filter(Boolean).length} filtre(s) actif(s) � </span>{directoryFiltered.length} résultat{directoryFiltered.length>1?'s':''}{directoryStatusFilter!=='all'?' · filtre : '+({follow:'À suivre',prepare:'À préparer',ready:'Prêt pour démarchage',relaunch:'À relancer',overdue:'Relance en retard',...STAGE_LABELS}[directoryStatusFilter]):''}</p>
       {showForm && <form className="panel crm-form prospect-create-v2" onSubmit={(e) => void submitProspect(e)}><div className="panel-title"><div><span className="eyebrow">Annuaire de prospection</span><h2>Nouvelle entreprise à préparer</h2><p className="muted">Enregistre ce que tu sais déjà. Le dossier n’entre dans le parcours commercial qu’au clic sur « Démarrer le parcours commercial ».</p></div></div><div className="form-grid">
         <label>Société <FieldHelp text="Nom commercial ou nom de la structure." /><input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
         <label>Corps de métier / activité <FieldHelp text="Utilise un libellé stable pour pouvoir filtrer l’annuaire : restaurant, artisan, garage, profession libérale…" /><input value={draft.industry} onChange={(e) => setDraft({ ...draft, industry: e.target.value })} placeholder="Ex. restaurant" /></label>
@@ -546,7 +547,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
       </div>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="form-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Ajouter à l’annuaire'}</button></div></form>}
       {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}>
         <div className="panel table-panel prospect-directory-table-panel">
-          <ConfiguredDataTable<ProspectSummary> fitAvailable={false} scope={PROSPECT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} rows={directoryFiltered} selectedId={selectedId} getId={p=>p.id} onSelect={p=>setSelectedId(p.id)} className="prospect-directory-table" caption="Annuaire prospects · source complète · tri sur tous les résultats filtrés" columns={[
+          <ConfiguredDataTable<ProspectSummary> fitAvailable defaultVisibleColumnIds={['identity','next_action','due','status','open']} scope={PROSPECT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} rows={directoryFiltered} selectedId={selectedId} getId={p=>p.id} onSelect={p=>setSelectedId(p.id)} className="prospect-directory-table" caption="Annuaire prospects · source complète · tri sur tous les résultats filtrés" columns={[
             {id:'identity',label:'Entreprise',required:true,sortValue:p=>p.displayName,render:p=><div className="client-name-cell"><CrmIdentityAvatar organizationId={p.organizationId} contactId={p.contactId} name={p.displayName}/><div><strong>{p.displayName}</strong><small><span className={'prospect-temperature-dot '+(p.temperature??'neutral')} title={TEMPERATURE_LABELS[p.temperature??'neutral']} aria-label={'Niveau d’intérêt : '+TEMPERATURE_LABELS[p.temperature??'neutral']}/> {SOURCE_LABELS[p.source??'other']}</small></div></div>},
             {id:'next_action',label:'Prochaine action',sortValue:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.title??null,render:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.title||<span className="muted">Aucune action programmée</span>},
             {id:'due',label:'Échéance',sortValue:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.dueAt??null,render:p=>{const a=nextOpenAction(actions.filter(a=>a.ownerId===p.id)),date=a?.dueAt;return <span className={date&&new Date(date).getTime()<Date.now()?'prospection-due-overdue':''}>{date?formatDate(date):'—'}</span>;}},
@@ -581,7 +582,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
       })}</div><div className="pipeline-conversion-history"><button className="secondary-button" type="button" onClick={()=>setView('conversions')}><OperationIcon name="check-circle"/>Clients acquis · {historicalConversions.length}</button></div></div></div>}
     </>}
 
-    {(view === 'history' || view === 'conversions') && <>{view === 'conversions' && <div className="module-toolbar prospect-toolbar"><strong>Clients acquis · {historicalConversions.length}</strong><button className="secondary-button" type="button" onClick={() => setView('pipeline')}>Retour au parcours commercial</button></div>}<HistoryView prospects={historyVisible} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected && historyVisible.some((item) => item.id === selected.id) ? selected : null} activity={activity} onClose={() => setSelectedId(null)} /></>}
+    {(view === 'history' || view === 'conversions') && <>{view === 'conversions' && <div className="module-toolbar prospect-toolbar"><strong>Clients acquis · {historicalConversions.length}</strong><button className="secondary-button" type="button" onClick={() => setView('pipeline')}>Retour au parcours commercial</button></div>}<HistoryView prospects={historyVisible} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected && historyVisible.some((item) => item.id === selected.id) ? selected : null} activity={activity} onClose={() => {if(setSelectedId(null))requestAnimationFrame(()=>document.querySelector<HTMLElement>(`tr[data-record-id="${selected?.id}"]`)?.focus({preventScroll:true}));}} /></>}
     {deskProspect && <div className="prospect-desk-overlay" role="dialog" aria-modal="true" aria-label={`Fiche de travail ${deskProspect.displayName}`}><div className="prospect-desk-shell"><ProspectDetailV2 prospect={deskProspect} actions={actions.filter((item) => item.ownerId === deskProspect.id)} activity={selectedId === deskProspect.id ? activity : []} mode="desk" initialTab={deskStartTab} onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setDeskModeId(null)} onTemperature={(temperature) => void updateTemperature(deskProspect, temperature)} onStart={() => void startProspecting(deskProspect)} onLost={(code, reason) => void markLost(deskProspect, code, reason)} onArchive={() => void archive(deskProspect)} /></div></div>}
   </div>;
 }
