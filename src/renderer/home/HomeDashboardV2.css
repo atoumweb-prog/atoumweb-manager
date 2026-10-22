@@ -127,3 +127,16 @@
 :root[data-theme='noir'] .aw-manager-shell:has(.home-dashboard){--canvas:#031321;--surface:#071b2d;--surface-soft:#10283d;--sidebar:#041321;--sidebar-text:#e9f2ff;--muted:#a9c2df;--border:#25445d;--accent:#ffd326;--accent-strong:#ffda39;--text:#f0f5fc;}
 :root[data-theme='noir'] .aw-manager-shell:has(.home-dashboard) .home-widget:not(.home-widget-kpis){background:linear-gradient(120deg,#0b2131,#04172a);box-shadow:inset 0 1px 0 #ffffff0b;}
 :root[data-theme='noir'] .aw-manager-shell:has(.home-dashboard) .home-widget .home-card{background:transparent;}
+
+/* Native legacy button rounding had higher specificity than the chart class. */
+.aw-manager-shell .content-area .home-dashboard button.home-time-donut{width:136px;height:136px;aspect-ratio:1;border-radius:50%;padding:0;border:0;flex:none;}
+.aw-manager-shell .home-widget .home-time-card{grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);padding:18px 14px;gap:16px;}
+.aw-manager-shell .home-time-body{grid-template-columns:136px minmax(0,1fr);gap:16px;}
+.aw-manager-shell .home-time-legend>span{grid-template-columns:10px minmax(0,1fr) auto auto;gap:10px;}
+.aw-manager-shell .home-time-legend :is(small,strong,em){font-size:14px;font-style:normal;white-space:nowrap;}
+.aw-manager-shell .home-time-legend em{color:var(--muted);font-variant-numeric:tabular-nums;}
+.aw-manager-shell .home-time-donut strong{font-size:23px;}.aw-manager-shell .home-time-donut small{font-size:14px;}
+.aw-manager-shell .home-billing-row{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:8px;}
+.aw-manager-shell .home-billing-row>svg{display:none;}.aw-manager-shell .home-billing-row>span{gap:8px;}
+.aw-manager-shell .home-billing-row strong{font-size:30px;}.aw-manager-shell .home-billing-row em{color:var(--muted);font-size:14px;}
+@container home (max-width:850px){.aw-manager-shell .home-widget .home-time-card{grid-template-columns:1fr;}.aw-manager-shell .home-time-body{grid-template-columns:136px minmax(0,1fr);}}

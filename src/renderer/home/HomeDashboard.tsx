@@ -56,7 +56,7 @@ function money(cents: number): string {
 function hours(seconds: number): string {
   const value = seconds / 3600;
   if (value === 0) return '0 h';
-  return `${value.toLocaleString('fr-FR', { maximumFractionDigits: value < 10 ? 1 : 0 })} h`;
+  return `${value.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h`;
 }
 
 function alertTarget(alert: OperationsAlert): SearchResult | null {
@@ -84,7 +84,7 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   const [resources,setResources]=useState<Partial<ResourceSnapshot<HomeData>>>({});
   const data=useMemo(()=>Object.fromEntries(Object.entries(resources).filter(([,resource])=>resource.value!==undefined).map(([key,resource])=>[key,resource.value])) as Partial<HomeData>,[resources]);
   const [preference,setPreference]=useState(defaultHomeWidgets),[preferenceError,setPreferenceError]=useState('');
-  const widgetLabels:Record<HomeWidgetKey,string>={today:'Aujourd’hui',kpis:'Indicateurs',pipeline:'Pipeline commercial',time:'Temps et facturation',watch:'À surveiller',actions:'Projets récents'};
+  const widgetLabels:Record<HomeWidgetKey,string>={today:'Aujourd’hui',kpis:'Indicateurs',pipeline:'Pipeline commercial',time:'Temps & facturation',watch:'À surveiller',actions:'Projets récents'};
   const sourceLabels:Record<keyof HomeData,string>={entries:'Dossiers du jour',prospects:'Prospects',quotes:'Devis du pipeline',actions:'Relances',projects:'Projets',interventions:'Interventions',time:'Temps du mois',billing:'Éléments à facturer',alerts:'Alertes opérationnelles'};
   const loading=Object.keys(resources).length===0||Object.values(resources).some(source=>source.status==='loading');
   const failed=(Object.keys(resources) as (keyof HomeData)[]).filter(key=>resources[key]?.status==='error');
@@ -194,11 +194,11 @@ time:<article className="home-card home-time-card">
         <div className="home-time-body">
           <button type="button" className="home-time-donut" style={donutStyle} onClick={() => openPage('Gestion des temps')}><span><strong>{has("time")?hours(time.totalSeconds):"—"}</strong><small>ce mois-ci</small></span></button>
           <div className="home-time-legend">
-            <span><i className="billable" /><small>Facturable</small><strong>{has("time")?hours(time.billableSeconds):"—"}</strong></span>
-            <span><i /><small>Non facturable</small><strong>{has("time")?hours(time.nonBillableSeconds):"—"}</strong></span>
+            <span><i className="billable" /><small>Heures facturables</small><em>{has("time")&&time.totalSeconds>0?`${Math.round(billableRatio*100)} %`:"—"}</em><strong>{has("time")?hours(time.billableSeconds):"—"}</strong></span>
+            <span><i /><small>Heures non facturables</small><em>{has("time")&&time.totalSeconds>0?`${100-Math.round(billableRatio*100)} %`:"—"}</em><strong>{has("time")?hours(time.nonBillableSeconds):"—"}</strong></span>
           </div>
         </div>
-        <button className="home-billing-row" type="button" onClick={() => openPage('Facturation')}><OperationIcon name="receipt" size={20} /><span><small>À facturer · éléments prêts, hors factures Abby émises</small><strong>{has("billing")?money(readyAmount):"—"}</strong></span><em>{has("billing")?`${readyBilling.length} élément${readyBilling.length>1?"s":""}`:"Nombre indisponible"}</em><b>›</b></button>
+        <button className="home-billing-row" title="Éléments prêts à facturer, hors factures Abby émises" type="button" onClick={() => openPage('Facturation')}><OperationIcon name="receipt" size={20} /><span><small>Montant à facturer</small><strong>{has("billing")?money(readyAmount):"—"}</strong></span><em>{has("billing")?`${readyBilling.length} élément${readyBilling.length>1?"s":""}`:"Nombre indisponible"}</em><b>›</b></button>
       </article>,
 watch:<article className={`home-card home-watch-card ${alerts.length||resources.alerts?.status!=='ready' ? 'has-alerts' : 'is-clear'}`}>
         <div className="home-watch-copy">
@@ -225,7 +225,7 @@ actions:<article className="home-card home-actions-card">
   function renderWidget(key:HomeWidgetKey){
     const folded=preference.collapsed?.includes(key)??false;
     return <div key={key} data-home-widget={key} className={'home-widget home-widget-'+key} hidden={preference.hidden.includes(key)}>
-      <div className="home-widget-heading"><button type="button" className="home-widget-fold" aria-expanded={!folded} aria-controls={'home-content-'+key} aria-label={`${folded?'Déplier':'Replier'} ${widgetLabels[key]}`} onClick={()=>persist({...preference,collapsed:folded?(preference.collapsed??[]).filter(value=>value!==key):[...(preference.collapsed??[]),key]})}><OperationIcon name={widgetIcons[key]}/><strong>{widgetLabels[key]}</strong>{key==='today'&&has('entries')&&<span>{todayEntries.length}</span>}<span className="home-fold-symbol" aria-hidden="true">{folded?'+':'−'}</span></button>{!['kpis'].includes(key)&&<button type="button" className="home-widget-open" onClick={widgetOpen[key]} aria-label={key==='today'?'Ouvrir les actions':key==='pipeline'?'Ouvrir le pipeline commercial':key==='time'?'Ouvrir la gestion des temps':key==='actions'?'Ouvrir les projets':'Ouvrir les opérations'}>Voir tout <span aria-hidden="true">›</span></button>}</div>
+      <div className="home-widget-heading"><button type="button" className="home-widget-fold" aria-expanded={!folded} aria-controls={'home-content-'+key} aria-label={`${folded?'Déplier':'Replier'} ${widgetLabels[key]}`} onClick={()=>persist({...preference,collapsed:folded?(preference.collapsed??[]).filter(value=>value!==key):[...(preference.collapsed??[]),key]})}><OperationIcon name={widgetIcons[key]}/><strong>{widgetLabels[key]}</strong>{key==='today'&&has('entries')&&<span>{todayEntries.length}</span>}<span className="home-fold-symbol" aria-hidden="true">{folded?'+':'−'}</span></button>{!['kpis','time'].includes(key)&&<button type="button" className="home-widget-open" onClick={widgetOpen[key]} aria-label={key==='today'?'Ouvrir les actions':key==='pipeline'?'Ouvrir le pipeline commercial':key==='time'?'Ouvrir la gestion des temps':key==='actions'?'Ouvrir les projets':'Ouvrir les opérations'}>Voir tout <span aria-hidden="true">›</span></button>}</div>
       <div id={'home-content-'+key} className="home-widget-content" hidden={folded}>{widgets[key]}</div>
     </div>;
   }
