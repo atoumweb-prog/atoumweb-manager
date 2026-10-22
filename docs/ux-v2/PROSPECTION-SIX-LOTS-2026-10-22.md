@@ -10,3 +10,7 @@ Vue initiale compacte Entreprise/Action/Échéance/Situation/Ouvrir pour nouvell
 ## UX-PRO-02 — Creation et contacts
 
 Creation en dialogue natif focalise, champs facultatifs regroupes, annulation protegee ; editeur entreprise ou contact/decideur a la fois, saisies montees. Recherche de contacts existants et association d'un contact sans entreprise via l'API existante avec comparaison de version ; refus de doublon nom/email, aucune reaffectation d'une autre entreprise. Le modele actuel Contact.organizationId est simple : multi-entreprises et role par relation non simules, pas de migration. Typecheck et10 controles Electron TEMP dont garde Rester sur creation, captures1920/1366.
+
+## UX-PRO-03 — Fiche, qualification, besoins et devis
+
+En-tete conserve identite/statut/interet/prochaine action ; deux onglets pleine largeur. Bureau en dialogue natif (focus/Escape), synthese sans controles dupliques ; groupe pertinent initialement ouvert, replis memorises, editeurs toujours montes. Qualification accompagnee de la liste reelle des manques ; prestations retenues et catalogue repliable, chiffrage conserve ; brouillon avec Modifier comme action principale et validation pour envoi distincte. Typecheck et12 controles Electron TEMP dont absence de creation implicite de devis, captures1920/1366. Statuts devis complets a couvrir dans la regression transversale.

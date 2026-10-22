@@ -556,13 +556,13 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
       </button>
     </div>}
 
-    <div className="need-current-list">{needs.map((need) => {
+    <div className="need-selection-summary"><strong>Prestations retenues · {needs.length}</strong>{needs.length===0&&<p>Aucune prestation retenue.</p>}</div><div className="need-current-list">{needs.map((need) => {
       const item = need.catalogItemId ? catalog.find((candidate) => candidate.id === need.catalogItemId) : null;
       const version = item?.currentVersion;
       return <div className="need-current-row need-solution-card" key={need.id}><div><strong className="need-name">{need.label}</strong>{version&&<small className="need-price">{priceLabel(version)}</small>}<details className="need-description"><summary>Voir le contenu et les compléments</summary><CommercialScope version={version}/></details></div><div className="need-row-actions"><button className="secondary-button compact-button" type="button" onClick={()=>editNeed(need)}>Modifier</button><button className="secondary-button compact-button" type="button" disabled={busy} onClick={()=>void remove(need.id)}>Retirer</button></div></div>;
     })}</div>
 
-    <div className="need-add-block">
+    <details className="need-catalog-disclosure" open={needs.length===0||!!editingId}><summary>1. Sélectionner une prestation au catalogue</summary>    <div className="need-add-block">
       <div className="need-selector-title"><strong>{editingId ? 'Modifier la solution' : 'Ajouter une offre / prestation au besoin'}</strong><small>Une sélection, un seul bouton de validation.</small></div>
       <KindTabs kind={kind} onChange={k=>{setKind(k);setCategory('');setSelectedId('');}}/>
       <label className="prospect-catalog-query">Rechercher par besoin ou mots-clés
@@ -579,8 +579,9 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
       <div className="inline-editor-actions">{editingId && <button type="button" className="secondary-button" onClick={() => { setEditingId(undefined); setSelectedId(''); setOtherText(''); }}>Annuler</button>}<button type="button" className="primary-button" disabled={busy || (!selectedId && !otherText.trim()) || (selectedId === 'other' && !otherText.trim())} onClick={() => void saveNeed()}>{editingId ? 'Enregistrer la modification' : 'Ajouter au besoin'}</button></div>
     </div>
 
+</details>
     <div className="need-identification-fields">
-      <div className="work-section-heading"><div><span className="eyebrow">Affiner le besoin</span><strong>Périmètre nécessaire au chiffrage</strong></div></div>
+      <div className="work-section-heading"><div><span className="eyebrow">Affiner le besoin</span><strong>2. Préciser le besoin avant vérification</strong></div></div>
       <div className="workflow-fields">
         <label className="form-span-2">Projet / problématique<textarea value={projectSummary} onChange={(e) => setProjectSummary(e.target.value)} placeholder="Ce que le prospect veut obtenir ou résoudre" disabled={busy} /></label>
         <label className="form-span-2">Contexte, contraintes et éléments hors socle<textarea value={projectContext} onChange={(e) => setProjectContext(e.target.value)} placeholder="Fonctionnalité particulière, volume, intégration, contenu important, contrainte technique…" disabled={busy} /></label>

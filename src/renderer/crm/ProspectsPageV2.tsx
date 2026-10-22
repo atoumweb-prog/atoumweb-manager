@@ -586,8 +586,14 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     </>}
 
     {(view === 'history' || view === 'conversions') && <>{view === 'conversions' && <div className="module-toolbar prospect-toolbar"><strong>Clients acquis · {historicalConversions.length}</strong><button className="secondary-button" type="button" onClick={() => setView('pipeline')}>Retour au parcours commercial</button></div>}<HistoryView prospects={historyVisible} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected && historyVisible.some((item) => item.id === selected.id) ? selected : null} activity={activity} onClose={() => {if(setSelectedId(null))requestAnimationFrame(()=>document.querySelector<HTMLElement>(`tr[data-record-id="${selected?.id}"]`)?.focus({preventScroll:true}));}} /></>}
-    {deskProspect && <div className="prospect-desk-overlay" role="dialog" aria-modal="true" aria-label={`Fiche de travail ${deskProspect.displayName}`}><div className="prospect-desk-shell"><ProspectDetailV2 prospect={deskProspect} actions={actions.filter((item) => item.ownerId === deskProspect.id)} activity={selectedId === deskProspect.id ? activity : []} mode="desk" initialTab={deskStartTab} onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setDeskModeId(null)} onTemperature={(temperature) => void updateTemperature(deskProspect, temperature)} onStart={() => void startProspecting(deskProspect)} onLost={(code, reason) => void markLost(deskProspect, code, reason)} onArchive={() => void archive(deskProspect)} /></div></div>}
+    {deskProspect && <ProspectDialog className="prospect-desk-dialog prospect-desk-overlay" label={`Fiche de travail ${deskProspect.displayName}`} onClose={()=>setDeskModeId(null)}><div className="prospect-desk-shell"><ProspectDetailV2 prospect={deskProspect} actions={actions.filter((item) => item.ownerId === deskProspect.id)} activity={selectedId === deskProspect.id ? activity : []} mode="desk" initialTab={deskStartTab} onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setDeskModeId(null)} onTemperature={(temperature) => void updateTemperature(deskProspect, temperature)} onStart={() => void startProspecting(deskProspect)} onLost={(code, reason) => void markLost(deskProspect, code, reason)} onArchive={() => void archive(deskProspect)} /></div></ProspectDialog>}
   </div>;
+}
+
+function ProspectSectionGroup({group,title,description,defaultOpen,children}:{group:string;title:string;description:string;defaultOpen:boolean;children:ReactNode}){
+ const ref=useRef<HTMLDetailsElement>(null),key='atoumweb:prospection:section:'+group;
+ useEffect(()=>{try{const saved=window.atoumweb.visualPreferences.getItem(key);if(ref.current)ref.current.open=saved===null?defaultOpen:saved==='open';}catch{if(ref.current)ref.current.open=defaultOpen;}},[]);
+ return <details ref={ref} className="prospect-section-group" data-group={group} onToggle={event=>{try{window.atoumweb.visualPreferences.setItem(key,event.currentTarget.open?'open':'closed');}catch{/* UI remains usable without persistence. */}}}><summary><span><strong>{title}</strong><small>{description}</small></span><OperationIcon name="chevron-down"/></summary><div className="prospect-section-group-body">{children}</div></details>;
 }
 
 function ProspectWorkAccordion({ title, summary, defaultOpen = false, children, sectionId }: {
@@ -681,6 +687,11 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
 <div className="prospect-workspace">
     <header className="prospect-workspace-header">
       <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large"/><div><h2>{prospect.displayName}</h2><p>{[prospect.organizationIndustry,prospect.organizationCity].filter(Boolean).join(' · ') || 'Informations entreprise à compléter'}</p></div></div>
+        <section className="prospect-focus-summary" aria-label="Synthèse commerciale">
+          <div className="prospect-temperature-control"><label>Niveau d’intérêt<select value={prospect.temperature ?? 'neutral'} onChange={(event) => onTemperature(event.target.value as ProspectTemperature)}>{PROSPECT_TEMPERATURES.map((value) => <option key={value} value={value}>{TEMPERATURE_LABELS[value]}</option>)}</select></label></div>
+          <div className="prospect-focus-stage"><span>Situation commerciale</span><strong>{STAGE_LABELS[prospect.stage ?? 'new']}</strong></div>
+          <div className="prospect-focus-next"><span className="prospect-next-label"><OperationIcon name="clock" />Prochaine action{nextAction?.dueAt ? ` · ${formatDate(nextAction.dueAt)}${new Date(nextAction.dueAt).getTime()<Date.now()?' · En retard':''}` : ''}</span><strong>{nextAction?.title || 'À programmer'}</strong><button className="secondary-button" type="button" onClick={()=>showSection(`prospect-followup-section-${prospect.id}`)}>{nextAction?'Consulter l’action':'Programmer une action'}</button></div>
+        </section>
       <div className="prospect-workspace-tools">
         <details className="prospect-workspace-identity"><summary>Identité et logo</summary><div><p>{prospect.organizationWebsite||prospect.existingUrl?<ProspectValue value={(prospect.organizationWebsite||prospect.existingUrl)!} kind="web"/>:'Site à renseigner'}</p>{prospect.source&&<p>{SOURCE_LABELS[prospect.source]}{prospect.source==='other'&&prospect.sourceDetail?' · '+prospect.sourceDetail:''}</p>}<CrmIdentityAssetEditor organizationId={prospect.organizationId} contactId={prospect.contactId} onMessage={onRefresh}/><button type="button" className="secondary-button" onClick={()=>void window.atoumweb.app.openProspectReferenceWindow(prospect.id)}><OperationIcon name="external-link"/>Référence dans une fenêtre</button></div></details>
         <details className="prospect-workspace-associations"><summary><OperationIcon name="folder"/>Associations</summary><div><ProspectRelatedRecords prospect={prospect}/></div></details>
@@ -699,19 +710,15 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
           <ProspectIdentityPanel directoryLinks={false} prospect={prospect} focusRequest={identityFocus} onSaved={()=>onRefresh('Informations du prospect mises à jour.')}/>
         </ProspectWorkAccordion>
       </> : <>
-        <section className="prospect-focus-summary" aria-label="Synthèse commerciale">
-          <div className="prospect-temperature-control"><label>Niveau d’intérêt<select value={prospect.temperature ?? 'neutral'} onChange={(event) => onTemperature(event.target.value as ProspectTemperature)}>{PROSPECT_TEMPERATURES.map((value) => <option key={value} value={value}>{TEMPERATURE_LABELS[value]}</option>)}</select></label></div>
-          <div className="prospect-focus-stage"><span>Situation commerciale</span><strong>{STAGE_LABELS[prospect.stage ?? 'new']}</strong></div>
-          <div className="prospect-focus-next"><span className="prospect-next-label"><OperationIcon name="clock" />Prochaine action{nextAction?.dueAt ? ` · ${formatDate(nextAction.dueAt)}${new Date(nextAction.dueAt).getTime()<Date.now()?' · En retard':''}` : ''}</span><strong>{nextAction?.title || 'À programmer'}</strong><button className="secondary-button" type="button" onClick={()=>showSection(`prospect-followup-section-${prospect.id}`)}>{nextAction?'Consulter la relance':'Programmer une relance'}</button></div>
-        </section>
+
         {prospect.stage === 'need_identified' && !prospect.primaryNeed && <div className="prospect-missing-actions" aria-label="Informations à compléter"><div className="missing-action"><span>Le besoin reste à préciser.</span><button type="button" className="secondary-button" onClick={()=>showSection(`prospect-need-section-${prospect.id}`)}>Renseigner le besoin</button></div></div>}
         {prospect.stage === 'new' && <button className="primary-button start-qualification-button" onClick={onStart}>Démarrer la prospection</button>}
         <section className="prospect-immediate-summary" aria-label="Résumé immédiat"><div><span>Besoin / projet</span><p>{prospect.primaryNeed||prospect.projectSummary||'Besoin à préciser'}</p></div><div><span>Contact principal</span><strong>{prospect.secondaryLabel||'Contact à identifier'}</strong></div><div><span>Dernière activité</span><p>{activity.length?humanActivity([...activity].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0].summary):'Aucune activité enregistrée'}</p></div></section>
-        <details className="prospect-section-group" onToggle={e=>{if(e.currentTarget.open){const summary=e.currentTarget.querySelector('summary');requestAnimationFrame(()=>summary?.scrollIntoView({block:'start'}));}}} data-group="identity"><summary>Entreprise et contacts<OperationIcon name="chevron-down"/></summary><div className="prospect-section-group-body">
+        <ProspectSectionGroup group="identity" title="Entreprise et contacts" description="Identité, contacts et coordonnées" defaultOpen={prospect.stage==='new'}>
           <div id={`prospect-identity-${prospect.id}`} className="prospect-target-section"><ProspectIdentityPanel directoryLinks={false} prospect={prospect} focusRequest={identityFocus} onSaved={()=>onRefresh('Informations du prospect mises à jour.')}/></div>
-        </div></details>
+        </ProspectSectionGroup>
 
-        <details className="prospect-section-group" onToggle={e=>{if(e.currentTarget.open){const summary=e.currentTarget.querySelector('summary');requestAnimationFrame(()=>summary?.scrollIntoView({block:'start'}));}}} data-group="needs"><summary>Besoins et qualification<OperationIcon name="chevron-down"/></summary><div className="prospect-section-group-body"><div className="reference-summary-grid"><div><span>Besoin</span><strong>{prospect.primaryNeed||prospect.projectSummary||'À préciser'}</strong></div><div><span>Décideur</span><strong>{prospect.decisionMakerName||prospect.decisionMakerDetails||'À qualifier'}</strong></div></div>
+        <ProspectSectionGroup group="needs" title="Besoins et qualification" description="Qualification, prestations et informations avant devis" defaultOpen={['qualifying','need_identified'].includes(prospect.stage??'')}><div className="reference-summary-grid"><div><span>Besoin</span><strong>{prospect.primaryNeed||prospect.projectSummary||'À préciser'}</strong></div><div><span>Décideur</span><strong>{prospect.decisionMakerName||prospect.decisionMakerDetails||'À qualifier'}</strong></div></div>
         {prospect.stage === 'qualifying' && <ProspectWorkAccordion title="Qualification" summary={prospect.decisionMakerName || prospect.decisionMakerDetails || 'Décideur à préciser'} defaultOpen>
           <ProspectQualificationPanelV2 prospect={prospect} onSaved={onRefresh} onGoTo={(target) => { if (target === 'decision' || target === 'contact') {showSection(`prospect-identity-${prospect.id}`);setIdentityFocus({ target, sequence: Date.now() });} else document.getElementById(`prospect-${target}-${prospect.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} />
         </ProspectWorkAccordion>}
@@ -722,8 +729,8 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
 
         {prospect.stage==='need_identified'&&<ProspectPreQuoteReviewPanel prospect={prospect} onChanged={onRefresh}/>}
 
-        </div></details>
-        <details className="prospect-section-group" onToggle={e=>{if(e.currentTarget.open){const summary=e.currentTarget.querySelector('summary');requestAnimationFrame(()=>summary?.scrollIntoView({block:'start'}));}}} data-group="activities"><summary>Devis et activités<OperationIcon name="chevron-down"/></summary><div className="prospect-section-group-body">
+        </ProspectSectionGroup>
+        <ProspectSectionGroup group="activities" title="Devis et activités" description="Devis, actions, journal et clôture" defaultOpen={quoteVisible}>
         {quoteVisible && <ProspectWorkAccordion title="Devis" summary="Documents liés au dossier" defaultOpen={['quote_to_prepare','quote_to_send','quote_sent','follow_up','negotiation'].includes(prospect.stage ?? '')}>
           <ProspectQuotePanel prospect={prospect} onChanged={onRefresh} />
         </ProspectWorkAccordion>}
@@ -738,7 +745,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
         <ProspectWorkAccordion title="Historique du dossier" summary={`${activity.length} événement${activity.length > 1 ? 's' : ''}`}>
           <div className="activity-preview"><strong>Journal du dossier</strong>{activity.slice(0, 20).map((event) => <div className="activity-item" key={event.id}><span className="activity-dot" /><div><p>{humanActivity(event.summary)}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div></div>)}{activity.length === 0 && <p className="muted">Aucune activité.</p>}</div>
         </ProspectWorkAccordion>
-        </div></details>
+        </ProspectSectionGroup>
       </>}
     </div>
 </div>

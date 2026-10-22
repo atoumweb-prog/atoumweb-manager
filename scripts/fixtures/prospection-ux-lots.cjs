@@ -30,5 +30,12 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
  await click('.linked-contacts-panel .work-section-heading button');test(await get('!!document.querySelector(".linked-contact-editor input[type=search]")'),'Existing contact search available');await shot('contact-search');
  win.setContentSize(1366,768);await shot('contacts-1366');
  }
+ if(lot==='03'){
+ await click(`tr[data-record-id="${ids[0]}"]`);await click('[aria-label="Agrandir la fiche"]');await wait('document.querySelector(".prospect-desk-dialog").open','desk dialog');
+ test(await get('document.querySelector("[data-group=needs]").open'),'Relevant qualification group opens');test(await get('document.querySelectorAll(".prospect-focus-summary").length===1&&!!document.querySelector(".prospect-workspace-header .prospect-focus-summary")'),'Single commercial summary in header');await shot('fiche-1920');
+ win.setContentSize(1366,768);await sleep(150);test(await get('(()=>{const e=document.querySelector(".prospect-desk-dialog").getBoundingClientRect();return e.width<=innerWidth&&e.height<=innerHeight})()'),'Desk fits reduced viewport');await shot('fiche-1366');
+ await click('[data-group=needs]>summary');await click('[data-group=needs]>summary');test(await get('!!document.querySelector(".qualification-panel-v2")'),'Qualification editor remains mounted after folding');await click('.prospect-detail-desk .close-detail');
+ await click(`tr[data-record-id="${ids[1]}"]`);await click('[aria-label="Agrandir la fiche"]');await js('document.querySelector("[data-group=needs]").open=true');await wait('document.querySelector(".needs-panel-v2")','needs loaded');await shot('besoins-1366');test(await get('document.querySelector(".need-selection-summary").textContent.includes("0")'),'Selected needs summary uses actual count');test(db.quotes.list().length===1,'Browsing needs creates no quote');
+ }
  fs.writeFileSync(path.join(out,'captures.json'),JSON.stringify(captures,null,2));console.log('UX_PRO_LOT '+lot+' '+JSON.stringify(captures));
 };

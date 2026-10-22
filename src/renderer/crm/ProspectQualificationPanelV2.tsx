@@ -284,6 +284,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
       <div><span className="eyebrow">Qualification · {ORIGIN_LABELS[origin]}</span><strong>{readiness.filter((item) => item.ok).length}/{readiness.length} éléments minimums acquis</strong></div>
     </div>
 
+    <p className="qualification-progress-note">{allReady?'Les informations minimums sont acquises.':'À préciser : '+missing.map(item=>item.label).join(', ')}. Le passage à l’étape suivante reste une action explicite.</p>
     <div className="qualification-readiness" aria-label="État de la qualification">
       {readiness.map((item) => <span key={item.key} className={item.ok ? 'ready' : 'missing'}>{item.ok ? '✓' : '○'} {item.label}</span>)}
     </div>
