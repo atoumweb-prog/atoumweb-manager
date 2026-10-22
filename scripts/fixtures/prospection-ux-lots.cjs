@@ -9,6 +9,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
  const old=db.crm.createOrganization({name:'TEST — Dossier historique'}),lost=db.crm.createProspect({organizationId:old.id,stage:'new'});db.crm.changeProspectStage(lost.id,'lost','TEST — Sans suite');
  win.setContentSize(1920,1080);win.webContents.setZoomFactor(1);await navigate('Prospection');await js("document.documentElement.dataset.theme='noir';document.documentElement.dataset.density='comfort'");await wait('document.querySelector(".prospect-directory-table tbody tr")','annuaire');await shot('annuaire');
 
+ if(lot==='01'){
  for(const [w,h,z] of [[1920,1080,1],[1440,900,1],[1366,768,1],[1920,1080,1.25],[1920,1080,1.5],[1366,768,1.5]]){
  win.setContentSize(w,h);win.webContents.setZoomFactor(z);await sleep(250);
  test(await get('(()=>{const e=document.querySelector(".aw-data-table-scroll");return e.scrollWidth<=e.clientWidth+2})()'),`Default table fits ${w}/${z}`);
@@ -19,5 +20,15 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
  await click('[aria-label="Trier par Entreprise"]');test(await get(`document.querySelector('aside[data-prospect-id="${ids[0]}"]')!==null`),'Sort keeps selected ID');
  await click('[data-prospect-filter=qualifying]');test(await get('document.querySelectorAll(".prospect-directory-table tbody tr").length===1'),'KPI filters actual records');
  await click('[data-prospect-filter=all]');await click('.aw-table-preferences>summary');await shot('colonnes-vues');await click('.aw-table-preferences>summary');
+
+ }else if(lot==='02'){
+ await click('.prospection-pilot-heading .primary-button');test(await get('document.querySelector("dialog").open'),'Creation in native focus-contained modal');await shot('creation-1920');
+ const {dialog}=require('electron'),original=dialog.showMessageBoxSync;let prompts=0;dialog.showMessageBoxSync=()=>{prompts++;return 0;};
+ try{await js(`const e=document.querySelector('.prospect-create-v2 input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'TEST brouillon');e.dispatchEvent(new Event('input',{bubbles:true}));`);await sleep(80);await click('.prospect-create-v2 .form-actions .secondary-button');test(prompts===1&&await get('document.querySelector("dialog").open'),'Stay protects creation draft');}finally{dialog.showMessageBoxSync=original;}
+ await js(`const e=document.querySelector('.prospect-create-v2 input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'');e.dispatchEvent(new Event('input',{bubbles:true}));`);await sleep(80);await click('.prospect-create-v2 .form-actions .secondary-button');
+ await click(`tr[data-record-id="${ids[0]}"]`);await click('[aria-label="Agrandir la fiche"]');await click('[data-group=identity]>summary');await wait('document.querySelector(".identity-panel-v2 button")','identity loaded');await click('.identity-panel-v2 .button-row button:first-child');test(await get('document.querySelector(".identity-part[hidden]")!==null'),'Single entity editor');await shot('entreprise-1920');await click('.identity-panel-v2 .button-row button');
+ await click('.linked-contacts-panel .work-section-heading button');test(await get('!!document.querySelector(".linked-contact-editor input[type=search]")'),'Existing contact search available');await shot('contact-search');
+ win.setContentSize(1366,768);await shot('contacts-1366');
+ }
  fs.writeFileSync(path.join(out,'captures.json'),JSON.stringify(captures,null,2));console.log('UX_PRO_LOT '+lot+' '+JSON.stringify(captures));
 };

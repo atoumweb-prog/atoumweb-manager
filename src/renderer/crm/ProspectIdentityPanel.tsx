@@ -59,6 +59,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest, directo
   const [decisionContactId, setDecisionContactId] = useState('');
   const [primaryDraft, setPrimaryDraft] = useState<PrimaryDraft>({ firstName: '', lastName: '', role: '' });
   const [editing, setEditing] = useState(false);
+  const [editPart,setEditPart]=useState<'organization'|'contact'>('organization');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   // Après une réponse IPC partielle, réutiliser les contacts effectivement créés
@@ -71,7 +72,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest, directo
 
   useEffect(() => {
     if (!focusRequest) return;
-    if (focusRequest.target === 'decision') setEditing(true);
+    if (focusRequest.target === 'decision') {setEditPart('contact');setEditing(true);}
     window.setTimeout(() => {
       const field = focusRequest.target === 'decision' ? document.getElementById('prospect-decision-field') : document.querySelector<HTMLElement>('.prospect-detail-v2 .contact-methods-panel');
       if (field instanceof HTMLDetailsElement) field.open = true;
@@ -249,14 +250,14 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest, directo
 
   return <section className="prospect-work-section identity-panel-v2">
     {directoryLinks&&<div className="identity-directory-links">{identity.organization&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'organization',entityId:identity.organization!.id,title:identity.organization!.name})}>Ouvrir l’organisation dans l’Annuaire</button>}{identity.contact&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'contact',entityId:identity.contact!.id,title:identity.contact!.firstName+' '+identity.contact!.lastName})}>Ouvrir le contact dans l’Annuaire</button>}</div>}
-    <div className="work-section-heading"><div><span className="eyebrow">Entreprise & interlocuteur</span><strong>{identity.organization?.industry || identity.contact?.jobTitle || 'Informations principales'}</strong></div><button className="secondary-button compact-button" type="button" onClick={() => setEditing((value) => !value)}>{editing ? 'Fermer la modification' : 'Modifier l’entreprise et le contact'}</button></div>
+    <div className="work-section-heading"><div><span className="eyebrow">Entreprise & interlocuteur</span><strong>{identity.organization?.industry || identity.contact?.jobTitle || 'Informations principales'}</strong></div><div className="button-row">{!editing?<><button className="secondary-button" type="button" onClick={()=>{setEditPart('organization');setEditing(true);}}>Modifier l'entreprise</button><button className="secondary-button" type="button" onClick={()=>{setEditPart('contact');setEditing(true);}}>Modifier le contact et le décideur</button></>:<button className="secondary-button" type="button" disabled={busy} onClick={()=>guard.request(()=>{guard.discard();setEditing(false);})}>Annuler la modification</button>}</div></div>
     {!editing && <div className="identity-summary-grid">
       {identity.organization && <><div><span>Société</span><strong>{identity.organization.name}</strong></div><div><span>Activité</span><strong>{identity.organization.industry || 'À préciser'}</strong></div>{identity.organization.website && <div><span>Site web</span><strong><ProspectValue value={identity.organization.website} kind="web"/></strong></div>}{address && <div className="identity-wide"><span>Adresse</span><strong>{address}</strong></div>}{identity.organization.notes && <div className="identity-wide"><span>Description</span><strong>{identity.organization.notes}</strong></div>}</>}
       {identity.contact ? <><div><span>Interlocuteur principal</span><strong>{identity.contact.firstName} {identity.contact.lastName}</strong></div><div><span>Fonction</span><strong>{identity.contact.jobTitle || 'À préciser'}</strong></div></> : <div className="identity-wide"><span>Interlocuteur principal</span><strong>Aucun interlocuteur renseigné</strong><small>Utilise « Modifier » pour l’ajouter sans recréer le prospect.</small></div>}
       <div className="identity-wide decision-summary"><span>Décisionnaire</span><strong>{decisionLabel}</strong>{decision.details && decision.details !== 'Décisionnaire identifié dans les Contacts' && <small>{decision.details}</small>}</div>
     </div>}
-    {editing && <div className="workflow-fields identity-editor-v2">
-      <div className="form-span-2"><CrmIdentityAssetEditor organizationId={identity.organization?.id} contactId={identity.contact?.id} /></div>
+    {editing && <div className="workflow-fields identity-editor-v2" data-edit-part={editPart}>
+      <div className="identity-part form-span-2" hidden={editPart!=='organization'}><div className="workflow-fields">      <div className="form-span-2"><CrmIdentityAssetEditor organizationId={identity.organization?.id} contactId={identity.contact?.id} /></div>
       {identity.organization && <>
         <label>Société <FieldHelp text="Nom usuel de la société ou de la structure commerciale." /><input value={identity.organization.name} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, name: e.target.value } })} disabled={busy} /></label>
         <label>Activité / type de structure <FieldHelp text="Permet d’identifier rapidement le métier : artisan, restaurant, commerçant, association, profession libérale…" /><input value={identity.organization.industry ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, industry: e.target.value } })} placeholder="Ex. artisan cirier, restaurant, commerce…" disabled={busy} /></label>
@@ -269,7 +270,8 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest, directo
         <label>Pays<input value={identity.organization.country ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, country: e.target.value } })} disabled={busy} /></label>
       </>}
 
-      <div className="form-span-2"><span className="eyebrow">Interlocuteur principal</span></div>
+</div></div>
+      <div className="identity-part form-span-2" hidden={editPart!=='contact'}><div className="workflow-fields">      <div className="form-span-2"><span className="eyebrow">Interlocuteur principal</span></div>
       <label id="prospect-contact-field">Prénom interlocuteur<input value={primaryDraft.firstName} onChange={(e) => setPrimaryDraft({ ...primaryDraft, firstName: e.target.value })} placeholder="Prénom" disabled={busy} /></label>
       <label>Nom interlocuteur<input value={primaryDraft.lastName} onChange={(e) => setPrimaryDraft({ ...primaryDraft, lastName: e.target.value })} placeholder="Nom" disabled={busy} /></label>
       <label>Fonction / rôle <FieldHelp text="Champ libre : gérant, patron, comptable, banquier, responsable communication…" /><input value={primaryDraft.role} onChange={(e) => setPrimaryDraft({ ...primaryDraft, role: e.target.value })} placeholder="Gérant, responsable…" disabled={busy} /></label>
@@ -302,10 +304,11 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest, directo
         {decision.status !== 'yes' && <label>Précisions / chemin de validation<input value={decision.details} onChange={(e) => setDecision({ ...decision, details: e.target.value === 'Décisionnaire identifié dans les Contacts' ? '' : e.target.value })} placeholder="Ex. associé à consulter, responsable régional, nom à confirmer…" disabled={busy} /></label>}
       </fieldset>
 
+</div></div>
       {error && <p className="form-error form-span-2">{error}</p>}
       <button className="primary-button" type="button" disabled={busy || (decision.status === 'no' && !decisionContactId && (!decisionEmail.valid || !decisionPhone.valid))} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer les informations'}</button>
     </div>}
-    <ProspectLinkedContactsPanel
+    <div hidden={editing}><ProspectLinkedContactsPanel
       organizationId={identity.organization?.id}
       contacts={identity.contacts}
       primaryContactId={identity.contact?.id}
@@ -317,6 +320,6 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest, directo
       contactOwners={contactOwners}
       organizationLabel="Entreprise / accueil"
       summaryLabel="Coordonnées"
-    />
+    /></div>
   </section>;
 }

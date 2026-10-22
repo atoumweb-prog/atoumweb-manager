@@ -1,6 +1,6 @@
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
-import { useMemo, useState, useRef } from 'react';
-import type { Contact } from '../../shared/crm';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import type { Contact, DirectoryContact } from '../../shared/crm';
 import { validateEmail, validatePhone } from '../../shared/contactValidation';
 
 function cleanError(error: unknown): string {
@@ -32,6 +32,8 @@ export function ProspectLinkedContactsPanel({
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [existing,setExisting]=useState<DirectoryContact[]>([]),[query,setQuery]=useState('');
+  useEffect(()=>{if(!open)return;let active=true;void window.atoumweb.crm.contacts.list().then(items=>{if(active)setExisting(items);}).catch(e=>{if(active)setError(cleanError(e));});return()=>{active=false;};},[open]);
   const guard=useUnsavedDraft('Nouveau contact',{firstName,lastName,role,email,phone},{pending:busy,discard:s=>{setFirstName(s.firstName);setLastName(s.lastName);setRole(s.role);setEmail(s.email);setPhone(s.phone);}});
 
   const emailValidation = validateEmail(email);
@@ -48,6 +50,8 @@ export function ProspectLinkedContactsPanel({
     if (!emailValidation.valid || !phoneValidation.valid) return;
     setBusy(true); setError('');
     try {
+      const candidates=await window.atoumweb.crm.contacts.list();
+      if(candidates.some(contact=>contact.firstName.trim().toLocaleLowerCase('fr')===firstName.trim().toLocaleLowerCase('fr')&&contact.lastName.trim().toLocaleLowerCase('fr')===lastName.trim().toLocaleLowerCase('fr') || !!email.trim()&&contact.email?.trim().toLocaleLowerCase('fr')===email.trim().toLocaleLowerCase('fr'))){setError('Un contact porte déjà ce nom ou cet email. Recherche-le avant de créer une autre personne.');return;}
       await window.atoumweb.crm.directory.saveContact({organizationId,firstName:firstName.trim(),lastName:lastName.trim(),jobTitle:role.trim()||null,email:email.trim()||null,phone:phone.trim()||null},{operationId:creationOperation.current});
       creationOperation.current=crypto.randomUUID();
       setFirstName(''); setLastName(''); setRole(''); setEmail(''); setPhone(''); setOpen(false);
@@ -57,6 +61,13 @@ export function ProspectLinkedContactsPanel({
     finally { setBusy(false); }
   }
 
+  async function attach(contact:DirectoryContact){
+    if(busy||!organizationId||contact.organizationId)return;
+    setBusy(true);setError('');
+    try{await window.atoumweb.crm.directory.saveContact({...contact,organizationId},{id:contact.id,expected:contact,operationId:crypto.randomUUID()});setOpen(false);onChanged();window.dispatchEvent(new Event('atoumweb:changed'));}
+    catch(e){setError(cleanError(e));}finally{setBusy(false);}
+  }
+
   if (!organizationId) return null;
   return <div className="linked-contacts-panel">
     <div className="work-section-heading">
@@ -64,6 +75,8 @@ export function ProspectLinkedContactsPanel({
       <button className="secondary-button compact-button" type="button" onClick={() => setOpen((value) => !value)}>{open ? 'Fermer l’ajout' : 'Ajouter un contact'}</button>
     </div>
     {open && <div className="inline-editor linked-contact-editor">
+      <label>Rechercher un contact existant<input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Nom ou email"/></label>
+      {query.trim()&&<div className="contact-search-results">{existing.filter(contact=>[contact.firstName,contact.lastName,contact.email].join(' ').toLocaleLowerCase('fr').includes(query.trim().toLocaleLowerCase('fr'))).slice(0,12).map(contact=><div key={contact.id}><span>{contact.firstName} {contact.lastName} · {contact.organizationId===organizationId?'Déjà lié à cette entreprise':contact.organizationName||'Sans entreprise'}</span>{!contact.organizationId&&<button type="button" className="secondary-button" disabled={busy} onClick={()=>void attach(contact)}>Associer ce contact</button>}</div>)}<small>Un contact lié à une autre entreprise reste rattaché à celle-ci. Aucune copie ni réaffectation automatique.</small></div>}
       <strong>Ajouter un contact de l’entreprise</strong>
       <div className="action-editor-grid">
         <label>Prénom<input value={firstName} onChange={(e) => setFirstName(e.target.value)} disabled={busy} /></label>

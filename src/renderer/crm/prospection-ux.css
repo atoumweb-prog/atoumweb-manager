@@ -43,3 +43,19 @@
 .app-shell .prospects-v2 .prospect-side-panel-boundary>.prospect-detail-v2:not(.prospect-detail-desk)>.prospect-compact-scroll{flex:1;min-height:0;max-height:none!important;overflow:auto!important;}
 
 .app-shell .content-area>.prospects-v2{container-type:normal!important;}
+
+.prospect-modal{padding:0;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);margin:auto;}
+.prospect-modal::backdrop{background:#0009;backdrop-filter:blur(3px);}
+.prospect-create-dialog{width:min(1000px,calc(100vw - 24px));}
+.app-shell .prospects-v2 .prospect-create-dialog .prospect-create-v2{margin:0;max-height:calc(100dvh - 28px);overflow:auto;border:0;padding:18px;}
+.prospect-create-extra{border-block:1px solid var(--border);padding:10px 0;}
+.prospect-create-extra>summary{cursor:pointer;font-weight:600;padding:8px 0;}
+.prospect-create-extra .form-grid{padding-top:12px;}
+.prospect-create-dialog .form-actions{position:sticky;bottom:0;z-index:4;background:var(--surface);padding:12px;border-top:1px solid var(--border);}
+.prospect-workspace .identity-part[hidden],.prospect-workspace .identity-panel-v2>div[hidden]{display:none!important;}
+.prospect-workspace .identity-panel-v2 .workflow-fields{gap:12px;}
+.prospect-workspace .contact-method-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.prospect-workspace .contact-method-group>strong{grid-column:1/-1;}
+.prospect-workspace .contact-method-row{min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px;}
+.prospect-workspace .contact-method-row>span{flex:1;min-width:0;}
+@media(max-width:1000px){.prospect-workspace .contact-method-group{grid-template-columns:1fr;}.prospect-create-dialog .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.prospect-create-dialog .form-span-3{grid-column:1/-1;}}
