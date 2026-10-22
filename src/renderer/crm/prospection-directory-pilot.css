@@ -1,0 +1,67 @@
+/* Prospection pilot: existing data, routes, editors and guards; one standard visual. */
+:root[data-theme='noir'] .aw-manager-shell:has(.prospects-v2){--canvas:#031321;--surface:#071b2d;--surface-soft:#10283d;--sidebar:#041321;--sidebar-text:#e9f2ff;--muted:#a9c2df;--border:#25445d;--accent:#ffd326;--accent-strong:#ffda39;--text:#f0f5fc;}
+.app-shell .prospects-v2{min-width:0;gap:14px;}
+.prospection-pilot-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;}
+.prospection-pilot-heading h1{font-size:30px;margin:0 0 6px;}.prospection-pilot-heading p{margin:0;color:var(--muted);}
+.app-shell .prospects-v2>.prospect-view-switch{padding:0;border-radius:0;gap:18px;flex-wrap:nowrap;overflow:auto;}
+.app-shell .prospects-v2>.prospect-view-switch button{border:0;border-bottom:3px solid transparent;border-radius:0;background:transparent;padding:12px 4px;white-space:nowrap;}
+.app-shell .prospects-v2>.prospect-view-switch button.active{background:transparent;color:var(--accent);border-bottom-color:var(--accent);box-shadow:none;}
+.prospection-pilot-counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+.app-shell .prospects-v2 .prospection-pilot-counts>button{--counter:#2393ff;display:grid;grid-template-columns:1fr auto;gap:10px;justify-content:stretch;text-align:left;padding:16px 18px;background:linear-gradient(125deg,var(--surface-soft),var(--surface));border:1px solid var(--border);border-top:4px solid var(--counter);border-radius:10px;color:var(--text);cursor:pointer;}
+.prospection-pilot-counts>button:nth-child(2){--counter:#ffd326!important;}.prospection-pilot-counts>button:nth-child(3){--counter:#f05068!important;}.prospection-pilot-counts>button:nth-child(4){--counter:#00ba86!important;}
+.prospection-pilot-counts>button>strong{font-size:28px;}.prospection-pilot-counts>button>svg{color:var(--counter);}.prospection-pilot-counts>button>span{grid-column:1/-1;color:var(--muted);}
+.app-shell .prospects-v2 .prospection-pilot-counts>button[aria-pressed=true]{outline:1px solid var(--accent);outline-offset:2px;}
+.app-shell .prospects-v2 .prospect-directory-filters{display:flex;flex-wrap:wrap;align-items:center;padding:10px;}
+.app-shell .prospects-v2 .prospect-directory-filters input{flex:2 1 260px;}.app-shell .prospects-v2 .prospect-directory-filters select{flex:1 1 130px;}
+.prospection-pilot-results{margin:0;color:var(--muted);font-size:14px;}
+.app-shell .prospects-v2 .aw-data-table caption{font-size:14px;text-align:left;}
+.app-shell .prospects-v2 .aw-data-table td{padding:12px 10px;font-size:14px;line-height:1.4;}
+.app-shell .prospects-v2 .aw-data-table th{padding:8px 10px;font-size:14px;color:var(--muted);}
+.app-shell .prospects-v2 .aw-data-table td[data-column-id=identity] strong{font-size:15px;}
+.app-shell .prospects-v2 .aw-data-table tr[data-selected=true] td{background:color-mix(in srgb,var(--accent) 10%,var(--surface));border-block-color:var(--accent);}
+.app-shell .prospects-v2 .prospection-due-overdue{color:#ff7187;font-weight:600;}
+.app-shell .prospects-v2 .prospects-layout.with-detail{grid-template-columns:minmax(0,var(--prospect-list-percent,66%)) 8px minmax(0,1fr);align-items:start;}
+.app-shell .prospects-v2 .prospect-detail-v2:not(.prospect-detail-desk){min-width:0;max-height:calc(100dvh - 150px);overflow:auto;position:sticky;top:0;}
+.app-shell .prospects-v2 .prospect-detail-v2:not(.prospect-detail-desk) .detail-panel-heading{padding:14px;align-items:flex-start;}
+.app-shell .prospects-v2 .prospect-detail-v2:not(.prospect-detail-desk) h2{font-size:20px;}.app-shell .prospects-v2 .prospect-detail-v2:not(.prospect-detail-desk) .eyebrow{display:none;}
+.app-shell .prospects-v2 .prospect-compact-scroll{padding:12px;display:grid;gap:14px;}
+.prospection-quick-next,.prospection-quick-contact,.prospection-quick-activity,.prospection-quick-more{padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft);}
+.prospection-quick-next{border-color:var(--accent);}.prospection-quick-next>span{display:flex;align-items:center;gap:8px;color:var(--accent);font-weight:600;}.prospection-quick-next time{margin-left:auto;font-size:14px;}
+.prospection-quick-next h3{font-size:20px;line-height:1.3;margin:14px 0;}.prospection-quick-next>button{width:100%;}
+.prospection-quick-contact h3,.prospection-quick-activity h3{font-size:16px;color:var(--accent);margin:0 0 12px;}
+.prospection-quick-contact p,.prospection-quick-activity p{margin:8px 0;line-height:1.5;}.prospection-quick-more summary{cursor:pointer;color:var(--muted);}.prospection-quick-more[open]>summary{margin-bottom:12px;}
+.app-shell .prospects-v2 .kanban-board{grid-template-columns:repeat(6,minmax(215px,1fr));gap:12px;overflow-x:auto;}
+.app-shell .prospects-v2 .kanban-column>header{display:flex;align-items:flex-start;gap:8px;min-height:76px;}
+.app-shell .prospects-v2 .kanban-column>header>div{flex:1;min-width:0;}.app-shell .prospects-v2 .kanban-column>header strong{white-space:normal;overflow-wrap:anywhere;font-size:16px;}
+.app-shell .prospects-v2 .kanban-column>header>span{flex:none;position:static;min-width:24px;}
+.app-shell .prospects-v2 .prospect-card{border-radius:10px;}.app-shell .prospects-v2 .quick-followups{flex-wrap:wrap;}
+.app-shell .prospects-v2 .pipeline-conversion-history{min-height:0;padding-bottom:10px;}
+.app-shell .prospects-v2 .history-prospect-row{padding:14px 16px;min-height:64px;gap:12px;}
+@media(max-width:1000px){.prospection-pilot-counts{grid-template-columns:repeat(2,minmax(0,1fr));}.app-shell .prospects-v2 .prospects-layout.with-detail{grid-template-columns:minmax(0,1fr);}.app-shell .prospects-v2 .prospect-detail-v2:not(.prospect-detail-desk){position:static;max-height:none;}}
+
+.app-shell .content-area:has(>.prospects-v2)>.page-heading .database-chip{display:none;}
+.app-shell .content-area:has(>.prospects-v2)>.page-heading h1{font-size:30px!important;}
+.app-shell .content-area:has(>.prospects-v2)>.page-heading{margin-bottom:4px;}
+.prospection-pilot-heading{min-height:42px;}
+
+.app-shell .prospects-v2 .prospect-directory-filters{flex-wrap:nowrap;}
+.app-shell .prospects-v2 .prospect-directory-filters select{flex:0 1 150px;min-width:100px;}
+.app-shell .prospects-v2 .prospect-directory-filters input{flex:1 1 240px;min-width:180px;}
+.app-shell .prospects-v2 .prospect-directory-filters>.aw-ui-button-wrap{flex:0 0 auto;}
+.app-shell .prospects-v2>.prospect-view-switch{border:0;border-bottom:1px solid var(--border);border-radius:0;width:100%;}
+.app-shell .prospects-v2>.prospect-view-switch button{border-radius:0!important;}
+.app-shell .prospects-v2 .prospect-directory-table th button{padding:4px;text-align:left;overflow-wrap:normal;word-break:normal;}
+.app-shell .prospects-v2 .prospection-pilot-counts>button{padding:12px 16px;gap:6px;}
+.app-shell .prospects-v2 .prospect-detail-v2:not(.prospect-detail-desk) .prospect-header-meta .status-pill{background:var(--surface-soft);color:var(--text);border:1px solid var(--border);}
+@media(max-width:1000px){.app-shell .prospects-v2 .prospect-directory-filters{flex-wrap:wrap;}}
+
+/* Grid gives the controls explicit tracks; legacy flex rules cannot shrink them to icons. */
+.app-shell .prospects-v2[data-prospect-view=directory] .prospect-directory-filters{display:grid;grid-template-columns:minmax(240px,1fr) repeat(3,minmax(110px,160px)) auto 42px;gap:8px;min-width:0;}
+.app-shell .prospects-v2[data-prospect-view=directory] .prospect-directory-filters>:is(input,select,button){width:100%;min-width:0;max-width:100%;}
+.app-shell .prospects-v2[data-prospect-view=directory] .prospect-directory-filters>button{white-space:nowrap;}
+.app-shell .prospects-v2 .prospects-layout{width:100%;min-width:0;}
+.app-shell .prospects-v2 .aw-data-table-scroll{min-width:0;max-width:100%;overflow:auto;}
+.app-shell .prospects-v2 .prospection-card-preview{display:grid;gap:8px;padding:0 12px 12px;color:var(--muted);font-size:14px;}
+.app-shell .prospects-v2 .prospection-card-preview time{color:var(--muted);}
+.app-shell .prospects-v2 .prospection-card-preview time.is-overdue{color:#ff7187;font-weight:600;}
+@media(max-width:1100px){.app-shell .prospects-v2[data-prospect-view=directory] .prospect-directory-filters{grid-template-columns:repeat(2,minmax(0,1fr));}}
