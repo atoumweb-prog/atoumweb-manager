@@ -22,3 +22,16 @@
 @media(hover:none){.aw-rail-row .aw-rail-pin{opacity:1;}}
 
 .aw-manager-shell .aw-navigation-rail:not(.is-collapsed){width:clamp(220px,18vw,270px);}
+
+/* Match the approved navigation proportions, without changing routes or groups. */
+.aw-manager-shell .aw-navigation-rail:not(.is-collapsed){width:250px;padding:14px 12px;}
+.aw-manager-shell .aw-rail-brand{min-height:52px;margin-bottom:10px;}
+.aw-manager-shell .aw-rail-brand .aw-brand-logotype{max-width:212px;}
+.aw-manager-shell .aw-rail-toggle{min-height:30px;padding:4px 8px;font-size:14px;align-self:flex-end;}
+.aw-manager-shell .aw-rail-scroll{padding:0;}
+.aw-manager-shell .aw-rail-group{margin-top:14px;}
+.aw-manager-shell .aw-rail-group-heading{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);min-height:30px;padding:4px 10px;}
+.aw-manager-shell .aw-rail-destination{min-height:39px;padding:7px 10px;font-size:15px;}
+.aw-manager-shell .aw-rail-destination svg{width:20px;height:20px;}
+.aw-manager-shell .aw-rail-row button[aria-current=page]{background:linear-gradient(115deg,color-mix(in srgb,var(--accent) 22%,var(--sidebar)),var(--sidebar));box-shadow:inset 0 0 8px color-mix(in srgb,var(--accent) 20%,transparent);}
+.aw-manager-shell .aw-rail-row button[aria-current=page] svg{color:var(--accent);}

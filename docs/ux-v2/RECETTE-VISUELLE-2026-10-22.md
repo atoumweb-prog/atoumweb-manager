@@ -39,3 +39,22 @@ Après commit : typecheck, suite complète Vitest une fois et banc combiné au m
 ## Suite proposée
 
 Avis visuel sur ce premier incrément, puis corrections ciblées. Reprise des autres pages uniquement avec les comparatifs avant/après fournis et les arbitrages nécessaires. Aucune généralisation automatique aux fiches CRM. Une prochaine livraison de recette devra être construite séparément après validation ; le ZIP déjà remis ne se met pas à jour automatiquement.
+
+## Reprise fidèle à la référence — passe standard uniquement
+
+La première simplification ne reproduisait pas suffisamment la composition fournie. Nouvelle consigne prioritaire : un seul rendu Noir / Confort / 1920×1080 / 100%, contrôles ciblés seulement. La précédente matrice reste historique ; elle ne valide pas ce nouveau rendu.
+
+| Écart démontré | Correction | Fonction conservée |
+|---|---|---|
+| Aujourd’hui seul en pleine largeur | Aujourd’hui et À surveiller côte à côte dans la disposition standard | Sources indépendantes, erreurs, vraies cibles et alertes critiques |
+| Cartes monochromes, emboîtées | Quatre compteurs colorés, icônes circulaires, espacement réduit | Compteurs métier et navigation existants |
+| Pipeline surdimensionné / compte avant libellé | Sept cases compactes, libellés puis compteurs | Véritables étapes 6+1 ; aucun libellé métier inventé |
+| Projets récents absents du premier plan | Trois projets de la source déjà chargée, tri par dernière modification | Accès rapides conservés en détails ; identifiants réels |
+| Personnalisation entre les blocs | Commande près du titre, réglages dépliables | Préférences de masquage, ordre et repli conservées |
+| Rail trop large et groupes espacés | Largeur 250px, liens compacts, sélection or | 17 destinations, favoris et cinq groupes repliables |
+| Date enfouie dans les options | Même horloge montée dans la ligne principale | Chrono métier unique et dialogues inchangés |
+| Noir gris éloigné de l’image | Marine, bordures bleues et accents jaunes sur le shell | Autres thèmes non redessinés pendant cette passe |
+
+La disposition personnelle non standard garde son ordre. La disposition standard est présentée dans l’ordre de la référence sans réécrire la préférence persistée. Le logo original reste inchangé : pas de redessin ou recoloration de ses pixels. Aucune cloche avec chiffre fictif ni facture/montant inventé n’est ajouté pour imiter les données de l’image. Aucun moteur, IPC, prix, contrat, migration ou fiche CRM modifié.
+
+Protocole réduit : typecheck et `node scripts/check-shell-home-simplification.cjs --standard` : une seule fenêtre/thème/densité/zoom, repli des six blocs, montage du chrono et des contenus, accès aux réglages, géométrie standard, absence d’écriture métier, intégrité/FK/registre 71. Aucune suite Vitest complète ni matrice multiconfiguration relancée. Capture et rapport SHA dans `outputs/shell-reference-standard/`. Recette visuelle utilisateur attendue, portable et main inchangés.

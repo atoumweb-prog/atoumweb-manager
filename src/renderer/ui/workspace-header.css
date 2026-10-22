@@ -54,3 +54,15 @@
  .app-shell .aw-workspace-header:not(.is-compact) .aw-header-primary:has(.aw-header-search:not(.is-open)) #header-search-trigger{display:none;}
  .app-shell .aw-header-timer{flex:0 1 380px;}
 }
+
+/* Standard reference: search, date and the existing unique timer in one row. */
+.app-shell .aw-header-date{flex:none;}
+.app-shell .aw-header-date .global-clock{background:transparent;border:0;box-shadow:none;padding:0 8px;min-width:0;gap:8px;}
+.app-shell .aw-header-date .global-clock-icon{background:transparent;color:var(--accent);width:24px;height:24px;}
+.app-shell .aw-header-date .global-clock-copy strong,.app-shell .aw-header-date .global-clock>b{display:none;}
+.app-shell .aw-header-date .global-clock-copy small{font-size:14px;color:var(--text);white-space:nowrap;max-width:none;}
+.app-shell .aw-header-search .global-search{height:44px;border-radius:9px;background:var(--surface-soft);}
+.app-shell .aw-header-search .global-search>svg{color:var(--accent);}
+.app-shell .aw-header-primary{gap:12px;}
+.app-shell .aw-header-timer{flex:0 1 300px;}
+@container workspace-header (max-width:1100px){.app-shell .aw-header-date{display:none;}}

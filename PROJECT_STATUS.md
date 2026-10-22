@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 22/10/2026 — Correction de la composition Accueil selon référence
+
+Première simplification jugée insuffisamment fidèle : reprise de la composition Today/Watch, cartes colorées, pipeline compact, projets récents et rail/en-tête. Nouveau protocole demandé : Noir, Confort,1920×1080,100% uniquement ; typecheck et recette ciblée, aucune nouvelle suite complète. Sources métier/services/IPC/migrations/CRM inchangés ; préférences personnelles conservées. [Audit des écarts et protocole](docs/ux-v2/RECETTE-VISUELLE-2026-10-22.md). Validation visuelle attendue ; aucune publication, fusion ou installation.
+
 ## 22/10/2026 — Reprise visuelle ciblée : Accueil et shell
 
 Utilisateur autorise les corrections visibles de l'Accueil, du rail et de l'en-tête, avec adaptation aux fenêtres et zooms de PC. Branche locale `codex/ux-v2-shell-home-simplification` depuis main921f0066. Doublons/annotations retirés, détails à la demande, repli des six blocs et cinq groupes, préférences visuelles existantes étendues sans données métier. [Registre, décisions et protocole](docs/ux-v2/RECETTE-VISUELLE-2026-10-22.md). Validation visuelle humaine encore attendue ; preuves techniques finales rattachées au SHA propre dans le bilan. Aucune migration/service/prix/contrat ou fiche CRM modifié ; aucune publication/CI hébergée/installation/fusion. EC04 reste non exposé. La recette portable921f0066 déjà livrée reste inchangée.
