@@ -16,9 +16,11 @@ Mise à jour : 23/10/2026. Les demandes récentes de l’utilisateur priment. Su
 
 ## Dernier état
 
+- Passation ChatGPT publiée à la racine : PASSATION-CHATGPT.md (organisation métier, carte des sources, contrôles, livraison et limites). README fournit le lien d’entrée ; la recette utilisateur reste la prochaine étape.
+
 - Nouvelle demande autorisée : dépôt privé dédié https://github.com/atoumweb-prog/atoumweb-manager-prospection créé pour cette version ; commit/push de la branche codex/crm-saisie-coherente autorisés vers ce dépôt uniquement. Remote prospection ; origin historique inchangé. Actions désactivé avant push ; aucun exécutable ni donnée utilisateur publié.
 
-- Dépôt : C:/DEV/01_PROJETS/AtoumWeb/atoumweb-manager-ec04-validation ; branche codex/crm-saisie-coherente, HEAD b0800783, modifications locales de toutes les passes conservées. Ne pas réinitialiser.
+- Dépôt : C:/DEV/01_PROJETS/AtoumWeb/atoumweb-manager-ec04-validation ; branche codex/crm-saisie-coherente, commit applicatif de référence 3c118101, toutes les passes consolidées et publiées dans le nouveau dépôt. Ne pas réinitialiser un travail local ultérieur.
 - Dernière autorisation : appliquer les corrections relevées et corriger l’exécutable, texte noir du bouton Entreprise inclus. Passe réalisée.
 - Sept onglets : Entreprise / Contacts / Préparer l’échange / Besoins / Actions et échanges / Devis / Historique. Préparation contient Analyse et Objectif/questions. Besoins réparti en quatre sous-onglets, formulaires compacts ; intentions sans prix ni offre forcée.
 - Entreprise : URL canonique éditable et présence du site sauvegardées atomiquement avec CAS ; coordonnées générales. Contacts : cartes avec téléphone/email, choix du principal/décisionnaire, fonction contextuelle. Éditeur réel du devis intégré avec contexte et contrôle avant devis ; même source et éditeur que le registre global.

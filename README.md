@@ -1,5 +1,9 @@
 # AtoumWeb Manager
 
+## Version Prospection — reprise au 23/10/2026
+
+Ce dépôt privé reprend la version Prospection et devis intégré sur `codex/crm-saisie-coherente`, schéma SQLite 74. **Pour continuer avec ChatGPT, commencer par [PASSATION-CHATGPT.md](PASSATION-CHATGPT.md)**, puis suivre ses lectures. Les sections datées ci-dessous sont historiques ; leurs branches, schémas et lanceurs ne définissent pas cette version.
+
 ## UX/UI V2 — convergence du 15/10/2026
 
 Le présent arbre réunit le socle UX/UI V2 et les lots04–10 ; le suivi de publication/fusion/CI est consigné dans [PROJECT_STATUS](PROJECT_STATUS.md) et le [bilan de convergence](docs/ux-v2/CONVERGENCE-04-10-2026-10-15.md). Registre SQLite exact1–70, sauvegardes/restaurations et protections de saisie conservées. Les entrées datées ci-dessous décrivent l’historique et leurs anciens lanceurs ne doivent pas servir à choisir la version V2. Un workspace et un profil V2 distincts sont préparés localement pour réunir contrats actuels et temps historiques, sans modifier les bases/profils existants. La recette humaine globale et les validations externes restent distinctes des tests techniques.

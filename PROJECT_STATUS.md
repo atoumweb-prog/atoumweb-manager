@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 23/10/2026 — Passation ChatGPT dans le dépôt dédié
+
+Demande utilisateur de préparer la reprise avec ChatGPT. Fichier racine [PASSATION-CHATGPT.md](PASSATION-CHATGPT.md) : état et branche, logique UX acceptée, invariants métier, carte des sources, validations déjà faites, commandes ciblées, chemins locaux et limites d’accès distant, message de reprise prêt à coller. Lien visible en tête du README ; mémo actualisé (référence applicative 3c118101). Publication documentaire uniquement sur le dépôt privé Prospection ; aucun changement applicatif ni nouvelle campagne de tests/package/CI. Prochaine étape : retour de recette utilisateur.
+
 ## 23/10/2026 — Dépôt GitHub dédié à la version Prospection
 
 Demande explicite utilisateur de créer un dépôt GitHub pour travailler sur cette version. Dépôt privé : https://github.com/atoumweb-prog/atoumweb-manager-prospection ; branche de travail codex/crm-saisie-coherente, historique conservé. Sources de la recette 166160dc et rapports inclus ; exécutables, bases, profils et captures locales exclus. Remote local prospection ; origin historique inchangé. GitHub Actions désactivé avant le premier push, aucune CI ni publication d’exécutable. Cette demande autorise le commit et le push de la version courante vers ce nouveau dépôt, sans fusion dans l’ancien dépôt. Prochaine action : poursuivre la recette et les corrections sur cette base dédiée.
