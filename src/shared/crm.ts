@@ -79,6 +79,7 @@ export interface ProspectResearchOpportunity {
 }
 
 export interface ProspectResearchSnapshotInput {
+  activityArea?: string | null;
   checkedAt?: string | null;
   source?: string | null;
   sourceUrl?: string | null;
@@ -122,6 +123,7 @@ export interface ProspectResearchSnapshotInput {
   };
   opportunities?: ProspectResearchOpportunity[];
   conversation?: {
+    objective?: string | null;
     strengths?: string | null;
     issues?: string | null;
     talkingPoints?: string | null;

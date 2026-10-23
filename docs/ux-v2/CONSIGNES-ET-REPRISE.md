@@ -16,20 +16,13 @@ Mise à jour : 23/10/2026. Les demandes récentes de l’utilisateur priment. Su
 
 ## Dernier état
 
-- Passation ChatGPT publiée à la racine : PASSATION-CHATGPT.md (organisation métier, carte des sources, contrôles, livraison et limites). README fournit le lien d’entrée ; la recette utilisateur reste la prochaine étape.
-
-- Nouvelle demande autorisée : dépôt privé dédié https://github.com/atoumweb-prog/atoumweb-manager-prospection créé pour cette version ; commit/push de la branche codex/crm-saisie-coherente autorisés vers ce dépôt uniquement. Remote prospection ; origin historique inchangé. Actions désactivé avant push ; aucun exécutable ni donnée utilisateur publié.
-
-- Dépôt : C:/DEV/01_PROJETS/AtoumWeb/atoumweb-manager-ec04-validation ; branche codex/crm-saisie-coherente, commit applicatif de référence 3c118101, toutes les passes consolidées et publiées dans le nouveau dépôt. Ne pas réinitialiser un travail local ultérieur.
-- Dernière autorisation : appliquer les corrections relevées et corriger l’exécutable, texte noir du bouton Entreprise inclus. Passe réalisée.
-- Sept onglets : Entreprise / Contacts / Préparer l’échange / Besoins / Actions et échanges / Devis / Historique. Préparation contient Analyse et Objectif/questions. Besoins réparti en quatre sous-onglets, formulaires compacts ; intentions sans prix ni offre forcée.
-- Entreprise : URL canonique éditable et présence du site sauvegardées atomiquement avec CAS ; coordonnées générales. Contacts : cartes avec téléphone/email, choix du principal/décisionnaire, fonction contextuelle. Éditeur réel du devis intégré avec contexte et contrôle avant devis ; même source et éditeur que le registre global.
-- Consultation distincte de l’étape, avertissement préalable et liens vers champs manquants, saisies protégées. Création du brouillon atomique/rejouable et vide de lignes, après contrôle du dossier ; aucun chiffrage automatique des intentions.
-- Modèle : SQLite 74 inchangé ; sources uniques, relations multi-entreprises, CAS, demande initiale / besoin confirmé distincts, continuité historique conservés.
-- Validation : typecheck/package ; 94 tests ciblés distincts + 5 plan avant devis ; 29 assertions natives TEMP sans erreur renderer ; 16 captures. Véritable package : 31 assertions/12 visites/trois thèmes, intégrité/FK/registre conformes. Pas de répétition sans changement pertinent. Banc smoke : attente RAF bornée pour fenêtres en arrière-plan.
-- Livraison : C:/DEV/03_LIVRAISONS/AtoumWeb/Manager-Prospection-20261023-166160dc/LANCER-LE-MANAGER.cmd. Empreintes et syntaxe du lanceur vérifiées. app.asar 166160dc9a16deba27999b392a2fe5fc78fe532e8043b1369703e271f2de6984 ; exe 33952e3fb435581bdaa08ad24e51c22cf80b17b34a95f27558a28952449f1802.
-- Nouveau profil et Workspace TEST indépendants. Ancienne recette Manager-Prospection-20261023-16cfd49e avec saisies Le Bon Pain intacte, autres anciens portables intacts. Aucun transfert/migration automatique des données utilisateur.
-- Galerie : C:/Users/AtoumWeb/Downloads/Prospection-parcours-20261023-166160dc/index.html ; aussi outputs/prospection-parcours-20261023 et Captures de la livraison.
-- Bilan : PROSPECTION-PARCOURS-RECETTE-2026-10-23.md. Bilan précédent : PROSPECTION-ONGLETS-RECETTE-2026-10-23.md ; socle : PROSPECTION-CRM-CINQ-LOTS-2026-10-23.md.
-- Limites : pas d’enrichissement fictif de l’historique ; catalogue/chiffrage dans Devis, intentions distinctes. Règles existantes de validation/envoi/acceptation conservées. Aucun main/push/CI/installateur/Bridge.
-- Prochaine action : recette utilisateur du portable ; aucun autre chantier implicitement autorisé.
+- Chantier autorisé : PR #1 https://github.com/atoumweb-prog/atoumweb-manager-prospection/pull/1, uniquement Nouvelle entreprise de l’annuaire. Branche chatgpt/creation-entreprise-compacte-20261023, source initiale 0a37d3d90cc5623e1e21970299330d879f93dad4. Cible codex/crm-saisie-coherente inchangée ; pas de fusion. Commit/push permis vers la branche source Prospection uniquement.
+- Local : C:/DEV/01_PROJETS/AtoumWeb/atoumweb-manager-ec04-validation ; remote prospection = dépôt dédié, origin = ancien Manager, ne pas y pousser. Actions désactivé.
+- PR auditée : TypeScript/JSX initiaux corrects ; Analyse partielle, objectif absent, opportunités confondues avec préparation, aperçu logo perdu. Finalisé : quatre cartes 2×2, édition structurée et compteurs, numérique/opportunités/sources persistés, zone et objectif facultatifs dans le snapshot JSON existant ; aucun schéma nouveau (74).
+- Préparation compacte en deux colonnes avec points multiligne, objectifs/actions proposés et texte libre ; logo miniature dans la barre, retrait et annulation préservés. Identités canoniques non dupliquées, observations et opportunités séparées des besoins confirmés ; action prévue open, pas effectuée.
+- Exception partagée minimale : lecture conditionnelle zone/objectif dans ProspectResearchPanel pour les retrouver après création ; aucune autre fiche/règle métier remaniée. Nouvelle propriété activityArea et conversation.objective conservées par le snapshot existant ; pas d’éditeur ajouté hors création.
+- Succès de création : brouillon réinitialisé et ouverture du dossier sauvegardé sans repasser par la garde globale en cours ; protection d’abandon avant sauvegarde vérifiée.
+- Validation : typecheck, 21 tests ciblés distincts ; recette native TEMP 42 assertions sans erreur renderer, 13 captures ; réouverture réelle de toutes les rubriques, logo, données et protections. Référence Noir/Confort/100 %/1920×1080 CSS ; autres thèmes ciblés.
+- Bilan : CREATION-ENTREPRISE-PR1-RECETTE-2026-10-23.md. Galerie outputs/creation-company-20261023 ; portable distinct en préparation.
+- Précédente livraison préservée : C:/DEV/03_LIVRAISONS/AtoumWeb/Manager-Prospection-20261023-166160dc/LANCER-LE-MANAGER.cmd. Ancienne 16cfd49e avec saisies Le Bon Pain intacte. Aucun transfert automatique de données.
+- Prochaine action : construire et contrôler le nouveau portable, publier les commits sur la seule branche de PR puis recette utilisateur. Pas de fusion/CI/installateur/Bridge.

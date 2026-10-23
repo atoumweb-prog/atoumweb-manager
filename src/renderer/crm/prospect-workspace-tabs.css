@@ -129,18 +129,32 @@ html[data-theme] .prospect-create-dialog .prospect-desk-tabs button[aria-selecte
 
 /* Creation dialog only: compact research and preparation; no effect on prospect workspace. */
 .prospect-create-dialog .prospect-create-tabs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 12px;}
-.prospect-create-dialog .prospect-create-logo-tab,.prospect-create-dialog .prospect-create-logo-clear{border:1px solid var(--border-color,#355269);background:transparent;color:var(--text-primary,#eef4fb);border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer;}
+.prospect-create-dialog .prospect-create-logo-tab,.prospect-create-dialog .prospect-create-logo-clear{border:1px solid var(--border);background:transparent;color:var(--text);border-radius:8px;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer;}
 .prospect-create-dialog .prospect-create-analysis{display:grid;gap:12px;}
 .prospect-create-dialog .prospect-create-analysis-head,.prospect-create-dialog .prospect-create-analysis-detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .prospect-create-dialog .prospect-create-analysis-head h3,.prospect-create-dialog .prospect-create-analysis-detail-head h4{margin:0;}
 .prospect-create-dialog .prospect-create-analysis-head p{margin:4px 0 0;}
 .prospect-create-dialog .prospect-create-analysis-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
-.prospect-create-dialog .prospect-create-analysis-cards button{display:flex;flex-direction:column;text-align:left;gap:5px;padding:12px;background:var(--surface-secondary,#102b42);color:var(--text-primary,#eef4fb);border:1px solid var(--border-color,#355269);border-radius:10px;cursor:pointer;}
-.prospect-create-dialog .prospect-create-analysis-cards button.selected{border-color:#ffda29;background:color-mix(in srgb,#ffda29 16%,var(--surface-secondary,#102b42));}
-.prospect-create-dialog .prospect-create-analysis-cards small{color:var(--text-secondary,#a9bed1);}
-.prospect-create-dialog .prospect-create-analysis-detail{border-top:1px solid var(--border-color,#355269);padding-top:12px;display:grid;gap:12px;}
-.prospect-create-dialog .prospect-create-readonly{display:block;white-space:pre-wrap;padding:9px 11px;border:1px solid var(--border-color,#355269);border-radius:8px;font-weight:400;min-height:22px;color:var(--text-primary,#eef4fb);}
+.prospect-create-dialog .prospect-create-analysis-cards button{display:flex;flex-direction:column;text-align:left;gap:5px;padding:12px;background:var(--surface-soft,var(--surface));color:var(--text);border:1px solid var(--border);border-radius:10px;cursor:pointer;}
+.prospect-create-dialog .prospect-create-analysis-cards button.selected{border-color:#ffda29;background:color-mix(in srgb,#ffda29 16%,var(--surface-soft,var(--surface)));}
+.prospect-create-dialog .prospect-create-analysis-cards small{color:var(--text-muted);}
+.prospect-create-dialog .prospect-create-analysis-detail{border-top:1px solid var(--border);padding-top:12px;display:grid;gap:12px;}
+.prospect-create-dialog .prospect-create-readonly{display:block;white-space:pre-wrap;padding:9px 11px;border:1px solid var(--border);border-radius:8px;font-weight:400;min-height:22px;color:var(--text);}
 .prospect-create-dialog .prospect-create-analysis-guidance{display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
 .prospect-create-dialog .prospect-create-analysis-guidance p{margin:0;}
 .prospect-create-dialog .prospect-create-preparation .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;}
 @media(max-width:650px){.prospect-create-dialog .prospect-create-analysis-cards,.prospect-create-dialog .prospect-create-preparation .form-grid{grid-template-columns:1fr;}}
+
+/* Same dialog width and height limits as before; density is scoped to creation. */
+.app-shell .prospects-v2 .prospect-create-dialog .panel-title{margin-bottom:10px;}
+.app-shell .prospects-v2 .prospect-create-dialog .panel-title p{margin:6px 0 0;}
+.app-shell .prospects-v2 .prospect-create-dialog .form-grid{gap:10px 12px;}
+.prospect-create-dialog .creation-analysis-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;}
+.prospect-create-dialog .creation-wide{grid-column:1/-1;}
+.prospect-create-dialog .creation-site-reference{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
+.prospect-create-dialog .prospect-create-logo-tab{display:flex;align-items:center;gap:6px;}
+.prospect-create-dialog .prospect-create-logo-tab img{width:24px;height:24px;object-fit:contain;}
+.app-shell .prospects-v2 .prospect-create-dialog textarea{min-height:66px;height:66px;resize:vertical;}
+.app-shell .prospects-v2 .prospect-create-dialog .prospect-create-preparation textarea{min-height:94px;height:94px;}
+.prospect-create-dialog .prospect-create-analysis p{margin:0;}
+@media(max-width:650px){.prospect-create-dialog .creation-analysis-fields{grid-template-columns:1fr;}}

@@ -1,5 +1,15 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 23/10/2026 — PR #1 : création Entreprise compacte, reprise locale
+
+Autorisation explicite : reprendre la branche chatgpt/creation-entreprise-compacte-20261023 de la PR #1 (HEAD source 0a37d3d90cc5623e1e21970299330d879f93dad4), sans fusion, terminer uniquement Nouvelle entreprise et livrer un portable TEST distinct ; commit/push sur cette seule branche Prospection. Arbre initial propre, remotes vérifiés, ancien origin inchangé.
+
+Quatre cartes et disposition de la PR conservées ; rubriques Présence numérique, Opportunités, Sources complétées avec champs structurés réellement sauvegardés. Zone d’activité et objectif du contact ajoutés comme propriétés facultatives du snapshot JSON existant, aucune table/migration. Objectif, angle et points dans conversation ; opportunités séparées des besoins confirmés. Logo avec aperçu et conservation lors de l’annulation du sélecteur. CSS limité à la fenêtre ; dimensions inchangées. Garde de création validée et référence de brouillon réinitialisée après succès, ouverture directe du dossier enregistré sans fausse alerte d’enregistrement en cours.
+
+Exception minimale de lecture dans ProspectResearchPanel : afficher zone et objectif uniquement s’ils existent, afin de retrouver ces nouvelles données après création ; aucun éditeur, autre fiche, Client, parcours ou règle métier remanié. Identité réutilisée non modifiée silencieusement ; champs canoniques d’activité/présentation en lecture seule dans Analyse pour une entreprise existante. Schéma 74 intact.
+
+Typecheck, 21 tests ciblés distincts (sources CRM et nouveau mapper/sauvegarde), recette native TEMP : 42 assertions sans erreur renderer, 13 captures, réouverture complète, logo, saisie non enregistrée, action ouverte non effectuée, trois thèmes ciblés. Bilan : docs/ux-v2/CREATION-ENTREPRISE-PR1-RECETTE-2026-10-23.md. Construction et vérification du nouveau portable en cours ; aucune fusion/CI/Bridge.
+
 ## 23/10/2026 — Passation ChatGPT dans le dépôt dédié
 
 Demande utilisateur de préparer la reprise avec ChatGPT. Fichier racine [PASSATION-CHATGPT.md](PASSATION-CHATGPT.md) : état et branche, logique UX acceptée, invariants métier, carte des sources, validations déjà faites, commandes ciblées, chemins locaux et limites d’accès distant, message de reprise prêt à coller. Lien visible en tête du README ; mémo actualisé (référence applicative 3c118101). Publication documentaire uniquement sur le dépôt privé Prospection ; aucun changement applicatif ni nouvelle campagne de tests/package/CI. Prochaine étape : retour de recette utilisateur.

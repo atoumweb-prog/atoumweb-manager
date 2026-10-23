@@ -2,6 +2,10 @@
 
 Mis à jour le 23 octobre 2026. Ce fichier est le point d’entrée pour reprendre cette version sans relire toute la conversation. Les nouvelles demandes de Carlos priment ; les anciens comptes rendus datés ne constituent pas une liste de travaux à recommencer.
 
+## Reprise locale PR #1 — état complémentaire
+
+La demande suivante autorise uniquement la fenêtre Nouvelle entreprise sur `chatgpt/creation-entreprise-compacte-20261023`, PR #1, sans fusion vers la branche cible. La base décrite plus bas reste le socle. Lire le dernier état dans `docs/ux-v2/CONSIGNES-ET-REPRISE.md` et le bilan `docs/ux-v2/CREATION-ENTREPRISE-PR1-RECETTE-2026-10-23.md`. Quatre cartes Analyse et Préparation compacte finalisées ; zone et objectif ajoutés au snapshot existant, schéma 74. Aucun autre chantier autorisé par cette reprise.
+
 ## 1. Dépôt et état à reprendre
 
 - Dépôt privé de travail : https://github.com/atoumweb-prog/atoumweb-manager-prospection

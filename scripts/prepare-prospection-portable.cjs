@@ -49,7 +49,7 @@ fs.writeFileSync(path.join(profile,'workspace.json'),JSON.stringify({workspaceRo
 fs.writeFileSync(path.join(root,'preparer-profil.cjs'),helper);
 const previous='C:/DEV/03_LIVRAISONS/AtoumWeb/Manager-Pilote-20261022-42b12a93';
 for(const file of ['Demarrer.ps1','LANCER-LE-MANAGER.cmd'])fs.copyFileSync(path.join(previous,file),path.join(root,file));
-fs.writeFileSync(path.join(root,'VERSION.json'),JSON.stringify({baseSha:cp.execFileSync('git',['rev-parse','HEAD'],{cwd:repo,encoding:'utf8'}).trim(),branch:'codex/crm-saisie-coherente',sourceStatus:'working tree tested',exeSHA256,asarSHA256,onlySynthetic:true,installer:false,migrations:74},null,2));
+fs.writeFileSync(path.join(root,'VERSION.json'),JSON.stringify({baseSha:cp.execFileSync('git',['rev-parse','HEAD'],{cwd:repo,encoding:'utf8'}).trim(),branch:cp.execFileSync('git',['branch','--show-current'],{cwd:repo,encoding:'utf8'}).trim(),sourceStatus:'working tree tested',exeSHA256,asarSHA256,onlySynthetic:true,installer:false,migrations:74},null,2));
 fs.writeFileSync(path.join(root,'LIRE-MOI.txt'),'AtoumWeb Manager — Prospection, fiche à onglets — 23/10/2026\r\n\r\nLancer LANCER-LE-MANAGER.cmd. Garder Application, Profil et Workspace ensemble.\r\nDonnées de recette fictives TEST, indépendantes des anciennes versions. Aucun installateur.\r\nNe pas ouvrir ce Workspace avec un ancien exécutable (schéma 74).\r\nLa version finale reste à valider ; aucune fusion main.\r\n');
 const prepared=cp.spawnSync(path.join(root,'Application','atoumweb-manager.exe'),[path.join(root,'preparer-profil.cjs')],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},windowsHide:true,encoding:'utf8'});
 if(prepared.status!==0)throw Error(prepared.stderr||'Préparation profil échouée');
