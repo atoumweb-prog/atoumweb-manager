@@ -192,7 +192,7 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
     const detailText = waitReason === 'other' ? waitOther.trim() : label;
     if (!detailText) { setError('Précise le motif de mise en attente.'); return; }
     await run(async () => {
-      await window.atoumweb.crm.prospects.updateQualification(prospect.id, { waitingReasonCode: waitReason, waitingReasonText: detailText, waitingResumeAt: resumeDate || null });
+      await window.atoumweb.crm.prospects.patchIfUnchanged(prospect.id,{waitingReasonCode:prospect.waitingReasonCode??null,waitingReasonText:prospect.waitingReasonText??null,waitingResumeAt:prospect.waitingResumeAt??null}, { waitingReasonCode: waitReason, waitingReasonText: detailText, waitingResumeAt: resumeDate || null });
       await window.atoumweb.crm.prospects.changeStage(prospect.id, 'waiting');
       if (resumeDate) await window.atoumweb.crm.actions.create({ ownerType: 'prospect', ownerId: prospect.id, type: 'action', title: `Reprendre le suivi : ${detailText}`, dueAt: new Date(`${resumeDate}T09:00:00`).toISOString(), relatedType: 'quote', relatedId: quote?.id ?? null });
     }, 'Prospect mis en attente avec motif enregistré.');
@@ -222,7 +222,7 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
         ownerType: 'prospect', ownerId: prospect.id, type: 'action', title: `Refus du devis ${quote.number}`, relatedType: 'quote', relatedId: quote.id,
       });
       await window.atoumweb.crm.actions.complete(action.id, { outcome: `Devis refusé — ${reason}` });
-      await window.atoumweb.crm.prospects.updateQualification(prospect.id, { waitingReasonCode: 'other', waitingReasonText: `Devis refusé — ${reason}`, waitingResumeAt: null });
+      await window.atoumweb.crm.prospects.patchIfUnchanged(prospect.id,{waitingReasonCode:prospect.waitingReasonCode??null,waitingReasonText:prospect.waitingReasonText??null,waitingResumeAt:prospect.waitingResumeAt??null}, { waitingReasonCode: 'other', waitingReasonText: `Devis refusé — ${reason}`, waitingResumeAt: null });
       await window.atoumweb.crm.prospects.changeStage(prospect.id, 'waiting');
     }, 'Devis marqué refusé. Le prospect reste actif : tu peux le reprendre plus tard ou le classer « Perdu » séparément.');
     setRefuseOpen(false); setRefusalOther('');

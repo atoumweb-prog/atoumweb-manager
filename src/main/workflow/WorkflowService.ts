@@ -17,15 +17,15 @@ export class WorkflowService {
   private contactsForOrganization(organizationId: string | null): WorkflowIdentity['contacts'] {
     if (!organizationId) return [];
     return this.db.all<{id:string}>(
-      'SELECT id FROM contacts WHERE organization_id=? AND archived_at IS NULL ORDER BY last_name COLLATE NOCASE,first_name COLLATE NOCASE',
+      'SELECT c.id FROM contacts c JOIN organization_contact_links l ON l.contact_id=c.id WHERE l.organization_id=? AND l.archived_at IS NULL AND c.archived_at IS NULL ORDER BY c.last_name COLLATE NOCASE,c.first_name COLLATE NOCASE',
       [organizationId],
-    ).map((row) => this.crm.getContact(row.id));
+    ).map((row) => this.crm.getContactForOrganization(row.id,organizationId));
   }
   private identityContacts(organizationId: string | null, contactIds: Array<string | null>): WorkflowIdentity['contacts'] {
     const contacts = this.contactsForOrganization(organizationId);
     for (const contactId of contactIds) {
       if (!contactId || contacts.some((contact) => contact.id === contactId)) continue;
-      contacts.push(this.crm.getContact(contactId));
+      contacts.push(this.crm.getContactForOrganization(contactId,organizationId));
     }
     return contacts;
   }
@@ -64,8 +64,8 @@ export class WorkflowService {
       )!;
       return {
         organization: row.organization_id ? this.crm.getOrganization(row.organization_id) : null,
-        contact: row.contact_id ? this.crm.getContact(row.contact_id) : null,
-        decisionMaker: row.decision_maker_contact_id ? this.crm.getContact(row.decision_maker_contact_id) : null,
+        contact: row.contact_id ? this.crm.getContactForOrganization(row.contact_id,row.organization_id) : null,
+        decisionMaker: row.decision_maker_contact_id ? this.crm.getContactForOrganization(row.decision_maker_contact_id,row.organization_id) : null,
         contacts: this.identityContacts(row.organization_id, [row.contact_id, row.decision_maker_contact_id]),
       };
     }
@@ -74,7 +74,7 @@ export class WorkflowService {
     )!;
     return {
       organization: row.organization_id ? this.crm.getOrganization(row.organization_id) : null,
-      contact: row.contact_id ? this.crm.getContact(row.contact_id) : null,
+      contact: row.contact_id ? this.crm.getContactForOrganization(row.contact_id,row.organization_id) : null,
       decisionMaker: null,
       contacts: this.identityContacts(row.organization_id, [row.contact_id]),
     };

@@ -197,7 +197,7 @@ describe('EC03 — préparation / envoi / acceptation',()=>{
       expect(legacy.get("SELECT name FROM sqlite_master WHERE name='quote_contract_preparations'")).toBeUndefined();
       expect(legacy.all<{name:string}>("PRAGMA table_info(quotes)").some(c=>c.name==='contract_preparation_id')).toBe(false);
       expect(legacy.all('PRAGMA foreign_key_check')).toEqual([]);
-      migration.sql=sql;expect(applyPendingMigrations(legacy).map(m=>m.id)).toEqual([71]);
+      migration.sql=sql;expect(applyPendingMigrations(legacy).map(m=>m.id)).toEqual([71,72,73,74]);
     }finally{migration.sql=sql;legacy.close();}
   });
   it('refuse une acceptation dont le snapshot ne correspond plus à la transmission',()=>{
@@ -217,7 +217,7 @@ describe('EC03 — préparation / envoi / acceptation',()=>{
       legacy.exec('CREATE TABLE schema_migrations(id INTEGER PRIMARY KEY,name TEXT NOT NULL,applied_at TEXT NOT NULL) STRICT;');
       for(const migration of MIGRATIONS.filter(m=>m.id<=70)){legacy.exec(migration.sql);legacy.run('INSERT INTO schema_migrations VALUES(?,?,?)',[migration.id,migration.name,'2026-09-01']);}
       const history=legacy.all('SELECT * FROM schema_migrations'),oldQuotes=legacy.all('SELECT * FROM quotes');
-      expect(applyPendingMigrations(legacy).map(m=>m.id)).toEqual([71]);expect(legacy.all('SELECT * FROM schema_migrations WHERE id<=70')).toEqual(history);
+      expect(applyPendingMigrations(legacy).map(m=>m.id)).toEqual([71,72,73,74]);expect(legacy.all('SELECT * FROM schema_migrations WHERE id<=70')).toEqual(history);
       expect(legacy.all('SELECT * FROM quote_contract_transmissions')).toEqual([]);expect(legacy.all('SELECT * FROM quote_contract_preparations')).toEqual([]);
       expect(legacy.all('SELECT * FROM quotes')).toEqual(oldQuotes);expect(legacy.all('PRAGMA foreign_key_check')).toEqual([]);expect(legacy.get('PRAGMA integrity_check')).toEqual({integrity_check:'ok'});
       expect(applyPendingMigrations(legacy)).toEqual([]);

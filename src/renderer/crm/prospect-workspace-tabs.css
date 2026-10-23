@@ -1,0 +1,128 @@
+/* Shared CRM legibility: fixed labels remain distinct from editable values. */
+.crm-form label,.prospect-detail-v2 label,.contact-methods-panel label {font-size:14px;font-weight:600;line-height:1.5;color:var(--text-secondary,var(--text-muted,#a9bed1));}
+.crm-form input:not([type=checkbox]),.crm-form select,.crm-form textarea,.prospect-detail-v2 input:not([type=checkbox]),.prospect-detail-v2 select,.prospect-detail-v2 textarea,.contact-methods-panel input:not([type=checkbox]),.contact-methods-panel select,.prospect-modal input:not([type=checkbox]),.prospect-modal select {font-size:16px;font-weight:400;line-height:1.5;color:var(--text-primary,var(--text,#eef4fb));}
+.crm-form .primary-button,.prospect-detail-v2 .primary-button,.prospect-modal .primary-button {color:#14212a!important;font-size:16px;font-weight:700;}
+.prospect-detail-v2 input[type=checkbox],.contact-methods-panel input[type=checkbox],.prospect-modal input[type=checkbox] {appearance:auto!important;width:18px!important;height:18px!important;min-width:18px!important;min-height:18px!important;max-width:18px!important;padding:0!important;vertical-align:middle;flex:0 0 18px;accent-color:#ffda29;}
+.prospect-detail-v2 input[type=checkbox]+span {font-weight:400;}
+.prospect-workspace-header {position:relative;}
+.prospect-workspace-header .prospect-focus-summary {grid-template-columns:minmax(180px,.7fr) minmax(240px,1.4fr) minmax(240px,1fr);gap:20px;margin-top:12px;padding:12px;}
+.prospect-focus-summary>div {display:flex;flex-direction:column;align-items:flex-start;gap:6px;}
+.prospect-focus-summary span,.identity-summary-grid>div>span,.reference-summary-grid>div>span,.research-company-strip small {font-size:13px;font-weight:500;color:var(--text-secondary,var(--text-muted,#a9bed1));}
+.identity-summary-grid strong,.reference-summary-grid strong,.research-company-strip strong {font-size:17px;font-weight:600;color:var(--text-primary,var(--text,#eef4fb));}
+.crm-journey {display:flex;gap:8px;flex-wrap:wrap;grid-column:1/-1;}
+.crm-journey button {padding:8px 12px;border:1px solid var(--border-color,#355269);border-radius:8px;background:transparent;color:inherit;font-size:14px;}
+.crm-journey button.current {border-color:#ffda29;font-weight:700;box-shadow:inset 0 -3px #ffda29;}
+.crm-workspace-tabs {display:flex;flex-wrap:wrap;gap:4px;flex-shrink:0;}
+.crm-workspace-tabs button {font-size:15px!important;padding:10px 14px!important;}
+.crm-logo-button {background:transparent;border:0;padding:0;cursor:pointer;}
+.crm-stage-consultation {padding:10px;border-left:3px solid #ffda29;}
+.crm-contact-heading,.crm-timeline>header {display:flex;justify-content:space-between;align-items:center;gap:16px;margin:10px 0;}
+.crm-timeline ol {list-style:none;border-left:2px solid var(--border-color,#355269);padding-left:20px;margin-left:8px;}
+.crm-timeline li {display:flex;gap:16px;align-items:baseline;margin:14px 0;}
+.crm-timeline time {font-size:13px;opacity:.8;min-width:44px;}
+.crm-timeline details {margin:12px 0 24px 30px;}
+.prospect-create-v2 .form-grid>div[hidden] {display:none!important;}
+.crm-catalog-results {display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;max-height:45vh;overflow:auto;}
+.crm-catalog-results>article {padding:16px;border:1px solid var(--border-color,#355269);border-radius:10px;}
+.crm-catalog-results h4 {margin:0 0 8px;}
+@media(max-width:950px){.prospect-workspace-header .prospect-focus-summary{grid-template-columns:1fr 1fr;}.crm-journey-actions{grid-column:1/-1;}}
+
+.app-shell .prospects-v2 .prospect-workspace-header>.crm-journey{order:4;flex:1 0 100%;}
+.app-shell .prospects-v2 .prospect-workspace-header>.prospect-workspace-tools{order:2;}
+.app-shell .prospects-v2 .prospect-workspace-header>.prospect-focus-summary{grid-template-columns:minmax(180px,.8fr) minmax(240px,1.4fr) minmax(260px,1fr);}
+.app-shell .prospects-v2 .prospect-workspace-header .crm-journey-actions{flex-direction:row;flex-wrap:wrap;align-content:flex-start;}
+.prospect-workspace [hidden],.prospect-modal [hidden]{display:none!important;}
+.app-shell .prospects-v2 .prospect-workspace .identity-summary-grid>div>span,.app-shell .prospects-v2 .reference-summary-grid>div>span,.app-shell .prospects-v2 .research-company-strip small{font-size:13px!important;font-weight:500!important;color:var(--muted)!important;}
+.app-shell .prospects-v2 .prospect-workspace .identity-summary-grid>div>strong,.app-shell .prospects-v2 .reference-summary-grid>div>strong,.app-shell .prospects-v2 .research-company-strip strong{font-size:17px!important;font-weight:600!important;color:var(--text)!important;}
+.app-shell .prospects-v2 input:not([type=checkbox]),.app-shell .prospects-v2 select,.app-shell .prospects-v2 textarea,.prospect-modal input:not([type=checkbox]),.prospect-modal select,.prospect-modal textarea{font-size:16px!important;font-weight:400!important;color:var(--text)!important;}
+.app-shell .prospects-v2 label,.prospect-modal label{font-size:14px!important;font-weight:500!important;color:var(--muted)!important;}
+
+.crm-form .primary-button,.prospect-detail-v2 .primary-button,.prospect-modal .primary-button{background:#ffda29!important;color:#14212a!important;}
+.prospect-focus-summary>div>span{color:var(--muted)!important;}
+.research-reading dt{font-size:13px!important;font-weight:500!important;color:var(--muted)!important;}
+.research-reading dd{font-size:17px!important;font-weight:500!important;color:var(--text)!important;}
+
+.prospect-research-panel[data-research-scope=preparation] .research-save-bar>label,.prospect-research-panel[data-research-scope=preparation] .research-reading-source{display:none;}
+
+/* Selection remains visible after focus moves into the form. */
+.app-shell .prospects-v2 .prospect-desk-tabs button[aria-selected="true"],
+.prospect-create-dialog .prospect-desk-tabs button[aria-selected="true"],
+.app-shell .prospects-v2 .research-tabs button.active {
+  background: #ffda29 !important;
+  color: #14212a !important;
+  border: 1px solid #ffda29 !important;
+  border-radius: 8px;
+  box-shadow: inset 0 -3px 0 #b18b00 !important;
+  font-weight: 700 !important;
+}
+
+/* Revue utilisateur : mêmes repères et dimensions dans les formulaires CRM. */
+.app-shell .prospects-v2 .prospection-pilot-heading>.primary-button,
+.app-shell .prospects-v2 .prospection-pilot-heading>.primary-button *{color:#111!important;}
+.app-shell .prospects-v2 .crm-compact-fields,.app-shell .prospects-v2 .identity-editor-v2 .workflow-fields,.app-shell .prospects-v2 .linked-contact-editor .action-editor-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:end;gap:12px;}
+.app-shell .prospects-v2 .linked-contact-editor .span-2{grid-column:auto;}
+.app-shell .prospects-v2 textarea{min-height:76px!important;height:auto;line-height:1.45;}
+.app-shell .prospects-v2 input[type=tel],.app-shell .prospects-v2 input[inputmode=tel]{max-width:280px;}
+.app-shell .prospects-v2 input[type=date]{max-width:220px;}
+.app-shell .prospects-v2 input[inputmode=decimal]{max-width:240px;}
+.app-shell .prospects-v2 .prospect-work-section{margin:0;padding:12px 0;}
+.app-shell .prospects-v2 .needs-panel-v2 .panel{padding:12px;margin:0;}
+.app-shell .prospects-v2 .needs-panel-v2 h4{margin:0 0 8px;}
+.app-shell .prospects-v2 .needs-panel-v2 .need-identification-fields{padding:12px;margin-top:10px;}
+.app-shell .prospects-v2 .needs-panel-v2 .workflow-fields{display:block;}
+.app-shell .prospects-v2 .crm-brief-fields,.app-shell .prospects-v2 .crm-commercial-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;}
+.app-shell .prospects-v2 .crm-commercial-fields{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));}
+.app-shell .prospects-v2 .crm-initial-request .panel>p{margin:6px 0;}
+.app-shell .prospects-v2 .crm-brief-fields .form-span-3{grid-column:1/-1;}
+.app-shell .prospects-v2 .crm-brief-fields .form-span-2{grid-column:auto;}
+.app-shell .prospects-v2 .need-scope-assessment{margin:10px 0;padding:10px;}
+.app-shell .prospects-v2 .need-identification-fields .primary-button{margin-top:12px;}
+.crm-need-footer{position:sticky;bottom:0;padding:10px 0;background:var(--surface);display:flex;justify-content:flex-end;z-index:2;}
+.crm-contact-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px;margin:12px 0;}
+.crm-contact-card,.crm-role-selection,.crm-website-panel{padding:14px;border:1px solid var(--border);border-radius:10px;margin:10px 0;}
+.crm-contact-card header{display:flex;justify-content:space-between;gap:10px;}
+.crm-contact-card strong{font-size:18px;}
+.crm-contact-card p{margin:4px 0;}
+.crm-contact-coordinates{display:grid;grid-template-columns:minmax(140px,.7fr) minmax(180px,1.3fr);gap:12px;margin:12px 0;}
+.crm-contact-coordinates>div{display:flex;flex-direction:column;gap:4px;overflow-wrap:anywhere;}
+.crm-primary-choice{margin:12px 0;}
+.crm-primary-choice .panel{padding:12px;}
+.crm-role-selection .prospect-decision-editor{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;align-items:end;}
+.crm-role-selection .prospect-decision-editor>small{display:none;}
+.crm-intent-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:12px 0;}
+.crm-intent-grid label{display:flex!important;align-items:center;gap:10px;}
+.crm-intent-grid input{flex-shrink:0;}
+.crm-missing-list{border:1px solid #bf7c1d;border-left:4px solid #bf7c1d;border-radius:8px;padding:12px;margin:10px 0;display:flex;flex-wrap:wrap;gap:8px;}
+.crm-missing-list>strong,.crm-missing-list>h4{flex:1 0 100%;}
+.prospects-v2 [aria-invalid=true]{border:2px solid #dd514d!important;box-shadow:0 0 0 1px #dd514d!important;}
+.crm-field-warning{padding:12px;border-left:4px solid #bf7c1d;background:var(--accent-soft);}
+.prospect-quote-workspace{display:grid;grid-template-columns:minmax(260px,.75fr) minmax(0,2fr);gap:18px;align-items:start;}
+.quote-dossier-context{padding:14px;border:1px solid var(--border);border-radius:10px;position:sticky;top:0;max-height:65vh;overflow:auto;}
+.quote-dossier-context dt{font-size:13px;color:var(--muted);margin-top:12px;}
+.quote-dossier-context dd{margin:4px 0;font-size:16px;white-space:pre-wrap;}
+.quote-dossier-context h3{margin-top:0;}
+.prospect-quote-editor{min-width:0;}
+.quotes-embedded>.page-heading,.quotes-embedded>.module-toolbar,.quotes-embedded>.quote-toolbar,.quotes-embedded>.quote-filters,.quotes-embedded .quote-list-panel,.quotes-embedded .quote-detail-backdrop,.quotes-embedded .quote-detail-expand{display:none!important;}
+.app-shell .prospects-v2 .quotes-embedded .quotes-layout{display:block!important;}
+.app-shell .prospects-v2 .quotes-embedded .quote-detail-panel{position:static!important;inset:auto!important;transform:none!important;width:100%!important;max-width:none!important;height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important;z-index:auto!important;margin:0!important;box-shadow:none!important;}
+.quotes-embedded .detail-panel-heading{position:static!important;}
+.quotes-embedded>.quote-wizard{display:none;}
+@media(max-width:1100px){.prospect-quote-workspace{grid-template-columns:1fr;}.quote-dossier-context{position:static;max-height:none;}.app-shell .prospects-v2 .crm-brief-fields{grid-template-columns:1fr;}}
+@media(max-width:700px){.crm-contact-cards,.crm-contact-coordinates{grid-template-columns:1fr;}}
+
+/* Selected tab text must override the older theme .active rules as well. */
+html[data-theme] .app-shell .prospects-v2 .prospect-workspace .prospect-desk-tabs button[aria-selected=true],
+html[data-theme] .app-shell .prospects-v2 .prospect-workspace .research-tabs button[aria-selected=true],
+html[data-theme] .app-shell .prospects-v2 .prospect-workspace .research-tabs button.active,
+html[data-theme] .prospect-create-dialog .prospect-desk-tabs button[aria-selected=true]{color:#111!important;-webkit-text-fill-color:#111!important;background:#ffda29!important;}
+.app-shell .prospects-v2 .needs-panel-v2[data-needs-section=brief]>fieldset{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:16px;align-items:start;}
+.app-shell .prospects-v2 .needs-panel-v2[data-needs-section=brief] .need-identification-fields{grid-column:2;grid-row:1;margin:0;}
+.app-shell .prospects-v2 .needs-panel-v2[data-needs-section=brief] .crm-brief-fields{grid-template-columns:1fr;}
+.app-shell .prospects-v2 .needs-panel-v2[data-needs-section=brief] .crm-need-footer,.app-shell .prospects-v2 .needs-panel-v2[data-needs-section=brief]>fieldset>.form-error{grid-column:1/-1;}
+.identity-panel-v2[data-identity-section=contacts]>.identity-summary-grid{display:none;}
+.crm-contact-card .status-pill{align-self:flex-start;flex-shrink:0;}
+.app-shell .prospects-v2 .quotes-embedded .quote-lines{margin-top:16px;}
+.app-shell .prospects-v2 .quotes-embedded .quote-add-line{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:end;padding:12px;margin:12px 0;}
+.quotes-embedded .quote-add-line>strong{grid-column:1/-1;}
+:root[data-theme=noir] .prospect-desk-content{color-scheme:dark;}
+@media(max-width:1100px){.app-shell .prospects-v2 .needs-panel-v2[data-needs-section=brief]>fieldset{grid-template-columns:1fr;}.app-shell .prospects-v2 .needs-panel-v2[data-needs-section=brief] .need-identification-fields{grid-column:1;grid-row:auto;}}

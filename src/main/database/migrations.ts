@@ -1,3 +1,6 @@
+import { CRM_ORGANIZATION_CONTACTS_MIGRATION } from './crmOrganizationContactsMigration';
+import { CRM_COMMERCIAL_FIELDS_MIGRATION } from './crmCommercialFieldsMigration';
+import { CRM_RECONCILIATION_MIGRATION } from './crmReconciliationMigration';
 import { QUOTE_TRANSMISSION_MIGRATION } from './quoteTransmissionMigration';
 import { CONTRACT_SECTION_REVIEW_MIGRATION } from './contractSectionReviewMigration';
 import { CONTRACT_TYPES_MIGRATION } from './contractTypesMigration';
@@ -257,6 +260,9 @@ export const MIGRATIONS: Migration[] = [
   CONTRACT_SECTION_REVIEW_MIGRATION,
   CATALOG_RECOMMENDATION_DETAILS_MIGRATION,
   QUOTE_TRANSMISSION_MIGRATION,
+  CRM_RECONCILIATION_MIGRATION,
+  CRM_COMMERCIAL_FIELDS_MIGRATION,
+  CRM_ORGANIZATION_CONTACTS_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

@@ -125,7 +125,7 @@ function mergeCheck(defaultValue: ProspectResearchStructuredCheck, actual?: Pros
 }
 
 const emptySnapshot = (prospect: ProspectSummary): ProspectResearchSnapshotInput => ({
-  checkedAt: new Date().toISOString().slice(0, 10),
+  checkedAt: null,
   source: 'Vérification manuelle',
   sourceUrl: prospect.organizationWebsite ?? prospect.existingUrl ?? '',
   services: [],
@@ -145,7 +145,7 @@ const emptySnapshot = (prospect: ProspectSummary): ProspectResearchSnapshotInput
     notes: '',
   },
   website: {
-    presence: prospect.organizationWebsite || prospect.existingUrl ? 'present' : 'review',
+    presence: prospect.organizationWebsite ? 'present' : 'review',
     url: prospect.organizationWebsite ?? prospect.existingUrl ?? '',
     cms: '',
     hosting: '',
@@ -205,8 +205,8 @@ function hydrateSnapshot(prospect: ProspectSummary, snapshot: ProspectResearchSn
   };
 }
 
-function csv(value?: string[]): string { return (value ?? []).join(', '); }
-function csvList(value: string): string[] { return value.split(',').map((item) => item.trim()).filter(Boolean); }
+function csv(value?: string[]): string { return (value ?? []).join(','); }
+function csvList(value: string): string[] { return value.split(','); }
 function displayDate(value?: string | null): string {
   if (!value) return '—';
   const parsed = new Date(value.length === 10 ? `${value}T12:00:00` : value);
@@ -281,14 +281,16 @@ function factMap(snapshot: ProspectResearchSnapshot): Map<string, string> {
   ]);
 }
 
-export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirst = false, onChanged }: {
+export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirst = false, scope = 'research', onEditCompany, onChanged }: {
   prospect: ProspectSummary;
+  scope?: 'research'|'preparation';
+  onEditCompany?:()=>void;
   defaultOpen?: boolean;
   browseFirst?: boolean;
   onChanged?: (message?: string) => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
-  const [tab, setTab] = useState<ResearchTab>('company');
+  const [tab, setTab] = useState<ResearchTab>(scope==='preparation'?'conversation':'company');
   const [history, setHistory] = useState<ProspectResearchSnapshot[]>([]);
   const [draft, setDraft] = useState<ProspectResearchSnapshotInput>(() => emptySnapshot(prospect));
   const [busy, setBusy] = useState(false);
@@ -300,9 +302,9 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
 
   async function load() {
     const current=++sequence.current;
-    try{const snapshots=await window.atoumweb.crm.prospects.research.list(prospect.id);if(current!==sequence.current)return;
-      setHistory(snapshots);const next=snapshots[0]?hydrateSnapshot(prospect,snapshots[0]):emptySnapshot(prospect);
-      if(!guard.dirty){baselineVersion.current=snapshots[0]?.id??null;guard.initial(next);setDraft(next);setConflict(false);}else if((snapshots[0]?.id??null)!==baselineVersion.current)setConflict(true);
+    try{const context=await window.atoumweb.crm.prospects.research.context(prospect.id),snapshots=context.history;if(current!==sequence.current)return;
+      setHistory(snapshots);const next=snapshots[0]?hydrateSnapshot(prospect,{...context.draft,id:snapshots[0].id,prospectId:prospect.id,createdAt:snapshots[0].createdAt,checkedAt:context.draft.checkedAt??''}):emptySnapshot(prospect);
+      if(!guard.dirty){baselineVersion.current=context.version;guard.initial(next);setDraft(next);setConflict(false);}else if(context.version!==baselineVersion.current)setConflict(true);
       setLoaded(true);setLoadError('');
     }catch(error){if(current===sequence.current)setLoadError(error instanceof Error?error.message:'Lecture impossible.');}
   }
@@ -338,13 +340,12 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
     if(busy||!loaded||conflict)return;
     setBusy(true);
     try {
-      const current=await window.atoumweb.crm.prospects.research.list(prospect.id);
-      if((current[0]?.id??null)!==baselineVersion.current){setConflict(true);return;}
-      await window.atoumweb.crm.prospects.research.save(prospect.id, draft);
+      await window.atoumweb.crm.prospects.research.saveIfUnchanged(prospect.id,baselineVersion.current??'',draft);
       guard.saved();await load();if(browseFirst)setEditing(false);
       window.dispatchEvent(new Event('atoumweb:changed'));
       onChanged?.('Nouvelle version de la connaissance entreprise enregistrée.');
     } catch (error) {
+      if(error instanceof Error&&error.message.includes('Conflit'))setConflict(true);
       onChanged?.(error instanceof Error ? error.message : 'Enregistrement impossible.');
     } finally {
       setBusy(false);
@@ -354,39 +355,39 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
   const legal = mergeCheck({ overallStatus: 'review', items: LEGAL_ITEMS.map((item) => ({ ...item })), observations: '', talkingPoint: '', source: 'Site public', url: '' }, draft.legalNotices);
 
   if(!loaded)return <section className="prospect-research-panel"><p role="status">{loadError||'Chargement de la référence…'}</p>{loadError&&<button type="button" onClick={()=>void load()}>Réessayer</button>}</section>;
-  return <section className="prospect-work-section prospect-research-panel" data-browse-first={browseFirst} data-editing={editing}>
+  return <section className="prospect-work-section prospect-research-panel" data-research-scope={scope} data-browse-first={browseFirst} data-editing={editing}>
     <div className="research-heading">
       <div>
-        <span className="eyebrow">Référence prospect</span>
-        <h3>Connaissance entreprise</h3>
-        <p className="muted">Informations collectées pour préparer les échanges.</p>
+        <span className="eyebrow">{scope==='preparation'?'Préparation':'Recherche entreprise'}</span>
+        <h3>{scope==='preparation'?'Préparation du prochain échange':'Analyse de l’entreprise'}</h3>
+        <p className="muted">{scope==='preparation'?'Objectifs, questions et arguments pour le prochain échange.':'Observations, présence numérique et vérifications.'}</p>
       </div>
-      {browseFirst&&<>{editing&&<button type="button" className="primary-button research-save-primary" disabled={busy||!loaded||conflict} onClick={()=>void save()}>{busy?'Enregistrement…':'Enregistrer'}</button>}<button type="button" className="secondary-button research-edit-toggle" disabled={busy} onClick={()=>{if(editing){guard.discard();setEditing(false);}else{setOpen(true);setEditing(true);}}}>{editing?'Annuler':'Modifier la référence'}</button></>}
+      {browseFirst&&<>{editing&&<button type="button" className="primary-button research-save-primary" disabled={busy||!loaded||conflict} onClick={()=>void save()}>{busy?'Enregistrement…':'Enregistrer'}</button>}<button type="button" className="secondary-button research-edit-toggle" disabled={busy} onClick={()=>{if(editing){guard.discard();setEditing(false);}else{setOpen(true);setEditing(true);}}}>{editing?'Annuler':scope==='preparation'?'Modifier la préparation':'Modifier l’analyse'}</button></>}
       <button type="button" className="secondary-button" onClick={() => setOpen((value) => !value)}>{open ? 'Réduire' : 'Afficher'}</button>
     </div>
 
     {conflict&&<div className="research-conflict" role="alert"><strong>Une version plus récente existe.</strong><p>Votre saisie reste conservée. Relisez la dernière version avant d'enregistrer.</p><button className="secondary-button" type="button" onClick={()=>guard.request(()=>{guard.discard();setConflict(false);void load();})}>Recharger la dernière version</button></div>}
     {loadError&&<p role="alert">{loadError}</p>}
     {open && <>
-      <div className="research-company-strip">
+      <div className="research-company-strip" hidden={scope==='preparation'}>
         <div><small>Activité</small><strong>{prospect.organizationIndustry || 'À compléter'}</strong></div>
         <div><small>Ville</small><strong>{prospect.organizationCity || 'À compléter'}</strong></div>
-        <div><small>Site</small><strong>{prospect.organizationWebsite||prospect.existingUrl?<ProspectValue value={(prospect.organizationWebsite||prospect.existingUrl)!} kind="web"/>:'À vérifier'}</strong></div>
-        <div><small>Dernière vérification</small><strong>{history[0] ? displayDate(history[0].checkedAt) : 'Aucune vérification enregistrée'}</strong></div>
+        <div><small>Site</small><strong>{prospect.organizationWebsite?<ProspectValue value={prospect.organizationWebsite} kind="web"/>:draft.website?.presence==='absent'?'Pas de site internet':'À vérifier'}</strong>{onEditCompany&&<button type="button" className="secondary-button" onClick={onEditCompany}>{prospect.organizationWebsite?'Modifier le site':'Renseigner le site'}</button>}</div>
+        <div><small>Dernière vérification</small><strong>{history[0]?.checkedAt ? displayDate(history[0].checkedAt) : 'Aucune vérification enregistrée'}</strong></div>
       </div>
 
       <div className="research-tabs" role="tablist" aria-label="Connaissance entreprise">
         {([
-          ['company', 'Entreprise'],
+          ['company', 'Activité et clientèle'],
           ['visibility', 'Web & visibilité'],
           ['checks', 'Contrôles'],
           ['opportunities', 'Opportunités'],
           ['conversation', 'Conversation'],
-          ['history', 'Historique'],
-        ] as Array<[ResearchTab, string]>).map(([key, label]) => <button type="button" key={key} className={tab === key ? 'active' : ''} onClick={event => {setTab(key);const scroller=event.currentTarget.closest('.prospect-desk-content,.prospect-reference-pilot');if(scroller)scroller.scrollTop=0;}}>{label}</button>)}
+
+        ] as Array<[ResearchTab, string]>).filter(([key])=>scope==='preparation'?['opportunities','conversation'].includes(key):!['opportunities','conversation'].includes(key)).map(([key, label]) => <button type="button" key={key} className={tab === key ? 'active' : ''} onClick={event => {setTab(key);const scroller=event.currentTarget.closest('.prospect-desk-content,.prospect-reference-pilot');if(scroller)scroller.scrollTop=0;}}>{label}</button>)}
       </div>
 
-      {browseFirst&&!editing&&tab!=='history'&&<ResearchReading tab={tab} draft={draft} notes={prospect.organizationNotes} hasSnapshot={history.length>0}/>}
+      {browseFirst&&!editing&&tab!=='history'&&<ResearchReading tab={tab} draft={draft} notes={prospect.organizationNotes} website={prospect.organizationWebsite} hasSnapshot={history.length>0}/>}
       <div className="research-tab-content" hidden={browseFirst&&!editing&&tab!=='history'}>
         {tab === 'company' && <div className="research-grid research-grid-single-row">
           <fieldset className="research-card">
@@ -425,11 +426,11 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
           <fieldset className="research-card">
             <legend>Site internet <FieldHelp text="Vérifier URL, CMS si identifiable sans intrusion, HTTPS, mobile, e-commerce, réservation, formulaire et actualités." /></legend>
             <div className="research-inline-fields">
-              <label>Présence<select value={draft.website?.presence ?? 'review'} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), presence: event.target.value as 'present' | 'absent' | 'review' } })} disabled={busy}><option value="present">Présent</option><option value="absent">Absent</option><option value="review">À vérifier</option></select></label>
+              <div><span>Site de l’entreprise</span><p>{prospect.organizationWebsite|| (draft.website?.presence==='absent'?'Pas de site internet':'À vérifier')}</p></div>
               <label>CMS<input value={draft.website?.cms ?? ''} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), cms: event.target.value } })} disabled={busy} /></label>
               <label>Hébergeur<input value={draft.website?.hosting ?? ''} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), hosting: event.target.value } })} disabled={busy} /></label>
             </div>
-            <label>URL<input inputMode="url" value={displayWebUrl(draft.website?.url)} onChange={(event) => setDraft({ ...draft, website: { ...(draft.website ?? { presence: 'review' }), url: event.target.value } })} placeholder="exemple.fr" disabled={busy} /></label>
+            <p>Adresse du site : {prospect.organizationWebsite||'À renseigner dans Entreprise'}</p>
             <div className="research-check-grid">
               <label>HTTPS<CheckSelect value={draft.website?.httpsStatus} onChange={(value) => updateWebsiteStatus('httpsStatus', value)} /></label>
               <label>Mobile / responsive<CheckSelect value={draft.website?.responsiveStatus} onChange={(value) => updateWebsiteStatus('responsiveStatus', value)} /></label>
@@ -456,6 +457,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
               <label>Priorité<select value={item.priority} onChange={(event) => updateOpportunity(index, { priority: event.target.value as ProspectResearchOpportunity['priority'] })} disabled={busy}><option value="low">Faible</option><option value="medium">Moyenne</option><option value="high">Forte</option></select></label>
               <label>Note<input value={item.note ?? ''} onChange={(event) => updateOpportunity(index, { note: event.target.value })} disabled={busy} /></label>
               <label className="research-keep"><input type="checkbox" checked={item.keep} onChange={(event) => updateOpportunity(index, { keep: event.target.checked })} disabled={busy} /> Retenir</label>
+              <button type="button" className="secondary-button" disabled={busy||guard.dirty} title={guard.dirty?'Enregistre la référence avant de reprendre une opportunité.':undefined} onClick={()=>void (async()=>{try{const current=(await window.atoumweb.crm.prospects.list()).find(p=>p.id===prospect.id);if(!current)throw Error('Dossier introuvable.');if(current.detectedOpportunity&&!window.confirm('Remplacer l’opportunité de qualification par ce constat ?'))return;const sourceId=JSON.parse(baselineVersion.current??'[]')[1];if(!sourceId)throw Error('Enregistre la référence avant de reprendre cette opportunité.');await window.atoumweb.crm.prospects.research.adoptOpportunity(prospect.id,sourceId,index,current.detectedOpportunity??null);window.dispatchEvent(new Event('atoumweb:changed'));onChanged?.('Opportunité reprise dans la qualification.');}catch(e){onChanged?.(String(e));}})()}>Reprendre dans la qualification</button>
               <button type="button" className="secondary-button danger-outline" onClick={() => setDraft({ ...draft, opportunities: (draft.opportunities ?? []).filter((_, itemIndex) => itemIndex !== index) })}>Supprimer</button>
             </div>)}
             {(draft.opportunities ?? []).length === 0 && <p className="muted">Aucune opportunité enregistrée.</p>}
@@ -471,12 +473,12 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
             <label>Points à évoquer<textarea value={draft.conversation?.talkingPoints ?? ''} onChange={(event) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), talkingPoints: event.target.value } })} disabled={busy} /></label>
             <label>Angle d’approche<textarea value={draft.conversation?.approach ?? ''} onChange={(event) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), approach: event.target.value } })} disabled={busy} /></label>
           </div>
-          <label>À ne pas oublier / notes pendant l’appel<textarea value={draft.conversation?.callNotes ?? ''} onChange={(event) => setDraft({ ...draft, conversation: { ...(draft.conversation ?? {}), callNotes: event.target.value } })} disabled={busy} /></label>
+          {draft.conversation?.callNotes&&<div><strong>Anciennes notes d’appel — contenu conservé</strong><p>{draft.conversation.callNotes}</p></div>}<p className="muted">Prépare l’échange ici. Enregistre son résultat dans le compte rendu de l’action.</p>
         </fieldset>}
 
         {tab === 'history' && <div className="research-history">
           <div className="research-history-heading"><div><strong>Historique des vérifications</strong><small>{history.length} version{history.length > 1 ? 's' : ''}</small></div>{history.length > 1 && <button className="secondary-button" type="button" onClick={() => setCompare((value) => !value)}>{compare ? 'Masquer la comparaison' : 'Comparer avec la précédente'}</button>}</div>
-          <div className="research-version-list">{history.slice(0, 8).map((snapshot, index) => <span key={snapshot.id} className={index === 0 ? 'current' : ''}>{displayDate(snapshot.checkedAt)}{index === 0 ? ' · actuelle' : ''}</span>)}</div>
+          <div className="research-version-list">{history.slice(0, 8).map((snapshot, index) => <span key={snapshot.id} className={index === 0 ? 'current' : ''}>{snapshot.checkedAt?displayDate(snapshot.checkedAt):'Date de vérification non renseignée'}{snapshot.sharedFromProspectId?' · Recherche partagée de l’entreprise':''}{index === 0 ? ' · actuelle' : ''}</span>)}</div>
           {history.length === 0 && <p className="muted">Aucune vérification enregistrée.</p>}
           {compare && <div className="research-diff">{differences.length === 0 ? <p className="muted">Aucun changement sur les indicateurs comparés.</p> : differences.map((diff) => <div className="research-diff-row" key={diff.key}><strong>{diff.key}</strong><span>{diff.before || '—'}</span><b>→</b><span>{diff.after || '—'}</span></div>)}</div>}
         </div>}
@@ -495,15 +497,15 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
 }
 
 /** Read-only projection of the same draft; editing and versioning still use the existing service. */
-function ResearchReading({tab,draft,notes,hasSnapshot}:{tab:ResearchTab;draft:ProspectResearchSnapshotInput;notes?:string|null;hasSnapshot:boolean}){
+function ResearchReading({tab,draft,notes,website,hasSnapshot}:{tab:ResearchTab;draft:ProspectResearchSnapshotInput;notes?:string|null;website?:string|null;hasSnapshot:boolean}){
  const facts=(items:Array<[string,string|number|null|undefined]>)=>{const missing=items.filter(([,value])=>value==null||value===''||value==='À vérifier');const known=items.filter(item=>!missing.includes(item));return <><dl className="research-reading-facts">{known.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{typeof value==='string'&&/^https?:\/\//i.test(value)?<ProspectValue value={value} kind="web"/>:value}</dd></div>)}</dl>{!!missing.length&&<details className="research-missing"><summary>Informations à compléter · {missing.length}</summary><p>{missing.map(([label])=>label).join(' · ')}</p></details>}</>;};
  const check=(title:string,value:ProspectResearchStructuredCheck)=><details className="research-reading-check" key={title}><summary>{title}<span>{statusLabel(value.overallStatus)}</span></summary>{facts(value.items.map(item=>[item.label,statusLabel(item.status)]))}{facts([['Observations',value.observations],['Point à évoquer',value.talkingPoint],['Source',value.source],['URL',value.url]])}</details>;
  return <section className="research-reading" aria-label="Lecture de la référence">
   {tab==='company'&&<div className="research-reading-columns"><section><h3>Activité et offre de l’entreprise</h3>{facts([['Services proposés',csv(draft.services)],['Produits principaux',csv(draft.products)],['Clientèles visées',csv(draft.customerSegments)],['Points différenciants',csv(draft.differentiators)]])}</section><section><h3>Notes source</h3><p>{notes||'Aucune note source.'}</p></section></div>}
-  {tab==='visibility'&&<div className="research-reading-columns"><section><h3>Google Business</h3>{facts([['Présence',draft.googleBusiness?.presence==='present'?'Présent':draft.googleBusiness?.presence==='absent'?'Absent':'À vérifier'],['URL',draft.googleBusiness?.url],['Catégorie',draft.googleBusiness?.category],['Note',draft.googleBusiness?.rating],['Nombre d’avis',draft.googleBusiness?.reviewCount],['Horaires',statusLabel(draft.googleBusiness?.hoursStatus)],['Photos',statusLabel(draft.googleBusiness?.photosStatus)],['Site lié',statusLabel(draft.googleBusiness?.websiteLinkedStatus)],['Coordonnées',statusLabel(draft.googleBusiness?.contactConsistencyStatus)],['Observations',draft.googleBusiness?.notes]])}</section><section><h3>Site web</h3>{facts([['Présence',draft.website?.presence==='present'?'Présent':draft.website?.presence==='absent'?'Absent':'À vérifier'],['URL',draft.website?.url],['CMS',draft.website?.cms],['Hébergeur',draft.website?.hosting],...(['httpsStatus','responsiveStatus','ecommerceStatus','bookingStatus','contactFormStatus','blogStatus'] as WebsiteStatusKey[]).map((k,i):[string,string]=>[['HTTPS','Responsive','E-commerce','Réservation','Formulaire','Blog'][i],statusLabel(draft.website?.[k])]),['Observations',draft.website?.notes]])}</section></div>}
+  {tab==='visibility'&&<div className="research-reading-columns"><section><h3>Google Business</h3>{facts([['Présence',draft.googleBusiness?.presence==='present'?'Présent':draft.googleBusiness?.presence==='absent'?'Absent':'À vérifier'],['URL',draft.googleBusiness?.url],['Catégorie',draft.googleBusiness?.category],['Note',draft.googleBusiness?.rating],['Nombre d’avis',draft.googleBusiness?.reviewCount],['Horaires',statusLabel(draft.googleBusiness?.hoursStatus)],['Photos',statusLabel(draft.googleBusiness?.photosStatus)],['Site lié',statusLabel(draft.googleBusiness?.websiteLinkedStatus)],['Coordonnées',statusLabel(draft.googleBusiness?.contactConsistencyStatus)],['Observations',draft.googleBusiness?.notes]])}</section><section><h3>Site web</h3>{facts([['Présence',website?'Présent':draft.website?.presence==='absent'?'Absent':'À vérifier'],['URL',website],['CMS',draft.website?.cms],['Hébergeur',draft.website?.hosting],...(['httpsStatus','responsiveStatus','ecommerceStatus','bookingStatus','contactFormStatus','blogStatus'] as WebsiteStatusKey[]).map((k,i):[string,string]=>[['HTTPS','Responsive','E-commerce','Réservation','Formulaire','Blog'][i],statusLabel(draft.website?.[k])]),['Observations',draft.website?.notes]])}</section></div>}
   {tab==='checks'&&<>{check('Mentions légales',mergeCheck({overallStatus:'review',items:LEGAL_ITEMS},draft.legalNotices))}{(Object.keys(AUDIT_DEFINITIONS) as AuditKey[]).map(k=>check(AUDIT_DEFINITIONS[k].title,mergeCheck(createAudit(k),draft.audits?.[k])))}</>}
   {tab==='opportunities'&&<>{!draft.opportunities?.length&&<p>Aucune opportunité renseignée.</p>}{draft.opportunities?.map((item,i)=><section key={i}><h3>{item.service||item.finding||'Opportunité'}</h3>{facts([['Constat',item.finding],['Priorité',item.priority==='high'?'Forte':item.priority==='low'?'Faible':'Moyenne'],['Retenue',item.keep?'Oui':'Non'],['Note',item.note]])}</section>)}</>}
-  {tab==='conversation'&&facts([['Points forts',draft.conversation?.strengths],['Problèmes observés',draft.conversation?.issues],['Points à évoquer',draft.conversation?.talkingPoints],['Angle d’approche',draft.conversation?.approach],['Notes pendant l’appel',draft.conversation?.callNotes]])}
+  {tab==='conversation'&&facts([['Points forts',draft.conversation?.strengths],['Problèmes observés',draft.conversation?.issues],['Points à évoquer',draft.conversation?.talkingPoints],['Angle d’approche',draft.conversation?.approach],['Anciennes notes d’appel — conservées',draft.conversation?.callNotes]])}
   <footer className="research-reading-source">{hasSnapshot?facts([['Date de vérification',displayDate(draft.checkedAt)],['Source',draft.source],['URL source',draft.sourceUrl]]):<p>Aucune vérification enregistrée. Utiliser « Modifier la référence » pour préparer la première.</p>}</footer>
  </section>;
 }

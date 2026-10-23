@@ -259,6 +259,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     });
   });
 
+  ipcMain.handle('crm:directory:reconciliation',(_event,owner:string,id:string)=>database.crm.listReconciliation(owner,id));
   ipcMain.handle('crm:directory:save-existing',(_event,...args:Parameters<typeof database.crm.saveExistingDirectoryIdentities>)=> guardedMutation(() => database.crm.saveExistingDirectoryIdentities(...args)));
   ipcMain.handle('crm:directory:save-organization',(_event,...args:Parameters<typeof database.crm.saveDirectoryOrganization>)=> guardedMutation(() => database.crm.saveDirectoryOrganization(...args)));
   ipcMain.handle('crm:directory:save-contact',(_event,...args:Parameters<typeof database.crm.saveDirectoryContact>)=> guardedMutation(() => database.crm.saveDirectoryContact(...args)));
@@ -274,9 +275,33 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:contacts:create-and-attach-primary-prospect', (_event, prospectId: string, input: ContactInput) => guardedMutation(() => database.crm.createAndAttachPrimaryProspectContact(prospectId, input)));
   ipcMain.handle('crm:contacts:create-and-attach-decision-prospect', (_event, prospectId: string, input: ContactInput) => guardedMutation(() => database.crm.createAndAttachDecisionProspectContact(prospectId, input)));
   ipcMain.handle('crm:contacts:update', (_event, id: string, input: ContactInput) => guardedMutation(() => database.crm.updateContact(id, input)));
+  ipcMain.handle('crm:organization-contacts:list',(_event,id:string)=>database.crm.listOrganizationContacts(id));
+  ipcMain.handle('crm:organization-contacts:save',(_event,...args:Parameters<typeof database.crm.saveOrganizationContact>)=>guardedMutation(()=>database.crm.saveOrganizationContact(...args)));
   ipcMain.handle('crm:contact-methods:list',(_event,owner:'organization'|'contact',id:string,includeArchived?:boolean)=>database.crm.listContactMethods(owner,id,includeArchived));
-  ipcMain.handle('crm:contact-methods:save',(_event,input:ContactMethodInput,id?:string)=> guardedMutation(() => database.crm.saveContactMethod(input,id)));
-  ipcMain.handle('crm:contact-methods:archive',(_event,id:string,archived?:boolean)=> guardedMutation(() => database.crm.archiveContactMethod(id,archived)));
+  ipcMain.handle('crm:contact-methods:save',(_event,...args:Parameters<typeof database.crm.saveContactMethod>)=> guardedMutation(() => database.crm.saveContactMethod(...args)));
+  ipcMain.handle('crm:contact-methods:archive',(_event,...args:Parameters<typeof database.crm.archiveContactMethod>)=> guardedMutation(() => database.crm.archiveContactMethod(...args)));
+  // Draft selection is scoped to the requesting window; no identity is created by picking an image.
+  const draftLogos=new Map<number,{token:string;source:string;bytes:Buffer;at:number;ownerId?:string}>();
+  ipcMain.handle('crm:identity-assets:choose-draft',async(event)=>{
+    const selection=await dialog.showOpenDialog({title:'Choisir le logo',properties:['openFile'],filters:[{name:'Images',extensions:['jpg','jpeg','png','webp','gif','ico']}]});
+    if(selection.canceled||!selection.filePaths[0])return null;
+    const source=selection.filePaths[0],stats=statSync(source);
+    if(!stats.isFile()||stats.size===0||stats.size>8*1024*1024)throw Error('Image vide ou supérieure à 8 Mo.');
+    const bytes=readFileSync(source),image=await crmIdentityImagePreview(event.sender,bytes),token=randomUUID();
+    draftLogos.set(event.sender.id,{token,source,bytes,at:Date.now()});
+    event.sender.once('destroyed',()=>draftLogos.delete(event.sender.id));
+    return {token,preview:image.toDataURL(),name:basename(source)};
+  });
+  ipcMain.handle('crm:identity-assets:attach-draft',async(event,token:string,owner:CrmIdentityOwnerType,id:string)=>guardedMutation(()=>{
+    const draft=draftLogos.get(event.sender.id);
+    if(!draft||draft.token!==token||Date.now()-draft.at>30*60*1000)throw Error('Choisis de nouveau le logo avant d’enregistrer.');
+    if(draft.ownerId&&draft.ownerId!==owner+':'+id)throw Error('Ce logo a déjà été rattaché à une autre identité.');
+    const role=owner==='organization'?'logo':'avatar';
+    if(draft.ownerId)return database.crmIdentityAssets.list(owner,id).find(a=>a.role===role)??null;
+    if(database.crmIdentityAssets.list(owner,id).some(a=>a.role===role))throw Error('Cette identité possède déjà un logo. Modifie-le depuis sa fiche pour confirmer le remplacement.');
+    if(!readFileSync(draft.source).equals(draft.bytes))throw Error('Le fichier choisi a changé. Choisis de nouveau le logo.');
+    const asset=database.crmIdentityAssets.importFilePath(owner,id,role,draft.source);draft.ownerId=owner+':'+id;return asset;
+  }));
   ipcMain.handle('crm:identity-assets:list', (_event, owner: CrmIdentityOwnerType, id: string) => database.crmIdentityAssets.list(owner, id));
   ipcMain.handle('crm:identity-assets:import', async (_event, owner: CrmIdentityOwnerType, id: string, role: CrmIdentityAssetRole) => {
     const previous = database.crmIdentityAssets.list(owner, id).find(asset=>asset.role===role);
@@ -313,6 +338,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       database.crmIdentityAssets.remove(assetId);return true;
     });
   });
+  ipcMain.handle('crm:prospects:patch',(_event,...args:Parameters<typeof database.crm.patchProspectIfUnchanged>)=>guardedMutation(()=>database.crm.patchProspectIfUnchanged(...args)));
+  ipcMain.handle('crm:prospects:create-atomic',(_event,input:Parameters<typeof database.crm.createProspectAtomic>[0])=>guardedMutation(()=>database.crm.createProspectAtomic(input)));
+  ipcMain.handle('crm:prospects:temperature',(_event,...args:Parameters<typeof database.crm.updateProspectTemperature>)=>guardedMutation(()=>database.crm.updateProspectTemperature(...args)));
   ipcMain.handle('crm:prospects:list', (_event, filters?: ProspectFilters) => database.crm.listProspects(filters));
   ipcMain.handle('crm:prospects:create', (_event, input: ProspectInput) => guardedMutation(() => database.crm.createProspect(input)));
   ipcMain.handle('crm:prospects:update', (_event, id: string, input: ProspectInput) => guardedMutation(() => database.crm.updateProspect(id, input)));
@@ -328,8 +356,14 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:prospects:change-stage', (_event, id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification?: boolean) => guardedMutation(() => database.crm.changeProspectStage(id, stage, lostReason, Boolean(allowIncompleteQualification))));
   ipcMain.handle('crm:prospects:set-next-action', (_event, id: string, at: string | null, text: string | null) => guardedMutation(() => database.crm.setProspectNextAction(id, at, text)));
   ipcMain.handle('crm:prospects:convert-to-client', (_event, id: string) => guardedMutation(() => database.crm.convertProspectToClient(id)));
+  ipcMain.handle('crm:prospects:research:adopt-opportunity',(_event,...args:Parameters<typeof database.crm.adoptResearchOpportunity>)=>guardedMutation(()=>database.crm.adoptResearchOpportunity(...args)));
+  ipcMain.handle('crm:prospects:website',(_event,...args:Parameters<typeof database.crm.saveProspectWebsite>)=>guardedMutation(()=>database.crm.saveProspectWebsite(...args)));
+  ipcMain.handle('crm:prospects:research:context',(_event,id:string)=>database.crm.prospectResearchContext(id));
+  ipcMain.handle('crm:prospects:research:save-if-unchanged',(_event,...args:Parameters<typeof database.crm.saveProspectResearchIfUnchanged>)=>guardedMutation(()=>database.crm.saveProspectResearchIfUnchanged(...args)));
   ipcMain.handle('crm:prospects:research:list', (_event, id: string) => database.crm.listProspectResearchSnapshots(id));
   ipcMain.handle('crm:prospects:research:save', (_event, id: string, input: ProspectResearchSnapshotInput) => guardedMutation(() => database.crm.saveProspectResearchSnapshot(id, input)));
+  ipcMain.handle('crm:clients:status',(_event,...args:Parameters<typeof database.crm.updateClientStatusIfUnchanged>)=>guardedMutation(()=>database.crm.updateClientStatusIfUnchanged(...args)));
+  ipcMain.handle('crm:clients:schedule-action',(_event,...args:Parameters<typeof database.crm.scheduleClientAction>)=>guardedMutation(()=>database.crm.scheduleClientAction(...args)));
   ipcMain.handle('crm:clients:list', (_event, filters?: ClientFilters) => database.crm.listClients(filters));
   ipcMain.handle('crm:clients:create', (_event, input: ClientInput) => guardedMutation(() => database.crm.createClient(input)));
   ipcMain.handle('crm:clients:update-relationship-if-unchanged', (_event,id:string,expected:Parameters<typeof database.crm.updateClientRelationshipIfUnchanged>[1],next:Parameters<typeof database.crm.updateClientRelationshipIfUnchanged>[2])=> guardedMutation(() => database.crm.updateClientRelationshipIfUnchanged(id,expected,next)));
@@ -337,7 +371,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('crm:clients:archive', (_event, id: string) => guardedMutation(() => database.crm.archiveClient(id)));
   ipcMain.handle('crm:clients:reactivate', (_event, id: string, status: Exclude<ClientStatus, 'archived'>) => guardedMutation(() => database.crm.reactivateClient(id, status)));
   ipcMain.handle('crm:clients:list-contacts', (_event, id: string) => database.clientContacts.list(id));
-  ipcMain.handle('crm:clients:add-contact', (_event, id: string, input: ContactInput, role: ClientContactRole, makePrimary?: boolean) => guardedMutation(() => database.clientContacts.add(id, input, role, makePrimary)));
+  ipcMain.handle('crm:clients:add-contact', (_event,...args:Parameters<typeof database.clientContacts.add>) => guardedMutation(() => database.clientContacts.add(...args)));
   ipcMain.handle('crm:clients:set-primary-contact', (_event, id: string, contactId: string) => guardedMutation(() => database.clientContacts.setPrimary(id, contactId)));
   ipcMain.handle('crm:actions:list', (_event, filters?: CrmActionFilters) => database.actions.list(filters));
   ipcMain.handle('crm:actions:create', (_event, input: CrmActionInput) => guardedMutation(() => database.actions.create(input)));
@@ -670,6 +704,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:operational-sales',(_event,id:string)=>database.quotes.operationalSales(id));
   ipcMain.handle('quotes:list', (_event, filters?: QuoteFilters) => database.quotes.list(filters));
   ipcMain.handle('quotes:get', (_event, id: string) => database.quotes.get(id));
+  ipcMain.handle('quotes:prepare-prospect-draft',(_event,...args:Parameters<typeof database.quotes.prepareProspectDraft>)=>guardedMutation(()=>database.quotes.prepareProspectDraft(...args)));
   ipcMain.handle('quotes:create-with-lines', (_event, input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>) => guardedMutation(() => database.quotes.createWithLines(input,lines)));
   ipcMain.handle('quotes:create', (_event, input: QuoteInput) => guardedMutation(() => database.quotes.create(input)));
   ipcMain.handle('quotes:add-catalog-line', (_event, quoteId: string, catalogVersionId: string, input?: Partial<QuoteLineInput>) => guardedMutation(() => database.quotes.addCatalogLine(quoteId, catalogVersionId, input)));

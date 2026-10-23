@@ -1,43 +1,33 @@
 # Manager — consignes et reprise courte
 
-Mise à jour :22/10/2026. Synthèse des décisions de cette conversation ; pas une transcription. Les demandes récentes de l’utilisateur priment. Le suivi général reste PROJECT_STATUS.md ; ne pas créer de feuille de route concurrente pour Manager/Bridge.
+Mise à jour : 23/10/2026. Les demandes récentes de l’utilisateur priment. Suivi général : PROJECT_STATUS.md. Périmètre actuel : Prospection, composants CRM partagés concernés et lanceur ; aucun chantier Bridge implicitement autorisé.
 
-## Travailler avec un budget maîtrisé
+## Travail et validations
 
-- Réponses courtes, concrètes ; éviter les longs audits répétés, propositions et explications déjà données.
-- Traiter uniquement la page et le problème demandés. Conserver les fonctionnalités ; ne pas généraliser la refonte aux autres vues avant validation.
-- Pendant la collecte de captures : relever les défauts sans coder si l’utilisateur demande de les garder pour après. Après « corrige tout », regrouper les points connus en une passe cohérente.
-- Ne pas refaire les travaux et contrôles déjà validés. Lire ce mémo une fois ; rechercher seulement les fichiers pertinents. Respecter les autres lectures obligatoires du dépôt.
-- Référence de recette visuelle :1920×1080, thème Noir avec palette bleu nuit/jaune approuvée, densité Confort, zoom100%. Le code doit rester adaptable ; aucune matrice de tailles/thèmes sans demande ou anomalie précise à reproduire.
-- Tests proportionnés : inspection visuelle ciblée et parcours touchés ; typecheck si TypeScript modifié. Ne pas relancer la suite complète ni visiter les17 modules pour une correction visuelle. Tests supplémentaires seulement après modification pertinente, échec ou risque concret non résolu. Une modification documentaire ne nécessite pas de tests applicatifs.
-- Ne pas fabriquer un portable/ZIP à chaque échange. Regrouper les corrections ; préparer une livraison quand l’utilisateur la demande ou quand une livraison est déjà explicitement en cours. Ne pas reconstruire si les sources n’ont pas changé.
-- Pas de délégation/sous-agents sans demande. Pas de recherche Internet pour les simples corrections locales. Sorties d’outils courtes, recherches ciblées ; pas de lectures/captures massives inutiles.
-- En fin de lot : mettre à jour ce mémo en remplaçant l’état précédent, puis PROJECT_STATUS pour une étape significative. Rapporter résultat, contrôles et limite réelle sans répéter tout l’historique.
+- Lire AGENTS.md et les lectures obligatoires du dépôt. Réponses courtes et concrètes, pas de reprise du chat complet.
+- Aucune délégation sans demande. Pas de recherche web pour ces corrections locales.
+- Respecter les brouillons UX-01, conflits et règles métier. Informations liées à leurs identités canoniques ; aucune duplication de système Entreprise / Contacts / Prospects.
+- Garder six étapes actives du pipeline, conversions protégées, contrats, devis et snapshots acceptés, historiques.
+- Référence de recette : Noir, densité Confort, zoom 100 %, fenêtre 1920×1080 CSS. Adaptable aux autres thèmes ; contrôles ciblés si anomalie réelle.
+- Contrôles proportionnés : pas de suite complète, matrice ou reconstruction sans changement pertinent. Ne pas relancer les contrôles déjà réussis uniquement pour reprendre.
+- Bases de test TEMP déterministes ; nouveaux portables sur Workspace TEST distinct. Ne pas toucher ni écraser les saisies dans les anciennes recettes.
+- Pas de main/fusion/push/CI/installateur ou activation EC04/B1 sans autorisation correspondante.
+- À la fin d’une étape significative, actualiser PROJECT_STATUS et remplacer ce mémo par l’état utile courant.
 
-## Décisions produit durables
+## Dernier état
 
-- Manager beau et pratique : informations utiles, textes compréhensibles, pas de doublons ni annotations techniques inutiles ; sections repliables et commandes explicites.
-- Conserver logo AtoumWeb approuvé, palette et Accueil/en-tête validés. Barre supérieure : recherche unique, date, chrono unique, cloche et réglages ; pas de compactage/burger dans le vrai shell.
-- Prospection : annuaire, parcours commercial, historique ; fiche de travail distincte de la référence. Lecture puis modification explicite ; préserver les brouillons et gardes UX01.
-- Défilements accessibles et contenus bornés ; ne pas écraser les colonnes, couper les mots ou masquer les commandes.
-- Ne pas inventer compteurs, dates de vérification, états de devis ou fonctions métier à partir d’une maquette.
-- Aucune donnée réelle modifiée. Tests sur bases TEMP déterministes, portables sur nouveau jeu fictif. Anciennes recettes intactes.
-- Aucun main/fusion/push/CI sans autorisation correspondante. Aucun installateur. EC04 reste expérimental, non exposé ; aucune activation de sauvegarde complète B1.
+- Nouvelle demande autorisée : dépôt privé dédié https://github.com/atoumweb-prog/atoumweb-manager-prospection créé pour cette version ; commit/push de la branche codex/crm-saisie-coherente autorisés vers ce dépôt uniquement. Remote prospection ; origin historique inchangé. Actions désactivé avant push ; aucun exécutable ni donnée utilisateur publié.
 
-## État utile pour reprendre
-
-- Depot local : C:/DEV/01_PROJETS/AtoumWeb/atoumweb-manager-ec04-validation.
-- Branche courante : codex/prospection-ux-six-lots ; baseline50b749b0, code finale40dd1298616b8a635873d7b328d32f4e2f6473c. Commits documentaires possibles apres sans changement de code.
-- Autorisation du22/10 : appliquer les six lots UX sequentiellement sans validation intermediaire. Disposition confirmee : logo/nom et synthese commerciale en haut, Identite/logo et Associations a la demande, deux onglets pleine largeur. Remplace la mention de trois colonnes permanentes du cahier.
-- Realise : annuaire5 colonnes par defaut, vues existantes preservees et volet adaptatif ; creation en dialogue et contacts reutilisables ; groupe metier pertinent ouvert, besoins/catalogue restructures ; actions/compte rendu/suite en dialogue ; confirmations lisibles et historique filtre ; reference avec controles repliables et conflit observe protege ; pipeline compact avec rappels et alternative clavier.
-- Bilan : docs/ux-v2/PROSPECTION-SIX-LOTS-2026-10-22.md ; cahier utilisateur copie dans PROSPECTION-CAHIER-UX-2026-10-22.md. Tous les points sont evalues avec adaptations/limites explicites.
-- Controles deja passes : typecheck/build Vite renderer ;1666/1666 tests complets(195 fichiers), puis85/85 cibles ;118 controles natifs cumules TEMP,9 combinaisons taille/zoom pour Annuaire, clavier natif Tab/Maj+Tab/Escape et contrastes >=4,5 des confirmations sur3 themes ; etats devis avec lignes/preparation/envoi/accord/refus/conversion controles. Ne pas repeter sans modification pertinente.
-- Limites metier conservees : Contact mono-entreprise ; QuoteService.accept convertit/rattache deja le Client apres confirmation ; snapshots de reference append-only sans CAS atomique public pour deux saves exactement simultanes. Pas de service, migration ou contrat public modifie.
-- Galerie apres : outputs/prospection-ux-lots (49 PNG). Comparatif : C:/Users/AtoumWeb/Downloads/Prospection-refonte-six-lots-20261022/index.html et ZIP du meme nom (49 apres/11 avant). Avant : outputs/prospection-galerie-20261022 (69 captures).
-- PR preparee localement dans docs/ux-v2/PROSPECTION-PR-PREPAREE.md ; aucun push/CI/PR distant. Le pilote parent n'est pas dans origin/main, choisir la base avant publication. Refonte Client hors perimetre ; main et activations EC04/B1 inchanges.
-- Dernier portable livre reste42b12a93125796f60aeec1cef1dd9ea4b2a52c3f, non reconstruit : C:/DEV/03_LIVRAISONS/AtoumWeb/Manager-Pilote-20261022-42b12a93/LANCER-LE-MANAGER.cmd ; ZIP Downloads/AtoumWeb-Pilote-42b12a93.zip. Ancienne reserve Electron startupData au premier lancement non reproduite ensuite, cause inconnue.
-- Validation visuelle utilisateur encore attendue. Prochaine action : retours sur galerie, puis livraison/publication seulement si demandee ; ne pas declarer l'ergonomie approuvee parce que les tests passent.
-
-## Phrase pour un nouveau chat
-
-« Lis AGENTS.md et docs/ux-v2/CONSIGNES-ET-REPRISE.md. Reprends l’état actuel sans refaire les validations. Voici la page ou le défaut à traiter :… »
+- Dépôt : C:/DEV/01_PROJETS/AtoumWeb/atoumweb-manager-ec04-validation ; branche codex/crm-saisie-coherente, HEAD b0800783, modifications locales de toutes les passes conservées. Ne pas réinitialiser.
+- Dernière autorisation : appliquer les corrections relevées et corriger l’exécutable, texte noir du bouton Entreprise inclus. Passe réalisée.
+- Sept onglets : Entreprise / Contacts / Préparer l’échange / Besoins / Actions et échanges / Devis / Historique. Préparation contient Analyse et Objectif/questions. Besoins réparti en quatre sous-onglets, formulaires compacts ; intentions sans prix ni offre forcée.
+- Entreprise : URL canonique éditable et présence du site sauvegardées atomiquement avec CAS ; coordonnées générales. Contacts : cartes avec téléphone/email, choix du principal/décisionnaire, fonction contextuelle. Éditeur réel du devis intégré avec contexte et contrôle avant devis ; même source et éditeur que le registre global.
+- Consultation distincte de l’étape, avertissement préalable et liens vers champs manquants, saisies protégées. Création du brouillon atomique/rejouable et vide de lignes, après contrôle du dossier ; aucun chiffrage automatique des intentions.
+- Modèle : SQLite 74 inchangé ; sources uniques, relations multi-entreprises, CAS, demande initiale / besoin confirmé distincts, continuité historique conservés.
+- Validation : typecheck/package ; 94 tests ciblés distincts + 5 plan avant devis ; 29 assertions natives TEMP sans erreur renderer ; 16 captures. Véritable package : 31 assertions/12 visites/trois thèmes, intégrité/FK/registre conformes. Pas de répétition sans changement pertinent. Banc smoke : attente RAF bornée pour fenêtres en arrière-plan.
+- Livraison : C:/DEV/03_LIVRAISONS/AtoumWeb/Manager-Prospection-20261023-166160dc/LANCER-LE-MANAGER.cmd. Empreintes et syntaxe du lanceur vérifiées. app.asar 166160dc9a16deba27999b392a2fe5fc78fe532e8043b1369703e271f2de6984 ; exe 33952e3fb435581bdaa08ad24e51c22cf80b17b34a95f27558a28952449f1802.
+- Nouveau profil et Workspace TEST indépendants. Ancienne recette Manager-Prospection-20261023-16cfd49e avec saisies Le Bon Pain intacte, autres anciens portables intacts. Aucun transfert/migration automatique des données utilisateur.
+- Galerie : C:/Users/AtoumWeb/Downloads/Prospection-parcours-20261023-166160dc/index.html ; aussi outputs/prospection-parcours-20261023 et Captures de la livraison.
+- Bilan : PROSPECTION-PARCOURS-RECETTE-2026-10-23.md. Bilan précédent : PROSPECTION-ONGLETS-RECETTE-2026-10-23.md ; socle : PROSPECTION-CRM-CINQ-LOTS-2026-10-23.md.
+- Limites : pas d’enrichissement fictif de l’historique ; catalogue/chiffrage dans Devis, intentions distinctes. Règles existantes de validation/envoi/acceptation conservées. Aucun main/push/CI/installateur/Bridge.
+- Prochaine action : recette utilisateur du portable ; aucun autre chantier implicitement autorisé.

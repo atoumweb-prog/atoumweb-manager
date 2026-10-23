@@ -1,3 +1,4 @@
+import {beforeQuoteMissing} from '../../shared/prospectProgress';
 import { activePreparation, assertPreparedContent, contractHash, contractSourceHash } from './quoteTransmission';
 import type { QuoteSendAttestation, QuoteTransmissionState } from '../../shared/quoteTransmission';
 import { OperationalSalesTargetService } from '../operations/OperationalSalesTargetService';
@@ -273,6 +274,23 @@ export class QuoteService {
       throw error;
     }
     return this.get(id);
+  }
+
+  /** One initial draft, assembled explicitly in the existing editor; no intent is priced automatically. */
+  prepareProspectDraft(prospectId:string,expectedUpdatedAt:string,expectedNeeds:Array<{id:string;catalogItemId:string|null;otherText:string|null}>):QuoteDetail {
+    this.database.exec('BEGIN IMMEDIATE;');
+    try {
+      const existing=this.database.get<{id:string}>("SELECT id FROM quotes WHERE prospect_id=? AND status='draft' ORDER BY created_at DESC,id DESC LIMIT 1",[prospectId]);
+      if(existing){const saved=this.get(existing.id);this.database.exec('COMMIT;');return saved;}
+      const p=this.crm.listProspects({includeArchived:true}).find(p=>p.id===prospectId);
+      if(!p||p.archivedAt||p.clientAccountId||!['need_identified','quote_to_prepare','quote_to_send','quote_sent','follow_up','waiting','negotiation'].includes(p.stage??''))throw Error('Valide d’abord les étapes de qualification et de besoin.');
+      const needs=this.database.all<{id:string;catalogItemId:string|null;otherText:string|null}>('SELECT id,catalog_item_id AS catalogItemId,other_text AS otherText FROM crm_needs WHERE prospect_id=? ORDER BY id',[prospectId]);
+      const normalized=[...expectedNeeds].map(n=>({id:n.id,catalogItemId:n.catalogItemId,otherText:n.otherText})).sort((a,b)=>a.id.localeCompare(b.id));
+      if(p.updatedAt!==expectedUpdatedAt||JSON.stringify(needs)!==JSON.stringify(normalized))throw Error('Conflit : le besoin ou les prestations envisagées ont changé. Actualise le contrôle.');
+      const missing=beforeQuoteMissing(p,needs.length>0);if(missing.length)throw Error('Avant devis : '+missing.map(m=>m.label).join(', '));
+      const q=this.create({prospectId,subject:p.projectSummary!.trim(),needSummary:[p.projectSummary,p.projectContext].filter(Boolean).join('\n\n'),estimatedDelay:p.targetDate||p.timelineNote||null,validityDays:30,depositPercent:30},true);
+      this.database.exec('COMMIT;');return q;
+    }catch(error){this.database.exec('ROLLBACK;');throw error;}
   }
 
   createWithLines(input: QuoteInput, lines: Array<{ catalogVersionId?: string; input: QuoteLineInput }>): QuoteDetail {

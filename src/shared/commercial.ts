@@ -339,6 +339,7 @@ export interface QuoteApi {
   setLineParameters(lineId:string,parameters:QuoteLineParameters):Promise<QuoteDetail>;
   preparationIssues(id:string):Promise<string[]>;
   operationalSales(id:string):Promise<Record<string,unknown>[]>;
+  prepareProspectDraft(prospectId:string,expectedUpdatedAt:string,expectedNeeds:Array<{id:string;catalogItemId:string|null;otherText:string|null}>):Promise<QuoteDetail>;
   createWithLines(input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>): Promise<QuoteDetail>;
   list(filters?: QuoteFilters): Promise<QuoteSummary[]>;
   get(id: string): Promise<QuoteDetail>;

@@ -1,6 +1,6 @@
 import {ProspectDialog} from './ProspectDialog';
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import type { ActivityEvent, CrmAction, ProspectSummary } from '../../shared/crm';
 import type { WorkflowIdentity } from '../../shared/workflow';
 
@@ -136,6 +136,7 @@ export function ProspectActionsPanel({ prospect, actions, onChanged, showJournal
   const [notes, setNotes] = useState('');
   const [recurrence, setRecurrence] = useState<'none' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'>('none');
   const [completingId, setCompletingId] = useState<string | null>(null);
+  const actionOperation=useRef(crypto.randomUUID());
   const [channel, setChannel] = useState('phone');
   const [outcome, setOutcome] = useState('prospect_reached');
   const [completionNotes, setCompletionNotes] = useState('');
@@ -236,7 +237,7 @@ export function ProspectActionsPanel({ prospect, actions, onChanged, showJournal
     if (followUp && !dueDate) { setError('Choisis une date pour le rappel / la relance.'); return; }
     setBusy(true); setError('');
     try {
-      await window.atoumweb.crm.actions.create({
+      await window.atoumweb.crm.actions.create({operationId:actionOperation.current,
         ownerType: 'prospect', ownerId: prospect.id, type: followUp ? 'follow_up' : 'action', title: title.trim(),
         dueAt: toDueAt(dueDate, dueTime), notes: notes.trim() || null,
         targetContactId: targetContactId || null, reasonCode: reasonCode || null,
@@ -244,7 +245,7 @@ export function ProspectActionsPanel({ prospect, actions, onChanged, showJournal
         relatedType: quoteContext && latestQuote ? 'quote' : null,
         relatedId: quoteContext && latestQuote ? latestQuote.id : null, recurrence,
       });
-      actionGuard.saved();setCreationCycle(n=>n+1);setCreateOpen(false); setDueDate(''); setDueTime(''); setNotes(''); setReasonText(''); setRecurrence('none');
+      actionOperation.current=crypto.randomUUID();actionGuard.saved();setCreationCycle(n=>n+1);setCreateOpen(false); setDueDate(''); setDueTime(''); setNotes(''); setReasonText(''); setRecurrence('none');
       onChanged(followUp ? 'Rappel / relance programmé.' : 'Action commerciale ajoutée.');
       window.dispatchEvent(new Event('atoumweb:changed'));
     } catch (e) { setError(cleanError(e)); }
@@ -269,7 +270,7 @@ export function ProspectActionsPanel({ prospect, actions, onChanged, showJournal
         nextAction: outcome === 'categorical_refusal' ? null : explicitNext,
       });
       if (outcome === 'categorical_refusal') {
-        await window.atoumweb.crm.prospects.updateQualification(prospect.id, { lostReasonCode: 'categorical_refusal' });
+        await window.atoumweb.crm.prospects.patchIfUnchanged(prospect.id,{lostReasonCode:prospect.lostReasonCode??null},{lostReasonCode:'categorical_refusal'});
         await window.atoumweb.crm.prospects.changeStage(prospect.id, 'lost', 'Refus catégorique');
       }
       completeGuard.saved();setCompletingId(null); setCompletionNotes(''); resetNext();

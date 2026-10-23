@@ -1,3 +1,8 @@
+import {ProspectQuoteWorkspace} from './ProspectQuoteWorkspace';
+import {qualificationMissing,beforeQuoteMissing,type ProspectMissing} from '../../shared/prospectProgress';
+import {ProspectTimeline} from './ProspectTimeline';
+import {activePipelineColumn} from '../../shared/prospectPipelineProjection';
+import './prospect-workspace-tabs.css';
 import {readLayout,writeLayout,layoutKey} from '../../shared/panelLayout';
 import {ProspectDialog} from './ProspectDialog';
 import {ProspectValue} from './ProspectValue';
@@ -89,6 +94,7 @@ const MANUAL_STAGE_OPTIONS: Record<ProspectStage, ProspectStage[]> = {
 };
 
 interface ProspectDraft {
+  organizationId?:string; contactId?:string;
   company: string; industry: string; activityDescription: string; website: string; websitePresence?:'present'|'absent'|'review';
   addressLine1: string; addressLine2: string; postalCode: string; city: string; country: string;
   firstName: string; lastName: string; jobTitle: string; email: string; phone: string;
@@ -199,9 +205,15 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const closeCreation=()=>requestUnsavedExit(()=>setShowForm(false),'prospect:create');
+  const [creationTab,setCreationTab]=useState('company');
+  const [draftLogo,setDraftLogo]=useState<{token:string;preview:string;name:string}|null>(null);
   const [draft, setDraft] = useState<ProspectDraft>(EMPTY_DRAFT);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const creationOperation=useRef(crypto.randomUUID());
+  const [existingOrganizations,setExistingOrganizations]=useState<import('../../shared/crm').DirectoryOrganization[]>([]);
+  const [existingContacts,setExistingContacts]=useState<import('../../shared/crm').DirectoryContact[]>([]);
+  useEffect(()=>{if(!showForm)return;let active=true;Promise.all([window.atoumweb.crm.organizations.list(),window.atoumweb.crm.contacts.list()]).then(([o,c])=>{if(active){setExistingOrganizations(o);setExistingContacts(c);}}).catch(e=>{if(active)setFormError(String(e));});return()=>{active=false;};},[showForm]);
   const [selectedId, applySelectedId] = useState<string | null>(initialId ?? null);
   const splitKey=layoutKey('prospection','directory');
   const [prospectSplitPercent, applyProspectSplitPercent] = useState(()=>{try{return Math.max(40,Math.min(74,readLayout(window.atoumweb.visualPreferences,splitKey,66)));}catch{return 66;}});
@@ -212,9 +224,9 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   const [quickDateFor,setQuickDateFor]=useState<ProspectSummary|null>(null),[quickDate,setQuickDate]=useState(''),[quickSaving,setQuickSaving]=useState(false),[quickError,setQuickError]=useState('');
   const quickDateGuard=useUnsavedDraft('Date du rappel',{quickDate},{group:'prospect:quick-date',pending:quickSaving,discard:value=>setQuickDate(value.quickDate)});
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  useUnsavedDraft('Nouvelle entreprise',draft,{group:'prospect:create',pending:saving,discard:saved=>setDraft(saved)});
+  useUnsavedDraft('Nouvelle entreprise',{draft,draftLogo},{group:'prospect:create',ready:showForm||saving,pending:saving,discard:saved=>{setDraft(saved.draft);setDraftLogo(saved.draftLogo);}});
   function setSelectedId(id:string|null){if(id===selectedId)return true;return requestUnsavedExit(()=>applySelectedId(id),selectedId?'prospect:'+selectedId+'/panel':'prospect:none');}
-  function setDeskModeId(id:string|null){if(id===deskModeId)return;requestUnsavedExit(()=>applyDeskModeId(id),deskModeId?'prospect:'+deskModeId+'/desk':selectedId?'prospect:'+selectedId+'/panel':'prospect:none');}
+  function setDeskModeId(id:string|null){if(id===deskModeId)return;requestUnsavedExit(()=>applyDeskModeId(id));}
   function setView(next:View){if(next===view)return;requestUnsavedExit(()=>applyView(next),selectedId?'prospect:'+selectedId+'/panel':'prospect:none');}
   const loadedOnce=useRef(false);
   const refreshGeneration=useRef(0);
@@ -299,7 +311,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   }), [directory, directorySearch, directoryIndustry, directoryCity, directoryStatusFilter, followUpBuckets]);
   const closed = useMemo(() => prospects.filter(isClosed), [prospects]);
   const selected = prospects.find((item) => item.id === selectedId) ?? null;
-  const deskProspect = prospects.find((item) => item.id === deskModeId) ?? null;
+  const deskProspect = withCurrentQuoteSignal(prospects,quotes).find((item) => item.id === deskModeId) ?? null;
   useSearchTargetConfirmation('prospect',(deskProspect??selected)?.id,loading,onEntityReady);
 
   const selectedActions = actions.filter((item) => item.ownerId === selectedId);
@@ -321,7 +333,8 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
 
   async function submitProspect(event: FormEvent) {
     event.preventDefault(); setFormError('');
-    if (!draft.company.trim() && (!draft.firstName.trim() || !draft.lastName.trim())) { setFormError('Renseigne une société ou le prénom et le nom du contact.'); return; }
+    if (!draft.organizationId && !draft.contactId && !draft.company.trim() && (!draft.firstName.trim() || !draft.lastName.trim())) { setFormError('Renseigne une société ou le prénom et le nom du contact.'); return; }
+    if(!draft.contactId&&Boolean(draft.firstName.trim())!==Boolean(draft.lastName.trim())){setFormError('Renseigne le prénom et le nom, ou sélectionne une personne existante.');return;}
     setSaving(true);
     try {
       // Validate shared contact rules before creating any identity record.
@@ -330,47 +343,32 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
       const normalized = draft.estimatedValueEuros.trim().replace(',', '.');
       const estimatedValueCents = normalized ? Math.round(Number(normalized) * 100) : null;
       if (estimatedValueCents != null && (!Number.isFinite(estimatedValueCents) || estimatedValueCents < 0)) throw new Error('Valeur estimée invalide.');
-      let organizationId: string | null = null; let contactId: string | null = null;
-      if (draft.company.trim()) {
-        const organization = await window.atoumweb.crm.organizations.create({ name: draft.company.trim(), industry: draft.industry.trim() || null, notes: draft.activityDescription.trim() || null, website, addressLine1: draft.addressLine1.trim() || null, addressLine2: draft.addressLine2.trim() || null, postalCode: draft.postalCode.trim() || null, city: draft.city.trim() || null, country: draft.country.trim() || null });
-        organizationId = organization.id;
-      }
-      if (draft.firstName.trim() && draft.lastName.trim()) {
-        const contact = await window.atoumweb.crm.contacts.create({ organizationId, firstName: draft.firstName.trim(), lastName: draft.lastName.trim(), jobTitle: draft.jobTitle.trim() || null, email: draft.email.trim() || null, phone: draft.phone.trim() || null });
-        contactId = contact.id;
-        if (draft.email.trim()) await window.atoumweb.crm.contactMethods.save({ contactId, type: 'email', value: draft.email.trim(), label: 'Principal', isPrimary: true });
-        if (draft.phone.trim()) await window.atoumweb.crm.contactMethods.save({ contactId, type: 'phone', value: draft.phone.trim(), label: 'Principal', isPrimary: true });
-      } else if (organizationId) {
-        if (draft.email.trim()) await window.atoumweb.crm.contactMethods.save({ organizationId, type: 'email', value: draft.email.trim(), label: 'Accueil / principal', isPrimary: true });
-        if (draft.phone.trim()) await window.atoumweb.crm.contactMethods.save({ organizationId, type: 'phone', value: draft.phone.trim(), label: 'Accueil / principal', isPrimary: true });
-      }
-      const prospect = await window.atoumweb.crm.prospects.create({ organizationId, contactId, stage: 'new', temperature: draft.temperature, source: draft.source, sourceDetail: draft.source === 'other' ? draft.sourceDetail.trim() || null : null, estimatedValueCents });
-      const structuredKnowledge = [draft.services, draft.customerSegments, draft.differentiators, draft.talkingPoints, draft.approach].some((value) => value.trim()) || !!website || draft.websitePresence==='absent' || draft.websitePresence==='present';
-      if (structuredKnowledge) {
-        await window.atoumweb.crm.prospects.research.save(prospect.id, {
-          checkedAt: new Date().toISOString().slice(0, 10),
-          source: 'Saisie annuaire',
-          sourceUrl: website,
-          services: splitList(draft.services),
-          customerSegments: splitList(draft.customerSegments),
-          differentiators: splitList(draft.differentiators),
-          website: {presence:draft.websitePresence==='absent'?'absent':website||draft.websitePresence==='present'?'present':'review',url:website},
-          conversation: {
-            talkingPoints: draft.talkingPoints.trim() || null,
-            approach: draft.approach.trim() || null,
-          },
-        });
-      }
-      if (draft.firstActionText.trim() || draft.firstActionDate) await window.atoumweb.crm.actions.create({ ownerType: 'prospect', ownerId: prospect.id, type: 'action', title: draft.firstActionText.trim() || 'Première prise de contact', dueAt: draft.firstActionDate ? new Date(`${draft.firstActionDate}T09:00:00`).toISOString() : null });
-      setDraft(EMPTY_DRAFT); setShowForm(false); await refresh(); setSelectedId(prospect.id); onMessage('Prospect créé. Il reste en « Nouveau contact » jusqu’au démarrage de la prospection.');
+      if(draft.organizationId&&!draft.contactId&&!draft.firstName.trim()&&(draft.email.trim()||draft.phone.trim()))throw Error('Pour ajouter les coordonnées d’une entreprise existante, utilise sa fiche Identité ; pour une personne, renseigne son prénom et son nom.');
+      const hasNewContact=!draft.contactId&&!!draft.firstName.trim()&&!!draft.lastName.trim();
+      const prospect=await window.atoumweb.crm.prospects.createAtomic({
+        operationId:creationOperation.current,
+        organizationId:draft.organizationId||null,
+        organization:!draft.organizationId&&draft.company.trim()?{name:draft.company.trim(),industry:draft.industry,notes:draft.activityDescription,website,addressLine1:draft.addressLine1,addressLine2:draft.addressLine2,postalCode:draft.postalCode,city:draft.city,country:draft.country,...(!hasNewContact&&!draft.contactId?{email:draft.email,phone:draft.phone}:{})}:undefined,
+        contactId:draft.contactId||null,
+        contact:hasNewContact?{firstName:draft.firstName.trim(),lastName:draft.lastName.trim(),jobTitle:draft.jobTitle,email:draft.email,phone:draft.phone}:undefined,
+        prospect:{temperature:draft.temperature,source:draft.source,sourceDetail:draft.source==='other'?draft.sourceDetail.trim()||null:null,estimatedValueCents},
+        research:[draft.services,draft.customerSegments,draft.differentiators,draft.talkingPoints,draft.approach].some(v=>v.trim())||website||draft.websitePresence==='absent'?{
+          checkedAt:null,source:'Saisie annuaire',sourceUrl:website,services:splitList(draft.services),customerSegments:splitList(draft.customerSegments),differentiators:splitList(draft.differentiators),website:{presence:draft.websitePresence==='absent'?'absent':website?'present':'review',url:website},conversation:{talkingPoints:draft.talkingPoints,approach:draft.approach}
+        }:undefined,
+        firstAction:draft.firstActionText.trim()||draft.firstActionDate?{title:draft.firstActionText.trim()||'Première prise de contact',dueAt:draft.firstActionDate?new Date(`${draft.firstActionDate}T09:00:00`).toISOString():null}:undefined
+      });
+      if(draftLogo){const owner=prospect.organizationId?'organization':'contact',id=prospect.organizationId||prospect.contactId;if(id){try{await window.atoumweb.crm.identityAssets.attachDraft(draftLogo.token,owner,id);}catch(error){setFormError('La fiche est créée, mais le logo reste à enregistrer. '+cleanBusinessError(error,'Réessaie sans modifier les autres champs.'));return;}}}
+      setDraftLogo(null);setCreationTab('company');
+      creationOperation.current=crypto.randomUUID();
+      setDraft(EMPTY_DRAFT); setShowForm(false); await refresh(); setSelectedId(prospect.id); setDeskModeId(prospect.id); onMessage('Prospect créé. Il reste en « Nouveau contact » jusqu’au démarrage de la prospection.');
     } catch (e) { setFormError(cleanBusinessError(e, 'Création impossible.')); }
     finally { setSaving(false); }
   }
 
   async function updateTemperature(prospect: ProspectSummary, temperature: ProspectTemperature) {
     try {
-      await window.atoumweb.crm.prospects.update(prospect.id, { ...prospect, temperature });
-      await refresh(); onMessage(`Niveau d’intérêt : ${TEMPERATURE_LABELS[temperature]}.`);
+      await window.atoumweb.crm.prospects.updateTemperature(prospect.id, prospect.temperature, temperature);
+      await refresh(); onMessage(`Température commerciale : ${TEMPERATURE_LABELS[temperature]}.`);
     } catch (e) { onMessage(cleanBusinessError(e, 'Modification de la température commerciale impossible.')); }
   }
 
@@ -419,16 +417,16 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     }catch(error){const message=cleanBusinessError(error,'Programmation impossible.');setQuickError(message);onMessage(message);}finally{setQuickSaving(false);}
   }
 
-  async function archive(prospect: ProspectSummary) { if(!requestUnsavedExit(()=>{},'prospect:'+prospect.id))return;await window.atoumweb.workflow.archiveProspect(prospect.id, true); setSelectedId(null); setDeskModeId(null); await refresh(); onMessage('Prospect archivé.'); }
+  async function archive(prospect: ProspectSummary):Promise<boolean> { if(!requestUnsavedExit(()=>{},'prospect:'+prospect.id))return false;try{await window.atoumweb.workflow.archiveProspect(prospect.id, true);setSelectedId(null);setDeskModeId(null);await refresh();onMessage('Prospect archivé.');return true;}catch(error){onMessage(cleanBusinessError(error,'Archivage impossible.'));return false;} }
 
-  async function markLost(prospect: ProspectSummary, reasonCode: string, reasonText: string) {
-    if (!reasonText.trim()) return;
-    if(!requestUnsavedExit(()=>{},'prospect:'+prospect.id))return;
+  async function markLost(prospect: ProspectSummary, reasonCode: string, reasonText: string):Promise<boolean> {
+    if (!reasonText.trim()) return false;
+    if(!requestUnsavedExit(()=>{},'prospect:'+prospect.id))return false;
     try {
-      await window.atoumweb.crm.prospects.updateQualification(prospect.id, { lostReasonCode: reasonCode });
+      await window.atoumweb.crm.prospects.patchIfUnchanged(prospect.id,{lostReasonCode:prospect.lostReasonCode??null},{lostReasonCode:reasonCode});
       await window.atoumweb.crm.prospects.changeStage(prospect.id, 'lost', reasonText.trim());
-      setSelectedId(null); setDeskModeId(null); await refresh(); onMessage('Prospect classé perdu.');
-    } catch (e) { onMessage(cleanBusinessError(e, 'Classement en perdu impossible.')); }
+      setSelectedId(null); setDeskModeId(null); await refresh(); onMessage('Prospect classé perdu.');return true;
+    } catch (e) { onMessage(cleanBusinessError(e, 'Classement en perdu impossible.'));return false; }
   }
 
   async function handleGroupDrop(stages: ProspectStage[]) {
@@ -488,9 +486,9 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     onClose={() => {if(setSelectedId(null))requestAnimationFrame(()=>document.querySelector<HTMLElement>(`tr[data-record-id="${selected?.id}"]`)?.focus({preventScroll:true}));}}
     onOpenDesk={(tab='commercial',action=false) => {setDeskStartTab(tab);setDeskAction(action);setDeskModeId(selected.id);}}
     onTemperature={(temperature) => void updateTemperature(selected, temperature)}
-    onStart={() => void startProspecting(selected)}
-    onLost={(code, reason) => void markLost(selected, code, reason)}
-    onArchive={() => void archive(selected)}
+    onStage={stage=>void changeStage(selected,stage)} onStart={() => void startProspecting(selected)}
+    onLost={(code, reason) => markLost(selected, code, reason)}
+    onArchive={() => archive(selected)}
   /></div> : null;
 
   const renderProspectCard = (prospect: ProspectSummary, draggable = true) => {
@@ -548,34 +546,34 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
         <button type="button" className="secondary-button" aria-label="Effacer les filtres" onClick={()=>{setDirectorySearch('');setDirectoryIndustry('');setDirectoryCity('');setDirectoryStatusFilter('all');}}>Effacer les filtres</button><AppButton variant="quiet" aria-label="Actualiser les prospects" title="Actualiser les prospects" icon={<OperationIcon name="refresh"/>} onAction={refresh}/>
       </div>
       <p className="prospection-pilot-results" role="status"><span>{[directorySearch.trim(),directoryIndustry,directoryCity,directoryStatusFilter!=='all'?directoryStatusFilter:''].filter(Boolean).length} filtre(s) actif(s) · </span>{directoryFiltered.length} résultat{directoryFiltered.length>1?'s':''}{directoryStatusFilter!=='all'?' · filtre : '+({follow:'À suivre',prepare:'À préparer',ready:'Prêt pour démarchage',relaunch:'À relancer',overdue:'Relance en retard',...STAGE_LABELS}[directoryStatusFilter]):''}</p>
-      {showForm && <ProspectDialog label="Nouveau prospect" onClose={closeCreation} className="prospect-create-dialog"><form className="panel crm-form prospect-create-v2" onSubmit={(e) => void submitProspect(e)}><div className="panel-title"><div><span className="eyebrow">Annuaire de prospection</span><h2>Nouvelle entreprise à préparer</h2><p className="muted">Enregistre ce que tu sais déjà. Le dossier n’entre dans le parcours commercial qu’au clic sur « Démarrer le parcours commercial ».</p></div></div><div className="form-grid">
-        <label>Société <FieldHelp text="Nom commercial ou nom de la structure." /><input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
+      {showForm && <ProspectDialog label="Nouveau prospect" onClose={closeCreation} className="prospect-create-dialog"><form className="panel crm-form prospect-create-v2" onSubmit={(e) => void submitProspect(e)}><div className="panel-title"><div><span className="eyebrow">Annuaire de prospection</span><h2>Nouvelle entreprise</h2><p className="muted">Enregistre ce que tu sais déjà. Le dossier n’entre dans le parcours commercial qu’au clic sur « Démarrer la prospection ».</p></div></div><div className="prospect-desk-tabs" role="tablist" aria-label="Créer et renseigner l’entreprise">{[['company','Entreprise'],['contact','Contact'],['research','Recherche'],['preparation','Préparation']].map(([id,label])=><button key={id} type="button" role="tab" aria-selected={creationTab===id} className={creationTab===id?'active':''} onClick={()=>setCreationTab(id)}>{label}</button>)}</div><div className="form-grid">
+        <div className="form-span-3 form-grid" hidden={creationTab!=='company'}><button type="button" className="crm-logo-button" aria-label="Charger le logo de l’entreprise" onClick={()=>void window.atoumweb.crm.identityAssets.chooseDraft().then(setDraftLogo).catch(e=>setFormError(String(e)))}>{draftLogo?<img src={draftLogo.preview} alt="Logo sélectionné" style={{width:72,height:72,objectFit:'contain'}}/>:<span className="status-pill">+ Logo</span>}</button>{draftLogo&&<button type="button" className="secondary-button" onClick={()=>setDraftLogo(null)}>Retirer le logo choisi</button>}
+        <label className="form-span-3">Rechercher une entreprise existante<select aria-label="Entreprise existante" value={draft.organizationId??''} onChange={e=>setDraft({...draft,organizationId:e.target.value})}><option value="">Créer une nouvelle entreprise</option>{existingOrganizations.map(o=><option key={o.id} value={o.id}>{o.name} · {o.city||'Ville non renseignée'}</option>)}</select></label>
+        {!draft.organizationId&&<><label>Société <FieldHelp text="Nom commercial ou nom de la structure." /><input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
         <label>Corps de métier / activité <FieldHelp text="Utilise un libellé stable pour pouvoir filtrer l’annuaire : restaurant, artisan, garage, profession libérale…" /><input value={draft.industry} onChange={(e) => setDraft({ ...draft, industry: e.target.value })} placeholder="Ex. restaurant" /></label>
         <label>Site web — facultatif <FieldHelp text="Une adresse n’est pas nécessaire pour ajouter ce prospect. Choisis Pas de site internet si l’absence est connue ; sinon laisse Non renseigné. Une URL saisie doit être valide." /><select aria-label="Situation du site internet" value={draft.websitePresence??(draft.website.trim()?'present':'review')} onChange={e=>{const presence=e.target.value as 'present'|'absent'|'review';setDraft({...draft,websitePresence:presence,website:presence==='absent'?'':draft.website});setFormError('');}}><option value="review">Non renseigné / à vérifier</option><option value="absent">Pas de site internet</option><option value="present">Site internet existant</option></select><input aria-label="Adresse du site web facultative" inputMode="url" disabled={draft.websitePresence==='absent'} value={draft.website} onChange={e=>{setDraft({...draft,website:e.target.value,websitePresence:e.target.value.trim()?'present':'review'});setFormError('');}} placeholder={draft.websitePresence==='absent'?'Pas de site internet':'exemple.fr — facultatif'} /></label>
-        <details className="prospect-create-extra form-span-3"><summary>Informations et adresse (facultatif)</summary><div className="form-grid">        <label className="form-span-3">Présentation / notes source <FieldHelp text="Conserve ici le texte brut récupéré. Les informations importantes sont ensuite rangées dans les champs structurés ci-dessous." /><textarea value={draft.activityDescription} onChange={(e) => setDraft({ ...draft, activityDescription: e.target.value })} placeholder="Texte brut, présentation du site, informations trouvées…" /></label>
+        <details className="prospect-create-extra form-span-3"><summary>Adresse (facultatif)</summary><div className="form-grid">        <label>Adresse<input value={draft.addressLine1} onChange={(e) => setDraft({ ...draft, addressLine1: e.target.value })} /></label><label>Complément<input value={draft.addressLine2} onChange={(e) => setDraft({ ...draft, addressLine2: e.target.value })} /></label><label>Code postal<input value={draft.postalCode} onChange={(e) => setDraft({ ...draft, postalCode: e.target.value })} /></label><label>Ville<input value={draft.city} onChange={(e) => setDraft({ ...draft, city: e.target.value })} /></label><label>Pays<input value={draft.country} onChange={(e) => setDraft({ ...draft, country: e.target.value })} /></label></div></details></>}</div><div className="form-span-3" hidden={creationTab!=='research'}>{!draft.organizationId&&<details open className="prospect-create-extra form-span-3"><summary>Connaissance entreprise (facultatif)</summary><div className="form-grid">        <label className="form-span-3">Présentation / notes source <FieldHelp text="Conserve ici le texte brut récupéré. Les informations importantes sont ensuite rangées dans les champs structurés ci-dessous." /><textarea value={draft.activityDescription} onChange={(e) => setDraft({ ...draft, activityDescription: e.target.value })} placeholder="Texte brut, présentation du site, informations trouvées…" /></label>
         <label className="form-span-2">Services proposés <FieldHelp text="Sépare les services par des virgules. Ils seront enregistrés dans la fiche de connaissance entreprise." /><input value={draft.services} onChange={(e) => setDraft({ ...draft, services: e.target.value })} placeholder="Ex. gardiennage, rondes, intervention sur alarme" /></label>
         <label>Clientèles visées<input value={draft.customerSegments} onChange={(e) => setDraft({ ...draft, customerSegments: e.target.value })} placeholder="Ex. entreprises, collectivités" /></label>
         <label>Points différenciants<input value={draft.differentiators} onChange={(e) => setDraft({ ...draft, differentiators: e.target.value })} placeholder="Ex. 24/7, 3 agences" /></label>
+
+</div></details>}</div><div className="form-span-3 form-grid" hidden={creationTab!=='contact'}><label className="form-span-3">Associer une personne existante<select aria-label="Contact existant" value={draft.contactId??''} onChange={e=>setDraft({...draft,contactId:e.target.value})}><option value="">Créer une personne si nécessaire</option>{existingContacts.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName} · {c.organizationName||'Sans entreprise'}</option>)}</select></label>{!draft.contactId&&<><label>Prénom interlocuteur<input value={draft.firstName} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} /></label><label>Nom interlocuteur<input value={draft.lastName} onChange={(e) => setDraft({ ...draft, lastName: e.target.value })} /></label><label>Fonction<input value={draft.jobTitle} onChange={(e) => setDraft({ ...draft, jobTitle: e.target.value })} placeholder="Gérant, responsable…" /></label><label>Email<input type="email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} /></label><label>Téléphone<input inputMode="tel" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} /></label>
+        </>}</div><div className="form-span-3 form-grid" hidden={creationTab!=='preparation'}><label>Origine <FieldHelp text="Une demande entrante reste Prospect jusqu’à l’acceptation du devis. Choisis la vraie origine pour adapter la qualification." /><select value={draft.source} onChange={(e) => setDraft({ ...draft, source: e.target.value as ProspectSource })}>{PROSPECT_SOURCES.map((source) => <option key={source} value={source}>{SOURCE_LABELS[source]}</option>)}</select></label>{draft.source === 'other' && <label>Préciser l’origine<input value={draft.sourceDetail} onChange={(e) => setDraft({ ...draft, sourceDetail: e.target.value })} /></label>}
         <label className="form-span-2">Points à évoquer pendant la prospection<input value={draft.talkingPoints} onChange={(e) => setDraft({ ...draft, talkingPoints: e.target.value })} placeholder="Ce que tu veux aborder pendant l’appel" /></label>
         <label className="form-span-3">Angle d’approche<input value={draft.approach} onChange={(e) => setDraft({ ...draft, approach: e.target.value })} placeholder="Ex. amélioration de la visibilité locale, refonte du site…" /></label>
-        <label>Adresse<input value={draft.addressLine1} onChange={(e) => setDraft({ ...draft, addressLine1: e.target.value })} /></label><label>Complément<input value={draft.addressLine2} onChange={(e) => setDraft({ ...draft, addressLine2: e.target.value })} /></label><label>Code postal<input value={draft.postalCode} onChange={(e) => setDraft({ ...draft, postalCode: e.target.value })} /></label><label>Ville<input value={draft.city} onChange={(e) => setDraft({ ...draft, city: e.target.value })} /></label><label>Pays<input value={draft.country} onChange={(e) => setDraft({ ...draft, country: e.target.value })} /></label>
-</div></details>
-        <label>Prénom interlocuteur<input value={draft.firstName} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} /></label><label>Nom interlocuteur<input value={draft.lastName} onChange={(e) => setDraft({ ...draft, lastName: e.target.value })} /></label><label>Fonction<input value={draft.jobTitle} onChange={(e) => setDraft({ ...draft, jobTitle: e.target.value })} placeholder="Gérant, responsable…" /></label><label>Email<input type="email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} /></label><label>Téléphone<input inputMode="tel" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} /></label>
-        <label>Origine <FieldHelp text="Une demande entrante reste Prospect jusqu’à l’acceptation du devis. Choisis la vraie origine pour adapter la qualification." /><select value={draft.source} onChange={(e) => setDraft({ ...draft, source: e.target.value as ProspectSource })}>{PROSPECT_SOURCES.map((source) => <option key={source} value={source}>{SOURCE_LABELS[source]}</option>)}</select></label>{draft.source === 'other' && <label>Préciser l’origine<input value={draft.sourceDetail} onChange={(e) => setDraft({ ...draft, sourceDetail: e.target.value })} /></label>}
-        <label>Niveau d’intérêt<select value={draft.temperature} onChange={(e) => setDraft({ ...draft, temperature: e.target.value as ProspectTemperature })}>{PROSPECT_TEMPERATURES.map((temperature) => <option key={temperature} value={temperature}>{TEMPERATURE_LABELS[temperature]}</option>)}</select></label><label>Valeur estimée (€)<input inputMode="decimal" value={draft.estimatedValueEuros} onChange={(e) => setDraft({ ...draft, estimatedValueEuros: e.target.value })} /></label>
+        <label>Température commerciale<select value={draft.temperature} onChange={(e) => setDraft({ ...draft, temperature: e.target.value as ProspectTemperature })}>{PROSPECT_TEMPERATURES.map((temperature) => <option key={temperature} value={temperature}>{TEMPERATURE_LABELS[temperature]}</option>)}</select></label>
         <label>Première action — date<input type="date" value={draft.firstActionDate} onChange={(e) => setDraft({ ...draft, firstActionDate: e.target.value })} /></label><label className="form-span-2">Première action<input value={draft.firstActionText} onChange={(e) => setDraft({ ...draft, firstActionText: e.target.value })} placeholder="Ex. rechercher le gérant, appeler l’accueil…" /></label>
-      </div>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="form-actions"><button className="secondary-button" type="button" onClick={closeCreation}>Annuler</button><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Ajouter à l’annuaire'}</button></div></form></ProspectDialog>}
+      </div></div>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="form-actions"><button className="secondary-button" type="button" onClick={closeCreation}>Annuler</button><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Ajouter à l’annuaire'}</button></div></form></ProspectDialog>}
       {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}>
         <div className="panel table-panel prospect-directory-table-panel">
-          <ConfiguredDataTable<ProspectSummary> fitAvailable defaultVisibleColumnIds={['identity','next_action','due','status','open']} scope={PROSPECT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} rows={directoryFiltered} selectedId={selectedId} getId={p=>p.id} onSelect={p=>setSelectedId(p.id)} className="prospect-directory-table" caption="Annuaire prospects · source complète · tri sur tous les résultats filtrés" columns={[
-            {id:'identity',label:'Entreprise',required:true,sortValue:p=>p.displayName,render:p=><div className="client-name-cell"><CrmIdentityAvatar organizationId={p.organizationId} contactId={p.contactId} name={p.displayName}/><div><strong title={p.displayName}>{p.displayName}</strong><small><span className={'prospect-temperature-dot '+(p.temperature??'neutral')} title={TEMPERATURE_LABELS[p.temperature??'neutral']} aria-label={'Niveau d’intérêt : '+TEMPERATURE_LABELS[p.temperature??'neutral']}/> {SOURCE_LABELS[p.source??'other']}</small></div></div>},
+          <ConfiguredDataTable<ProspectSummary> fitAvailable defaultVisibleColumnIds={['identity','next_action','due','status']} scope={PROSPECT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} rows={directoryFiltered} selectedId={selectedId} getId={p=>p.id} onSelect={p=>setSelectedId(p.id)} className="prospect-directory-table" caption="Annuaire prospects · source complète · tri sur tous les résultats filtrés" columns={[
+            {id:'identity',label:'Entreprise',required:true,sortValue:p=>p.displayName,render:p=><div className="client-name-cell"><CrmIdentityAvatar organizationId={p.organizationId} contactId={p.contactId} name={p.displayName}/><div><strong title={p.displayName}>{p.displayName}</strong><small><span className={'prospect-temperature-dot '+(p.temperature??'neutral')} title={TEMPERATURE_LABELS[p.temperature??'neutral']} aria-label={'Température commerciale : '+TEMPERATURE_LABELS[p.temperature??'neutral']}/> {SOURCE_LABELS[p.source??'other']}</small></div></div>},
             {id:'next_action',label:'Prochaine action',sortValue:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.title??null,render:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.title||<span className="muted">Aucune action programmée</span>},
             {id:'due',label:'Échéance',sortValue:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.dueAt??null,render:p=>{const a=nextOpenAction(actions.filter(a=>a.ownerId===p.id)),date=a?.dueAt;return <span className={date&&new Date(date).getTime()<Date.now()?'prospection-due-overdue':''}>{date?formatDate(date):'—'}</span>;}},
             {id:'industry',label:'Activité',sortValue:p=>p.organizationIndustry??null,render:p=>p.organizationIndustry||<span className="muted">À compléter</span>},
             {id:'city',label:'Ville',sortValue:p=>p.organizationCity??null,render:p=>p.organizationCity||'—'},
             {id:'contact',label:'Contact',sortValue:p=>p.secondaryLabel??null,render:p=>p.secondaryLabel||'À identifier'},
             {id:'status',label:'Statut',sortValue:p=>directoryStatus(p).label,render:p=><span className={'prospect-directory-status prospect-directory-status-'+directoryStatus(p).tone} title={p.stage==='new'&&!prospectReadiness(p).ready?'À compléter : '+prospectReadiness(p).missing.join(', '):directoryStatus(p).label}>{directoryStatus(p).label}</span>},
-            {id:'open',label:'Ouvrir',fixedWidth:76,required:true,render:p=><button type="button" className="link-button pilot-icon-button" title={'Ouvrir '+p.displayName} aria-label={'Ouvrir '+p.displayName} onClick={e=>{e.stopPropagation();setSelectedId(p.id);}}><OperationIcon name="record-open"/></button>},
           ]}/>
 
         </div>
@@ -604,7 +602,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
 
     {(view === 'history' || view === 'conversions') && <>{view === 'conversions' && <div className="module-toolbar prospect-toolbar"><strong>Clients acquis · {historicalConversions.length}</strong><button className="secondary-button" type="button" onClick={() => setView('pipeline')}>Retour au parcours commercial</button></div>}<HistoryView prospects={historyVisible} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected && historyVisible.some((item) => item.id === selected.id) ? selected : null} activity={activity} onClose={() => {if(setSelectedId(null))requestAnimationFrame(()=>document.querySelector<HTMLElement>(`tr[data-record-id="${selected?.id}"]`)?.focus({preventScroll:true}));}} /></>}
     {quickDateFor&&<ProspectDialog label="Programmer un rappel" className="prospect-action-dialog" onClose={()=>quickDateGuard.request(()=>{quickDateGuard.discard();setQuickDateFor(null);})}><div className="inline-editor"><h2>Rappel — {quickDateFor.displayName}</h2><label>Date du rappel<input type="date" value={quickDate} onChange={event=>setQuickDate(event.target.value)}/></label>{quickError&&<p role="alert" className="form-error">{quickError}</p>}<div className="inline-editor-actions"><button type="button" className="secondary-button" onClick={()=>quickDateGuard.request(()=>{quickDateGuard.discard();setQuickDateFor(null);})}>Annuler la saisie</button><button type="button" className="primary-button" disabled={!quickDate||quickSaving} onClick={()=>void scheduleQuick(quickDateFor,0,quickDate)}>Programmer le rappel</button></div></div></ProspectDialog>}
-    {deskProspect && <ProspectDialog className="prospect-desk-dialog prospect-desk-overlay" label={`Fiche de travail ${deskProspect.displayName}`} onClose={()=>setDeskModeId(null)}><div className="prospect-desk-shell"><ProspectDetailV2 prospect={deskProspect} actions={actions.filter((item) => item.ownerId === deskProspect.id)} activity={selectedId === deskProspect.id ? activity : []} mode="desk" initialTab={deskStartTab} initialAction={deskAction} onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setDeskModeId(null)} onTemperature={(temperature) => void updateTemperature(deskProspect, temperature)} onStart={() => void startProspecting(deskProspect)} onLost={(code, reason) => void markLost(deskProspect, code, reason)} onArchive={() => void archive(deskProspect)} /></div></ProspectDialog>}
+    {deskProspect && <ProspectDialog className="prospect-desk-dialog prospect-desk-overlay" label={`Fiche de travail ${deskProspect.displayName}`} onClose={()=>setDeskModeId(null)}><div className="prospect-desk-shell"><ProspectDetailV2 prospect={deskProspect} actions={actions.filter((item) => item.ownerId === deskProspect.id)} activity={selectedId === deskProspect.id ? activity : []} mode="desk" initialTab={deskStartTab} initialAction={deskAction} onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setDeskModeId(null)} onTemperature={(temperature) => void updateTemperature(deskProspect, temperature)} onStage={stage=>void changeStage(deskProspect,stage)} onStart={() => void startProspecting(deskProspect)} onLost={(code, reason) => markLost(deskProspect, code, reason)} onArchive={() => archive(deskProspect)} /></div></ProspectDialog>}
   </div>;
 }
 
@@ -634,7 +632,7 @@ function ProspectWorkAccordion({ title, summary, defaultOpen = false, children, 
 }
 
 function ProspectDetailV2(props:Parameters<typeof ProspectDetailV2Inner>[0]){return <UnsavedGroup name={'prospect:'+props.prospect.id+'/'+props.mode}><ProspectDetailV2Inner {...props}/></UnsavedGroup>;}
-function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, onClose, onOpenDesk, initialTab='commercial', initialAction=false, onTemperature, onStart, onLost, onArchive }: {
+function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, onClose, onOpenDesk, initialTab='commercial', initialAction=false, onTemperature, onStage, onStart, onLost, onArchive }: {
   prospect: ProspectSummary;
   actions: CrmAction[];
   activity: ActivityEvent[];
@@ -645,14 +643,34 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
   initialAction?:boolean;
   initialTab?:'commercial'|'reference';
   onTemperature: (value: ProspectTemperature) => void;
+  onStage: (stage:ProspectStage)=>void;
   onStart: () => void;
-  onLost: (code: string, reason: string) => void;
-  onArchive: () => void;
+  onLost: (code: string, reason: string) => Promise<boolean>;
+  onArchive: () => Promise<boolean>;
 }) {
+  const [closingBusy,setClosingBusy]=useState(false);
   const [lossOpen, setLossOpen] = useState(false);
   const [archiveOpen,setArchiveOpen]=useState(false);
   const [quickContact,setQuickContact]=useState<{role:string;email:string;phone:string}>({role:'',email:'',phone:''});
-  useEffect(()=>{if(mode!=='panel')return;let current=true;const load=async()=>{try{const identity=await window.atoumweb.workflow.identity('prospect',prospect.id);const methods=identity.contact?await window.atoumweb.crm.contactMethods.list('contact',identity.contact.id):[];if(current)setQuickContact({role:identity.contact?.jobTitle||'',email:(methods.find(method=>method.type==='email'&&method.isPrimary)||methods.find(method=>method.type==='email'))?.value||'',phone:(methods.find(method=>method.type==='phone'&&method.isPrimary)||methods.find(method=>method.type==='phone'))?.value||''});}catch{if(current)setQuickContact({role:'',email:'',phone:''});}};void load();window.addEventListener('atoumweb:changed',load);return()=>{current=false;window.removeEventListener('atoumweb:changed',load);};},[prospect.id,mode]);
+  useEffect(()=>{let current=true;const load=async()=>{try{const identity=await window.atoumweb.workflow.identity('prospect',prospect.id);const methods=identity.contact?await window.atoumweb.crm.contactMethods.list('contact',identity.contact.id):[];if(current)setQuickContact({role:identity.contact?.jobTitle||'',email:(methods.find(method=>method.type==='email'&&method.isPrimary)||methods.find(method=>method.type==='email'))?.value||'',phone:(methods.find(method=>method.type==='phone'&&method.isPrimary)||methods.find(method=>method.type==='phone'))?.value||''});}catch{if(current)setQuickContact({role:'',email:'',phone:''});}};void load();window.addEventListener('atoumweb:changed',load);return()=>{current=false;window.removeEventListener('atoumweb:changed',load);};},[prospect.id,mode]);
+  const [workspaceTab,applyWorkspaceTab]=useState(initialAction?'actions':initialTab==='reference'?'preparation':prospect.stage==='new'?'company':prospect.stage==='qualifying'?'preparation':'needs');
+  const [preparationSection,setPreparationSection]=useState<'research'|'preparation'>('research');
+  const [highlightMissing,setHighlightMissing]=useState(false),[hasNeeds,setHasNeeds]=useState(false),[hasContactMethod,setHasContactMethod]=useState(true);
+  const [phaseWarning,setPhaseWarning]=useState<{target:string;missing:ProspectMissing[]}|null>(null);
+  const acknowledged=useRef(new Set<string>());
+  useEffect(()=>{let active=true;const load=()=>{void window.atoumweb.workflow.needs('prospect',prospect.id).then(n=>{if(active)setHasNeeds(n.length>0);}).catch(()=>{});void window.atoumweb.workflow.identity('prospect',prospect.id).then(async i=>{const lists=await Promise.all([i.organization?window.atoumweb.crm.contactMethods.list('organization',i.organization.id):Promise.resolve([]),i.contact?window.atoumweb.crm.contactMethods.list('contact',i.contact.id):Promise.resolve([])]);if(active)setHasContactMethod(lists.some(l=>l.length>0));}).catch(()=>{});};load();window.addEventListener('atoumweb:changed',load);return()=>{active=false;window.removeEventListener('atoumweb:changed',load);};},[prospect.id,prospect.updatedAt]);
+
+  const qualificationGaps=[...qualificationMissing(prospect),...(!hasContactMethod?[{key:'contact',label:'Moyen de contact valide',tab:'contacts' as const}]:[])];
+  const warningKey=(target:string,missing:ProspectMissing[])=>target+':'+prospect.stage+':'+missing.map(m=>m.key).join(',');
+  function completeMissing(item:ProspectMissing){requestUnsavedExit(()=>{setPhaseWarning(null);setHighlightMissing(true);if(item.tab==='contacts')applyWorkspaceTab('contacts');else{applyWorkspaceTab('needs');setNeedsSection(item.tab==='qualification'?'qualification':item.tab);requestAnimationFrame(()=>{document.querySelector<HTMLElement>('.prospect-desk-content [aria-invalid=true]')?.focus();});}});}
+  function goTab(tab:string){requestUnsavedExit(()=>{const missing=tab==='needs'&&['new','qualifying'].includes(prospect.stage??'new')?qualificationGaps:tab==='quotes'?[...(['new','qualifying'].includes(prospect.stage??'new')?qualificationGaps:[]),...beforeQuoteMissing(prospect,hasNeeds)]:[];if(missing.length&&!acknowledged.current.has(warningKey(tab,missing))){setPhaseWarning({target:tab,missing});return;}setViewStage(null);applyWorkspaceTab(tab);});}
+
+  function validateOrShowQualification(){if(qualificationGaps.length){if(workspaceTab==='needs'&&needsSection==='qualification'){setHighlightMissing(true);document.querySelector<HTMLElement>('.qualification-panel-v2 [aria-invalid=true]')?.focus();}else requestUnsavedExit(()=>{setHighlightMissing(true);applyWorkspaceTab('needs');setNeedsSection('qualification');});}else requestUnsavedExit(()=>onStage('need_identified'));}
+  const [needsSection,setNeedsSection]=useState('brief');
+  const previousStage=useRef(prospect.stage);
+  useEffect(()=>{if(previousStage.current!==prospect.stage&&prospect.stage==='need_identified'){setNeedsSection('brief');applyWorkspaceTab('needs');}previousStage.current=prospect.stage;},[prospect.stage]);
+  const [viewStage,setViewStage]=useState<string|null>(null);
+  const [logoOpen,setLogoOpen]=useState(false);
   const [deskTab, applyDeskTab] = useState<'commercial' | 'reference'>(initialTab);
   function setDeskTab(tab:'commercial'|'reference'){if(tab!==deskTab)requestUnsavedExit(()=>applyDeskTab(tab),'prospect:'+prospect.id+'/'+mode);}
   const [identityFocus, setIdentityFocus] = useState<{ target: 'decision' | 'contact'; sequence: number } | null>(null);
@@ -665,6 +683,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
   const nextAction = nextOpenAction(openActions);
   const readiness = prospectReadiness(prospect);
   function showSection(id:string){
+    if(mode==='desk'){goTab(id.includes('followup')?'actions':id.includes('identity')?'contacts':'needs');return;}
     const section=document.getElementById(id);
     const group=section?.closest<HTMLDetailsElement>('details.prospect-section-group');if(group)group.open=true;
     const trigger=section?.querySelector<HTMLButtonElement>('.prospect-work-accordion-trigger');
@@ -680,18 +699,19 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
         <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large" /><div><span className="eyebrow">{prospect.stage === 'new' ? 'Fiche annuaire' : 'Fiche de travail'}</span><h2>{prospect.displayName}</h2><div className="prospect-header-meta"><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>{prospect.organizationIndustry && <span className="status-pill">{prospect.organizationIndustry}</span>}{prospect.organizationCity && <span className="status-pill">{prospect.organizationCity}</span>}</div></div></div>
         <div className="detail-heading-actions">{onOpenDesk && <button className="secondary-button open-desk-button" type="button" aria-label="Agrandir la fiche" title="Agrandir la fiche" onClick={()=>onOpenDesk?.()}><OperationIcon name="record-expand"/></button>}<button className="close-detail" type="button" aria-label="Fermer la fiche prospect" title="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button></div>
       </div>
+        {prospect.stage === 'new' && <div className={`prospect-readiness-card ${readiness.ready ? 'ready' : 'incomplete'}`}><div><span>Préparation</span><strong>{readiness.ready ? 'Prêt pour démarchage' : 'À compléter avant ou pendant le premier contact'}</strong>{!readiness.ready && <small>Manque : {readiness.missing.join(', ')}</small>}</div><button className="primary-button" type="button" onClick={()=>requestUnsavedExit(onStart,'prospect:'+prospect.id+'/'+mode)}>Démarrer la prospection</button></div>}
       <div className="prospect-compact-scroll" tabIndex={0} role="region" aria-label="Contenu défilable de la fiche rapide">
         <section className="prospection-quick-next"><span><OperationIcon name="calendar"/>Prochaine action{nextAction?.dueAt&&<time>{formatDate(nextAction.dueAt)}{new Date(nextAction.dueAt).getTime()<Date.now()?' · En retard':''}</time>}</span><h3>{nextAction?.title||'Aucune action programmée'}</h3>{onOpenDesk&&<button type="button" className="primary-button" onClick={()=>onOpenDesk?.('commercial',true)}>{nextAction?'Consulter l’action':'Programmer une action'}<span aria-hidden="true">›</span></button>}</section>
         <section className="prospection-quick-contact"><h3>Contact principal</h3><strong>{prospect.secondaryLabel||'Contact à identifier'}</strong>{quickContact.role&&<p>{quickContact.role}</p>}{quickContact.email&&<p><ProspectValue value={quickContact.email} kind="email"/></p>}{quickContact.phone&&<p><ProspectValue value={quickContact.phone} kind="phone"/></p>}</section>
         <section className="prospection-quick-activity"><h3>Dernière activité</h3>{activity.length?<><p>{humanActivity([...activity].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0].summary)}</p><small>{formatDate([...activity].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0].createdAt)}</small></>:<p>Aucune activité enregistrée</p>}</section>
         <details className="prospection-quick-more"><summary>Informations et préparation</summary>
-        {prospect.stage === 'new' && <div className={`prospect-readiness-card ${readiness.ready ? 'ready' : 'incomplete'}`}><div><span>Préparation</span><strong>{readiness.ready ? 'Prêt pour démarchage' : 'À compléter avant ou pendant le premier contact'}</strong>{!readiness.ready && <small>Manque : {readiness.missing.join(', ')}</small>}</div><button className="primary-button" type="button" onClick={onStart}>Démarrer la prospection</button></div>}
+
         {prospect.stage !== 'new' && <section className="prospect-commercial-priority">
           <h3>Priorité commerciale</h3>
           <div className="reference-summary-grid">
             <div><span>Interlocuteur</span><strong>{prospect.secondaryLabel || 'À préciser'}</strong></div>
             <div><span>Décideur</span><strong>{prospect.decisionMakerName || prospect.decisionMakerDetails || 'À qualifier'}</strong></div>
-            <div><span>Besoin</span><strong>{prospect.primaryNeed || prospect.projectSummary || 'À préciser'}</strong></div>
+            <div><span>Besoin</span><strong>{prospect.projectSummary || prospect.primaryNeed || 'À préciser'}</strong></div>
             <div><span>Prochaine action</span><strong>{nextAction?.title || 'À programmer'}</strong>{nextAction?.dueAt && <small>{formatDate(nextAction.dueAt)}</small>}</div>
           </div>
         </section>}
@@ -705,73 +725,31 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
     </aside>;
   }
 
-  return <aside data-prospect-composition="balanced" className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-desk prospect-temperature-${prospect.temperature ?? 'neutral'}`}>
-<div className="prospect-workspace">
+  const tabs=[['company','Entreprise'],['contacts','Contacts'],['preparation','Préparer l’échange'],['needs','Besoins'],['actions','Actions et échanges'],['quotes','Devis'],['history','Historique']];
+  const currentColumn=activePipelineColumn(prospect);
+  function viewColumn(id:string){if(id==='qualify'){requestUnsavedExit(()=>{applyWorkspaceTab('needs');setNeedsSection('qualification');setViewStage(id);});}else goTab(id==='needs'?'needs':'quotes');}
+  return <aside data-prospect-composition="balanced" className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-desk prospect-temperature-${prospect.temperature??'neutral'}`}><div className="prospect-workspace">
     <header className="prospect-workspace-header">
-      <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large"/><div><h2>{prospect.displayName}</h2><p>{[prospect.organizationIndustry,prospect.organizationCity].filter(Boolean).join(' · ') || 'Informations entreprise à compléter'}</p></div></div>
-        <section className="prospect-focus-summary" aria-label="Synthèse commerciale">
-          <div className="prospect-temperature-control"><label>Niveau d’intérêt<select value={prospect.temperature ?? 'neutral'} onChange={(event) => onTemperature(event.target.value as ProspectTemperature)}>{PROSPECT_TEMPERATURES.map((value) => <option key={value} value={value}>{TEMPERATURE_LABELS[value]}</option>)}</select></label></div>
-          <div className="prospect-focus-stage"><span>Situation commerciale</span><strong>{STAGE_LABELS[prospect.stage ?? 'new']}</strong></div>
-          <div className="prospect-focus-next"><span className="prospect-next-label"><OperationIcon name="clock" />Prochaine action{nextAction?.dueAt ? ` · ${formatDate(nextAction.dueAt)}${new Date(nextAction.dueAt).getTime()<Date.now()?' · En retard':''}` : ''}</span><strong>{nextAction?.title || 'À programmer'}</strong><button className="secondary-button" type="button" onClick={()=>showSection(`prospect-followup-section-${prospect.id}`)}>{nextAction?'Consulter l’action':'Programmer une action'}</button></div>
-        </section>
-      <div className="prospect-workspace-tools">
-        <details className="prospect-workspace-identity"><summary>Identité et logo</summary><div><p>{prospect.organizationWebsite||prospect.existingUrl?<ProspectValue value={(prospect.organizationWebsite||prospect.existingUrl)!} kind="web"/>:'Site à renseigner'}</p>{prospect.source&&<p>{SOURCE_LABELS[prospect.source]}{prospect.source==='other'&&prospect.sourceDetail?' · '+prospect.sourceDetail:''}</p>}<CrmIdentityAssetEditor organizationId={prospect.organizationId} contactId={prospect.contactId} onMessage={onRefresh}/><button type="button" className="secondary-button" onClick={()=>void window.atoumweb.app.openProspectReferenceWindow(prospect.id)}><OperationIcon name="external-link"/>Référence dans une fenêtre</button></div></details>
-        <details className="prospect-workspace-associations"><summary><OperationIcon name="folder"/>Associations</summary><div><ProspectRelatedRecords prospect={prospect}/></div></details>
-        <button className="close-detail" type="button" aria-label="Fermer la fiche prospect" title="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button>
-      </div>
+      <div className="prospect-detail-identity-head"><button type="button" className="crm-logo-button" aria-label="Voir la fiche express et modifier le logo" onClick={()=>setLogoOpen(true)}><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large"/></button><div><h2>{prospect.displayName}</h2><p>{[prospect.organizationIndustry,prospect.organizationCity].filter(Boolean).join(' · ')}</p><strong className="status-pill">{prospect.clientAccountId?'Client':prospect.archivedAt?'Archivé':STAGE_LABELS[prospect.stage??'new']}</strong></div></div>
+      <div className="prospect-workspace-tools"><button className="secondary-button" type="button" onClick={()=>{goTab('company');setLogoOpen(true);}}>Identité et logo</button><details className="prospect-workspace-associations"><summary>Associations</summary><ProspectRelatedRecords prospect={prospect}/></details><button type="button" className="close-detail" aria-label="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button></div>
+      <section className="prospect-focus-summary" aria-label="Synthèse commerciale"><label>Température commerciale<select disabled={Boolean(prospect.clientAccountId||prospect.archivedAt)} value={prospect.temperature??'neutral'} onChange={e=>onTemperature(e.target.value as ProspectTemperature)}>{PROSPECT_TEMPERATURES.map(t=><option key={t} value={t}>{TEMPERATURE_LABELS[t]}</option>)}</select></label><div><span>Prochaine action{nextAction?.dueAt?' · '+formatDate(nextAction.dueAt):''}</span><strong>{nextAction?.title||'À programmer'}</strong><button type="button" className="secondary-button" onClick={()=>goTab('actions')}>{nextAction?'Consulter l’action':'Programmer une action'}</button></div><div className="crm-journey-actions">{!prospect.clientAccountId&&!prospect.archivedAt&&prospect.stage!=='lost'&&prospect.stage!=='won'&&<>{prospect.stage==='new'?<button type="button" className="primary-button" onClick={()=>requestUnsavedExit(onStart,'prospect:'+prospect.id+'/'+mode)}>Démarrer la prospection</button>:prospect.stage==='qualifying'?<button type="button" className="primary-button" onClick={validateOrShowQualification}>{qualificationGaps.length?'Compléter la qualification avant l’étape Besoins':'Valider la qualification et passer à Besoins'}</button>:<button type="button" className="primary-button" onClick={()=>goTab('quotes')}>{prospect.stage==='need_identified'?'Préparer le devis':'Poursuivre le devis'}</button>}{prospect.stage!=='new'&&prospect.stage!=='qualifying'&&manualStages(prospect).filter(stage=>stage!==prospect.stage).length>0&&<label>Changer la situation<select aria-label="Changer la situation commerciale" value="" onChange={e=>{const stage=e.target.value as ProspectStage;if(stage)requestUnsavedExit(()=>onStage(stage),'prospect:'+prospect.id+'/'+mode);}}><option value="">Choisir une transition…</option>{manualStages(prospect).filter(stage=>stage!==prospect.stage).map(stage=><option key={stage} value={stage}>{STAGE_LABELS[stage]}</option>)}</select></label>}<button type="button" className="secondary-button danger-outline" onClick={()=>setLossOpen(true)}>Classer comme perdu</button></>}<button type="button" className="secondary-button" onClick={()=>setArchiveOpen(true)}>Archiver</button></div></section>
+      <nav className="crm-journey" aria-label="Parcours commercial : consulter une étape ne change pas le statut">{PROSPECT_PIPELINE_COLUMNS.map((column,index)=><button type="button" key={column.id} aria-current={currentColumn===column.id?'step':undefined} className={currentColumn===column.id?'current':''} onClick={()=>viewColumn(column.id)}>{index+1}. {column.label}{currentColumn===column.id?' · Étape actuelle':''}</button>)}</nav>
     </header>
-    <div className="prospect-desk-tabs" role="tablist" aria-label="Fiche prospect">
-      <button type="button" className={deskTab === 'commercial' ? 'active' : ''} onClick={() => setDeskTab('commercial')}><OperationIcon name="file-text"/>Fiche de travail</button>
-      <button type="button" className={deskTab === 'reference' ? 'active' : ''} onClick={() => setDeskTab('reference')}><OperationIcon name="contact"/>Référence prospect</button>
+    <div className="prospect-desk-tabs crm-workspace-tabs" role="tablist" aria-label="Informations de la fiche">{tabs.map(([id,label])=><button type="button" role="tab" aria-selected={workspaceTab===id} key={id} className={workspaceTab===id?'active':''} onClick={()=>{setViewStage(null);goTab(id);}}>{label}</button>)}</div>
+    <div className="prospect-desk-content" role="tabpanel" tabIndex={0} aria-label={tabs.find(([id])=>id===workspaceTab)?.[1]}>
+      {viewStage&&<p className="crm-stage-consultation" role="status">Consultation : {PROSPECT_PIPELINE_COLUMNS.find(c=>c.id===viewStage)?.label}. Le dossier reste « {STAGE_LABELS[prospect.stage??'new']} ».</p>}
+      {(workspaceTab==='company'||workspaceTab==='contacts')&&<ProspectIdentityPanel key={workspaceTab} section={workspaceTab==='company'?'company':'contacts'} directoryLinks={false} prospect={prospect} focusRequest={identityFocus} onSaved={()=>onRefresh('Informations enregistrées.')}/>}
+      {workspaceTab==='preparation'&&<><div className="research-tabs" role="tablist" aria-label="Préparer l’échange"><button type="button" role="tab" aria-selected={preparationSection==='research'} className={preparationSection==='research'?'active':''} onClick={()=>requestUnsavedExit(()=>setPreparationSection('research'))}>Analyse de l’entreprise</button><button type="button" role="tab" aria-selected={preparationSection==='preparation'} className={preparationSection==='preparation'?'active':''} onClick={()=>requestUnsavedExit(()=>setPreparationSection('preparation'))}>Objectif et questions</button></div><ProspectResearchPanel key={preparationSection} scope={preparationSection} onEditCompany={()=>goTab('company')} prospect={prospect} defaultOpen browseFirst onChanged={onRefresh}/>{preparationSection==='research'&&<button type="button" className="secondary-button" onClick={()=>goTab('company')}>Renseigner le site et l’identité dans Entreprise</button>}</>}
+      {workspaceTab==='needs'&&<><div className="research-tabs" role="tablist" aria-label="Informations du besoin">{[['qualification','Qualification'],['brief','Demande et besoin'],['commercial','Budget et délais'],['services','Prestations et points à confirmer']].map(([id,label])=><button type="button" role="tab" key={id} aria-selected={needsSection===id} className={needsSection===id?'active':''} onClick={()=>{if((id==='qualification')!==(needsSection==='qualification'))requestUnsavedExit(()=>setNeedsSection(id));else setNeedsSection(id);}}>{label}</button>)}</div>{highlightMissing&&qualificationGaps.length>0&&<div className="crm-missing-list"><strong>Qualification à compléter</strong>{qualificationGaps.map(m=><button type="button" className="secondary-button" key={m.key} onClick={()=>completeMissing(m)}>{m.label} · Compléter</button>)}</div>}{needsSection==='qualification'?<ProspectQualificationPanelV2 prospect={prospect} onSaved={onRefresh} onGoTo={target=>{if(target==='decision'||target==='contact'){goTab('contacts');setIdentityFocus(null);}else setNeedsSection('brief');}}/>:<ProspectNeedsPanel prospectId={prospect.id} section={needsSection as 'brief'|'commercial'|'services'} highlightMissing={highlightMissing} onChanged={()=>onRefresh()} onPrepareQuote={()=>goTab('quotes')}/>}</>}
+      {workspaceTab==='actions'&&<ProspectActionsPanel prospect={prospect} actions={actions} onChanged={onRefresh} showJournal={false}/>}
+      {workspaceTab==='quotes'&&<ProspectQuoteWorkspace prospect={prospect} actions={actions} onChanged={onRefresh} onComplete={tab=>completeMissing({key:tab,label:'Compléter',tab:tab as ProspectMissing['tab']})}/>}
+      {workspaceTab==='history'&&<ProspectTimeline activity={activity} actions={actions}/>}
     </div>
-
-    <div className="prospect-desk-content" tabIndex={0} role="region" aria-label="Contenu de la fiche prospect">
-      {deskTab === 'reference' ? <>
-        <ProspectResearchPanel prospect={prospect} defaultOpen browseFirst onChanged={onRefresh}/>
-        <ProspectWorkAccordion title="Identité et coordonnées" summary="Modifier les informations entreprise et contacts">
-          <ProspectIdentityPanel directoryLinks={false} prospect={prospect} focusRequest={identityFocus} onSaved={()=>onRefresh('Informations du prospect mises à jour.')}/>
-        </ProspectWorkAccordion>
-      </> : <>
-
-        {prospect.stage === 'need_identified' && !prospect.primaryNeed && <div className="prospect-missing-actions" aria-label="Informations à compléter"><div className="missing-action"><span>Le besoin reste à préciser.</span><button type="button" className="secondary-button" onClick={()=>showSection(`prospect-need-section-${prospect.id}`)}>Renseigner le besoin</button></div></div>}
-        {prospect.stage === 'new' && <button className="primary-button start-qualification-button" onClick={onStart}>Démarrer la prospection</button>}
-        <section className="prospect-immediate-summary" aria-label="Résumé immédiat"><div><span>Besoin / projet</span><p>{prospect.primaryNeed||prospect.projectSummary||'Besoin à préciser'}</p></div><div><span>Contact principal</span><strong>{prospect.secondaryLabel||'Contact à identifier'}</strong></div><div><span>Dernière activité</span><p>{activity.length?humanActivity([...activity].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0].summary):'Aucune activité enregistrée'}</p></div></section>
-        <ProspectSectionGroup group="identity" title="Entreprise et contacts" description="Identité, contacts et coordonnées" defaultOpen={prospect.stage==='new'}>
-          <div id={`prospect-identity-${prospect.id}`} className="prospect-target-section"><ProspectIdentityPanel directoryLinks={false} prospect={prospect} focusRequest={identityFocus} onSaved={()=>onRefresh('Informations du prospect mises à jour.')}/></div>
-        </ProspectSectionGroup>
-
-        <ProspectSectionGroup group="needs" title="Besoins et qualification" description="Qualification, prestations et informations avant devis" defaultOpen={['qualifying','need_identified'].includes(prospect.stage??'')}><div className="reference-summary-grid"><div><span>Besoin</span><strong>{prospect.primaryNeed||prospect.projectSummary||'À préciser'}</strong></div><div><span>Décideur</span><strong>{prospect.decisionMakerName||prospect.decisionMakerDetails||'À qualifier'}</strong></div></div>
-        {prospect.stage === 'qualifying' && <ProspectWorkAccordion title="Qualification" summary={prospect.decisionMakerName || prospect.decisionMakerDetails || 'Décideur à préciser'} defaultOpen>
-          <ProspectQualificationPanelV2 prospect={prospect} onSaved={onRefresh} onGoTo={(target) => { if (target === 'decision' || target === 'contact') {showSection(`prospect-identity-${prospect.id}`);setIdentityFocus({ target, sequence: Date.now() });} else document.getElementById(`prospect-${target}-${prospect.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} />
-        </ProspectWorkAccordion>}
-
-        {prospect.stage === 'need_identified' && <ProspectWorkAccordion sectionId={`prospect-need-section-${prospect.id}`} title="Besoin / projet" summary={prospect.primaryNeed || prospect.projectSummary || 'Besoin à préciser'} defaultOpen>
-          <div id={`prospect-need-${prospect.id}`} className="prospect-target-section"><ProspectNeedsPanel prospectId={prospect.id} onChanged={() => onRefresh()} /></div>
-        </ProspectWorkAccordion>}
-
-        {prospect.stage==='need_identified'&&<ProspectPreQuoteReviewPanel prospect={prospect} onChanged={onRefresh}/>}
-
-        </ProspectSectionGroup>
-        <ProspectSectionGroup group="activities" title="Devis et activités" description="Devis, actions, journal et clôture" defaultOpen={quoteVisible}>
-        {quoteVisible && <ProspectWorkAccordion title="Devis" summary="Documents liés au dossier" defaultOpen={['quote_to_prepare','quote_to_send','quote_sent','follow_up','negotiation'].includes(prospect.stage ?? '')}>
-          <ProspectQuotePanel prospect={prospect} onChanged={onRefresh} />
-        </ProspectWorkAccordion>}
-
-        <section id={`prospect-followup-section-${prospect.id}`} className="prospect-followup-direct"><div id={`prospect-followup-${prospect.id}`}><ProspectActionsPanel prospect={prospect} actions={actions} onChanged={onRefresh} showJournal={false}/></div></section>
-
-        <ProspectWorkAccordion title="Clôture du dossier" summary={prospect.stage === 'won' ? 'Gagné' : prospect.stage === 'lost' ? 'Perdu' : 'Dossier en cours'}>
-          <div className="detail-actions"><button className="secondary-button danger-outline" onClick={() => setLossOpen((value) => !value)}>Classer comme perdu</button><button className="secondary-button" onClick={()=>setArchiveOpen(true)}>Archiver le prospect</button></div>
-          {archiveOpen&&<div className="inline-editor prospect-archive-confirmation"><p>Archiver ce prospect ? Il restera consultable dans l’historique.</p><button className="secondary-button" type="button" onClick={()=>setArchiveOpen(false)}>Annuler</button><button className="primary-button" type="button" onClick={onArchive}>Confirmer l’archivage</button></div>}{lossOpen && <div className="inline-editor prospect-loss-editor"><strong>Classer le prospect comme perdu</strong><label>Raison<select value={lossCode} onChange={(event) => setLossCode(event.target.value)}>{LOSS_REASONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>{lossCode === 'other' && <label>Préciser<input value={lossOther} onChange={(event) => setLossOther(event.target.value)} /></label>}<div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setLossOpen(false)}>Annuler</button><button className="secondary-button danger-outline" type="button" disabled={!lossReason} onClick={() => onLost(lossCode, lossReason)}>Confirmer Perdu</button></div></div>}
-        </ProspectWorkAccordion>
-
-        <ProspectWorkAccordion title="Historique du dossier" summary={`${activity.length} événement${activity.length > 1 ? 's' : ''}`}>
-          <div className="activity-preview"><strong>Journal du dossier</strong>{activity.map((event) => <div className="activity-item" key={event.id}><span className="activity-dot" /><div><p>{humanActivity(event.summary)}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div></div>)}{activity.length === 0 && <p className="muted">Aucune activité.</p>}</div>
-        </ProspectWorkAccordion>
-        </ProspectSectionGroup>
-      </>}
-    </div>
-</div>
-  </aside>;
+    {phaseWarning&&<ProspectDialog label="Phase précédente incomplète" onClose={()=>setPhaseWarning(null)}><h3>Des informations restent à compléter</h3><p>Tu peux consulter cette phase sans changer l’étape du dossier. Les protections métier restent appliquées.</p><ul>{phaseWarning.missing.map(m=><li key={m.key}>{m.label}</li>)}</ul><div className="form-actions"><button type="button" className="secondary-button" onClick={()=>completeMissing(phaseWarning.missing[0])}>Compléter d’abord</button><button type="button" className="primary-button" onClick={()=>{acknowledged.current.add(warningKey(phaseWarning.target,phaseWarning.missing));setHighlightMissing(true);applyWorkspaceTab(phaseWarning.target);setPhaseWarning(null);}}>Continuer sans changer d’étape</button><button type="button" className="secondary-button" onClick={()=>setPhaseWarning(null)}>Annuler</button></div></ProspectDialog>}
+    {logoOpen&&<ProspectDialog label="Fiche express entreprise" onClose={()=>setLogoOpen(false)}><h3>{prospect.displayName}</h3><dl><dt>Contact principal</dt><dd>{prospect.secondaryLabel||'À identifier'}</dd><dt>Téléphone préféré</dt><dd>{quickContact.phone?<ProspectValue value={quickContact.phone} kind="phone"/>:'Non renseigné'}</dd><dt>Service / besoin</dt><dd>{prospect.projectSummary||prospect.primaryNeed||'À préciser'}</dd><dt>Prochaine échéance</dt><dd>{nextAction?.dueAt?formatDate(nextAction.dueAt):'Aucune échéance programmée'}</dd></dl><CrmIdentityAssetEditor organizationId={prospect.organizationId} contactId={prospect.contactId} onMessage={onRefresh}/><button type="button" className="secondary-button" onClick={()=>setLogoOpen(false)}>Fermer</button></ProspectDialog>}
+    {lossOpen&&<ProspectDialog label="Classer le dossier comme perdu" onClose={()=>setLossOpen(false)}><h3>Classer comme perdu</h3><label>Raison<select value={lossCode} onChange={e=>setLossCode(e.target.value)}>{LOSS_REASONS.map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>{lossCode==='other'&&<label>Préciser<input value={lossOther} onChange={e=>setLossOther(e.target.value)}/></label>}<div className="form-actions"><button type="button" className="secondary-button" onClick={()=>setLossOpen(false)}>Annuler</button><button type="button" className="primary-button" disabled={!lossReason||closingBusy} onClick={()=>void (async()=>{setClosingBusy(true);try{if(await onLost(lossCode,lossReason))setLossOpen(false);}finally{setClosingBusy(false);}})()}>Confirmer Perdu</button></div></ProspectDialog>}
+    {archiveOpen&&<ProspectDialog label="Archiver le dossier" onClose={()=>setArchiveOpen(false)}><h3>Archiver le dossier ?</h3><p>Il restera consultable dans l’historique.</p><button type="button" className="secondary-button" onClick={()=>setArchiveOpen(false)}>Annuler</button><button type="button" className="primary-button" disabled={closingBusy} onClick={()=>void (async()=>{setClosingBusy(true);try{if(await onArchive())setArchiveOpen(false);}finally{setClosingBusy(false);}})()}>Confirmer l’archivage</button></ProspectDialog>}
+  </div></aside>;
 }
 
 function HistoryView({ prospects, search, onSearch, onSelect, selected, activity, onClose }: { prospects: ProspectSummary[]; search: string; onSearch: (value: string) => void; onSelect: (item: ProspectSummary) => void; selected: ProspectSummary | null; activity: ActivityEvent[]; onClose: () => void }) {
