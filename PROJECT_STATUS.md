@@ -8,7 +8,7 @@ Quatre cartes et disposition de la PR conservées ; rubriques Présence numériq
 
 Exception minimale de lecture dans ProspectResearchPanel : afficher zone et objectif uniquement s’ils existent, afin de retrouver ces nouvelles données après création ; aucun éditeur, autre fiche, Client, parcours ou règle métier remanié. Identité réutilisée non modifiée silencieusement ; champs canoniques d’activité/présentation en lecture seule dans Analyse pour une entreprise existante. Schéma 74 intact.
 
-Typecheck, 21 tests ciblés distincts (sources CRM et nouveau mapper/sauvegarde), recette native TEMP : 42 assertions sans erreur renderer, 13 captures, réouverture complète, logo, saisie non enregistrée, action ouverte non effectuée, trois thèmes ciblés. Bilan : docs/ux-v2/CREATION-ENTREPRISE-PR1-RECETTE-2026-10-23.md. Construction et vérification du nouveau portable en cours ; aucune fusion/CI/Bridge.
+Typecheck, 21 tests ciblés distincts (sources CRM et nouveau mapper/sauvegarde), recette native TEMP : 42 assertions sans erreur renderer, 13 captures, réouverture complète, logo, saisie non enregistrée, action ouverte non effectuée, trois thèmes ciblés. Bilan : docs/ux-v2/CREATION-ENTREPRISE-PR1-RECETTE-2026-10-23.md. Package 4d6021e5 contrôlé : 31 assertions / 12 visites / trois thèmes sans erreur renderer, intégrité/FK/registre74 conformes. Lanceur distinct : C:/DEV/03_LIVRAISONS/AtoumWeb/Manager-Prospection-20261023-1ddd01fb/LANCER-LE-MANAGER.cmd ; galerie Downloads/Creation-entreprise-PR1-20261023-1ddd01fb, avec deux références avant. Profil/Workspace TEST indépendants, anciens intacts. Aucune fusion/CI/Bridge ; prochaine action : recette utilisateur de la PR ouverte.
 
 ## 23/10/2026 — Passation ChatGPT dans le dépôt dédié
 

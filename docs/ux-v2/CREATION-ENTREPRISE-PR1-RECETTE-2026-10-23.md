@@ -36,4 +36,14 @@ Pas de migration ni stockage parallèle. Observations société partagées selon
 
 ## Livraison
 
-Portable distinct et contrôle du package : à compléter après construction. Aucun ancien Workspace, profil ou portable modifié. Aucun installateur, aucune activation GitHub Actions, aucun travail Bridge/EC04/B1. PR laissée ouverte pour revue utilisateur.
+Package construit depuis le commit applicatif 4d6021e5970e2eb60a3b427b2c83ad1d8b1b7817. Véritable exécutable : 31 assertions / 12 visites / trois thèmes Confort, aucune erreur renderer ; intégrité SQLite, clés étrangères et migrations exactes 1–74 conformes.
+
+Lanceur : C:/DEV/03_LIVRAISONS/AtoumWeb/Manager-Prospection-20261023-1ddd01fb/LANCER-LE-MANAGER.cmd
+
+Galerie : C:/Users/AtoumWeb/Downloads/Creation-entreprise-PR1-20261023-1ddd01fb/index.html ; 13 nouvelles captures et deux références locales antérieures explicitement identifiées, aussi dans Captures du portable.
+
+app.asar SHA256 : 1ddd01fb904aae936d00e67e3f4c82113878d07ba8b00bd8850d6ed6fbe44f28
+
+exe SHA256 : ba1f46087de095833758effff3a9613973f181c2aa70b922de317cb04a1860d9
+
+Empreintes de la copie et profil vers son propre Workspace vérifiés ; syntaxe du lanceur vérifiée. Nouveau profil et Workspace TEST indépendants, pas de transfert automatique des anciennes saisies. Aucun ancien Workspace, profil ou portable modifié. Aucun installateur, aucune activation GitHub Actions, aucun travail Bridge/EC04/B1. PR laissée ouverte pour revue utilisateur.
