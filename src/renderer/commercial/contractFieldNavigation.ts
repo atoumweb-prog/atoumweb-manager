@@ -19,8 +19,10 @@ function incomplete(field:HTMLElement):boolean {
   if(field instanceof HTMLInputElement||field instanceof HTMLTextAreaElement||field instanceof HTMLSelectElement)return !field.value.trim()||['unknown','unconfigured','missing','verify'].includes(field.value);
   return false;
 }
+export function contractIssueSection(code:string):string{return code.startsWith('ADMIN_')?'administration':sections[code]??'client';}
 /** Open every ancestor accordion before scrolling, including a surrounding Devis accordion. No data is changed. */
 export function focusContractField(quoteId:string,code:string):boolean {
+  window.dispatchEvent(new CustomEvent('atoumweb:contract-focus',{detail:{quoteId,code}}));
   const root=[...document.querySelectorAll<HTMLElement>('.quote-contract-preparation')].find(e=>e.dataset.quoteId===quoteId);
   if(!root)return false;
   const section=code.startsWith('ADMIN_')?'administration':sections[code];
@@ -32,7 +34,7 @@ export function focusContractField(quoteId:string,code:string):boolean {
   const field=candidates.find(incomplete)??candidates[0]??target.querySelector<HTMLElement>('input:not(:disabled),select:not(:disabled),textarea:not(:disabled),button:not(:disabled),summary');
   const destination=field??target;
   for(let node:HTMLElement|null=destination;node;node=node.parentElement)if(node.tagName==='DETAILS')(node as HTMLDetailsElement).open=true;
-  destination.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});
-  destination.focus({preventScroll:true});
+  requestAnimationFrame(()=>{destination.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});
+  destination.focus({preventScroll:true});});
   return true;
 }

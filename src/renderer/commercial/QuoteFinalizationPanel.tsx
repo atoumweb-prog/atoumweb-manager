@@ -13,7 +13,6 @@ export function QuoteFinalizationPanel({quote,onFinalize}:{quote:QuoteDetail;onF
     {error&&<p role="alert">{error}</p>}
     {blocking.length>0&&<ul>{blocking.map((i,index)=><li key={i.code+index}><button type="button" className="contract-issue-link" data-issue-code={i.code} onClick={()=>focusContractField(quote.id,i.code)}>{i.message} →</button></li>)}</ul>}
     <button type="button" className="primary-button" disabled={!review||!!error||blocking.length>0} onClick={()=>onFinalize(false)}>Finaliser le devis</button>
-    <button type="button" className="secondary-button" disabled={!review||!!error||blocking.length>0} onClick={()=>onFinalize(true)}>Finaliser avec contrôle juridique 05C</button>
-    <p className="muted">Le contrôle 05C exige le classement humain approuvé de toutes les rubriques concernées. Il ne remplace pas une validation juridique.</p>
+    <details><summary>Contrôle du classement des clauses</summary><button type="button" className="secondary-button" disabled={!review||!!error||blocking.length>0} onClick={()=>onFinalize(true)}>Finaliser avec le classement approuvé</button><p className="muted">Option destinée aux bibliothèques disposant d’un classement approuvé.</p></details>
   </section>;
 }
