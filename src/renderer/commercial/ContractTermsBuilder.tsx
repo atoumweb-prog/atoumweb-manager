@@ -155,6 +155,11 @@ export function ContractTermsBuilder({ quote,human=false }: { quote: QuoteDetail
       const next = await window.atoumweb.contractTerms.quotes.get(quoteId);
       if(!isCurrent())return;
       setBuildAndDrafts(next);
+      if(human&&next.snapshotState==='draft'){
+        const proposal=await window.atoumweb.contractTerms.quotes.proposeUpdate(quoteId);
+        if(!isCurrent())return;
+        setUpdateProposal(proposal.changes.length?proposal:null);
+      }
       const [nextTemplates,nextCatalog]=await Promise.all([
         window.atoumweb.contractTerms.library.list(),
         window.atoumweb.catalog.list({status:'active'}),
@@ -423,6 +428,7 @@ export function ContractTermsBuilder({ quote,human=false }: { quote: QuoteDetail
   }
 
   const comparisonView = updateProposal?.quoteId===quote.id&&<section aria-label="Comparaison des CGV">
+        {human&&updateProposal.changes.some(c=>!c.before&&c.after)&&<p role="status"><strong>Des clauses applicables ne sont pas encore incluses dans ce devis.</strong> Vérifie les changements proposés ci-dessous avant de les intégrer.</p>}
         <strong>{updateProposal.changes.length} changement(s) proposé(s)</strong>
         <p>Les clauses personnalisées ne sont pas remplacées. Aucune modification avant confirmation.</p>
         <details className="contract-update-details"><summary>Détail des changements proposés</summary>{updateProposal.changes.map(change=><details key={change.sourceKey}><summary>{change.after?.title??change.before?.title}</summary><p>Version conservée : {change.before?.versionId??'Aucune'} · incluse : {change.before?.enabled?'Oui':'Non'}</p><p>Ordre : {change.before?.sortOrder??'—'} · rattachement : {change.before?.isOrphaned?'orphelin':'applicable'}</p><pre>{change.before?.body??'Absente'}</pre><p>Version proposée : {change.after?.versionId??'Aucune'} · incluse : {change.after?.enabled?'Oui':'Non'}</p><p>Ordre : {change.after?.sortOrder??'—'} · rattachement : {change.after?.isOrphaned?'orphelin':'applicable'}</p>{JSON.stringify(change.before?.sourceCatalogItemIds)!==JSON.stringify(change.after?.sourceCatalogItemIds)&&<p>Les prestations rattachées changent ; vérifier leur périmètre.</p>}<pre>{change.after?.body??'Absente'}</pre></details>)}</details>

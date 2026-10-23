@@ -61,3 +61,6 @@ html[data-theme] .quote-journey-tabs button[aria-selected=true]{background:#ffda
 .quote-detail-panel:has(.quote-journey)>.quote-preview-button{margin:6px 0;padding:8px 12px;}
 @media(max-width:1000px){.clause-desk-layout{grid-template-columns:1fr;}.clause-desk-outline{grid-template-columns:repeat(3,minmax(0,1fr));}.app-shell .quote-detail-panel:has(.quote-journey){width:calc(100vw - 40px);}.clause-desk-document{padding:14px;}}
 @media(max-width:650px){.quote-journey-tabs button{min-width:0;padding:10px 6px;font-size:13px;}.clause-desk-outline{grid-template-columns:1fr;}.preparation-compact [data-contract-section=administration][open]{grid-template-columns:1fr;}}
+.quote-document-frame{display:block;width:100%;height:calc(100vh - 220px);min-height:450px;background:#fff;border:1px solid #d6dce2;border-radius:5px;}
+.quote-preview-help{margin:0;padding:10px 16px;font-size:12px;color:#535d67;background:#f5f6f7;}
+.app-shell .quote-client-preview-toolbar .primary-button{background:#ffda00!important;color:#111!important;-webkit-text-fill-color:#111!important;border-color:#ffda00!important;}
