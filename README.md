@@ -46,6 +46,10 @@ Validation-MSI est un environnement **de développement/test non productif**. Le
 
 ## Parcours et périmètre intégrés
 
+**Décision produit du 23/10/2026 — cible du prochain parcours :** Manager prépare le devis et ses conditions, conserve l’ensemble transmis et sa preuve d’acceptation ; Abby intervient ensuite pour la facturation. Voir le cahier des charges §10.3. Les écrans d’acceptation encore intitulés « dans Abby » doivent être adaptés ; cette décision documentaire ne les a pas déjà modifiés.
+
+Parcours historique encore présent dans l’application :
+
 `Prospect → Devis → prestations/options → clauses et snapshot → préparation manuelle Abby → Projet prévisionnel → acceptation et gel du même Projet → production et suivi`
 
 Les prestations récurrentes, packs et interventions utilisent leurs objets opérationnels propres. Une option disponible ne contribue que lorsqu’une ligne d’achat est réellement persistée. Les nouveaux abonnements ont des cycles de date à date, distincts de la facturation ; les quotas inutilisés ne sont pas reportés. Les estimations restent indicatives et ajustables au dossier.
