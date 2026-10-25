@@ -6,6 +6,7 @@ import type { QuoteDetail } from './commercial';
 export interface ContractSectionArticle { number:number;title:string;body:string;group:string;sourceVersionId:string|null }
 export interface ContractSection { id: string; title: string; text: string; articles?:ContractSectionArticle[] }
 export interface ContractPresentation {
+  documentSettings?:import('./quoteDocumentSettings').QuoteDocumentSettings;
   schemaVersion: 1; state: 'draft' | 'prepared' | 'frozen' | 'historical_missing'; compiledAt: string | null;
   sections: ContractSection[]; text: string; types: ContractTypeReference[];
   template?: { referenceName:string; referenceCode:string|null; catalogueVersion:number; audience:'professional'|'consumer'; inclusions?:string[]; exclusions?:string[] };

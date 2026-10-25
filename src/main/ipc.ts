@@ -1,3 +1,6 @@
+import {renderQuotePdfBuffer} from './commercial/quotePdf';
+import {formatContractPresentation} from '../shared/contractPresentation';
+import {nativeImage} from 'electron';
 import {prospectExternalUrl} from '../shared/prospectExternalUrl';
 import type { QuoteSendAttestation } from '../shared/quoteTransmission';
 import {crmIdentityImagePreview} from './crm/crmIdentityImagePreview';
@@ -769,6 +772,19 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   });
   ipcMain.handle('quotes:update-abby-reference', (_event, id: string, abbyReference?: string | null) => guardedMutation(() => database.quotes.updateAbbyReference(id, abbyReference)));
 
+  const documentSettings=()=>database.quoteDocumentSettings;
+  ipcMain.handle('quote-model:adopt',(_event,id:string)=>guardedMutation(()=>documentSettings().adopt(id)));
+  ipcMain.handle('quote-model:save-all',(_event,value,admin,expected)=>guardedMutation(()=>documentSettings().saveAll(value,admin,expected)));
+  ipcMain.handle('quote-model:get',()=>documentSettings().get());
+  ipcMain.handle('quote-model:save',(_event,value,expected)=>guardedMutation(()=>documentSettings().save(value,expected)));
+  ipcMain.handle('quote-model:logo',async()=>{const selected=await dialog.showOpenDialog({properties:['openFile'],filters:[{name:'Logo PNG ou JPEG',extensions:['png','jpg','jpeg']}]});if(selected.canceled||!selected.filePaths[0])return null;const file=selected.filePaths[0];if(statSync(file).size>2*1024*1024)throw Error('Logo limité à 2 Mo.');const image=nativeImage.createFromBuffer(readFileSync(file));if(image.isEmpty())throw Error('Image illisible.');return image.resize({width:Math.min(image.getSize().width,1600)}).toDataURL();});
+  ipcMain.handle('quote-model:preview-quote',async(_event,id:string)=>(await renderQuotePdfBuffer(database.quotes.get(id),database.contractTerms.presentation(id))).toString('base64'));
+  ipcMain.handle('quote-model:preview',async()=>{
+    const model=documentSettings().get();const now=new Date().toISOString();
+    const example={id:'model-preview',number:'APERÇU',status:'draft',subject:'Exemple de présentation',ownerLabel:'Client exemple',createdAt:now,validUntil:now,contractValueCents:120000,depositPercent:model.depositPercent,depositCents:Math.round(120000*model.depositPercent/100),balanceCents:120000-Math.round(120000*model.depositPercent/100),lines:[{id:'example',label:'Exemple de prestation',description:'Texte de démonstration pour contrôler la présentation.',quantityMilli:1000,catalogUnitPriceCents:120000,contractLineValueCents:120000}]} as import('../shared/commercial').QuoteDetail;
+    const p=formatContractPresentation({state:'draft',number:'APERÇU',subject:example.subject,totalCents:120000,estimatedDelay:null,prerequisites:null,compiledAt:null,clauseText:'',clauses:[],parameters:null,administration:database.quotePreparation.administration(),types:[],modules:[]});
+    p.documentSettings=model;return(await renderQuotePdfBuffer(example,p)).toString('base64');
+  });
   ipcMain.handle('quotes:generate-pdf', async (_event, id: string) =>
     guardedMutation(() => {
       // Export doesn't acknowledge an actual send or mutate frozen clauses.

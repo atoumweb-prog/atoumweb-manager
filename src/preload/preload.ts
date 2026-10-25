@@ -140,6 +140,7 @@ const api: AtoumWebApi = {
     removeItem: key => { visualCall('remove', key); }, confirmReset: () => visualCall('confirm-reset', '') === true,
     subscribe: listener => { const handler = (_event: unknown, key: string) => listener(key); ipcRenderer.on('settings:visual-changed', handler); return () => { ipcRenderer.removeListener('settings:visual-changed', handler); }; },
   },
+  quoteDocumentSettings: {saveAll:(v,a,e)=>ipcRenderer.invoke('quote-model:save-all',v,a,e),applyToQuote:id=>ipcRenderer.invoke('quote-model:adopt',id),get:()=>ipcRenderer.invoke('quote-model:get'),save:(v,e)=>ipcRenderer.invoke('quote-model:save',v,e),importLogo:()=>ipcRenderer.invoke('quote-model:logo'),preview:()=>ipcRenderer.invoke('quote-model:preview'),previewQuote:id=>ipcRenderer.invoke('quote-model:preview-quote',id)},
   settings: {
     setTheme: (theme: ThemeName) => ipcRenderer.invoke('settings:set-theme', theme),
     setDisplayDensity: (density: DisplayDensity) => ipcRenderer.invoke('settings:set-display-density', density),

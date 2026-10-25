@@ -1,3 +1,4 @@
+import {QuoteDocumentSettingsService} from './QuoteDocumentSettingsService';
 import {beforeQuoteMissing} from '../../shared/prospectProgress';
 import { activePreparation, assertPreparedContent, contractHash, contractSourceHash } from './quoteTransmission';
 import type { QuoteSendAttestation, QuoteTransmissionState } from '../../shared/quoteTransmission';
@@ -228,9 +229,10 @@ export class QuoteService {
     this.validateOwner(input.prospectId, input.clientAccountId);
     const subject = clean(input.subject);
     if (!subject) throw new Error('L’objet du devis est requis.');
-    const validityDays = input.validityDays ?? 30;
+    const defaults=new QuoteDocumentSettingsService(this.database).get();
+    const validityDays = input.validityDays ?? defaults.validityDays;
     if (!Number.isInteger(validityDays) || validityDays <= 0) throw new Error('Durée de validité invalide.');
-    const depositPercent = input.depositPercent ?? 30;
+    const depositPercent = input.depositPercent ?? defaults.depositPercent;
     if (!Number.isInteger(depositPercent) || depositPercent < 0 || depositPercent > 100) throw new Error('Acompte invalide.');
     const contractAudience = input.contractAudience ?? this.inferContractAudience(input.prospectId, input.clientAccountId);
     if (!['professional', 'consumer'].includes(contractAudience)) throw new Error('Type de client contractuel invalide.');
@@ -272,6 +274,7 @@ export class QuoteService {
         ],
       );
       this.database.run('UPDATE quotes SET contract_parameters_json=? WHERE id=?',[JSON.stringify(emptyContractParameters(contractAudience,depositPercent)),id]);
+      new QuoteDocumentSettingsService(this.database).adopt(id);
       this.writeActivity(id, 'quote_created', `Devis ${number} créé`);
       if (input.prospectId) this.database.run("UPDATE prospects SET stage='quote_to_prepare',updated_at=? WHERE id=? AND stage NOT IN ('new','won','lost')", [nowString, input.prospectId]);
       if (!withinTransaction) this.database.exec('COMMIT;');
@@ -294,7 +297,7 @@ export class QuoteService {
       const normalized=[...expectedNeeds].map(n=>({id:n.id,catalogItemId:n.catalogItemId,otherText:n.otherText})).sort((a,b)=>a.id.localeCompare(b.id));
       if(p.updatedAt!==expectedUpdatedAt||JSON.stringify(needs)!==JSON.stringify(normalized))throw Error('Conflit : le besoin ou les prestations envisagées ont changé. Actualise le contrôle.');
       const missing=beforeQuoteMissing(p,needs.length>0);if(missing.length)throw Error('Avant devis : '+missing.map(m=>m.label).join(', '));
-      const q=this.create({prospectId,subject:p.projectSummary!.trim(),needSummary:[p.projectSummary,p.projectContext].filter(Boolean).join('\n\n'),estimatedDelay:p.targetDate||p.timelineNote||null,validityDays:30,depositPercent:30},true);
+      const q=this.create({prospectId,subject:p.projectSummary!.trim(),needSummary:[p.projectSummary,p.projectContext].filter(Boolean).join('\n\n'),estimatedDelay:p.targetDate||p.timelineNote||null},true);
       this.database.exec('COMMIT;');return q;
     }catch(error){this.database.exec('ROLLBACK;');throw error;}
   }

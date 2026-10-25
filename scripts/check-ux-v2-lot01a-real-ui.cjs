@@ -38,9 +38,11 @@ if(!process.versions.electron){
  const serviceEntries=['database/DatabaseService','workspace','ipc','operations/operationsIpc','referentials/referentialsIpc','backups/businessBackupsIpc','time/timeIpc',...(process.env.ATOUMWEB_EC03_ONLY==='1'?['testSupport/quotePreparationFixture']:[])];
  const source=serviceEntries.map(s=>"export * from '"+base+"/src/main/"+s+"';").join('\n');
  esbuild.buildSync({stdin:{contents:source,resolveDir:repo,loader:'ts'},bundle:true,loader:{'.png':'dataurl'},platform:'node',format:'cjs',outfile:path.join(temp,'services.cjs'),external:['electron'],logLevel:'silent'});
+ fs.copyFileSync(require.resolve('pdfjs-dist/build/pdf.worker.min.mjs'),path.join(temp,'pdf.worker.min.mjs'));
+ fs.writeFileSync(path.join(temp,'pdf-worker-url.js'),'export default "./pdf.worker.min.mjs"');
  for(const entry of [['src/preload/preload.ts','preload.js','node'],['src/renderer/main.tsx','ui.js','browser']]){
   const [file,out,platform]=entry;
-  esbuild.buildSync({entryPoints:[path.join(repo,file)],bundle:true,loader:{'.png':'dataurl'},platform,outfile:path.join(temp,out),logLevel:'silent',...(platform==='node'?{format:'cjs',external:['electron']}:{format:'iife'})});
+  esbuild.buildSync({entryPoints:[path.join(repo,file)],bundle:true,loader:{'.png':'dataurl'},platform,outfile:path.join(temp,out),alias:{'pdfjs-dist/build/pdf.worker.min.mjs?url':path.join(temp,'pdf-worker-url.js')},logLevel:'silent',...(platform==='node'?{format:'cjs',external:['electron']}:{format:'iife'})});
  }
  fs.writeFileSync(path.join(temp,'index.html'),'<html lang="fr"><head><meta charset="utf-8"><link rel="stylesheet" href="ui.css"></head><body><div id="root"></div><script src="ui.js"></script></body></html>');
  const S=require(path.join(temp,'services.cjs'));

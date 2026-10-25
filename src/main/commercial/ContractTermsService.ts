@@ -1,3 +1,4 @@
+import {QuoteDocumentSettingsService} from './QuoteDocumentSettingsService';
 import { activePreparation, contractHash, contractSourceHash } from './quoteTransmission';
 import type { ContractUpdateProposal } from '../../shared/quoteTransmission';
 import { CatalogService } from './CatalogService';
@@ -466,7 +467,7 @@ export class ContractTermsService {
       const info=[String(c?.itemName??l.label??'Prestation'),`Exécution : ${nature==='continuous'?'service continu':nature==='one_off'?'réalisation ponctuelle':'à préciser pour cette prestation'}`,d?.contractEvent?`Date ou événement convenu : ${d.contractEvent}`:'',d?.acceptedDeadline?`Livraison convenue : ${d.acceptedDeadline}`:nature==='one_off'&&!d?.contractEvent?'Livraison : date ou événement à préciser':'',d?.serviceStartDate?`Début du service : ${d.serviceStartDate}`:nature==='continuous'&&!d?.contractEvent?'Début du service : date ou événement à préciser':'',d?.serviceEndDate?`Fin du service : ${d.serviceEndDate}`:'',d?.serviceDuration?`Durée convenue : ${d.serviceDuration}`:cp?.deliveryTerms?`Durée indiquée au Catalogue vendu : ${cp.deliveryTerms}`:'',cp?.reviewTerms?`Limites prévues : ${cp.reviewTerms}`:'',d?.renewalTerms?`Renouvellement / fin : ${d.renewalTerms}`:nature==='continuous'?'Renouvellement / fin : à confirmer':'',d?.scopeReference?`Référence de départ du périmètre : ${d.scopeReference.label} · version ${d.scopeReference.versionNumber}`:''];
       return info.filter(Boolean).join('\n');
     });
-    return formatContractPresentation({state:build.snapshotState,number:String(row.quote_number),subject:String(row.subject),totalCents:Number(row.contract_value_cents),estimatedDelay:row.estimated_delay as string|null,prerequisites:row.prerequisites_text as string|null,compiledAt:build.compiledAt??null,clauseText:build.snapshotState==='draft'?build.compiledText:build.snapshotText??'',clauses,parameters,administration,types,modules,lineDetails,warrantyLabels,clauseGroupLabels,lineCommitments});
+    return {...formatContractPresentation({state:build.snapshotState,number:String(row.quote_number),subject:String(row.subject),totalCents:Number(row.contract_value_cents),estimatedDelay:row.estimated_delay as string|null,prerequisites:row.prerequisites_text as string|null,compiledAt:build.compiledAt??null,clauseText:build.snapshotState==='draft'?build.compiledText:build.snapshotText??'',clauses,parameters,administration,types,modules,lineDetails,warrantyLabels,clauseGroupLabels,lineCommitments}),...(build.snapshotState==='draft'?{documentSettings:new QuoteDocumentSettingsService(this.database).forQuote(quoteId)}:{})};
   }
 
   syncQuote(quoteId: string): QuoteContractBuild {
