@@ -3,7 +3,8 @@ import type { QuoteContractClause } from './contractTerms';
 import type { ContractTypeReference } from './contractTypes';
 import type { QuoteDetail } from './commercial';
 
-export interface ContractSection { id: string; title: string; text: string }
+export interface ContractSectionArticle { number:number;title:string;body:string;group:string;sourceVersionId:string|null }
+export interface ContractSection { id: string; title: string; text: string; articles?:ContractSectionArticle[] }
 export interface ContractPresentation {
   schemaVersion: 1; state: 'draft' | 'prepared' | 'frozen' | 'historical_missing'; compiledAt: string | null;
   sections: ContractSection[]; text: string; types: ContractTypeReference[];
@@ -16,7 +17,7 @@ export interface ContractPresentationInput {
   estimatedDelay: string | null; prerequisites: string | null; compiledAt: string | null;
   clauseText: string; clauses: QuoteContractClause[]; parameters: QuoteContractParameters | null;
   administration: ContractAdministration | null; types: ContractTypeReference[];
-  modules: ContractPresentation['modules']; lineDetails?: string[]; warrantyLabels?: Record<string,string>; clauseGroupLabels?:Record<string,string>;
+  modules: ContractPresentation['modules']; lineDetails?: string[]; warrantyLabels?: Record<string,string>; clauseGroupLabels?:Record<string,string>; lineCommitments?:string[];
 }
 const money=(c:number)=>`${(c/100).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €`;
 const value=(s?:string|null)=>s?.trim()||'À renseigner';
@@ -37,13 +38,15 @@ export function formatContractPresentation(i:ContractPresentationInput):Contract
     add('administration','Informations AtoumWeb',Object.entries(i.administration).map(([key,v])=>`${labels[key as keyof ContractAdministration]} : ${v.state==='not_applicable'?'Non applicable':value(v.value)}${v.reason?` — ${v.reason}`:''}`));
   }
   const enabled=i.clauses.filter(c=>c.enabled);
+  let articleNumber=0;
   if(enabled.length){
     for(const [kind,title] of [['base','Conditions générales — CGV communes'],['catalog','Conditions spécifiques — Modules des prestations vendues'],['custom','Conditions particulières']] as const){
       const items=enabled.filter(c=>c.sourceKind===kind);
       if(items.length){
         const groups=new Map<string,QuoteContractClause[]>();
         for(const c of items){const group=kind==='catalog'?i.clauseGroupLabels?.[c.id]??'Prestations du devis':'';groups.set(group,[...(groups.get(group)??[]),c]);}
-        add(kind,title,[...groups].map(([group,clauses])=>[group?group.toUpperCase():'',...clauses.map(c=>`${enabled.indexOf(c)+1}. ${c.title}\n\n${c.body}`)].filter(Boolean).join('\n\n')));
+        const articles=[...groups].flatMap(([group,clauses])=>clauses.map(c=>({number:i.state==='frozen'?enabled.indexOf(c)+1:++articleNumber,title:c.title,body:c.body,group,sourceVersionId:c.sourceClauseVersionId??null})));
+        sections.push({id:kind,title,articles,text:[...groups.keys()].map(group=>[group?group.toUpperCase():'',...articles.filter(c=>c.group===group).map(c=>`${c.number}. ${c.title}\n\n${c.body}`)].filter(Boolean).join('\n\n')).join('\n')});
       }
     }
   }else if(i.clauseText)add('clauses','Clauses contractuelles conservées',[i.clauseText]);
@@ -52,9 +55,9 @@ export function formatContractPresentation(i:ContractPresentationInput):Contract
     const lines=[`Client contractuel : ${p.audience==='consumer'?'Particulier / consommateur':'Professionnel'}`,`Paiement initial : ${p.initialPayment.qualification==='arrhes'?'Arrhes':'Acompte'}${p.initialPayment.dueDate?` — ${p.initialPayment.dueDate}`:''}`];
     let used=0;p.payment.milestones.forEach((m,index)=>{const cents=index===p.payment.milestones.length-1?i.totalCents-used:Math.round(i.totalCents*m.percent/100);used+=cents;lines.push(`${m.label} : ${m.percent} % — ${money(cents)} — ${value(m.dueDate||m.event)}`);});
     if(p.payment.professionalTerms)lines.push(`Délai particulier B2B : ${p.payment.professionalTerms.extraDelay||'Aucun délai supplémentaire convenu'}`,`Taux B2B retenu : ${p.payment.professionalTerms.lateRate==='three_times_legal'?'trois fois le taux d’intérêt légal':'À qualifier'}. Indemnité forfaitaire prévue : ${money(p.payment.professionalTerms.recoveryIndemnityCents)} ; conditions d’application prévues par les clauses.`);
-    lines.push(`Qualification prévue : ${p.digital.kinds.map(k=>({digital_content:'Contenu numérique',digital_service:'Service numérique',classical_service:'Prestation classique'}[k])).join(' / ')||'À qualifier'}${p.digital.mixed?' — prestation mixte':''}`,`Fourniture : ${p.digital.supply==='continuous'?'Continue':p.digital.supply==='one_off'?'Ponctuelle':'À qualifier'}`);
+    lines.push(`Qualification prévue : ${p.digital.kinds.map(k=>({digital_content:'Contenu numérique',digital_service:'Service numérique',classical_service:'Prestation classique'}[k])).join(' / ')||'À qualifier'}${p.digital.mixed?' — prestation mixte':''}`,i.lineCommitments?.length?'Modalités d’exécution : voir les engagements distincts de chaque prestation.':`Fourniture : ${p.digital.supply==='continuous'?'Continue':p.digital.supply==='one_off'?'Ponctuelle':'À qualifier'}`);
     lines.push(...p.milestones.map(m=>`Exécution — ${m.label} : ${value(m.date||m.event)}`));
-    lines.push(`Conclusion : ${{distance:'À distance',off_premises:'Hors établissement',on_premises:'En établissement',other:p.conclusion.otherChannelReason}[p.conclusion.channel??'other']||'À qualifier'} — ${value(p.conclusion.context)}`,`Finalité : ${value(p.conclusion.purchasePurpose)}`,`Prestation / qualification : ${value(p.digital.qualificationReason)}`,`Livraison : ${value(p.digital.delivery)}`,p.digital.associatedServices?`Services associés : ${p.digital.associatedServices}`:'','Validation explicite uniquement : le silence ne vaut pas acceptation.');
+    lines.push(`Conclusion : ${{distance:'À distance',off_premises:'Hors établissement',on_premises:'En établissement',other:p.conclusion.otherChannelReason}[p.conclusion.channel??'other']||'À qualifier'} — ${value(p.conclusion.context)}`,`Finalité : ${value(p.conclusion.purchasePurpose)}`,`Prestation / qualification : ${value(p.digital.qualificationReason)}`,i.lineCommitments?.length?'Livraison / durée : voir les engagements de chaque prestation.':`Livraison : ${value(p.digital.delivery)}`,p.digital.associatedServices?`Services associés : ${p.digital.associatedServices}`:'','Validation explicite uniquement : le silence ne vaut pas acceptation.');
     lines.push(...p.warranties.filter(w=>w.days!==null).map(w=>`Garantie corrective — ${i.warrantyLabels?.[w.lineId]??'Prestation du devis'} : ${w.days} jours à compter de ${value(w.startEvent)}. Sans limitation des garanties légales applicables.`));
     if(p.rights.applicable)lines.push(`Droits transmis : ${value(p.rights.uses)}`,`Durée / territoire des droits : ${value(p.rights.duration)} / ${value(p.rights.territory)}`,`Sources : ${value(p.rights.sourceDelivery)}`,`Exclusivité : ${p.rights.exclusivity||'Aucune exclusivité particulière'}`);
     if(p.renewal.applicable)lines.push(`Renouvellement : ${p.renewal.mode==='express'?'Exprès':'Mensuel sans engagement'} — ${value(p.renewal.period)}`,`Préavis : ${value(p.renewal.notice)}`,`Fin de service : ${value(p.renewal.termination)}`,`Restitution : ${value(p.renewal.restitution)}`);
@@ -65,6 +68,7 @@ export function formatContractPresentation(i:ContractPresentationInput):Contract
   }
   if(i.template&&!p)add('parameters','Paramètres à compléter dans le devis',['Identité du client, périmètre personnalisé, montant, échéancier, délais, droits et annexes seront renseignés dans le devis.','Cet aperçu n’est ni un devis finalisé ni un snapshot contractuel signé.']);
   if(i.lineDetails?.length)add('sold-details','Périmètre vendu',i.lineDetails.map(d=>d+'\n'));
+  if(i.lineCommitments?.length)add('commitments','Calendrier et engagements par prestation',i.lineCommitments.map(s=>s+'\n'));
   if(i.types.length)add('types','Types et versions utilisés',i.types.map(t=>`${t.name} · ${t.code} · v${t.versionNumber}`));
   const text=sections.map(s=>`${s.title.toUpperCase()}\n\n${s.text}`).join('\n\n');
   return {schemaVersion:1,state:i.state,compiledAt:i.compiledAt,sections,text,types:i.types,modules:i.modules,...(i.template?{template:i.template}:{})};

@@ -169,10 +169,12 @@ export class QuoteContractPreparationService {
     for (const key of ['identity','administrative','vat','complaints'] as const) check(admin[key].state==='filled'&&present(admin[key].value),`ADMIN_${key.toUpperCase()}`,`Informations AtoumWeb à renseigner/vérifier : ${key}`);
     check(Boolean(p.conclusion.channel)&&present(p.conclusion.context)&&present(p.conclusion.purchasePurpose),'CONCLUSION','Canal, contexte et finalité à confirmer');
     check(p.conclusion.channel!=='other'||present(p.conclusion.otherChannelReason),'OTHER_CHANNEL','Précise le canal particulier');
-    check(p.digital.kinds.length>0&&p.digital.supply!==null&&present(p.digital.delivery)&&present(p.digital.qualificationReason),'DIGITAL_QUALIFICATION','Qualification de la prestation et livraison à préciser');
+    check(p.digital.kinds.length>0&&(p.digital.mixed||p.digital.supply!==null)&&present(p.digital.delivery)&&present(p.digital.qualificationReason),'DIGITAL_QUALIFICATION','Qualification de la prestation et livraison à préciser');
     check(p.payment.milestones.every(m=>Boolean(m.dueDate)||present(m.event)),'PAYMENT_DATES','Dates ou événements objectifs de chaque échéance à renseigner');
     check(Boolean(p.initialPayment.dueDate)||present(p.payment.milestones[0]?.event),'INITIAL_DUE','Échéance du paiement initial à renseigner');
-    check(p.milestones.length>0&&p.milestones.every(m=>present(m.label)&&(Boolean(m.date)||present(m.event))),'DELIVERY_MILESTONE','Au moins un jalon d’exécution avec date ou événement objectif convenu à renseigner');
+    const soldLines=this.db.all<{id:string}>('SELECT id FROM quote_lines WHERE quote_id=?',[id]);
+    const lineDates=soldLines.length>0&&soldLines.every(l=>{const d=new CommercialRulesService(this.db).parameters(l.id);return Boolean(d?.acceptedDeadline||d?.serviceStartDate||d?.contractEvent?.trim());});
+    check(lineDates||p.milestones.length>0&&p.milestones.every(m=>present(m.label)&&(Boolean(m.date)||present(m.event))),'DELIVERY_MILESTONE','Jalons d’exécution : renseigner une date ou un événement objectif pour chaque prestation, ou un calendrier commun convenu');
     const lineIds=this.db.all<{id:string}>('SELECT id FROM quote_lines WHERE quote_id=?',[id]).map(l=>l.id);
     check(lineIds.every(lineId=>p.warranties.some(w=>w.lineId===lineId)),'WARRANTY_COVERAGE','Qualification de garantie corrective requise pour chaque ligne, y compris non applicable');
     check(p.warranties.every(w=>lineIds.includes(w.lineId)),'WARRANTY_LINE','Une garantie référence une ligne retirée');

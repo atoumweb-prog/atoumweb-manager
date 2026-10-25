@@ -452,15 +452,21 @@ export class ContractTermsService {
     const lineDetails:string[]=sold.flatMap((l:Record<string,unknown>)=>{
       const catalogue=l.catalogue as Record<string,unknown>|null;
       const dossier=l.dossier as Record<string,unknown>|null;
-      const description=[catalogue?.itemName??l.label,`Quantité : ${Number(l.quantityMilli??1000)/1000}`,dossier?.scope,dossier?.acceptedDeadline].filter(Boolean).join(' — ');
-      const inclusions=Array.isArray(catalogue?.inclusions)?catalogue.inclusions.filter(x=>typeof x==='string'):[];
-      const exclusions=Array.isArray(catalogue?.exclusions)?catalogue.exclusions.filter(x=>typeof x==='string'):[];
+      const description=[catalogue?.itemName??l.label,`Quantité : ${Number(l.quantityMilli??1000)/1000}`,dossier?.scope].filter(Boolean).join(' — ');
+      const inclusions=Array.isArray(catalogue?.inclusions)?catalogue.inclusions.filter(x=>typeof x==='string'&&!(dossier?.scope&&/mêmes? (périmètre|prérequis)|mêmes? .*mensuel/i.test(x))):[];
+      const exclusions=dossier?.scopeExclusions?[String(dossier.scopeExclusions)]:Array.isArray(catalogue?.exclusions)?catalogue.exclusions.filter(x=>typeof x==='string'):[];
       return description?[[description,...inclusions.map(x=>`• Inclus : ${x}`),...exclusions.map(x=>`• Non inclus : ${x}`)].join('\n')]:[];
     });
     const familyNames:Record<string,string>={WEB:'Site vitrine / Web',LANDING:'Landing page',ECOM:'E-commerce',CONTENU:'Contenu',IDENTITE:'Identité visuelle',PHOTO:'Photographie',DATA:'Analytics',MAINT:'Maintenance',MARIAGE:'Site mariage',APP:'Application métier',DEVWP:'Développement WordPress',TECH:'Prestations techniques',SEO:'Référencement'};
     const itemGroups:Record<string,string>=Object.fromEntries(sold.map((l:Record<string,unknown>)=>{const c=l.catalogue as Record<string,unknown>|null;return [String(c?.itemId??l.itemId??''),familyNames[String(c?.familyCode)]??'Prestations du devis'];}));
     const clauseGroupLabels=Object.fromEntries(clauses.map(c=>[c.id,[...new Set(c.sourceCatalogItemIds.map(id=>itemGroups[id]).filter(Boolean))].join(' / ')||'Prestations du devis']));
-    return formatContractPresentation({state:build.snapshotState,number:String(row.quote_number),subject:String(row.subject),totalCents:Number(row.contract_value_cents),estimatedDelay:row.estimated_delay as string|null,prerequisites:row.prerequisites_text as string|null,compiledAt:build.compiledAt??null,clauseText:build.snapshotState==='draft'?build.compiledText:build.snapshotText??'',clauses,parameters,administration,types,modules,lineDetails,warrantyLabels,clauseGroupLabels});
+    const lineCommitments=sold.map((l:Record<string,unknown>)=>{
+      const c=l.catalogue as Record<string,unknown>|null,d=l.dossier as import('../../shared/commercialRules').QuoteLineParameters|null,cp=c?.commercialParameters as Record<string,unknown>|null;
+      const nature=d?.contractNature??(['mensuelle','annuelle','monthly','yearly'].includes(String(c?.periodicity))?'continuous':['ponctuelle','once'].includes(String(c?.periodicity))?'one_off':null);
+      const info=[String(c?.itemName??l.label??'Prestation'),`Exécution : ${nature==='continuous'?'service continu':nature==='one_off'?'réalisation ponctuelle':'à préciser pour cette prestation'}`,d?.contractEvent?`Date ou événement convenu : ${d.contractEvent}`:'',d?.acceptedDeadline?`Livraison convenue : ${d.acceptedDeadline}`:nature==='one_off'&&!d?.contractEvent?'Livraison : date ou événement à préciser':'',d?.serviceStartDate?`Début du service : ${d.serviceStartDate}`:nature==='continuous'&&!d?.contractEvent?'Début du service : date ou événement à préciser':'',d?.serviceEndDate?`Fin du service : ${d.serviceEndDate}`:'',d?.serviceDuration?`Durée convenue : ${d.serviceDuration}`:cp?.deliveryTerms?`Durée indiquée au Catalogue vendu : ${cp.deliveryTerms}`:'',cp?.reviewTerms?`Limites prévues : ${cp.reviewTerms}`:'',d?.renewalTerms?`Renouvellement / fin : ${d.renewalTerms}`:nature==='continuous'?'Renouvellement / fin : à confirmer':'',d?.scopeReference?`Référence de départ du périmètre : ${d.scopeReference.label} · version ${d.scopeReference.versionNumber}`:''];
+      return info.filter(Boolean).join('\n');
+    });
+    return formatContractPresentation({state:build.snapshotState,number:String(row.quote_number),subject:String(row.subject),totalCents:Number(row.contract_value_cents),estimatedDelay:row.estimated_delay as string|null,prerequisites:row.prerequisites_text as string|null,compiledAt:build.compiledAt??null,clauseText:build.snapshotState==='draft'?build.compiledText:build.snapshotText??'',clauses,parameters,administration,types,modules,lineDetails,warrantyLabels,clauseGroupLabels,lineCommitments});
   }
 
   syncQuote(quoteId: string): QuoteContractBuild {

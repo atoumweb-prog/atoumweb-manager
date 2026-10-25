@@ -26,8 +26,12 @@ export class CommercialRulesService {
   }
 
   setParameters(lineId: string, parameters: QuoteLineParameters): void {
-    const allowed=new Set(['parentLineId','parentInterventionId','requestedDeadline','availabilityConfirmed','acceptedDeadline','scope','currentEstimateMinutes','productionPlan','serviceStartDate','serviceEndDate','siteId','contextNodeId','setupEstimateMinutes','operationalProjectId','parentOperationalSaleId','periodAlignment']);
+    const allowed=new Set(['contractNature','contractEvent','serviceDuration','renewalTerms','scopeExclusions','productCount','scopeReference','parentLineId','parentInterventionId','requestedDeadline','availabilityConfirmed','acceptedDeadline','scope','currentEstimateMinutes','productionPlan','serviceStartDate','serviceEndDate','siteId','contextNodeId','setupEstimateMinutes','operationalProjectId','parentOperationalSaleId','periodAlignment']);
     if(!parameters||Object.keys(parameters).some(key=>!allowed.has(key)))throw Error('Paramètre de dossier inconnu.');
+    if(parameters.contractNature&&!['one_off','continuous'].includes(parameters.contractNature))throw Error('Nature de prestation invalide.');
+    for(const key of ['contractEvent','serviceDuration','renewalTerms','scopeExclusions'] as const)if(parameters[key]!=null&&typeof parameters[key]!=='string')throw Error('Engagement de prestation invalide.');
+    if(parameters.productCount&&(!['included','additional'].includes(parameters.productCount.kind)||!Number.isSafeInteger(parameters.productCount.count)||parameters.productCount.count<0))throw Error('Nombre de produits invalide.');
+    if(parameters.scopeReference){const r=parameters.scopeReference;const version=this.database.get<{version_number:number;name:string}>(`SELECT v.version_number,i.name FROM catalog_versions v JOIN catalog_items i ON i.id=v.item_id WHERE v.id=? AND v.status IN ('published','retired')`,[r.versionId]);if(!version||r.label!==version.name||r.versionNumber!==version.version_number)throw Error('Version de référence publiée introuvable.');}
     if(parameters.periodAlignment&&!['calendar','anniversary'].includes(parameters.periodAlignment))throw Error('Alignement des périodes invalide.');
     const line = this.database.get<{quote_id:string;snapshot_json:string|null}>('SELECT quote_id,snapshot_json FROM quote_lines WHERE id=?', [lineId]);
     if (!line) throw Error('Ligne introuvable.');
@@ -70,6 +74,16 @@ export class CommercialRulesService {
     for (const line of quote.lines) {
       const rules = line.snapshot?.commercialRules as CommercialVersionRules | undefined;
       const params = this.parameters(line.id);
+      const snapshot=line.snapshot??{};
+      const unresolvedReference=(v:unknown):boolean=>Array.isArray(v)?v.some(unresolvedReference):typeof v==='string'&&/mêmes? (périmètre|exclusions|prérequis)|mêmes? .*mensuel/i.test(v);
+      if(unresolvedReference(params?.scope)||unresolvedReference(snapshot.inclusions)&&!params?.scope?.trim())issues.push(`${line.label} : détailler le périmètre de référence avant finalisation.`);
+      if(unresolvedReference(params?.scopeExclusions)||unresolvedReference(snapshot.exclusions)&&!params?.scopeExclusions?.trim())issues.push(`${line.label} : détailler les exclusions de référence avant finalisation.`);
+      if(params?.contractNature==='one_off'&&!params.acceptedDeadline&&!params.contractEvent?.trim())issues.push(`${line.label} : date ou événement de livraison à préciser.`);
+      if(params?.contractNature==='continuous'){
+        if(!params.serviceStartDate&&!params.contractEvent?.trim())issues.push(`${line.label} : début du service ou événement de départ à préciser.`);
+        if(!params.serviceEndDate&&!params.serviceDuration?.trim())issues.push(`${line.label} : durée ou fin du service à préciser.`);
+        if(!params.renewalTerms?.trim())issues.push(`${line.label} : conditions de renouvellement ou fin sans renouvellement à préciser.`);
+      }
       if (rules?.attachment) {
         const parent = quote.lines.find(candidate => candidate.id === params?.parentLineId);
         const intervention = rules.attachment.allowIntervention && params?.parentInterventionId ? this.database.get(`SELECT id FROM interventions WHERE id=? AND client_account_id=? AND status NOT IN ('archived','cancelled','completed')`,[params.parentInterventionId,quote.clientAccountId??null]) : null;

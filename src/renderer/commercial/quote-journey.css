@@ -64,3 +64,10 @@ html[data-theme] .quote-journey-tabs button[aria-selected=true]{background:#ffda
 .quote-document-frame{display:block;width:100%;height:calc(100vh - 220px);min-height:450px;background:#fff;border:1px solid #d6dce2;border-radius:5px;}
 .quote-preview-help{margin:0;padding:10px 16px;font-size:12px;color:#535d67;background:#f5f6f7;}
 .app-shell .quote-client-preview-toolbar .primary-button{background:#ffda00!important;color:#111!important;-webkit-text-fill-color:#111!important;border-color:#ffda00!important;}
+
+.quote-line-parameters .quote-scope-reference{grid-column:1/-1;}
+.quote-line-parameters .quote-scope-reference p{font-size:13px;}
+.quote-line-parameters textarea{min-height:80px;}
+.quote-line-parameters .quote-line-editor-grid{min-width:0;}
+.quote-line-parameters .quote-line-editor-grid>label{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0;}
+.quote-line-parameters .quote-line-editor-grid>label>input:not([type=checkbox]),.quote-line-parameters .quote-line-editor-grid>label>select,.quote-line-parameters .quote-line-editor-grid>label>textarea{width:100%;min-width:0;max-width:100%;box-sizing:border-box;}

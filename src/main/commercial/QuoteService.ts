@@ -159,9 +159,15 @@ export class QuoteService {
   ) {}
 
   setLineParameters(lineId:string,parameters:import('../../shared/commercialRules').QuoteLineParameters):QuoteDetail {
+    this.database.exec('SAVEPOINT quote_line_parameters_save;');
+    try{
     new CommercialRulesService(this.database).setParameters(lineId,parameters);
     const row=this.database.get<{quote_id:string}>('SELECT quote_id FROM quote_lines WHERE id=?',[lineId])!;
-    return this.get(row.quote_id);
+    this.database.run('UPDATE quotes SET updated_at=? WHERE id=?',[nowIso(),row.quote_id]);
+    const result=this.get(row.quote_id);
+    this.database.exec('RELEASE quote_line_parameters_save;');
+    return result;
+    }catch(e){this.database.exec('ROLLBACK TO quote_line_parameters_save; RELEASE quote_line_parameters_save;');throw e;}
   }
   preparationIssues(id:string):string[] {
     const quote=this.get(id);

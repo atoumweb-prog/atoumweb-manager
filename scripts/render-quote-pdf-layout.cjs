@@ -6,8 +6,9 @@ const repo=path.resolve(__dirname,'..');
  const source=process.argv[2];if(!source)throw Error('Pass an explicit TEST Workspace path. No default user database.');
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'atoumweb-pdf-layout-')),workspace=path.join(temp,'workspace');fs.mkdirSync(path.join(workspace,'data'),{recursive:true});
  const original=new DatabaseSync(path.join(source,'data/atoumweb-manager.sqlite'),{readOnly:true});try{await backup(original,path.join(workspace,'data/atoumweb-manager.sqlite'));}finally{original.close();}
- const out=path.join(repo,'output/pdf');fs.mkdirSync(out,{recursive:true});
- const script=path.join(temp,'render.cjs');
+ const stamp=process.argv[3]||new Date().toISOString().slice(0,10).replaceAll('-','');if(!/^\d{8}$/.test(stamp))throw Error('Date YYYYMMDD required');const out=path.join(repo,'output/pdf',stamp);fs.mkdirSync(out,{recursive:true});
+ const archived=process.argv[4]?require('./complete-quote-maintenance-reference.cjs').loadReference(process.argv[4]):null;
+const script=path.join(temp,'render.cjs');
  esbuild.buildSync({stdin:{contents:`
  import {app} from 'electron';import fs from 'node:fs';import path from 'node:path';
  import {DatabaseService} from './src/main/database/DatabaseService';import {ensureWorkspace} from './src/main/workspace';
@@ -17,6 +18,11 @@ const repo=path.resolve(__dirname,'..');
  const quote=db.quotes.list().find(q=>q.number==='DEV-2026-003');if(!quote)throw Error('TEST quote DEV-2026-003 absent');
  const before=db.quotes.get(quote.id);if(before.status!=='draft'||before.finalizedAt)throw Error('This recipe requires a mutable TEST draft.');
  const proposal=db.contractTerms.proposeQuoteUpdate(quote.id);const build=db.contractTerms.applyQuoteUpdate(quote.id,proposal.token);
+ // Explicit scenario facts from Carlos: 10 included + 51 additional products, annual reference is WooCommerce monthly.
+ const current=db.quotes.get(quote.id),main=current.lines.find(l=>l.catalogItemId==='atoumweb-ecommerce'),products=current.lines.find(l=>l.catalogItemId==='atoumweb-produits51'),annual=current.lines.find(l=>l.snapshot?.canonicalCode==='AW-MAINT-WC-A');
+ if(main)db.quotes.setLineParameters(main.id,{...main.parameters,contractNature:'one_off',productCount:{kind:'included',count:10}});
+ if(products)db.quotes.setLineParameters(products.id,{...products.parameters,contractNature:'one_off',productCount:{kind:'additional',count:51}});
+ const archived=${JSON.stringify(archived)};if(annual&&archived)db.quotes.setLineParameters(annual.id,{...annual.parameters,contractNature:'continuous',scope:archived.scope,scopeExclusions:archived.exclusions,serviceDuration:String(annual.snapshot?.commercialParameters?.deliveryTerms??'')});
  const q=db.quotes.get(quote.id),p=db.contractTerms.presentation(quote.id);
  if(q.contractValueCents!==before.contractValueCents||q.lines.length!==before.lines.length)throw Error('Commercial values unexpectedly changed.');
  const result=await generateQuotePdf(q,workspace,p),dest=path.join(${JSON.stringify(out)},'DEV-2026-003-mise-en-page.pdf');fs.copyFileSync(result.path,dest);
