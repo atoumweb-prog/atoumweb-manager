@@ -1,3 +1,6 @@
+import {commercialDescription} from '../../shared/commercialDescription';
+import {quotePaymentSchedule} from '../../shared/quotePaymentSchedule';
+import {quoteRecipient} from './quoteRecipient';
 import {QuoteDocumentSettingsService} from './QuoteDocumentSettingsService';
 import {beforeQuoteMissing} from '../../shared/prospectProgress';
 import { activePreparation, assertPreparedContent, contractHash, contractSourceHash } from './quoteTransmission';
@@ -212,6 +215,7 @@ export class QuoteService {
     return {
       ...this.mapSummary(row),
       contractRecipientLabel:typeof recipient==='string'?recipient:null,
+      recipient:documentJson?JSON.parse(documentJson).recipient??null:quoteRecipient(this.database,id),
       needSummary: row.need_summary,
       estimatedDelay: row.estimated_delay,
       prerequisitesText: row.prerequisites_text,
@@ -419,10 +423,11 @@ export class QuoteService {
     this.insertLine(quoteId, 'catalog', {
       ...input,
       label: clean(input.label) ?? source.item_name,
-      description: input.description ?? source.description,
+      description: input.description ?? commercialDescription(source.description,snapshot),
       catalogUnitPriceCents: source.price_cents ?? proposed ?? 0,
       proposedUnitPriceCents: proposed ?? 0,
     }, source.item_id, source.version_id, snapshot);
+    this.recalculate(quoteId);
     if (firstOffer) {
       this.updateConditions(quoteId, {
         prerequisitesText: current.prerequisitesText,
@@ -520,7 +525,17 @@ export class QuoteService {
       && input.catalogUnitPriceCents !== existing.catalog_unit_price_cents) {
       throw Error('Le prix catalogue de l’option vendue est figé ; modifie le prix proposé ou la remise.');
     }
+    const rulesService=new CommercialRulesService(this.database);
+    const parameters=rulesService.parameters(lineId);
+    if(parameters?.productCount?.kind==='additional'&&input.quantityMilli!==existing.quantity_milli){
+      if(!Number.isSafeInteger(input.quantityMilli)||input.quantityMilli!%1000!==0)throw Error('Les produits supplémentaires se vendent en nombres entiers.');
+      const snapshot=this.mapLine(existing).snapshot;
+      if(existing.description&&existing.description!==commercialDescription(snapshot?.description as string|null,snapshot)&&clean(input.description)===existing.description)
+        throw Error('La quantité change : vérifie et actualise la description personnalisée avant d’enregistrer.');
+    }
     const values = this.calculateLine(this.mapLine(existing).optionPurchase ? { ...input, catalogUnitPriceCents: existing.catalog_unit_price_cents } : input, this.mapLine(existing).snapshot);
+    this.database.exec('SAVEPOINT update_quote_line;');
+    try{
     this.database.run(
       `UPDATE quote_lines SET label=?, description=?, quantity_milli=?, catalog_unit_price_cents=?,
        proposed_unit_price_cents=?, adjustment_mode=?, adjustment_value=?, discount_reason_code=?,
@@ -532,8 +547,11 @@ export class QuoteService {
         values.contractLineValueCents, nowIso(), lineId,
       ],
     );
+    if(parameters?.productCount?.kind==='additional')rulesService.setParameters(lineId,{...parameters,productCount:{kind:'additional',count:values.quantityMilli/1000}});
     this.recalculate(existing.quote_id);
+    this.database.exec('RELEASE update_quote_line;');
     return this.get(existing.quote_id);
+    }catch(error){this.database.exec('ROLLBACK TO update_quote_line; RELEASE update_quote_line;');throw error;}
   }
 
   removeLine(lineId: string): QuoteDetail {
@@ -552,6 +570,7 @@ export class QuoteService {
       }
       const parameters = this.preparation.parameters(existing.quote_id);
       if (parameters) {
+        if(parameters.payment.lineSchedules)parameters.payment.lineSchedules=parameters.payment.lineSchedules.filter(s=>!removedIds.includes(s.lineId));
         parameters.warranties = parameters.warranties.filter((row) => !removedIds.includes(row.lineId));
         this.database.run('UPDATE quotes SET contract_parameters_json=? WHERE id=?', [JSON.stringify(parameters), existing.quote_id]);
       }
@@ -584,7 +603,7 @@ export class QuoteService {
     this.database.run(
       `UPDATE quotes SET subject=?, need_summary=?, validity_days=?, valid_until=?, estimated_delay=?,
        prerequisites_text=?, special_terms=?, contract_type=?, contract_audience=?, deposit_percent=?, updated_at=? WHERE id=?`,
-      [subject, clean(input.needSummary ?? current.needSummary), validityDays, validUntil.toISOString(),
+      [subject, clean(input.needSummary ?? current.needSummary), validityDays, input.validityDays===undefined?current.validUntil??null:validUntil.toISOString(),
         clean(input.estimatedDelay ?? current.estimatedDelay), clean(input.prerequisitesText ?? current.prerequisitesText),
         clean(input.specialTerms ?? current.specialTerms), clean(input.contractType ?? current.contractType),
         contractAudience, depositPercent, nowIso(), quoteId],
@@ -628,6 +647,8 @@ export class QuoteService {
       if(prepared){
         if(quote.contractTextSnapshot!=null||quote.contractSnapshotJson!=null||quote.contractCompiledAt!=null||quote.snapshotLockedAt)throw Error('Devis déjà figé ou état ambigu : aucun snapshot existant ne sera remplacé.');
         assertPreparedContent(prepared);
+        const savedRecipient=JSON.parse(prepared.snapshot_json).recipient;
+        if(savedRecipient&&JSON.stringify(savedRecipient)!==JSON.stringify(quoteRecipient(this.database,id)))throw Error('Le destinataire a changé (identité ou coordonnées). Reprenez puis préparez le brouillon.');
         const recipient=JSON.parse(prepared.snapshot_json).recipientLabel;
         if(typeof recipient!=='string'||recipient!==quote.ownerLabel)throw Error('Le destinataire a changé ou sa version est ambiguë. Reprenez puis préparez le brouillon.');
         const annexes=JSON.parse(prepared.snapshot_json).documents as Array<{id:string;sha256:string|null;documentId?:string|null;relativePath?:string|null}>|undefined;
@@ -656,7 +677,7 @@ export class QuoteService {
     const lineIssues = [...new CommercialRulesService(this.database).issues(quote), ...new OperationalSalesService(this.database).issues(quote)];
     if (lineIssues.length) throw Error(lineIssues.join('\n'));
     const artifact=this.contractTerms.compilePreparation(id,explicitCanonicalReview);
-    artifact.json=JSON.stringify({...JSON.parse(artifact.json),recipientLabel:quote.ownerLabel});
+    artifact.json=JSON.stringify({...JSON.parse(artifact.json),recipientLabel:quote.ownerLabel,recipient:quote.recipient??null});
     const now=artifact.preparedAt,preparationId=randomUUID();
     this.database.run(`INSERT INTO quote_contract_preparations(id,quote_id,protocol_version,text_snapshot,snapshot_json,content_hash,source_hash,prepared_at) VALUES(?,?,1,?,?,?,?,?)`,
       [preparationId,id,artifact.text,artifact.json,contractHash([artifact.text,artifact.json]),contractSourceHash(this.database,id),now]);
@@ -886,6 +907,9 @@ export class QuoteService {
             origin.sourceOfferVersionId, origin.sourceComponentId, origin.purchasedAt],
         );
       }
+      this.recalculate(copy.id);
+      const sourceParameters=this.preparation.parameters(id);
+      if(sourceParameters){const copied=structuredClone(sourceParameters);copied.warranties=copied.warranties.map(w=>({...w,lineId:lineIds.get(w.lineId)??w.lineId}));if(copied.payment.lineSchedules)copied.payment.lineSchedules=copied.payment.lineSchedules.map(s=>({...s,lineId:lineIds.get(s.lineId)??s.lineId}));this.preparation.save(copy.id,copied);}
       new CommercialRulesService(this.database).copyParameters(lineIds);
       this.recalculate(copy.id);
       this.contractTerms.copyQuoteCustomizations(id, copy.id, lineIds);
@@ -991,7 +1015,9 @@ export class QuoteService {
     const contract = Number(totals?.contract_total ?? 0);
     const discount = Math.max(0, catalog - contract);
     const depositPercent = quote.deposit_percent ?? 0;
-    const deposit = Math.round(contract * depositPercent / 100);
+    const parameters=this.preparation.parameters(quoteId);
+    const paymentLines=this.database.all<{id:string;label:string;contract_line_value_cents:number;snapshot_json:string|null}>('SELECT id,label,contract_line_value_cents,snapshot_json FROM quote_lines WHERE quote_id=?',[quoteId]).map(l=>({id:l.id,label:l.label,contractLineValueCents:l.contract_line_value_cents,snapshot:l.snapshot_json?JSON.parse(l.snapshot_json):null}));
+    const deposit = parameters?.payment.lineSchedules?quotePaymentSchedule(parameters,paymentLines,contract).filter(m=>m.first).reduce((n,m)=>n+m.amountCents,0):Math.round(contract * depositPercent / 100);
     const balance = Math.max(0, contract - deposit);
     this.database.run(
       `UPDATE quotes SET catalog_value_cents=?, discount_value_cents=?, contract_value_cents=?,

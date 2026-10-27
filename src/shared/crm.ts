@@ -160,6 +160,7 @@ export interface DirectoryOrganization extends Organization {
 }
 
 export interface ContactInput {
+  addressLine1?:string|null;addressLine2?:string|null;postalCode?:string|null;city?:string|null;country?:string|null;
   organizationId?: string | null; firstName: string; lastName: string; jobTitle?: string | null; email?: string | null; phone?: string | null; preferredChannel?: string | null; notes?: string | null;
 }
 export interface Contact extends ContactInput { id: string; createdAt: string; updatedAt: string; archivedAt?: string | null; }

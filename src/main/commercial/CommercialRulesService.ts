@@ -35,6 +35,7 @@ export class CommercialRulesService {
     if(parameters.periodAlignment&&!['calendar','anniversary'].includes(parameters.periodAlignment))throw Error('Alignement des périodes invalide.');
     const line = this.database.get<{quote_id:string;snapshot_json:string|null}>('SELECT quote_id,snapshot_json FROM quote_lines WHERE id=?', [lineId]);
     if (!line) throw Error('Ligne introuvable.');
+    if(parameters.productCount?.kind==='additional'){const qty=this.database.get<{quantity_milli:number}>('SELECT quantity_milli FROM quote_lines WHERE id=?',[lineId])!.quantity_milli;if(parameters.productCount.count*1000!==qty)throw Error('Le nombre de produits supplémentaires doit correspondre à la quantité facturée.');}
     const quote = this.database.get<{status:string;finalized_at:string|null}>('SELECT status,finalized_at FROM quotes WHERE id=?', [line.quote_id]);
     if (quote?.status !== 'draft' || quote.finalized_at) throw Error('Les paramètres du devis sont figés.');
     if(parameters.parentOperationalSaleId){
@@ -75,6 +76,13 @@ export class CommercialRulesService {
       const rules = line.snapshot?.commercialRules as CommercialVersionRules | undefined;
       const params = this.parameters(line.id);
       const snapshot=line.snapshot??{};
+      if(params?.productCount?.kind==='additional'){
+        if(params.productCount.count*1000!==line.quantityMilli)issues.push(`${line.label} : quantité facturée et nombre de produits contradictoires.`);
+        const range=line.label.match(/(?:—|–|-)\s*(\d+)\s*(?:à|a)\s*(\d+)/i);
+        const included=quote.lines.reduce((n,l)=>n+(l.parameters?.productCount?.kind==='included'?l.parameters.productCount.count:0),0);
+        const total=included+quote.lines.reduce((n,l)=>n+(l.parameters?.productCount?.kind==='additional'?l.parameters.productCount.count:0),0);
+        if(range&&(!included||total<Number(range[1])||total>Number(range[2])))issues.push(`${line.label} : vérifier la tranche tarifaire pour ${total} produits au total ; aucun changement de prix automatique.`);
+      }
       const unresolvedReference=(v:unknown):boolean=>Array.isArray(v)?v.some(unresolvedReference):typeof v==='string'&&/mêmes? (périmètre|exclusions|prérequis)|mêmes? .*mensuel/i.test(v);
       if(unresolvedReference(params?.scope)||unresolvedReference(snapshot.inclusions)&&!params?.scope?.trim())issues.push(`${line.label} : détailler le périmètre de référence avant finalisation.`);
       if(unresolvedReference(params?.scopeExclusions)||unresolvedReference(snapshot.exclusions)&&!params?.scopeExclusions?.trim())issues.push(`${line.label} : détailler les exclusions de référence avant finalisation.`);

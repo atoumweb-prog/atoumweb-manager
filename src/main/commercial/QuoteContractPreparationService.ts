@@ -1,3 +1,5 @@
+import {resolveContractFields,hasUnresolvedContractFields} from '../../shared/contractFields';
+import {quotePaymentSchedule} from '../../shared/quotePaymentSchedule';
 import { activePreparation, contractHash } from './quoteTransmission';
 import {draftFingerprint} from '../../shared/draftSection';
 import { deriveQuoteContractDefaults } from '../../shared/quoteContractDefaults';
@@ -60,7 +62,9 @@ export class QuoteContractPreparationService {
     if(expected!==undefined&&draftFingerprint(expected.parameters)!==draftFingerprint(this.parameters(id)))throw Error('Les paramètres du devis ont changé. Votre brouillon est conservé ; actualisez avant de réessayer.');
     this.validate(parameters);
     const first = parameters.payment.milestones[0]?.percent;
-    this.db.run('UPDATE quotes SET contract_parameters_json=?,contract_audience=?,deposit_percent=?,deposit_cents=CAST(ROUND(contract_value_cents*?/100.0) AS INTEGER),balance_cents=contract_value_cents-CAST(ROUND(contract_value_cents*?/100.0) AS INTEGER),updated_at=? WHERE id=?',[JSON.stringify(parameters),parameters.audience,first,first,first,new Date().toISOString(),id]);
+    const paymentLines=this.paymentLines(id),total=Number(this.quote(id).contract_value_cents);
+    const deposit=quotePaymentSchedule(parameters,paymentLines,total).filter(m=>m.first).reduce((n,m)=>n+m.amountCents,0);
+    this.db.run('UPDATE quotes SET contract_parameters_json=?,contract_audience=?,deposit_percent=?,deposit_cents=?,balance_cents=contract_value_cents-?,updated_at=? WHERE id=?',[JSON.stringify(parameters),parameters.audience,first,deposit,deposit,new Date().toISOString(),id]);
     this.log(id,'quote_contract_parameters_saved','Paramètres contractuels du devis enregistrés');
     return this.get(id);
   }
@@ -152,17 +156,18 @@ export class QuoteContractPreparationService {
     const blocking = this.issues(id,parameters).filter(i=>i.severity==='blocking');
     if (blocking.length) throw Error(`Préparation contractuelle incomplète : ${blocking.map(i=>i.message).join(' ; ')}`);
     const total = Number(row.contract_value_cents);
-    let used=0;
-    const schedule=parameters.payment.milestones.map((m,i)=>{const amountCents=i===parameters.payment.milestones.length-1?total-used:Math.round(total*m.percent/100);used+=amountCents;return{...m,amountCents};});
+    const schedule=quotePaymentSchedule(parameters,this.paymentLines(id),total);
     const lines = this.db.all<Record<string,unknown>>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY sort_order,created_at',[id])
       .map<Record<string,unknown>>(line => ({ ...line, option_purchase: this.db.get<Record<string,unknown>>('SELECT * FROM quote_option_purchases WHERE line_id=?',[String(line.id)]) ?? null }));
     return { schemaVersion:2, parameters, schedule, lines, soldCatalogue:lines.map(l=>({lineId:l.id,itemId:l.catalog_item_id,versionId:l.catalog_version_id,quantityMilli:l.quantity_milli,catalogUnitPriceCents:l.catalog_unit_price_cents,proposedUnitPriceCents:l.proposed_unit_price_cents,lineValueCents:l.contract_line_value_cents,dossier:new CommercialRulesService(this.db).parameters(String(l.id)),catalogue:l.snapshot_json==null?null:JSON.parse(String(l.snapshot_json))})), quote:{id:row.id,number:row.quote_number,subject:row.subject,validUntil:row.valid_until,estimatedDelay:row.estimated_delay,prerequisites:row.prerequisites_text,specialTerms:row.special_terms}, administration:this.administration(), documents:this.links(id), totalCents:total, acceptance:{...parameters.acceptance,proofAtFinalization:this.links(id).filter(l=>l.role==='acceptance')} };
   }
+  private paymentLines(id:string){return this.db.all<{id:string;label:string;contract_line_value_cents:number;snapshot_json:string|null}>('SELECT id,label,contract_line_value_cents,snapshot_json FROM quote_lines WHERE quote_id=?',[id]).map(l=>({id:l.id,label:l.label,contractLineValueCents:l.contract_line_value_cents,snapshot:l.snapshot_json?JSON.parse(l.snapshot_json):null}));}
   issues(id: string, p: QuoteContractParameters | null): ContractIssue[] {
     const results:ContractIssue[]=[];
     const check=(condition:boolean,code:string,message:string)=>{if(!condition)results.push({code,severity:'blocking',message});};
     if (!p) return [{code:'PARAMETERS_MISSING',severity:'blocking',message:'Paramètres contractuels non préparés (absence conservée).'}];
     const admin=this.administration(), links=this.links(id);
+    for(const clause of this.db.all<{title:string;body:string}>('SELECT title,body FROM quote_contract_clauses WHERE quote_id=? AND enabled=1',[id]))check(!hasUnresolvedContractFields(resolveContractFields(clause.body,admin)),'CLAUSE_FIELDS',`${clause.title} : des informations contractuelles restent à renseigner.`);
     check(Boolean(this.db.get("SELECT t.id FROM contract_clause_templates t JOIN contract_clause_versions v ON v.id=t.current_version_id WHERE t.scope='base' AND t.status='active' AND v.status='published' AND t.audience IN ('all',?) LIMIT 1",[p.audience])),'PUBLISHED_BASE_MISSING','Aucun socle contractuel publié disponible ; les brouillons ne sont pas consommés');
     const hasRole=(role:ContractDocumentLink['role'])=>links.some(l=>l.role===role);
     if(this.documents&&!this.documents.isDevelopmentWorkspace())for(const key of ADMIN_CONTRACT_KEYS)check(!/^TEST\s*[—-]|\bTEST\b.*fictif/i.test(admin[key].value),`ADMIN_${key.toUpperCase()}_TEST`,`Valeur administrative TEST interdite hors environnement de développement : ${key}`);
@@ -170,7 +175,8 @@ export class QuoteContractPreparationService {
     check(Boolean(p.conclusion.channel)&&present(p.conclusion.context)&&present(p.conclusion.purchasePurpose),'CONCLUSION','Canal, contexte et finalité à confirmer');
     check(p.conclusion.channel!=='other'||present(p.conclusion.otherChannelReason),'OTHER_CHANNEL','Précise le canal particulier');
     check(p.digital.kinds.length>0&&(p.digital.mixed||p.digital.supply!==null)&&present(p.digital.delivery)&&present(p.digital.qualificationReason),'DIGITAL_QUALIFICATION','Qualification de la prestation et livraison à préciser');
-    check(p.payment.milestones.every(m=>Boolean(m.dueDate)||present(m.event)),'PAYMENT_DATES','Dates ou événements objectifs de chaque échéance à renseigner');
+    check((p.payment.lineSchedules?.flatMap(s=>s.milestones)??p.payment.milestones).every(m=>Boolean(m.dueDate)||present(m.event)),'PAYMENT_DATES','Dates ou événements objectifs de chaque échéance à renseigner');
+    if(p.payment.lineSchedules){const ids=this.paymentLines(id).map(l=>l.id),selected=p.payment.lineSchedules.map(s=>s.lineId);check(selected.length===ids.length&&ids.every(id=>selected.includes(id))&&new Set(selected).size===selected.length,'PAYMENT_COVERAGE','Échéancier par prestation : chaque ligne doit être couverte exactement une fois.');}
     check(Boolean(p.initialPayment.dueDate)||present(p.payment.milestones[0]?.event),'INITIAL_DUE','Échéance du paiement initial à renseigner');
     const soldLines=this.db.all<{id:string}>('SELECT id FROM quote_lines WHERE quote_id=?',[id]);
     const lineDates=soldLines.length>0&&soldLines.every(l=>{const d=new CommercialRulesService(this.db).parameters(l.id);return Boolean(d?.acceptedDeadline||d?.serviceStartDate||d?.contractEvent?.trim());});
@@ -226,7 +232,7 @@ export class QuoteContractPreparationService {
     if(p.schemaVersion!==1||!['professional','consumer'].includes(p.audience))fail();
     const shapes:[unknown,Record<string,string>][]=[
       [p.initialPayment,{qualification:'string',dueDate:'nullable'}],
-      [p.payment,{preset:'string',milestones:'array',professionalTerms:'object_or_null'}],
+      [p.payment,{preset:'string',milestones:'array',professionalTerms:'object_or_null',...(p.payment.lineSchedules!==undefined?{lineSchedules:'array'}:{})}],
       [p.conclusion,{channel:'nullable',context:'string',purchasePurpose:'string',professionalConsumerRegime:'string',offPremisesControlsVerified:'boolean',otherChannelReason:'string'}],
       [p.digital,{kinds:'array',mixed:'boolean',supply:'nullable',delivery:'string',hosting:'boolean',associatedServices:'string',qualificationReason:'string'}],
       [p.acceptance,{mode:'string',silenceHasEffect:'boolean'}],
@@ -245,6 +251,7 @@ export class QuoteContractPreparationService {
     if(p.acceptance.mode!=='explicit'||p.acceptance.silenceHasEffect!==false||p.rsvp.mode!=='minimal'||p.rsvp.sensitiveEnabled!==false||!['disabled','direct_caterer'].includes(p.rsvp.sensitiveRoute))throw Error('Validation explicite uniquement ; RSVP sensible toujours désactivé.');
     if(!['express','monthly_no_commitment'].includes(p.renewal.mode)||!['applicable','not_applicable','unknown'].includes(p.consumer.withdrawal)||!['not_applicable','verified','unconfigured'].includes(p.consumer.onlineWithdrawal))fail();
     if(!Array.isArray(p.milestones)||!Array.isArray(p.warranties)||!Array.isArray(p.annexes)||p.payment.milestones.length<1)fail();
+    if(p.payment.lineSchedules!==undefined){if(!Array.isArray(p.payment.lineSchedules)||!p.payment.lineSchedules.length)fail();const ids=new Set<string>();for(const line of p.payment.lineSchedules){keys(line,['lineId','milestones']);if(!present(line.lineId)||ids.has(line.lineId)||!Array.isArray(line.milestones)||!line.milestones.length)fail();ids.add(line.lineId);for(const m of line.milestones){keys(m,['label','percent','dueDate','event']);if(!present(m.label)||typeof m.event!=='string'||!Number.isInteger(m.percent)||m.percent<=0||m.percent>100||m.dueDate!==null&&!isoDate(m.dueDate))fail();}if(line.milestones.reduce((n,m)=>n+m.percent,0)!==100)throw Error('Chaque prestation doit totaliser 100 %.');}}
     for(const m of p.payment.milestones){keys(m,['label','percent','dueDate','event']);if(!present(m.label)||typeof m.event!=='string'||!Number.isInteger(m.percent)||m.percent<=0||m.percent>100||m.dueDate!==null&&!isoDate(m.dueDate))fail();}
     if(Math.abs(p.payment.milestones.reduce((n,m)=>n+m.percent,0)-100)>0.000001)throw Error('L’échéancier doit totaliser exactement 100 %.');
     const expected=p.payment.preset==='order_100'?[100]:p.payment.preset==='30_70'?[30,70]:p.payment.preset==='30_40_30'?[30,40,30]:null;

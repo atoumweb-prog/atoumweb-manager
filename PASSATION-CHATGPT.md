@@ -1,5 +1,9 @@
 # Passation à ChatGPT — AtoumWeb Manager Prospection
 
+## Priorité — passation GitHub des devis du 27 octobre 2026
+
+Pour la suite de la présentation des devis, lire [PASSATION-DEVIS-GITHUB-20261027.md](PASSATION-DEVIS-GITHUB-20261027.md). Destination explicitement demandée : `atoumweb-prog/atoumweb-manager`, branche `codex/quote-pdf-handoff-20261027`, PR en brouillon, sans fusion ni déploiement. Cette instruction récente remplace les anciennes destinations et restrictions de branche ci-dessous pour cette passation uniquement. Aucune refonte du PDF n’est réalisée pendant la synchronisation.
+
 Mis à jour le 23 octobre 2026. Ce fichier est le point d’entrée pour reprendre cette version sans relire toute la conversation. Les nouvelles demandes de Carlos priment ; les anciens comptes rendus datés ne constituent pas une liste de travaux à recommencer.
 
 ## Reprise locale PR #1 — état complémentaire

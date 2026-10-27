@@ -263,6 +263,9 @@ export const MIGRATIONS: Migration[] = [
   CRM_RECONCILIATION_MIGRATION,
   CRM_COMMERCIAL_FIELDS_MIGRATION,
   CRM_ORGANIZATION_CONTACTS_MIGRATION,
+  {id:75,name:'contact_postal_address',sql:`ALTER TABLE contacts ADD COLUMN address_line1 TEXT;
+    ALTER TABLE contacts ADD COLUMN address_line2 TEXT;ALTER TABLE contacts ADD COLUMN postal_code TEXT;
+    ALTER TABLE contacts ADD COLUMN city TEXT;ALTER TABLE contacts ADD COLUMN country TEXT;`},
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

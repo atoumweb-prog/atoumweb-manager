@@ -1,3 +1,4 @@
+import {resolveContractFields,hasUnresolvedContractFields,renderContractReferences} from '../../shared/contractFields';
 import {QuoteDocumentSettingsService} from './QuoteDocumentSettingsService';
 import { activePreparation, contractHash, contractSourceHash } from './quoteTransmission';
 import type { ContractUpdateProposal } from '../../shared/quoteTransmission';
@@ -359,9 +360,14 @@ export class ContractTermsService {
     const frozen = this.hasSnapshot(state);
     const locked = frozen || state.status !== 'draft' || Boolean(state.finalized_at);
     const snapshotState = frozen ? 'frozen' : prepared ? 'prepared' : locked ? 'historical_missing' : 'draft';
-    const clauses = this.quoteClauses(quoteId);
+    const sourceClauses = this.quoteClauses(quoteId);
+    const admin=new QuoteContractPreparationService(this.database,this.documents).administration();
+    const clauses=sourceClauses.map(c=>({...c,body:renderContractReferences(resolveContractFields(c.body,admin),this.database.all<{code:string;title:string}>('SELECT code,title FROM contract_clause_templates'))}));
     const audience = this.resolveQuoteAudience(state);
-    const compiledText = this.compile(clauses);
+    const administration=snapshotState==='draft'?new QuoteContractPreparationService(this.database,this.documents).administration():null;
+    const references=snapshotState==='draft'?this.database.all<{code:string;title:string}>('SELECT code,title FROM contract_clause_templates'):[];
+    const documentClauses=snapshotState==='draft'?clauses.map(c=>({...c,body:renderContractReferences(resolveContractFields(c.body,administration),references)})):clauses;
+    const compiledText = this.compile(documentClauses);
     const warnings: string[] = [];
     if (snapshotState === 'historical_missing') {
       warnings.push('Devis historique sans snapshot contractuel : cette absence est conservée. Aucune reconstruction depuis la bibliothèque actuelle.');
@@ -377,7 +383,7 @@ export class ContractTermsService {
     if (clauses.some((clause) => clause.isOrphaned && clause.enabled)) {
       warnings.push('Une clause liée à une prestation retirée est encore incluse.');
     }
-    if (clauses.some((clause) => clause.enabled && /\[À RENSEIGNER/i.test(clause.body))) {
+    if (documentClauses.some((clause) => clause.enabled && hasUnresolvedContractFields(clause.body))) {
       warnings.push('Au moins une clause contient encore un placeholder « À RENSEIGNER ».');
     }
     const dedicatedAudienceClause = this.database.get<{ id: string }>(
@@ -439,16 +445,17 @@ export class ContractTermsService {
     }
     const snapshot=row.contract_snapshot_json ? JSON.parse(String(row.contract_snapshot_json)) : null;
     if(build.snapshotState==='frozen' && snapshot?.presentation) return snapshot.presentation as ContractPresentation;
-    const clauses:QuoteContractClause[]=build.snapshotState==='frozen' ? snapshot?.clauses ?? [] : build.clauses;
+    const sourceClauses:QuoteContractClause[]=build.snapshotState==='frozen' ? snapshot?.clauses ?? [] : build.clauses;
     const preparation=new QuoteContractPreparationService(this.database,this.documents);
     const parameters=preparation.parameters(quoteId);
     const administration:ContractAdministration|null=build.snapshotState==='draft'?preparation.administration():snapshot?.administration??null;
+    const clauses=build.snapshotState==='draft'?sourceClauses.map(c=>({...c,body:renderContractReferences(resolveContractFields(c.body,administration),this.database.all<{code:string;title:string}>('SELECT code,title FROM contract_clause_templates'))})):sourceClauses;
     const types:ContractTypeReference[]=build.types??[];
     const modules=clauses.filter(c=>c.enabled).map(c=>{
       const source=c.sourceClauseVersionId?this.database.get<Record<string,unknown>>('SELECT t.code,v.version_number FROM contract_clause_versions v JOIN contract_clause_templates t ON t.id=v.clause_id WHERE v.id=?',[c.sourceClauseVersionId]):null;
       return {code:source?String(source.code):'Particulière',title:c.title,version:source?Number(source.version_number):null,source:c.sourceKind};
     });
-    const sold=build.snapshotState==='frozen'?snapshot?.soldCatalogue??[]:this.database.all<Record<string,unknown>>('SELECT id,label,quantity_milli,snapshot_json FROM quote_lines WHERE quote_id=? ORDER BY sort_order,created_at',[quoteId]).map(l=>({lineId:l.id,dossier:new CommercialRulesService(this.database).parameters(String(l.id)),quantityMilli:l.quantity_milli,catalogue:l.snapshot_json?JSON.parse(String(l.snapshot_json)):null,label:l.label}));
+    const sold=build.snapshotState==='frozen'?snapshot?.soldCatalogue??[]:this.database.all<Record<string,unknown>>('SELECT id,label,quantity_milli,contract_line_value_cents,snapshot_json FROM quote_lines WHERE quote_id=? ORDER BY sort_order,created_at',[quoteId]).map(l=>({lineId:l.id,dossier:new CommercialRulesService(this.database).parameters(String(l.id)),lineValueCents:l.contract_line_value_cents,quantityMilli:l.quantity_milli,catalogue:l.snapshot_json?JSON.parse(String(l.snapshot_json)):null,label:l.label}));
     const warrantyLabels:Record<string,string>=Object.fromEntries(sold.map((l:Record<string,unknown>)=>[String(l.lineId),String((l.catalogue as Record<string,unknown>|null)?.itemName??l.label??'Prestation du devis')]));
     const lineDetails:string[]=sold.flatMap((l:Record<string,unknown>)=>{
       const catalogue=l.catalogue as Record<string,unknown>|null;
@@ -467,7 +474,7 @@ export class ContractTermsService {
       const info=[String(c?.itemName??l.label??'Prestation'),`Exécution : ${nature==='continuous'?'service continu':nature==='one_off'?'réalisation ponctuelle':'à préciser pour cette prestation'}`,d?.contractEvent?`Date ou événement convenu : ${d.contractEvent}`:'',d?.acceptedDeadline?`Livraison convenue : ${d.acceptedDeadline}`:nature==='one_off'&&!d?.contractEvent?'Livraison : date ou événement à préciser':'',d?.serviceStartDate?`Début du service : ${d.serviceStartDate}`:nature==='continuous'&&!d?.contractEvent?'Début du service : date ou événement à préciser':'',d?.serviceEndDate?`Fin du service : ${d.serviceEndDate}`:'',d?.serviceDuration?`Durée convenue : ${d.serviceDuration}`:cp?.deliveryTerms?`Durée indiquée au Catalogue vendu : ${cp.deliveryTerms}`:'',cp?.reviewTerms?`Limites prévues : ${cp.reviewTerms}`:'',d?.renewalTerms?`Renouvellement / fin : ${d.renewalTerms}`:nature==='continuous'?'Renouvellement / fin : à confirmer':'',d?.scopeReference?`Référence de départ du périmètre : ${d.scopeReference.label} · version ${d.scopeReference.versionNumber}`:''];
       return info.filter(Boolean).join('\n');
     });
-    return {...formatContractPresentation({state:build.snapshotState,number:String(row.quote_number),subject:String(row.subject),totalCents:Number(row.contract_value_cents),estimatedDelay:row.estimated_delay as string|null,prerequisites:row.prerequisites_text as string|null,compiledAt:build.compiledAt??null,clauseText:build.snapshotState==='draft'?build.compiledText:build.snapshotText??'',clauses,parameters,administration,types,modules,lineDetails,warrantyLabels,clauseGroupLabels,lineCommitments}),...(build.snapshotState==='draft'?{documentSettings:new QuoteDocumentSettingsService(this.database).forQuote(quoteId)}:{})};
+    return {...formatContractPresentation({state:build.snapshotState,number:String(row.quote_number),subject:String(row.subject),totalCents:Number(row.contract_value_cents),estimatedDelay:row.estimated_delay as string|null,prerequisites:row.prerequisites_text as string|null,compiledAt:build.compiledAt??null,clauseText:build.snapshotState==='draft'?build.compiledText:build.snapshotText??'',clauses,parameters,administration,types,modules,lineDetails,warrantyLabels,clauseGroupLabels,lineCommitments,paymentLines:sold.map((l:Record<string,unknown>)=>({id:String(l.lineId),label:String(l.label),contractLineValueCents:Number(l.lineValueCents??0),snapshot:l.catalogue as Record<string,unknown>|null}))}),...(build.snapshotState==='draft'?{documentSettings:new QuoteDocumentSettingsService(this.database).forQuote(quoteId)}:{})};
   }
 
   syncQuote(quoteId: string): QuoteContractBuild {
@@ -600,7 +607,9 @@ export class ContractTermsService {
     if(explicitCanonicalReview&&!payload)throw Error('Préparation du devis indispensable pour la validation canonique du contrat.');
     this.database.exec('SAVEPOINT quote_contract_freeze;');
     try {
-    const clauses = this.quoteClauses(quoteId);
+    const sourceClauses = this.quoteClauses(quoteId);
+    const admin=new QuoteContractPreparationService(this.database,this.documents).administration();
+    const clauses=sourceClauses.map(c=>({...c,body:renderContractReferences(resolveContractFields(c.body,admin),this.database.all<{code:string;title:string}>('SELECT code,title FROM contract_clause_templates'))}));
     const audience = this.resolveQuoteAudience(state);
     const included = clauses.filter((clause) => clause.enabled && !clause.isOrphaned);
     const activeOrphans = clauses.filter((clause) => clause.enabled && clause.isOrphaned);
@@ -637,7 +646,7 @@ export class ContractTermsService {
     }
     if(payload && !included.some(c=>c.sourceKind==='base'&&!c.isOrphaned)) throw Error('Préparation contractuelle incomplète : aucun socle publié disponible ; les brouillons ne sont pas consommés.');
 
-    if(payload && (activeOrphans.length > 0 || included.some(c=>!clean(c.body)||/\[À RENSEIGNER/i.test(c.body)))) throw Error('Clause incluse vide, orpheline ou incomplète : finalisation refusée.');
+    if(payload && (activeOrphans.length > 0 || included.some(c=>!clean(c.body)||hasUnresolvedContractFields(c.body)))) throw Error('Clause incluse vide, orpheline ou incomplète : finalisation refusée.');
     const now = nowIso();
     const types=this.selectedTypes(quoteId);
     const orderConflicts=new ContractTypeService(this.database).orderWarnings(types,new Set(included.filter(c=>c.sourceClauseId).map(c=>c.sourceClauseId!)));

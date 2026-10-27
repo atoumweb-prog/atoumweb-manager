@@ -1,3 +1,5 @@
+import {readableTechnicalTerms} from './contractFields';
+import {quotePaymentSchedule,type PaymentLine} from './quotePaymentSchedule';
 import type { ContractAdministration, QuoteContractParameters } from './quoteContractPreparation';
 import type { QuoteContractClause } from './contractTerms';
 import type { ContractTypeReference } from './contractTypes';
@@ -7,12 +9,14 @@ export interface ContractSectionArticle { number:number;title:string;body:string
 export interface ContractSection { id: string; title: string; text: string; articles?:ContractSectionArticle[] }
 export interface ContractPresentation {
   documentSettings?:import('./quoteDocumentSettings').QuoteDocumentSettings;
+  paymentSummary?:{scoped:boolean;rows:import('./quotePaymentSchedule').PaymentAmount[]};
   schemaVersion: 1; state: 'draft' | 'prepared' | 'frozen' | 'historical_missing'; compiledAt: string | null;
   sections: ContractSection[]; text: string; types: ContractTypeReference[];
   template?: { referenceName:string; referenceCode:string|null; catalogueVersion:number; audience:'professional'|'consumer'; inclusions?:string[]; exclusions?:string[] };
   modules: { code: string; title: string; version: number | null; source: string }[];
 }
 export interface ContractPresentationInput {
+  paymentLines?:PaymentLine[];
   template?: ContractPresentation['template'];
   state: ContractPresentation['state']; number: string; subject: string; totalCents: number;
   estimatedDelay: string | null; prerequisites: string | null; compiledAt: string | null;
@@ -36,7 +40,7 @@ export function formatContractPresentation(i:ContractPresentationInput):Contract
   if(i.template?.exclusions?.length)add('reference-exclusions','Exclusions de la référence Catalogue',i.template.exclusions);
   if(i.administration){
     const labels:Record<keyof ContractAdministration,string>={identity:'Identité AtoumWeb',administrative:'Mentions administratives',vat:'TVA',complaints:'Réclamations',mediator:'Médiateur',withdrawalRecipient:'Rétractation',providers:'Prestataires',gdpr:'Données personnelles'};
-    add('administration','Informations AtoumWeb',Object.entries(i.administration).map(([key,v])=>`${labels[key as keyof ContractAdministration]} : ${v.state==='not_applicable'?'Non applicable':value(v.value)}${v.reason?` — ${v.reason}`:''}`));
+    add('administration','Informations AtoumWeb',Object.entries(i.administration).filter(([key])=>i.state!=='draft'||!i.parameters||key!=='mediator'&&key!=='withdrawalRecipient'||(key==='mediator'?i.parameters.audience==='consumer':i.parameters.audience==='consumer'||i.parameters.conclusion.channel==='off_premises'&&i.parameters.conclusion.professionalConsumerRegime==='applicable')).map(([key,v])=>`${labels[key as keyof ContractAdministration]} : ${v.state==='not_applicable'?'Non applicable':value(v.value)}${v.reason?` — ${v.reason}`:''}`));
   }
   const enabled=i.clauses.filter(c=>c.enabled);
   let articleNumber=0;
@@ -54,7 +58,7 @@ export function formatContractPresentation(i:ContractPresentationInput):Contract
   const p=i.parameters;
   if(p){
     const lines=[`Client contractuel : ${p.audience==='consumer'?'Particulier / consommateur':'Professionnel'}`,`Paiement initial : ${p.initialPayment.qualification==='arrhes'?'Arrhes':'Acompte'}${p.initialPayment.dueDate?` — ${p.initialPayment.dueDate}`:''}`];
-    let used=0;p.payment.milestones.forEach((m,index)=>{const cents=index===p.payment.milestones.length-1?i.totalCents-used:Math.round(i.totalCents*m.percent/100);used+=cents;lines.push(`${m.label} : ${m.percent} % — ${money(cents)} — ${value(m.dueDate||m.event)}`);});
+    quotePaymentSchedule(p,i.paymentLines??[],i.totalCents).forEach(m=>lines.push(`${m.lineLabel?m.lineLabel+' — ':''}${m.label} : ${m.percent} % — ${money(m.amountCents)}${['mensuelle','monthly'].includes(m.periodicity??'')?' / mois':['annuelle','yearly'].includes(m.periodicity??'')?' / période annuelle':''} — ${value(m.dueDate||m.event)}`));
     if(p.payment.professionalTerms)lines.push(`Délai particulier B2B : ${p.payment.professionalTerms.extraDelay||'Aucun délai supplémentaire convenu'}`,`Taux B2B retenu : ${p.payment.professionalTerms.lateRate==='three_times_legal'?'trois fois le taux d’intérêt légal':'À qualifier'}. Indemnité forfaitaire prévue : ${money(p.payment.professionalTerms.recoveryIndemnityCents)} ; conditions d’application prévues par les clauses.`);
     lines.push(`Qualification prévue : ${p.digital.kinds.map(k=>({digital_content:'Contenu numérique',digital_service:'Service numérique',classical_service:'Prestation classique'}[k])).join(' / ')||'À qualifier'}${p.digital.mixed?' — prestation mixte':''}`,i.lineCommitments?.length?'Modalités d’exécution : voir les engagements distincts de chaque prestation.':`Fourniture : ${p.digital.supply==='continuous'?'Continue':p.digital.supply==='one_off'?'Ponctuelle':'À qualifier'}`);
     lines.push(...p.milestones.map(m=>`Exécution — ${m.label} : ${value(m.date||m.event)}`));
@@ -71,8 +75,9 @@ export function formatContractPresentation(i:ContractPresentationInput):Contract
   if(i.lineDetails?.length)add('sold-details','Périmètre vendu',i.lineDetails.map(d=>d+'\n'));
   if(i.lineCommitments?.length)add('commitments','Calendrier et engagements par prestation',i.lineCommitments.map(s=>s+'\n'));
   if(i.types.length)add('types','Types et versions utilisés',i.types.map(t=>`${t.name} · ${t.code} · v${t.versionNumber}`));
+  if(i.state==='draft')for(const section of sections)if(['base','catalog','custom','sold-details','commitments','parameters'].includes(section.id)){section.text=readableTechnicalTerms(section.text);if(section.articles)section.articles=section.articles.map(a=>({...a,body:readableTechnicalTerms(a.body)}));}
   const text=sections.map(s=>`${s.title.toUpperCase()}\n\n${s.text}`).join('\n\n');
-  return {schemaVersion:1,state:i.state,compiledAt:i.compiledAt,sections,text,types:i.types,modules:i.modules,...(i.template?{template:i.template}:{})};
+  return {schemaVersion:1,state:i.state,compiledAt:i.compiledAt,sections,text,types:i.types,modules:i.modules,...(p?{paymentSummary:{scoped:!!p.payment.lineSchedules,rows:quotePaymentSchedule(p,i.paymentLines??[],i.totalCents)}}:{}),...(i.template?{template:i.template}:{})};
 }
 export function contractCopy(kind:'abby'|'contract'|'all',p:ContractPresentation,commercial:string):string {
   return kind==='all'?[commercial,p.text].filter(Boolean).join('\n\n---\n\n'):p.text;

@@ -536,6 +536,7 @@ export class CrmService {
         null, clean(input.preferredChannel), clean(input.notes), now, now,
       ],
     );
+    this.saveContactAddress(id,input);
     if(email)this.saveContactMethod({contactId:id,type:'email',value:email,isPrimary:true});
     if(phone)this.saveContactMethod({contactId:id,type:'phone',value:phone,isPrimary:true});
     this.activity({ entityType: 'contact', entityId: id, action: 'created', summary: `Contact créé : ${firstName} ${lastName}`, contactId: id, organizationId: clean(input.organizationId) });
@@ -614,6 +615,10 @@ export class CrmService {
     });
   }
 
+  private saveContactAddress(id:string,input:ContactInput):void {
+    for(const [key,column] of [['addressLine1','address_line1'],['addressLine2','address_line2'],['postalCode','postal_code'],['city','city'],['country','country']] as const)
+      if(key in input)this.database.run(`UPDATE contacts SET ${column}=? WHERE id=?`,[clean(input[key]),id]);
+  }
   updateContact(id: string, input: ContactInput): Contact {
     const firstName = clean(input.firstName);
     const lastName = clean(input.lastName);
@@ -631,6 +636,7 @@ export class CrmService {
       ],
     );
     if (Number(result.changes) !== 1) throw new Error('Contact introuvable.');
+    this.saveContactAddress(id,input);
     if(input.organizationId){const link=this.listOrganizationContacts(id).find(l=>l.organizationId===input.organizationId);this.saveOrganizationContact(input.organizationId,id,link?{jobTitle:link.jobTitle,archivedAt:link.archivedAt}:null,{jobTitle:input.jobTitle??null,archivedAt:null});}
     this.activity({ entityType: 'contact', entityId: id, action: 'updated', summary: `Contact mis à jour : ${firstName} ${lastName}`, contactId: id, organizationId: clean(input.organizationId) });
     this.rebuildSearchIndex();
@@ -644,6 +650,7 @@ export class CrmService {
     return {
       id: String(row.id), organizationId: primary?.organizationId??null,
       firstName: String(row.first_name), lastName: String(row.last_name), jobTitle: primary?.jobTitle??null,
+      addressLine1:row.address_line1 as string|null,addressLine2:row.address_line2 as string|null,postalCode:row.postal_code as string|null,city:row.city as string|null,country:row.country as string|null,
       email: this.canonicalMethod('contact', id, 'email'), phone: this.canonicalMethod('contact', id, 'phone'),
       preferredChannel: row.preferred_channel as string | null, notes: row.notes as string | null,
       createdAt: String(row.created_at), updatedAt: String(row.updated_at), archivedAt: row.archived_at as string | null,
@@ -688,6 +695,7 @@ export class CrmService {
         id: String(row.id), organizationLinks:links, legacyJobTitle:activeLinks.length?null:row.job_title as string|null,
         organizationId: primary?.organizationId??null,
         organizationName: activeLinks.map(l=>l.organizationName).join(' · ')||null,
+        addressLine1:row.address_line1 as string|null,addressLine2:row.address_line2 as string|null,postalCode:row.postal_code as string|null,city:row.city as string|null,country:row.country as string|null,
         firstName: String(row.first_name),
         lastName: String(row.last_name),
         jobTitle: primary?.jobTitle??null,

@@ -26,6 +26,7 @@ it('exige un périmètre et des exclusions autonomes pour une référence annuel
 it('conserve une réalisation ponctuelle avec un événement objectif et ne fabrique pas de calendrier',()=>{
  const v=service('AW-TEST-DELAI',10000);let q=quotes.addCatalogLine(quotes.create({prospectId:prospect,subject:'TEST date'}).id,v),l=q.lines[0];
  q=quotes.setLineParameters(l.id,{contractNature:'one_off'});expect(rules.issues(q)).toEqual([expect.stringContaining('événement')]);
+ quotes.updateLine(l.id,{...l,quantityMilli:51000});
  q=quotes.setLineParameters(l.id,{contractNature:'one_off',contractEvent:'Après accord écrit sur la maquette',productCount:{kind:'additional',count:51}});expect(rules.issues(q)).toEqual([]);expect(q.lines[0].parameters?.acceptedDeadline).toBeUndefined();
 });
 function service(code:string, price:number, configuration?:CommercialVersionRules) {

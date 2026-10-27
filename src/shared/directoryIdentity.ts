@@ -14,7 +14,7 @@ export interface DirectoryVerification {
 export function directoryIdentitySnapshot(type: DirectoryIdentityType, input: OrganizationInput | ContactInput, coordinates = false): Record<string, string> {
   const keys = type === 'organization'
     ? ['name', 'legalName', 'siret', 'website', 'addressLine1', 'addressLine2', 'postalCode', 'city', 'country', 'industry', 'notes']
-    : ['organizationId', 'firstName', 'lastName', 'jobTitle', 'preferredChannel', 'notes'];
+    : ['organizationId', 'firstName', 'lastName', 'jobTitle', 'preferredChannel', 'notes', 'addressLine1', 'addressLine2', 'postalCode', 'city', 'country'];
   if (coordinates) keys.push('email', 'phone');
   const value = input as unknown as Record<string, unknown>;
   return Object.fromEntries(keys.map(key => [key, typeof value[key] === 'string' ? (value[key] as string).trim() : '']));

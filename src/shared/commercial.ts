@@ -305,7 +305,13 @@ export interface QuoteSummary {
   updatedAt: string;
 }
 
+export interface QuoteRecipient {
+  kind:'organization'|'person';organizationId:string|null;contactId:string|null;name:string;
+  addressLine1:string|null;addressLine2:string|null;postalCode:string|null;city:string|null;country:string|null;
+  identification:string|null;contactName:string|null;email:string|null;phone:string|null;contactEmail:string|null;contactPhone:string|null;
+}
 export interface QuoteDetail extends QuoteSummary {
+  recipient?:QuoteRecipient|null;
   /** Exact document recipient from preparation/transmission; absent for legacy evidence. */
   contractRecipientLabel?:string|null;
   needSummary?: string | null;
