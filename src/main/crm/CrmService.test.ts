@@ -67,7 +67,7 @@ describe('CrmService', () => {
     });
   });
 
-  it('03C qualification : conflit détecté sur contexte partagé avec le formulaire Besoins', () => {
+  it('qualification : demande initiale indépendante du besoin confirmé', () => {
     const org = crm.createOrganization({ name: 'Qualification et besoin' });
     const prospect = crm.createProspect({ organizationId: org.id });
     const oldQualification = prospectQualificationBriefSnapshot(readProspect(crm, prospect.id));
@@ -75,9 +75,10 @@ describe('CrmService', () => {
     crm.updateProspectProjectBriefIfUnchanged(prospect.id, existingProject, {
       ...existingProject, projectSummary: 'Demande mise à jour dans Besoins',
     });
-    expect(() => crm.updateProspectQualificationBriefIfUnchanged(prospect.id, oldQualification, {
-      ...oldQualification, projectSummary: 'Ancien formulaire',
-    })).toThrow(/Conflit/);
+    crm.updateProspectQualificationBriefIfUnchanged(prospect.id, oldQualification, {
+      ...oldQualification, initialRequest: 'Demande reçue',
+    });
+    expect(readProspect(crm, prospect.id).initialRequest).toBe('Demande reçue');
     expect(readProspect(crm, prospect.id).projectSummary).toBe('Demande mise à jour dans Besoins');
   });
 
@@ -496,7 +497,8 @@ describe('CrmService', () => {
     expect(cleared.nextActionText).toBeNull();
 
     const events = crm.listActivity('prospect', prospect.id);
-    expect(events.filter((event) => event.action === 'next_action_changed')).toHaveLength(2);
+    expect(events.filter((event) => event.action === 'action_created')).toHaveLength(1);
+    expect(events.filter((event) => event.action === 'action_cancelled')).toHaveLength(1);
   });
 
   it('reconstruit la recherche depuis les données maîtres après modification', () => {

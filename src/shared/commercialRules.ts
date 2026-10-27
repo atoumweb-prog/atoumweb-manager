@@ -8,6 +8,13 @@ export interface CommercialVersionRules {
 }
 
 export interface QuoteLineParameters {
+  contractNature?:'one_off'|'continuous'|null;
+  contractEvent?:string|null;
+  serviceDuration?:string|null;
+  renewalTerms?:string|null;
+  scopeExclusions?:string|null;
+  productCount?:{kind:'included'|'additional';count:number}|null;
+  scopeReference?:{versionId:string;label:string;versionNumber:number}|null;
   parentLineId?: string | null;
   parentInterventionId?: string | null;
   requestedDeadline?: string | null;

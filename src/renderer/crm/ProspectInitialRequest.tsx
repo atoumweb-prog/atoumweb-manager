@@ -1,0 +1,9 @@
+import {useState} from 'react';
+import type {ProspectSummary} from '../../shared/crm';
+import {useUnsavedDraft} from '../unsaved/unsaved';
+export function ProspectInitialRequest({prospect,onSaved}:{prospect:ProspectSummary;onSaved:()=>void}){
+ const [editing,setEditing]=useState(false),[text,setText]=useState(''),[expected,setExpected]=useState<string|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const guard=useUnsavedDraft('Demande initiale',{text},{pending:busy,discard:s=>setText(s.text)});
+ async function save(){setBusy(true);setError('');try{await window.atoumweb.crm.prospects.patchIfUnchanged(prospect.id,{initialRequest:expected},{initialRequest:text.trim()||null});guard.saved();setEditing(false);onSaved();window.dispatchEvent(new Event('atoumweb:changed'));}catch(e){setError(String(e));}finally{setBusy(false);}}
+ return <section className="panel"><h4>Demande initiale</h4><p className="muted">Ce qui a été demandé au départ. Préciser le besoin confirmé ne modifie pas cette information.</p>{editing?<><label>Demande reçue<textarea value={text} onChange={e=>setText(e.target.value)} disabled={busy}/></label><div className="form-actions"><button type="button" className="primary-button" disabled={busy} onClick={()=>void save()}>Enregistrer la demande initiale</button><button type="button" className="secondary-button" disabled={busy} onClick={()=>guard.request(()=>{guard.discard();setEditing(false);})}>Annuler</button></div></>:<><p>{prospect.initialRequest||'Non renseignée'}</p>{!prospect.archivedAt&&!prospect.clientAccountId&&<button type="button" className="secondary-button" onClick={()=>{const value=prospect.initialRequest??'';setText(value);setExpected(prospect.initialRequest??null);guard.initial({text:value});setEditing(true);}}>Modifier la demande initiale</button>}</>}{error&&<p className="form-error" role="alert">{error}</p>}</section>;
+}

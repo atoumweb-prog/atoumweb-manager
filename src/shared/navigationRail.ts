@@ -23,14 +23,15 @@ export const NAVIGATION_MODULES = [
 export type NavigationModuleKey = typeof NAVIGATION_MODULES[number]['key'];
 export type NavigationModule = typeof NAVIGATION_MODULES[number];
 export const NAVIGATION_PREFERENCE_KEY = 'atoumweb:navigation:rail:v1';
-export interface NavigationPreference {version:1;railCollapsed:boolean;favoriteModuleKeys:NavigationModuleKey[]}
+export interface NavigationPreference {version:1;railCollapsed:boolean;favoriteModuleKeys:NavigationModuleKey[];collapsedGroups?:NavigationGroup[]}
 export const defaultNavigationPreference = ():NavigationPreference=>({version:1,railCollapsed:false,favoriteModuleKeys:[]});
 export const isNavigationModuleKey = (value:unknown):value is NavigationModuleKey=>typeof value==='string'&&NAVIGATION_MODULES.some(module=>module.key===value);
 export function normalizeNavigationPreference(value:unknown):NavigationPreference {
   if(!value||typeof value!=='object')throw Error('Préférence de navigation invalide.');
   const data=value as Record<string,unknown>;if(data.version!==1&&data.version!==0)throw Error('Version de navigation incompatible.');
   const favorites=data.version===0?data.favorites:data.favoriteModuleKeys;
-  return {version:1,railCollapsed:data.railCollapsed===true,favoriteModuleKeys:[...new Set(Array.isArray(favorites)?favorites.filter(isNavigationModuleKey).filter(key=>key!=='Accueil'):[])]};
+  const collapsedGroups=[...new Set(Array.isArray(data.collapsedGroups)?data.collapsedGroups.filter((group):group is NavigationGroup=>(NAVIGATION_GROUPS as readonly unknown[]).includes(group)):[])];
+  return {...(collapsedGroups.length?{collapsedGroups}:{}),version:1,railCollapsed:data.railCollapsed===true,favoriteModuleKeys:[...new Set(Array.isArray(favorites)?favorites.filter(isNavigationModuleKey).filter(key=>key!=='Accueil'):[])]};
 }
 export function readNavigationPreference(store:VisualPreferenceStore):NavigationPreference {const raw=store.getItem(NAVIGATION_PREFERENCE_KEY);return raw===null?defaultNavigationPreference():normalizeNavigationPreference(JSON.parse(raw));}
 export function writeNavigationPreference(store:VisualPreferenceStore,value:NavigationPreference){store.setItem(NAVIGATION_PREFERENCE_KEY,JSON.stringify(normalizeNavigationPreference(value)));}

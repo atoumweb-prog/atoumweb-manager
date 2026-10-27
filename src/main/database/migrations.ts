@@ -1,3 +1,6 @@
+import { CRM_ORGANIZATION_CONTACTS_MIGRATION } from './crmOrganizationContactsMigration';
+import { CRM_COMMERCIAL_FIELDS_MIGRATION } from './crmCommercialFieldsMigration';
+import { CRM_RECONCILIATION_MIGRATION } from './crmReconciliationMigration';
 import { QUOTE_TRANSMISSION_MIGRATION } from './quoteTransmissionMigration';
 import { CONTRACT_SECTION_REVIEW_MIGRATION } from './contractSectionReviewMigration';
 import { CONTRACT_TYPES_MIGRATION } from './contractTypesMigration';
@@ -257,6 +260,12 @@ export const MIGRATIONS: Migration[] = [
   CONTRACT_SECTION_REVIEW_MIGRATION,
   CATALOG_RECOMMENDATION_DETAILS_MIGRATION,
   QUOTE_TRANSMISSION_MIGRATION,
+  CRM_RECONCILIATION_MIGRATION,
+  CRM_COMMERCIAL_FIELDS_MIGRATION,
+  CRM_ORGANIZATION_CONTACTS_MIGRATION,
+  {id:75,name:'contact_postal_address',sql:`ALTER TABLE contacts ADD COLUMN address_line1 TEXT;
+    ALTER TABLE contacts ADD COLUMN address_line2 TEXT;ALTER TABLE contacts ADD COLUMN postal_code TEXT;
+    ALTER TABLE contacts ADD COLUMN city TEXT;ALTER TABLE contacts ADD COLUMN country TEXT;`},
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

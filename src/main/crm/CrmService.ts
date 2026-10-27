@@ -1,3 +1,5 @@
+import { ActionService } from './ActionService';
+import type { ProspectCreation } from '../../shared/crm';
 import { createHash } from 'node:crypto';
 import { directoryIdentitySnapshot, sameDirectoryIdentity, type DirectoryWrite, type DirectoryVerification, type DirectoryIdentityType, type ExistingIdentityWrite } from '../../shared/directoryIdentity';
 import { draftFingerprint } from '../../shared/draftSection';
@@ -234,6 +236,10 @@ export class CrmService {
     );
   }
 
+  listReconciliation(owner:string,id:string):import('../../shared/crm').CrmReconciliation[]{
+    return this.database.all<{id:string;ownerType:string;ownerId:string;field:string;legacyValue:string;disposition:string;methodsJson:string;createdAt:string}>('SELECT id,owner_type AS ownerType,owner_id AS ownerId,field,legacy_value AS legacyValue,disposition,methods_json AS methodsJson,created_at AS createdAt FROM crm_reconciliation WHERE owner_type=? AND owner_id=? ORDER BY field',[owner,id]);
+  }
+
   saveExistingDirectoryIdentities(input:ExistingIdentityWrite):{organization?:DirectoryOrganization;contact?:DirectoryContact}{
     return this.transaction(()=>{
       const organization=input.organization?this.saveDirectoryOrganization(input.organization.input,{id:input.organization.id,expected:input.organization.expected}):undefined;
@@ -260,8 +266,6 @@ export class CrmService {
       const current=context.id?this.getOrganization(context.id):null;
       const saved=current?this.updateOrganization(current.id,{...input,email:current.email,phone:current.phone}):this.createOrganization(input);
       if(!context.id){
-        if(input.email?.trim())this.saveContactMethod({organizationId:saved.id,type:'email',value:input.email,label:'Principal',isPrimary:true});
-        if(input.phone?.trim())this.saveContactMethod({organizationId:saved.id,type:'phone',value:input.phone,label:'Principal',isPrimary:true});
         this.activity({entityType:'organization',entityId:saved.id,action:'directory_created',summary:'Création Annuaire confirmée',organizationId:saved.id,metadata:{operationId:context.operationId,inputFingerprint:draftFingerprint(directoryIdentitySnapshot('organization',input,true))}});
       }
       return this.getDirectoryOrganization(saved.id);
@@ -273,12 +277,10 @@ export class CrmService {
       this.database.run('UPDATE contacts SET id=id WHERE id=?',[context.id??'']);
       const replay=context.id?null:this.directoryCreationReplay('contact',input,context.operationId);
       if(replay)return this.getDirectoryContact(replay);
-      if(context.id&&(!context.expected||!sameDirectoryIdentity('contact',this.getContact(context.id),context.expected)))throw Error('Conflit Annuaire : contact modifié dans une autre fenêtre. Saisie conservée.');
+      if(context.id&&(!context.expected||!sameDirectoryIdentity('contact',this.getContactForOrganization(context.id,context.expected.organizationId??null),context.expected)))throw Error('Conflit Annuaire : contact modifié dans une autre fenêtre. Saisie conservée.');
       const current=context.id?this.getContact(context.id):null;
       const saved=current?this.updateContact(current.id,{...input,email:current.email,phone:current.phone}):this.createContact(input);
       if(!context.id){
-        if(input.email?.trim())this.saveContactMethod({contactId:saved.id,type:'email',value:input.email,label:'Principal',isPrimary:true});
-        if(input.phone?.trim())this.saveContactMethod({contactId:saved.id,type:'phone',value:input.phone,label:'Principal',isPrimary:true});
         this.activity({entityType:'contact',entityId:saved.id,action:'directory_created',summary:'Création Annuaire confirmée',contactId:saved.id,organizationId:saved.organizationId,metadata:{operationId:context.operationId,inputFingerprint:draftFingerprint(directoryIdentitySnapshot('contact',input,true))}});
       }
       return this.getDirectoryContact(saved.id);
@@ -309,7 +311,86 @@ export class CrmService {
     });
   }
 
+  listOrganizationContacts(contactId:string):import('../../shared/crm').OrganizationContactLink[] {
+    return this.database.all<{organizationId:string;contactId:string;organizationName:string;jobTitle:string|null;archivedAt:string|null}>(`SELECT l.organization_id AS organizationId,l.contact_id AS contactId,o.name AS organizationName,l.job_title AS jobTitle,l.archived_at AS archivedAt FROM organization_contact_links l JOIN organizations o ON o.id=l.organization_id WHERE l.contact_id=? ORDER BY o.name,l.organization_id`,[contactId]);
+  }
+
+  getContactForOrganization(contactId:string,organizationId:string|null):Contact {
+    const contact=this.getContact(contactId);
+    if(!organizationId)return contact;
+    const link=this.listOrganizationContacts(contactId).find(l=>l.organizationId===organizationId&&!l.archivedAt);
+    return {...contact,organizationId:link?organizationId:contact.organizationId,jobTitle:link?.jobTitle??null};
+  }
+
+  saveOrganizationContact(organizationId:string,contactId:string,expected:{jobTitle:string|null;archivedAt:string|null}|null,next:{jobTitle:string|null;archivedAt:string|null}):import('../../shared/crm').OrganizationContactLink[] {
+    return this.transaction(()=>{
+      this.database.run('UPDATE contacts SET id=id WHERE id=?',[contactId]);
+      if(this.getOrganization(organizationId).archivedAt||this.getContact(contactId).archivedAt)throw Error('Identité archivée.');
+      const current=this.listOrganizationContacts(contactId).find(l=>l.organizationId===organizationId);
+      if((!expected&&current)||(expected&&(!current||current.jobTitle!==expected.jobTitle||current.archivedAt!==expected.archivedAt)))throw Error('Conflit : association modifiée. Saisie conservée.');
+      const now=nowIso();
+      this.database.run(`INSERT INTO organization_contact_links(organization_id,contact_id,job_title,created_at,updated_at,archived_at,provenance) VALUES(?,?,?,?,?,?,?) ON CONFLICT(organization_id,contact_id) DO UPDATE SET job_title=excluded.job_title,archived_at=excluded.archived_at,updated_at=excluded.updated_at`,[organizationId,contactId,clean(next.jobTitle),now,now,next.archivedAt,'manual']);
+      this.activity({entityType:'contact',entityId:contactId,action:'association_updated',summary:'Association entreprise et fonction mises à jour',organizationId,contactId,metadata:{organizationId,previous:current??null,next}});this.rebuildSearchIndex();return this.listOrganizationContacts(contactId);
+    });
+  }
+
+  private canonicalMethod(owner: 'organization'|'contact', id: string, type: 'email'|'phone'): string|null {
+    return this.database.get<{value:string}>(`SELECT value FROM contact_methods WHERE ${owner==='organization'?'organization_id':'contact_id'}=? AND method_type=? AND archived_at IS NULL ORDER BY is_primary DESC,created_at,id LIMIT 1`,[id,type])?.value??null;
+  }
+
+  createProspectAtomic(input: ProspectCreation): ProspectSummary {
+    if(!/^[0-9a-f-]{36}$/i.test(input.operationId))throw Error('Identifiant de création requis.');
+    return this.transaction(()=>{
+      // First write serializes contenders before replay lookup.
+      this.database.run('UPDATE prospects SET id=id WHERE id=?',['']);
+      const fingerprint=draftFingerprint(input);
+      const replay=this.database.get<{entity_id:string;metadata_json:string}>("SELECT entity_id,metadata_json FROM activity_events WHERE action='prospect_creation' AND json_extract(metadata_json,'$.operationId')=?",[input.operationId]);
+      if(replay){if(JSON.parse(replay.metadata_json).fingerprint!==fingerprint)throw Error('Cette création a déjà été enregistrée avec une autre saisie.');return this.getProspect(replay.entity_id);}
+      if(input.organizationId&&input.organization)throw Error('Choisis une entreprise existante ou une nouvelle entreprise.');
+      if(input.contactId&&input.contact)throw Error('Choisis une personne existante ou une nouvelle personne.');
+      const organization=input.organizationId?this.getOrganization(input.organizationId):input.organization?this.createOrganization(input.organization):null;
+      const contact=input.contactId?this.getContact(input.contactId):input.contact?this.createContact({...input.contact,organizationId:organization?.id??null}):null;
+      if(organization?.archivedAt||contact?.archivedAt)throw Error('Identité archivée.');
+      if(organization&&contact&&!this.listOrganizationContacts(contact.id).some(l=>l.organizationId===organization.id&&!l.archivedAt))this.saveOrganizationContact(organization.id,contact.id,null,{jobTitle:null,archivedAt:null});
+      const prospect=this.createProspect({...input.prospect,organizationId:organization?.id??null,contactId:contact?.id??null,stage:'new'});
+      if(input.research)this.saveProspectResearchSnapshot(prospect.id,input.research);
+      if(input.firstAction)new ActionService(this.database).create({...input.firstAction,ownerType:'prospect',ownerId:prospect.id,type:'action'});
+      this.activity({entityType:'prospect',entityId:prospect.id,action:'prospect_creation',summary:'Création du dossier confirmée',prospectId:prospect.id,metadata:{operationId:input.operationId,fingerprint}});
+      return this.getProspect(prospect.id);
+    });
+  }
+
+  patchProspectIfUnchanged(id:string,expected:Partial<ProspectInput>,patch:Partial<ProspectInput>):ProspectSummary {
+    const columns:Partial<Record<keyof ProspectInput,string>>={contactId:'contact_id',initialRequest:'initial_request',estimatedValueCents:'estimated_value_cents',notes:'notes',decisionStatus:'decision_status',decisionMakerContactId:'decision_maker_contact_id',decisionMakerDetails:'decision_maker_details',detectedOpportunity:'detected_opportunity',waitingReasonCode:'waiting_reason_code',waitingReasonText:'waiting_reason_text',waitingResumeAt:'waiting_resume_at',lostReasonCode:'lost_reason_code'};
+    const keys=Object.keys(patch) as Array<keyof ProspectInput>;
+    if(!keys.length||keys.some(k=>!columns[k]||!Object.prototype.hasOwnProperty.call(expected,k)))throw Error('Champs ou valeurs de comparaison manquants.');
+    if(patch.estimatedValueCents!=null)assertMoney(patch.estimatedValueCents,'La valeur estimée');
+    if(patch.decisionStatus!=null&&!['yes','no','unknown'].includes(patch.decisionStatus))throw Error('Circuit de décision invalide.');
+    if(patch.contactId&&this.getContact(patch.contactId).archivedAt)throw Error('Contact archivé.');
+    if(patch.decisionMakerContactId&&this.getContact(patch.decisionMakerContactId).archivedAt)throw Error('Contact archivé.');
+    const value=(v:unknown):SqlValue=>typeof v==='number'?v:typeof v==='string'?clean(v):null;
+    return this.transaction(()=>{
+    if(Object.prototype.hasOwnProperty.call(patch,'contactId')){const prospect=this.getProspect(id);if(!patch.contactId&&!prospect.organizationId)throw Error('Une identité est requise.');if(patch.contactId&&prospect.organizationId&&!this.database.get("SELECT 1 FROM organization_contact_links WHERE organization_id=? AND contact_id=? AND archived_at IS NULL",[prospect.organizationId,patch.contactId]))throw Error('Associe d’abord cette personne à l’entreprise.');}
+      const result=this.database.run(`UPDATE prospects SET ${keys.map(k=>columns[k]+'=?').join(',')},updated_at=? WHERE id=? AND archived_at IS NULL AND client_account_id IS NULL AND ${keys.map(k=>columns[k]+' IS ?').join(' AND ')}`,[...keys.map(k=>value(patch[k])),nowIso(),id,...keys.map(k=>value(expected[k]))]);
+      if(Number(result.changes)!==1)throw Error('Conflit : les informations du dossier ont changé. Saisie conservée.');
+      this.activity({entityType:'prospect',entityId:id,action:'fields_updated',summary:'Informations du dossier mises à jour',prospectId:id,metadata:{fields:keys}});this.indexProspect(id);return this.getProspect(id);
+    });
+  }
+
+  updateProspectTemperature(id:string,expected:ProspectSummary['temperature'],next:NonNullable<ProspectSummary['temperature']>):ProspectSummary {
+    if(!PROSPECT_TEMPERATURES.includes(next))throw Error('Température invalide.');
+    return this.transaction(()=>{
+      const changed=this.database.run('UPDATE prospects SET temperature=?,updated_at=? WHERE id=? AND temperature IS ? AND archived_at IS NULL AND client_account_id IS NULL',[next,nowIso(),id,expected??null]);
+      if(Number(changed.changes)!==1)throw Error('Conflit : la température ou le dossier a changé. Saisie conservée.');
+      this.activity({entityType:'prospect',entityId:id,action:'temperature_updated',summary:'Température commerciale mise à jour',prospectId:id});this.indexProspect(id);return this.getProspect(id);
+    });
+  }
+
   createOrganization(input: OrganizationInput): Organization {
+    return this.transaction(()=>this.insertOrganization(input));
+  }
+
+  private insertOrganization(input:OrganizationInput):Organization {
     const name = clean(input.name);
     if (!name) throw new Error('Le nom de l’organisation est requis.');
     const email = normalizeEmail(input.email);
@@ -322,11 +403,13 @@ export class CrmService {
         postal_code, city, country, industry, notes, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, name, clean(input.legalName), clean(input.siret), email, phone,
+        id, name, clean(input.legalName), clean(input.siret), null, null,
         normalizeWebUrl(input.website), clean(input.addressLine1), clean(input.addressLine2), clean(input.postalCode),
         clean(input.city), clean(input.country), clean(input.industry), clean(input.notes), now, now,
       ],
     );
+    if(email)this.saveContactMethod({organizationId:id,type:'email',value:email,isPrimary:true});
+    if(phone)this.saveContactMethod({organizationId:id,type:'phone',value:phone,isPrimary:true});
     this.activity({ entityType: 'organization', entityId: id, action: 'created', summary: `Organisation créée : ${name}`, organizationId: id });
     this.rebuildSearchIndex();
     return this.getOrganization(id);
@@ -337,13 +420,15 @@ export class CrmService {
     if (!name) throw new Error('Le nom de l’organisation est requis.');
     const email = normalizeEmail(input.email);
     const phone = normalizePhone(input.phone);
+    const current=this.getOrganization(id);
+    if(('email' in input&&email!==(current.email??null))||('phone' in input&&phone!==(current.phone??null)))throw Error('Modifie les coordonnées depuis leur éditeur dédié.');
     const result = this.database.run(
       `UPDATE organizations SET
-        name=?, legal_name=?, siret=?, email=?, phone=?, website=?, address_line1=?, address_line2=?,
+        name=?, legal_name=?, siret=?, email=email, phone=phone, website=?, address_line1=?, address_line2=?,
         postal_code=?, city=?, country=?, industry=?, notes=?, updated_at=?
        WHERE id=? AND archived_at IS NULL`,
       [
-        name, clean(input.legalName), clean(input.siret), email, phone, normalizeWebUrl(input.website),
+        name, clean(input.legalName), clean(input.siret), normalizeWebUrl(input.website),
         clean(input.addressLine1), clean(input.addressLine2), clean(input.postalCode), clean(input.city), clean(input.country),
         clean(input.industry), clean(input.notes), nowIso(), id,
       ],
@@ -359,7 +444,7 @@ export class CrmService {
     if (!row) throw new Error('Organisation introuvable.');
     return {
       id: String(row.id), name: String(row.name), legalName: row.legal_name as string | null,
-      siret: row.siret as string | null, email: row.email as string | null, phone: row.phone as string | null,
+      siret: row.siret as string | null, email: this.canonicalMethod('organization', id, 'email'), phone: this.canonicalMethod('organization', id, 'phone'),
       website: row.website as string | null, addressLine1: row.address_line1 as string | null,
       addressLine2: row.address_line2 as string | null, postalCode: row.postal_code as string | null,
       city: row.city as string | null, country: row.country as string | null, industry: row.industry as string | null,
@@ -371,19 +456,13 @@ export class CrmService {
   listDirectoryOrganizations(includeArchived = false): DirectoryOrganization[] {
     const rows = this.database.all<Record<string, unknown>>(
       `SELECT o.*,
-        COALESCE(
-          (SELECT cm.value FROM contact_methods cm
+        (SELECT cm.value FROM contact_methods cm
            WHERE cm.organization_id=o.id AND cm.method_type='email' AND cm.archived_at IS NULL
-           ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
-          o.email
-        ) AS resolved_email,
-        COALESCE(
-          (SELECT cm.value FROM contact_methods cm
+           ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1) AS resolved_email,
+        (SELECT cm.value FROM contact_methods cm
            WHERE cm.organization_id=o.id AND cm.method_type='phone' AND cm.archived_at IS NULL
-           ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
-          o.phone
-        ) AS resolved_phone,
-        (SELECT COUNT(*) FROM contacts c WHERE c.organization_id=o.id AND c.archived_at IS NULL) AS contact_count,
+           ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1) AS resolved_phone,
+        (SELECT COUNT(*) FROM contacts c WHERE c.archived_at IS NULL AND EXISTS(SELECT 1 FROM organization_contact_links l WHERE l.contact_id=c.id AND l.organization_id=o.id AND l.archived_at IS NULL)) AS contact_count,
         (SELECT COUNT(*) FROM prospects p
           WHERE p.organization_id=o.id AND p.archived_at IS NULL AND p.stage NOT IN ('won','lost')) AS prospect_count,
         (SELECT COUNT(*) FROM client_accounts ca
@@ -436,6 +515,10 @@ export class CrmService {
   }
 
   createContact(input: ContactInput): Contact {
+    return this.transaction(()=>this.insertContact(input));
+  }
+
+  private insertContact(input:ContactInput):Contact {
     const firstName = clean(input.firstName);
     const lastName = clean(input.lastName);
     if (!firstName || !lastName) throw new Error('Le prénom et le nom sont requis.');
@@ -449,10 +532,13 @@ export class CrmService {
         notes, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, clean(input.organizationId), firstName, lastName, clean(input.jobTitle), email,
-        phone, clean(input.preferredChannel), clean(input.notes), now, now,
+        id, clean(input.organizationId), firstName, lastName, clean(input.jobTitle), null,
+        null, clean(input.preferredChannel), clean(input.notes), now, now,
       ],
     );
+    this.saveContactAddress(id,input);
+    if(email)this.saveContactMethod({contactId:id,type:'email',value:email,isPrimary:true});
+    if(phone)this.saveContactMethod({contactId:id,type:'phone',value:phone,isPrimary:true});
     this.activity({ entityType: 'contact', entityId: id, action: 'created', summary: `Contact créé : ${firstName} ${lastName}`, contactId: id, organizationId: clean(input.organizationId) });
     this.rebuildSearchIndex();
     return this.getContact(id);
@@ -529,21 +615,29 @@ export class CrmService {
     });
   }
 
+  private saveContactAddress(id:string,input:ContactInput):void {
+    for(const [key,column] of [['addressLine1','address_line1'],['addressLine2','address_line2'],['postalCode','postal_code'],['city','city'],['country','country']] as const)
+      if(key in input)this.database.run(`UPDATE contacts SET ${column}=? WHERE id=?`,[clean(input[key]),id]);
+  }
   updateContact(id: string, input: ContactInput): Contact {
     const firstName = clean(input.firstName);
     const lastName = clean(input.lastName);
     if (!firstName || !lastName) throw new Error('Le prénom et le nom sont requis.');
     const email = normalizeEmail(input.email);
     const phone = normalizePhone(input.phone);
+    const current=this.getContact(id);
+    if(('email' in input&&email!==(current.email??null))||('phone' in input&&phone!==(current.phone??null)))throw Error('Modifie les coordonnées depuis leur éditeur dédié.');
     const result = this.database.run(
-      `UPDATE contacts SET organization_id=?, first_name=?, last_name=?, job_title=?, email=?, phone=?,
+      `UPDATE contacts SET first_name=?, last_name=?, email=email, phone=phone,
        preferred_channel=?, notes=?, updated_at=? WHERE id=? AND archived_at IS NULL`,
       [
-        clean(input.organizationId), firstName, lastName, clean(input.jobTitle), email, phone,
+        firstName, lastName,
         clean(input.preferredChannel), clean(input.notes), nowIso(), id,
       ],
     );
     if (Number(result.changes) !== 1) throw new Error('Contact introuvable.');
+    this.saveContactAddress(id,input);
+    if(input.organizationId){const link=this.listOrganizationContacts(id).find(l=>l.organizationId===input.organizationId);this.saveOrganizationContact(input.organizationId,id,link?{jobTitle:link.jobTitle,archivedAt:link.archivedAt}:null,{jobTitle:input.jobTitle??null,archivedAt:null});}
     this.activity({ entityType: 'contact', entityId: id, action: 'updated', summary: `Contact mis à jour : ${firstName} ${lastName}`, contactId: id, organizationId: clean(input.organizationId) });
     this.rebuildSearchIndex();
     return this.getContact(id);
@@ -552,10 +646,12 @@ export class CrmService {
   getContact(id: string): Contact {
     const row = this.database.get<Record<string, unknown>>('SELECT * FROM contacts WHERE id=?', [id]);
     if (!row) throw new Error('Contact introuvable.');
+    const active=this.listOrganizationContacts(id).filter(l=>!l.archivedAt);const primary=active.find(l=>l.organizationId===row.organization_id)??active[0];
     return {
-      id: String(row.id), organizationId: row.organization_id as string | null,
-      firstName: String(row.first_name), lastName: String(row.last_name), jobTitle: row.job_title as string | null,
-      email: row.email as string | null, phone: row.phone as string | null,
+      id: String(row.id), organizationId: primary?.organizationId??null,
+      firstName: String(row.first_name), lastName: String(row.last_name), jobTitle: primary?.jobTitle??null,
+      addressLine1:row.address_line1 as string|null,addressLine2:row.address_line2 as string|null,postalCode:row.postal_code as string|null,city:row.city as string|null,country:row.country as string|null,
+      email: this.canonicalMethod('contact', id, 'email'), phone: this.canonicalMethod('contact', id, 'phone'),
       preferredChannel: row.preferred_channel as string | null, notes: row.notes as string | null,
       createdAt: String(row.created_at), updatedAt: String(row.updated_at), archivedAt: row.archived_at as string | null,
     };
@@ -564,33 +660,27 @@ export class CrmService {
   listDirectoryContacts(includeArchived = false): DirectoryContact[] {
     const rows = this.database.all<Record<string, unknown>>(
       `SELECT c.*, o.name AS organization_name,
-        COALESCE(
-          (SELECT cm.value FROM contact_methods cm
+        (SELECT cm.value FROM contact_methods cm
            WHERE cm.contact_id=c.id AND cm.method_type='email' AND cm.archived_at IS NULL
-           ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
-          c.email
-        ) AS resolved_email,
-        COALESCE(
-          (SELECT cm.value FROM contact_methods cm
+           ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1) AS resolved_email,
+        (SELECT cm.value FROM contact_methods cm
            WHERE cm.contact_id=c.id AND cm.method_type='phone' AND cm.archived_at IS NULL
-           ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
-          c.phone
-        ) AS resolved_phone,
+           ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1) AS resolved_phone,
         (SELECT COUNT(DISTINCT p.id) FROM prospects p
           WHERE p.archived_at IS NULL AND p.stage NOT IN ('won','lost')
-            AND (p.contact_id=c.id OR (c.organization_id IS NOT NULL AND p.organization_id=c.organization_id))) AS prospect_count,
+            AND (p.contact_id=c.id OR (EXISTS(SELECT 1 FROM organization_contact_links l WHERE l.contact_id=c.id AND l.organization_id=p.organization_id AND l.archived_at IS NULL)))) AS prospect_count,
         (SELECT COUNT(DISTINCT ca.id) FROM client_accounts ca
           LEFT JOIN client_contact_roles ccr ON ccr.client_account_id=ca.id
           WHERE ca.archived_at IS NULL AND ca.status<>'archived'
-            AND (ca.primary_contact_id=c.id OR ccr.contact_id=c.id OR (c.organization_id IS NOT NULL AND ca.organization_id=c.organization_id))) AS client_count,
+            AND (ca.primary_contact_id=c.id OR ccr.contact_id=c.id OR (EXISTS(SELECT 1 FROM organization_contact_links l WHERE l.contact_id=c.id AND l.organization_id=ca.organization_id AND l.archived_at IS NULL)))) AS client_count,
         (SELECT p.id FROM prospects p
           WHERE p.archived_at IS NULL AND p.stage NOT IN ('won','lost')
-            AND (p.contact_id=c.id OR (c.organization_id IS NOT NULL AND p.organization_id=c.organization_id))
+            AND (p.contact_id=c.id OR (EXISTS(SELECT 1 FROM organization_contact_links l WHERE l.contact_id=c.id AND l.organization_id=p.organization_id AND l.archived_at IS NULL)))
           ORDER BY p.updated_at DESC LIMIT 1) AS prospect_id,
         (SELECT ca.id FROM client_accounts ca
           LEFT JOIN client_contact_roles ccr ON ccr.client_account_id=ca.id
           WHERE ca.archived_at IS NULL AND ca.status<>'archived'
-            AND (ca.primary_contact_id=c.id OR ccr.contact_id=c.id OR (c.organization_id IS NOT NULL AND ca.organization_id=c.organization_id))
+            AND (ca.primary_contact_id=c.id OR ccr.contact_id=c.id OR (EXISTS(SELECT 1 FROM organization_contact_links l WHERE l.contact_id=c.id AND l.organization_id=ca.organization_id AND l.archived_at IS NULL)))
           ORDER BY ca.updated_at DESC LIMIT 1) AS client_id
        FROM contacts c
        LEFT JOIN organizations o ON o.id=c.organization_id
@@ -598,15 +688,17 @@ export class CrmService {
        ORDER BY c.last_name COLLATE NOCASE, c.first_name COLLATE NOCASE`,
     );
     return rows.map((row) => {
+      const links=this.listOrganizationContacts(String(row.id)),activeLinks=links.filter(l=>!l.archivedAt),primary=activeLinks.find(l=>l.organizationId===row.organization_id)??activeLinks[0];
       const activeProspectCount = Number(row.prospect_count ?? 0);
       const activeClientCount = Number(row.client_count ?? 0);
       return {
-        id: String(row.id),
-        organizationId: row.organization_id as string | null,
-        organizationName: row.organization_name as string | null,
+        id: String(row.id), organizationLinks:links, legacyJobTitle:activeLinks.length?null:row.job_title as string|null,
+        organizationId: primary?.organizationId??null,
+        organizationName: activeLinks.map(l=>l.organizationName).join(' · ')||null,
+        addressLine1:row.address_line1 as string|null,addressLine2:row.address_line2 as string|null,postalCode:row.postal_code as string|null,city:row.city as string|null,country:row.country as string|null,
         firstName: String(row.first_name),
         lastName: String(row.last_name),
-        jobTitle: row.job_title as string | null,
+        jobTitle: primary?.jobTitle??null,
         email: row.resolved_email as string | null,
         phone: row.resolved_phone as string | null,
         preferredChannel: row.preferred_channel as string | null,
@@ -638,7 +730,20 @@ export class CrmService {
       notes:row.notes as string|null, createdAt:String(row.created_at), updatedAt:String(row.updated_at), archivedAt:row.archived_at as string|null }));
   }
 
-  saveContactMethod(input: ContactMethodInput, id?: string): ContactMethod {
+  saveContactMethod(input: ContactMethodInput, id?: string, expected?:ContactMethod): ContactMethod {
+    return this.transaction(()=>{
+      this.database.run('UPDATE contact_methods SET id=id WHERE id=?',[id??'']);
+      if(id){
+        const current=this.listContactMethods(input.organizationId?'organization':'contact',input.organizationId??input.contactId??'',true).find(m=>m.id===id);
+        if(!current)throw Error('La coordonnée n’appartient pas à cette identité.');
+        if(expected&&draftFingerprint(current)!==draftFingerprint(expected))throw Error('Conflit : la coordonnée a changé. Saisie conservée.');
+        if(current.archivedAt)throw Error('Coordonnée archivée : utilise la restauration explicite.');
+      }
+      return this.writeContactMethod(input,id);
+    });
+  }
+
+  private writeContactMethod(input: ContactMethodInput, id?: string): ContactMethod {
     if(!['email','phone'].includes(input.type)) throw new Error('Type de coordonnée invalide.');
     const value = input.type === 'email' ? normalizeEmail(input.value) : normalizePhone(input.value);
     if(!value) throw new Error('La coordonnée est requise.');
@@ -656,13 +761,29 @@ export class CrmService {
     return this.listContactMethods(input.organizationId?'organization':'contact',ownerId,true).find(method=>method.id===methodId)!;
   }
 
-  archiveContactMethod(id: string, archived=true): void {
+  archiveContactMethod(id: string, archived=true,expected?:ContactMethod): void {
+    return this.transaction(()=>{
+      this.database.run('UPDATE contact_methods SET id=id WHERE id=?',[id]);
+      if(expected){const current=this.listContactMethods(expected.organizationId?'organization':'contact',expected.organizationId??expected.contactId??'',true).find(m=>m.id===id);if(!current||draftFingerprint(current)!==draftFingerprint(expected))throw Error('Conflit : la coordonnée a changé.');}
+      this.writeArchiveContactMethod(id,archived);
+    });
+  }
+
+  private writeArchiveContactMethod(id: string, archived=true): void {
     const result=this.database.run('UPDATE contact_methods SET archived_at=?,updated_at=? WHERE id=?',[archived?nowIso():null,nowIso(),id]);
     if(Number(result.changes)!==1) throw new Error('Coordonnée introuvable.');
     this.rebuildSearchIndex();
   }
 
-  createProspect(input: ProspectInput): ProspectSummary {
+  createProspect(input:ProspectInput):ProspectSummary {
+    return this.transaction(()=>{
+      const saved=this.insertProspect(input);
+      if(input.nextActionAt||input.nextActionText)new ActionService(this.database).create({ownerType:'prospect',ownerId:saved.id,type:'action',title:input.nextActionText?.trim()||'Action prévue',dueAt:input.nextActionAt});
+      return this.getProspect(saved.id);
+    });
+  }
+
+  private insertProspect(input:ProspectInput):ProspectSummary {
     assertProspectInput(input);
     const id = randomUUID();
     const now = nowIso();
@@ -696,14 +817,14 @@ export class CrmService {
     const result = this.database.run(
       `UPDATE prospects SET organization_id=?, contact_id=?, stage=?, temperature=?, source=?, source_detail=?, origin_type=?,
        primary_need=?, secondary_need=?, budget_min_cents=?, budget_max_cents=?, estimated_value_cents=?,
-       probability_percent=?, next_action_at=?, next_action_text=?, target_date=?, notes=?, updated_at=?
+       probability_percent=?, target_date=?, notes=?, updated_at=?
        WHERE id=? AND archived_at IS NULL`,
       [
         clean(input.organizationId), clean(input.contactId), stage, input.temperature ?? current.temperature ?? 'neutral',
         input.source ?? current.source ?? null, clean(input.sourceDetail), input.originType ?? current.originType ?? inferOrigin(input.source ?? current.source),
         clean(input.primaryNeed), clean(input.secondaryNeed),
         input.budgetMinCents ?? null, input.budgetMaxCents ?? null, input.estimatedValueCents ?? null,
-        input.probabilityPercent ?? null, clean(input.nextActionAt), clean(input.nextActionText), clean(input.targetDate),
+        input.probabilityPercent ?? null, clean(input.targetDate),
         clean(input.notes), nowIso(), id,
       ],
     );
@@ -715,7 +836,9 @@ export class CrmService {
 
   updateProspectQualification(id: string, input: Partial<ProspectInput>): ProspectSummary {
     const current=this.getProspect(id);
-    const pick = <K extends keyof ProspectInput>(key: K): ProspectInput[K] => Object.prototype.hasOwnProperty.call(input, key) ? input[key] : current[key];
+    const legacy=this.database.get<Record<string,unknown>>('SELECT decision_maker_name,decision_maker_role,decision_maker_email,decision_maker_phone FROM prospects WHERE id=?',[id])!;
+    const legacyColumns:Partial<Record<keyof ProspectInput,string>>={decisionMakerName:'decision_maker_name',decisionMakerRole:'decision_maker_role',decisionMakerEmail:'decision_maker_email',decisionMakerPhone:'decision_maker_phone'};
+    const pick = <K extends keyof ProspectInput>(key: K): ProspectInput[K] => Object.prototype.hasOwnProperty.call(input, key) ? input[key] : legacyColumns[key] ? legacy[legacyColumns[key]!] as ProspectInput[K] : current[key];
     const decisionMakerEmail = normalizeEmail(pick('decisionMakerEmail') as string | null | undefined);
     const decisionMakerPhone = normalizePhone(pick('decisionMakerPhone') as string | null | undefined);
     this.database.run(`UPDATE prospects SET
@@ -761,14 +884,14 @@ export class CrmService {
     const cols = [
       'origin_type', 'targeting_reason_code', 'targeting_reason_text',
       'initial_observation', 'detected_opportunity', 'first_contact_result_code',
-      'first_contact_result_text', 'interest_level', 'project_summary', 'project_context',
+      'first_contact_result_text', 'interest_level', 'initial_request',
     ] as const;
     const values = (brief: ProspectQualificationBrief): SqlValue[] => [
       brief.originType ?? null,
       clean(brief.targetingReasonCode), clean(brief.targetingReasonText),
       clean(brief.initialObservation), clean(brief.detectedOpportunity),
       clean(brief.firstContactResultCode), clean(brief.firstContactResultText),
-      brief.interestLevel ?? null, clean(brief.projectSummary), clean(brief.projectContext),
+      brief.interestLevel ?? null, clean(brief.initialRequest),
     ];
     const result = this.database.run(
       `UPDATE prospects SET ${cols.map(col => `${col}=?`).join(', ')}, updated_at=?
@@ -857,10 +980,10 @@ export class CrmService {
     const nextValues = values(next);
     const expectedValues = values(expected);
     const result = this.database.run(
-      `UPDATE prospects SET ${columns.map((column) => `${column}=?`).join(', ')}, updated_at=?
+      `UPDATE prospects SET ${columns.map((column) => `${column}=?`).join(', ')}, confirmed_brief_at=?, updated_at=?
        WHERE id=? AND archived_at IS NULL AND client_account_id IS NULL
          AND ${columns.map((column) => `${column} IS ?`).join(' AND ')}`,
-      [...nextValues, nowIso(), id, ...expectedValues],
+      [...nextValues, clean(next.projectSummary)?nowIso():null, nowIso(), id, ...expectedValues],
     );
     if (Number(result.changes) !== 1) {
       throw new Error('Conflit : le projet, le budget ou le calendrier a changé dans une autre fenêtre. Vérifie les valeurs enregistrées avant de continuer.');
@@ -981,26 +1104,21 @@ export class CrmService {
       if (!clean(prospect.firstContactResultCode) && !clean(prospect.firstContactResultText)) missing.push('le résultat du premier contact');
       if (!['interested', 'very_interested'].includes(prospect.interestLevel ?? '')) missing.push('un intérêt confirmé du prospect');
     } else if (origin === 'inbound') {
-      if (!clean(prospect.projectSummary)) missing.push('la demande initiale du prospect');
-    } else if (!clean(prospect.projectSummary) && !clean(prospect.projectContext)) {
+      if (!clean(prospect.initialRequest) && !clean(prospect.projectSummary)) missing.push('la demande initiale du prospect');
+    } else if (!clean(prospect.initialRequest) && !clean(prospect.projectSummary) && !clean(prospect.projectContext)) {
       missing.push('le motif de l’échange ou le contexte commercial');
     }
 
     return missing;
   }
 
-  setProspectNextAction(id: string, at: string | null, text: string | null): ProspectSummary {
-    this.getProspect(id);
-    this.database.run(
-      'UPDATE prospects SET next_action_at=?, next_action_text=?, updated_at=? WHERE id=?',
-      [clean(at), clean(text), nowIso(), id],
-    );
-    this.activity({
-      entityType: 'prospect', entityId: id, action: 'next_action_changed',
-      summary: clean(text) ? `Prochaine action : ${clean(text)}` : 'Prochaine action retirée', prospectId: id,
+  setProspectNextAction(id:string,at:string|null,text:string|null):ProspectSummary {
+    return this.transaction(()=>{
+      const current=this.getProspect(id),actions=new ActionService(this.database);
+      const first=actions.list({ownerType:'prospect',ownerId:id,status:'open'})[0];if(first)actions.cancel(first.id);
+      if(at||text)actions.create({ownerType:'prospect',ownerId:id,type:'action',title:clean(text)||'Action prévue',dueAt:at});
+      return this.getProspect(id);
     });
-    this.indexProspect(id);
-    return this.getProspect(id);
   }
 
   listProspects(filters: ProspectFilters = {}): ProspectSummary[] {
@@ -1029,7 +1147,10 @@ export class CrmService {
   }
 
   private prospectSelect(): string {
-    return `SELECT p.*, o.name AS organization_name, o.industry AS organization_industry,
+    return `SELECT p.*,
+      (SELECT due_at FROM crm_actions WHERE prospect_id=p.id AND status='open' ORDER BY due_at IS NULL,due_at,created_at,id LIMIT 1) AS live_next_at,
+      (SELECT title FROM crm_actions WHERE prospect_id=p.id AND status='open' ORDER BY due_at IS NULL,due_at,created_at,id LIMIT 1) AS live_next_text,
+      (SELECT max(completed_at) FROM crm_actions WHERE prospect_id=p.id AND status='done' AND completion_channel IS NOT NULL AND completion_outcome IN ('prospect_reached','decision_maker_reached','decision_maker_absent','meeting_set','information_requested','categorical_refusal','not_interested_yet')) AS last_exchange_at, o.name AS organization_name, o.industry AS organization_industry,
       o.city AS organization_city, o.website AS organization_website, o.notes AS organization_notes,
       EXISTS(
         SELECT 1 FROM contact_methods cm
@@ -1039,14 +1160,15 @@ export class CrmService {
       ) AS has_contact_method,
       (SELECT COUNT(*) FROM activity_events ae
         WHERE ae.entity_type='prospect' AND ae.entity_id=p.id AND ae.action='research_snapshot') AS research_snapshot_count,
-      c.first_name AS contact_first_name, c.last_name AS contact_last_name, c.email AS contact_email,
-      COALESCE((SELECT group_concat(COALESCE(ci.name,n.other_text), ' · ') FROM crm_needs n LEFT JOIN catalog_items ci ON ci.id=n.catalog_item_id WHERE n.prospect_id=p.id),p.primary_need) AS live_need
+      c.first_name AS contact_first_name, c.last_name AS contact_last_name, (SELECT value FROM contact_methods WHERE contact_id=c.id AND method_type='email' AND archived_at IS NULL ORDER BY is_primary DESC,created_at LIMIT 1) AS contact_email,
+      (SELECT group_concat(COALESCE(ci.name,n.other_text), ' · ') FROM crm_needs n LEFT JOIN catalog_items ci ON ci.id=n.catalog_item_id WHERE n.prospect_id=p.id) AS live_need
       FROM prospects p
       LEFT JOIN organizations o ON o.id=p.organization_id
       LEFT JOIN contacts c ON c.id=p.contact_id`;
   }
 
   private mapProspect(row: ProspectRow): ProspectSummary {
+    const decision=row.decision_maker_contact_id?this.getContactForOrganization(row.decision_maker_contact_id,row.organization_id):null;
     const contactName = [row.contact_first_name, row.contact_last_name].filter(Boolean).join(' ');
     const displayName = (row.organization_name ?? contactName) || 'Prospect sans nom';
     return {
@@ -1057,15 +1179,15 @@ export class CrmService {
       targetingReasonCode: row.targeting_reason_code, targetingReasonText: row.targeting_reason_text,
       initialObservation: row.initial_observation, detectedOpportunity: row.detected_opportunity,
       firstContactResultCode: row.first_contact_result_code, firstContactResultText: row.first_contact_result_text,
-      interestLevel: row.interest_level, decisionMakerName: row.decision_maker_name, decisionMakerRole: row.decision_maker_role,
-      decisionMakerEmail: row.decision_maker_email, decisionMakerPhone: row.decision_maker_phone,
-      primaryNeed: row.live_need as string | null, secondaryNeed: row.secondary_need, budgetMinCents: row.budget_min_cents,
+      interestLevel: row.interest_level, decisionMakerName: decision?[decision.firstName,decision.lastName].join(' '):row.decision_maker_name, decisionMakerRole: decision?.jobTitle??row.decision_maker_role,
+      decisionMakerEmail: decision?decision.email:row.decision_maker_email, decisionMakerPhone: decision?decision.phone:row.decision_maker_phone,
+      lastExchangeAt: row.last_exchange_at as string|null, primaryNeed: row.primary_need, proposedServices: row.live_need as string | null, secondaryNeed: row.secondary_need, budgetMinCents: row.budget_min_cents,
       budgetMaxCents: row.budget_max_cents, estimatedValueCents: row.estimated_value_cents,
-      probabilityPercent: row.probability_percent, nextActionAt: row.next_action_at,
-      nextActionText: row.next_action_text, targetDate: row.target_date, lostReason: row.lost_reason,
+      probabilityPercent: row.probability_percent, nextActionAt: row.live_next_at as string|null,
+      nextActionText: row.live_next_text as string|null, targetDate: row.target_date, lostReason: row.lost_reason,
       notes: row.notes, wonAt: row.won_at, lostAt: row.lost_at, createdAt: row.created_at,
       decisionStatus: row.decision_status, decisionMakerDetails: row.decision_maker_details, decisionMakerContactId: row.decision_maker_contact_id,
-      projectSummary: row.project_summary, projectContext: row.project_context, budgetStatus: row.budget_status,
+      initialRequest: row.initial_request as string|null, legacyBriefJson: row.legacy_brief_json as string|null, confirmedBriefAt:row.confirmed_brief_at as string|null, projectSummary: row.project_summary, projectContext: row.project_context, budgetStatus: row.budget_status,
       timelineStatus: row.timeline_status, timelineNote: row.timeline_note, existingStatus: row.existing_status,
       existingUrl: row.existing_url, existingNotes: row.existing_notes, missingInformation: row.missing_information,
       waitingReasonCode: row.waiting_reason_code, waitingReasonText: row.waiting_reason_text,
@@ -1079,6 +1201,55 @@ export class CrmService {
       hasContactMethod: Boolean(row.has_contact_method),
       researchSnapshotCount: Number(row.research_snapshot_count ?? 0),
     };
+  }
+
+  prospectResearchContext(id:string):{draft:ProspectResearchSnapshotInput;version:string;history:ProspectResearchSnapshot[]} {
+    const prospect=this.getProspect(id),local=this.listProspectResearchSnapshots(id)[0];
+    const rows=this.database.all<{entity_id:string}>(`SELECT DISTINCT entity_id FROM activity_events WHERE entity_type='prospect' AND action='research_snapshot' AND organization_id=?`,[prospect.organizationId??null]);
+    const order=this.database.all<{id:string}>(`SELECT id FROM activity_events WHERE action='research_snapshot' AND (organization_id=? OR (entity_type='prospect' AND entity_id=?)) ORDER BY created_at DESC,rowid DESC`,[prospect.organizationId??null,id]);const rank=new Map(order.map((r,i)=>[r.id,i]));
+    const history=[...this.listProspectResearchSnapshots(id),...rows.filter(r=>r.entity_id!==id).flatMap(r=>this.listProspectResearchSnapshots(r.entity_id).map(s=>({...s,opportunities:[],conversation:undefined,sharedFromProspectId:r.entity_id})))].sort((a,b)=>(rank.get(a.id)??0)-(rank.get(b.id)??0));
+    // Only corporate observations travel between dossiers; preparation and leads stay local.
+    const company=history[0];
+    const {opportunities:_o,conversation:_c,id:_id,prospectId:_p,createdAt:_at,sharedFromProspectId:_from,...facts}=company??{};
+    const draft:ProspectResearchSnapshotInput={...facts,opportunities:local?.opportunities??[],conversation:local?.conversation};
+    return {draft,version:JSON.stringify([company?.id??null,local?.id??null]),history};
+  }
+
+  saveProspectWebsite(id:string,version:string,expectedWebsite:string|null,presence:'present'|'absent'|'review',url:string|null):ProspectSummary {
+    if(!['present','absent','review'].includes(presence))throw Error('Situation du site invalide.');
+    const website=presence==='present'?normalizeWebUrl(url):null;
+    if(presence==='present'&&!website)throw Error('Renseigne l’adresse du site.');
+    return this.transaction(()=>{
+      const p=this.getProspect(id);if(!p.organizationId)throw Error('Une entreprise est nécessaire.');
+      if(p.archivedAt||p.clientAccountId)throw Error('Dossier en lecture seule.');
+      const context=this.prospectResearchContext(id);if(context.version!==version)throw Error('Conflit : les informations du site ont changé.');
+      const result=this.database.run('UPDATE organizations SET website=?,updated_at=? WHERE id=? AND website IS ? AND archived_at IS NULL',[website,nowIso(),p.organizationId,expectedWebsite]);
+      if(Number(result.changes)!==1)throw Error('Conflit : le site a été modifié dans une autre fenêtre.');
+      this.saveProspectResearchSnapshot(id,{...context.draft,website:{...context.draft.website,presence,url:website}},JSON.parse(version)[0]??null);
+      this.indexOrganization(p.organizationId);this.indexProspect(id);return this.getProspect(id);
+    });
+  }
+
+  saveProspectResearchIfUnchanged(id:string,version:string,input:ProspectResearchSnapshotInput):ProspectResearchSnapshot {
+    return this.transaction(()=>{
+      this.database.run('UPDATE prospects SET id=id WHERE id=?',[id]);
+      const prospect=this.getProspect(id);
+      if(prospect.archivedAt||prospect.clientAccountId)throw Error('Référence en lecture seule sur un dossier archivé ou converti.');
+      if(this.prospectResearchContext(id).version!==version)throw Error('Conflit : la recherche entreprise ou la préparation du dossier a changé. Saisie conservée.');
+      return this.saveProspectResearchSnapshot(id,input,JSON.parse(version)[0]??null);
+    });
+  }
+
+  adoptResearchOpportunity(id:string,snapshotId:string,index:number,expected:string|null):ProspectSummary {
+    return this.transaction(()=>{
+      const source=this.listProspectResearchSnapshots(id).find(s=>s.id===snapshotId);
+      if(!source||!Number.isInteger(index)||index<0||!source.opportunities?.[index])throw Error('Enregistre cette opportunité dans la référence du dossier avant de la reprendre.');
+      const opportunity=source.opportunities[index];
+      const text=[opportunity.finding,opportunity.service,opportunity.note].filter(Boolean).join(' · ');
+      const result=this.patchProspectIfUnchanged(id,{detectedOpportunity:expected} as Partial<ProspectInput>,{detectedOpportunity:text});
+      this.activity({entityType:'prospect',entityId:id,action:'research_opportunity_adopted',summary:'Opportunité reprise volontairement dans la qualification',prospectId:id,metadata:{snapshotId,index,previous:expected,text}});
+      return result;
+    });
   }
 
   listProspectResearchSnapshots(id: string): ProspectResearchSnapshot[] {
@@ -1099,7 +1270,7 @@ export class CrmService {
           ...snapshot,
           id: String(row.id),
           prospectId: id,
-          checkedAt: snapshot.checkedAt?.trim() || String(row.created_at),
+          checkedAt: snapshot.checkedAt?.trim() || '',
           createdAt: String(row.created_at),
         }];
       } catch {
@@ -1108,9 +1279,9 @@ export class CrmService {
     });
   }
 
-  saveProspectResearchSnapshot(id: string, input: ProspectResearchSnapshotInput): ProspectResearchSnapshot {
+  saveProspectResearchSnapshot(id: string, input: ProspectResearchSnapshotInput,basedOnSnapshotId?:string|null): ProspectResearchSnapshot {
     const prospect = this.getProspect(id);
-    const checkedAt = clean(input.checkedAt) ?? nowIso();
+    const checkedAt = clean(input.checkedAt);
     const rating = input.googleBusiness?.rating;
     const reviewCount = input.googleBusiness?.reviewCount;
     if (rating != null && (!Number.isFinite(rating) || rating < 0 || rating > 5)) throw new Error('La note Google doit être comprise entre 0 et 5.');
@@ -1148,8 +1319,8 @@ export class CrmService {
       entityType: 'prospect',
       entityId: id,
       action: 'research_snapshot',
-      summary: 'Vérification de la connaissance entreprise enregistrée',
-      metadata: { snapshot },
+      summary: checkedAt?'Vérification de la connaissance entreprise enregistrée':'Informations entreprise collectées, sans vérification déclarée',
+      metadata: { snapshot,basedOnSnapshotId:basedOnSnapshotId??null },
       prospectId: id,
       organizationId: prospect.organizationId,
       contactId: prospect.contactId,
@@ -1159,7 +1330,15 @@ export class CrmService {
     return saved;
   }
 
-  createClient(input: ClientInput): ClientSummary {
+  createClient(input:ClientInput):ClientSummary {
+    return this.transaction(()=>{
+      const saved=this.insertClient(input);
+      if(input.nextActionAt||input.nextActionText)new ActionService(this.database).create({ownerType:'client',ownerId:saved.id,type:'action',title:input.nextActionText?.trim()||'Action prévue',dueAt:input.nextActionAt});
+      return this.getClient(saved.id);
+    });
+  }
+
+  private insertClient(input:ClientInput):ClientSummary {
     assertClientInput(input);
     const id = randomUUID();
     const now = nowIso();
@@ -1307,14 +1486,13 @@ export class CrmService {
     if (clean(filters.search)) {
       const query = `%${clean(filters.search)}%`;
       where.push(`(o.name LIKE ? COLLATE NOCASE OR c.first_name LIKE ? COLLATE NOCASE OR c.last_name LIKE ? COLLATE NOCASE
-        OR o.email LIKE ? COLLATE NOCASE OR c.email LIKE ? COLLATE NOCASE
         OR EXISTS (
           SELECT 1 FROM contact_methods cm
           WHERE cm.archived_at IS NULL
             AND (cm.organization_id=ca.organization_id OR cm.contact_id=ca.primary_contact_id)
             AND cm.value LIKE ? COLLATE NOCASE
         ))`);
-      params.push(query, query, query, query, query, query);
+      params.push(query, query, query, query);
     }
     return this.database.all<ClientRow>(
       `${this.clientSelect()} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY ca.updated_at DESC`,
@@ -1329,24 +1507,14 @@ export class CrmService {
   }
 
   private clientSelect(): string {
-    return `SELECT ca.*, o.name AS organization_name,
-      COALESCE(
-        (SELECT cm.value FROM contact_methods cm WHERE cm.organization_id=ca.organization_id AND cm.method_type='email' AND cm.archived_at IS NULL ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
-        o.email
-      ) AS organization_email,
-      COALESCE(
-        (SELECT cm.value FROM contact_methods cm WHERE cm.organization_id=ca.organization_id AND cm.method_type='phone' AND cm.archived_at IS NULL ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
-        o.phone
-      ) AS organization_phone,
+    return `SELECT ca.*,
+      (SELECT due_at FROM crm_actions WHERE (client_account_id=ca.id OR prospect_id IN (SELECT id FROM prospects WHERE client_account_id=ca.id)) AND status='open' ORDER BY due_at IS NULL,due_at,created_at,id LIMIT 1) AS live_next_at,
+      (SELECT title FROM crm_actions WHERE (client_account_id=ca.id OR prospect_id IN (SELECT id FROM prospects WHERE client_account_id=ca.id)) AND status='open' ORDER BY due_at IS NULL,due_at,created_at,id LIMIT 1) AS live_next_text, o.name AS organization_name,
+      (SELECT cm.value FROM contact_methods cm WHERE cm.organization_id=ca.organization_id AND cm.method_type='email' AND cm.archived_at IS NULL ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1) AS organization_email,
+      (SELECT cm.value FROM contact_methods cm WHERE cm.organization_id=ca.organization_id AND cm.method_type='phone' AND cm.archived_at IS NULL ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1) AS organization_phone,
       c.first_name AS contact_first_name, c.last_name AS contact_last_name,
-      COALESCE(
-        (SELECT cm.value FROM contact_methods cm WHERE cm.contact_id=ca.primary_contact_id AND cm.method_type='email' AND cm.archived_at IS NULL ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
-        c.email
-      ) AS contact_email,
-      COALESCE(
-        (SELECT cm.value FROM contact_methods cm WHERE cm.contact_id=ca.primary_contact_id AND cm.method_type='phone' AND cm.archived_at IS NULL ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1),
-        c.phone
-      ) AS contact_phone
+      (SELECT cm.value FROM contact_methods cm WHERE cm.contact_id=ca.primary_contact_id AND cm.method_type='email' AND cm.archived_at IS NULL ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1) AS contact_email,
+      (SELECT cm.value FROM contact_methods cm WHERE cm.contact_id=ca.primary_contact_id AND cm.method_type='phone' AND cm.archived_at IS NULL ORDER BY cm.is_primary DESC, cm.created_at LIMIT 1) AS contact_phone
       FROM client_accounts ca
       LEFT JOIN organizations o ON o.id=ca.organization_id
       LEFT JOIN contacts c ON c.id=ca.primary_contact_id`;
@@ -1357,8 +1525,8 @@ export class CrmService {
     const displayName = (row.organization_name ?? contactName) || 'Client sans nom';
     return {
       id: row.id, organizationId: row.organization_id, primaryContactId: row.primary_contact_id,
-      status: row.status, becameClientAt: row.became_client_at, nextActionAt: row.next_action_at,
-      nextActionText: row.next_action_text, notes: row.notes, createdAt: row.created_at,
+      status: row.status, becameClientAt: row.became_client_at, nextActionAt: row.live_next_at as string|null,
+      nextActionText: row.live_next_text as string|null, notes: row.notes, createdAt: row.created_at,
       updatedAt: row.updated_at, archivedAt: row.archived_at, displayName,
       contactName: contactName || null, email: row.organization_email ?? row.contact_email,
       phone: row.organization_phone ?? row.contact_phone,
@@ -1382,11 +1550,31 @@ export class CrmService {
     );
   }
 
+  updateClientStatusIfUnchanged(id:string,expected:ClientStatus,next:ClientStatus):ClientSummary {
+    if(!['active','inactive'].includes(next))throw Error('Utilise la commande d’archivage ou de réactivation.');
+    const result=this.database.run('UPDATE client_accounts SET status=?,updated_at=? WHERE id=? AND status=? AND archived_at IS NULL',[next,nowIso(),id,expected]);
+    if(Number(result.changes)!==1)throw Error('Conflit : le statut Client a changé.');
+    this.activity({entityType:'client',entityId:id,action:'status_updated',summary:'Statut Client mis à jour',clientId:id});this.indexClient(id);return this.getClient(id);
+  }
+
+  scheduleClientAction(id:string,expected:{at:string|null;text:string|null},next:{at:string;text:string}|null):ClientSummary {
+    return this.transaction(()=>{
+      this.database.run('UPDATE client_accounts SET id=id WHERE id=?',[id]);
+      const client=this.getClient(id);
+      if((client.nextActionAt??null)!==expected.at||(client.nextActionText??null)!==expected.text)throw Error('Conflit : la prochaine action a changé. Saisie conservée.');
+      const actions=new ActionService(this.database);
+      const current=actions.list({ownerType:'client',ownerId:id,status:'open'}).find(a=>(a.dueAt??null)===expected.at&&a.title===expected.text);
+      if(current)actions.cancel(current.id);
+      if(next)actions.create({ownerType:'client',ownerId:id,type:'action',title:next.text,dueAt:next.at});
+      return this.getClient(id);
+    });
+  }
+
   listActivity(entityType: string, entityId: string): ActivityEvent[] {
     return this.database.all<Record<string, unknown>>(
       `SELECT id, entity_type, entity_id, action, summary, metadata_json, created_at
-       FROM activity_events WHERE entity_type=? AND entity_id=? ORDER BY created_at DESC`,
-      [entityType, entityId],
+       FROM activity_events WHERE ${entityType==='client'?"(entity_type=? AND entity_id=?) OR client_account_id=? OR prospect_id IN (SELECT id FROM prospects WHERE client_account_id=?) OR (entity_type='prospect' AND entity_id IN (SELECT id FROM prospects WHERE client_account_id=?))":"entity_type=? AND entity_id=?"} ORDER BY created_at DESC,id`,
+      entityType==='client'?[entityType,entityId,entityId,entityId,entityId]:[entityType, entityId],
     ).map((row) => ({
       id: String(row.id), entityType: String(row.entity_type), entityId: String(row.entity_id),
       action: String(row.action), summary: String(row.summary),
@@ -1447,8 +1635,8 @@ export class CrmService {
       return;
     }
     this.upsertSearchDocument('organization', id, String(row.name), row.city as string | null, null, [
-      String(row.name), row.legal_name as string | null, row.siret as string | null, row.email as string | null,
-      row.phone as string | null, row.city as string | null, row.industry as string | null,
+      String(row.name), row.legal_name as string | null, row.siret as string | null,
+      row.city as string | null, row.industry as string | null,
       ...this.listContactMethods('organization',id).map((method)=>method.value),
     ]);
   }
@@ -1465,8 +1653,8 @@ export class CrmService {
     }
     const title = `${row.first_name} ${row.last_name}`;
     this.upsertSearchDocument('contact', id, title, row.organization_name as string | null, null, [
-      title, row.email as string | null, row.phone as string | null,
-      row.job_title as string | null, row.organization_name as string | null,
+      title,
+      ...this.listOrganizationContacts(id).filter(l=>!l.archivedAt).flatMap(l=>[l.organizationName,l.jobTitle]),
       ...this.listContactMethods('contact',id).map((method)=>method.value),
     ]);
   }

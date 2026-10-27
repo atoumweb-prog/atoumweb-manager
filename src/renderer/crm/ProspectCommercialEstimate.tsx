@@ -1,0 +1,11 @@
+import {parseEuroCents} from '../../shared/moneyInput';
+import {useEffect,useState} from 'react';
+import type {ProspectSummary} from '../../shared/crm';
+import {useUnsavedDraft} from '../unsaved/unsaved';
+export function ProspectCommercialEstimate({prospect,onSaved}:{prospect:ProspectSummary;onSaved:()=>void}){
+ const [editing,setEditing]=useState(false),[value,setValue]=useState(''),[baseline,setBaseline]=useState<number|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const guard=useUnsavedDraft('Valeur commerciale estimée',{value},{pending:busy,discard:s=>setValue(s.value)});
+ useEffect(()=>{if(!editing){const next=prospect.estimatedValueCents==null?'':String(prospect.estimatedValueCents/100);setValue(next);setBaseline(prospect.estimatedValueCents??null);guard.initial({value:next});}},[prospect.id,prospect.estimatedValueCents,editing]);
+ async function save(){const cents=parseEuroCents(value);if(cents===undefined){setError('Montant estimé invalide.');return;}setBusy(true);setError('');try{await window.atoumweb.crm.prospects.patchIfUnchanged(prospect.id,{estimatedValueCents:baseline},{estimatedValueCents:cents});guard.saved();setEditing(false);onSaved();window.dispatchEvent(new Event('atoumweb:changed'));}catch(e){setError(String(e));}finally{setBusy(false);}}
+ return <section className="panel"><h4>Valeur commerciale estimée</h4><p className="muted">Prévision AtoumWeb, distincte du budget annoncé et du montant du devis.</p>{editing?<><label>Estimation (€)<input inputMode="decimal" value={value} onChange={e=>{setValue(e.target.value);setError('');}} disabled={busy}/></label><div className="form-actions"><button type="button" className="primary-button" disabled={busy} onClick={()=>void save()}>Enregistrer l’estimation</button><button type="button" className="secondary-button" disabled={busy} onClick={()=>guard.request(()=>{guard.discard();setEditing(false);})}>Annuler</button></div></>:<><strong>{prospect.estimatedValueCents==null?'Non renseignée':new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(prospect.estimatedValueCents/100)}</strong>{!prospect.clientAccountId&&!prospect.archivedAt&&<button type="button" className="secondary-button" onClick={()=>setEditing(true)}>Modifier l’estimation</button>}</>}{error&&<p role="alert" className="form-error">{error}</p>}</section>;
+}

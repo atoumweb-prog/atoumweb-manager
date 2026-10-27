@@ -1,3 +1,4 @@
+import {CompanyQuoteSettings} from './commercial/CompanyQuoteSettings';
 import {FieldHelp} from './ui/FieldHelp';
 import {useCallback} from 'react';
 import {SEARCH_DESTINATIONS,searchDestination,readSearchTarget,type SearchNavigationResult} from '../shared/searchNavigation';
@@ -121,7 +122,7 @@ function App() {
       if(error){visibleEntity.current=null;pending.resolve({status:'failed',message:error});setMessage(error);return;}
       visibleEntity.current=id?{type,id}:null;
       pending.resolve({status:'opened'});
-      setMessage((pending.result.title||'Fiche')+' : fiche chargée.');
+      if(type==='prospect'||activePage==='Prospects')setMessage('');else setMessage((pending.result.title||'Fiche')+' : fiche chargée.');
       if(id){
         const epoch=navigationEpoch.current;
         requestAnimationFrame(()=>{
@@ -406,7 +407,7 @@ function App() {
 
 
         <section className={`content-area ${activePage === 'Accueil' ? 'home-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' || activePage === 'Sites' ? 'workspace-content' : ''} ${activePage === 'Projets' ? 'projects-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' ? 'library-workspace-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' && libraryHeaderCollapsed ? 'library-header-collapsed' : ''}`}>
-          {activePage !== 'Accueil' && <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1><OperationIcon name={NAVIGATION_MODULES.find(item=>item.key===activePage)!.icon}/>{activePage === 'Prospects' ? 'Prospection' : activePage}</h1><FieldHelp text={PAGE_HINTS[activePage]} detail={activePage==='Prospects'?"Trois vues : annuaire prospects, parcours commercial et historique. Cliquer une ligne ouvre sa fiche rapide ; Agrandir permet de travailler sur le même dossier.":undefined}/></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1><OperationIcon name={NAVIGATION_MODULES.find(item=>item.key===activePage)!.icon}/>{activePage}</h1><FieldHelp text={PAGE_HINTS[activePage]}/></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>}
           {message && <div className={`notice ${messageAction?.message === message ? 'is-actionable' : ''}`} role="status">
             {messageAction?.message === message
               ? <button className="notice-action" type="button" onClick={messageAction.run}><span>{message}</span><small>Ouvrir dans l’Explorateur</small></button>
@@ -523,6 +524,7 @@ function SettingsPage({ visualStore, bootstrap, theme, displayDensity, showHover
     finally { operationLock.current = false; setSaving(false); }
   }
 
+  const company=visible('entreprise société identité adresse siret tva email téléphone logo devis modèle conditions cgv présentation');
   const appearance = visible('apparence thème thèmes noir blanc atoumweb densité compact confort affichage interface lisibilité');
   const navigation = visible('navigation vues rail favoris modules ordre disposition largeur colonnes liste clients annuaire');
   const help = visible('aide aides conseil survol ? contextuelle clavier');
@@ -531,6 +533,7 @@ function SettingsPage({ visualStore, bootstrap, theme, displayDensity, showHover
   const advanced = visible('avancé diagnostic diagnostics version migration migrations sqlite intégrité base état erreurs');
   const security = visible('sécurité sauvegarde backup restauration restore sqlite base copie sécurité');
   const shortcuts = [
+    ...(company?[{label:"Mon entreprise et devis",id:"settings-company-quotes"}]:[]),
     ...(appearance ? [{ label: 'Apparence et densité', id: settingsSectionMatches(search, 'densité compact confort lisibilité') ? 'settings-density-compact' : 'settings-theme-atoumweb' }] : []),
     ...(navigation ? [{ label: 'Navigation et vues', id: 'settings-nav-collapse' }] : []),
     ...(help ? [{ label: 'Aide contextuelle', id: 'settings-hover-help' }] : []),
@@ -552,8 +555,9 @@ function SettingsPage({ visualStore, bootstrap, theme, displayDensity, showHover
           </button>)}
         </nav>}
         {error && <p role="alert" className="notice">{error}</p>}
-        {!appearance && !navigation && !help && !documents && !advanced && !workspace && !security && <p role="status">Aucun réglage correspondant. Efface la recherche pour retrouver toutes les rubriques.</p>}
+        {!company && !appearance && !navigation && !help && !documents && !advanced && !workspace && !security && <p role="status">Aucun réglage correspondant. Efface la recherche pour retrouver toutes les rubriques.</p>}
       </article>
+      {company&&<CompanyQuoteSettings/>}
       {appearance && <article className="panel panel-large">
         <div className="panel-title"><div><span className="eyebrow">Apparence</span><h2>Thème de l’interface</h2></div>{theme !== 'atoumweb' && <button className="secondary-button" type="button" disabled={saving} onClick={() => void runSetting(() => onThemeChange('atoumweb'))}>Rétablir le thème par défaut</button>}</div>
         <div className="theme-grid">{THEMES.map((item) => <button className={`theme-card ${theme === item.id ? 'selected' : ''}`} key={item.id} id={item.id === 'atoumweb' ? 'settings-theme-atoumweb' : undefined} disabled={saving} onClick={() => void runSetting(() => onThemeChange(item.id))} type="button" aria-pressed={theme === item.id}><span className={`theme-preview preview-${item.id}`}><i /><b /></span><strong>{item.label}</strong><span>{item.description}</span></button>)}</div>

@@ -1,3 +1,4 @@
+import {QuoteDocumentSettingsService} from '../commercial/QuoteDocumentSettingsService';
 import { ContractSectionReviewService } from '../commercial/ContractSectionReviewService';
 import { ContractTypeService } from '../commercial/ContractTypeService';
 import { QuoteContractPreparationService } from '../commercial/QuoteContractPreparationService';
@@ -73,6 +74,7 @@ export class DatabaseService {
   readonly contractSectionReviews: ContractSectionReviewService;
   readonly contractTypes: ContractTypeService;
   readonly quotes: QuoteService;
+  readonly quoteDocumentSettings:QuoteDocumentSettingsService;
   readonly quotePreparation: QuoteContractPreparationService;
   readonly projects: ProjectService;
   readonly projectSites: ProjectSiteService;
@@ -120,6 +122,7 @@ export class DatabaseService {
     this.contractTerms = new ContractTermsService(this.database, this.clientDocuments);
     this.contractSectionReviews = new ContractSectionReviewService(this.database);
     this.contractTypes = new ContractTypeService(this.database);
+    this.quoteDocumentSettings=new QuoteDocumentSettingsService(this.database);
     this.quotePreparation = new QuoteContractPreparationService(this.database, this.clientDocuments);
     this.quotes = new QuoteService(this.database, this.crm, this.contractTerms, this.quotePreparation);
     this.projectSites = new ProjectSiteService(this.database);

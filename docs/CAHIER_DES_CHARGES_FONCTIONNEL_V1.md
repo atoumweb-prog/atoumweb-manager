@@ -218,6 +218,20 @@ Brouillon → Envoyé → Vu → Accepté → Refusé → Expiré.
 
 Un devis accepté peut être transformé en projet.
 
+### 10.3 Répartition Manager / Abby — décision Carlos du 23/10/2026
+
+**Cible confirmée, à distinguer du parcours applicatif encore en place :** AtoumWeb Manager est la source du devis commercial et de son ensemble contractuel ; Abby est utilisé ensuite pour la facturation réglementaire. Cette décision remplace les descriptions antérieures imposant une acceptation du devis « dans Abby » ou la copie du contrat vers Abby comme étape obligatoire du parcours commercial.
+
+- Manager prépare les prestations, quantités, prix, échéancier, délais, CGV communes, modules propres aux prestations et conditions particulières.
+- Le PDF destiné au client regroupe la partie commerciale et ses annexes contractuelles sous la même référence, avec identification des versions réellement jointes et emplacement d’acceptation. Export de travail identifié comme brouillon ; préparation complète requise pour la version destinée à transmission.
+- Conserver l’exacte version transmise, ses documents, leur empreinte et l’attestation d’envoi. L’acceptation porte sur cette version ; conserver le PDF signé ou une autre preuve d’acceptation datée, avec sa provenance et sa référence. Un clic interne de changement de statut ne constitue pas cette preuve.
+- Le parcours cible est Préparer → Vérifier → Générer le dossier → Attester la transmission → Enregistrer l’acceptation et sa preuve → Préparer la facturation Abby. Conserver les règles de préparation/gels EC03, conversion Client et activation du Projet ; pas de reconstruction rétroactive d’un devis envoyé ou accepté.
+- Première cible : gestion des pièces et attestations dans le Manager. Un service de signature électronique intégré ou un envoi automatique n’est pas demandé par cette décision.
+- Abby émet les factures d’acompte/solde et assure le traitement réglementaire applicable ; Manager conserve leurs références et le suivi utile. Aucun connecteur ni conformité de plateforme présumés.
+- Copie intégrale des clauses, PDF et Word restent disponibles depuis la même source contractuelle. Les modèles restent administrables dans le Manager, sans créer une seconde bibliothèque contractuelle dans Abby.
+
+Cette décision définit l’organisation produit. Elle ne vaut pas validation juridique de la mention d’acceptation proposée ni des conditions propres à chaque dossier. Informations fiscales, délais, modalités ponctuelles/récurrentes et exigences contextuelles à renseigner sans valeurs inventées.
+
 ## 11. Projets
 
 Hiérarchie :
