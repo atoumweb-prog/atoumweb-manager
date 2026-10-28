@@ -2954,7 +2954,7 @@
         "S14",
         "S10"
       ],
-      "proposal": "Nous réalisons les mises à jour comprises dans votre prestation.\n\nSi une mise à jour présente un risque identifié de dysfonctionnement, d’incompatibilité ou d’indisponibilité, nous pouvons la reporter le temps d’évaluer une solution adaptée. Nous vous informons alors du report, du risque connu et des mesures temporaires ou suites proposées.\n\nCe report ne nous dispense pas des obligations de sécurité et de mise à jour qui restent applicables.\n\nUne adaptation dépassant les travaux déjà dus peut faire l’objet d’un accord complémentaire avant sa réalisation. En revanche, une correction qui nous incombe ou qui est légalement due ne peut pas être facturée en supplément au seul motif qu’un composant tiers est concerné.",
+      "proposal": "Chaque semaine, nous vérifions les mises à jour disponibles pour WordPress, les thèmes et les extensions de votre site, puis nous réalisons celles qui relèvent de la formule souscrite et peuvent être appliquées dans des conditions adaptées.\n\nNous traitons en priorité les correctifs de sécurité urgents, en tenant compte du risque et de l’état technique du site. Cette priorité ne constitue pas une garantie de résolution dans un délai non prévu au devis.\n\nSi une mise à jour présente un risque identifié de dysfonctionnement, d’incompatibilité ou d’indisponibilité, nous pouvons la reporter le temps d’évaluer une solution adaptée. Nous vous informons alors du report, du risque connu et des mesures temporaires ou suites proposées.\n\nCe report ne nous dispense pas des obligations de sécurité et de mise à jour qui restent applicables.\n\nUne adaptation dépassant les travaux déjà dus peut faire l’objet d’un accord complémentaire avant sa réalisation. En revanche, une correction qui nous incombe ou qui est légalement due ne peut pas être facturée en supplément au seul motif qu’un composant tiers est concerné.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 17,
@@ -2997,11 +2997,18 @@
       "previousEditorialProposal": "Nous réalisons les mises à jour comprises dans votre prestation.\n\nLorsqu’une mise à jour présente un risque identifié de perturber le fonctionnement du site, de rendre certains éléments incompatibles ou de provoquer une indisponibilité, nous pouvons la reporter le temps d’évaluer une solution adaptée. Nous vous informons du report, du risque connu et des mesures temporaires ou suites proposées.\n\nCe report ne supprime pas les obligations de sécurité ou de mise à jour qui restent applicables. Une adaptation qui dépasse les travaux déjà dus peut faire l’objet d’un accord complémentaire avant sa réalisation. En revanche, une non-conformité qui nous est imputable ou un correctif légalement dû ne devient pas un supplément facturable du seul fait qu’un composant tiers intervient.",
       "editorialRevision": {
         "date": "2026-10-28",
-        "status": "proposition révisée — en attente de validation humaine",
-        "scope": "clarification rédactionnelle uniquement",
-        "note": "Phrases raccourcies et report distingué des obligations de sécurité/correction ; pas de délai inventé.",
+        "status": "proposition adaptée aux décisions métier — en attente d'approbation et de publication",
+        "scope": "contrôle et mises à jour hebdomadaires, traitement prioritaire de la sécurité",
+        "note": "Règle D03 validée par l'utilisateur le 28/10/2026 ; pas de délai d'intervention ou de résolution inventé, ni de report exonérant les obligations.",
         "priorProposalRetained": true
-      }
+      },
+      "editorialRevisionHistory": [
+        {
+          "date": "2026-10-28",
+          "priorProposal": "Nous réalisons les mises à jour comprises dans votre prestation.\n\nSi une mise à jour présente un risque identifié de dysfonctionnement, d’incompatibilité ou d’indisponibilité, nous pouvons la reporter le temps d’évaluer une solution adaptée. Nous vous informons alors du report, du risque connu et des mesures temporaires ou suites proposées.\n\nCe report ne nous dispense pas des obligations de sécurité et de mise à jour qui restent applicables.\n\nUne adaptation dépassant les travaux déjà dus peut faire l’objet d’un accord complémentaire avant sa réalisation. En revanche, une correction qui nous incombe ou qui est légalement due ne peut pas être facturée en supplément au seul motif qu’un composant tiers est concerné.",
+          "note": "Rédaction antérieure conservée avant la décision D03 sur la périodicité des contrôles et mises à jour."
+        }
+      ]
     },
     {
       "code": "MAINT-PERIMETRE",
