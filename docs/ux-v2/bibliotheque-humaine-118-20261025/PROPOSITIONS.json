@@ -3194,7 +3194,7 @@
         "S8",
         "S3"
       ],
-      "proposal": "Nous prenons en charge les demandes urgentes selon les modalités et les plages horaires prévues dans votre offre. Nous ne garantissons pas un délai d’intervention plus court que celui qui a été convenu.\n\nÀ partir des informations disponibles, le diagnostic précise la cause de l’incident et les actions relevant de notre prise en charge. Seuls les travaux dépassant nos obligations déjà convenues peuvent donner lieu à un complément soumis à votre accord avant leur réalisation.\n\nUn piratage ou un incident provenant d’un service extérieur ne nous dégage pas automatiquement d’une faute qui nous est imputable. Les obligations légales relatives au traitement et à la notification des violations de données personnelles restent distinctes des horaires d’intervention prévus commercialement.",
+      "proposal": "Nous prenons en charge les demandes urgentes pendant les jours et horaires professionnels annoncés aux clients, selon les modalités prévues dans votre offre. Aucune astreinte permanente en dehors de ces plages n’est prévue par cette règle. Nous ne garantissons pas un délai d’intervention plus court que celui qui a été convenu.\n\nÀ partir des informations disponibles, le diagnostic précise la cause de l’incident et les actions relevant de notre prise en charge. Seuls les travaux dépassant nos obligations déjà convenues peuvent donner lieu à un complément soumis à votre accord avant leur réalisation.\n\nUn piratage ou un incident provenant d’un service extérieur ne nous dégage pas automatiquement d’une faute qui nous est imputable. Les obligations légales relatives au traitement et à la notification des violations de données personnelles restent distinctes des horaires d’intervention prévus commercialement.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 20,
@@ -3236,7 +3236,7 @@
         "date": "2026-10-28",
         "status": "proposition révisée — en attente de validation humaine",
         "scope": "clarification rédactionnelle uniquement",
-        "note": "Prise en charge, diagnostic et complément séparés ; vérifier les engagements précis et la procédure RGPD.",
+        "note": "Décision D04 : jours et horaires professionnels annoncés, sans astreinte permanente. Délai initial en attente.",
         "priorProposalRetained": true
       }
     },
