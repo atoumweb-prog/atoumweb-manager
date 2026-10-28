@@ -4,7 +4,13 @@
 
 ## Décision tarifaire définitive — 149 €/an
 
-**Décision tarifaire définitive (28/10/2026) : 149 €/an pour l'hébergement WordPress isolé, répartis en 99 €/an d'hébergement et 50 €/an pour la Lune dédiée.** Ce tarif est validé par le responsable, mais reste **une future version du Catalogue à créer et publier après recette**, sans changement des contrats historiques. La facturation de la migration initiale est à arbitrer séparément ; ne pas présumer qu'elle est incluse dans ces 149 €/an.
+**Décision tarifaire définitive (28/10/2026) : 149 €/an pour l'hébergement WordPress isolé, répartis en 99 €/an d'hébergement et 50 €/an pour la Lune dédiée.** Ce tarif est validé par le responsable, mais reste **une future version du Catalogue à créer et publier après recette**, sans changement des contrats historiques. **La migration initiale d'un site déjà hébergé chez AtoumWeb depuis l'espace partagé vers sa Lune est incluse sans frais supplémentaires dans la première année à 149 € (choix A validé).**
+
+## Choix A validé — transfert initial vers la Lune inclus
+
+**Dernier arbitrage utilisateur : A remplace B pour les frais de migration** (sans remettre en cause le choix commercial B de l'offre Lune à prix fixe). Pour un site **déjà hébergé chez AtoumWeb** qui passe de l'espace partagé à sa Lune dédiée, **le transfert initial est inclus dans la première année d'hébergement isolé à 149 €**, sans frais de migration en supplément. **Les renouvellements restent à 149 €/an** si l'offre et le tarif ne sont pas modifiés dans les conditions convenues. Un transfert depuis un hébergeur tiers ou une refonte du site constitue une prestation distincte, qui n'est pas automatiquement incluse. Ne pas confondre l'offre de migration vers l'hébergement AtoumWeb déjà publiée à 99 € avec ce **transfert interne inclus**.
+
+Cette décision concerne les **nouveaux accords** de transition vers la formule isolée. Elle ne modifie pas rétroactivement les engagements existants et exige d'organiser le transfert avec le client, sans interruption arbitraire d'un hébergement payé.
 
 ## Nouvelle règle ferme — hébergement sans maintenance (28/10/2026)
 
@@ -20,7 +26,7 @@
 - **Pour WooCommerce** : ne pas assimiler automatiquement tous les sites à l'offre WordPress simple à 99 €/an ; un besoin de ressources/contraintes spécifiques peut exiger un devis distinct.
 - **Sans maintenance applicative** : pas de mises à jour WordPress, thèmes, extensions, ni interventions de maintenance incluses ; le suivi technique de l'espace d'hébergement reste défini au devis.
 - **Accès** : possibilité de cPanel propre à sa Lune si retenu au devis, jamais cPanel maître. Une Lune ne constitue pas un contrat o2switch individuel transférable.
-- **Contrats existants** : aucun basculement, supplément ou coupure unilatérale ; proposer une migration et un nouveau contrat/avenant à accepter. En cas de migration technique, préciser la prestation et qui en supporte le coût avant accord.
+- **Contrats existants** : aucun basculement, supplément ou coupure unilatérale ; proposer une migration et un nouveau contrat/avenant à accepter. **Dans la nouvelle formule, le transfert initial du site depuis le compte AtoumWeb mutualisé vers sa Lune est inclus dans les 149 € de la première année**, sans supplément pour cette migration interne. Les travaux d'une autre nature doivent être distingués.
 
 **Nouvelle proposition de composant Catalogue non publiée** : `AW-TECH-HEBERG-ISO-LUNE`, libellé « Hébergement isolé avec Lune dédiée », périodicité annuelle, prix total **149 €/an approuvé (99 € + 50 €)**. Réutiliser `AW-TECH-HEBERG-WP` comme base de prix connue, mais éviter les doublons de facturation dans le devis.
 
@@ -75,7 +81,7 @@ Ne pas promettre « serveur et site toujours à jour », « sécurité garantie 
 
 La documentation o2switch annonce **Grow : 4 Lunes incluses, Cloud : 8, Pro : 16**, puis **1,50 € TTC/mois par Lune supplémentaire**, jusqu'à 20 au total. Le responsable indique pour son usage une facturation « à partir de la troisième » : **vérifier le quota réel, l'offre et les Lunes actuellement occupées**. Cela peut correspondre à un seuil pratique de disponibilité, sans nécessairement être le quota contractuel officiel. Ne pas coder en dur « troisième = payante » avant vérification.
 
-Le responsable d'AtoumWeb a **approuvé le montant commercial de 50 €/an** pour l'option dédiée, mais il **n'est pas encore publié dans le Catalogue**. **Choix B confirmé : un forfait Lune à prix fixe est facturé en plus des 99 €/an d'hébergement WordPress seul**, même si o2switch ne facture pas de supplément de Lune à AtoumWeb. Le devis présente **un total annuel fixe et clair** pour la formule « Hébergement isolé avec Lune dédiée », avec détail des composantes si nécessaire. Avant lancement, préciser les conditions de migration et la politique de fin de prestation, ainsi que les informations de facturation applicables. Les 1,50 € TTC/mois officiels ne sont **pas** le prix de vente client décidé.
+Le responsable d'AtoumWeb a **approuvé le montant commercial de 50 €/an** pour l'option dédiée, mais il **n'est pas encore publié dans le Catalogue**. **Choix B confirmé : un forfait Lune à prix fixe est facturé en plus des 99 €/an d'hébergement WordPress seul**, même si o2switch ne facture pas de supplément de Lune à AtoumWeb. Le devis présente **un total annuel fixe et clair** pour la formule « Hébergement isolé avec Lune dédiée », avec détail des composantes si nécessaire. Avant lancement, décrire l'organisation de la **migration interne comprise dans la première année**, la politique de fin de prestation et les informations de facturation applicables. Les 1,50 € TTC/mois officiels ne sont **pas** le prix de vente client décidé.
 
 ## Cas pratiques à prévoir dans les devis
 
@@ -85,7 +91,7 @@ Le responsable d'AtoumWeb a **approuvé le montant commercial de 50 €/an** pou
 | Client sans maintenance, souhaite rester chez AtoumWeb | **Hébergement WordPress 99 €/an + forfait Lune dédiée obligatoire 50 €/an = 149 €/an.** Suivi technique d'hébergement limité, **aucune maintenance WordPress/WooCommerce** comprise. Site WooCommerce exigeant : hébergement sur devis. |
 | Client choisit maintenance WordPress + hébergement chez AtoumWeb | **49 €/mois** ou **539 €/an** pour la maintenance, et **hébergement selon le devis** ; éviter toute double facturation si déjà compris. |
 | Client choisit maintenance WooCommerce + hébergement chez AtoumWeb | **99 €/mois** ou **1 089 €/an** pour la maintenance, hébergement à préciser selon caractéristiques du site et devis ; Lune éventuelle distincte. |
-| Fin de maintenance, hébergement encore payé | Les interventions WordPress cessent ; **prévoir la migration vers une Lune dédiée**, sous réserve des droits du contrat existant et des modalités de migration acceptées, pour permettre l'hébergement sans maintenance. Pas de coupure arbitraire d'un hébergement payé. Informer du risque applicatif. |
+| Fin de maintenance, hébergement encore payé | Les interventions WordPress cessent ; **proposer la formule hébergement isolé 149 €/an avec transfert interne initial vers la Lune inclus dans la première année**, sous réserve des droits du contrat existant et de l'accord au changement de formule. Pas de coupure arbitraire d'un hébergement payé. Informer du risque applicatif. |
 | Client quitte définitivement l'hébergement AtoumWeb | Restitution/export des éléments et accès propres au site selon les droits applicables ; migration optionnelle sur devis si hors obligations déjà dues. |
 
 ## Préparation pour le Catalogue / Devis / Manager
@@ -98,7 +104,7 @@ Le responsable d'AtoumWeb a **approuvé le montant commercial de 50 €/an** pou
 5. Dans la fiche Site/Contrat : propriétaire du domaine, compte principal AtoumWeb (jamais de secret en clair), identifiant de Lune **non sensible**, date de fin de l'hébergement, date de fin de la maintenance, statut de renouvellement, alerte J-30.
 6. Contrats : conserver les droits à la restitution, les obligations de sécurité et le principe de renouvellement annuel par **accord exprès**. Ne jamais transformer automatiquement les conditions d'un devis déjà accepté.
 
-**Arbitrages encore ouverts** : **tarif annuel fixe de la Lune validé (50 €/an) et montant total validé (149 €/an)** ; offre o2switch exacte et quota Lunes disponible ; conditions d'inclusion de l'année 1 suivant les offres ; périmètre précis du suivi technique PHP/SSL ; organisation d'une migration préalable des sites actuellement mutualisés ; canaux de notification.
+**Décisions validées** : hébergement 99 €/an + Lune 50 €/an, soit 149 €/an ; **migration initiale interne depuis le compte partagé vers la Lune incluse dans la première année**, sans prestation ponctuelle facturée en supplément. **Points ouverts** : offre o2switch et quota disponible, conditions d'inclusion de l'année 1 de création selon les devis, périmètre du suivi technique PHP/SSL, préparation technique des migrations, modalités d'accès et canaux de notification.
 
 ## Sources o2switch consultées
 
