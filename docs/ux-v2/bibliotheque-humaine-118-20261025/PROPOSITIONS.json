@@ -3124,7 +3124,7 @@
         "S2",
         "S8"
       ],
-      "proposal": "Si votre formule comprend des sauvegardes, nous mettons en œuvre le dispositif qui y est prévu.\n\nLe devis ou les caractéristiques de la solution technique utilisée précisent leur fréquence, leur durée de conservation et leur support de stockage.\n\nLorsque les sauvegardes sont assurées par l’hébergeur ou un autre prestataire, les conditions de ce service s’appliquent.",
+      "proposal": "Lorsque votre formule comprend les sauvegardes réalisées par AtoumWeb, nous effectuons une sauvegarde par semaine et nous conservons ces sauvegardes pendant 30 jours.\n\nLes sauvegardes fournies par votre hébergeur constituent un dispositif distinct. Leur fréquence, leur conservation et leurs modalités dépendent des conditions de cet hébergeur.\n\nLe devis indique les dispositifs de sauvegarde compris dans votre formule. Le lieu de stockage de nos sauvegardes et les modalités de restauration seront précisés dans les documents de prestation applicables.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 18,
@@ -3164,11 +3164,18 @@
       "previousEditorialProposal": "Si les sauvegardes sont incluses dans votre formule, nous mettons en place le dispositif prévu.\n\nLe devis ou la solution technique utilisée précise leur fréquence, leur durée de conservation et leur emplacement de stockage.\n\nLorsque les sauvegardes sont fournies par l’hébergeur ou un autre prestataire, les conditions de ce service s’appliquent.",
       "editorialRevision": {
         "date": "2026-10-28",
-        "status": "proposition révisée — en attente de validation humaine",
-        "scope": "clarification rédactionnelle uniquement",
-        "note": "Clarification du support, fréquence et conservation sans valeurs inventées ; vérifier l'annexe du prestataire.",
+        "status": "proposition adaptée aux décisions métier — en attente d'approbation et de publication",
+        "scope": "inclure sauvegardes AtoumWeb hebdomadaires et conservation 30 jours, distinguer hébergeur",
+        "note": "La fréquence et la conservation des sauvegardes AtoumWeb sont validées. Les modalités du tiers, la localisation du stockage et les conditions de restauration ne sont pas définies ; ne pas inventer de SLA.",
         "priorProposalRetained": true
-      }
+      },
+      "editorialRevisionHistory": [
+        {
+          "date": "2026-10-28",
+          "priorProposal": "Si votre formule comprend des sauvegardes, nous mettons en œuvre le dispositif qui y est prévu.\n\nLe devis ou les caractéristiques de la solution technique utilisée précisent leur fréquence, leur durée de conservation et leur support de stockage.\n\nLorsque les sauvegardes sont assurées par l’hébergeur ou un autre prestataire, les conditions de ce service s’appliquent.",
+          "note": "État précédent conservé avant intégration de la décision D02 sur la fréquence et la conservation."
+        }
+      ]
     },
     {
       "code": "MAINT-URGENCE",
