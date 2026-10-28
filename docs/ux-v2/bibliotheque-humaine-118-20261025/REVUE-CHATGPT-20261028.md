@@ -71,7 +71,7 @@ Conséquence rédactionnelle pour `MAINT-MAJ` : le texte proposé décrit le con
 
 Décision explicite du responsable AtoumWeb : **les incidents urgents sont pris en charge pendant les jours et horaires professionnels annoncés aux clients**. Aucune astreinte permanente 24 h/24 et 7 j/7 n'est convenue dans cette règle. Les horaires et jours exacts ne sont pas encore détaillés ; ils doivent être communiqués dans l'offre ou les conditions applicables.
 
-**En attente (question 6)** : délai de première prise en charge pendant ces plages ; distinguer réception, réponse initiale, diagnostic, intervention et résolution. Les obligations légales de notification des violations de données restent distinctes du service commercial.
+**Question 6 — règle validée :** les incidents urgents reçoivent un premier retour humain en priorité, **sans délai maximal garanti**. Ce premier retour ne vaut ni garantie d'intervention dans un délai déterminé, ni résolution du problème. Les jours et horaires professionnels annoncés aux clients restent à préciser (question 7). Les obligations légales de notification des violations de données restent distinctes du service commercial.
 
 **État** : règle métier approuvée, proposition de clause ajustée ; aucune modification de version publiée ou de contrat historique.
 
