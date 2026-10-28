@@ -169,15 +169,16 @@ Le responsable AtoumWeb **remplace** le choix antérieur « Lune éventuellement
 **Réalisé** : document `OFFRES-HEBERGEMENT-LUNES-20261028.md` mis à jour avec les montants et propositions des clauses `TECH-HEBERGEMENT`, `WEB-HEBERGEMENT`, `MAINT-RENOUVELLEMENT` annotées. **Aucune publication, migration, import ou application rétroactive**.
 
 
-## D10 — Migration initiale vers Lune : choix A validé (28/10/2026)
+## D10 — Clarification définitive : migration AtoumWeb gratuite, entrée extérieure payante
 
-**Dernière correction expresse de l'utilisateur** : sa réponse **« ou plutôt A » remplace « B »** à la question sur les frais de migration d'un site **déjà hébergé chez AtoumWeb** vers sa Lune dédiée. **Le transfert initial interne est compris dans la première année à 149 €**, sans facture de migration en supplément. Le **renouvellement reste à 149 €/an** selon les termes de la formule annuelle acceptée.
+**Correction explicite du responsable :** « non c est gratuit de passer d'Atoum vers Atoum pas d'integrer un site gratuitement de l'exteireur ».
 
-Distinction importante : le « choix B » **antérieur portant sur le modèle commercial de Lune à tarif fixe** demeure validé ; seul le choix B « migration facturée séparément » est **annulé** et remplacé par l'option A « migration incluse ». La migration depuis un hébergeur tiers, une refonte ou un travail sans lien avec le transfert interne ne deviennent pas automatiquement gratuits.
+- **AtoumWeb → AtoumWeb : déplacement interne gratuit (0 €)**, notamment du compte partagé à une Lune dédiée. La gratuité ne dépend **ni de la première année ni d'un prix promotionnel**.
+- **Hébergeur extérieur → AtoumWeb : migration payante** distincte de l'abonnement. Le Catalogue publié contient déjà `AW-TECH-MIGRATION-AW`, migration standard vers AtoumWeb **99 €** ; cas complexes selon devis et conditions existantes. Ne pas confondre avec le forfait de Lune.
+- L'offre **« Hébergement isolé avec Lune dédiée » reste à 149 €/an**, soit hébergement 99 €/an et Lune 50 €/an ; ces montants rémunèrent le service récurrent et ne sont pas un prix de migration.
+- Le choix B pour une **formule commerciale à forfait fixe** demeure retenu. L'ancien choix B « facturer une migration interne à part » est rejeté. L'ancienne formulation « migration interne incluse seulement dans la première année » est remplacée par **gratuité des transferts internes**.
+- Les devis déjà acceptés ne sont pas modifiés rétroactivement ; l'éventuelle bascule vers la formule d'hébergement isolé exige un nouvel accord si elle change le contrat, mais le **transfert technique entre espaces AtoumWeb** n'est pas facturé.
 
-Mise en œuvre à prévoir : chiffrer les temps et capacités internes de ce transfert, puis planifier un déplacement des fichiers, de la base, de la configuration du site et des paramètres associés vers la Lune, avec tests de bon fonctionnement, sans divulguer l'accès cPanel maître. Les droits issus d'un contrat historique demeurent protégés ; toute nouvelle formule doit être acceptée.
+**Modifications dans la PR #159 :** grille d'offres actualisée ; clauses documentaires `TECH-HEBERGEMENT`, `WEB-HEBERGEMENT`, `MAINT-RENOUVELLEMENT` rectifiées. Aucun tarif actif, contrat historique ou devis accepté changé.
 
-**Documents modifiés sur la PR #159** : `OFFRES-HEBERGEMENT-LUNES-20261028.md` et propositions `TECH-HEBERGEMENT`, `WEB-HEBERGEMENT`, `MAINT-RENOUVELLEMENT`. **Pas de publication Catalogue, déploiement, modification de contrats acceptés ni migration réelle.**
-
-**Prochaine décision à recueillir** : le client hébergé sur sa Lune dédiée reçoit-il systématiquement les identifiants d'administration de sa Lune, uniquement sur demande, ou pas du tout ? Distinguer l'accès cPanel dédié de l'accès WordPress et du compte maître.
-
+**Point suivant :** définir si l'accès au cPanel propre à la Lune est remis au client automatiquement, sur demande, ou conservé par AtoumWeb, sans jamais exposer les accès au compte maître.
