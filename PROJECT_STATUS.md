@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 28/10/2026 — Hébergement isolé 149 €/an : prix validé, non publié
+
+**Arbitrage utilisateur** : total annuel **149 €** pour la nouvelle formule « Hébergement isolé avec Lune dédiée », soit **99 €/an** d'hébergement WordPress standard (tarif Catalogue publié) et **50 €/an** de forfait commercial Lune dédiée. Lune **obligatoire** pour les nouvelles offres d'hébergement AtoumWeb **sans maintenance WordPress/WooCommerce**, que la Lune génère ou non un coût fournisseur. Les mises à jour WordPress/thèmes/plugins demeurent hors hébergement. WooCommerce complexe : devis adapté. Les contrats déjà acceptés sont inchangés.
+
+**Travail GitHub PR #159 (brouillon)** : grille commerciale actualisée dans `OFFRES-HEBERGEMENT-LUNES-20261028.md`, décision D09 ajoutée à `REVUE-CHATGPT-20261028.md`, propositions `TECH-HEBERGEMENT`, `WEB-HEBERGEMENT`, `MAINT-RENOUVELLEMENT` annotées pour la tarification par devis. **Tarif approuvé, pas encore intégré comme produit publié dans la base Catalogue**, et pas de mutation de devis/contrat historique. **À faire** : arbitrer coût ponctuel éventuel de migration depuis l'hébergement partagé, préparer nouvelle formule versionnée en brouillon sans double facturation, contrôler la fiscalité affichée et tester des devis, puis validation de mise en service.
+
 ## 28/10/2026 — Arbitrage final : Lune obligatoire pour hébergement sans maintenance (non publié)
 
 **Nouvelle décision utilisateur prioritaire par rapport à la règle précédente** : le client qui n'a **pas** de maintenance WordPress/WooCommerce mais conserve l'hébergement chez AtoumWeb doit souscrire **une Lune o2switch dédiée obligatoire**, **facturée séparément** de l'hébergement. Prix publié retrouvé dans le Catalogue : `AW-TECH-HEBERG-WP`, **99 €/an** pour WordPress seul (hébergement, SSL, maintien de l'espace). **Prix client de la Lune non encore fixé** ; montant o2switch de **1,50 € TTC/mois uniquement au-delà du quota fournisseur**, qui ne vaut pas tarif de revente. Hébergement WooCommerce / besoins techniques particuliers : devis. Distinguer maintenance de l'environnement d'hébergement et maintenance applicative ; limiter l'accès au cPanel dédié, jamais au compte maître.
