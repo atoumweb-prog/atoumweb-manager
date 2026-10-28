@@ -58,3 +58,16 @@ Ces références étayent des points précis, sans certifier automatiquement la 
 
 **D02 — Sauvegardes AtoumWeb + hébergeur : RÈGLE VALIDÉE.** Le responsable confirme deux dispositifs distincts : les sauvegardes effectuées par AtoumWeb et celles proposées par l’hébergeur. Les sauvegardes de l’hébergeur suivent leurs propres conditions et ne se substituent pas aux sauvegardes AtoumWeb. **Précision validée pour les sauvegardes propres AtoumWeb : une sauvegarde chaque semaine, conservée 30 jours.** La fréquence et la conservation du dispositif de l’hébergeur restent à vérifier auprès de celui-ci. Le lieu de stockage et les modalités de restauration AtoumWeb ne sont pas encore documentés. Aucune version contractuelle publiée n’est modifiée.
 
+
+### D03 — Mises à jour WordPress, thèmes et extensions : RÈGLE VALIDÉE
+
+Décision explicite du responsable AtoumWeb : **vérification et mises à jour hebdomadaires** de WordPress, des thèmes et des extensions pour les formules de gestion/maintenance concernées ; **traitement prioritaire des correctifs de sécurité urgents**.
+
+Conséquence rédactionnelle pour `MAINT-MAJ` : le texte proposé décrit le contrôle chaque semaine et la réalisation des mises à jour comprises dans la formule, avec la possibilité de reporter une mise à jour risquée le temps d'évaluer une solution adaptée, information du client et préservation des obligations applicables. **Prioritaire ne signifie pas intervention ou résolution dans un délai inventé**.
+
+**État** : décision métier validée et proposition documentaire ajustée. Aucune publication de clause, aucun changement de version Catalogue, aucun engagement rétroactif sur les contrats historiques.
+
+### D04 — Prise en charge des incidents urgents : EN ATTENTE
+
+À préciser : plages horaires et délais de prise en charge contractuellement proposés ; distinction entre réception, premier diagnostic, intervention et résolution ; traitement des incidents critiques de sécurité et obligations légales distinctes.
+
