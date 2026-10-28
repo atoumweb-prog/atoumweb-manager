@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-25",
+  "templates": 118,
+  "publishedVersions": 118,
+  "base": 19,
+  "catalog": 99,
+  "reusedPriorProposalsUnchanged": 35,
+  "newIndividualProposals": 83,
+  "riskCounts": {
+    "Faible": 26,
+    "Modéré": 49,
+    "Élevé": 43
+  },
+  "fullBeforeAfterInReport": 118,
+  "sourceBodiesRecheckedReadOnly": 118,
+  "audienceSafeExamples": 4,
+  "exampleClauseCounts": {
+    "vitrine": 24,
+    "commerce-maintenance": 35,
+    "mariage": 24,
+    "contenu-seo": 23
+  },
+  "identifiersAndSourceHashesValid": true,
+  "allHumanDecisionsPending": true,
+  "noneIsSimpleNameSubstitution": true,
+  "applicationCodeChanged": false,
+  "databaseMutation": false,
+  "publication": false,
+  "adoption": false,
+  "productionEngineOrPDFTested": false,
+  "readerEmbeddedDataChecked": true,
+  "readerVisualCheck": "Non effectué : ouverture file:// refusée par la politique du navigateur ; aucun contournement. Contrôles statiques seulement.",
+  "limits": "Les contrôles de couverture et de correspondance ne prouvent pas une équivalence juridique ; revue humaine requise."
+}

@@ -2,6 +2,10 @@
 
 Mise à jour : 27/10/2026. Les demandes récentes de Carlos priment. Dépôt courant : C:/DEV/01_PROJETS/AtoumWeb/atoumweb-manager-ec04-validation. Lire AGENTS.md et ses sources obligatoires ; suivi PROJECT_STATUS. Ne pas reprendre tout le chat.
 
+## Priorité du 27/10/2026 — centralisation des données commerciales
+
+Carlos autorise une nouvelle branche GitHub dédiée contenant l'état courant du code, un export structuré du Catalogue/contrats/temps en lecture seule et les propositions humanisées documentaires. Ne pas modifier les données métier, lancer d'audit, produire Excel/PDF ou démarrer une correction. [Point d'entrée de la passation](../../PASSATION-REFERENTIEL-INTERNE-20261027.md).
+
 ## Travail autorisé et protections
 
 - Priorité du 27/10 : passation GitHub autorisée sur `atoumweb-prog/atoumweb-manager`, branche `codex/quote-pdf-handoff-20261027`, push normal et PR brouillon, sans fusion/déploiement/refonte/nouvelle campagne. Lire [la passation dédiée](../../PASSATION-DEVIS-GITHUB-20261027.md). Cette autorisation remplace les anciennes restrictions de push ci-dessous pour cette synchronisation seulement.

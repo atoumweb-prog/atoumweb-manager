@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "exportDate": "2026-10-27",
+  "sourceDatabaseSha256": "964da31efac12ad54effaa9e6c22e5e591053a1185d7bc51762a02adcbfdc0cb",
+  "sourceDatabaseUnchanged": true,
+  "files": [
+    {
+      "path": "catalogue.json",
+      "sha256": "5e8520f40f47d09a73ff2aa45c16c8aeadde9d1a87ce026d3570870cbebc8a2b"
+    },
+    {
+      "path": "contrats-publies.json",
+      "sha256": "ad4accae21fe39d6a6f69d749341784d507233df583cfd08aaa8a549a88a77a6"
+    },
+    {
+      "path": "temps-et-modeles-execution.json",
+      "sha256": "a75245c767718023fcc4c5acf59496ec6e6db956fa367a15b684b50e60ef864a"
+    }
+  ],
+  "rowCounts": {
+    "catalog_categories": 0,
+    "catalog_items": 136,
+    "catalog_versions": 163,
+    "offer_components": 11,
+    "catalog_commercial_rules": 0,
+    "catalog_version_recommendations": 0,
+    "catalog_project_blueprints": 2,
+    "contract_clause_templates": 118,
+    "contract_clause_versions": 118,
+    "catalog_contract_clause_links": 409,
+    "contract_types": 13,
+    "contract_type_versions": 13,
+    "contract_type_version_modules": 147,
+    "catalog_contract_type_links": 112,
+    "contract_library_import_runs": 1,
+    "contract_library_import_entries": 118,
+    "project_templates": 1,
+    "project_template_versions": 1,
+    "project_template_nodes": 28,
+    "project_template_sites": 1,
+    "project_template_site_pages": 5,
+    "project_type_site_blueprints": 2,
+    "maintenance_checklist_templates": 1,
+    "maintenance_checklist_template_items": 7
+  },
+  "privacy": {
+    "included": "Catalogue, clauses, associations, modèles et temps de référence",
+    "excluded": [
+      "prospects et clients",
+      "contacts et coordonnées",
+      "devis et contrats de dossiers clients",
+      "réglages personnels de l'entreprise",
+      "documents, chemins locaux et secrets"
+    ]
+  }
+}

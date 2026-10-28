@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 27/10/2026 — Centralisation GitHub du référentiel commercial
+
+Autorisation explicite de publier sur une branche dédiée l'état courant déjà transmis et les données commerciales existantes, sans correction ni nouvelle campagne. Export SQLite strictement en lecture seule et limité aux tables Catalogue, contrats, associations et modèles/temps ; base, prospects, clients, contacts, devis réels, réglages, secrets et documents privés exclus. Les 118 propositions humanisées restent documentaires et séparées des 118 clauses publiées. [Passation et limites](PASSATION-REFERENTIEL-INTERNE-20261027.md). Aucun tarif, texte publié, contrat historique ou statut modifié ; aucune fusion, aucun déploiement.
+
 ## 27/10/2026 — Passation GitHub demandée, sans refonte
 
 Autorisation explicite de synchroniser l’état local complet vers `atoumweb-prog/atoumweb-manager`, branche dédiée `codex/quote-pdf-handoff-20261027`, commit/push normaux et PR brouillon uniquement. Aucun changement de `main`, force-push, déploiement, nouvelle campagne ou correction PDF. Les 39 commits d’avance sur `origin/main` et les modifications source/tests/migration75 non commitées sont repris ensemble. [Point d’entrée](PASSATION-DEVIS-GITHUB-20261027.md) : sources, commandes, limites et éléments locaux exclus. `output/` ignoré ; bases, clients, secrets, binaires, archives et propositions métier non nécessaires exclus du lot. Contrôles de synchronisation uniquement, pas de nouveaux tests métier. La suite de présentation du PDF client est confiée à ChatGPT après cette passation.
