@@ -3075,7 +3075,7 @@
       "sources": [
         "S15"
       ],
-      "proposal": "Le devis indique la durée de votre formule de maintenance, sa périodicité de facturation et les conditions pour y mettre fin.\n\nUne formule mensuelle se poursuit de mois en mois jusqu’à sa résiliation, selon les conditions convenues. Les formules annuelles, notamment la maintenance, l’hébergement et le domaine, sont renouvelées par accord exprès : elles ne sont pas reconduites automatiquement par défaut.\n\nNous vous communiquons les conditions de poursuite et de fin du service avant votre acceptation. Les obligations légales d’information et de résiliation, notamment par voie électronique lorsqu’elle est requise, continuent de s’appliquer selon le contrat et votre situation.\n\nUn changement de formule, de périmètre ou de prix ne peut intervenir que dans les conditions valablement convenues et prévues par la loi. Le simple fait de vous informer d’un changement ne vaut pas acceptation. La restitution des éléments et la fin du service suivent les conditions contractuelles et légales applicables.",
+      "proposal": "Le devis indique la durée de votre formule de maintenance, sa périodicité de facturation et les conditions pour y mettre fin.\n\nUne formule mensuelle se poursuit de mois en mois jusqu’à sa résiliation. Vous pouvez demander sa résiliation à tout moment, sans préavis supplémentaire. Le service prend fin à l’issue de la période mensuelle déjà payée, sans préjudice des droits légaux de résiliation anticipée ou de remboursement lorsqu’ils s’appliquent. Les formules annuelles, notamment la maintenance, l’hébergement et le domaine, sont renouvelées par accord exprès : elles ne sont pas reconduites automatiquement par défaut.\n\nNous vous communiquons les conditions de poursuite et de fin du service avant votre acceptation. Les obligations légales d’information et de résiliation, notamment par voie électronique lorsqu’elle est requise, continuent de s’appliquer selon le contrat et votre situation.\n\nUn changement de formule, de périmètre ou de prix ne peut intervenir que dans les conditions valablement convenues et prévues par la loi. Le simple fait de vous informer d’un changement ne vaut pas acceptation. La restitution des éléments et la fin du service suivent les conditions contractuelles et légales applicables.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 21,
@@ -3115,11 +3115,18 @@
       "previousEditorialProposal": "Le devis précise la durée de votre formule, sa périodicité de facturation et ses conditions de résiliation.\n\nUn abonnement mensuel se poursuit de mois en mois jusqu’à sa résiliation selon les conditions convenues. Les offres annuelles, notamment la maintenance annuelle, l’hébergement et le domaine, sont renouvelées par accord exprès : elles ne sont pas reconduites tacitement par défaut.\n\nNous vous communiquons les conditions de poursuite et de fin du service avant votre acceptation. Les obligations légales d’information et de résiliation, notamment par voie électronique lorsqu’elle est requise, restent applicables selon le contrat et la catégorie de client.\n\nUn changement de formule, de périmètre ou de prix ne s’applique que dans les conditions valablement convenues et dans le respect de la loi. Le simple envoi d’une information ne suffit pas à autoriser toute modification. La restitution et la fin du service suivent les conditions contractuelles et légales applicables.",
       "editorialRevision": {
         "date": "2026-10-28",
-        "status": "proposition révisée — en attente de validation humaine",
-        "scope": "clarification rédactionnelle uniquement",
-        "note": "Mensuel vs annuel mieux distingués ; renouvellement annuel exprès conservé ; contrôler le parcours de résiliation.",
+        "status": "proposition adaptée à la décision métier — non publiée, en attente de validation contractuelle",
+        "scope": "résiliation mensuelle à tout moment, sans préavis, fin de période payée",
+        "note": "D06 validée le 28 octobre 2026 ; renouvellement annuel exprès inchangé, droits légaux réservés.",
         "priorProposalRetained": true
-      }
+      },
+      "editorialRevisionHistory": [
+        {
+          "date": "2026-10-28",
+          "priorProposal": "Le devis indique la durée de votre formule de maintenance, sa périodicité de facturation et les conditions pour y mettre fin.\n\nUne formule mensuelle se poursuit de mois en mois jusqu’à sa résiliation, selon les conditions convenues. Les formules annuelles, notamment la maintenance, l’hébergement et le domaine, sont renouvelées par accord exprès : elles ne sont pas reconduites automatiquement par défaut.\n\nNous vous communiquons les conditions de poursuite et de fin du service avant votre acceptation. Les obligations légales d’information et de résiliation, notamment par voie électronique lorsqu’elle est requise, continuent de s’appliquer selon le contrat et votre situation.\n\nUn changement de formule, de périmètre ou de prix ne peut intervenir que dans les conditions valablement convenues et prévues par la loi. Le simple fait de vous informer d’un changement ne vaut pas acceptation. La restitution des éléments et la fin du service suivent les conditions contractuelles et légales applicables.",
+          "note": "Version antérieure à la décision D06 sur la résiliation de maintenance mensuelle."
+        }
+      ]
     },
     {
       "code": "MAINT-SAUVEGARDE",
