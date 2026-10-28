@@ -3020,7 +3020,7 @@
         "S10",
         "S14"
       ],
-      "proposal": "La maintenance couvre uniquement les opérations prévues dans la formule que vous avez choisie et décrites dans votre devis.\n\nLe devis distingue les opérations préventives, les interventions comprises dans la formule, les travaux hors forfait et les évolutions ou refontes nécessitant un devis distinct. Une demande est comprise dans la formule lorsqu’elle correspond au périmètre convenu.\n\nCes limites ne suppriment pas les corrections, garanties ou mises à jour que nous devons déjà fournir au titre du contrat ou de la loi.",
+      "proposal": "La maintenance couvre uniquement les opérations prévues dans la formule que vous avez choisie et décrites dans votre devis.\n\nLe devis distingue les opérations préventives, les interventions comprises dans la formule, les travaux hors forfait et les évolutions ou refontes nécessitant un devis distinct. L’hébergement et son suivi technique constituent une prestation distincte de la maintenance WordPress ou WooCommerce, sauf inclusion explicitement prévue dans le devis. Une demande est comprise dans la formule lorsqu’elle correspond au périmètre convenu.\n\nCes limites ne suppriment pas les corrections, garanties ou mises à jour que nous devons déjà fournir au titre du contrat ou de la loi.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 16,
@@ -3060,11 +3060,18 @@
       "previousEditorialProposal": "La maintenance comprend les opérations prévues dans la formule que vous avez choisie et décrites au devis.\n\nNous distinguons les opérations préventives, les interventions comprises dans la formule, les travaux hors forfait et les évolutions ou refontes qui nécessitent un devis distinct.\n\nUne demande entre dans la formule lorsqu’elle correspond au périmètre souscrit. Cette limite ne supprime pas les corrections, garanties ou mises à jour que nous devons déjà fournir au titre du contrat ou de la loi.",
       "editorialRevision": {
         "date": "2026-10-28",
-        "status": "proposition révisée — en attente de validation humaine",
-        "scope": "clarification rédactionnelle uniquement",
-        "note": "Rédaction simple sans points-virgules et sans nouvelle inclusion.",
+        "status": "proposition commerciale adaptée — non publiée, en attente de validation",
+        "scope": "distinguer suivi technique hébergement, maintenance applicative et Lune dédiée",
+        "note": "Offres documentées dans OFFRES-HEBERGEMENT-LUNES-20261028.md. Pas de tarif de Lune inventé ni accès global au serveur mutualisé. Droits de restitution préservés.",
         "priorProposalRetained": true
-      }
+      },
+      "editorialRevisionHistory": [
+        {
+          "date": "2026-10-28",
+          "priorProposal": "La maintenance couvre uniquement les opérations prévues dans la formule que vous avez choisie et décrites dans votre devis.\n\nLe devis distingue les opérations préventives, les interventions comprises dans la formule, les travaux hors forfait et les évolutions ou refontes nécessitant un devis distinct. Une demande est comprise dans la formule lorsqu’elle correspond au périmètre convenu.\n\nCes limites ne suppriment pas les corrections, garanties ou mises à jour que nous devons déjà fournir au titre du contrat ou de la loi.",
+          "note": "Proposition avant intégration des formules d'hébergement et Lunes."
+        }
+      ]
     },
     {
       "code": "MAINT-RENOUVELLEMENT",
@@ -3075,7 +3082,7 @@
       "sources": [
         "S15"
       ],
-      "proposal": "Le devis indique la durée de votre formule de maintenance, sa périodicité de facturation et les conditions pour y mettre fin.\n\nUne formule mensuelle se poursuit de mois en mois jusqu’à sa résiliation. Vous pouvez demander sa résiliation à tout moment, sans préavis supplémentaire. Le service prend fin à l’issue de la période mensuelle déjà payée, sans préjudice des droits légaux de résiliation anticipée ou de remboursement lorsqu’ils s’appliquent. Les formules annuelles, notamment la maintenance, l’hébergement et le domaine, sont renouvelées par accord exprès : elles ne sont pas reconduites automatiquement par défaut. Pour les formules annuelles de maintenance, nous vous adressons une proposition de renouvellement 30 jours avant l’échéance. Cette proposition ne vaut pas renouvellement : votre accord exprès est nécessaire.\n\nNous vous communiquons les conditions de poursuite et de fin du service avant votre acceptation. Les obligations légales d’information et de résiliation, notamment par voie électronique lorsqu’elle est requise, continuent de s’appliquer selon le contrat et votre situation.\n\nUn changement de formule, de périmètre ou de prix ne peut intervenir que dans les conditions valablement convenues et prévues par la loi. Le simple fait de vous informer d’un changement ne vaut pas acceptation. L’arrêt ou le non-renouvellement de la maintenance met fin aux opérations de maintenance à l’échéance concernée. Il ne met pas fin, par lui-même, à un hébergement distinct qui reste contractuellement actif. Lorsque le site est hébergé sur un compte mutualisé hébergeant aussi d’autres clients, l’accès global à ce compte ou à son administration serveur n’est pas remis au client. Cette limite n’exclut pas les accès propres à son site et les modalités de récupération ou de transfert de ses éléments, qui sont organisés selon le contrat et les droits applicables. La restitution des éléments et la fin du service suivent les conditions contractuelles et légales applicables.",
+      "proposal": "Le devis indique la durée de votre formule de maintenance, sa périodicité de facturation et les conditions pour y mettre fin.\n\nUne formule mensuelle se poursuit de mois en mois jusqu’à sa résiliation. Vous pouvez demander sa résiliation à tout moment, sans préavis supplémentaire. Le service prend fin à l’issue de la période mensuelle déjà payée, sans préjudice des droits légaux de résiliation anticipée ou de remboursement lorsqu’ils s’appliquent. Les formules annuelles, notamment la maintenance, l’hébergement et le domaine, sont renouvelées par accord exprès : elles ne sont pas reconduites automatiquement par défaut. Pour les formules annuelles de maintenance, nous vous adressons une proposition de renouvellement 30 jours avant l’échéance. Cette proposition ne vaut pas renouvellement : votre accord exprès est nécessaire.\n\nNous vous communiquons les conditions de poursuite et de fin du service avant votre acceptation. Les obligations légales d’information et de résiliation, notamment par voie électronique lorsqu’elle est requise, continuent de s’appliquer selon le contrat et votre situation.\n\nUn changement de formule, de périmètre ou de prix ne peut intervenir que dans les conditions valablement convenues et prévues par la loi. Le simple fait de vous informer d’un changement ne vaut pas acceptation. L’arrêt ou le non-renouvellement de la maintenance met fin aux opérations de maintenance à l’échéance concernée. Il ne met pas fin, par lui-même, à un hébergement distinct qui reste contractuellement actif et payé. Le suivi de l’espace d’hébergement ne comprend pas, à lui seul, les mises à jour de WordPress, des thèmes ou des extensions. Le client est informé des risques liés à l’absence de maintenance applicative et peut souscrire celle-ci séparément. Lorsque le site est hébergé sur un compte mutualisé hébergeant aussi d’autres clients, l’accès global à ce compte ou à son administration serveur n’est pas remis au client. Cette limite n’exclut pas les accès propres à son site et les modalités de récupération ou de transfert de ses éléments, qui sont organisés selon le contrat et les droits applicables. La restitution des éléments et la fin du service suivent les conditions contractuelles et légales applicables.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 21,
@@ -3115,9 +3122,9 @@
       "previousEditorialProposal": "Le devis précise la durée de votre formule, sa périodicité de facturation et ses conditions de résiliation.\n\nUn abonnement mensuel se poursuit de mois en mois jusqu’à sa résiliation selon les conditions convenues. Les offres annuelles, notamment la maintenance annuelle, l’hébergement et le domaine, sont renouvelées par accord exprès : elles ne sont pas reconduites tacitement par défaut.\n\nNous vous communiquons les conditions de poursuite et de fin du service avant votre acceptation. Les obligations légales d’information et de résiliation, notamment par voie électronique lorsqu’elle est requise, restent applicables selon le contrat et la catégorie de client.\n\nUn changement de formule, de périmètre ou de prix ne s’applique que dans les conditions valablement convenues et dans le respect de la loi. Le simple envoi d’une information ne suffit pas à autoriser toute modification. La restitution et la fin du service suivent les conditions contractuelles et légales applicables.",
       "editorialRevision": {
         "date": "2026-10-28",
-        "status": "proposition adaptée aux décisions métier — non publiée, en attente de validation contractuelle",
-        "scope": "fin de maintenance indépendante d'un hébergement encore actif, absence d'accès global à un compte mutualisé",
-        "note": "D08 approuvée : ne pas couper un hébergement encore actif du seul fait du non-renouvellement de maintenance ; pas d'accès client à une administration mutualisée contenant d'autres sites ; droits de restitution et transfert réservés, modalités à confirmer D09.",
+        "status": "proposition commerciale adaptée — non publiée, en attente de validation",
+        "scope": "distinguer suivi technique hébergement, maintenance applicative et Lune dédiée",
+        "note": "Offres documentées dans OFFRES-HEBERGEMENT-LUNES-20261028.md. Pas de tarif de Lune inventé ni accès global au serveur mutualisé. Droits de restitution préservés.",
         "priorProposalRetained": true
       },
       "editorialRevisionHistory": [
@@ -3135,6 +3142,11 @@
           "date": "2026-10-28",
           "priorProposal": "Le devis indique la durée de votre formule de maintenance, sa périodicité de facturation et les conditions pour y mettre fin.\n\nUne formule mensuelle se poursuit de mois en mois jusqu’à sa résiliation. Vous pouvez demander sa résiliation à tout moment, sans préavis supplémentaire. Le service prend fin à l’issue de la période mensuelle déjà payée, sans préjudice des droits légaux de résiliation anticipée ou de remboursement lorsqu’ils s’appliquent. Les formules annuelles, notamment la maintenance, l’hébergement et le domaine, sont renouvelées par accord exprès : elles ne sont pas reconduites automatiquement par défaut. Pour les formules annuelles de maintenance, nous vous adressons une proposition de renouvellement 30 jours avant l’échéance. Cette proposition ne vaut pas renouvellement : votre accord exprès est nécessaire.\n\nNous vous communiquons les conditions de poursuite et de fin du service avant votre acceptation. Les obligations légales d’information et de résiliation, notamment par voie électronique lorsqu’elle est requise, continuent de s’appliquer selon le contrat et votre situation.\n\nUn changement de formule, de périmètre ou de prix ne peut intervenir que dans les conditions valablement convenues et prévues par la loi. Le simple fait de vous informer d’un changement ne vaut pas acceptation. La restitution des éléments et la fin du service suivent les conditions contractuelles et légales applicables.",
           "note": "Proposition avant confirmation D08 : indépendance de la maintenance et de l'hébergement mutualisé."
+        },
+        {
+          "date": "2026-10-28",
+          "priorProposal": "Le devis indique la durée de votre formule de maintenance, sa périodicité de facturation et les conditions pour y mettre fin.\n\nUne formule mensuelle se poursuit de mois en mois jusqu’à sa résiliation. Vous pouvez demander sa résiliation à tout moment, sans préavis supplémentaire. Le service prend fin à l’issue de la période mensuelle déjà payée, sans préjudice des droits légaux de résiliation anticipée ou de remboursement lorsqu’ils s’appliquent. Les formules annuelles, notamment la maintenance, l’hébergement et le domaine, sont renouvelées par accord exprès : elles ne sont pas reconduites automatiquement par défaut. Pour les formules annuelles de maintenance, nous vous adressons une proposition de renouvellement 30 jours avant l’échéance. Cette proposition ne vaut pas renouvellement : votre accord exprès est nécessaire.\n\nNous vous communiquons les conditions de poursuite et de fin du service avant votre acceptation. Les obligations légales d’information et de résiliation, notamment par voie électronique lorsqu’elle est requise, continuent de s’appliquer selon le contrat et votre situation.\n\nUn changement de formule, de périmètre ou de prix ne peut intervenir que dans les conditions valablement convenues et prévues par la loi. Le simple fait de vous informer d’un changement ne vaut pas acceptation. L’arrêt ou le non-renouvellement de la maintenance met fin aux opérations de maintenance à l’échéance concernée. Il ne met pas fin, par lui-même, à un hébergement distinct qui reste contractuellement actif. Lorsque le site est hébergé sur un compte mutualisé hébergeant aussi d’autres clients, l’accès global à ce compte ou à son administration serveur n’est pas remis au client. Cette limite n’exclut pas les accès propres à son site et les modalités de récupération ou de transfert de ses éléments, qui sont organisés selon le contrat et les droits applicables. La restitution des éléments et la fin du service suivent les conditions contractuelles et légales applicables.",
+          "note": "Proposition avant intégration des formules d'hébergement et Lunes."
         }
       ]
     },
@@ -4600,7 +4612,7 @@
         "S8",
         "S15"
       ],
-      "proposal": "Cette clause concerne l’hébergement WordPress vendu seul, séparément d’une création de site. Nous mettons à disposition ou gérons l’environnement décrit au devis, dans les limites des services retenus.\n\nLes sauvegardes, le domaine, la messagerie, la maintenance et l’assistance sont compris uniquement s’ils sont indiqués expressément.\n\nUn engagement annuel est renouvelé par accord exprès, sans reconduction tacite annuelle par défaut. Une prestation mensuelle expressément souscrite se poursuit selon les conditions de résiliation convenues.\n\nLe devis précise une période pour récupérer, exporter ou transférer les éléments à la fin du service. Une migration ou une reconstruction complexe hors périmètre nécessite un accord complémentaire. Les données devenues inutiles sont supprimées selon les règles applicables, en distinguant les durées propres aux sauvegardes et archives à conserver.\n\nSi l’hébergement est compris dans une création de site, il relève de la clause « Hébergement et nom de domaine » associée à cette création.",
+      "proposal": "Cette clause concerne l’hébergement WordPress vendu seul, séparément d’une création de site. Nous mettons à disposition ou gérons l’environnement décrit au devis, dans les limites des services retenus. Le suivi technique de cet espace peut comprendre, selon le devis, la gestion du SSL, les réglages d’hébergement et la vérification de la version PHP configurée ainsi que de sa compatibilité. Les mises à jour de l’infrastructure du fournisseur relèvent de celui-ci. Ce suivi ne garantit pas que le logiciel WordPress, son thème ou ses extensions soient à jour.\n\nLes sauvegardes, le domaine, la messagerie, la maintenance et l’assistance sont compris uniquement s’ils sont indiqués expressément. Une Lune o2switch dédiée peut être mise à disposition selon le devis pour isoler l’espace du client. Le client peut recevoir les accès propres à cette Lune si cette faculté est prévue ; il ne reçoit jamais les accès au cPanel maître commun à plusieurs clients. Tout supplément lié à cette option doit être annoncé et accepté avant facturation.\n\nUn engagement annuel est renouvelé par accord exprès, sans reconduction tacite annuelle par défaut. Une prestation mensuelle expressément souscrite se poursuit selon les conditions de résiliation convenues.\n\nLe devis précise une période pour récupérer, exporter ou transférer les éléments à la fin du service. Une migration ou une reconstruction complexe hors périmètre nécessite un accord complémentaire. Les données devenues inutiles sont supprimées selon les règles applicables, en distinguant les durées propres aux sauvegardes et archives à conserver.\n\nSi l’hébergement est compris dans une création de site, il relève de la clause « Hébergement et nom de domaine » associée à cette création.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4633,7 +4645,21 @@
       "importantChanges": "Le retrait du code commercial visible est éditorial ; l’hébergement seul ne doit pas neutraliser les inclusions d’une création.",
       "proposedTitle": "Hébergement seul sans maintenance",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "editorialRevisionHistory": [
+        {
+          "date": "2026-10-28",
+          "priorProposal": "Cette clause concerne l’hébergement WordPress vendu seul, séparément d’une création de site. Nous mettons à disposition ou gérons l’environnement décrit au devis, dans les limites des services retenus.\n\nLes sauvegardes, le domaine, la messagerie, la maintenance et l’assistance sont compris uniquement s’ils sont indiqués expressément.\n\nUn engagement annuel est renouvelé par accord exprès, sans reconduction tacite annuelle par défaut. Une prestation mensuelle expressément souscrite se poursuit selon les conditions de résiliation convenues.\n\nLe devis précise une période pour récupérer, exporter ou transférer les éléments à la fin du service. Une migration ou une reconstruction complexe hors périmètre nécessite un accord complémentaire. Les données devenues inutiles sont supprimées selon les règles applicables, en distinguant les durées propres aux sauvegardes et archives à conserver.\n\nSi l’hébergement est compris dans une création de site, il relève de la clause « Hébergement et nom de domaine » associée à cette création.",
+          "note": "Proposition avant intégration des formules d'hébergement et Lunes."
+        }
+      ],
+      "editorialRevision": {
+        "date": "2026-10-28",
+        "status": "proposition commerciale adaptée — non publiée, en attente de validation",
+        "scope": "distinguer suivi technique hébergement, maintenance applicative et Lune dédiée",
+        "note": "Offres documentées dans OFFRES-HEBERGEMENT-LUNES-20261028.md. Pas de tarif de Lune inventé ni accès global au serveur mutualisé. Droits de restitution préservés.",
+        "priorProposalRetained": true
+      }
     },
     {
       "code": "TECH-MIGRATION",
@@ -4873,7 +4899,7 @@
         "S15",
         "S8"
       ],
-      "proposal": "Si l’hébergement ou le nom de domaine est compris dans votre prestation, le devis précise le fournisseur, les services couverts, leur durée, les coûts inclus et les conditions de poursuite.\n\nLe titulaire du domaine et les accès permettant de le gérer sont identifiés explicitement. Notre intervention technique ne nous rend pas propriétaires de votre domaine.\n\nLes engagements annuels d’hébergement ou de domaine sont renouvelés par accord exprès, sans reconduction annuelle tacite par défaut. Une prestation mensuelle expressément souscrite se poursuit de mois en mois jusqu’à sa résiliation selon les conditions convenues. Les changements de prix respectent les conditions acceptées et la loi ; ils ne modifient pas automatiquement un engagement en cours.\n\nNous vous communiquons les limites utiles du fournisseur. Elles ne nous dispensent pas de nos propres obligations.\n\nLe devis prévoit la période permettant de récupérer, d’exporter ou de transférer les éléments à la fin du service. Une migration ou une reconstruction complexe nécessite un accord complémentaire si elle dépasse le périmètre convenu. Les données devenues inutiles sont supprimées selon les règles applicables ; les sauvegardes et archives conservées légalement ou légitimement suivent leurs durées propres.",
+      "proposal": "Si l’hébergement ou le nom de domaine est compris dans votre prestation, le devis précise le fournisseur, les services couverts, leur durée, les coûts inclus et les conditions de poursuite.\n\nLe titulaire du domaine et les accès permettant de le gérer sont identifiés explicitement. Notre intervention technique ne nous rend pas propriétaires de votre domaine. Si votre site est placé dans une Lune dédiée, les droits d’accès à son cPanel sont précisés au devis. Les identifiants du compte maître mutualisé AtoumWeb ne sont pas communiqués, afin de protéger les autres clients. Le coût éventuel d’une Lune supplémentaire est une ligne acceptée séparément. La durée d’hébergement offerte lors de la création du site existe uniquement si elle est expressément prévue au devis, ainsi que son échéance.\n\nLes engagements annuels d’hébergement ou de domaine sont renouvelés par accord exprès, sans reconduction annuelle tacite par défaut. Une prestation mensuelle expressément souscrite se poursuit de mois en mois jusqu’à sa résiliation selon les conditions convenues. Les changements de prix respectent les conditions acceptées et la loi ; ils ne modifient pas automatiquement un engagement en cours.\n\nNous vous communiquons les limites utiles du fournisseur. Elles ne nous dispensent pas de nos propres obligations. Lorsque l’hébergement AtoumWeb prévoit un suivi technique de l’espace, celui-ci peut couvrir la gestion du SSL, les réglages d’hébergement et la vérification de la version PHP configurée, dans les limites convenues. L’entretien du serveur par le fournisseur et ce suivi technique ne remplacent pas les mises à jour de WordPress, des thèmes ou des extensions, qui relèvent d’une maintenance applicative distincte si elle n’est pas déjà comprise au contrat.\n\nLe devis prévoit la période permettant de récupérer, d’exporter ou de transférer les éléments à la fin du service. Une migration ou une reconstruction complexe nécessite un accord complémentaire si elle dépasse le périmètre convenu. Les données devenues inutiles sont supprimées selon les règles applicables ; les sauvegardes et archives conservées légalement ou légitimement suivent leurs durées propres.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 27,
@@ -4909,7 +4935,21 @@
       "importantChanges": "Trois sujets dans un long paragraphe ; fournisseur/transfert incomplets dans le dossier.",
       "proposedTitle": "Hébergement et nom de domaine",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "editorialRevisionHistory": [
+        {
+          "date": "2026-10-28",
+          "priorProposal": "Si l’hébergement ou le nom de domaine est compris dans votre prestation, le devis précise le fournisseur, les services couverts, leur durée, les coûts inclus et les conditions de poursuite.\n\nLe titulaire du domaine et les accès permettant de le gérer sont identifiés explicitement. Notre intervention technique ne nous rend pas propriétaires de votre domaine.\n\nLes engagements annuels d’hébergement ou de domaine sont renouvelés par accord exprès, sans reconduction annuelle tacite par défaut. Une prestation mensuelle expressément souscrite se poursuit de mois en mois jusqu’à sa résiliation selon les conditions convenues. Les changements de prix respectent les conditions acceptées et la loi ; ils ne modifient pas automatiquement un engagement en cours.\n\nNous vous communiquons les limites utiles du fournisseur. Elles ne nous dispensent pas de nos propres obligations.\n\nLe devis prévoit la période permettant de récupérer, d’exporter ou de transférer les éléments à la fin du service. Une migration ou une reconstruction complexe nécessite un accord complémentaire si elle dépasse le périmètre convenu. Les données devenues inutiles sont supprimées selon les règles applicables ; les sauvegardes et archives conservées légalement ou légitimement suivent leurs durées propres.",
+          "note": "Proposition avant intégration des formules d'hébergement et Lunes."
+        }
+      ],
+      "editorialRevision": {
+        "date": "2026-10-28",
+        "status": "proposition commerciale adaptée — non publiée, en attente de validation",
+        "scope": "distinguer suivi technique hébergement, maintenance applicative et Lune dédiée",
+        "note": "Offres documentées dans OFFRES-HEBERGEMENT-LUNES-20261028.md. Pas de tarif de Lune inventé ni accès global au serveur mutualisé. Droits de restitution préservés.",
+        "priorProposalRetained": true
+      }
     },
     {
       "code": "WEB-LICENCES",
