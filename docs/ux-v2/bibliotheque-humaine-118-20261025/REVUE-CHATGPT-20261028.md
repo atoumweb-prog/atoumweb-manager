@@ -80,6 +80,12 @@ Décision explicite du responsable AtoumWeb : **les incidents urgents sont pris 
 
 Le responsable confirme une prise en charge des urgences pendant les horaires de bureau. Aucune plage horaire chiffrée ni jour exact n'est fixé ici. Premier retour humain prioritaire sans délai maximal garanti (D04). Il reste à préciser les plages exactes communiquées aux clients avant publication.
 
-### D06 — Résiliation de maintenance : EN ATTENTE
+### D06 — Résiliation de maintenance mensuelle : VALIDÉE
 
-À arbitrer : modalités de résiliation mensuelle. Les formules annuelles requièrent un accord exprès de renouvellement.
+Décision expresse du responsable AtoumWeb : le client peut demander **à tout moment** la résiliation de la maintenance mensuelle WordPress (49 €/mois) ou WooCommerce (99 €/mois), **sans préavis supplémentaire**. La prestation prend fin **à l'issue de la période mensuelle déjà payée**. Cette règle s'applique sans préjudice des droits légaux de résiliation anticipée ou de remboursement lorsqu'ils existent.
+
+Conséquence rédactionnelle : adapter la proposition `MAINT-RENOUVELLEMENT` sans changer les formules annuelles : celles-ci restent renouvelées par **accord exprès**, sans reconduction annuelle tacite par défaut. Le moyen de demande de résiliation et les informations requises par la réglementation devront être précisés selon le canal de souscription.
+
+**D07 — Renouvellement annuel : À PRÉCISER.** Définir si AtoumWeb informe le client de l'arrivée à échéance et selon quel délai ; aucune poursuite annuelle automatique sans nouvel accord.
+
+État : **décision métier approuvée et consignée**, proposition documentaire à aligner, aucune clause ou version Catalogue publiée modifiée.
