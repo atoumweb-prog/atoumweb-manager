@@ -1,5 +1,9 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 28/10/2026 — Revue rédactionnelle ChatGPT : maintenance et socle (propositions non adoptées)
+
+Demande utilisateur : poursuivre la revue des clauses et modifier les propositions lorsque la rédaction s'améliore sans changement d'engagement. Branche dérivée de `codex/internal-reference-handoff-20261027`. Neuf propositions documentaires révisées dans `docs/ux-v2/bibliotheque-humaine-118-20261025/PROPOSITIONS.json` : sept `MAINT-*`, `BASE-CONFIDENTIALITE` et `BASE-FORCE-MAJEURE`. Les textes proposés précédents sont conservés, les 118 identifiants et textes publiés restent inchangés ; aucun statut d'approbation modifié. [Compte rendu et vigilance](docs/ux-v2/bibliotheque-humaine-118-20261025/REVUE-CHATGPT-20261028.md). Vérifications documentaires d'intégrité réussies ; aucune validation juridique finale, aucun test du moteur ni publication, aucune fusion ou mise en production. Prochaine étape : revoir les clauses WEB/ECOM, obtenir les décisions de contenu, puis traiter séparément le rendu PDF client et ses tests.
+
 ## 27/10/2026 — Centralisation GitHub du référentiel commercial
 
 Autorisation explicite de publier sur une branche dédiée l'état courant déjà transmis et les données commerciales existantes, sans correction ni nouvelle campagne. Export SQLite strictement en lecture seule et limité aux tables Catalogue, contrats, associations et modèles/temps ; base, prospects, clients, contacts, devis réels, réglages, secrets et documents privés exclus. Les 118 propositions humanisées restent documentaires et séparées des 118 clauses publiées. [Passation et limites](PASSATION-REFERENTIEL-INTERNE-20261027.md). Aucun tarif, texte publié, contrat historique ou statut modifié ; aucune fusion, aucun déploiement.
