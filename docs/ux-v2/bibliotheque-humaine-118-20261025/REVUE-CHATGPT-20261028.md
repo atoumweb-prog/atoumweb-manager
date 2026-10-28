@@ -75,3 +75,11 @@ Décision explicite du responsable AtoumWeb : **les incidents urgents sont pris 
 
 **État** : règle métier approuvée, proposition de clause ajustée ; aucune modification de version publiée ou de contrat historique.
 
+
+### D05 — Horaires de bureau : VALIDÉ
+
+Le responsable confirme une prise en charge des urgences pendant les horaires de bureau. Aucune plage horaire chiffrée ni jour exact n'est fixé ici. Premier retour humain prioritaire sans délai maximal garanti (D04). Il reste à préciser les plages exactes communiquées aux clients avant publication.
+
+### D06 — Résiliation de maintenance : EN ATTENTE
+
+À arbitrer : modalités de résiliation mensuelle. Les formules annuelles requièrent un accord exprès de renouvellement.
