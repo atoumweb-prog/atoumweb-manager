@@ -2,11 +2,15 @@
 
 **Date : 28/10/2026** — **Document de travail** pour le Catalogue, les devis et les clauses. Aucune offre publiée ou ancien contrat n'est modifié. À intégrer sous forme de nouvelles versions brouillon après validation des points encore ouverts.
 
+## Nouvelle règle ferme — hébergement sans maintenance (28/10/2026)
+
+**Hébergement AtoumWeb sans maintenance WordPress/WooCommerce = espace Lune dédié obligatoire, facturé en supplément de l'hébergement.** Tarif d'hébergement WordPress seul retrouvé dans le Catalogue **publié : 99 €/an** (`AW-TECH-HEBERG-WP`). **Prix de l'option Lune : à définir, jamais inventé ni présumé égal au coût fournisseur.** Les contrats déjà signés doivent être respectés et, si nécessaire, faire l'objet d'un avenant ou d'une proposition acceptée. La nécessité d'isoler ne permet pas de supprimer sans procédure un hébergement contractuellement actif.
+
 ## Décisions déjà exprimées
 
-1. Un client peut **cesser la maintenance WordPress/WooCommerce** tout en maintenant son site **en hébergement AtoumWeb**, si cette prestation d'hébergement est encore en vigueur et payée.
+1. **Règle prioritaire validée** : tout client **sans maintenance WordPress/WooCommerce** qui souhaite rester hébergé chez AtoumWeb doit disposer d'**une Lune o2switch dédiée obligatoire**. Il souscrit **l'hébergement + l'option Lune**, deux prestations facturées séparément. Il n'est pas admissible de laisser un site non maintenu sur le compte cPanel partagé avec d'autres clients. Cette politique est prospective et ne modifie pas rétroactivement les contrats existants.
 2. L'hébergement au-delà de la première année est facturé si l'offre initiale comprenait **explicitement** une première année. **Ne pas supposer** que tous les devis de création offrent cette année : relire chaque devis.
-3. L'accès **cPanel maître** d'AtoumWeb, qui porte plusieurs sites, n'est jamais fourni à un client. Une **Lune o2switch** peut créer un espace cPanel client séparé ; son éventuel coût supplémentaire peut être facturé sur une ligne distincte acceptée au devis.
+3. L'accès **cPanel maître** d'AtoumWeb n'est jamais fourni à un client. La **Lune o2switch dédiée est obligatoire pour toute formule d'hébergement AtoumWeb sans maintenance applicative**, et une **option facturée par AtoumWeb en plus de l'hébergement**, même si cette Lune est incluse dans le quota fournisseur. Le prix commercial de cette option et sa périodicité restent à valider avant toute facturation. Les accès cPanel de la Lune restent définis au devis.
 4. **Hébergement et suivi technique de l'environnement** ne sont **pas** équivalents à « WordPress entièrement maintenu ». Un client sans contrat de maintenance WordPress peut garder un WordPress, thème ou plugin obsolète, malgré une infrastructure o2switch maintenue.
 5. Contrats annuels : relance à J-30 et renouvellement uniquement sur accord exprès. Maintenance mensuelle : résiliation à tout moment, sans préavis supplémentaire, effet en fin de mois payé.
 
@@ -14,12 +18,12 @@
 
 | Offre / situation | Référence du Catalogue du Manager | Prix actuellement référencé | Prestations à distinguer |
 | --- | --- | ---: | --- |
-| **Hébergement WordPress seul** (sans maintenance applicative) | `AW-TECH-HEBERG-WP` | **99 €/an** | Espace d'hébergement, SSL, gestion technique de l'espace. Ajouter un **suivi des paramètres techniques** décrit ci-dessous, sans mettre à jour WordPress/thèmes/plugins. |
+| **Hébergement WordPress seul** (sans maintenance applicative) | `AW-TECH-HEBERG-WP` | **99 €/an + Lune dédiée facturée en supplément (prix à valider)** | **Lune dédiée obligatoire** ; espace d'hébergement, SSL, gestion technique de l'espace. Aucun suivi applicatif WordPress/thèmes/plugins. Cas WooCommerce complexe : devis distinct possible. |
 | **Maintenance WordPress mensuelle** | `atoumweb-wordpress` | **49 €/mois** | Contrôle/MAJ WordPress, thèmes et plugins chaque semaine, 2 petites interventions/mois de 30 min max, non reportables. Hébergement **distinct sauf inclusion écrite au devis**. |
 | **Maintenance WooCommerce mensuelle** | `atoumweb-woocommerce` | **99 €/mois** | Même principe, 4 petites interventions/mois de 30 min max, non reportables ; hébergement distinct sauf inclusion écrite au devis. |
 | **Maintenance WordPress annuelle** | `AW-MAINT-WP-A` | **539 €/an** | Périmètre de maintenance WP mensuelle, facturation annuelle ; hébergement distinct sauf inclusion au devis. |
 | **Maintenance WooCommerce annuelle** | `AW-MAINT-WC-A` | **1 089 €/an** | Périmètre de maintenance WooCommerce mensuelle, facturation annuelle ; hébergement distinct sauf inclusion au devis. |
-| **Lune dédiée o2switch** | **Option à créer**, pas de code Catalogue existant identifié | **À valider avant vente** | Espace isolé, cPanel dédié, isolation des autres clients. Ligne **distincte** si le supplément est facturé. Préciser accès remis ou non, durée, rattachement à l'abonnement AtoumWeb, migration éventuelle. |
+| **Lune dédiée o2switch** | **Option à créer**, pas de code Catalogue existant identifié | **Supplément commercial obligatoire en hébergement sans maintenance ; montant à valider** | Un espace propre au client ; **ligne séparée Hébergement + Lune** ; cPanel dédié si accès prévu au devis, rattachement à l'abonnement AtoumWeb ; migration éventuelle depuis un compte commun. L'option peut aussi être proposée aux clients avec maintenance. |
 | **Migration vers hébergement AtoumWeb** | `AW-TECH-MIGRATION-AW` | **99 €** pour un cas standard | Migration des fichiers/base/config et vérifications, hors cas complexes selon devis. Ne pas confondre avec la création d'une Lune ni avec un départ vers un tiers. |
 
 **Règle de non-cumul forcé :** si un devis signé inclut déjà l'hébergement dans le prix de la maintenance ou de la création, ne pas facturer une deuxième fois ce même hébergement ; identifier la date de fin de la période incluse et faire une proposition séparée de poursuite.
@@ -44,26 +48,26 @@ Ne pas promettre « serveur et site toujours à jour », « sécurité garantie 
 ## Accès techniques et Lunes
 
 - **Compte maître mutualisé** : identifiants réservés à AtoumWeb ; un client ne reçoit pas l'accès aux autres sites, bases, courriels ou données.
-- **Lune dédiée au client** : espace cPanel propre, que le client **peut** administrer s'il choisit/si le devis prévoit un accès. Les accès sont limités à sa Lune, jamais au compte maître. Un client sans maintenance applicative est prioritaire pour l'isolement.
-- **Si le site reste sur un compte commun** : remettre selon besoin des accès WordPress ou FTP restreints ; ne pas assimiler ces accès à une isolation parfaite des scripts PHP exécutés dans le compte commun. Une Lune dédiée est préférable.
+- **Lune dédiée au client** : espace cPanel propre, que le client **peut** administrer si le devis prévoit un accès. Les accès sont limités à sa Lune, jamais au compte maître. **Obligatoire pour tout client hébergé chez AtoumWeb sans maintenance applicative** ; le supplément commercial Lune est facturé séparément de l'hébergement, après accord du client.
+- **Si le site reste sur un compte commun** : situation réservée aux sites dont les conditions de maintenance et d'hébergement permettent cette organisation. Si le client abandonne la maintenance tout en souhaitant conserver l'hébergement AtoumWeb, **organiser une migration vers une Lune dédiée avant de maintenir le site durablement en hébergement sans maintenance**, avec vérification du périmètre et des obligations du devis existant. Un FTP limité n'est pas une alternative suffisante à la séparation demandée.
 - **Sortie** : l'accès à la Lune ne transfère pas la propriété de l'abonnement o2switch principal. À la sortie définitive, faciliter la restitution des fichiers/base et éléments propres au client et proposer, en option, une migration vers un nouvel hébergement, sous réserve des obligations déjà dues.
-- **Lune supplémentaire** : la disponibilité gratuite dépend du forfait d'AtoumWeb et du nombre de Lunes déjà utilisées. Si o2switch facture une Lune supplémentaire, la ligne « Espace cPanel isolé — Lune dédiée » porte un **prix client explicite** accepté avant commande ; ne pas présenter automatiquement le coût fournisseur TTC comme un prix de vente HT/TTC d'AtoumWeb.
+- **Option Lune facturée au client** : lorsque le client est hébergé **sans maintenance**, la ligne « Espace cPanel isolé — Lune dédiée » est **obligatoire** et présente un **prix client explicite**, à valider et accepter avant commande. Le montant facturé par AtoumWeb est **distinct du coût fournisseur o2switch**, même lorsque la Lune est incluse dans le quota de son abonnement. Ne pas inventer de prix client avant arbitrage.
 
 ## Tarification de la Lune : informations officielles à ne pas confondre avec le forfait AtoumWeb
 
 La documentation o2switch annonce **Grow : 4 Lunes incluses, Cloud : 8, Pro : 16**, puis **1,50 € TTC/mois par Lune supplémentaire**, jusqu'à 20 au total. Le responsable indique pour son usage une facturation « à partir de la troisième » : **vérifier le quota réel, l'offre et les Lunes actuellement occupées**. Cela peut correspondre à un seuil pratique de disponibilité, sans nécessairement être le quota contractuel officiel. Ne pas coder en dur « troisième = payante » avant vérification.
 
-La revente client de l'option dédiée n'a **pas de prix approuvé** dans le Catalogue : avant lancement, décider du tarif affiché, de la périodicité (mensuelle/annuelle), de son éventuelle inclusion dans l'hébergement 99 €/an et de la politique de désactivation à échéance.
+La revente client de l'option dédiée n'a **pas de prix approuvé** dans le Catalogue. **Décision acquise : la Lune est facturée à part en plus des 99 €/an d'hébergement WordPress seul**, même si o2switch ne facture pas de supplément de Lune à AtoumWeb. Avant lancement, fixer son **prix client** et sa **périodicité**, les conditions de migration et la politique de fin de prestation. Les 1,50 € TTC/mois officiels ne sont **pas** le prix de vente client décidé.
 
 ## Cas pratiques à prévoir dans les devis
 
 | Scénario | Devis à présenter |
 | --- | --- |
-| Nouveau site avec première année d'hébergement offerte **si explicitement incluse** | Création + hébergement année 1 inclus ; date exacte d'expiration ; année 2 et suivantes **99 €/an** sous réserve de maintien de la grille ; Lune dédiée si incluse ou option acceptée. |
-| Client sans maintenance, souhaite rester chez AtoumWeb | **Hébergement 99 €/an** +, le cas échéant, **option Lune dédiée** ; suivi d'hébergement limité et **aucune maintenance WordPress** comprise. |
+| Nouveau site avec première année d'hébergement offerte **si explicitement incluse** | Création + hébergement année 1 inclus ; date exacte d'expiration ; année 2 et suivantes **99 €/an** (grille actuelle). **Si le client ne souscrit pas de maintenance et souhaite rester hébergé chez AtoumWeb : Lune dédiée obligatoire + prix séparé accepté**. Les contrats existants restent régis par leurs conditions acceptées. |
+| Client sans maintenance, souhaite rester chez AtoumWeb | **Hébergement WordPress 99 €/an + Lune dédiée obligatoire facturée séparément (tarif à définir)**. Suivi technique d'hébergement limité, **aucune maintenance WordPress/WooCommerce** comprise. Site WooCommerce exigeant : hébergement sur devis. |
 | Client choisit maintenance WordPress + hébergement chez AtoumWeb | **49 €/mois** ou **539 €/an** pour la maintenance, et **hébergement selon le devis** ; éviter toute double facturation si déjà compris. |
 | Client choisit maintenance WooCommerce + hébergement chez AtoumWeb | **99 €/mois** ou **1 089 €/an** pour la maintenance, hébergement à préciser selon caractéristiques du site et devis ; Lune éventuelle distincte. |
-| Fin de maintenance, hébergement encore payé | Les interventions WordPress cessent ; le site et l'espace d'hébergement restent disponibles jusqu'à l'échéance de l'hébergement, sous réserve des autres clauses. Avertir du risque de CMS obsolète. |
+| Fin de maintenance, hébergement encore payé | Les interventions WordPress cessent ; **prévoir la migration vers une Lune dédiée**, sous réserve des droits du contrat existant et des modalités de migration acceptées, pour permettre l'hébergement sans maintenance. Pas de coupure arbitraire d'un hébergement payé. Informer du risque applicatif. |
 | Client quitte définitivement l'hébergement AtoumWeb | Restitution/export des éléments et accès propres au site selon les droits applicables ; migration optionnelle sur devis si hors obligations déjà dues. |
 
 ## Préparation pour le Catalogue / Devis / Manager
@@ -71,12 +75,12 @@ La revente client de l'option dédiée n'a **pas de prix approuvé** dans le Cat
 **À préparer sous forme de versions brouillon (pas encore publiées)** :
 1. `AW-TECH-HEBERG-WP` : nouvelle version détaillant la gestion technique de l'hébergement **sans** maintenance du CMS.
 2. Gestion WordPress / WooCommerce mensuelles et annuelles : distinguer clairement dans les inclusions **maintenance du site** et **hébergement éventuel selon le devis**. Préserver 2/4 interventions et les mises à jour hebdomadaires.
-3. Option Catalogue **« Espace d'hébergement isolé — Lune dédiée »**, liée à un site et à un client avec prix, périodicité, date d'échéance, nombre d'espaces et statut d'accès.
+3. Option Catalogue **« Espace d'hébergement isolé — Lune dédiée »**, **requise lorsque le client hébergé par AtoumWeb ne prend pas la maintenance applicative**, avec prix **distinct du prix d'hébergement** et périodicité à valider, date d'échéance, identification du site, du client et statut d'accès.
 4. Dans les devis : 3 lignes séparées **Hébergement**, **Maintenance applicative**, **Lune dédiée** ; si une prestation est incluse, préciser **« incluse jusqu'au [date] »** au lieu de zéro prix sans terme.
 5. Dans la fiche Site/Contrat : propriétaire du domaine, compte principal AtoumWeb (jamais de secret en clair), identifiant de Lune **non sensible**, date de fin de l'hébergement, date de fin de la maintenance, statut de renouvellement, alerte J-30.
 6. Contrats : conserver les droits à la restitution, les obligations de sécurité et le principe de renouvellement annuel par **accord exprès**. Ne jamais transformer automatiquement les conditions d'un devis déjà accepté.
 
-**Arbitrages encore ouverts** : offre o2switch exacte et quota Lunes disponible ; prix client de l'option Lune ; conditions d'inclusion de l'année 1 suivant les offres ; périmètre précis du « suivi technique » et périodicité éventuelle ; canaux de notification et éventuels besoins de migration.
+**Arbitrages encore ouverts** : **prix client et périodicité de la Lune obligatoire sans maintenance** ; offre o2switch exacte et quota Lunes disponible ; conditions d'inclusion de l'année 1 suivant les offres ; périmètre précis du suivi technique PHP/SSL ; organisation d'une migration préalable des sites actuellement mutualisés ; canaux de notification.
 
 ## Sources o2switch consultées
 
