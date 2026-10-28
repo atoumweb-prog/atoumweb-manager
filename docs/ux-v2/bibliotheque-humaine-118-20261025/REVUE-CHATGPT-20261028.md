@@ -86,6 +86,8 @@ Décision expresse du responsable AtoumWeb : le client peut demander **à tout m
 
 Conséquence rédactionnelle : adapter la proposition `MAINT-RENOUVELLEMENT` sans changer les formules annuelles : celles-ci restent renouvelées par **accord exprès**, sans reconduction annuelle tacite par défaut. Le moyen de demande de résiliation et les informations requises par la réglementation devront être précisés selon le canal de souscription.
 
-**D07 — Renouvellement annuel : À PRÉCISER.** Définir si AtoumWeb informe le client de l'arrivée à échéance et selon quel délai ; aucune poursuite annuelle automatique sans nouvel accord.
+**D07 — Renouvellement annuel : VALIDÉ (question 9).** AtoumWeb adresse une **proposition de renouvellement 30 jours avant l'échéance** de la maintenance annuelle. Le renouvellement reste soumis à **l'accord exprès du client** ; l'envoi d'une proposition, son silence ou l'absence de réponse ne valent pas acceptation et ne créent pas de reconduction tacite. Les formules de maintenance annuelles concernées restent identifiées par leurs devis. Décision métier consignée pour la proposition `MAINT-RENOUVELLEMENT`, sans publication ni changement des contrats historiques.
+
+**D08 — Absence de renouvellement annuel : EN ATTENTE (question 10).** Distinguer arrêt de la maintenance et continuité éventuelle de l'hébergement ou du domaine, selon le périmètre contractuel.
 
 État : **décision métier approuvée et consignée**, proposition documentaire à aligner, aucune clause ou version Catalogue publiée modifiée.
