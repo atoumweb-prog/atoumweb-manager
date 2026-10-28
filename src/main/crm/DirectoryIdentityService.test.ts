@@ -46,7 +46,7 @@ describe('03E existing identity sources and atomic Directory writes', () => {
     expect(crm.listProspects().find(p=>p.id===prospect.id)?.stage).toBe('new');expect(count('activity_events')).toBe(events);
   });
   it('detects contact edits without relying on updatedAt timestamp resolution', () => {
-    const person=crm.createContact({firstName:'Before',lastName:'Name'});
+    const org=crm.createOrganization({name:'TEST fonction'});const person=crm.createContact({organizationId:org.id,firstName:'Before',lastName:'Name'});
     crm.saveDirectoryContact({...person,jobTitle:'Window A'},{id:person.id,expected:person});
     // Even identical timestamps cannot conceal the differing editable field.
     db.run('UPDATE contacts SET updated_at=? WHERE id=?',[person.updatedAt,person.id]);

@@ -1,0 +1,1696 @@
+{
+  "status": "propositions non publiées",
+  "items": [
+    {
+      "priority": "P1 — utilisé dans les 14 scénarios",
+      "sourceItemId": "atoumweb-article-seo",
+      "sourceVersionId": "atoumweb-article-seo-v1",
+      "name": "Article SEO",
+      "priceCents": 14900,
+      "scenarios": [
+        "DEV-TEST-12"
+      ],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-article-seo",
+        "versionId": "6e9928f7-c706-4e65-93fa-c972c985d558",
+        "version": 2,
+        "code": "AW-CONT-ART-SEO",
+        "name": "Article SEO",
+        "priceCents": 14900,
+        "inclusions": [
+          "900-1200 mots",
+          "requête principale",
+          "intention",
+          "structure SEO",
+          "Title/meta",
+          "maillage",
+          "1 cycle."
+        ],
+        "exclusions": [
+          "Garantie classement",
+          "recherche experte lourde."
+        ],
+        "prerequisites": [
+          "Accès site si maillage",
+          "informations métier."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A62:T62"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P1 — utilisé dans les 14 scénarios",
+      "sourceItemId": "atoumweb-page",
+      "sourceVersionId": "atoumweb-page-v1",
+      "name": "Création d’une page",
+      "priceCents": 9900,
+      "scenarios": [
+        "DEV-TEST-02",
+        "DEV-TEST-14"
+      ],
+      "classification": "Rapprochement entre articles distincts, à valider",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "c3b96bc0-fd34-45d4-9012-28b6681ba507",
+        "versionId": "c393a912-52a2-497d-831d-d98491b70b05",
+        "version": 1,
+        "code": "AW-WEB-PAGE-SUP",
+        "name": "Page supplémentaire",
+        "priceCents": 7900,
+        "inclusions": [
+          "Création/intégration dans la continuité graphique, à partir des textes et visuels fournis."
+        ],
+        "exclusions": [
+          "Rédaction complète",
+          "fonction complexe",
+          "gros volume de contenu."
+        ],
+        "prerequisites": [
+          "Contenus et objectif de page fournis",
+          "site existant exploitable."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A3:T3"
+        }
+      },
+      "divergences": [
+        "Prix : 99,00 € / référence 79,00 €",
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue",
+        "Identifiants article distincts : simple proximité commerciale, pas de doublon prouvé"
+      ],
+      "recommendation": "99 € pour « Création d’une page » contre 79 € pour « Page supplémentaire » : aucune fusion ni baisse de prix. Comparer la création, les contenus fournis, la mise en page et les limites avant décision."
+    },
+    {
+      "priority": "P1 — utilisé dans les 14 scénarios",
+      "sourceItemId": "atoumweb-ecommerce",
+      "sourceVersionId": "atoumweb-ecommerce-v1",
+      "name": "E-commerce",
+      "priceCents": 149000,
+      "scenarios": [
+        "DEV-TEST-05",
+        "DEV-TEST-06",
+        "DEV-TEST-07"
+      ],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": false,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-ecommerce",
+        "versionId": "c5b9352c-d8aa-466f-91e2-e2deb7a1cd5a",
+        "version": 2,
+        "code": "AW-ECOM-BASE",
+        "name": "Boutique WooCommerce",
+        "priceCents": 149000,
+        "inclusions": [
+          "WooCommerce",
+          "design",
+          "pages essentielles",
+          "10 produits simples",
+          "2 moyens de paiement standards",
+          "livraison simple",
+          "TVA selon règles client",
+          "stock standard",
+          "comptes clients",
+          "emails transactionnels",
+          "codes promo",
+          "SEO de base",
+          "SSL",
+          "hébergement + domaine standard 1 an",
+          "mise en ligne",
+          "2 h formation",
+          "2 cycles",
+          "garantie 30 j."
+        ],
+        "exclusions": [
+          "Rédaction fiches",
+          "produits variables complexes",
+          "gros catalogue",
+          "multilingue",
+          "ERP/marketplace",
+          "juridique du commerçant."
+        ],
+        "prerequisites": [
+          "Produits/prix/visuels",
+          "règles TVA/livraison",
+          "comptes paiement",
+          "CGV/retours validés par client",
+          "accès."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A22:T22"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P1 — utilisé dans les 14 scénarios",
+      "sourceItemId": "atoumweb-wordpress",
+      "sourceVersionId": "atoumweb-wordpress-v1",
+      "name": "Gestion WordPress",
+      "priceCents": 4900,
+      "scenarios": [
+        "DEV-TEST-09"
+      ],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-wordpress",
+        "versionId": "9e519e4a-59f1-4ead-91c5-23e45c660277",
+        "version": 2,
+        "code": "AW-MAINT-WP-M",
+        "name": "Maintenance WordPress mensuelle",
+        "priceCents": 4900,
+        "inclusions": [
+          "Mises à jour",
+          "sauvegardes",
+          "surveillance de base",
+          "contrôle après MAJ",
+          "2 interventions mineures <=30 min",
+          "prise en charge standard sous 2 jours ouvrés."
+        ],
+        "exclusions": [
+          "Refonte",
+          "gros dépannage",
+          "urgence HNO",
+          "interventions >30 min",
+          "malware lourd."
+        ],
+        "prerequisites": [
+          "Site sain ou audit de reprise",
+          "accès",
+          "mensualité payée en début de période."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A29:T29"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P1 — utilisé dans les 14 scénarios",
+      "sourceItemId": "atoumweb-landing",
+      "sourceVersionId": "atoumweb-landing-v1",
+      "name": "Landing page",
+      "priceCents": 49900,
+      "scenarios": [
+        "DEV-TEST-08",
+        "DEV-TEST-09"
+      ],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-landing",
+        "versionId": "fda73112-b141-4a85-951b-b2b0e8704a06",
+        "version": 4,
+        "code": "AW-LP-BASE",
+        "name": "Landing Page",
+        "priceCents": 49900,
+        "inclusions": [
+          "Jusqu'à 8 sections standards",
+          "WordPress/Divi",
+          "responsive",
+          "structure conversion",
+          "intégration/adaptation légère jusqu'à ~800 mots fournis",
+          "formulaire simple ou CTA",
+          "FAQ/témoignages dans le quota",
+          "visuels simples",
+          "SEO de base",
+          "SSL",
+          "hébergement 1 an",
+          "domaine standard si nécessaire",
+          "2 cycles",
+          "garantie 30 j."
+        ],
+        "exclusions": [
+          "Rédaction complète",
+          "fonctions avancées",
+          ">8 sections sans option."
+        ],
+        "prerequisites": [
+          "Brief",
+          "offre",
+          "contenus/éléments",
+          "accès si existants",
+          "validations."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A15:T15"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P1 — utilisé dans les 14 scénarios",
+      "sourceItemId": "atoumweb-mariage-essentiel",
+      "sourceVersionId": "atoumweb-mariage-essentiel-v1",
+      "name": "Mariage Essentiel",
+      "priceCents": 39900,
+      "scenarios": [
+        "DEV-TEST-10"
+      ],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-mariage-essentiel",
+        "versionId": "37141521-7ea1-4a8c-b1dc-0450f1247cbe",
+        "version": 2,
+        "code": "AW-MARIAGE-ESS",
+        "name": "Mariage Essentiel",
+        "priceCents": 39900,
+        "inclusions": [
+          "1 page responsive",
+          "date/lieu/horaires",
+          "programme court",
+          "Google Maps",
+          "RSVP simple",
+          "sous-domaine AtoumWeb",
+          "hébergement 1 an",
+          "1 cycle."
+        ],
+        "exclusions": [
+          "Nom de domaine personnalisé",
+          "grosse galerie",
+          "fonctions avancées."
+        ],
+        "prerequisites": [
+          "Infos mariage",
+          "contenus",
+          "liste champs RSVP."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A94:T94"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P1 — utilisé dans les 14 scénarios",
+      "sourceItemId": "atoumweb-mariage-grand-jour",
+      "sourceVersionId": "atoumweb-mariage-grand-jour-v1",
+      "name": "Mariage Grand Jour",
+      "priceCents": 64900,
+      "scenarios": [
+        "DEV-TEST-11"
+      ],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-mariage-grand-jour",
+        "versionId": "03f8e86b-6580-442b-92a7-8efbb64ac932",
+        "version": 2,
+        "code": "AW-MARIAGE-GRAND",
+        "name": "Mariage Grand Jour",
+        "priceCents": 64900,
+        "inclusions": [
+          "Essentiel + Notre histoire",
+          "galerie pré-mariage jusqu'à 30 photos",
+          "FAQ",
+          "RSVP repas/régimes",
+          "QR code",
+          "témoins/proches",
+          "hébergement 1 an",
+          "2 cycles."
+        ],
+        "exclusions": [
+          "Paiements",
+          "gros volumes",
+          "prise de vue mariage."
+        ],
+        "prerequisites": [
+          "Infos/visuels",
+          "champs RSVP",
+          "consentement/données invités."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A95:T95"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P1 — utilisé dans les 14 scénarios",
+      "sourceItemId": "atoumweb-produits11",
+      "sourceVersionId": "atoumweb-produits11-v1",
+      "name": "Produits simples supplémentaires — 11 à 20",
+      "priceCents": 1900,
+      "scenarios": [
+        "DEV-TEST-06"
+      ],
+      "classification": "Périmètre de vente réellement incomplet",
+      "coreMissing": false,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Conserver prix et blocage ; confirmer la règle progressive avant de proposer les lignes par tranche. Au-delà de 100 : chiffrage spécifique."
+    },
+    {
+      "priority": "P1 — utilisé dans les 14 scénarios",
+      "sourceItemId": "atoumweb-redaction",
+      "sourceVersionId": "atoumweb-redaction-v1",
+      "name": "Rédaction AtoumWeb par page",
+      "priceCents": 9900,
+      "scenarios": [
+        "DEV-TEST-04",
+        "DEV-TEST-14"
+      ],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-redaction",
+        "versionId": "d58ba2c8-8fa4-4b66-9c00-1918a4404aa0",
+        "version": 2,
+        "code": "AW-CONT-PAGE",
+        "name": "Rédaction page web",
+        "priceCents": 9900,
+        "inclusions": [
+          "Env. 500-800 mots",
+          "cadrage",
+          "H1/H2/H3",
+          "ton adapté",
+          "rédaction complète",
+          "1 cycle de corrections."
+        ],
+        "exclusions": [
+          "Recherche lourde",
+          "changement complet d'angle après livraison."
+        ],
+        "prerequisites": [
+          "Infos métier/offre",
+          "validation factuelle."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A59:T59"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P1 — utilisé dans les 14 scénarios",
+      "sourceItemId": "atoumweb-vitrine",
+      "sourceVersionId": "atoumweb-vitrine-v1",
+      "name": "Site vitrine",
+      "priceCents": 69900,
+      "scenarios": [
+        "DEV-TEST-01",
+        "DEV-TEST-02",
+        "DEV-TEST-03",
+        "DEV-TEST-04",
+        "DEV-TEST-14"
+      ],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-vitrine",
+        "versionId": "0833aca4-9340-47d3-a0aa-a465f0fd4dcd",
+        "version": 3,
+        "code": "AW-WEB-VITRINE",
+        "name": "Site vitrine 5 pages",
+        "priceCents": 69900,
+        "inclusions": [
+          "5 pages de contenu",
+          "pages légales hors quota",
+          "WordPress + Divi",
+          "responsive",
+          "formulaire simple",
+          "SEO de base",
+          "SSL",
+          "hébergement 1 an",
+          "1 domaine standard 1 an",
+          "1 h de formation",
+          "2 cycles de corrections",
+          "intégration/adaptation légère des contenus fournis."
+        ],
+        "exclusions": [
+          "Rédaction complète",
+          "e-commerce",
+          "multilingue",
+          "fonctions spécifiques",
+          "maintenance après garantie",
+          "licences premium non prévues."
+        ],
+        "prerequisites": [
+          "Devis accepté",
+          "acompte",
+          "contenus/visuels",
+          "accès domaine/hébergement si existants",
+          "interlocuteur habilité",
+          "informations légales."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A2:T2",
+          "operationalPreparation": {
+            "code": "AW-WEB-VITRINE",
+            "sourceVersionId": "b938f0d8-6c6d-4a76-ba57-26220fd7677f",
+            "decision": "AtoumWeb : V3 seule propriétaire du modèle opérationnel",
+            "removedComponents": [
+              {
+                "id": "5b5bab99-642b-4f28-ad4c-dfdf5ceb0225",
+                "offer_version_id": "b938f0d8-6c6d-4a76-ba57-26220fd7677f",
+                "service_version_id": "atoumweb-web-v1",
+                "is_optional": 0,
+                "quantity_milli": 1000,
+                "sort_order": 0,
+                "created_at": "2026-10-03T11:33:56.993Z"
+              }
+            ],
+            "removedBlueprintLinks": [
+              {
+                "id": "54d20bbd-aff3-49df-82c1-8ef770579526",
+                "catalog_version_id": "b938f0d8-6c6d-4a76-ba57-26220fd7677f",
+                "template_version_id": "atoumweb-project-template-vitrine-v1",
+                "role": "base",
+                "sort_order": 10,
+                "created_at": "2026-10-03T11:33:56.993Z",
+                "quantity_mode": "once",
+                "site_mode": "create"
+              }
+            ],
+            "createdAt": "2026-10-05T12:19:59.369Z"
+          }
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-applications",
+      "sourceVersionId": "atoumweb-applications-v1",
+      "name": "Applications & outils métier sur mesure",
+      "priceCents": 149000,
+      "scenarios": [],
+      "classification": "Rapprochement entre articles distincts, à valider",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "9221804d-1d26-4b2e-8704-536a30974951",
+        "versionId": "f29bbabe-ef74-44f1-864b-8164440bbfda",
+        "version": 1,
+        "code": "AW-APP-DEV",
+        "name": "Application / logiciel métier sur mesure",
+        "priceCents": null,
+        "inclusions": [
+          "MVP puis évolutions selon cadrage",
+          "web/desktop",
+          "workflows",
+          "données",
+          "intégrations raisonnables."
+        ],
+        "exclusions": [
+          "Fonctions hors périmètre",
+          "coûts tiers",
+          "compatibilité future non prévue."
+        ],
+        "prerequisites": [
+          "Cadrage",
+          "accès/services",
+          "données exemples",
+          "référent métier disponible."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A111:T111"
+        }
+      },
+      "divergences": [
+        "Prix : 1 490,00 € / référence sur devis",
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue",
+        "Identifiants article distincts : simple proximité commerciale, pas de doublon prouvé"
+      ],
+      "recommendation": "Divergence de prix : conserver les deux identités et tarifs. Décider du périmètre et de la correspondance avant toute reprise de contenu."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-article",
+      "sourceVersionId": "atoumweb-article-v1",
+      "name": "Article essentiel",
+      "priceCents": 9900,
+      "scenarios": [],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-article",
+        "versionId": "26844a9c-06a8-46ab-8778-c9923ecbd494",
+        "version": 2,
+        "code": "AW-CONT-ART-ESS",
+        "name": "Article essentiel",
+        "priceCents": 9900,
+        "inclusions": [
+          "700-900 mots",
+          "rédaction informative",
+          "1 aller-retour."
+        ],
+        "exclusions": [
+          "Recherche SEO approfondie."
+        ],
+        "prerequisites": [
+          "Informations/sujet."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A61:T61"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-audit",
+      "sourceVersionId": "atoumweb-audit-v1",
+      "name": "Audit / reprise site tiers",
+      "priceCents": 14900,
+      "scenarios": [],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-audit",
+        "versionId": "0ed6dea4-61a2-4575-9709-011ebc16b455",
+        "version": 2,
+        "code": "AW-TECH-AUDIT-REPRISE",
+        "name": "Audit de reprise WordPress",
+        "priceCents": 14900,
+        "inclusions": [
+          "État WP/thème/plugins/versions/sauvegardes/sécurité/SSL/users/erreurs/perf/hébergement/customisations",
+          "risques",
+          "priorités",
+          "conclusion reprise/remise à niveau/refus."
+        ],
+        "exclusions": [
+          "Corrections."
+        ],
+        "prerequisites": [
+          "Accès WordPress/hébergement",
+          "autorisation audit."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A34:T34"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-web",
+      "sourceVersionId": "atoumweb-web-v1",
+      "name": "Conception et réalisation web",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Famille générique : cadrage obligatoire dans un devis particulier",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Confirmer le rôle de famille de classement ; ne pas en faire un forfait autonome sans cadrage. Un prix absent est cohérent avec le sur-mesure."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-boutique",
+      "sourceVersionId": "atoumweb-boutique-v1",
+      "name": "Création de boutique WooCommerce",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Famille générique : cadrage obligatoire dans un devis particulier",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Confirmer le rôle de famille de classement ; ne pas en faire un forfait autonome sans cadrage. Un prix absent est cohérent avec le sur-mesure."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-contenu",
+      "sourceVersionId": "atoumweb-contenu-v1",
+      "name": "Création de contenu",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Famille générique : cadrage obligatoire dans un devis particulier",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Confirmer le rôle de famille de classement ; ne pas en faire un forfait autonome sans cadrage. Un prix absent est cohérent avec le sur-mesure."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-mariage",
+      "sourceVersionId": "atoumweb-mariage-v1",
+      "name": "Création de site mariage",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Famille générique : cadrage obligatoire dans un devis particulier",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Confirmer le rôle de famille de classement ; ne pas en faire un forfait autonome sans cadrage. Un prix absent est cohérent avec le sur-mesure."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-dev",
+      "sourceVersionId": "atoumweb-dev-v1",
+      "name": "Développement sur mesure",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Famille générique : cadrage obligatoire dans un devis particulier",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Confirmer le rôle de famille de classement ; ne pas en faire un forfait autonome sans cadrage. Un prix absent est cohérent avec le sur-mesure."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-pack10",
+      "sourceVersionId": "atoumweb-pack10-v1",
+      "name": "Forfait 10 h",
+      "priceCents": 69000,
+      "scenarios": [],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-pack10",
+        "versionId": "22fc7d4a-a9c9-43b8-bd1f-198dc2ff2d39",
+        "version": 2,
+        "code": "AW-TECH-PACK-10H",
+        "name": "Pack interventions 10 h",
+        "priceCents": 54900,
+        "inclusions": [
+          "10 h",
+          "décompte 15 min",
+          "valable 12 mois."
+        ],
+        "exclusions": [
+          "Projet complet au forfait."
+        ],
+        "prerequisites": [
+          "Accès/demandes compatibles."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A40:T40"
+        }
+      },
+      "divergences": [
+        "Prix : 690,00 € / référence 549,00 €",
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Divergence de prix : conserver les deux identités et tarifs. Décider du périmètre et de la correspondance avant toute reprise de contenu. Préciser l’usage du crédit, sa validité et les exclusions ; ne pas déduire une équivalence avec un autre pack."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-pack20",
+      "sourceVersionId": "atoumweb-pack20-v1",
+      "name": "Forfait 20 h",
+      "priceCents": 129000,
+      "scenarios": [],
+      "classification": "Périmètre de vente réellement incomplet",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Définir inclusions, limites et livrables avant vente autonome ; garder le prix actuel. Aucune description inventée. Préciser l’usage du crédit, sa validité et les exclusions ; ne pas déduire une équivalence avec un autre pack."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-pack30",
+      "sourceVersionId": "atoumweb-pack30-v1",
+      "name": "Forfait 30 h",
+      "priceCents": 189000,
+      "scenarios": [],
+      "classification": "Périmètre de vente réellement incomplet",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Définir inclusions, limites et livrables avant vente autonome ; garder le prix actuel. Aucune description inventée. Préciser l’usage du crédit, sa validité et les exclusions ; ne pas déduire une équivalence avec un autre pack."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-woocommerce",
+      "sourceVersionId": "atoumweb-woocommerce-v1",
+      "name": "Gestion WooCommerce",
+      "priceCents": 9900,
+      "scenarios": [],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-woocommerce",
+        "versionId": "be472551-4393-43bd-b0d8-0b801b9d74fc",
+        "version": 2,
+        "code": "AW-MAINT-WC-M",
+        "name": "Maintenance WooCommerce mensuelle",
+        "priceCents": 9900,
+        "inclusions": [
+          "MAJ/sauvegardes/surveillance adaptées WooCommerce",
+          "4 interventions mineures <=30 min",
+          "prise en charge sous 1 jour ouvré."
+        ],
+        "exclusions": [
+          "Gestion quotidienne commandes",
+          "refonte",
+          "urgence HNO",
+          "gros incident."
+        ],
+        "prerequisites": [
+          "Audit/reprise si site externe",
+          "accès complets."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A31:T31"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-identite",
+      "sourceVersionId": "atoumweb-identite-v1",
+      "name": "Identité visuelle",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Rapprochement entre articles distincts, à valider",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "07848eb7-ecf4-43c0-8013-80968cf92b5e",
+        "versionId": "ae2115f7-4c3a-498a-8742-b7e4424ff206",
+        "version": 1,
+        "code": "AW-BRAND-IDENTITE",
+        "name": "Identité Visuelle Essentielle",
+        "priceCents": 49900,
+        "inclusions": [
+          "Logo Standard + palette",
+          "typographies",
+          "mini-charte PDF",
+          "règles d'usage",
+          "déclinaisons web/réseaux",
+          "profil + bannière simple."
+        ],
+        "exclusions": [
+          "Charte très complète",
+          "naming",
+          "dépôt marque."
+        ],
+        "prerequisites": [
+          "Brief complet."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A72:T72"
+        }
+      },
+      "divergences": [
+        "Prix : sur devis / référence 499,00 €",
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue",
+        "Identifiants article distincts : simple proximité commerciale, pas de doublon prouvé"
+      ],
+      "recommendation": "Divergence de prix : conserver les deux identités et tarifs. Décider du périmètre et de la correspondance avant toute reprise de contenu."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-import",
+      "sourceVersionId": "atoumweb-import-v1",
+      "name": "Import / automatisation gros catalogue CSV ou XLSX",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": false,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-import",
+        "versionId": "16dc38ad-9afe-48b2-8844-e461ad68c19e",
+        "version": 2,
+        "code": "AW-ECOM-IMPORT",
+        "name": "Import catalogue volumineux",
+        "priceCents": null,
+        "inclusions": [
+          "Import/traitement en lot selon données disponibles."
+        ],
+        "exclusions": [
+          "Nettoyage massif non prévu",
+          "enrichissement éditorial."
+        ],
+        "prerequisites": [
+          "CSV/export source propre",
+          "règles de mapping."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A25:T25"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-contenu-client",
+      "sourceVersionId": "atoumweb-contenu-client-v1",
+      "name": "Intégration texte/images fournis par le client",
+      "priceCents": 3900,
+      "scenarios": [],
+      "classification": "Rapprochement entre articles distincts, à valider",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "dc5a8e7d-5448-4338-899d-0b76d0bdfa8d",
+        "versionId": "734c17f2-4e5d-41a7-b9e2-e4a5fdf97c85",
+        "version": 1,
+        "code": "AW-CONT-INTEG-WP",
+        "name": "Intégration WordPress",
+        "priceCents": 3900,
+        "inclusions": [
+          "Intégration standard d'un contenu livré dans WordPress."
+        ],
+        "exclusions": [
+          "Refonte de page",
+          "design complexe."
+        ],
+        "prerequisites": [
+          "Accès WP",
+          "thème exploitable."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A65:T65"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue",
+        "Identifiants article distincts : simple proximité commerciale, pas de doublon prouvé"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-livraison",
+      "sourceVersionId": "atoumweb-livraison-v1",
+      "name": "Livraison avancée",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": false,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-livraison",
+        "versionId": "5f683322-1ceb-4702-a0f6-4d87af13796d",
+        "version": 2,
+        "code": "AW-ECOM-LIVRAISON-ADV",
+        "name": "Livraison avancée",
+        "priceCents": null,
+        "inclusions": [
+          "Zones/poids/dimensions/transporteurs/points relais selon devis."
+        ],
+        "exclusions": [
+          "Contrats transporteurs",
+          "coûts externes."
+        ],
+        "prerequisites": [
+          "Tarifs/règles transport",
+          "comptes transporteurs."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A28:T28"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-livre-blanc",
+      "sourceVersionId": "atoumweb-livre-blanc-v1",
+      "name": "Livre blanc",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-livre-blanc",
+        "versionId": "7919f9fd-2e2a-4f76-8d11-12880e571097",
+        "version": 2,
+        "code": "AW-CONT-LIVRE-BLANC",
+        "name": "Livre blanc",
+        "priceCents": 59000,
+        "inclusions": [
+          "Cadrage",
+          "plan",
+          "rédaction jusqu'à ~3500 mots",
+          "1 cycle",
+          "livraison texte structurée."
+        ],
+        "exclusions": [
+          "Interviews",
+          "recherche lourde",
+          "infographies",
+          "mise en page graphique complète",
+          "très long document."
+        ],
+        "prerequisites": [
+          "Matière fournie ou accessible",
+          "interlocuteur expert."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A64:T64"
+        }
+      },
+      "divergences": [
+        "Prix : sur devis / référence 590,00 €",
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Divergence de prix : conserver les deux identités et tarifs. Décider du périmètre et de la correspondance avant toute reprise de contenu."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-mariage-histoire",
+      "sourceVersionId": "atoumweb-mariage-histoire-v1",
+      "name": "Mariage Histoire",
+      "priceCents": 89900,
+      "scenarios": [],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-mariage-histoire",
+        "versionId": "942f5247-8fca-4a17-a781-9fda576e7b6a",
+        "version": 3,
+        "code": "AW-MARIAGE-HISTOIRE",
+        "name": "Mariage Histoire",
+        "priceCents": 89900,
+        "inclusions": [
+          "1 Site / 4 Pages : Accueil, Notre histoire, Le Jour J, Espace privé",
+          "Navigation multipage et responsive sur les quatre Pages",
+          "Protection standard par mot de passe de la Page Espace privé",
+          "Galerie après mariage jusqu’à 100 photos",
+          "Livre d’or simple nom + message, sans compte, avec modération",
+          "Cagnotte/liste externe",
+          "Vidéo/diaporama fourni",
+          "Hébergement 2 ans",
+          "2 cycles de corrections",
+          "Une intervention post-mariage, maximum 2 h, dans les 60 jours suivant le mariage"
+        ],
+        "exclusions": [
+          "Gestion des paiements",
+          "Montage vidéo",
+          "Shooting mariage",
+          "Plus de 100 photos",
+          "Protection renforcée des URLs directes des médias",
+          "Portail à comptes utilisateurs",
+          "Interventions au-delà du nombre, de la durée ou de la fenêtre inclus : prestation complémentaire après accord"
+        ],
+        "prerequisites": [
+          "Contenus/visuels fournis et droits nécessaires",
+          "Lien cagnotte et vidéo/diaporama fourni lorsque prévu",
+          "Date du mariage et date de remise des contenus à renseigner au devis",
+          "Responsable/modalités de modération à préciser au devis",
+          "Dispositif de données invités maîtrisé ; RSVP minimal sans données sensibles par défaut"
+        ],
+        "provenance": {
+          "reference": "Dernier arbitrage AtoumWeb — Histoire 4 Pages, 27 h 30 provisoires, vigilance 33 h, prix 899 € inchangé",
+          "sha256": "285d9ee4ea5fe632f44945c205740926626991bb45ac7804ed0792d87e9b861f",
+          "recordKey": "AW-MARIAGE-HISTOIRE ; modèle V2 candidat ; catalogue V3 candidat"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-migration",
+      "sourceVersionId": "atoumweb-migration-v1",
+      "name": "Migration",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Rapprochement entre articles distincts, à valider",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "b500e84d-effa-47d8-9d6c-f7e1b4186168",
+        "versionId": "7d571a59-4c06-43c2-9904-5bc44e27634b",
+        "version": 1,
+        "code": "AW-TECH-MIGRATION-AW",
+        "name": "Migration vers hébergement AtoumWeb",
+        "priceCents": 9900,
+        "inclusions": [
+          "Sauvegarde",
+          "transfert fichiers/base",
+          "config",
+          "DNS si besoin",
+          "SSL",
+          "vérification."
+        ],
+        "exclusions": [
+          "Messagerie complexe",
+          "gros site",
+          "multisite",
+          "WooCommerce actif complexe."
+        ],
+        "prerequisites": [
+          "Accès ancien hébergeur/domaine",
+          "site standard."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A41:T41"
+        }
+      },
+      "divergences": [
+        "Prix : sur devis / référence 99,00 €",
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue",
+        "Identifiants article distincts : simple proximité commerciale, pas de doublon prouvé"
+      ],
+      "recommendation": "Divergence de prix : conserver les deux identités et tarifs. Décider du périmètre et de la correspondance avant toute reprise de contenu."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-articles4",
+      "sourceVersionId": "atoumweb-articles4-v1",
+      "name": "Pack 4 articles SEO",
+      "priceCents": 54900,
+      "scenarios": [],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-articles4",
+        "versionId": "94603849-6709-46a6-b217-0d777deb3d11",
+        "version": 2,
+        "code": "AW-CONT-PACK4-SEO",
+        "name": "Pack 4 articles SEO",
+        "priceCents": 54900,
+        "inclusions": [
+          "4 articles SEO",
+          "sujets cadrés ensemble",
+          "économie de 47 € vs unité."
+        ],
+        "exclusions": [
+          "Travaux hors périmètre de chaque article."
+        ],
+        "prerequisites": [
+          "Brief global",
+          "validations."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A63:T63"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-page-eco",
+      "sourceVersionId": "atoumweb-page-eco-v1",
+      "name": "Page e-commerce supplémentaire",
+      "priceCents": 7900,
+      "scenarios": [],
+      "classification": "Périmètre de vente réellement incomplet",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Définir inclusions, limites et livrables avant vente autonome ; garder le prix actuel. Aucune description inventée."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-paiement",
+      "sourceVersionId": "atoumweb-paiement-v1",
+      "name": "Paiement avancé",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-paiement",
+        "versionId": "a9729a3e-3c5b-42a4-8db8-51294e8593be",
+        "version": 2,
+        "code": "AW-ECOM-PAIEMENT-ADV",
+        "name": "Paiement avancé / passerelle spécifique",
+        "priceCents": null,
+        "inclusions": [
+          "Intégration selon compatibilité WooCommerce et contrat du client."
+        ],
+        "exclusions": [
+          "Frais prestataire",
+          "développement hors compatibilité standard."
+        ],
+        "prerequisites": [
+          "Compte marchand/banque",
+          "identifiants",
+          "contrat client."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A27:T27"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-produits100",
+      "sourceVersionId": "atoumweb-produits100-v1",
+      "name": "Plus de 100 produits",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Périmètre de vente réellement incomplet",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Conserver prix et blocage ; confirmer la règle progressive avant de proposer les lignes par tranche. Au-delà de 100 : chiffrage spécifique."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-variable-complexe",
+      "sourceVersionId": "atoumweb-variable-complexe-v1",
+      "name": "Produit variable complexe",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Périmètre de vente réellement incomplet",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Définir inclusions, limites et livrables avant vente autonome ; garder le prix actuel. Aucune description inventée."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-variable-inter",
+      "sourceVersionId": "atoumweb-variable-inter-v1",
+      "name": "Produit variable intermédiaire",
+      "priceCents": 4900,
+      "scenarios": [],
+      "classification": "Périmètre de vente réellement incomplet",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Définir inclusions, limites et livrables avant vente autonome ; garder le prix actuel. Aucune description inventée."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-variable-simple",
+      "sourceVersionId": "atoumweb-variable-simple-v1",
+      "name": "Produit variable simple",
+      "priceCents": 2900,
+      "scenarios": [],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-variable-simple",
+        "versionId": "028765af-42ea-450c-bfa6-52fed45d23a1",
+        "version": 2,
+        "code": "AW-ECOM-PROD-VAR",
+        "name": "Produit variable",
+        "priceCents": 2900,
+        "inclusions": [
+          "Produit variable standard avec nombre raisonnable d'attributs/variations."
+        ],
+        "exclusions": [
+          "Très nombreuses combinaisons",
+          "logique tarifaire complexe."
+        ],
+        "prerequisites": [
+          "Données complètes par variation."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A24:T24"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-produits21",
+      "sourceVersionId": "atoumweb-produits21-v1",
+      "name": "Produits simples supplémentaires — 21 à 50",
+      "priceCents": 1700,
+      "scenarios": [],
+      "classification": "Périmètre de vente réellement incomplet",
+      "coreMissing": false,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Conserver prix et blocage ; confirmer la règle progressive avant de proposer les lignes par tranche. Au-delà de 100 : chiffrage spécifique."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-produits51",
+      "sourceVersionId": "atoumweb-produits51-v1",
+      "name": "Produits simples supplémentaires — 51 à 100",
+      "priceCents": 1500,
+      "scenarios": [],
+      "classification": "Périmètre de vente réellement incomplet",
+      "coreMissing": false,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Conserver prix et blocage ; confirmer la règle progressive avant de proposer les lignes par tranche. Au-delà de 100 : chiffrage spécifique."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-images",
+      "sourceVersionId": "atoumweb-images-v1",
+      "name": "Recherche d’images",
+      "priceCents": 2900,
+      "scenarios": [],
+      "classification": "Rapprochement entre articles distincts, à valider",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "bc29f8de-1d65-4329-a963-b4dd9b7b9d81",
+        "versionId": "7be2edb1-051b-44d2-a2b0-088e2443dab3",
+        "version": 1,
+        "code": "AW-CONT-IMG3",
+        "name": "3 images optimisées",
+        "priceCents": 2900,
+        "inclusions": [
+          "Recherche simple de 3 images exploitables légalement",
+          "compression/format web."
+        ],
+        "exclusions": [
+          "Premium payant",
+          "retouche avancée."
+        ],
+        "prerequisites": [
+          "Brief visuel."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A66:T66"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue",
+        "Identifiants article distincts : simple proximité commerciale, pas de doublon prouvé"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-remise",
+      "sourceVersionId": "atoumweb-remise-v1",
+      "name": "Remise en état",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Périmètre de vente réellement incomplet",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Définir inclusions, limites et livrables avant vente autonome ; garder le prix actuel. Aucune description inventée."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-photos",
+      "sourceVersionId": "atoumweb-photos-v1",
+      "name": "Retouche photos",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Famille générique : cadrage obligatoire dans un devis particulier",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Confirmer le rôle de famille de classement ; ne pas en faire un forfait autonome sans cadrage. Un prix absent est cohérent avec le sur-mesure."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-reecriture",
+      "sourceVersionId": "atoumweb-reecriture-v1",
+      "name": "Réécriture",
+      "priceCents": 7900,
+      "scenarios": [],
+      "classification": "Ancienne version avec référence détaillée du même article",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": {
+        "itemId": "atoumweb-reecriture",
+        "versionId": "c606ec95-b425-4e14-b617-9ce79e1c47e3",
+        "version": 2,
+        "code": "AW-CONT-REWRITE",
+        "name": "Réécriture page",
+        "priceCents": 7900,
+        "inclusions": [
+          "Amélioration clarté/structure/formulation/hiérarchie à partir d'un vrai texte existant."
+        ],
+        "exclusions": [
+          "Création complète si contenu insuffisant."
+        ],
+        "prerequisites": [
+          "Texte existant suffisamment complet."
+        ],
+        "provenance": {
+          "reference": "AtoumWeb_Catalogue_V1_Contractuel_consolide.xlsx",
+          "sha256": "3652a835d847aec83eb346ec0ba212d2f8bf91f1e8d7235d1773bb088485b686",
+          "recordKey": "Catalogue!A60:T60"
+        }
+      },
+      "divergences": [
+        "Inclusions différentes ou absentes dans la version vendue",
+        "Exclusions différentes ou absentes dans la version vendue"
+      ],
+      "recommendation": "Proposer une nouvelle version relue depuis la référence ; ne pas migrer les devis existants ni publier automatiquement."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-seo",
+      "sourceVersionId": "atoumweb-seo-v1",
+      "name": "SEO / visibilité",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Famille générique : cadrage obligatoire dans un devis particulier",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Confirmer le rôle de famille de classement ; ne pas en faire un forfait autonome sans cadrage. Un prix absent est cohérent avec le sur-mesure."
+    },
+    {
+      "priority": "P2 — hors scénarios",
+      "sourceItemId": "atoumweb-support",
+      "sourceVersionId": "atoumweb-support-v1",
+      "name": "Support et maintenance",
+      "priceCents": null,
+      "scenarios": [],
+      "classification": "Famille générique : cadrage obligatoire dans un devis particulier",
+      "coreMissing": true,
+      "optionalBlanks": [
+        "Une exclusion vide peut être légitime si le périmètre positif suffit ; ici elle ne compense pas des inclusions absentes.",
+        "Un délai, une durée ou un prérequis peut être défini au devis plutôt que dans le Catalogue.",
+        "Un prix absent est légitime sur devis ; pas sur un forfait présenté comme fixe."
+      ],
+      "candidateReference": null,
+      "divergences": [],
+      "recommendation": "Confirmer le rôle de famille de classement ; ne pas en faire un forfait autonome sans cadrage. Un prix absent est cohérent avec le sur-mesure."
+    }
+  ],
+  "counts": {
+    "Ancienne version avec référence détaillée du même article": 20,
+    "Rapprochement entre articles distincts, à valider": 6,
+    "Périmètre de vente réellement incomplet": 10,
+    "Famille générique : cadrage obligatoire dans un devis particulier": 8
+  }
+}

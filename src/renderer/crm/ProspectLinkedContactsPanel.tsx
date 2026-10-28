@@ -1,6 +1,8 @@
+import {ContactSummaryCard} from './ContactSummaryCard';
+import {ContactNameEditor} from './ContactNameEditor';
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
-import { useMemo, useState, useRef } from 'react';
-import type { Contact } from '../../shared/crm';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import type { Contact, DirectoryContact } from '../../shared/crm';
 import { validateEmail, validatePhone } from '../../shared/contactValidation';
 
 function cleanError(error: unknown): string {
@@ -24,7 +26,9 @@ export function ProspectLinkedContactsPanel({
   decisionMakerContactId?: string | null;
   onChanged: () => void;
 }) {
+  const [editName,setEditName]=useState<string|null>(null);
   const [open, setOpen] = useState(false);
+  useEffect(()=>{const add=(e:Event)=>{if((e as CustomEvent).detail===organizationId)setOpen(true);};window.addEventListener('atoumweb:add-related-contact',add);return()=>window.removeEventListener('atoumweb:add-related-contact',add);},[organizationId]);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [role, setRole] = useState('');
@@ -32,6 +36,8 @@ export function ProspectLinkedContactsPanel({
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [existing,setExisting]=useState<DirectoryContact[]>([]),[query,setQuery]=useState('');
+  useEffect(()=>{if(!open)return;let active=true;void window.atoumweb.crm.contacts.list().then(items=>{if(active)setExisting(items);}).catch(e=>{if(active)setError(cleanError(e));});return()=>{active=false;};},[open]);
   const guard=useUnsavedDraft('Nouveau contact',{firstName,lastName,role,email,phone},{pending:busy,discard:s=>{setFirstName(s.firstName);setLastName(s.lastName);setRole(s.role);setEmail(s.email);setPhone(s.phone);}});
 
   const emailValidation = validateEmail(email);
@@ -57,14 +63,23 @@ export function ProspectLinkedContactsPanel({
     finally { setBusy(false); }
   }
 
+  async function attach(contact:DirectoryContact){
+    if(busy||!organizationId)return;
+    setBusy(true);setError('');
+    try{const current=(await window.atoumweb.crm.organizationContacts.list(contact.id)).find(l=>l.organizationId===organizationId);await window.atoumweb.crm.organizationContacts.save(organizationId,contact.id,current?{jobTitle:current.jobTitle,archivedAt:current.archivedAt}:null,{jobTitle:role.trim()||null,archivedAt:null});setOpen(false);onChanged();window.dispatchEvent(new Event('atoumweb:changed'));}
+    catch(e){setError(cleanError(e));}finally{setBusy(false);}
+  }
+
   if (!organizationId) return null;
   return <div className="linked-contacts-panel">
     <div className="work-section-heading">
       <div><span className="eyebrow">Autres contacts liés</span><strong>{otherContacts.length} contact{otherContacts.length > 1 ? 's' : ''}</strong></div>
-      <button className="secondary-button compact-button" type="button" onClick={() => setOpen((value) => !value)}>{open ? 'Fermer' : '+ Contact'}</button>
+      <button className="secondary-button compact-button" type="button" onClick={() => setOpen((value) => !value)}>{open ? 'Fermer l’ajout' : 'Ajouter un contact'}</button>
     </div>
     {open && <div className="inline-editor linked-contact-editor">
-      <strong>Ajouter un contact de l’entreprise</strong>
+      <label>Rechercher un contact existant<input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Nom ou email"/></label>
+      {query.trim()&&<div className="contact-search-results">{existing.filter(contact=>[contact.firstName,contact.lastName,contact.email].join(' ').toLocaleLowerCase('fr').includes(query.trim().toLocaleLowerCase('fr'))).slice(0,12).map(contact=><div key={contact.id}><span>{contact.firstName} {contact.lastName} · {contact.organizationId===organizationId?'Déjà lié à cette entreprise':contact.organizationName||'Sans entreprise'}</span>{!contacts.some(c=>c.id===contact.id)&&<button type="button" className="secondary-button" disabled={busy} onClick={()=>void attach(contact)}>Associer ce contact</button>}</div>)}<small>La même personne peut être associée à plusieurs entreprises. Ses autres associations sont conservées.</small></div>}
+      <label>Fonction dans cette entreprise (pour une association existante)<input value={role} onChange={e=>setRole(e.target.value)} disabled={busy}/></label><strong>Ou créer une nouvelle personne</strong>
       <div className="action-editor-grid">
         <label>Prénom<input value={firstName} onChange={(e) => setFirstName(e.target.value)} disabled={busy} /></label>
         <label>Nom<input value={lastName} onChange={(e) => setLastName(e.target.value)} disabled={busy} /></label>
@@ -75,7 +90,8 @@ export function ProspectLinkedContactsPanel({
       {error && <p className="form-error">{error}</p>}
       <div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => setOpen(false)}>Annuler</button><button className="primary-button" type="button" disabled={busy || !emailValidation.valid || !phoneValidation.valid} onClick={() => void createContact()}>{busy ? 'Ajout…' : 'Ajouter le contact'}</button></div>
     </div>}
-    {otherContacts.length > 0 && <div className="linked-contact-list">{otherContacts.map((contact) => <div className="linked-contact-row" key={contact.id}><div><strong>{contact.firstName} {contact.lastName}</strong><small>{contact.jobTitle || 'Fonction à préciser'}</small></div><span className="status-pill">Contact lié</span></div>)}</div>}
+    {otherContacts.length>0&&<div className="crm-contact-cards">{otherContacts.map(contact=><ContactSummaryCard key={contact.id} contact={contact} role="Contact associé" onChanged={onChanged}/>)}</div>}
+    {editName&&<ContactNameEditor id={editName} onClose={()=>{setEditName(null);onChanged();}}/>}
     {otherContacts.length === 0 && !open && <p className="muted">Aucun autre contact lié pour le moment.</p>}
   </div>;
 }

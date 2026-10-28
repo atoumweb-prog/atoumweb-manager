@@ -1,3 +1,5 @@
+import {ClientActionsHistory} from './ClientActionsHistory';
+import {CrmReconciliationPanel} from './CrmReconciliationPanel';
 import {CrmRecordLayout} from './CrmRecordLayout';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import {CLIENT_DIRECTORY_VIEW} from '../../shared/realTableSchemas';
@@ -64,6 +66,7 @@ interface ClientDraft {
 }
 
 interface ContactDraft {
+  existingContactId?:string;
   firstName: string;
   lastName: string;
   jobTitle: string;
@@ -180,19 +183,22 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
   useEffect(()=>()=>{clientDataEpoch.current++;listEpoch.current++;},[]);
   const [activeTab, setActiveTab] = useState<ClientTab>('summary');
   const [showForm, setShowForm] = useState(false);
+  const [clientDraftLogo,setClientDraftLogo]=useState<{token:string;preview:string;name:string}|null>(null);
   const [draft, setDraft] = useState<ClientDraft>(EMPTY_DRAFT);
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
+  const [availableContacts,setAvailableContacts]=useState<import('../../shared/crm').DirectoryContact[]>([]);
   const [showContactForm, setShowContactForm] = useState(false);
   const [contactDraft, setContactDraft] = useState<ContactDraft>(EMPTY_CONTACT_DRAFT);
   const [editingContactId, setEditingContactId] = useState<string | null>(null);
   const [contactError, setContactError] = useState<string | null>(null);
   const [contactSaving, setContactSaving] = useState(false);
+  const actionBaseline=useRef<{at:string|null;text:string|null}>({at:null,text:null});
   const [actionEditor, setActionEditor] = useState<ClientActionEditor | null>(null);
   const [archiveCandidateId, setArchiveCandidateId] = useState<string | null>(null);
   const [coordinatesSaving,setCoordinatesSaving]=useState(false);
-  const clientCreateGuard=useUnsavedDraft('Nouveau client',{draft,needsDraft,demoMode},{ready:showForm||saving,pending:saving,resetKey:showForm,discard:value=>{setDraft(value.draft);setNeedsDraft(value.needsDraft);setDemoMode(value.demoMode);setShowForm(false);}});
+  const clientCreateGuard=useUnsavedDraft('Nouveau client',{draft,needsDraft,demoMode,clientDraftLogo},{ready:showForm||saving,pending:saving,resetKey:showForm,discard:value=>{setDraft(value.draft);setNeedsDraft(value.needsDraft);setDemoMode(value.demoMode);setClientDraftLogo(value.clientDraftLogo);setShowForm(false);}});
   const coordinateGuard=useUnsavedDraft('Coordonnées client',coordinateDraft,{ready:editingCoordinates||coordinatesSaving,pending:coordinatesSaving,resetKey:selectedId+':'+editingCoordinates,discard:value=>{setCoordinateDraft(value);setEditingCoordinates(false);}});
   const contactGuard=useUnsavedDraft('Contact client',contactDraft,{ready:showContactForm||contactSaving,pending:contactSaving,resetKey:selectedId+':'+editingContactId+':'+showContactForm,discard:value=>{setContactDraft(value);setShowContactForm(false);setEditingContactId(null);}});
   const [actionSaving,setActionSaving]=useState(false);
@@ -374,15 +380,18 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
         notes: draft.notes.trim() || null,
       });
 
+      let logoWarning='';
+      if(clientDraftLogo){const owner=organizationId?'organization':'contact',ownerId=organizationId||contactId;if(ownerId){try{await window.atoumweb.crm.identityAssets.attachDraft(clientDraftLogo.token,owner,ownerId);}catch(error){logoWarning=' Logo non enregistré : '+String(error);}}}
+      setClientDraftLogo(null);
       for (const need of needsDraft) await window.atoumweb.workflow.saveNeed('client', client.id, need);
       setNeedsDraft([]);
       setDraft(EMPTY_DRAFT);
       setDemoMode(false);
-      clientCreateGuard.saved({draft:EMPTY_DRAFT,needsDraft:[],demoMode:false});
+      clientCreateGuard.saved({draft:EMPTY_DRAFT,needsDraft:[],demoMode:false,clientDraftLogo:null});
       setShowForm(false);
       await refresh();
       openClient(client.id,true);
-      onMessage('Client créé.');
+      onMessage('Client créé.'+logoWarning);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Impossible de créer le client.');
     } finally {
@@ -479,14 +488,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
     if (client.status === 'archived') {
       await window.atoumweb.crm.clients.reactivate(client.id, status);
     } else {
-      await window.atoumweb.crm.clients.update(client.id, {
-        organizationId: client.organizationId,
-        primaryContactId: client.primaryContactId,
-        status,
-        notes: client.notes,
-        nextActionAt: client.nextActionAt,
-        nextActionText: client.nextActionText,
-      });
+      await window.atoumweb.crm.clients.updateStatus(client.id,client.status??'active',status);
     }
     await refresh();
     onMessage(`Client passé ${status === 'active' ? 'actif' : 'inactif'}.`);
@@ -501,6 +503,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
 
   function openActionEditor(client: ClientSummary): void {
     if(actionEditor&&!actionGuard.request(()=>{}))return;
+    actionBaseline.current={at:client.nextActionAt??null,text:client.nextActionText??null};
     setActionEditor({
       clientId: client.id,
       date: dateInputValue(client.nextActionAt),
@@ -522,14 +525,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
     }
     setActionSaving(true);
     try {
-    await window.atoumweb.crm.clients.update(client.id, {
-      organizationId: client.organizationId,
-      primaryContactId: client.primaryContactId,
-      status: client.status,
-      notes: client.notes,
-      nextActionAt: date.toISOString(),
-      nextActionText: text,
-    });
+    await window.atoumweb.crm.clients.scheduleAction(client.id,actionBaseline.current,{at:date.toISOString(),text});
     actionGuard.saved(actionEditor);setActionEditor(null);
     await refresh();
     onMessage('Prochaine action client enregistrée.');
@@ -539,25 +535,20 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
   async function clearAction(client: ClientSummary): Promise<void> {
     if(actionSaving)return;setActionSaving(true);
     try {
-    await window.atoumweb.crm.clients.update(client.id, {
-      organizationId: client.organizationId,
-      primaryContactId: client.primaryContactId,
-      status: client.status,
-      notes: client.notes,
-      nextActionAt: null,
-      nextActionText: null,
-    });
+    await window.atoumweb.crm.clients.scheduleAction(client.id,{at:client.nextActionAt??null,text:client.nextActionText??null},null);
     setActionEditor(null);
     await refresh();
     onMessage('Prochaine action client retirée.');
     }catch(error){onMessage(error instanceof Error?error.message:'Action non retirée.');}finally{setActionSaving(false);}
   }
 
+  useEffect(()=>{if(!showContactForm)return;let active=true;window.atoumweb.crm.contacts.list().then(items=>{if(active)setAvailableContacts(items);}).catch(e=>{if(active)setContactError(String(e));});return()=>{active=false;};},[showContactForm]);
+
   async function submitContact(event: React.FormEvent): Promise<void> {
     event.preventDefault();
     if (!selected) return;
     setContactError(null);
-    if (!contactDraft.firstName.trim() || !contactDraft.lastName.trim()) {
+    if (!contactDraft.existingContactId&&(!contactDraft.firstName.trim() || !contactDraft.lastName.trim())) {
       setContactError('Le prénom et le nom sont requis.');
       return;
     }
@@ -583,6 +574,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
         },
         contactDraft.role,
         contactDraft.makePrimary,
+        contactDraft.existingContactId||undefined,
       );
       contactGuard.saved(EMPTY_CONTACT_DRAFT);setContactDraft(EMPTY_CONTACT_DRAFT);
       setEditingContactId(null);
@@ -626,6 +618,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
         <form className="panel crm-form" onSubmit={(event) => void submitClient(event)}>
           <div className="panel-title"><div><span className="eyebrow">Client</span><h2>Ajouter un client directement</h2></div></div>
           <button className="secondary-button" type="button" onClick={() => { setDemoMode(true); setDraft({ company: 'DEMO — Atelier Mercure', firstName: 'Léa', lastName: 'Durand', email: 'lea@example.test', phone: '', website: 'atelier-mercure.example', notes: 'Dossier de démonstration.' }); setNeedsDraft([{ catalogItemId: 'atoumweb-ecommerce' }]); }}>Remplir avec des données test</button>
+          <button type="button" className="crm-logo-button" aria-label="Charger le logo du client" onClick={()=>void window.atoumweb.crm.identityAssets.chooseDraft().then(setClientDraftLogo).catch(e=>setFormError(String(e)))}>{clientDraftLogo?<img src={clientDraftLogo.preview} alt="Logo choisi" style={{width:72,height:72,objectFit:'contain'}}/>:<span className="status-pill">+ Logo</span>}</button>{clientDraftLogo&&<button type="button" className="secondary-button" onClick={()=>setClientDraftLogo(null)}>Retirer le logo choisi</button>}
           <fieldset disabled={saving}><div className="form-grid">
             <label><span className="field-label-with-help">Société <FieldHelp text="Nom de l’entreprise cliente. Laisse vide uniquement pour un client particulier." /></span><input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
             <label><span className="field-label-with-help">Prénom <FieldHelp text="Prénom du contact principal si le client est une personne ou si un interlocuteur est déjà identifié." /></span><input value={draft.firstName} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} /></label>
@@ -683,7 +676,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
               {Object.entries(sectionErrors).map(([zone,error])=><p role="alert" key={zone}>Chargement incomplet — {zone} : {error} <button type="button" onClick={()=>void refreshSelectedClientData(selected.id)}>Réessayer</button></p>)}
               <section hidden={activeTab!=='summary'} id="client-panel-summary" className="client-summary-overview" role="tabpanel" aria-labelledby="client-tab-summary">
                 <section className="client-primary-card client-summary-priority"><h3><OperationIcon name="clock"/> À traiter · Échéances</h3>
-                  {selected.nextActionAt && <SummaryLine label="Prochaine action" value={`${selected.nextActionText || 'Action'} · ${new Date(selected.nextActionAt).toLocaleDateString('fr-FR')}`} />}
+                  {<CrmReconciliationPanel owner="client" id={selected.id}/>}<ClientActionsHistory key={selected.id} clientId={selected.id} onChanged={()=>void refresh()}/>{selected.nextActionAt && <SummaryLine label="Prochaine action" value={`${selected.nextActionText || 'Action'} · ${new Date(selected.nextActionAt).toLocaleDateString('fr-FR')}`} />}
                   {interventions.filter(item=>!['completed','cancelled'].includes(item.status)).map(item=><button className="workflow-link" type="button" key={item.id} onClick={()=>setActiveTab('operations')}>Intervention {item.number} · {item.subject}</button>)}
                   {!detailLoading&&!sectionErrors.interventions&&!selected.nextActionAt&&!interventions.some(item=>!['completed','cancelled'].includes(item.status))&&<p className="muted">Aucune action ni intervention à suivre.</p>}
                   {actionEditor?.clientId === selected.id && (
@@ -754,11 +747,12 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
                   {showContactForm && (
                     <form className="contact-inline-form" onSubmit={(event) => void submitContact(event)}><fieldset disabled={contactSaving}>
                       <div className="contact-form-grid">
-                        <label>Prénom<input value={contactDraft.firstName} onChange={(e) => setContactDraft({ ...contactDraft, firstName: e.target.value })} /></label>
+                        {!editingContactId&&<label>Réutiliser un contact existant<select value={contactDraft.existingContactId??''} onChange={e=>setContactDraft({...contactDraft,existingContactId:e.target.value})}><option value="">Créer une nouvelle personne</option>{availableContacts.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName} · {c.organizationName||'Sans entreprise'}</option>)}</select></label>}
+                        {!contactDraft.existingContactId&&<><label>Prénom<input value={contactDraft.firstName} onChange={(e) => setContactDraft({ ...contactDraft, firstName: e.target.value })} /></label>
                         <label>Nom<input value={contactDraft.lastName} onChange={(e) => setContactDraft({ ...contactDraft, lastName: e.target.value })} /></label>
                         <label>Fonction<input value={contactDraft.jobTitle} onChange={(e) => setContactDraft({ ...contactDraft, jobTitle: e.target.value })} /></label>
                         {!editingContactId && <><label>Email<input type="email" value={contactDraft.email} onChange={(e) => setContactDraft({ ...contactDraft, email: e.target.value })} /></label><label>Téléphone<input value={contactDraft.phone} onChange={(e) => setContactDraft({ ...contactDraft, phone: e.target.value })} /></label></>}
-                        <label>Rôle<select value={contactDraft.role} disabled={Boolean(editingContactId)} onChange={(e) => setContactDraft({ ...contactDraft, role: e.target.value as ClientContactRole })}>{CLIENT_CONTACT_ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}</select></label>
+                        </>}<label>Rôle dans le compte Client<select value={contactDraft.role} disabled={Boolean(editingContactId)} onChange={(e) => setContactDraft({ ...contactDraft, role: e.target.value as ClientContactRole })}>{CLIENT_CONTACT_ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}</select></label>
                       </div>
                       <label className="primary-check"><input type="checkbox" checked={contactDraft.makePrimary} onChange={(e) => setContactDraft({ ...contactDraft, makePrimary: e.target.checked })} /> Définir comme contact principal</label>
                       {contactError && <p className="form-error">{contactError}</p>}

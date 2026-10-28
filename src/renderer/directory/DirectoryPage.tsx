@@ -1,3 +1,5 @@
+import {CrmReconciliationPanel} from '../crm/CrmReconciliationPanel';
+import {OrganizationContactLinks} from '../crm/OrganizationContactLinks';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import {DIRECTORY_ORGANIZATIONS_VIEW,DIRECTORY_CONTACTS_VIEW} from '../../shared/realTableSchemas';
 import '../crm/crm-visual-foundation.css';
@@ -199,17 +201,17 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
     const needle = query.trim().toLocaleLowerCase('fr-FR');
     return contacts.filter((item) => {
       if (relationFilter !== 'all' && item.relation !== relationFilter) return false;
-      if (secondaryFilter !== 'all' && (item.organizationId ?? '') !== secondaryFilter) return false;
+      if (secondaryFilter !== 'all' && !item.organizationLinks?.some(l=>l.organizationId===secondaryFilter&&!l.archivedAt)) return false;
       if (!needle) return true;
       return [
-        item.firstName, item.lastName, item.organizationName ?? '', item.jobTitle ?? '', item.email ?? '', item.phone ?? '', item.notes ?? '',
+        item.firstName, item.lastName, item.organizationName ?? '',...(item.organizationLinks??[]).filter(l=>!l.archivedAt).map(l=>l.jobTitle??''), item.jobTitle ?? '', item.email ?? '', item.phone ?? '', item.notes ?? '',
       ].some((value) => value.toLocaleLowerCase('fr-FR').includes(needle));
     });
   }, [contacts, query, relationFilter, secondaryFilter]);
 
   const activeClients = organizations.filter((item) => item.activeClientCount > 0).length;
   const activeProspects = organizations.filter((item) => item.activeProspectCount > 0).length;
-  const selectedOrganizationContacts = selectedOrganization ? contacts.filter((item) => item.organizationId === selectedOrganization.id) : [];
+  const selectedOrganizationContacts = selectedOrganization ? contacts.filter((item) => item.organizationLinks?.some(l=>l.organizationId===selectedOrganization.id&&!l.archivedAt)).map(item=>({...item,jobTitle:item.organizationLinks?.find(l=>l.organizationId===selectedOrganization.id&&!l.archivedAt)?.jobTitle??null})) : [];
   const showDetail = Boolean(selectedOrganization || selectedContact || createMode);
 
   function closeDirectory():void {
@@ -404,6 +406,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
           <button className="secondary-button" type="button" onClick={toggleEdit}>{editing ? 'Annuler' : 'Modifier'}</button>
         </div>
 
+        <CrmReconciliationPanel owner="organization" id={selectedOrganization.id}/>
         <CrmIdentityAssetEditor organizationId={selectedOrganization.id} onMessage={onMessage}/>
         {verificationPanel}{editing ? <OrganizationEditor value={organizationDraft} onChange={setOrganizationDraft} onSave={() => void saveOrganization(false)} busy={busy} /> : <>
           <div className="directory-meta-grid">
@@ -427,7 +430,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
         <DirectoryDetailActions expanded={expanded} onExpand={() => setExpanded((value) => !value)} onClose={closeDirectory} />
         <div className="directory-identity-heading">
           <CrmIdentityAvatar organizationId={selectedContact.organizationId} contactId={selectedContact.id} name={`${selectedContact.firstName} ${selectedContact.lastName}`} size="large" />
-          <div><span className="eyebrow">Contact</span><h2>{selectedContact.firstName} {selectedContact.lastName}</h2><p>{[selectedContact.jobTitle, selectedContact.organizationName].filter(Boolean).join(' · ') || 'Contact professionnel'}</p></div>
+          <div><span className="eyebrow">Contact</span><h2>{selectedContact.firstName} {selectedContact.lastName}</h2><p>{[(selectedContact.organizationLinks?.filter(l=>!l.archivedAt).length??0)>1?'Plusieurs fonctions — voir les associations':selectedContact.jobTitle, selectedContact.organizationName].filter(Boolean).join(' · ') || 'Contact professionnel'}</p></div>
         </div>
         <div className="directory-status-row">
           <span className={`directory-relation-pill ${relationClass(selectedContact.relation)}`}>{RELATION_LABELS[selectedContact.relation]}</span>
@@ -444,6 +447,9 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
             <div><span>Canal préféré</span><strong>{selectedContact.preferredChannel || 'Non renseigné'}</strong></div>
             <div><span>Mis à jour</span><strong>{dateLabel(selectedContact.updatedAt)}</strong></div>
           </div>
+          <CrmReconciliationPanel owner="contact" id={selectedContact.id}/>
+          {selectedContact.legacyJobTitle&&<p>Ancienne fonction sans association confirmée : {selectedContact.legacyJobTitle}</p>}
+          <OrganizationContactLinks contactId={selectedContact.id} onChanged={()=>void refresh()}/>
           <ContactMethodsPanel organizationId={selectedContact.organizationId} contactId={selectedContact.id} summaryLabel="Coordonnées du contact" />
           <section className="directory-info-block"><div><span>Notes</span><strong>{selectedContact.notes || 'Aucune note'}</strong></div></section>
 
@@ -484,8 +490,8 @@ function ContactEditor({ value, organizations, onChange, onSave, busy, includeCo
   return <fieldset disabled={busy} className="directory-editor">
     <label>Prénom<input value={value.firstName} onChange={(event) => onChange({ ...value, firstName: event.target.value })} /></label>
     <label>Nom<input value={value.lastName} onChange={(event) => onChange({ ...value, lastName: event.target.value })} /></label>
-    <label className="wide">Entreprise<select value={value.organizationId ?? ''} onChange={(event) => onChange({ ...value, organizationId: event.target.value || null })}><option value="">Sans entreprise</option>{organizations.map((organization) => <option key={organization.id} value={organization.id}>{organization.name}</option>)}</select></label>
-    <label>Fonction<input value={value.jobTitle ?? ''} onChange={(event) => onChange({ ...value, jobTitle: event.target.value })} /></label>
+    {includeCoordinates&&<><label className="wide">Entreprise<select value={value.organizationId ?? ''} onChange={(event) => onChange({ ...value, organizationId: event.target.value || null })}><option value="">Sans entreprise</option>{organizations.map((organization) => <option key={organization.id} value={organization.id}>{organization.name}</option>)}</select></label>
+    <label>Fonction dans cette entreprise<input disabled={!value.organizationId} value={value.jobTitle ?? ''} onChange={(event) => onChange({ ...value, jobTitle: event.target.value })} /></label></>}
     <label>Canal préféré<select value={value.preferredChannel ?? ''} onChange={(event) => onChange({ ...value, preferredChannel: event.target.value || null })}><option value="">Non renseigné</option><option value="email">Email</option><option value="phone">Téléphone</option></select></label>
     {includeCoordinates && <><label>Email<input inputMode="email" value={value.email ?? ''} onChange={(event) => onChange({ ...value, email: event.target.value })} /></label>
     <label>Téléphone<input inputMode="tel" value={value.phone ?? ''} onChange={(event) => onChange({ ...value, phone: event.target.value })} /></label></>}

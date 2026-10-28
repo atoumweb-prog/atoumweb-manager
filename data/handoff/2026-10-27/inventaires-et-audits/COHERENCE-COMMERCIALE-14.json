@@ -1,0 +1,681 @@
+[
+  {
+    "scenario": "DEV-TEST-01",
+    "lines": [
+      {
+        "lineId": "1d876175-6ec2-443d-b7b3-ccfb713965f3",
+        "label": "Site vitrine",
+        "catalogVersionId": "atoumweb-vitrine-v1",
+        "totalCents": 69900,
+        "inclusions": [],
+        "exclusions": [],
+        "savedScope": "TEST — Site vitrine ; détail du forfait publié non renseigné, à confirmer",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Inclusions Catalogue absentes : périmètre positif à valider",
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions",
+          "Cadrage TEST signalant un manque : ne constitue pas une description client validée"
+        ],
+        "assessment": "Révision commerciale requise"
+      }
+    ],
+    "totalCents": 69900,
+    "scope": "Relecture documentaire des valeurs de la dernière campagne, sans nouvelle génération complète"
+  },
+  {
+    "scenario": "DEV-TEST-02",
+    "lines": [
+      {
+        "lineId": "9ea51297-284e-4d55-b299-9c926385141b",
+        "label": "Site vitrine",
+        "catalogVersionId": "atoumweb-vitrine-v1",
+        "totalCents": 69900,
+        "inclusions": [],
+        "exclusions": [],
+        "savedScope": "TEST — Site vitrine ; détail du forfait publié non renseigné, à confirmer",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Inclusions Catalogue absentes : périmètre positif à valider",
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions",
+          "Cadrage TEST signalant un manque : ne constitue pas une description client validée"
+        ],
+        "assessment": "Révision commerciale requise"
+      },
+      {
+        "lineId": "e3c5d668-a167-460c-8441-566eaf83f43a",
+        "label": "Création d’une page",
+        "catalogVersionId": "atoumweb-page-v1",
+        "totalCents": 19800,
+        "inclusions": [],
+        "exclusions": [],
+        "savedScope": "TEST — Création d’une page ; détail du forfait publié non renseigné, à confirmer",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Inclusions Catalogue absentes : périmètre positif à valider",
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions",
+          "Cadrage TEST signalant un manque : ne constitue pas une description client validée"
+        ],
+        "assessment": "Révision commerciale requise"
+      }
+    ],
+    "totalCents": 89700,
+    "scope": "Relecture documentaire des valeurs de la dernière campagne, sans nouvelle génération complète"
+  },
+  {
+    "scenario": "DEV-TEST-03",
+    "lines": [
+      {
+        "lineId": "97c3055b-c96d-4616-ad7e-03dd66b0fa86",
+        "label": "Site vitrine",
+        "catalogVersionId": "atoumweb-vitrine-v1",
+        "totalCents": 69900,
+        "inclusions": [],
+        "exclusions": [],
+        "savedScope": "TEST — Site vitrine ; détail du forfait publié non renseigné, à confirmer",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Inclusions Catalogue absentes : périmètre positif à valider",
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions",
+          "Cadrage TEST signalant un manque : ne constitue pas une description client validée"
+        ],
+        "assessment": "Révision commerciale requise"
+      },
+      {
+        "lineId": "aabdae40-452f-4ca6-91e7-f0440492f281",
+        "label": "Maintenance WordPress annuelle",
+        "catalogVersionId": "1920474d-daea-47b1-9054-952145a9f638",
+        "totalCents": 53900,
+        "inclusions": [
+          "Même périmètre que mensuel",
+          "12 mois payés d'avance",
+          "1 mois offert."
+        ],
+        "exclusions": [
+          "Mêmes exclusions."
+        ],
+        "savedScope": "Mises à jour du site WordPress, sauvegardes et vérifications élémentaires de son bon fonctionnement.\nVérification du fonctionnement après les mises à jour.\nDeux petites interventions par mois, chacune limitée à trente minutes. Les interventions non utilisées ne sont pas reportées sur le mois suivant.\nPrise en charge des demandes couvertes sous deux jours ouvrés. Il s’agit du début du traitement, et non d’une promesse de résolution dans ce délai.\nCouverture de douze mois. Les dates de début et de fin sont renseignées dans le devis.\nPériode annuelle payée à l’avance ; le prix annuel correspond à onze mensualités pour douze mois de couverture.",
+        "savedExclusions": "Refonte du site.\nRecherche et résolution de pannes importantes sortant du suivi courant.\nInterventions urgentes en dehors des horaires de travail habituels.\nInterventions dépassant trente minutes.\nNettoyage approfondi d’un site compromis par des logiciels malveillants.",
+        "issues": [
+          "Renvoi de périmètre dans la version vendue ; proposition annuelle autonome disponible, non adoptée"
+        ],
+        "assessment": "Révision commerciale requise"
+      }
+    ],
+    "totalCents": 123800,
+    "scope": "Relecture documentaire des valeurs de la dernière campagne, sans nouvelle génération complète"
+  },
+  {
+    "scenario": "DEV-TEST-04",
+    "lines": [
+      {
+        "lineId": "48790cce-8660-4ff2-89bd-d0923fdbdd9f",
+        "label": "Site vitrine",
+        "catalogVersionId": "atoumweb-vitrine-v1",
+        "totalCents": 69900,
+        "inclusions": [],
+        "exclusions": [],
+        "savedScope": "TEST — Site vitrine ; détail du forfait publié non renseigné, à confirmer",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Inclusions Catalogue absentes : périmètre positif à valider",
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions",
+          "Cadrage TEST signalant un manque : ne constitue pas une description client validée"
+        ],
+        "assessment": "Révision commerciale requise"
+      },
+      {
+        "lineId": "e132a4bc-78cd-4a29-9468-ec548efcf1dc",
+        "label": "Rédaction AtoumWeb par page",
+        "catalogVersionId": "atoumweb-redaction-v1",
+        "totalCents": 19800,
+        "inclusions": [],
+        "exclusions": [],
+        "savedScope": "TEST — Rédaction AtoumWeb par page ; détail du forfait publié non renseigné, à confirmer",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Inclusions Catalogue absentes : périmètre positif à valider",
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions",
+          "Cadrage TEST signalant un manque : ne constitue pas une description client validée"
+        ],
+        "assessment": "Révision commerciale requise"
+      },
+      {
+        "lineId": "8c05a54f-f91a-4794-af62-0bf16d7c8740",
+        "label": "SEO local",
+        "catalogVersionId": "23741b61-8b61-4944-8fb5-7809f8b9fb91",
+        "totalCents": 24900,
+        "inclusions": [
+          "Création/optimisation 1 GBP",
+          "catégories",
+          "description",
+          "services",
+          "horaires",
+          "coordonnées/zone",
+          "cohérence NAP",
+          "lien site",
+          "optimisation locale d'1 page",
+          "Title/meta",
+          "données structurées si pertinentes",
+          "avis",
+          "indexation",
+          "mini bilan."
+        ],
+        "exclusions": [
+          "Nouvelle page rédigée",
+          "gestion mensuelle",
+          "netlinking",
+          "garantie de classement."
+        ],
+        "savedScope": "TEST — SEO local pour Entreprise Jardin Démo.",
+        "savedExclusions": "Nouvelle page rédigée\ngestion mensuelle\nnetlinking\ngarantie de classement.",
+        "issues": [
+          "Rendre les expressions de travail lisibles : GBP = fiche établissement Google ; aucun résultat de référencement garanti déduit"
+        ],
+        "assessment": "Révision commerciale requise"
+      }
+    ],
+    "totalCents": 114600,
+    "scope": "Relecture documentaire des valeurs de la dernière campagne, sans nouvelle génération complète"
+  },
+  {
+    "scenario": "DEV-TEST-05",
+    "lines": [
+      {
+        "lineId": "582f414c-7938-484b-8c05-9f2051f7737b",
+        "label": "E-commerce",
+        "catalogVersionId": "atoumweb-ecommerce-v1",
+        "totalCents": 149000,
+        "inclusions": [
+          "Hébergement offert 1 an",
+          "Nom de domaine offert 1 an",
+          "3 pages commerciales dont Accueil obligatoire",
+          "Pages techniques WooCommerce et pages légales hors quota",
+          "CGV fournies par le commerçant puis intégrées",
+          "Jusqu’à 10 produits simples inclus",
+          "Une référence, un prix principal, sans déclinaison obligatoire ni configuration complexe. Nom, description, prix, image principale, petite galerie, catégorie, SKU, stock simple, poids et dimensions fournis par le commerçant.",
+          "Jusqu’à 2 moyens de paiement standards : Stripe, PayPal, virement, chèque ou paiement à la livraison si pertinent",
+          "Livraison simple : tarif fixe, gratuité au seuil, retrait sur place, zones simples"
+        ],
+        "exclusions": [],
+        "savedScope": "TEST — E-commerce pour Boutique Créateurs Démo.",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions"
+        ],
+        "assessment": "Révision commerciale requise"
+      }
+    ],
+    "totalCents": 149000,
+    "scope": "Relecture documentaire des valeurs de la dernière campagne, sans nouvelle génération complète"
+  },
+  {
+    "scenario": "DEV-TEST-06",
+    "lines": [
+      {
+        "lineId": "343107fd-798a-4425-a5ff-984a3ac564b2",
+        "label": "E-commerce",
+        "catalogVersionId": "atoumweb-ecommerce-v1",
+        "totalCents": 149000,
+        "inclusions": [
+          "Hébergement offert 1 an",
+          "Nom de domaine offert 1 an",
+          "3 pages commerciales dont Accueil obligatoire",
+          "Pages techniques WooCommerce et pages légales hors quota",
+          "CGV fournies par le commerçant puis intégrées",
+          "Jusqu’à 10 produits simples inclus",
+          "Une référence, un prix principal, sans déclinaison obligatoire ni configuration complexe. Nom, description, prix, image principale, petite galerie, catégorie, SKU, stock simple, poids et dimensions fournis par le commerçant.",
+          "Jusqu’à 2 moyens de paiement standards : Stripe, PayPal, virement, chèque ou paiement à la livraison si pertinent",
+          "Livraison simple : tarif fixe, gratuité au seuil, retrait sur place, zones simples"
+        ],
+        "exclusions": [],
+        "savedScope": "TEST — E-commerce pour Boutique Thé Démo.",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions"
+        ],
+        "assessment": "Révision commerciale requise"
+      },
+      {
+        "lineId": "36807e31-c7d1-4fc6-8bc8-f93d0f0aa661",
+        "label": "Produits simples supplémentaires — 11 à 20",
+        "catalogVersionId": "atoumweb-produits11-v1",
+        "totalCents": 9500,
+        "inclusions": [
+          "Une référence, un prix principal, sans déclinaison obligatoire ni configuration complexe. Nom, description, prix, image principale, petite galerie, catégorie, SKU, stock simple, poids et dimensions fournis par le commerçant."
+        ],
+        "exclusions": [],
+        "savedScope": "TEST — Produits simples supplémentaires — 11 à 20 pour Boutique Thé Démo.",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions"
+        ],
+        "assessment": "Révision commerciale requise"
+      }
+    ],
+    "totalCents": 158500,
+    "scope": "Relecture documentaire des valeurs de la dernière campagne, sans nouvelle génération complète"
+  },
+  {
+    "scenario": "DEV-TEST-07",
+    "lines": [
+      {
+        "lineId": "850ef0a8-20fb-4b11-97e4-238643437093",
+        "label": "E-commerce",
+        "catalogVersionId": "atoumweb-ecommerce-v1",
+        "totalCents": 149000,
+        "inclusions": [
+          "Hébergement offert 1 an",
+          "Nom de domaine offert 1 an",
+          "3 pages commerciales dont Accueil obligatoire",
+          "Pages techniques WooCommerce et pages légales hors quota",
+          "CGV fournies par le commerçant puis intégrées",
+          "Jusqu’à 10 produits simples inclus",
+          "Une référence, un prix principal, sans déclinaison obligatoire ni configuration complexe. Nom, description, prix, image principale, petite galerie, catégorie, SKU, stock simple, poids et dimensions fournis par le commerçant.",
+          "Jusqu’à 2 moyens de paiement standards : Stripe, PayPal, virement, chèque ou paiement à la livraison si pertinent",
+          "Livraison simple : tarif fixe, gratuité au seuil, retrait sur place, zones simples"
+        ],
+        "exclusions": [],
+        "savedScope": "TEST — E-commerce pour Boutique Accessoires Démo.",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions"
+        ],
+        "assessment": "Révision commerciale requise"
+      },
+      {
+        "lineId": "0853e1fb-2d2b-4992-9159-ac71156216d0",
+        "label": "Maintenance WooCommerce annuelle",
+        "catalogVersionId": "0b1a6f26-f9cf-42f9-a8f9-8a9cf7b63f7f",
+        "totalCents": 108900,
+        "inclusions": [
+          "Même périmètre que mensuel",
+          "1 mois offert."
+        ],
+        "exclusions": [
+          "Mêmes exclusions."
+        ],
+        "savedScope": "Mises à jour, sauvegardes et vérifications du bon fonctionnement adaptées à une boutique WooCommerce.\nVérification du fonctionnement après les mises à jour.\nQuatre petites interventions par mois, chacune limitée à trente minutes. Les interventions non utilisées ne sont pas reportées sur le mois suivant.\nPrise en charge des demandes couvertes sous un jour ouvré. Il s’agit du début du traitement, et non d’une promesse de résolution dans ce délai.\nCouverture de douze mois. Les dates de début et de fin sont renseignées dans le devis.\nLe prix annuel correspond à onze mensualités pour douze mois de couverture. La date de paiement figure dans l’échéancier du devis.",
+        "savedExclusions": "Gestion quotidienne des commandes de la boutique.\nRefonte du site.\nInterventions urgentes en dehors des horaires de travail habituels.\nRecherche et résolution de pannes importantes sortant du suivi courant : intervention distincte à définir avant engagement.",
+        "issues": [
+          "Renvoi de périmètre dans la version vendue ; proposition annuelle autonome disponible, non adoptée"
+        ],
+        "assessment": "Révision commerciale requise"
+      }
+    ],
+    "totalCents": 257900,
+    "scope": "Relecture documentaire des valeurs de la dernière campagne, sans nouvelle génération complète"
+  },
+  {
+    "scenario": "DEV-TEST-08",
+    "lines": [
+      {
+        "lineId": "a9685360-cdb2-4449-bce6-4acb48ecf85d",
+        "label": "Landing page",
+        "catalogVersionId": "atoumweb-landing-v1",
+        "totalCents": 49900,
+        "inclusions": [],
+        "exclusions": [],
+        "savedScope": "TEST — Landing page ; détail du forfait publié non renseigné, à confirmer",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Inclusions Catalogue absentes : périmètre positif à valider",
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions",
+          "Cadrage TEST signalant un manque : ne constitue pas une description client validée"
+        ],
+        "assessment": "Révision commerciale requise"
+      }
+    ],
+    "totalCents": 49900,
+    "scope": "Relecture documentaire des valeurs de la dernière campagne, sans nouvelle génération complète"
+  },
+  {
+    "scenario": "DEV-TEST-09",
+    "lines": [
+      {
+        "lineId": "fe232644-b5a8-4fcc-a211-6b68ca924a7a",
+        "label": "Landing page",
+        "catalogVersionId": "atoumweb-landing-v1",
+        "totalCents": 49900,
+        "inclusions": [],
+        "exclusions": [],
+        "savedScope": "TEST — Landing page ; détail du forfait publié non renseigné, à confirmer",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Inclusions Catalogue absentes : périmètre positif à valider",
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions",
+          "Cadrage TEST signalant un manque : ne constitue pas une description client validée"
+        ],
+        "assessment": "Révision commerciale requise"
+      },
+      {
+        "lineId": "851a0141-e6a7-4c96-a134-253db80e1b04",
+        "label": "Gestion WordPress",
+        "catalogVersionId": "atoumweb-wordpress-v1",
+        "totalCents": 4900,
+        "inclusions": [],
+        "exclusions": [],
+        "savedScope": "TEST — Gestion WordPress ; détail du forfait publié non renseigné, à confirmer",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Inclusions Catalogue absentes : périmètre positif à valider",
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions",
+          "Cadrage TEST signalant un manque : ne constitue pas une description client validée"
+        ],
+        "assessment": "Révision commerciale requise"
+      }
+    ],
+    "totalCents": 54800,
+    "scope": "Relecture documentaire des valeurs de la dernière campagne, sans nouvelle génération complète"
+  },
+  {
+    "scenario": "DEV-TEST-10",
+    "lines": [
+      {
+        "lineId": "c4b972a5-b756-4193-b490-1a6b3185edf6",
+        "label": "Mariage Essentiel",
+        "catalogVersionId": "atoumweb-mariage-essentiel-v1",
+        "totalCents": 39900,
+        "inclusions": [],
+        "exclusions": [],
+        "savedScope": "TEST — Mariage Essentiel ; détail du forfait publié non renseigné, à confirmer",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Inclusions Catalogue absentes : périmètre positif à valider",
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions",
+          "Cadrage TEST signalant un manque : ne constitue pas une description client validée",
+          "Reprise des durées de référence et point de départ à valider, voir synthèse mariage"
+        ],
+        "assessment": "Révision commerciale requise"
+      }
+    ],
+    "totalCents": 39900,
+    "scope": "Relecture documentaire des valeurs de la dernière campagne, sans nouvelle génération complète"
+  },
+  {
+    "scenario": "DEV-TEST-11",
+    "lines": [
+      {
+        "lineId": "9890a845-596a-4813-8f4e-1e9440ef92c9",
+        "label": "Mariage Grand Jour",
+        "catalogVersionId": "atoumweb-mariage-grand-jour-v1",
+        "totalCents": 64900,
+        "inclusions": [],
+        "exclusions": [],
+        "savedScope": "TEST — Mariage Grand Jour ; détail du forfait publié non renseigné, à confirmer TEST — hypothèse de campagne : période initiale hébergée du 2026-12-01 au 2027-11-30, non renseignée dans la formule publiée, à confirmer.",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Inclusions Catalogue absentes : périmètre positif à valider",
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions",
+          "Cadrage TEST signalant un manque : ne constitue pas une description client validée",
+          "Reprise des durées de référence et point de départ à valider, voir synthèse mariage"
+        ],
+        "assessment": "Révision commerciale requise"
+      },
+      {
+        "lineId": "82d721a9-ea19-4c53-9b89-0be7a73f98f0",
+        "label": "Renouvellement site mariage",
+        "catalogVersionId": "50753281-12f2-4e64-9398-c923a79338cc",
+        "totalCents": 3000,
+        "inclusions": [
+          "1 an d'hébergement supplémentaire du site mariage."
+        ],
+        "exclusions": [
+          "Nom de domaine personnalisé."
+        ],
+        "savedScope": "TEST — Renouvellement site mariage pour Lou et Noa Démo.",
+        "savedExclusions": "Nom de domaine personnalisé.",
+        "issues": [
+          "Reprise des durées de référence et point de départ à valider, voir synthèse mariage"
+        ],
+        "assessment": "Révision commerciale requise"
+      }
+    ],
+    "totalCents": 67900,
+    "scope": "Relecture documentaire des valeurs de la dernière campagne, sans nouvelle génération complète"
+  },
+  {
+    "scenario": "DEV-TEST-12",
+    "lines": [
+      {
+        "lineId": "f3a7d816-c456-4083-b728-efe85549dcff",
+        "label": "Article SEO",
+        "catalogVersionId": "atoumweb-article-seo-v1",
+        "totalCents": 14900,
+        "inclusions": [],
+        "exclusions": [],
+        "savedScope": "TEST — Article SEO ; détail du forfait publié non renseigné, à confirmer",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Inclusions Catalogue absentes : périmètre positif à valider",
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions",
+          "Cadrage TEST signalant un manque : ne constitue pas une description client validée"
+        ],
+        "assessment": "Révision commerciale requise"
+      }
+    ],
+    "totalCents": 14900,
+    "scope": "Relecture documentaire des valeurs de la dernière campagne, sans nouvelle génération complète"
+  },
+  {
+    "scenario": "DEV-TEST-13",
+    "lines": [
+      {
+        "lineId": "4ddd1273-b833-4c46-b226-2156bbf6b85b",
+        "label": "Audit technique SEO",
+        "catalogVersionId": "56634461-1752-4c5d-8c48-4d3210325c59",
+        "totalCents": 19900,
+        "inclusions": [
+          "Indexation",
+          "sitemap/robots",
+          "balises/structure",
+          "mobile",
+          "vitesse/CWV",
+          "404/redirections",
+          "problèmes bloquants",
+          "rapport priorisé."
+        ],
+        "exclusions": [
+          "Corrections",
+          "stratégie éditoriale complète",
+          "concurrence avancée."
+        ],
+        "savedScope": "TEST — Audit technique SEO pour Atelier Existant Démo.",
+        "savedExclusions": "Corrections\nstratégie éditoriale complète\nconcurrence avancée.",
+        "issues": [],
+        "assessment": "Périmètre décrit dans les valeurs examinées ; confirmation du dossier réel reste nécessaire"
+      },
+      {
+        "lineId": "ed8dfbd4-3bee-40b9-8639-1244f2c213a9",
+        "label": "SEO local",
+        "catalogVersionId": "23741b61-8b61-4944-8fb5-7809f8b9fb91",
+        "totalCents": 24900,
+        "inclusions": [
+          "Création/optimisation 1 GBP",
+          "catégories",
+          "description",
+          "services",
+          "horaires",
+          "coordonnées/zone",
+          "cohérence NAP",
+          "lien site",
+          "optimisation locale d'1 page",
+          "Title/meta",
+          "données structurées si pertinentes",
+          "avis",
+          "indexation",
+          "mini bilan."
+        ],
+        "exclusions": [
+          "Nouvelle page rédigée",
+          "gestion mensuelle",
+          "netlinking",
+          "garantie de classement."
+        ],
+        "savedScope": "TEST — SEO local pour Atelier Existant Démo.",
+        "savedExclusions": "Nouvelle page rédigée\ngestion mensuelle\nnetlinking\ngarantie de classement.",
+        "issues": [
+          "Rendre les expressions de travail lisibles : GBP = fiche établissement Google ; aucun résultat de référencement garanti déduit"
+        ],
+        "assessment": "Révision commerciale requise"
+      },
+      {
+        "lineId": "844bbfc5-7cdc-4fa4-897b-f83a90defa5f",
+        "label": "Maintenance WordPress annuelle",
+        "catalogVersionId": "1920474d-daea-47b1-9054-952145a9f638",
+        "totalCents": 53900,
+        "inclusions": [
+          "Même périmètre que mensuel",
+          "12 mois payés d'avance",
+          "1 mois offert."
+        ],
+        "exclusions": [
+          "Mêmes exclusions."
+        ],
+        "savedScope": "Mises à jour du site WordPress, sauvegardes et vérifications élémentaires de son bon fonctionnement.\nVérification du fonctionnement après les mises à jour.\nDeux petites interventions par mois, chacune limitée à trente minutes. Les interventions non utilisées ne sont pas reportées sur le mois suivant.\nPrise en charge des demandes couvertes sous deux jours ouvrés. Il s’agit du début du traitement, et non d’une promesse de résolution dans ce délai.\nCouverture de douze mois. Les dates de début et de fin sont renseignées dans le devis.\nPériode annuelle payée à l’avance ; le prix annuel correspond à onze mensualités pour douze mois de couverture.",
+        "savedExclusions": "Refonte du site.\nRecherche et résolution de pannes importantes sortant du suivi courant.\nInterventions urgentes en dehors des horaires de travail habituels.\nInterventions dépassant trente minutes.\nNettoyage approfondi d’un site compromis par des logiciels malveillants.",
+        "issues": [
+          "Renvoi de périmètre dans la version vendue ; proposition annuelle autonome disponible, non adoptée"
+        ],
+        "assessment": "Révision commerciale requise"
+      }
+    ],
+    "totalCents": 98700,
+    "scope": "Relecture documentaire des valeurs de la dernière campagne, sans nouvelle génération complète"
+  },
+  {
+    "scenario": "DEV-TEST-14",
+    "lines": [
+      {
+        "lineId": "55c4c1f0-f317-489f-8456-c8833f19d335",
+        "label": "Site vitrine",
+        "catalogVersionId": "atoumweb-vitrine-v1",
+        "totalCents": 69900,
+        "inclusions": [],
+        "exclusions": [],
+        "savedScope": "TEST — Site vitrine ; détail du forfait publié non renseigné, à confirmer",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Inclusions Catalogue absentes : périmètre positif à valider",
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions",
+          "Cadrage TEST signalant un manque : ne constitue pas une description client validée"
+        ],
+        "assessment": "Révision commerciale requise"
+      },
+      {
+        "lineId": "645a74d7-204a-47ff-9388-af19d0cb9ace",
+        "label": "Création d’une page",
+        "catalogVersionId": "atoumweb-page-v1",
+        "totalCents": 19800,
+        "inclusions": [],
+        "exclusions": [],
+        "savedScope": "TEST — Création d’une page ; détail du forfait publié non renseigné, à confirmer",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Inclusions Catalogue absentes : périmètre positif à valider",
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions",
+          "Cadrage TEST signalant un manque : ne constitue pas une description client validée"
+        ],
+        "assessment": "Révision commerciale requise"
+      },
+      {
+        "lineId": "0d9ffa4f-db5a-4576-9a5b-9c3192d53c35",
+        "label": "Rédaction AtoumWeb par page",
+        "catalogVersionId": "atoumweb-redaction-v1",
+        "totalCents": 29700,
+        "inclusions": [],
+        "exclusions": [],
+        "savedScope": "TEST — Rédaction AtoumWeb par page ; détail du forfait publié non renseigné, à confirmer",
+        "savedExclusions": "TEST — seuls les travaux commandés sont couverts ; exclusions du forfait à confirmer",
+        "issues": [
+          "Inclusions Catalogue absentes : périmètre positif à valider",
+          "Exclusions absentes : évaluer la nécessité, ne pas inventer de restrictions",
+          "Cadrage TEST signalant un manque : ne constitue pas une description client validée"
+        ],
+        "assessment": "Révision commerciale requise"
+      },
+      {
+        "lineId": "13640001-2893-4d1d-b9c9-0951d0fe9ec2",
+        "label": "Logo Standard",
+        "catalogVersionId": "a37241b5-31ff-49ff-ab51-525bb15972a3",
+        "totalCents": 24900,
+        "inclusions": [
+          "Cadrage",
+          "2 propositions",
+          "1 direction choisie",
+          "2 séries d'ajustements",
+          "couleur/monochrome",
+          "fonds clair/sombre",
+          "PNG/JPG/vectoriel",
+          "favicon si pertinent."
+        ],
+        "exclusions": [
+          "Recherche disponibilité marque/INPI",
+          "impression",
+          "pistes non retenues."
+        ],
+        "savedScope": "TEST — Logo Standard pour PME Habitat Démo.",
+        "savedExclusions": "Recherche disponibilité marque/INPI\nimpression\npistes non retenues.",
+        "issues": [
+          "Rendre les expressions de travail lisibles : GBP = fiche établissement Google ; aucun résultat de référencement garanti déduit"
+        ],
+        "assessment": "Révision commerciale requise"
+      },
+      {
+        "lineId": "9112e83e-1728-407b-9386-8fa4e3b2111c",
+        "label": "SEO local",
+        "catalogVersionId": "23741b61-8b61-4944-8fb5-7809f8b9fb91",
+        "totalCents": 24900,
+        "inclusions": [
+          "Création/optimisation 1 GBP",
+          "catégories",
+          "description",
+          "services",
+          "horaires",
+          "coordonnées/zone",
+          "cohérence NAP",
+          "lien site",
+          "optimisation locale d'1 page",
+          "Title/meta",
+          "données structurées si pertinentes",
+          "avis",
+          "indexation",
+          "mini bilan."
+        ],
+        "exclusions": [
+          "Nouvelle page rédigée",
+          "gestion mensuelle",
+          "netlinking",
+          "garantie de classement."
+        ],
+        "savedScope": "TEST — SEO local pour PME Habitat Démo.",
+        "savedExclusions": "Nouvelle page rédigée\ngestion mensuelle\nnetlinking\ngarantie de classement.",
+        "issues": [
+          "Rendre les expressions de travail lisibles : GBP = fiche établissement Google ; aucun résultat de référencement garanti déduit"
+        ],
+        "assessment": "Révision commerciale requise"
+      },
+      {
+        "lineId": "6f6bafcd-21bd-4743-9978-b455738012de",
+        "label": "Maintenance WordPress annuelle",
+        "catalogVersionId": "1920474d-daea-47b1-9054-952145a9f638",
+        "totalCents": 53900,
+        "inclusions": [
+          "Même périmètre que mensuel",
+          "12 mois payés d'avance",
+          "1 mois offert."
+        ],
+        "exclusions": [
+          "Mêmes exclusions."
+        ],
+        "savedScope": "Mises à jour du site WordPress, sauvegardes et vérifications élémentaires de son bon fonctionnement.\nVérification du fonctionnement après les mises à jour.\nDeux petites interventions par mois, chacune limitée à trente minutes. Les interventions non utilisées ne sont pas reportées sur le mois suivant.\nPrise en charge des demandes couvertes sous deux jours ouvrés. Il s’agit du début du traitement, et non d’une promesse de résolution dans ce délai.\nCouverture de douze mois. Les dates de début et de fin sont renseignées dans le devis.\nPériode annuelle payée à l’avance ; le prix annuel correspond à onze mensualités pour douze mois de couverture.",
+        "savedExclusions": "Refonte du site.\nRecherche et résolution de pannes importantes sortant du suivi courant.\nInterventions urgentes en dehors des horaires de travail habituels.\nInterventions dépassant trente minutes.\nNettoyage approfondi d’un site compromis par des logiciels malveillants.",
+        "issues": [
+          "Renvoi de périmètre dans la version vendue ; proposition annuelle autonome disponible, non adoptée"
+        ],
+        "assessment": "Révision commerciale requise"
+      }
+    ],
+    "totalCents": 223100,
+    "scope": "Relecture documentaire des valeurs de la dernière campagne, sans nouvelle génération complète"
+  }
+]

@@ -184,9 +184,9 @@ describe('Lot 6 — achats optionnels explicites', () => {
 
   it('rejeu migration idempotent, anciennes lignes non requalifiées', () => {
     expect(applyPendingMigrations(db)).toEqual([]);
-    expect(MIGRATIONS.at(-1)).toMatchObject({id:71,name:'quote_contract_transmission_v1'});
+    expect(MIGRATIONS.at(-1)).toMatchObject({id:75,name:'contact_postal_address'});
     expect(MIGRATIONS.filter(m=>m.id>=67).map(m=>({id:m.id,name:m.name})))
-      .toEqual([{id:67,name:'catalog_category_registry_v1'},{id:68,name:'catalog_version_recommendations_v1'},{id:69,name:'contract_clause_section_review_v1'},{id:70,name:'catalog_recommendation_details_v1'},{id:71,name:'quote_contract_transmission_v1'}]);
+      .toEqual([{id:67,name:'catalog_category_registry_v1'},{id:68,name:'catalog_version_recommendations_v1'},{id:69,name:'contract_clause_section_review_v1'},{id:70,name:'catalog_recommendation_details_v1'},{id:71,name:'quote_contract_transmission_v1'},{id:72,name:'crm_single_source_reconciliation'},{id:73,name:'crm_initial_request_and_legacy_brief'},{id:74,name:'crm_organization_contact_links'},{id:75,name:'contact_postal_address'}]);
     expect(new Set(MIGRATIONS.map(m=>m.id)).size).toBe(MIGRATIONS.length);
     expect(db.get('SELECT name FROM schema_migrations WHERE id=?',[69]))
       .toEqual({name:'contract_clause_section_review_v1'});

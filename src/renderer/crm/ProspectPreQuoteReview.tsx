@@ -142,8 +142,6 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
         prospectId: prospect.id,
         subject,
         needSummary: summaryParts.join('\n\n') || null,
-        validityDays: 30,
-        depositPercent: 30,
         estimatedDelay: prospect.timelineStatus === 'date' && prospect.targetDate
           ? `Date cible : ${new Date(`${prospect.targetDate.slice(0, 10)}T12:00:00`).toLocaleDateString('fr-FR')}`
           : prospect.timelineNote || null,

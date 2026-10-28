@@ -20,6 +20,8 @@ Thumbs.db
 *.db-*
 *.bak
 outputs/
+/output/pdf/
+/output/
 backups/
 captures/
 screenshots/
