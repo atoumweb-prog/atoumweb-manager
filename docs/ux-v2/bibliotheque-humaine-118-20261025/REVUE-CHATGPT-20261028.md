@@ -153,3 +153,18 @@ Le responsable AtoumWeb **remplace** le choix antérieur « Lune éventuellement
 
 **En attente pour établir le tarif final :** montant du **forfait annuel Lune dédiée** vendu par AtoumWeb ; une fois ce montant validé, le prix annuel total pourra être calculé, puis renseigné dans une version brouillon du Catalogue. Aucune version publiée du Catalogue ni devis signé modifiés.
 
+
+## D09 — Tarif commercial « Hébergement isolé avec Lune dédiée » : VALIDÉ (28/10/2026)
+
+**Validation expresse du responsable AtoumWeb (« non ça me va » en réponse à la proposition 149 €/an)** :
+
+- Prix annuel total de l'hébergement isolé WordPress standard : **149 €/an**.
+- Composante **hébergement : 99 €/an**, correspondant au tarif publié de la prestation autonome `AW-TECH-HEBERG-WP`.
+- Composante **Lune dédiée : 50 €/an**, forfait commercial de mise à disposition de l'espace isolé et de sa gestion, même si une Lune ne génère aucun surcoût chez o2switch.
+- Lune obligatoire pour l'hébergement AtoumWeb **sans maintenance applicative** (nouveaux contrats ou changements acceptés) ; aucune maintenance WordPress/WooCommerce incluse dans ces 149 €/an.
+- Prix client approuvé, **non publié dans le Catalogue actif ni appliqué à un contrat existant** ; proposition de nouvelle formule `AW-TECH-HEBERG-ISO-LUNE` à créer en brouillon lors de l'intégration métier, avec contrôle des taxes/statut et du fait que `AW-TECH-HEBERG-WP` ne soit pas facturé deux fois.
+- Ne pas faire figurer 149 €/an en dur dans le texte universel des clauses : conserver la **référence au devis** et le tarif dans la fiche commerciale versionnée.
+- Modalités et éventuel coût ponctuel de **migration du site existant vers la Lune** : **à décider**. Les anciens contrats et droits de restitution restent respectés.
+
+**Réalisé** : document `OFFRES-HEBERGEMENT-LUNES-20261028.md` mis à jour avec les montants et propositions des clauses `TECH-HEBERGEMENT`, `WEB-HEBERGEMENT`, `MAINT-RENOUVELLEMENT` annotées. **Aucune publication, migration, import ou application rétroactive**.
+
