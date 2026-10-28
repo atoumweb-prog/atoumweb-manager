@@ -105,3 +105,23 @@ Recherche documentaire officielle, **non assimilable à une validation du param�
 - Une Lune reste **rattachée à l'abonnement principal** o2switch, notamment pour sa durée et sa gestion. Remettre un login de Lune n'est **pas** transférer le contrat d'hébergement du client vers son propre abonnement. En cas de départ définitif d'AtoumWeb, prévoir restitution/export ou migration sur un hébergement distinct.
 
 **Conséquence pour les clauses en projet** : nuancer D08 et `MAINT-RENOUVELLEMENT` / `WEB-HEBERGEMENT` / `TECH-HEBERGEMENT`. Ne **jamais** céder l'accès au cPanel maître comportant les autres clients ; un accès à une **Lune dédiée** est techniquement possible et peut être proposé selon les conditions acceptées. Les accès WordPress/FTP/base dédiés constituent des options restreintes si le site demeure sur un compte commun. Préserver les droits de restitution des éléments du site, le domaine, les obligations de sécurité et la possibilité d'une migration. **Le client n'a pas encore choisi la politique d'accès à inscrire au contrat** ; aucune clause finale ou version publiée modifiée sur cette recherche.
+
+## Extension des formules — hébergement sans maintenance et Lunes (28/10/2026)
+
+**Nouvelle décision utilisateur :** le client qui ne renouvelle pas sa maintenance peut rester hébergé chez AtoumWeb en payant l'hébergement au-delà de la période initialement prévue au devis et, si une Lune dédiée entraîne un coût supplémentaire, le supplément correspondant annoncé au client. AtoumWeb souhaite valoriser la **gestion de l'environnement technique d'hébergement**, indépendamment des mises à jour WordPress/WooCommerce.
+
+**Recherche officielle o2switch :** l'infrastructure relève de l'hébergeur ; AtoumWeb peut gérer les paramètres de son espace (SSL, PHP/configuration). La version PHP sélectionnée par le client/administrateur **n'est pas automatiquement changée** par les mises à jour système o2switch. La documentation annonce 4/8/16 Lunes incluses (Grow/Cloud/Pro) et 1,50 € TTC/mois par Lune supplémentaire, plafond 20. La mention utilisateur « payant à partir de 3 » est **à vérifier sur son compte**, avant de créer un tarif ou une règle de facturation. Sources :
+- https://faq.o2switch.fr/cpanel/o2switch/univers-web-sous-comptes/
+- https://faq.o2switch.fr/cpanel/logiciels/hebergement-php-multi-version/
+- https://faq.o2switch.fr/espace-client/offre/comparatif-offre-unique-o2switch/
+
+**Livrables préparés :**
+- `OFFRES-HEBERGEMENT-LUNES-20261028.md` : matrice des formules à partir du Catalogue existant, référence « Hébergement WordPress seul 99 €/an », gestion technique de l'espace d'hébergement, option Lune dédiée, exemples de devis et tâches d'intégration.
+- Propositions contractuelles révisées **sans adoption ni publication** : `TECH-HEBERGEMENT`, `WEB-HEBERGEMENT`, `MAINT-PERIMETRE`, `MAINT-RENOUVELLEMENT`. Historique conservé ; 118 versions sources publiées intactes.
+- La facturation d'une première année d'hébergement ne peut être décidée qu'en fonction de **ce que prévoit chaque devis** ; pas de gratuité automatique ajoutée.
+- L'hébergement sans maintenance laisse les composants WordPress potentiellement obsolètes : AtoumWeb ne doit pas promettre que **tout le site** reste à jour du seul fait du suivi technique.
+
+**Décisions encore nécessaires avant insertion dans le Catalogue du Manager :** prix de vente de la Lune dédiée, seuil/quota réellement disponible dans le compte o2switch, inclusion de la première année par type d'offre, fréquence du suivi technique PHP/SSL, modalités d'accès à la Lune et migration éventuelle.
+
+**Statut :** offres et clauses **rédigées dans la branche de travail**, aucune mutation des versions Catalogue publiées, des devis signés, des contrats ou des bases clients ; aucune mise en production.
+
