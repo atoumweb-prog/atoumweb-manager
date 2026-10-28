@@ -3188,7 +3188,7 @@
         "S2",
         "S8"
       ],
-      "proposal": "Lorsque votre formule comprend les sauvegardes réalisées par AtoumWeb, nous effectuons une sauvegarde par semaine et nous conservons ces sauvegardes pendant 30 jours.\n\nLes sauvegardes fournies par votre hébergeur constituent un dispositif distinct. Leur fréquence, leur conservation et leurs modalités dépendent des conditions de cet hébergeur.\n\nLe devis indique les dispositifs de sauvegarde compris dans votre formule. Le lieu de stockage de nos sauvegardes et les modalités de restauration seront précisés dans les documents de prestation applicables.",
+      "proposal": "**Sauvegardes réalisées par AtoumWeb**\n\nLorsque votre contrat de maintenance comprend les sauvegardes réalisées par AtoumWeb, nous effectuons une sauvegarde par semaine et la conservons pendant 30 jours. Ce dispositif est distinct des sauvegardes mises à disposition par l’hébergeur.\n\n**Sauvegardes de l’hébergeur**\n\nLes sauvegardes techniques proposées par l’hébergeur sont accessibles dans les limites de sa politique de sauvegarde, de leur disponibilité et de leur durée de conservation. AtoumWeb ne garantit pas qu’une version précise puisse être récupérée dans tous les cas. En cas d’hébergement isolé sans maintenance, seules ces sauvegardes techniques de l’hébergeur sont comprises dans la formule, sans engagement de sauvegardes applicatives supplémentaires par AtoumWeb.\n\n**Restauration du site**\n\nLa restauration manuelle demandée à AtoumWeb est une intervention distincte, réalisée sur devis accepté lorsqu’elle n’est pas déjà comprise dans une autre prestation ou nécessaire pour corriger un manquement imputable à AtoumWeb. La restauration dépend de l’existence et de l’intégrité des données disponibles ; son résultat ne peut pas être garanti indépendamment de ces conditions.\n\nLe devis ou les conditions de la formule précisent les dispositifs effectivement compris. Le lieu de stockage des sauvegardes AtoumWeb et les modalités techniques de restauration restent à préciser avant publication de cette clause.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 18,
@@ -3225,12 +3225,12 @@
       "proposedTitle": "Sauvegardes",
       "category": "Rédaction, avec contrôle renforcé de portée",
       "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
-      "previousEditorialProposal": "Si les sauvegardes sont incluses dans votre formule, nous mettons en place le dispositif prévu.\n\nLe devis ou la solution technique utilisée précise leur fréquence, leur durée de conservation et leur emplacement de stockage.\n\nLorsque les sauvegardes sont fournies par l’hébergeur ou un autre prestataire, les conditions de ce service s’appliquent.",
+      "previousEditorialProposal": "Lorsque votre formule comprend les sauvegardes réalisées par AtoumWeb, nous effectuons une sauvegarde par semaine et nous conservons ces sauvegardes pendant 30 jours.\n\nLes sauvegardes fournies par votre hébergeur constituent un dispositif distinct. Leur fréquence, leur conservation et leurs modalités dépendent des conditions de cet hébergeur.\n\nLe devis indique les dispositifs de sauvegarde compris dans votre formule. Le lieu de stockage de nos sauvegardes et les modalités de restauration seront précisés dans les documents de prestation applicables.",
       "editorialRevision": {
         "date": "2026-10-28",
-        "status": "proposition adaptée aux décisions métier — en attente d'approbation et de publication",
-        "scope": "inclure sauvegardes AtoumWeb hebdomadaires et conservation 30 jours, distinguer hébergeur",
-        "note": "La fréquence et la conservation des sauvegardes AtoumWeb sont validées. Les modalités du tiers, la localisation du stockage et les conditions de restauration ne sont pas définies ; ne pas inventer de SLA.",
+        "status": "proposition documentaire non approuvée et non publiée",
+        "scope": "distinguer sauvegardes AtoumWeb sous maintenance et sauvegardes hébergeur sans maintenance, restauration manuelle sur devis",
+        "note": "Fréquence AtoumWeb hebdomadaire / 30 jours issue des décisions existantes. Ne pas supposer fréquence, rétention ou disponibilité garanties chez o2switch. Lieu de stockage et modalités de restauration restent à confirmer.",
         "priorProposalRetained": true
       },
       "editorialRevisionHistory": [
