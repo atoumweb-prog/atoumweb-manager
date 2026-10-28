@@ -3129,7 +3129,7 @@
         "date": "2026-10-28",
         "status": "proposition selon choix B — en attente d’approbation et de publication",
         "scope": "hébergement isolé Lune obligatoire sans maintenance, prix total annuel fixe même si Lune fournisseur gratuite",
-        "note": "Montant hébergement seul publié 99 €/an ; forfait commercial annuel Lune et total à approuver. Contrats antérieurs inchangés.",
+        "note": "Décision tarifaire approuvée le 28 octobre 2026 : hébergement WordPress standard 99 €/an + Lune dédiée 50 €/an = offre annuelle isolée à 149 €/an. Maintenir le prix dans les offres et devis, non dans le corps de la clause générique. Conditions historiques inchangées, éventuelle migration préalable encore à arbitrer.",
         "priorProposalRetained": true
       },
       "editorialRevisionHistory": [
@@ -3162,6 +3162,11 @@
           "date": "2026-10-28",
           "priorProposal": "Le devis indique la durée de votre formule de maintenance, sa périodicité de facturation et les conditions pour y mettre fin.\n\nUne formule mensuelle se poursuit de mois en mois jusqu’à sa résiliation. Vous pouvez demander sa résiliation à tout moment, sans préavis supplémentaire. Le service prend fin à l’issue de la période mensuelle déjà payée, sans préjudice des droits légaux de résiliation anticipée ou de remboursement lorsqu’ils s’appliquent. Les formules annuelles, notamment la maintenance, l’hébergement et le domaine, sont renouvelées par accord exprès : elles ne sont pas reconduites automatiquement par défaut. Pour les formules annuelles de maintenance, nous vous adressons une proposition de renouvellement 30 jours avant l’échéance. Cette proposition ne vaut pas renouvellement : votre accord exprès est nécessaire.\n\nNous vous communiquons les conditions de poursuite et de fin du service avant votre acceptation. Les obligations légales d’information et de résiliation, notamment par voie électronique lorsqu’elle est requise, continuent de s’appliquer selon le contrat et votre situation.\n\nUn changement de formule, de périmètre ou de prix ne peut intervenir que dans les conditions valablement convenues et prévues par la loi. Le simple fait de vous informer d’un changement ne vaut pas acceptation. L’arrêt ou le non-renouvellement de la maintenance met fin aux opérations de maintenance à l’échéance concernée. Il ne met pas fin, par lui-même, à un hébergement distinct qui reste contractuellement actif et payé. Pour la poursuite de l’hébergement AtoumWeb sans maintenance applicative, la nouvelle formule prévoit obligatoirement une Lune dédiée, facturée séparément de l’hébergement après acceptation du devis. Si le site est encore sur un compte partagé, sa migration vers une Lune est organisée selon les conditions et droits applicables ; l’absence de maintenance ne permet pas de suspendre arbitrairement un hébergement déjà payé. Le suivi de l’espace d’hébergement ne comprend pas, à lui seul, les mises à jour de WordPress, des thèmes ou des extensions. Le client est informé des risques liés à l’absence de maintenance applicative et peut souscrire celle-ci séparément. Lorsque le site est hébergé sur un compte mutualisé hébergeant aussi d’autres clients, l’accès global à ce compte ou à son administration serveur n’est pas remis au client. Cette limite n’exclut pas les accès propres à son site et les modalités de récupération ou de transfert de ses éléments, qui sont organisés selon le contrat et les droits applicables. La restitution des éléments et la fin du service suivent les conditions contractuelles et légales applicables.",
           "note": "Clarification du choix B : offre annuelle totale à prix fixe, même Lune incluse chez le fournisseur."
+        },
+        {
+          "date": "2026-10-28",
+          "priorEditorialNote": "Montant hébergement seul publié 99 €/an ; forfait commercial annuel Lune et total à approuver. Contrats antérieurs inchangés.",
+          "note": "Référence commerciale à 149 €/an approuvée ; la clause générique renvoie toujours au devis pour éviter une durée de validité indue du tarif."
         }
       ]
     },
@@ -4676,13 +4681,18 @@
           "date": "2026-10-28",
           "priorProposal": "Cette clause concerne l’hébergement WordPress vendu seul, séparément d’une création de site. Nous mettons à disposition ou gérons l’environnement décrit au devis, dans les limites des services retenus. Le suivi technique de cet espace peut comprendre, selon le devis, la gestion du SSL, les réglages d’hébergement et la vérification de la version PHP configurée ainsi que de sa compatibilité. Les mises à jour de l’infrastructure du fournisseur relèvent de celui-ci. Ce suivi ne garantit pas que le logiciel WordPress, son thème ou ses extensions soient à jour.\n\nLes sauvegardes, le domaine, la messagerie, la maintenance et l’assistance sont compris uniquement s’ils sont indiqués expressément. Lorsque vous choisissez de conserver votre site en hébergement AtoumWeb sans prestation de maintenance WordPress ou WooCommerce, un espace d’hébergement séparé (« Lune » o2switch) est obligatoire pour isoler votre site des autres clients. L’hébergement annuel et la mise à disposition de cette Lune font l’objet de deux prix distincts indiqués et acceptés au devis. Cette obligation concerne les nouveaux engagements ou les changements de formule acceptés ; elle ne modifie pas un contrat déjà signé sans votre accord. Les accès au cPanel propre à la Lune sont définis au devis, tandis que les identifiants du compte maître mutualisé AtoumWeb ne sont jamais communiqués.\n\nUn engagement annuel est renouvelé par accord exprès, sans reconduction tacite annuelle par défaut. Une prestation mensuelle expressément souscrite se poursuit selon les conditions de résiliation convenues.\n\nLe devis précise une période pour récupérer, exporter ou transférer les éléments à la fin du service. Une migration ou une reconstruction complexe hors périmètre nécessite un accord complémentaire. Les données devenues inutiles sont supprimées selon les règles applicables, en distinguant les durées propres aux sauvegardes et archives à conserver.\n\nSi l’hébergement est compris dans une création de site, il relève de la clause « Hébergement et nom de domaine » associée à cette création.",
           "note": "Clarification du choix B : offre annuelle totale à prix fixe, même Lune incluse chez le fournisseur."
+        },
+        {
+          "date": "2026-10-28",
+          "priorEditorialNote": "Montant hébergement seul publié 99 €/an ; forfait commercial annuel Lune et total à approuver. Contrats antérieurs inchangés.",
+          "note": "Référence commerciale à 149 €/an approuvée ; la clause générique renvoie toujours au devis pour éviter une durée de validité indue du tarif."
         }
       ],
       "editorialRevision": {
         "date": "2026-10-28",
         "status": "proposition selon choix B — en attente d’approbation et de publication",
         "scope": "hébergement isolé Lune obligatoire sans maintenance, prix total annuel fixe même si Lune fournisseur gratuite",
-        "note": "Montant hébergement seul publié 99 €/an ; forfait commercial annuel Lune et total à approuver. Contrats antérieurs inchangés.",
+        "note": "Décision tarifaire approuvée le 28 octobre 2026 : hébergement WordPress standard 99 €/an + Lune dédiée 50 €/an = offre annuelle isolée à 149 €/an. Maintenir le prix dans les offres et devis, non dans le corps de la clause générique. Conditions historiques inchangées, éventuelle migration préalable encore à arbitrer.",
         "priorProposalRetained": true
       }
     },
@@ -4976,13 +4986,18 @@
           "date": "2026-10-28",
           "priorProposal": "Si l’hébergement ou le nom de domaine est compris dans votre prestation, le devis précise le fournisseur, les services couverts, leur durée, les coûts inclus et les conditions de poursuite.\n\nLe titulaire du domaine et les accès permettant de le gérer sont identifiés explicitement. Notre intervention technique ne nous rend pas propriétaires de votre domaine. Si vous restez hébergé chez AtoumWeb sans maintenance WordPress ou WooCommerce, votre site est placé dans une Lune dédiée : cet isolement est une condition de la nouvelle offre d’hébergement sans maintenance. Le prix de la Lune est facturé séparément de celui de l’hébergement, selon le devis accepté. Cette politique ne modifie pas rétroactivement les contrats déjà acceptés. Les droits d’accès au cPanel de la Lune sont précisés au devis ; les identifiants du compte maître mutualisé AtoumWeb ne sont jamais communiqués, afin de protéger les autres clients. La durée d’hébergement offerte lors de la création du site existe uniquement si elle est expressément prévue au devis, ainsi que son échéance.\n\nLes engagements annuels d’hébergement ou de domaine sont renouvelés par accord exprès, sans reconduction annuelle tacite par défaut. Une prestation mensuelle expressément souscrite se poursuit de mois en mois jusqu’à sa résiliation selon les conditions convenues. Les changements de prix respectent les conditions acceptées et la loi ; ils ne modifient pas automatiquement un engagement en cours.\n\nNous vous communiquons les limites utiles du fournisseur. Elles ne nous dispensent pas de nos propres obligations. Lorsque l’hébergement AtoumWeb prévoit un suivi technique de l’espace, celui-ci peut couvrir la gestion du SSL, les réglages d’hébergement et la vérification de la version PHP configurée, dans les limites convenues. L’entretien du serveur par le fournisseur et ce suivi technique ne remplacent pas les mises à jour de WordPress, des thèmes ou des extensions, qui relèvent d’une maintenance applicative distincte si elle n’est pas déjà comprise au contrat.\n\nLe devis prévoit la période permettant de récupérer, d’exporter ou de transférer les éléments à la fin du service. Une migration ou une reconstruction complexe nécessite un accord complémentaire si elle dépasse le périmètre convenu. Les données devenues inutiles sont supprimées selon les règles applicables ; les sauvegardes et archives conservées légalement ou légitimement suivent leurs durées propres.",
           "note": "Clarification du choix B : offre annuelle totale à prix fixe, même Lune incluse chez le fournisseur."
+        },
+        {
+          "date": "2026-10-28",
+          "priorEditorialNote": "Montant hébergement seul publié 99 €/an ; forfait commercial annuel Lune et total à approuver. Contrats antérieurs inchangés.",
+          "note": "Référence commerciale à 149 €/an approuvée ; la clause générique renvoie toujours au devis pour éviter une durée de validité indue du tarif."
         }
       ],
       "editorialRevision": {
         "date": "2026-10-28",
         "status": "proposition selon choix B — en attente d’approbation et de publication",
         "scope": "hébergement isolé Lune obligatoire sans maintenance, prix total annuel fixe même si Lune fournisseur gratuite",
-        "note": "Montant hébergement seul publié 99 €/an ; forfait commercial annuel Lune et total à approuver. Contrats antérieurs inchangés.",
+        "note": "Décision tarifaire approuvée le 28 octobre 2026 : hébergement WordPress standard 99 €/an + Lune dédiée 50 €/an = offre annuelle isolée à 149 €/an. Maintenir le prix dans les offres et devis, non dans le corps de la clause générique. Conditions historiques inchangées, éventuelle migration préalable encore à arbitrer.",
         "priorProposalRetained": true
       }
     },
