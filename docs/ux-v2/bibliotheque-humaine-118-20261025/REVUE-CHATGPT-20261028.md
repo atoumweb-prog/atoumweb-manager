@@ -125,3 +125,16 @@ Recherche documentaire officielle, **non assimilable à une validation du param�
 
 **Statut :** offres et clauses **rédigées dans la branche de travail**, aucune mutation des versions Catalogue publiées, des devis signés, des contrats ou des bases clients ; aucune mise en production.
 
+
+## Décision finale suivante — Lune dédiée obligatoire en hébergement sans maintenance (28/10/2026)
+
+Le responsable AtoumWeb **remplace** le choix antérieur « Lune éventuellement facturée » par une politique commerciale obligatoire : **tout client sans maintenance WordPress ou WooCommerce qui souhaite rester en hébergement AtoumWeb doit disposer d'une Lune o2switch dédiée, et payer deux prestations distinctes : hébergement + Lune**. Cette règle s'applique aux nouveaux engagements et aux changements de formule acceptés ; aucune adaptation rétroactive de devis signés ni interruption unilatérale d'un hébergement encore payé.
+
+**Tarif d'hébergement effectivement trouvé dans le Catalogue publié** (export 27/10/2026) : `AW-TECH-HEBERG-WP`, « Hébergement WordPress seul », **9 900 centimes = 99 € par an**, unité `an`, périodicité `annuelle`, services inclus : hébergement, SSL et maintien de l'espace ; exclus : maintenance WordPress, mises à jour, interventions, sauvegardes de maintenance. En cas de besoins WooCommerce / serveur particuliers, fiche commerciale prévoit un devis.
+
+**Tarif Lune client : non existant dans le Catalogue et non validé.** o2switch affiche comme **coût fournisseur** 1,50 € TTC/mois pour chaque Lune dépassant le quota gratuit, sous réserve de l'offre et des conditions. **Le tarif de vente AtoumWeb reste à arbitrer** et doit être indiqué séparément sur devis même lorsque la Lune est incluse dans le forfait o2switch. Source officielle : https://faq.o2switch.fr/cpanel/o2switch/univers-web-sous-comptes/.
+
+**Documents adaptés** : `OFFRES-HEBERGEMENT-LUNES-20261028.md`, textes proposés `TECH-HEBERGEMENT`, `WEB-HEBERGEMENT`, `MAINT-PERIMETRE`, `MAINT-RENOUVELLEMENT`. Les 118 clauses sources, versions publiées du Catalogue, contrats et devis acceptés demeurent inchangés. Le supplément Lune **n'est pas automatiquement le coût fournisseur**.
+
+**Étape suivante :** fixer le prix de la Lune facturé au client et sa périodicité, puis préparer les versions brouillon du Catalogue et le contrôle de cohérence devis, sans publication automatique.
+
