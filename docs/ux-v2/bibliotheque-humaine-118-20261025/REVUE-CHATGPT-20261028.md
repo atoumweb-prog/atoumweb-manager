@@ -56,5 +56,5 @@ Ces références étayent des points précis, sans certifier automatiquement la 
 
 **État** : règle métier approuvée, **pas** adoption globale ou publication de la clause contractuelle. La version publiée du Catalogue reste inchangée. Les fiches mensuelles `Gestion WordPress` et `Gestion WooCommerce` ne contiennent actuellement pas d'inclusions détaillées dans l'export daté du 27/10. Une future mise à jour **versionnée** des fiches commerciales sera donc nécessaire, avec contrôle de non-rétroactivité pour les devis déjà acceptés.
 
-**D02 — Sauvegardes : EN ATTENTE**. Fréquence et dispositif technique réellement fournis à préciser avant engagement dans les devis.
+**D02 — Sauvegardes AtoumWeb + hébergeur : RÈGLE VALIDÉE.** Le responsable confirme deux dispositifs distincts : les sauvegardes effectuées par AtoumWeb et celles proposées par l’hébergeur. Les sauvegardes de l’hébergeur suivent leurs propres conditions et ne se substituent pas aux sauvegardes AtoumWeb. **Fréquence et durée de conservation de chaque dispositif non encore validées.** Aucune version contractuelle publiée n’est modifiée.
 
