@@ -67,7 +67,11 @@ Conséquence rédactionnelle pour `MAINT-MAJ` : le texte proposé décrit le con
 
 **État** : décision métier validée et proposition documentaire ajustée. Aucune publication de clause, aucun changement de version Catalogue, aucun engagement rétroactif sur les contrats historiques.
 
-### D04 — Prise en charge des incidents urgents : EN ATTENTE
+### D04 — Prise en charge des incidents urgents : HORAIRES VALIDÉS
 
-À préciser : plages horaires et délais de prise en charge contractuellement proposés ; distinction entre réception, premier diagnostic, intervention et résolution ; traitement des incidents critiques de sécurité et obligations légales distinctes.
+Décision explicite du responsable AtoumWeb : **les incidents urgents sont pris en charge pendant les jours et horaires professionnels annoncés aux clients**. Aucune astreinte permanente 24 h/24 et 7 j/7 n'est convenue dans cette règle. Les horaires et jours exacts ne sont pas encore détaillés ; ils doivent être communiqués dans l'offre ou les conditions applicables.
+
+**En attente (question 6)** : délai de première prise en charge pendant ces plages ; distinguer réception, réponse initiale, diagnostic, intervention et résolution. Les obligations légales de notification des violations de données restent distinctes du service commercial.
+
+**État** : règle métier approuvée, proposition de clause ajustée ; aucune modification de version publiée ou de contrat historique.
 
