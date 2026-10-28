@@ -41,3 +41,20 @@ Ces références étayent des points précis, sans certifier automatiquement la 
 2. Examiner les clauses `WEB-*` et `ECOM-*` qui s'appliquent aux devis de création et de maintenance de sites.
 3. Ensuite seulement, améliorer le **rendu PDF client** (listes, codes internes, calendrier, titres, enchaînements), sans altérer les snapshots historiques.
 4. Tester les devis représentatifs et l'application B2B/B2C avant publication éventuelle des nouvelles versions.
+
+## Décisions métier prises avec le responsable d'AtoumWeb (28 octobre 2026)
+
+### D01 — Interventions comprises dans les formules de gestion et maintenance : VALIDÉ
+
+**Décision explicite de l'utilisateur :**
+- **Gestion / maintenance WordPress** : **2 petites interventions par mois** ; **30 minutes maximum par intervention**.
+- **Gestion / maintenance WooCommerce** : **4 petites interventions par mois** ; **30 minutes maximum par intervention**.
+- **Même règle pour la facturation mensuelle et annuelle** ; les interventions sont **non reportables** au mois suivant et **ne représentent pas une banque d'heures**.
+- Les corrections qui sont déjà dues au titre d'une garantie ou d'une obligation indépendante n'entament pas les quotas commerciaux.
+
+**Conséquence rédactionnelle** : conserver `MAINT-INTERVENTIONS` comme clause générique renvoyant au **quota exact inscrit au devis**, plutôt que de mentionner obligatoirement 2 ou 4 interventions dans toutes les prestations. Les conditions commerciales doivent reprendre les limites de 30 minutes et la non-reportabilité, y compris dans les formules annuelles.
+
+**État** : règle métier approuvée, **pas** adoption globale ou publication de la clause contractuelle. La version publiée du Catalogue reste inchangée. Les fiches mensuelles `Gestion WordPress` et `Gestion WooCommerce` ne contiennent actuellement pas d'inclusions détaillées dans l'export daté du 27/10. Une future mise à jour **versionnée** des fiches commerciales sera donc nécessaire, avec contrôle de non-rétroactivité pour les devis déjà acceptés.
+
+**D02 — Sauvegardes : EN ATTENTE**. Fréquence et dispositif technique réellement fournis à préciser avant engagement dans les devis.
+
