@@ -138,3 +138,18 @@ Le responsable AtoumWeb **remplace** le choix antérieur « Lune éventuellement
 
 **Étape suivante :** fixer le prix de la Lune facturé au client et sa périodicité, puis préparer les versions brouillon du Catalogue et le contrôle de cohérence devis, sans publication automatique.
 
+
+## Décision B — Formule d’hébergement isolé à prix fixe (28/10/2026)
+
+**Réponse explicite du responsable : « B. Créer une véritable option commerciale Hébergement isolé avec Lune dédiée, à tarif fixe, même lorsqu'une Lune est comprise dans l'abonnement o2switch ».**
+
+- Maintenir la règle de la **Lune obligatoire** dans tout nouvel hébergement AtoumWeb **sans maintenance WordPress/WooCommerce**.
+- Proposer un **tarif annuel total fixe au client**, identifiable en deux composantes : **hébergement WordPress seul 99 €/an** (tarif déjà publié dans `AW-TECH-HEBERG-WP`) **+ forfait commercial de mise à disposition/gestion de la Lune dédiée**. Son montant n'a pas été communiqué ; ne pas l'inventer.
+- La facturation commerciale de la Lune **ne dépend pas** du fait qu'o2switch l'offre dans le quota de l'abonnement AtoumWeb ou facture une Lune supplémentaire.
+- Libellé de nouvelle formule à préparer pour le Catalogue : **Hébergement isolé avec Lune dédiée** (`AW-TECH-HEBERG-ISO-LUNE`, code proposé seulement, pas d'enregistrement publié). Préserver les éventuelles particularités d'hébergement WooCommerce et de ressources au devis.
+- **Contrats déjà acceptés** : aucun supplément, basculement, ou arrêt d'hébergement automatique ; nouvelle offre/avenant acceptés avant tout changement, avec détail d'une éventuelle migration.
+- Les propositions `TECH-HEBERGEMENT`, `WEB-HEBERGEMENT`, `MAINT-RENOUVELLEMENT` sont ajustées à cette règle et conservent la source publiée.
+- Le suivi technique de l'hébergement (SSL, réglages disponibles, PHP selon l'offre) **ne comprend pas** les mises à jour de WordPress, du thème, ni des plugins. Risques d'obsolescence applicative à expliquer.
+
+**En attente pour établir le tarif final :** montant du **forfait annuel Lune dédiée** vendu par AtoumWeb ; une fois ce montant validé, le prix annuel total pourra être calculé, puis renseigné dans une version brouillon du Catalogue. Aucune version publiée du Catalogue ni devis signé modifiés.
+
