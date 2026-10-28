@@ -8,6 +8,12 @@
 
 **À décider avant publication et implémentation : prix de vente et périodicité de la Lune, comptage exact sur l'abonnement o2switch, rédaction définitive des offres, recette des devis.**
 
+## 28/10/2026 — Décision B : hébergement isolé avec Lune dédiée à prix fixe (non publié)
+
+**Décision explicite du responsable** : tout nouveau client sans maintenance applicative qui reste hébergé chez AtoumWeb doit être placé dans une Lune o2switch dédiée ; la **formule commerciale à prix total annuel fixe** « Hébergement isolé avec Lune dédiée » sera vendue **même lorsque la Lune est comprise dans le quota fournisseur**. **Tarif déjà publié** pour la base `AW-TECH-HEBERG-WP` : **99 €/an**. **Forfait commercial Lune annuelle et prix total de la formule : pas encore chiffrés**. Distinguer les composantes au devis, éviter double facturation ; besoin WooCommerce complexe sur devis. Aucun contrat signé ne peut être changé unilatéralement.
+
+Travail effectué sur la **PR #159 en brouillon** : mise à jour de `OFFRES-HEBERGEMENT-LUNES-20261028.md`, propositions `TECH-HEBERGEMENT`, `WEB-HEBERGEMENT`, `MAINT-RENOUVELLEMENT`, journal `REVUE-CHATGPT-20261028.md`. Préparation du code de nouvelle formule non persisté `AW-TECH-HEBERG-ISO-LUNE`. 118 clauses proposées, originaux et décisions de publication intacts ; **aucun import, changement dans le Catalogue actif, migration client ni application de tarif**. Étape suivante : fixer le **forfait annuel Lune** puis créer/valider les nouvelles versions brouillon du Catalogue et les scénarios de devis.
+
 ## 28/10/2026 — Hébergement AtoumWeb, suivi technique et Lunes : projet de formules non publié
 
 Décision utilisateur : permettre l'hébergement chez AtoumWeb **sans maintenance WordPress/WooCommerce**, avec paiement de l'hébergement à l'issue de toute première année **explicitement incluse au devis**, et supplément éventuel pour une Lune isolée. Valoriser la gestion technique de l'espace (SSL, paramètres d'hébergement, évaluation de la version PHP) sans promettre les mises à jour applicatives ; l'infrastructure o2switch est gérée par le fournisseur. Ne jamais donner l'accès au cPanel maître. Vérification doc officielle o2switch : Grow 4 Lunes incluses, Cloud 8, Pro 16, supplément fournisseur 1,50 € TTC/mois au-delà ; la mention « payantes à partir de 3 » doit être confrontée au quota réel du compte.
