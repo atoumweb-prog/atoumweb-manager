@@ -534,7 +534,7 @@
       "sources": [
         "S8"
       ],
-      "proposal": "Chacun de nous protège les informations non publiques reçues pour la mission et les utilise uniquement pour la réaliser. Seules les personnes qui en ont besoin peuvent y accéder, avec une obligation de confidentialité adaptée.\n\nCette protection ne couvre pas les informations devenues publiques sans faute, obtenues légalement auprès d’un tiers ou dont la communication est imposée par la loi.\n\nSelon le dossier, nous précisons les modalités nécessaires pour restituer, supprimer ou conserver ces informations.",
+      "proposal": "Nous protégeons les informations non publiques que vous nous communiquez pour votre projet. De votre côté, vous protégez celles que nous vous confions. Chacun s’engage à utiliser ces informations uniquement pour réaliser la prestation.\n\nSeules les personnes qui en ont besoin peuvent y accéder et doivent respecter une obligation de confidentialité adaptée.\n\nCette obligation ne concerne pas les informations devenues publiques sans faute, obtenues légitimement auprès d’un tiers ou dont la communication est imposée par la loi.\n\nSelon la nature du projet, nous précisons les modalités nécessaires pour restituer, supprimer ou conserver ces informations.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 2,
@@ -570,7 +570,15 @@
       "importantChanges": "Termes abstraits : obligation appropriée, modalités nécessaires.",
       "proposedTitle": "Confidentialité",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Chacun de nous protège les informations non publiques reçues pour la mission et les utilise uniquement pour la réaliser. Seules les personnes qui en ont besoin peuvent y accéder, avec une obligation de confidentialité adaptée.\n\nCette protection ne couvre pas les informations devenues publiques sans faute, obtenues légalement auprès d’un tiers ou dont la communication est imposée par la loi.\n\nSelon le dossier, nous précisons les modalités nécessaires pour restituer, supprimer ou conserver ces informations.",
+      "editorialRevision": {
+        "date": "2026-10-28",
+        "status": "proposition révisée — en attente de validation humaine",
+        "scope": "clarification rédactionnelle uniquement",
+        "note": "Reformulation réciproque nous/vous, aucune modification des exceptions ou de la restitution.",
+        "priorProposalRetained": true
+      }
     },
     {
       "code": "BASE-COOPERATION",
@@ -724,7 +732,7 @@
       "sources": [
         "S4"
       ],
-      "proposal": "Si un événement répondant aux conditions légales de la force majeure empêche l’un de nous de remplir une obligation, la partie concernée en informe l’autre et précise les conséquences connues.\n\nSi l’empêchement est temporaire, l’obligation concernée est suspendue dans les conditions prévues par la loi. Si l’empêchement se prolonge ou devient définitif, ses conséquences sur la fin du contrat sont traitées selon les règles applicables.\n\nUne panne ou la défaillance d’un prestataire extérieur ne constitue pas, à elle seule, un cas de force majeure.",
+      "proposal": "Si un événement répondant aux conditions légales de la force majeure empêche l’un de nous d’exécuter une obligation, la partie concernée en informe l’autre et précise les conséquences connues.\n\nSi l’empêchement est temporaire, l’exécution de l’obligation concernée est suspendue selon les règles légales, sauf si le retard qui en résulte justifie la fin du contrat. Si l’empêchement est définitif, le contrat prend fin de plein droit dans les conditions prévues par la loi.\n\nUne panne ou la défaillance d’un prestataire extérieur ne constitue pas automatiquement un cas de force majeure.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 6,
@@ -760,7 +768,15 @@
       "importantChanges": "Durable ou définitif ne décrit pas précisément un empêchement temporaire prolongé.",
       "proposedTitle": "Force majeure",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Si un événement répondant aux conditions légales de la force majeure empêche l’un de nous de remplir une obligation, la partie concernée en informe l’autre et précise les conséquences connues.\n\nSi l’empêchement est temporaire, l’obligation concernée est suspendue dans les conditions prévues par la loi. Si l’empêchement se prolonge ou devient définitif, ses conséquences sur la fin du contrat sont traitées selon les règles applicables.\n\nUne panne ou la défaillance d’un prestataire extérieur ne constitue pas, à elle seule, un cas de force majeure.",
+      "editorialRevision": {
+        "date": "2026-10-28",
+        "status": "proposition révisée — en attente de validation humaine",
+        "scope": "clarification rédactionnelle uniquement",
+        "note": "Précision du traitement de l'empêchement temporaire/définitif selon l'article 1218 du Code civil ; revue juridique finale nécessaire.",
+        "priorProposalRetained": true
+      }
     },
     {
       "code": "BASE-OBJET",
@@ -2882,7 +2898,7 @@
         "S3",
         "S10"
       ],
-      "proposal": "Le devis précise le nombre de petites interventions comprises par mois dans la formule. Elles font partie de l’abonnement global, avec les opérations de maintenance, de mise à jour, de sauvegarde et de suivi prévues ; elles ne constituent pas une réserve d’heures.\n\nLes interventions non utilisées pendant un mois ne sont pas reportées au mois suivant. Une demande qui dépasse le nombre d’interventions ou le périmètre convenu est chiffrée et acceptée avant sa réalisation.\n\nLes travaux que nous devons déjà au titre d’une garantie ou d’une obligation distincte ne sont pas déduits de ces interventions. L’absence de report ne supprime ni vos droits en cas de manquement qui nous est imputable ni les droits que la loi vous accorde.",
+      "proposal": "Le devis précise le nombre de petites interventions comprises chaque mois dans votre formule, y compris lorsque cette formule est facturée à l’année. Ces interventions font partie de l’abonnement, avec les opérations de maintenance, de mise à jour, de sauvegarde et de suivi effectivement prévues. Elles ne constituent pas une réserve d’heures à utiliser librement.\n\nLes interventions non utilisées pendant un mois ne sont pas reportées au mois suivant. Si une demande dépasse le nombre d’interventions ou le périmètre convenu, nous vous présentons son coût et recueillons votre accord avant de la réaliser.\n\nLes travaux que nous devons déjà effectuer au titre d’une garantie ou d’une autre obligation ne sont pas décomptés de ces interventions. L’absence de report ne supprime ni vos droits en cas de manquement qui nous est imputable ni vos droits légaux.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 19,
@@ -2918,7 +2934,15 @@
       "importantChanges": "Quota mensuel non reportable, même si facturation annuelle ; différent d’un pack de temps consommable.",
       "proposedTitle": "Nombre d’interventions ou temps inclus",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Le devis précise le nombre de petites interventions comprises par mois dans la formule. Elles font partie de l’abonnement global, avec les opérations de maintenance, de mise à jour, de sauvegarde et de suivi prévues ; elles ne constituent pas une réserve d’heures.\n\nLes interventions non utilisées pendant un mois ne sont pas reportées au mois suivant. Une demande qui dépasse le nombre d’interventions ou le périmètre convenu est chiffrée et acceptée avant sa réalisation.\n\nLes travaux que nous devons déjà au titre d’une garantie ou d’une obligation distincte ne sont pas déduits de ces interventions. L’absence de report ne supprime ni vos droits en cas de manquement qui nous est imputable ni les droits que la loi vous accorde.",
+      "editorialRevision": {
+        "date": "2026-10-28",
+        "status": "proposition révisée — en attente de validation humaine",
+        "scope": "clarification rédactionnelle uniquement",
+        "note": "Clarification du quota mensuel même en facturation annuelle ; aucune réserve d'heures créée ; contrôler la fréquence des interventions effectivement vendues.",
+        "priorProposalRetained": true
+      }
     },
     {
       "code": "MAINT-MAJ",
@@ -2930,7 +2954,7 @@
         "S14",
         "S10"
       ],
-      "proposal": "Nous réalisons les mises à jour comprises dans votre prestation.\n\nLorsqu’une mise à jour présente un risque identifié de perturber le fonctionnement du site, de rendre certains éléments incompatibles ou de provoquer une indisponibilité, nous pouvons la reporter le temps d’évaluer une solution adaptée. Nous vous informons du report, du risque connu et des mesures temporaires ou suites proposées.\n\nCe report ne supprime pas les obligations de sécurité ou de mise à jour qui restent applicables. Une adaptation qui dépasse les travaux déjà dus peut faire l’objet d’un accord complémentaire avant sa réalisation. En revanche, une non-conformité qui nous est imputable ou un correctif légalement dû ne devient pas un supplément facturable du seul fait qu’un composant tiers intervient.",
+      "proposal": "Nous réalisons les mises à jour comprises dans votre prestation.\n\nSi une mise à jour présente un risque identifié de dysfonctionnement, d’incompatibilité ou d’indisponibilité, nous pouvons la reporter le temps d’évaluer une solution adaptée. Nous vous informons alors du report, du risque connu et des mesures temporaires ou suites proposées.\n\nCe report ne nous dispense pas des obligations de sécurité et de mise à jour qui restent applicables.\n\nUne adaptation dépassant les travaux déjà dus peut faire l’objet d’un accord complémentaire avant sa réalisation. En revanche, une correction qui nous incombe ou qui est légalement due ne peut pas être facturée en supplément au seul motif qu’un composant tiers est concerné.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 17,
@@ -2969,7 +2993,15 @@
       "importantChanges": "Jargon et réserves imbriquées ; report technique potentiellement pris pour une dispense.",
       "proposedTitle": "Mises à jour",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Nous réalisons les mises à jour comprises dans votre prestation.\n\nLorsqu’une mise à jour présente un risque identifié de perturber le fonctionnement du site, de rendre certains éléments incompatibles ou de provoquer une indisponibilité, nous pouvons la reporter le temps d’évaluer une solution adaptée. Nous vous informons du report, du risque connu et des mesures temporaires ou suites proposées.\n\nCe report ne supprime pas les obligations de sécurité ou de mise à jour qui restent applicables. Une adaptation qui dépasse les travaux déjà dus peut faire l’objet d’un accord complémentaire avant sa réalisation. En revanche, une non-conformité qui nous est imputable ou un correctif légalement dû ne devient pas un supplément facturable du seul fait qu’un composant tiers intervient.",
+      "editorialRevision": {
+        "date": "2026-10-28",
+        "status": "proposition révisée — en attente de validation humaine",
+        "scope": "clarification rédactionnelle uniquement",
+        "note": "Phrases raccourcies et report distingué des obligations de sécurité/correction ; pas de délai inventé.",
+        "priorProposalRetained": true
+      }
     },
     {
       "code": "MAINT-PERIMETRE",
@@ -2981,7 +3013,7 @@
         "S10",
         "S14"
       ],
-      "proposal": "La maintenance comprend les opérations prévues dans la formule que vous avez choisie et décrites au devis.\n\nNous distinguons les opérations préventives, les interventions comprises dans la formule, les travaux hors forfait et les évolutions ou refontes qui nécessitent un devis distinct.\n\nUne demande entre dans la formule lorsqu’elle correspond au périmètre souscrit. Cette limite ne supprime pas les corrections, garanties ou mises à jour que nous devons déjà fournir au titre du contrat ou de la loi.",
+      "proposal": "La maintenance couvre uniquement les opérations prévues dans la formule que vous avez choisie et décrites dans votre devis.\n\nLe devis distingue les opérations préventives, les interventions comprises dans la formule, les travaux hors forfait et les évolutions ou refontes nécessitant un devis distinct. Une demande est comprise dans la formule lorsqu’elle correspond au périmètre convenu.\n\nCes limites ne suppriment pas les corrections, garanties ou mises à jour que nous devons déjà fournir au titre du contrat ou de la loi.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 16,
@@ -3017,7 +3049,15 @@
       "importantChanges": "Périmètre actif et intervention commerciale peu parlants.",
       "proposedTitle": "Périmètre de maintenance",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "La maintenance comprend les opérations prévues dans la formule que vous avez choisie et décrites au devis.\n\nNous distinguons les opérations préventives, les interventions comprises dans la formule, les travaux hors forfait et les évolutions ou refontes qui nécessitent un devis distinct.\n\nUne demande entre dans la formule lorsqu’elle correspond au périmètre souscrit. Cette limite ne supprime pas les corrections, garanties ou mises à jour que nous devons déjà fournir au titre du contrat ou de la loi.",
+      "editorialRevision": {
+        "date": "2026-10-28",
+        "status": "proposition révisée — en attente de validation humaine",
+        "scope": "clarification rédactionnelle uniquement",
+        "note": "Rédaction simple sans points-virgules et sans nouvelle inclusion.",
+        "priorProposalRetained": true
+      }
     },
     {
       "code": "MAINT-RENOUVELLEMENT",
@@ -3028,7 +3068,7 @@
       "sources": [
         "S15"
       ],
-      "proposal": "Le devis précise la durée de votre formule, sa périodicité de facturation et ses conditions de résiliation.\n\nUn abonnement mensuel se poursuit de mois en mois jusqu’à sa résiliation selon les conditions convenues. Les offres annuelles, notamment la maintenance annuelle, l’hébergement et le domaine, sont renouvelées par accord exprès : elles ne sont pas reconduites tacitement par défaut.\n\nNous vous communiquons les conditions de poursuite et de fin du service avant votre acceptation. Les obligations légales d’information et de résiliation, notamment par voie électronique lorsqu’elle est requise, restent applicables selon le contrat et la catégorie de client.\n\nUn changement de formule, de périmètre ou de prix ne s’applique que dans les conditions valablement convenues et dans le respect de la loi. Le simple envoi d’une information ne suffit pas à autoriser toute modification. La restitution et la fin du service suivent les conditions contractuelles et légales applicables.",
+      "proposal": "Le devis indique la durée de votre formule de maintenance, sa périodicité de facturation et les conditions pour y mettre fin.\n\nUne formule mensuelle se poursuit de mois en mois jusqu’à sa résiliation, selon les conditions convenues. Les formules annuelles, notamment la maintenance, l’hébergement et le domaine, sont renouvelées par accord exprès : elles ne sont pas reconduites automatiquement par défaut.\n\nNous vous communiquons les conditions de poursuite et de fin du service avant votre acceptation. Les obligations légales d’information et de résiliation, notamment par voie électronique lorsqu’elle est requise, continuent de s’appliquer selon le contrat et votre situation.\n\nUn changement de formule, de périmètre ou de prix ne peut intervenir que dans les conditions valablement convenues et prévues par la loi. Le simple fait de vous informer d’un changement ne vaut pas acceptation. La restitution des éléments et la fin du service suivent les conditions contractuelles et légales applicables.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 21,
@@ -3064,7 +3104,15 @@
       "importantChanges": "Ne pas remplacer l’accord exprès annuel par une reconduction tacite ; distinguer mensuel et annuel.",
       "proposedTitle": "Durée et renouvellement",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Le devis précise la durée de votre formule, sa périodicité de facturation et ses conditions de résiliation.\n\nUn abonnement mensuel se poursuit de mois en mois jusqu’à sa résiliation selon les conditions convenues. Les offres annuelles, notamment la maintenance annuelle, l’hébergement et le domaine, sont renouvelées par accord exprès : elles ne sont pas reconduites tacitement par défaut.\n\nNous vous communiquons les conditions de poursuite et de fin du service avant votre acceptation. Les obligations légales d’information et de résiliation, notamment par voie électronique lorsqu’elle est requise, restent applicables selon le contrat et la catégorie de client.\n\nUn changement de formule, de périmètre ou de prix ne s’applique que dans les conditions valablement convenues et dans le respect de la loi. Le simple envoi d’une information ne suffit pas à autoriser toute modification. La restitution et la fin du service suivent les conditions contractuelles et légales applicables.",
+      "editorialRevision": {
+        "date": "2026-10-28",
+        "status": "proposition révisée — en attente de validation humaine",
+        "scope": "clarification rédactionnelle uniquement",
+        "note": "Mensuel vs annuel mieux distingués ; renouvellement annuel exprès conservé ; contrôler le parcours de résiliation.",
+        "priorProposalRetained": true
+      }
     },
     {
       "code": "MAINT-SAUVEGARDE",
@@ -3076,7 +3124,7 @@
         "S2",
         "S8"
       ],
-      "proposal": "Si les sauvegardes sont incluses dans votre formule, nous mettons en place le dispositif prévu.\n\nLe devis ou la solution technique utilisée précise leur fréquence, leur durée de conservation et leur emplacement de stockage.\n\nLorsque les sauvegardes sont fournies par l’hébergeur ou un autre prestataire, les conditions de ce service s’appliquent.",
+      "proposal": "Si votre formule comprend des sauvegardes, nous mettons en œuvre le dispositif qui y est prévu.\n\nLe devis ou les caractéristiques de la solution technique utilisée précisent leur fréquence, leur durée de conservation et leur support de stockage.\n\nLorsque les sauvegardes sont assurées par l’hébergeur ou un autre prestataire, les conditions de ce service s’appliquent.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 18,
@@ -3112,7 +3160,15 @@
       "importantChanges": "Support technique ; fréquence/durée absentes du devis ; conditions de l’hébergeur non précisées.",
       "proposedTitle": "Sauvegardes",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Si les sauvegardes sont incluses dans votre formule, nous mettons en place le dispositif prévu.\n\nLe devis ou la solution technique utilisée précise leur fréquence, leur durée de conservation et leur emplacement de stockage.\n\nLorsque les sauvegardes sont fournies par l’hébergeur ou un autre prestataire, les conditions de ce service s’appliquent.",
+      "editorialRevision": {
+        "date": "2026-10-28",
+        "status": "proposition révisée — en attente de validation humaine",
+        "scope": "clarification rédactionnelle uniquement",
+        "note": "Clarification du support, fréquence et conservation sans valeurs inventées ; vérifier l'annexe du prestataire.",
+        "priorProposalRetained": true
+      }
     },
     {
       "code": "MAINT-URGENCE",
@@ -3124,7 +3180,7 @@
         "S8",
         "S3"
       ],
-      "proposal": "Nous traitons les demandes urgentes selon les modalités et les horaires de prise en charge prévus dans votre offre. Nous ne garantissons pas un délai d’intervention plus court que celui convenu.\n\nAvec les informations disponibles, le diagnostic précise la cause de l’incident et ce qui relève de notre prise en charge. Seuls les travaux qui dépassent les interventions déjà dues peuvent faire l’objet d’un complément soumis à votre accord.\n\nUn piratage ou un incident venant d’un service extérieur ne nous dégage pas automatiquement d’une faute qui nous est imputable. Les obligations légales de traitement et de notification d’une violation de données restent distinctes des horaires d’intervention prévus commercialement.",
+      "proposal": "Nous prenons en charge les demandes urgentes selon les modalités et les plages horaires prévues dans votre offre. Nous ne garantissons pas un délai d’intervention plus court que celui qui a été convenu.\n\nÀ partir des informations disponibles, le diagnostic précise la cause de l’incident et les actions relevant de notre prise en charge. Seuls les travaux dépassant nos obligations déjà convenues peuvent donner lieu à un complément soumis à votre accord avant leur réalisation.\n\nUn piratage ou un incident provenant d’un service extérieur ne nous dégage pas automatiquement d’une faute qui nous est imputable. Les obligations légales relatives au traitement et à la notification des violations de données personnelles restent distinctes des horaires d’intervention prévus commercialement.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 20,
@@ -3160,7 +3216,15 @@
       "importantChanges": "Plages commerciales et origine extérieure ; prise en charge et résolution à distinguer.",
       "proposedTitle": "Incident urgent",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Nous traitons les demandes urgentes selon les modalités et les horaires de prise en charge prévus dans votre offre. Nous ne garantissons pas un délai d’intervention plus court que celui convenu.\n\nAvec les informations disponibles, le diagnostic précise la cause de l’incident et ce qui relève de notre prise en charge. Seuls les travaux qui dépassent les interventions déjà dues peuvent faire l’objet d’un complément soumis à votre accord.\n\nUn piratage ou un incident venant d’un service extérieur ne nous dégage pas automatiquement d’une faute qui nous est imputable. Les obligations légales de traitement et de notification d’une violation de données restent distinctes des horaires d’intervention prévus commercialement.",
+      "editorialRevision": {
+        "date": "2026-10-28",
+        "status": "proposition révisée — en attente de validation humaine",
+        "scope": "clarification rédactionnelle uniquement",
+        "note": "Prise en charge, diagnostic et complément séparés ; vérifier les engagements précis et la procédure RGPD.",
+        "priorProposalRetained": true
+      }
     },
     {
       "code": "MAINT-WOOCOMMERCE",
@@ -3172,7 +3236,7 @@
         "S10",
         "S14"
       ],
-      "proposal": "La maintenance de votre boutique WooCommerce porte sur les opérations décrites au devis, pour la boutique, son outil de vente en ligne et les extensions expressément identifiées.\n\nElle ne comprend pas la gestion quotidienne des produits, des stocks, des commandes, des remboursements ou du service client, sauf prestation distincte.\n\nSi une mise à jour présente un risque identifié pour la boutique ou pour une connexion technique importante, nous pouvons la reporter le temps d’évaluer une solution adaptée. Nous vous en informons lorsque ce report est nécessaire.\n\nLes travaux qui dépassent nos obligations déjà dues peuvent faire l’objet d’un complément accepté avant leur réalisation. Une difficulté venant d’un tiers ne supprime pas les garanties, obligations de sécurité, corrections ou mises à jour qui nous incombent.",
+      "proposal": "La maintenance de votre boutique WooCommerce couvre uniquement les opérations prévues au devis, concernant la boutique, son outil de vente en ligne et les extensions expressément identifiées.\n\nElle ne comprend pas la gestion quotidienne des produits, des stocks, des commandes, des remboursements ou du service client, sauf si une prestation distincte a été convenue.\n\nSi une mise à jour présente un risque identifié pour la boutique ou une connexion technique importante, nous pouvons la reporter le temps d’évaluer une solution adaptée. Nous vous informons lorsque ce report est nécessaire.\n\nLes travaux qui dépassent nos obligations déjà dues peuvent faire l’objet d’un complément accepté avant leur réalisation. Une difficulté provenant d’un tiers ne supprime ni nos garanties, ni nos obligations de sécurité, ni les corrections ou mises à jour qui nous incombent.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 22,
@@ -3211,7 +3275,15 @@
       "importantChanges": "WooCommerce à expliquer ; réserves répétées sur les mises à jour.",
       "proposedTitle": "Périmètre spécifique WooCommerce",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "La maintenance de votre boutique WooCommerce porte sur les opérations décrites au devis, pour la boutique, son outil de vente en ligne et les extensions expressément identifiées.\n\nElle ne comprend pas la gestion quotidienne des produits, des stocks, des commandes, des remboursements ou du service client, sauf prestation distincte.\n\nSi une mise à jour présente un risque identifié pour la boutique ou pour une connexion technique importante, nous pouvons la reporter le temps d’évaluer une solution adaptée. Nous vous en informons lorsque ce report est nécessaire.\n\nLes travaux qui dépassent nos obligations déjà dues peuvent faire l’objet d’un complément accepté avant leur réalisation. Une difficulté venant d’un tiers ne supprime pas les garanties, obligations de sécurité, corrections ou mises à jour qui nous incombent.",
+      "editorialRevision": {
+        "date": "2026-10-28",
+        "status": "proposition révisée — en attente de validation humaine",
+        "scope": "clarification rédactionnelle uniquement",
+        "note": "Liste des exclusions expliquée sans jargon ni suppression des obligations envers le client.",
+        "priorProposalRetained": true
+      }
     },
     {
       "code": "MARIAGE-CONTENUS",
