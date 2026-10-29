@@ -2898,7 +2898,7 @@
         "S3",
         "S10"
       ],
-      "proposal": "Le devis précise le nombre de petites interventions comprises chaque mois dans votre formule, y compris lorsque cette formule est facturée à l’année. Ces interventions font partie de l’abonnement, avec les opérations de maintenance, de mise à jour, de sauvegarde et de suivi effectivement prévues. Elles ne constituent pas une réserve d’heures à utiliser librement.\n\nLes interventions non utilisées pendant un mois ne sont pas reportées au mois suivant. Si une demande dépasse le nombre d’interventions ou le périmètre convenu, nous vous présentons son coût et recueillons votre accord avant de la réaliser.\n\nLes travaux que nous devons déjà effectuer au titre d’une garantie ou d’une autre obligation ne sont pas décomptés de ces interventions. L’absence de report ne supprime ni vos droits en cas de manquement qui nous est imputable ni vos droits légaux.",
+      "proposal": "Votre formule de maintenance comprend le nombre d’interventions mineures indiqué au devis : deux par mois pour la gestion WordPress à 49 € mensuels ou quatre par mois pour la gestion WooCommerce à 99 € mensuels. Chaque intervention mineure est limitée à 30 minutes. Si vous avez choisi une facturation annuelle, ce quota reste mensuel et ne devient pas un crédit annuel d’heures.\n\nLes interventions non utilisées pendant un mois ne sont ni cumulables ni reportables. Elles ne constituent pas une réserve d’heures. Les opérations préventives, mises à jour et sauvegardes déjà comprises dans votre formule ne consomment pas ces interventions, sauf disposition expresse contraire acceptée dans votre devis.\n\nUne demande dépassant le quota, les 30 minutes par intervention ou le périmètre convenu fait l’objet d’une évaluation. Nous vous proposons, selon le besoin, un devis complémentaire, une prestation de remise en état ou un forfait d’heures du catalogue. Aucun travail supplémentaire payant n’est engagé sans votre accord préalable.\n\nLes corrections que nous devons déjà effectuer au titre d’une garantie, de notre responsabilité ou d’une obligation légale ou contractuelle ne sont pas décomptées du quota commercial. Cette règle de non-report ne limite pas vos droits en cas de manquement imputable à AtoumWeb.\n\nLes délais de prise en charge éventuels et la qualification d’une demande urgente sont définis dans les conditions de maintenance applicables ; le quota d’interventions ne constitue pas une garantie de résolution dans un délai déterminé.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 19,
@@ -2935,13 +2935,12 @@
       "proposedTitle": "Nombre d’interventions ou temps inclus",
       "category": "Rédaction, avec contrôle renforcé de portée",
       "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
-      "previousEditorialProposal": "Le devis précise le nombre de petites interventions comprises par mois dans la formule. Elles font partie de l’abonnement global, avec les opérations de maintenance, de mise à jour, de sauvegarde et de suivi prévues ; elles ne constituent pas une réserve d’heures.\n\nLes interventions non utilisées pendant un mois ne sont pas reportées au mois suivant. Une demande qui dépasse le nombre d’interventions ou le périmètre convenu est chiffrée et acceptée avant sa réalisation.\n\nLes travaux que nous devons déjà au titre d’une garantie ou d’une obligation distincte ne sont pas déduits de ces interventions. L’absence de report ne supprime ni vos droits en cas de manquement qui nous est imputable ni les droits que la loi vous accorde.",
+      "previousEditorialProposal": "Le devis précise le nombre de petites interventions comprises chaque mois dans votre formule, y compris lorsque cette formule est facturée à l’année. Ces interventions font partie de l’abonnement, avec les opérations de maintenance, de mise à jour, de sauvegarde et de suivi effectivement prévues. Elles ne constituent pas une réserve d’heures à utiliser librement.\n\nLes interventions non utilisées pendant un mois ne sont pas reportées au mois suivant. Si une demande dépasse le nombre d’interventions ou le périmètre convenu, nous vous présentons son coût et recueillons votre accord avant de la réaliser.\n\nLes travaux que nous devons déjà effectuer au titre d’une garantie ou d’une autre obligation ne sont pas décomptés de ces interventions. L’absence de report ne supprime ni vos droits en cas de manquement qui nous est imputable ni vos droits légaux.",
       "editorialRevision": {
-        "date": "2026-10-28",
-        "status": "proposition révisée — en attente de validation humaine",
-        "scope": "clarification rédactionnelle uniquement",
-        "note": "Clarification du quota mensuel même en facturation annuelle ; aucune réserve d'heures créée ; contrôler la fréquence des interventions effectivement vendues.",
-        "priorProposalRetained": true
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "quotas mensuels 2/4, limite 30 min, non-report, dépassement via catalogue existant",
+        "note": "Même quota mensuel en facturation annuelle ; préventif hors quota et corrections dues non décomptées. Pas de nouveau service ni de tarif inventé. Vérifier cohérence du devis."
       }
     },
     {
