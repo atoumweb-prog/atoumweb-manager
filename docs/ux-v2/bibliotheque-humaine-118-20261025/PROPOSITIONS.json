@@ -1612,7 +1612,7 @@
       "sources": [
         "S18"
       ],
-      "proposal": "Si vous êtes consommateur et souhaitez signaler une difficulté, vous pouvez d'abord nous adresser une réclamation écrite aux coordonnées suivantes : [CONTACT RÉCLAMATION ATOUMWEB À RENSEIGNER].\n\nSi cette démarche ne permet pas de résoudre le différend, vous pouvez saisir gratuitement, sous réserve des conditions légales de recevabilité, le médiateur de la consommation dont relève AtoumWeb :\n\n[NOM DU MÉDIATEUR — À RENSEIGNER]\n[ADRESSE — À RENSEIGNER]\n[SITE INTERNET — À RENSEIGNER]\n\nCette possibilité de médiation ne vous prive pas de votre droit de saisir une juridiction compétente. Les coordonnées du médiateur effectivement désigné doivent être communiquées dans les documents et supports où la loi l'exige.",
+      "proposal": "Si vous êtes un particulier qui commande une prestation pour ses besoins personnels, sans lien avec une activité professionnelle, vous avez la qualité de consommateur. En cas de difficulté, vous pouvez d'abord adresser une réclamation écrite à AtoumWeb : [CONTACT RÉCLAMATION ATOUMWEB À RENSEIGNER].\n\nSi cette démarche ne permet pas de résoudre le différend, vous pouvez saisir gratuitement, sous réserve des conditions légales de recevabilité, le médiateur de la consommation dont relève AtoumWeb :\n\n[NOM DU MÉDIATEUR — À RENSEIGNER]\n[ADRESSE — À RENSEIGNER]\n[SITE INTERNET — À RENSEIGNER]\n\nCette possibilité ne vous empêche pas de saisir un tribunal compétent. Elle ne concerne pas les prestations commandées pour les besoins d'une activité professionnelle, qui relèvent des dispositions contractuelles applicables aux professionnels.\n\nLes coordonnées du médiateur effectivement désigné doivent être communiquées sur les supports requis par la loi.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1644,12 +1644,12 @@
       "proposedTitle": "Médiation de la consommation",
       "category": "Rédaction, avec contrôle renforcé de portée",
       "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
-      "previousEditorialProposal": "Si vous êtes consommateur, vous pouvez nous adresser une réclamation écrite à : [CONTACT RÉCLAMATION ATOUMWEB À RENSEIGNER].\n\nSi notre tentative de résolution directe n’aboutit pas, vous pouvez saisir gratuitement le médiateur de la consommation dont nous relevons, sous réserve des conditions légales de recevabilité : [NOM DU MÉDIATEUR], [ADRESSE], [SITE INTERNET].\n\nCette démarche ne vous empêche pas de saisir le tribunal compétent.",
+      "previousEditorialProposal": "Si vous êtes consommateur et souhaitez signaler une difficulté, vous pouvez d'abord nous adresser une réclamation écrite aux coordonnées suivantes : [CONTACT RÉCLAMATION ATOUMWEB À RENSEIGNER].\n\nSi cette démarche ne permet pas de résoudre le différend, vous pouvez saisir gratuitement, sous réserve des conditions légales de recevabilité, le médiateur de la consommation dont relève AtoumWeb :\n\n[NOM DU MÉDIATEUR — À RENSEIGNER]\n[ADRESSE — À RENSEIGNER]\n[SITE INTERNET — À RENSEIGNER]\n\nCette possibilité de médiation ne vous prive pas de votre droit de saisir une juridiction compétente. Les coordonnées du médiateur effectivement désigné doivent être communiquées dans les documents et supports où la loi l'exige.",
       "editorialRevision": {
         "date": "2026-10-29",
-        "status": "proposition documentaire non approuvée et non publiée",
-        "scope": "révision contractuelle B2C / B2B, formulation naturelle, préservation des règles existantes",
-        "note": "BLOCAGE DE PUBLICATION : désigner un médiateur réellement référencé/compétent et renseigner nom, adresse, site, contact réclamation ; aucun organisme fictif."
+        "status": "proposition documentaire B2C non approuvée ni publiée",
+        "scope": "médiation de la consommation uniquement pour les particuliers agissant hors activité professionnelle",
+        "note": "Le client valide une application exclusivement B2C. Le champ sourceAudience reste consumer. Avant publication : adhésion à médiateur compétent, coordonnées réelles, vérifier sélection automatique B2C/B2B du moteur de devis."
       }
     },
     {
