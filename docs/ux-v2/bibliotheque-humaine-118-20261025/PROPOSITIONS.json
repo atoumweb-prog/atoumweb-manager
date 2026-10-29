@@ -487,7 +487,7 @@
       "sources": [
         "S1"
       ],
-      "proposal": "Dans ces conditions, « nous » désigne AtoumWeb et « vous » le client identifié au devis.\n\nLe contrat est conclu lorsque vous acceptez le devis pendant sa période de validité, ainsi que les conditions que nous vous avons communiquées. Le devis précise comment recueillir votre acceptation ; nous en conservons la preuve.\n\nAprès acceptation, toute modification des prestations ou des conditions nécessite notre accord commun, formalisé dans un avenant ou un devis complémentaire. La version acceptée reste la référence pour les engagements déjà conclus.",
+      "proposal": "Dans ces conditions, « nous » désigne AtoumWeb et « vous » le client identifié dans le devis.\n\nVotre contrat est conclu lorsque vous acceptez le devis pendant sa période de validité et les conditions contractuelles qui vous ont été communiquées avant votre accord. Le devis indique la manière de confirmer votre acceptation, dont nous conservons une preuve.\n\nUne fois le contrat conclu, nous ne modifions pas unilatéralement les prestations, leur prix ou les conditions convenues. Tout changement nécessite l’accord des deux parties, formalisé par un avenant ou un devis complémentaire accepté. Les documents et versions acceptés restent la référence pour votre commande.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 1,
@@ -523,7 +523,14 @@
       "importantChanges": "Style impersonnel ; formulation des versions peu concrète.",
       "proposedTitle": "Formation du contrat",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Dans ces conditions, « nous » désigne AtoumWeb et « vous » le client identifié au devis.\n\nLe contrat est conclu lorsque vous acceptez le devis pendant sa période de validité, ainsi que les conditions que nous vous avons communiquées. Le devis précise comment recueillir votre acceptation ; nous en conservons la preuve.\n\nAprès acceptation, toute modification des prestations ou des conditions nécessite notre accord commun, formalisé dans un avenant ou un devis complémentaire. La version acceptée reste la référence pour les engagements déjà conclus.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "rédaction simple des conditions communes, sans changement des droits ni du périmètre",
+        "note": "Version proposée conforme à la logique de la clause d'origine, à relire dans les contrats complets."
+      }
     },
     {
       "code": "BASE-CONFIDENTIALITE",
@@ -589,7 +596,7 @@
         "S2",
         "S3"
       ],
-      "proposal": "Vous nous fournissez les informations, contenus, accès et validations nécessaires aux prestations convenues. Vous désignez une personne autorisée à prendre les décisions pour votre projet, vérifiez les éléments transmis et nous signalez les contraintes connues.\n\nSi un élément nécessaire manque ou arrive en retard, nous vous expliquons ses conséquences sur la réalisation et proposons un calendrier adapté.\n\nUne demande qui change le périmètre du devis doit faire l’objet d’un accord complémentaire.",
+      "proposal": "Pour nous permettre de réaliser votre projet, vous nous communiquez les informations, contenus et accès nécessaires et vous nous transmettez vos validations aux étapes prévues. Vous désignez également une personne autorisée à prendre les décisions concernant la prestation.\n\nVous vérifiez l’exactitude des éléments transmis et nous signalez les contraintes dont vous avez connaissance, notamment celles qui peuvent affecter les délais ou le fonctionnement du projet.\n\nSi un élément indispensable manque ou arrive tardivement, nous vous expliquons quelles tâches sont concernées et les conséquences prévisibles sur le planning. Nous examinons avec vous les adaptations nécessaires, sans reporter automatiquement l’ensemble de nos engagements.\n\nUne demande qui modifie les prestations initialement convenues fait l’objet d’une proposition complémentaire acceptée avant réalisation. Cette organisation ne limite pas les obligations et garanties qui restent à notre charge.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 3,
@@ -625,7 +632,14 @@
       "importantChanges": "Interlocuteur habilité et procédure d’accord complémentaire peu accessibles ; recoupement avec WEB-CONTENUS.",
       "proposedTitle": "Obligations et coopération du client",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Vous nous fournissez les informations, contenus, accès et validations nécessaires aux prestations convenues. Vous désignez une personne autorisée à prendre les décisions pour votre projet, vérifiez les éléments transmis et nous signalez les contraintes connues.\n\nSi un élément nécessaire manque ou arrive en retard, nous vous expliquons ses conséquences sur la réalisation et proposons un calendrier adapté.\n\nUne demande qui change le périmètre du devis doit faire l’objet d’un accord complémentaire.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "rédaction simple des conditions communes, sans changement des droits ni du périmètre",
+        "note": "Version proposée conforme à la logique de la clause d'origine, à relire dans les contrats complets."
+      }
     },
     {
       "code": "BASE-DELAIS",
@@ -637,7 +651,7 @@
         "S2",
         "S3"
       ],
-      "proposal": "Le devis précise le calendrier, les conditions de démarrage et les dates ou délais d’exécution convenus.\n\nSi vous êtes un consommateur, nous vous communiquons une date ou un délai d’exécution avant votre acceptation. Une estimation simplement indicative ne remplace pas cette information. Les conditions de démarrage ne peuvent laisser l’exécution sans échéance déterminable ni écarter vos recours légaux.\n\nLorsqu’une information manquante, une validation attendue ou un service extérieur affecte le calendrier, nous vous en informons. Nous discutons avec vous des conséquences et du nouveau planning. Ces difficultés ne suppriment pas automatiquement nos engagements ni les droits prévus par la loi.",
+      "proposal": "Votre devis indique les conditions de démarrage du projet ainsi que la date ou le délai de réalisation convenu. Lorsque vous êtes un consommateur, cette information vous est communiquée avant votre acceptation : une simple indication approximative ne remplace pas la date ou le délai requis.\n\nCertaines étapes peuvent nécessiter la réception de contenus, une validation de votre part ou l’intervention d’un service extérieur. Si l’un de ces éléments risque d’affecter le calendrier, nous vous en informons en précisant les tâches concernées et les conséquences prévisibles.\n\nNous examinons ensemble les éventuelles adaptations du planning en tenant compte des causes réelles du retard et des obligations de chacun. Une difficulté ou une condition de démarrage ne peut pas laisser la prestation sans échéance déterminable ni supprimer vos droits légaux en cas de retard.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 4,
@@ -673,7 +687,14 @@
       "importantChanges": "Phrases longues ; dépendance extérieure et règles impératives ; calendrier du dossier incomplet.",
       "proposedTitle": "Délais et planning",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Le devis précise le calendrier, les conditions de démarrage et les dates ou délais d’exécution convenus.\n\nSi vous êtes un consommateur, nous vous communiquons une date ou un délai d’exécution avant votre acceptation. Une estimation simplement indicative ne remplace pas cette information. Les conditions de démarrage ne peuvent laisser l’exécution sans échéance déterminable ni écarter vos recours légaux.\n\nLorsqu’une information manquante, une validation attendue ou un service extérieur affecte le calendrier, nous vous en informons. Nous discutons avec vous des conséquences et du nouveau planning. Ces difficultés ne suppriment pas automatiquement nos engagements ni les droits prévus par la loi.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "rédaction simple des conditions communes, sans changement des droits ni du périmètre",
+        "note": "Vérifier les dates/délais d'exécution renseignés pour les consommateurs."
+      }
     },
     {
       "code": "BASE-DONNEES",
@@ -684,7 +705,7 @@
       "sources": [
         "S8"
       ],
-      "proposal": "Nous utilisons les accès et les données confiés uniquement dans le cadre autorisé et pour les besoins de la prestation.\n\nNous précisons ensemble le rôle de chacun, les instructions à suivre, les mesures de sécurité, les personnes autorisées à accéder aux données, leur durée de conservation et les modalités nécessaires de restitution ou de suppression.\n\nSi nous traitons des données personnelles pour votre compte, les conditions de ce traitement doivent être établies conformément au RGPD avant son commencement. Cette clause générale ne remplace ni cet accord spécifique ni les informations à fournir aux personnes concernées.",
+      "proposal": "Pour exécuter votre prestation, nous utilisons les données et les accès que vous nous confiez uniquement dans les limites de l’autorisation reçue et pour les besoins du projet. Nous limitons leur utilisation aux personnes qui doivent effectivement intervenir.\n\nSelon la nature de la mission, nous précisons ensemble qui décide des usages des données, qui intervient pour le compte de l’autre, les instructions à respecter, les mesures de sécurité nécessaires et les conditions d’accès, de conservation, de restitution ou de suppression.\n\nLorsque nous traitons des données personnelles pour votre compte, cet accompagnement doit être encadré par les dispositions requises par le RGPD avant le début du traitement. Cette clause générale ne remplace pas l’accord adapté à votre projet ni les informations qui doivent être fournies aux personnes concernées.\n\nChaque partie conserve les obligations que la réglementation lui impose dans son propre rôle.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 5,
@@ -720,7 +741,14 @@
       "importantChanges": "Accumulation technique ; simple renvoi au RGPD insuffisant pour un dossier réel.",
       "proposedTitle": "Données et accès",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Nous utilisons les accès et les données confiés uniquement dans le cadre autorisé et pour les besoins de la prestation.\n\nNous précisons ensemble le rôle de chacun, les instructions à suivre, les mesures de sécurité, les personnes autorisées à accéder aux données, leur durée de conservation et les modalités nécessaires de restitution ou de suppression.\n\nSi nous traitons des données personnelles pour votre compte, les conditions de ce traitement doivent être établies conformément au RGPD avant son commencement. Cette clause générale ne remplace ni cet accord spécifique ni les informations à fournir aux personnes concernées.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "rédaction simple des conditions communes, sans changement des droits ni du périmètre",
+        "note": "Encadrement RGPD de sous-traitance à établir dans les dossiers concernés."
+      }
     },
     {
       "code": "BASE-FORCE-MAJEURE",
@@ -785,7 +813,7 @@
       "sources": [
         "S1"
       ],
-      "proposal": "Votre devis accepté, ses conditions particulières, les clauses qui l’accompagnent et les annexes expressément citées forment le contrat. Celui-ci porte sur les prestations et livrables qui y sont décrits.\n\nSi deux dispositions se contredisent, les conditions particulières priment sur les clauses propres aux prestations, qui priment elles-mêmes sur les conditions générales communes. Les règles légales auxquelles il n’est pas possible de déroger restent applicables.",
+      "proposal": "Votre contrat comprend le devis que vous avez accepté, ses éventuelles conditions particulières, les clauses applicables à la prestation et les annexes expressément mentionnées qui vous ont été communiquées. Il définit les services et les livrables qu’AtoumWeb s’engage à fournir.\n\nSi deux dispositions contractuelles sont contradictoires, nous appliquons d’abord les conditions particulières de votre devis, puis les clauses propres à la prestation concernée et enfin les conditions générales communes.\n\nCette organisation ne permet pas d’écarter les règles légales auxquelles il n’est pas possible de déroger. Une prestation ou une option supplémentaire ne fait partie du contrat que si elle a été convenue.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 7,
@@ -821,7 +849,14 @@
       "importantChanges": "Bonne substance ; place tardive ; hiérarchie abstraite.",
       "proposedTitle": "Objet et champ d'application",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Votre devis accepté, ses conditions particulières, les clauses qui l’accompagnent et les annexes expressément citées forment le contrat. Celui-ci porte sur les prestations et livrables qui y sont décrits.\n\nSi deux dispositions se contredisent, les conditions particulières priment sur les clauses propres aux prestations, qui priment elles-mêmes sur les conditions générales communes. Les règles légales auxquelles il n’est pas possible de déroger restent applicables.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "rédaction simple des conditions communes, sans changement des droits ni du périmètre",
+        "note": "Version proposée conforme à la logique de la clause d'origine, à relire dans les contrats complets."
+      }
     },
     {
       "code": "BASE-PAIEMENT",
