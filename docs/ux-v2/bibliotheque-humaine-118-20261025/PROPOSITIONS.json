@@ -4917,7 +4917,7 @@
       "sources": [
         "S8"
       ],
-      "proposal": "Nous réalisons le formulaire, les règles et les traitements expressément décrits au devis.\n\nVous validez les données demandées, leur finalité, leurs destinataires et les informations présentées aux utilisateurs.\n\nLe stockage, les automatisations et les connexions externes sont limités au périmètre convenu.",
+      "proposal": "Nous créons et configurons votre formulaire selon les fonctionnalités décrites dans le devis : champs à remplir, conditions d’affichage, messages de confirmation et traitements des réponses prévus pour votre projet.\n\nVous nous indiquez quelles informations doivent être demandées aux utilisateurs, pourquoi elles sont nécessaires, à qui les réponses seront destinées et quelles informations doivent être affichées au moment de leur collecte. Nous vous présentons le fonctionnement prévu afin que vous puissiez le vérifier avant la mise en ligne.\n\nL’enregistrement des réponses, leur durée de conservation technique, les notifications, les automatisations et les connexions à des services extérieurs ne sont compris que lorsqu’ils sont expressément prévus au devis. Toute fonctionnalité supplémentaire est proposée et chiffrée avant sa réalisation.\n\nLa mise en place technique d’un formulaire ne garantit pas, à elle seule, la conformité de votre activité aux règles de protection des données personnelles. Les responsabilités respectives concernant les données collectées, les mentions à fournir, leur conservation et les éventuelles instructions de traitement doivent être précisées selon le fonctionnement réel du projet et les obligations applicables. Cette clause ne réduit pas les obligations légales qui incombent à AtoumWeb dans son propre rôle.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4948,7 +4948,14 @@
       "importantChanges": "Traitements et stockage abstraits.",
       "proposedTitle": "Formulaire avancé et traitement des données",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous réalisons le formulaire, les règles et les traitements expressément décrits au devis.\n\nVous validez les données demandées, leur finalité, leurs destinataires et les informations présentées aux utilisateurs.\n\nLe stockage, les automatisations et les connexions externes sont limités au périmètre convenu.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "formulaires avancés, validation du périmètre et des finalités, stockage et automatisations, responsabilités données personnelles",
+        "note": "N'attribue pas automatiquement tous les rôles RGPD au client ; modalités et durées de conservation à préciser au devis ou accord adapté. Aucune fonctionnalité ni conformité intégrale promise."
+      }
     },
     {
       "code": "WEB-HEBERGEMENT",
