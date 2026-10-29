@@ -868,7 +868,7 @@
         "S5",
         "S6"
       ],
-      "proposal": "Le devis précise le montant, la nature et les échéances des paiements, ainsi que les moyens de règlement.\n\nNous prévoyons par défaut un acompte, expressément indiqué au devis. Un autre régime doit être convenu explicitement. Si vous êtes un consommateur et qu’aucune disposition contraire n’est prévue, les sommes versées d’avance sont des arrhes : vous pouvez renoncer à la commande en les perdant ; si nous renonçons, nous vous en restituons le double, sous réserve des règles légales applicables.\n\nSi le démarrage dépend de l’encaissement d’un paiement, cette condition doit être précisée. Elle ne nous autorise pas à percevoir une somme lorsque la loi l’interdit, notamment pour certains contrats conclus hors établissement.\n\nLes paiements intermédiaires et le solde sont dus aux échéances convenues. Toute modification de l’échéancier nécessite notre accord commun. Les droits de rétractation, de remboursement et les autres droits légaux restent applicables.",
+      "proposal": "Votre devis précise le prix de la prestation, les montants à régler, les échéances et les moyens de paiement acceptés. Il indique également la nature de toute somme demandée avant la fin des travaux.\n\nPour ses prestations, AtoumWeb prévoit normalement un premier règlement qualifié expressément d’**acompte** dans le devis. Si un autre régime est retenu, il doit être indiqué et accepté clairement. Pour un client consommateur, lorsque rien d’autre n’a été convenu, les sommes versées d’avance sont considérées comme des **arrhes** : le client peut renoncer à la commande en perdant cette somme et le professionnel peut y renoncer en remboursant le double, dans les conditions prévues par la loi.\n\nSi le début des travaux dépend de la réception d’un paiement, cette condition doit figurer au devis. Elle ne permet pas de demander ni d’encaisser une somme pendant une période où la loi l’interdit, notamment dans certains contrats conclus hors établissement.\n\nLes paiements intermédiaires et le solde suivent l’échéancier accepté. Toute modification de cet échéancier nécessite notre accord commun. Les droits légaux de rétractation, de remboursement et les autres protections applicables restent pleinement préservés.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 8,
@@ -908,7 +908,14 @@
       "importantChanges": "Rendre cohérents acompte par défaut, choix exprès et régime des arrhes applicable ; aucune règle d’encaissement ne doit neutraliser une interdiction légale.",
       "proposedTitle": "Modalités générales de paiement",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Le devis précise le montant, la nature et les échéances des paiements, ainsi que les moyens de règlement.\n\nNous prévoyons par défaut un acompte, expressément indiqué au devis. Un autre régime doit être convenu explicitement. Si vous êtes un consommateur et qu’aucune disposition contraire n’est prévue, les sommes versées d’avance sont des arrhes : vous pouvez renoncer à la commande en les perdant ; si nous renonçons, nous vous en restituons le double, sous réserve des règles légales applicables.\n\nSi le démarrage dépend de l’encaissement d’un paiement, cette condition doit être précisée. Elle ne nous autorise pas à percevoir une somme lorsque la loi l’interdit, notamment pour certains contrats conclus hors établissement.\n\nLes paiements intermédiaires et le solde sont dus aux échéances convenues. Toute modification de l’échéancier nécessite notre accord commun. Les droits de rétractation, de remboursement et les autres droits légaux restent applicables.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "clarification des dispositions communes sans élargir les engagements",
+        "note": "Vérifier cohérence des mentions acompte/arrhes sur tous devis et restrictions de paiement hors établissement."
+      }
     },
     {
       "code": "BASE-PI",
@@ -919,7 +926,7 @@
       "sources": [
         "S7"
       ],
-      "proposal": "Les créations réalisées pour vous sont distinguées de nos outils, méthodes et composants réutilisables, ainsi que des ressources appartenant à des tiers.\n\nPour les développements spécifiques, nous prévoyons une licence suffisamment large et durable pour vous permettre d’utiliser, d’exploiter, de maintenir et de faire modifier le livrable. Une exclusivité ou une cession particulière nécessite un accord exprès.\n\nLe devis ou son annexe précise les droits convenus : usages autorisés, supports, territoire, durée et conditions de prise d’effet. Les créations graphiques et les photographies suivent les droits prévus dans leurs clauses spécifiques.\n\nRecevoir un fichier ne signifie pas acquérir tous les droits sur celui-ci. Les ressources tierces restent soumises à leurs licences. Vous devez disposer des autorisations nécessaires pour les contenus que vous fournissez.",
+      "proposal": "Les créations réalisées pour votre projet sont distinctes de nos méthodes de travail, de nos outils et des composants que nous utilisons également pour d’autres clients. Certains éléments de votre projet peuvent aussi dépendre de ressources ou de licences appartenant à des éditeurs tiers.\n\nPour les développements conçus spécialement pour vous, nous prévoyons des droits d’utilisation adaptés afin que vous puissiez exploiter, entretenir et faire évoluer le livrable dans les conditions convenues. Le devis ou son annexe précise les usages autorisés, les supports concernés, le territoire, la durée et la date de prise d’effet de ces droits.\n\nUne exclusivité ou un transfert particulier de droits ne s’applique que s’il est expressément convenu. Les créations graphiques et les photographies suivent les conditions spécifiques prévues pour ces prestations. La remise d’un fichier ne signifie donc pas, à elle seule, que tous les droits de propriété intellectuelle vous sont cédés.\n\nLes thèmes, extensions, polices, images et autres ressources provenant de tiers restent soumis à leurs propres licences. Vous vous assurez de disposer des droits nécessaires sur les contenus que vous nous fournissez. Les droits et obligations impératifs prévus par la loi restent applicables.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 9,
@@ -955,7 +962,14 @@
       "importantChanges": "Large et pérenne imprécis sans paramètres ; logiciels, graphisme et tiers mélangés.",
       "proposedTitle": "Propriété intellectuelle et droits d'utilisation",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Les créations réalisées pour vous sont distinguées de nos outils, méthodes et composants réutilisables, ainsi que des ressources appartenant à des tiers.\n\nPour les développements spécifiques, nous prévoyons une licence suffisamment large et durable pour vous permettre d’utiliser, d’exploiter, de maintenir et de faire modifier le livrable. Une exclusivité ou une cession particulière nécessite un accord exprès.\n\nLe devis ou son annexe précise les droits convenus : usages autorisés, supports, territoire, durée et conditions de prise d’effet. Les créations graphiques et les photographies suivent les droits prévus dans leurs clauses spécifiques.\n\nRecevoir un fichier ne signifie pas acquérir tous les droits sur celui-ci. Les ressources tierces restent soumises à leurs licences. Vous devez disposer des autorisations nécessaires pour les contenus que vous fournissez.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "clarification des dispositions communes sans élargir les engagements",
+        "note": "Vérifier termes de licence/cession dans chaque devis; absence d'exclusivité ou de transfert tacite."
+      }
     },
     {
       "code": "BASE-PRIX",
@@ -966,7 +980,7 @@
       "sources": [
         "S1"
       ],
-      "proposal": "Les prix et les prestations sont ceux du devis accepté. Les taxes sont présentées selon le régime fiscal applicable.\n\nAvant d’engager un travail ou un coût extérieur non compris dans le devis, nous vous en informons et demandons votre accord.\n\nUne nouvelle demande ne modifie pas, à elle seule, le prix de la prestation déjà convenue.",
+      "proposal": "Le prix et les prestations compris dans votre commande sont ceux du devis que vous avez accepté. La présentation des taxes respecte le régime fiscal applicable à AtoumWeb et à l’opération concernée.\n\nSi vous souhaitez ajouter une prestation ou si un coût extérieur non prévu devient nécessaire, nous vous expliquons ce qu’il couvre et son prix avant de vous demander votre accord. Aucun travail supplémentaire payant n’est engagé sur la seule base d’une nouvelle demande ou sans accord sur ses conditions.\n\nUne évolution du projet ne modifie pas automatiquement le prix des prestations déjà convenues. Les corrections et obligations qui nous incombent déjà restent comprises dans notre engagement.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 10,
@@ -1002,7 +1016,14 @@
       "importantChanges": "Texte déjà clair ; formulations encore impersonnelles.",
       "proposedTitle": "Prix et périmètre",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Les prix et les prestations sont ceux du devis accepté. Les taxes sont présentées selon le régime fiscal applicable.\n\nAvant d’engager un travail ou un coût extérieur non compris dans le devis, nous vous en informons et demandons votre accord.\n\nUne nouvelle demande ne modifie pas, à elle seule, le prix de la prestation déjà convenue.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "clarification des dispositions communes sans élargir les engagements",
+        "note": "Droits contractuels et légaux conservés. Relecture globale nécessaire."
+      }
     },
     {
       "code": "BASE-RESPONSABILITE",
@@ -1014,7 +1035,7 @@
         "S9",
         "S3"
       ],
-      "proposal": "Chacun de nous répond des obligations qui lui reviennent pour les prestations convenues. Nous vous signalons les risques ou blocages dont nous avons connaissance.\n\nLe recours à un prestataire extérieur ne nous dispense pas de nos propres obligations d’intégration ou d’intervention. Les clauses concernées précisent les responsabilités relatives aux contenus, aux accès, aux sauvegardes et à l’environnement technique.\n\nAucune disposition du contrat ne supprime une responsabilité ou une garantie que la loi impose.",
+      "proposal": "Nous nous engageons chacun à respecter les obligations prévues pour notre rôle dans le projet. De notre côté, nous vous informons des risques et des obstacles connus susceptibles d’affecter la réalisation de la prestation.\n\nLorsque le projet dépend d’un hébergeur, d’un éditeur de logiciel ou d’un autre fournisseur, nous tenons compte des limites de ce service sans nous dégager automatiquement de nos propres obligations de configuration, d’intégration ou d’intervention.\n\nLes responsabilités concernant les contenus fournis, les accès techniques, les sauvegardes et les environnements utilisés sont détaillées dans les clauses adaptées à votre prestation.\n\nAucune disposition de notre contrat ne peut écarter une responsabilité, une garantie ou un droit que la loi rend obligatoire.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 11,
@@ -1050,7 +1071,14 @@
       "importantChanges": "Réserves répétées dans plusieurs modules ; suppression globale risquée.",
       "proposedTitle": "Responsabilités générales",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Chacun de nous répond des obligations qui lui reviennent pour les prestations convenues. Nous vous signalons les risques ou blocages dont nous avons connaissance.\n\nLe recours à un prestataire extérieur ne nous dispense pas de nos propres obligations d’intégration ou d’intervention. Les clauses concernées précisent les responsabilités relatives aux contenus, aux accès, aux sauvegardes et à l’environnement technique.\n\nAucune disposition du contrat ne supprime une responsabilité ou une garantie que la loi impose.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "clarification des dispositions communes sans élargir les engagements",
+        "note": "Droits contractuels et légaux conservés. Relecture globale nécessaire."
+      }
     },
     {
       "code": "BASE-VALIDATION",
@@ -1062,7 +1090,7 @@
         "S3",
         "S10"
       ],
-      "proposal": "Vous vérifiez les livrables par rapport au devis et nous transmettez vos demandes de correction selon les modalités de vérification prévues.\n\nUn écart au périmètre convenu est examiné comme une anomalie. Une nouvelle fonction, un livrable supplémentaire ou un changement de règle est une évolution à convenir séparément. Votre validation est conservée par écrit ; votre silence ne vaut pas automatiquement acceptation.\n\nLes cycles de correction prévus commercialement sont distincts des reprises nécessaires pour corriger une non-conformité qui nous est imputable. Ces reprises ne sont pas comptées comme des demandes nouvelles ou des cycles supplémentaires.\n\nVotre validation ne supprime pas vos recours ni les responsabilités et garanties applicables, notamment lorsqu’une non-conformité concerne une exigence légale ou une qualité normalement attendue. Le délai prévu pour vérifier le livrable ne raccourcit pas un délai de recours légal.",
+      "proposal": "À chaque étape de validation prévue au devis, nous vous présentons le travail réalisé afin que vous puissiez vérifier qu’il correspond aux prestations convenues. Vous nous transmettez vos observations et demandes de correction selon les modalités de relecture indiquées.\n\nLorsqu’un élément ne correspond pas à ce qui était prévu, nous examinons la correction nécessaire. En revanche, l’ajout d’une nouvelle fonctionnalité, d’un nouveau livrable ou d’un changement important du projet constitue une demande complémentaire à définir et à accepter séparément.\n\nVotre validation est exprimée clairement et conservée par écrit. Votre absence de réponse ne vaut pas automatiquement acceptation.\n\nLes étapes de relecture et de correction prévues commercialement ne limitent pas notre obligation de remédier aux défauts qui nous sont imputables. Ces reprises ne sont pas comptabilisées comme des demandes supplémentaires.\n\nLa validation d’un livrable ne supprime ni vos recours ni les garanties prévues par la loi ou le contrat. Le temps prévu pour relire le travail ne raccourcit pas les délais légaux pour faire valoir vos droits.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 12,
@@ -1098,7 +1126,14 @@
       "importantChanges": "Recette et cycles commerciaux peu accessibles ; texte long mais protecteur.",
       "proposedTitle": "Validation des livrables",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Vous vérifiez les livrables par rapport au devis et nous transmettez vos demandes de correction selon les modalités de vérification prévues.\n\nUn écart au périmètre convenu est examiné comme une anomalie. Une nouvelle fonction, un livrable supplémentaire ou un changement de règle est une évolution à convenir séparément. Votre validation est conservée par écrit ; votre silence ne vaut pas automatiquement acceptation.\n\nLes cycles de correction prévus commercialement sont distincts des reprises nécessaires pour corriger une non-conformité qui nous est imputable. Ces reprises ne sont pas comptées comme des demandes nouvelles ou des cycles supplémentaires.\n\nVotre validation ne supprime pas vos recours ni les responsabilités et garanties applicables, notamment lorsqu’une non-conformité concerne une exigence légale ou une qualité normalement attendue. Le délai prévu pour vérifier le livrable ne raccourcit pas un délai de recours légal.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "clarification des dispositions communes sans élargir les engagements",
+        "note": "Aligné avec WEB-AR et WEB-VALIDATION ; remplacer partout le jargon allers-retours."
+      }
     },
     {
       "code": "BLOG-DONNEES",
