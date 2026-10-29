@@ -14,7 +14,7 @@
       "sources": [
         "S1"
       ],
-      "proposal": "Le cadrage est une prestation à part entière. Nous décrivons dans un document fonctionnel vos besoins, les utilisateurs, les processus de travail, les fonctions, les données, les droits d’accès, les contraintes et les connexions envisagées avec d’autres outils.\n\nCe document permet de préciser le périmètre et les choix nécessaires à un futur développement. Sauf engagement exprès dans le devis, sa remise ne nous engage pas à développer l’application et ne valide pas automatiquement un budget ou un calendrier de développement.",
+      "proposal": "Le cadrage constitue une prestation à part entière. Il permet de comprendre votre besoin et de le décrire clairement avant d’envisager le développement d’une application ou d’un outil métier.\n\nNous préparons le document fonctionnel prévu au devis. Il présente notamment les utilisateurs concernés, leurs tâches, les fonctionnalités attendues, les données nécessaires, les droits d’accès, les contraintes connues et les échanges envisagés avec d’autres outils. Ce document sert de base aux choix à effectuer pour la suite du projet.\n\nLa remise du cadrage ne signifie pas automatiquement qu’AtoumWeb est engagé pour réaliser l’application. Sauf accord exprès au devis, elle ne fixe pas non plus le prix ni le calendrier d’un développement ultérieur. Celui-ci fait l’objet d’une proposition distincte avant tout engagement.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -45,7 +45,14 @@
       "importantChanges": "Formaliser, exploitable et réalisation ultérieure peu concrets.",
       "proposedTitle": "Cadrage fonctionnel et livrable de cadrage",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Le cadrage est une prestation à part entière. Nous décrivons dans un document fonctionnel vos besoins, les utilisateurs, les processus de travail, les fonctions, les données, les droits d’accès, les contraintes et les connexions envisagées avec d’autres outils.\n\nCe document permet de préciser le périmètre et les choix nécessaires à un futur développement. Sauf engagement exprès dans le devis, sa remise ne nous engage pas à développer l’application et ne valide pas automatiquement un budget ou un calendrier de développement.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "clarification des engagements pour applications et outils métier, sans prix ni délais inventés",
+        "note": "Cadrage autonome, sans promesse de développement ni devis final automatique."
+      }
     },
     {
       "code": "APP-COMPATIBILITE",
@@ -58,7 +65,7 @@
         "S10",
         "S14"
       ],
-      "proposal": "Le devis ou une annexe remise avant votre acceptation précise les environnements et versions pris en charge : logiciels, systèmes, navigateurs, outils d’exécution, bases de données et connexions à des services externes. La documentation de livraison reprend ce cadre, dans lequel nous vérifions l’application.\n\nNous ne garantissons pas une compatibilité illimitée avec toutes les versions futures, les configurations non prévues, les services abandonnés ou les changements ultérieurs des outils externes.\n\nUne adaptation qui dépasse nos engagements peut relever d’une maintenance ou d’une évolution acceptée. Les corrections et mises à jour légalement dues restent applicables.",
+      "proposal": "Votre application est conçue pour les appareils, systèmes, logiciels, navigateurs, bases de données et services extérieurs précisés dans votre devis ou dans une annexe communiquée avant votre accord. Lors de la livraison, nous indiquons ces environnements pris en charge et effectuons les vérifications prévues dans ce cadre.\n\nNous ne pouvons pas garantir qu’elle fonctionnera sans adaptation avec toutes les configurations possibles, les versions logicielles futures ou les services extérieurs qui seraient ensuite modifiés ou arrêtés.\n\nSi un nouvel environnement ou une évolution d’un service nécessite des travaux non compris dans nos engagements, nous pouvons vous proposer une prestation de maintenance ou d’évolution, après votre accord. Cette limite ne supprime pas notre obligation de corriger les défauts qui nous sont imputables, ni les garanties et mises à jour légalement dues.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -89,7 +96,14 @@
       "importantChanges": "Matrice, runtimes et dépendances à expliquer.",
       "proposedTitle": "Compatibilité future et dépendances externes",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Le devis ou une annexe remise avant votre acceptation précise les environnements et versions pris en charge : logiciels, systèmes, navigateurs, outils d’exécution, bases de données et connexions à des services externes. La documentation de livraison reprend ce cadre, dans lequel nous vérifions l’application.\n\nNous ne garantissons pas une compatibilité illimitée avec toutes les versions futures, les configurations non prévues, les services abandonnés ou les changements ultérieurs des outils externes.\n\nUne adaptation qui dépasse nos engagements peut relever d’une maintenance ou d’une évolution acceptée. Les corrections et mises à jour légalement dues restent applicables.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "clarification des engagements pour applications et outils métier, sans prix ni délais inventés",
+        "note": "Conserver les obligations et les droits préexistants, relire dans les contrats modèles."
+      }
     },
     {
       "code": "APP-ENVIRONNEMENTS-ACCES",
@@ -100,7 +114,7 @@
       "sources": [
         "S8"
       ],
-      "proposal": "Vous nous fournissez les comptes, droits d’accès, clés de connexion et autres éléments confidentiels nécessaires aux environnements de développement, de test et de production. Les droits accordés doivent permettre la prestation prévue.\n\nNous utilisons et conservons uniquement les accès nécessaires, pendant la durée utile à l’intervention autorisée. Les tests utilisent le minimum de données requis. Nous privilégions des données fictives ou anonymisées lorsqu’elles permettent les vérifications nécessaires ; l’utilisation de données personnelles réelles doit être justifiée, autorisée et sécurisée selon les règles applicables.\n\nLes mots de passe et autres éléments secrets sont transmis et conservés par des moyens adaptés. Ils ne figurent pas en clair dans le devis ni dans sa copie contractuelle enregistrée.\n\nLorsque les accès ne sont plus nécessaires, nous cessons de les utiliser et organisons leur suppression ou leur révocation, sous réserve des conservations légalement justifiées. Le devis ou le dossier technique précise les responsabilités relatives à chaque environnement, aux sauvegardes, aux mises en service et aux accès.",
+      "proposal": "Pour réaliser votre application, vous mettez à notre disposition les comptes et autorisations nécessaires dans les environnements de développement, de test et, lorsque le devis le prévoit, de production. Les droits accordés doivent être suffisants pour la prestation, mais limités à ce qui est utile.\n\nNous protégeons les mots de passe, clés de connexion et autres informations sensibles qui nous sont confiés. Ces éléments sont transmis et conservés par des moyens adaptés : ils ne sont pas inscrits en clair dans le devis ni dans ses copies contractuelles.\n\nPour les essais, nous utilisons uniquement les données nécessaires et privilégions des données fictives ou anonymisées lorsqu’elles suffisent. Si l’utilisation de données personnelles réelles est nécessaire, elle doit être justifiée, autorisée et sécurisée selon les règles applicables.\n\nLorsque nos accès ne sont plus nécessaires, nous cessons de les utiliser et organisons leur suppression ou leur révocation, sous réserve des obligations de conservation applicables. Le devis ou le dossier technique précise les responsabilités de chacun concernant les différents environnements, les sauvegardes et les mises en service.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -131,7 +145,14 @@
       "importantChanges": "Secrets, environnements et fin d’accès réunis en bloc technique.",
       "proposedTitle": "Données, secrets et environnement client",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Vous nous fournissez les comptes, droits d’accès, clés de connexion et autres éléments confidentiels nécessaires aux environnements de développement, de test et de production. Les droits accordés doivent permettre la prestation prévue.\n\nNous utilisons et conservons uniquement les accès nécessaires, pendant la durée utile à l’intervention autorisée. Les tests utilisent le minimum de données requis. Nous privilégions des données fictives ou anonymisées lorsqu’elles permettent les vérifications nécessaires ; l’utilisation de données personnelles réelles doit être justifiée, autorisée et sécurisée selon les règles applicables.\n\nLes mots de passe et autres éléments secrets sont transmis et conservés par des moyens adaptés. Ils ne figurent pas en clair dans le devis ni dans sa copie contractuelle enregistrée.\n\nLorsque les accès ne sont plus nécessaires, nous cessons de les utiliser et organisons leur suppression ou leur révocation, sous réserve des conservations légalement justifiées. Le devis ou le dossier technique précise les responsabilités relatives à chaque environnement, aux sauvegardes, aux mises en service et aux accès.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "clarification des engagements pour applications et outils métier, sans prix ni délais inventés",
+        "note": "Conserver les obligations et les droits préexistants, relire dans les contrats modèles."
+      }
     },
     {
       "code": "APP-EVOLUTIONS",
@@ -142,7 +163,7 @@
       "sources": [
         "S3"
       ],
-      "proposal": "Une nouvelle fonction, un changement de processus ou de règle métier, ou une extension à d’autres utilisateurs, usages, données, plateformes ou outils est une évolution lorsqu’elle dépasse le périmètre validé.\n\nLes petites évolutions peuvent être réalisées au temps passé ou avec un pack prévu au devis. Les évolutions plus importantes font l’objet d’une estimation et d’un accord distincts avant leur réalisation.",
+      "proposal": "Après la livraison, vous pouvez souhaiter enrichir votre application : ajouter une fonctionnalité, modifier une règle de travail, accueillir de nouveaux utilisateurs ou la connecter à un autre logiciel.\n\nLorsque ces demandes dépassent ce qui avait été convenu, elles constituent des évolutions. Les modifications simples peuvent être réalisées au temps passé ou dans le cadre d’un forfait d’heures prévu au devis. Pour les évolutions plus importantes, nous vous présentons une estimation et les conditions de réalisation avant de commencer.\n\nUne correction nécessaire pour respecter les fonctionnalités initialement promises n’est pas considérée comme une évolution payante au seul motif qu’elle est demandée après la livraison. Les garanties et obligations qui nous incombent restent applicables.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -173,7 +194,14 @@
       "importantChanges": "Workflow et structurantes abstraits.",
       "proposedTitle": "Évolutions après livraison",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Une nouvelle fonction, un changement de processus ou de règle métier, ou une extension à d’autres utilisateurs, usages, données, plateformes ou outils est une évolution lorsqu’elle dépasse le périmètre validé.\n\nLes petites évolutions peuvent être réalisées au temps passé ou avec un pack prévu au devis. Les évolutions plus importantes font l’objet d’une estimation et d’un accord distincts avant leur réalisation.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "clarification des engagements pour applications et outils métier, sans prix ni délais inventés",
+        "note": "Conserver les obligations et les droits préexistants, relire dans les contrats modèles."
+      }
     },
     {
       "code": "APP-GARANTIE",
@@ -185,7 +213,7 @@
         "S10",
         "S14"
       ],
-      "proposal": "Notre garantie corrective contractuelle couvre les anomalies de la livraison qui nous sont imputables et relèvent des engagements convenus. Le devis en précise la durée et le point de départ.\n\nNous utilisons les informations disponibles pour analyser les anomalies, y compris lorsqu’elles se produisent par intermittence. Les fonctions nouvelles ou les nouvelles règles hors périmètre relèvent d’une évolution.\n\nUne modification faite par vous ou par un tiers, ou le changement d’un outil externe, n’est exclu de cette garantie que s’il est à l’origine de l’anomalie concernée.\n\nCette garantie commerciale ne supprime ni ne réduit les garanties légales, les mises à jour légalement dues ou notre responsabilité applicable.",
+      "proposal": "La garantie corrective prévue dans votre devis concerne les défauts de l’application livrée qui nous sont imputables et qui portent sur les fonctionnalités ou exigences convenues. Le devis précise la durée de cette garantie et la date à partir de laquelle elle commence.\n\nLorsque vous signalez un dysfonctionnement, nous examinons les éléments disponibles pour en rechercher l’origine, y compris s’il ne se produit que de temps à autre. Les nouvelles fonctionnalités ou les changements de règles non prévus initialement peuvent faire l’objet d’une prestation d’évolution distincte.\n\nUne modification effectuée par vous, par un autre intervenant ou par un service extérieur n’exclut notre garantie que dans la mesure où elle est réellement à l’origine du défaut concerné.\n\nCette garantie contractuelle s’ajoute aux droits qui vous sont reconnus par la loi. Elle ne supprime pas les garanties légales, les mises à jour légalement dues ni nos autres responsabilités applicables.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -216,7 +244,14 @@
       "importantChanges": "Titre source «90 jours» alors que le corps renvoie au devis : proposer le titre «Garantie corrective de l’application», sans choisir ni changer la durée.",
       "proposedTitle": "Garantie corrective de l’application",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Notre garantie corrective contractuelle couvre les anomalies de la livraison qui nous sont imputables et relèvent des engagements convenus. Le devis en précise la durée et le point de départ.\n\nNous utilisons les informations disponibles pour analyser les anomalies, y compris lorsqu’elles se produisent par intermittence. Les fonctions nouvelles ou les nouvelles règles hors périmètre relèvent d’une évolution.\n\nUne modification faite par vous ou par un tiers, ou le changement d’un outil externe, n’est exclu de cette garantie que s’il est à l’origine de l’anomalie concernée.\n\nCette garantie commerciale ne supprime ni ne réduit les garanties légales, les mises à jour légalement dues ou notre responsabilité applicable.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "clarification des engagements pour applications et outils métier, sans prix ni délais inventés",
+        "note": "Durée et point de départ au devis ; pas de durée fixe inventée. Vérifier anciennes offres 90 jours et garanties légales."
+      }
     },
     {
       "code": "APP-MAINTENANCE",
