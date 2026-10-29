@@ -2445,7 +2445,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Vous nous fournissez les données nécessaires à votre catalogue : noms, descriptions, prix, taux de TVA, références, variantes, quantités disponibles, poids, dimensions, photos et autres informations utiles.\n\nVous êtes responsable de leur exactitude. Leur mise à jour vous revient lorsqu’elle ne fait pas partie de notre prestation.\n\nL’import de produits en nombre ou la reprise d’un catalogue existant est compris uniquement si le devis le prévoit expressément.",
+      "proposal": "Pour préparer votre boutique en ligne, vous nous transmettez les informations nécessaires à la présentation de vos produits : noms, descriptions, prix, taux de TVA, références, déclinaisons, quantités disponibles, poids, dimensions, photographies et autres éléments prévus au devis.\n\nVous veillez à l’exactitude de ces informations et nous signalez les corrections nécessaires. Nous sommes responsables de leur intégration correcte dans la boutique, dans les limites de la prestation convenue. Après la livraison, l’actualisation des prix, des produits et des stocks vous revient, sauf si vous avez souscrit un service de gestion distinct.\n\nLa création ou la reprise d’un catalogue important, l’import automatisé de produits et la rédaction de nouvelles fiches sont compris uniquement lorsqu’ils figurent expressément au devis. Toute demande supplémentaire vous est présentée avec son prix avant réalisation.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 30,
@@ -2481,7 +2481,14 @@
       "importantChanges": "Liste technique et responsabilité peu incarnée.",
       "proposedTitle": "Données produits",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Vous nous fournissez les données nécessaires à votre catalogue : noms, descriptions, prix, taux de TVA, références, variantes, quantités disponibles, poids, dimensions, photos et autres informations utiles.\n\nVous êtes responsable de leur exactitude. Leur mise à jour vous revient lorsqu’elle ne fait pas partie de notre prestation.\n\nL’import de produits en nombre ou la reprise d’un catalogue existant est compris uniquement si le devis le prévoit expressément.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation du texte et clarification du périmètre, des responsabilités et des prestations complémentaires",
+        "note": "Aucune modification des prix, quotas ou contrats ; validation du périmètre au devis avant publication."
+      }
     },
     {
       "code": "ECOM-IMPORT",
@@ -2493,7 +2500,7 @@
         "S2",
         "S8"
       ],
-      "proposal": "Nous importons ou transférons les données de catalogue expressément identifiées au devis.\n\nVous fournissez des données utilisables, exactes et suffisamment organisées. Avant l’import définitif, vous validez la manière dont les informations correspondent aux champs de la boutique et un résultat de contrôle.\n\nLes corrections de données, enrichissements, reprises manuelles et autres traitements non prévus nécessitent un accord complémentaire.",
+      "proposal": "Lorsque votre projet prévoit l’import ou la migration d’un catalogue de produits, nous reprenons uniquement les données et les volumes définis dans le devis.\n\nVous nous fournissez des fichiers exploitables, complets et suffisamment organisés. Avant l’import définitif, nous vous présentons la manière dont les informations seront réparties dans les champs de la nouvelle boutique, ainsi qu’un résultat de contrôle pour que vous puissiez les vérifier et les valider.\n\nSi les données transmises nécessitent un nettoyage important, une réécriture, des corrections de contenu ou une reprise manuelle non prévue, nous vous soumettons une proposition complémentaire avant d’entreprendre ces travaux. En revanche, les corrections nécessaires pour remédier à une erreur d’importation qui nous est imputable restent à notre charge.\n\nLe résultat de l’import dépend également de la qualité des données fournies et des fonctionnalités effectivement prévues au devis.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2524,7 +2531,14 @@
       "importantChanges": "Correspondance et résultat de contrôle techniques.",
       "proposedTitle": "Import / migration de catalogue",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous importons ou transférons les données de catalogue expressément identifiées au devis.\n\nVous fournissez des données utilisables, exactes et suffisamment organisées. Avant l’import définitif, vous validez la manière dont les informations correspondent aux champs de la boutique et un résultat de contrôle.\n\nLes corrections de données, enrichissements, reprises manuelles et autres traitements non prévus nécessitent un accord complémentaire.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation du texte et clarification du périmètre, des responsabilités et des prestations complémentaires",
+        "note": "Préserver validation du mapping et du contrôle avant import définitif ; corrections des erreurs imputables à l'agence incluses."
+      }
     },
     {
       "code": "ECOM-LEGAL",
@@ -2536,7 +2550,7 @@
         "S2",
         "S9"
       ],
-      "proposal": "Vous êtes responsable des textes juridiques liés à votre activité de commerçant : notamment vos conditions générales de vente aux consommateurs, vos règles de livraison, de retour et de remboursement, ainsi que les informations obligatoires sur vos produits.\n\nNous pouvons intégrer les textes que vous ou votre conseil nous fournissez. Cette intervention technique ne constitue pas une validation juridique de leur contenu.",
+      "proposal": "En tant que commerçant, vous êtes responsable des informations et des documents juridiques propres à votre activité : notamment les conditions générales de vente de votre boutique, les règles de livraison, les possibilités de retour, les remboursements et les informations obligatoires relatives à vos produits.\n\nVous nous transmettez les textes que vous avez préparés ou fait vérifier par un professionnel compétent. Lorsque leur intégration est prévue au devis, nous les mettons en place sur votre site et vérifions leur affichage dans le cadre de notre prestation.\n\nCette intégration technique ne constitue pas une validation juridique des textes ni une garantie de conformité de l’ensemble de votre activité commerciale. Elle ne nous dispense toutefois pas de réaliser correctement les fonctionnalités et les affichages que nous avons convenus avec vous, ni de respecter nos propres obligations.\n\nLes conditions générales de vente de votre boutique sont distinctes des conditions contractuelles qui encadrent votre relation avec AtoumWeb.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 34,
@@ -2572,7 +2586,14 @@
       "importantChanges": "Risque de confondre les CGV du marchand et celles d’AtoumWeb.",
       "proposedTitle": "Contenus juridiques du marchand",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Vous êtes responsable des textes juridiques liés à votre activité de commerçant : notamment vos conditions générales de vente aux consommateurs, vos règles de livraison, de retour et de remboursement, ainsi que les informations obligatoires sur vos produits.\n\nNous pouvons intégrer les textes que vous ou votre conseil nous fournissez. Cette intervention technique ne constitue pas une validation juridique de leur contenu.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation du texte et clarification du périmètre, des responsabilités et des prestations complémentaires",
+        "note": "Ne pas confondre CGV de vente du commerçant et CGV AtoumWeb. La clause ne supprime aucune obligation d'intégration de l'agence."
+      }
     },
     {
       "code": "ECOM-LIVRAISON",
@@ -2583,7 +2604,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Nous configurons les tarifs de livraison, zones desservies, seuils de gratuité, délais annoncés et modalités de retrait à partir des informations que vous nous fournissez.\n\nLes services des transporteurs et leurs modules dépendent de prestataires externes.\n\nDes règles de livraison complexes ou une modification ultérieure de l’organisation prévue peuvent nécessiter une prestation complémentaire.",
+      "proposal": "Nous configurons les modes de livraison et de retrait prévus dans votre devis à partir des informations que vous nous communiquez : transporteurs, zones desservies, frais d’expédition, seuils de livraison gratuite, délais annoncés et conditions de retrait.\n\nVous validez ces règles commerciales avant leur mise en service. Lorsqu’un mode de livraison utilise un module ou un service extérieur, son fonctionnement dépend également des conditions et des possibilités du fournisseur concerné. Nous restons responsables de la configuration et des intégrations que nous nous sommes engagés à réaliser.\n\nLa mise en place de règles particulières, d’une connexion complexe avec un transporteur ou la modification ultérieure de votre organisation de livraison peuvent nécessiter un devis complémentaire. Nous vous présentons ces travaux et leur prix avant de les entreprendre.\n\nLes délais réellement assurés par les transporteurs et les engagements que vous prenez envers vos acheteurs ne doivent pas être confondus avec notre prestation de configuration technique.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 32,
@@ -2619,7 +2640,14 @@
       "importantChanges": "Schéma de livraison et règles complexes peu concrets.",
       "proposedTitle": "Livraison et transporteurs",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Nous configurons les tarifs de livraison, zones desservies, seuils de gratuité, délais annoncés et modalités de retrait à partir des informations que vous nous fournissez.\n\nLes services des transporteurs et leurs modules dépendent de prestataires externes.\n\nDes règles de livraison complexes ou une modification ultérieure de l’organisation prévue peuvent nécessiter une prestation complémentaire.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation du texte et clarification du périmètre, des responsabilités et des prestations complémentaires",
+        "note": "Aucune modification des prix, quotas ou contrats ; validation du périmètre au devis avant publication."
+      }
     },
     {
       "code": "ECOM-MULTILINGUE",
@@ -2630,7 +2658,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Nous configurons les langues de la boutique et intégrons les contenus et paramètres prévus au devis.\n\nSauf prestation expressément commandée, vous fournissez et validez les traductions, les informations produits et les textes juridiques pour chaque marché.\n\nLes règles fiscales, moyens de paiement, livraisons et obligations commerciales propres aux pays ou aux langues concernés sont compris uniquement s’ils figurent au devis.\n\nNous appliquons techniquement les paramètres fiscaux, commerciaux, de paiement et de livraison que vous communiquez ou validez. Nous ne déterminons pas votre régime fiscal ni les obligations juridiques des marchés visés.",
+      "proposal": "Si votre boutique doit être disponible dans plusieurs langues, nous mettons en place les langues, les pages et les paramètres prévus dans votre devis.\n\nSauf prestation de traduction expressément commandée, vous nous transmettez et validez les textes traduits, les informations sur les produits et les documents juridiques correspondant aux marchés que vous souhaitez desservir. Nous intégrons ces éléments dans les limites convenues, sans certifier leur traduction ni leur conformité juridique.\n\nLa vente dans plusieurs pays peut nécessiter des règles particulières concernant notamment la fiscalité, les moyens de paiement, la livraison ou les informations destinées aux acheteurs. Vous déterminez et validez les règles applicables à votre activité, avec les conseils spécialisés nécessaires le cas échéant. Nous configurons les paramètres que vous nous fournissez lorsque cette intervention figure au devis.\n\nL’ajout d’un pays, d’une langue, d’une règle commerciale ou d’une connexion non prévue initialement peut faire l’objet d’une proposition complémentaire acceptée avant réalisation. Cette répartition ne réduit pas notre responsabilité concernant les configurations techniques qui nous incombent.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2661,7 +2689,14 @@
       "importantChanges": "Marchés, fiscalité et traduction mêlés.",
       "proposedTitle": "WooCommerce multilingue",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous configurons les langues de la boutique et intégrons les contenus et paramètres prévus au devis.\n\nSauf prestation expressément commandée, vous fournissez et validez les traductions, les informations produits et les textes juridiques pour chaque marché.\n\nLes règles fiscales, moyens de paiement, livraisons et obligations commerciales propres aux pays ou aux langues concernés sont compris uniquement s’ils figurent au devis.\n\nNous appliquons techniquement les paramètres fiscaux, commerciaux, de paiement et de livraison que vous communiquez ou validez. Nous ne déterminons pas votre régime fiscal ni les obligations juridiques des marchés visés.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation du texte et clarification du périmètre, des responsabilités et des prestations complémentaires",
+        "note": "Aucune modification des prix, quotas ou contrats ; validation du périmètre au devis avant publication."
+      }
     },
     {
       "code": "ECOM-PAIEMENT",
@@ -2673,7 +2708,7 @@
         "S9",
         "S10"
       ],
-      "proposal": "Pour utiliser une solution de paiement externe, vous devez disposer d’un compte compatible et satisfaire aux vérifications demandées par son opérateur.\n\nCet opérateur fixe ses commissions et prend les décisions concernant votre compte selon ses propres conditions.\n\nNous réalisons l’intégration technique prévue au devis et restons responsables de sa bonne exécution et des erreurs qui nous sont imputables. Un incident chez l’opérateur ne nous dégage pas automatiquement de nos responsabilités.",
+      "proposal": "Pour permettre à vos clients de payer leurs commandes, nous intégrons à votre boutique la solution de paiement indiquée dans le devis.\n\nVous devez disposer d’un compte compatible auprès du prestataire retenu et effectuer les vérifications demandées par celui-ci. Ses conditions déterminent notamment les commissions, l’ouverture ou la suspension du compte et les services de paiement qu’il propose. Dans le modèle d’intégration convenu, votre compte de paiement reste à votre nom et les règlements de vos clients vous sont versés directement par ce prestataire : AtoumWeb n’encaisse pas et ne reverse pas ces sommes pour votre compte.\n\nNous réalisons la configuration et les vérifications techniques prévues au devis. Un dysfonctionnement du prestataire ne nous exonère pas automatiquement d’une erreur d’intégration ou d’un autre manquement qui nous serait imputable.\n\nToute fonction supplémentaire, connexion particulière ou modification sortant du périmètre accepté fait l’objet d’un accord sur les travaux et leur prix avant réalisation.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 31,
@@ -2709,7 +2744,14 @@
       "importantChanges": "Explications abstraites sur les dépendances et l’exonération.",
       "proposedTitle": "Solution de paiement",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Pour utiliser une solution de paiement externe, vous devez disposer d’un compte compatible et satisfaire aux vérifications demandées par son opérateur.\n\nCet opérateur fixe ses commissions et prend les décisions concernant votre compte selon ses propres conditions.\n\nNous réalisons l’intégration technique prévue au devis et restons responsables de sa bonne exécution et des erreurs qui nous sont imputables. Un incident chez l’opérateur ne nous dégage pas automatiquement de nos responsabilités.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation du texte et clarification du périmètre, des responsabilités et des prestations complémentaires",
+        "note": "Harmonisé avec WEB-PAIEMENT-TIERS : compte client et flux directs, sans encaissement AtoumWeb. Vérifier le modèle réellement utilisé."
+      }
     },
     {
       "code": "ECOM-STOCK",
@@ -2721,7 +2763,7 @@
         "S2",
         "S10"
       ],
-      "proposal": "Nous configurons le suivi des stocks prévu au devis. Vous fournissez et validez les quantités, les règles de disponibilité et les informations nécessaires à son utilisation.\n\nSi les stocks sont synchronisés avec un autre outil ou service, cette synchronisation dépend aussi des possibilités et limites de cette source.\n\nUne règle de stock ou une automatisation non prévue au devis nécessite un accord complémentaire. Après la livraison de la boutique, nous ne mettons pas à jour les quantités au quotidien, sauf si une prestation de gestion ou de synchronisation est expressément prévue au devis.",
+      "proposal": "Nous configurons le suivi des stocks de votre boutique selon les règles prévues au devis : quantités disponibles, conditions de vente et affichage des disponibilités.\n\nVous nous transmettez les quantités initiales et les règles de gestion à appliquer, puis vous en vérifiez l’exactitude. Si une synchronisation avec un logiciel de gestion, un fournisseur ou une autre plateforme est prévue, son fonctionnement dépend aussi des données et des possibilités techniques de ce service extérieur. Nous restons responsables de la connexion et des réglages que nous nous sommes engagés à réaliser.\n\nAprès la livraison, la mise à jour quotidienne des stocks reste à votre charge, sauf si vous avez expressément commandé une prestation de gestion ou de synchronisation continue.\n\nLes règles particulières de stock, les nouvelles automatisations ou les connexions supplémentaires non prévues font l’objet d’une proposition chiffrée et de votre accord avant réalisation. Les corrections nécessaires pour respecter le fonctionnement initialement convenu ne sont pas facturées en supplément.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 33,
@@ -2757,7 +2799,14 @@
       "importantChanges": "Automatisation et flux peu accessibles.",
       "proposedTitle": "Stock et données catalogue",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Nous configurons le suivi des stocks prévu au devis. Vous fournissez et validez les quantités, les règles de disponibilité et les informations nécessaires à son utilisation.\n\nSi les stocks sont synchronisés avec un autre outil ou service, cette synchronisation dépend aussi des possibilités et limites de cette source.\n\nUne règle de stock ou une automatisation non prévue au devis nécessite un accord complémentaire. Après la livraison de la boutique, nous ne mettons pas à jour les quantités au quotidien, sauf si une prestation de gestion ou de synchronisation est expressément prévue au devis.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation du texte et clarification du périmètre, des responsabilités et des prestations complémentaires",
+        "note": "Aucune modification des prix, quotas ou contrats ; validation du périmètre au devis avant publication."
+      }
     },
     {
       "code": "LANDING-FORM",
