@@ -4396,7 +4396,7 @@
       "sources": [
         "S8"
       ],
-      "proposal": "Vous nous fournissez les accès nécessaires à la prestation : site, Search Console, Analytics ou outils équivalents, lorsqu’ils sont requis.\n\nVous gérez vos données, comptes et autorisations. Nous utilisons nos accès dans le cadre autorisé, protégeons les identifiants dont nous disposons et cessons de les utiliser lorsqu’ils ne sont plus nécessaires.\n\nChacun de nous reste tenu de ses obligations en matière de données et de sécurité.",
+      "proposal": "Pour réaliser les actions de référencement prévues au devis, nous pouvons avoir besoin d’accéder à votre site et à certains outils de suivi, comme Google Search Console, Google Analytics ou leurs équivalents. Vous nous accordez les autorisations nécessaires, dans la limite des interventions convenues.\n\nVos comptes et vos données restent sous votre contrôle. Nous utilisons les accès reçus uniquement pour la mission, protégeons les identifiants qui nous sont confiés et cessons d’utiliser ces accès lorsqu’ils ne sont plus nécessaires.\n\nCette organisation ne supprime pas les obligations de chacune des parties en matière de sécurité et de protection des données personnelles.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4427,7 +4427,14 @@
       "importantChanges": "Outils cités sans expliquer autorisation et fin d’usage.",
       "proposedTitle": "Accès et données",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Vous nous fournissez les accès nécessaires à la prestation : site, Search Console, Analytics ou outils équivalents, lorsqu’ils sont requis.\n\nVous gérez vos données, comptes et autorisations. Nous utilisons nos accès dans le cadre autorisé, protégeons les identifiants dont nous disposons et cessons de les utiliser lorsqu’ils ne sont plus nécessaires.\n\nChacun de nous reste tenu de ses obligations en matière de données et de sécurité.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire en attente d'approbation, non publiée",
+        "scope": "humanisation et clarification du périmètre SEO, sans résultat garanti",
+        "note": "Les obligations d'exécution et livrables au devis sont préservés; aucune métrique, fréquence ou prix inventé."
+      }
     },
     {
       "code": "SEO-DELAIS",
@@ -4439,7 +4446,7 @@
         "S2",
         "S3"
       ],
-      "proposal": "Les effets du référencement naturel peuvent apparaître progressivement. Ils dépendent notamment de l’ancienneté du site, de la concurrence, de son état technique, de ses contenus et des changements des moteurs de recherche.\n\nL’absence de résultat immédiat ne signifie pas, à elle seule, que la prestation n’a pas été exécutée.",
+      "proposal": "Le référencement naturel évolue progressivement : une amélioration du contenu ou de la structure de votre site ne produit pas nécessairement des effets visibles immédiatement.\n\nLes résultats peuvent notamment dépendre de l’ancienneté du site, de la concurrence, de sa situation technique, de la qualité des contenus et des changements décidés par les moteurs de recherche.\n\nL’absence de progression rapide ne signifie donc pas, à elle seule, que la prestation a été mal exécutée. Nous restons néanmoins tenus de réaliser les actions et de remettre les livrables effectivement prévus au devis.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4470,7 +4477,14 @@
       "importantChanges": "Inexécution et ancienneté denses.",
       "proposedTitle": "Délais de résultat",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Les effets du référencement naturel peuvent apparaître progressivement. Ils dépendent notamment de l’ancienneté du site, de la concurrence, de son état technique, de ses contenus et des changements des moteurs de recherche.\n\nL’absence de résultat immédiat ne signifie pas, à elle seule, que la prestation n’a pas été exécutée.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire en attente d'approbation, non publiée",
+        "scope": "humanisation et clarification du périmètre SEO, sans résultat garanti",
+        "note": "Les obligations d'exécution et livrables au devis sont préservés; aucune métrique, fréquence ou prix inventé."
+      }
     },
     {
       "code": "SEO-DISCOVER",
@@ -4481,7 +4495,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Nous réalisons les optimisations techniques et éditoriales prévues au devis pour améliorer les possibilités de présentation de vos contenus dans Google Discover.\n\nGoogle décide seul des contenus qu’il explore, sélectionne et affiche. Nous ne garantissons donc pas leur apparition dans Discover, leur durée de visibilité ni un volume de visites déterminé.",
+      "proposal": "Si votre devis prévoit une optimisation pour Google Discover, nous intervenons sur les éléments techniques et éditoriaux convenus afin de rendre vos contenus plus adaptés aux critères de ce service.\n\nGoogle décide seul des contenus qu’il explore, sélectionne et présente aux internautes. Même après les optimisations, nous ne pouvons pas garantir qu’un article apparaîtra dans Google Discover, qu’il y restera pendant une durée déterminée ou qu’il générera un nombre précis de visites.\n\nNous restons responsables de l’exécution des optimisations comprises dans votre prestation.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4512,7 +4526,14 @@
       "importantChanges": "Éligibilité aux surfaces et exposition jargon.",
       "proposedTitle": "Optimisation Google Discover sans garantie d’apparition",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous réalisons les optimisations techniques et éditoriales prévues au devis pour améliorer les possibilités de présentation de vos contenus dans Google Discover.\n\nGoogle décide seul des contenus qu’il explore, sélectionne et affiche. Nous ne garantissons donc pas leur apparition dans Discover, leur durée de visibilité ni un volume de visites déterminé.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire en attente d'approbation, non publiée",
+        "scope": "humanisation et clarification du périmètre SEO, sans résultat garanti",
+        "note": "Les obligations d'exécution et livrables au devis sont préservés; aucune métrique, fréquence ou prix inventé."
+      }
     },
     {
       "code": "SEO-GBP-SUIVI",
@@ -4523,7 +4544,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Nous assurons le suivi et les actions sur votre fiche Google Business Profile prévus au devis. Vous nous accordez un accès adapté et validez les informations, contenus et réponses publiés en votre nom.\n\nGoogle gère ses vérifications, suspensions, refus, délais de traitement, fonctions et règles d’affichage. Nous ne garantissons ni la disponibilité permanente de la fiche, ni son classement, ni la publication d’un contenu ou d’une modification par Google.",
+      "proposal": "Nous assurons les interventions convenues sur votre fiche Google Business Profile, selon le contenu et la fréquence précisés dans votre devis.\n\nVous nous accordez un accès adapté à la fiche et validez les informations relatives à votre entreprise ainsi que les contenus ou réponses qui doivent être publiés en votre nom. Nous réalisons les actions de suivi, de mise à jour ou d’accompagnement effectivement comprises dans la prestation.\n\nGoogle conserve la maîtrise des procédures de vérification, des suspensions, des refus, des délais de traitement et de l’affichage de la fiche. Nous ne pouvons donc garantir ni sa disponibilité permanente, ni son classement local, ni l’acceptation d’une publication ou d’une modification par Google.\n\nCes limites ne nous dispensent pas d’effectuer correctement les actions dont nous avons la charge.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4554,7 +4575,14 @@
       "importantChanges": "Plateforme et formalités imbriquées.",
       "proposedTitle": "Suivi Google Business Profile",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous assurons le suivi et les actions sur votre fiche Google Business Profile prévus au devis. Vous nous accordez un accès adapté et validez les informations, contenus et réponses publiés en votre nom.\n\nGoogle gère ses vérifications, suspensions, refus, délais de traitement, fonctions et règles d’affichage. Nous ne garantissons ni la disponibilité permanente de la fiche, ni son classement, ni la publication d’un contenu ou d’une modification par Google.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire en attente d'approbation, non publiée",
+        "scope": "humanisation et clarification du périmètre SEO, sans résultat garanti",
+        "note": "Actions factuellement vendues et compte Google du client à vérifier; aucune publication ni classement garanti."
+      }
     },
     {
       "code": "SEO-LOCAL-PERIMETRE",
@@ -4565,7 +4593,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Nous réalisons les actions de visibilité locale prévues au devis pour les établissements, zones et supports concernés.\n\nVous fournissez et validez vos coordonnées, horaires, catégories, zones desservies, informations d’activité et contenus.\n\nNous effectuons les optimisations convenues, sans garantir une position, un niveau de visibilité ou un nombre de contacts. Les plateformes gardent la maîtrise de leur indexation, de leurs vérifications et de leur affichage.",
+      "proposal": "Nous travaillons sur la visibilité locale de votre activité dans les limites définies par votre devis : établissements concernés, villes ou zones desservies, pages du site et plateformes prévues.\n\nVous nous communiquez et validez les informations nécessaires, notamment votre adresse ou votre zone d’intervention, vos horaires, vos coordonnées, vos catégories d’activité et les contenus à présenter.\n\nNous réalisons les optimisations convenues pour améliorer la présentation et la pertinence de ces informations. Nous ne pouvons toutefois promettre une place précise dans les résultats locaux, un volume garanti de contacts ou une visibilité constante : les plateformes décident de la manière dont elles vérifient, sélectionnent et affichent les informations.\n\nLes actions et livrables prévus au devis restent dus, indépendamment de ces résultats.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4596,7 +4624,14 @@
       "importantChanges": "Indexation et zones à rendre directs.",
       "proposedTitle": "Périmètre SEO local",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous réalisons les actions de visibilité locale prévues au devis pour les établissements, zones et supports concernés.\n\nVous fournissez et validez vos coordonnées, horaires, catégories, zones desservies, informations d’activité et contenus.\n\nNous effectuons les optimisations convenues, sans garantir une position, un niveau de visibilité ou un nombre de contacts. Les plateformes gardent la maîtrise de leur indexation, de leurs vérifications et de leur affichage.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire en attente d'approbation, non publiée",
+        "scope": "humanisation et clarification du périmètre SEO, sans résultat garanti",
+        "note": "Les obligations d'exécution et livrables au devis sont préservés; aucune métrique, fréquence ou prix inventé."
+      }
     },
     {
       "code": "SEO-MOYENS",
@@ -4608,7 +4643,7 @@
         "S2",
         "S3"
       ],
-      "proposal": "Notre prestation de référencement naturel repose sur une obligation de moyens : nous réalisons les optimisations convenues, sans garantir une position dans les résultats, un nombre précis de visites ou un chiffre d’affaires.\n\nLes moteurs de recherche restent seuls responsables de leurs méthodes d’indexation, de classement et d’affichage.",
+      "proposal": "Notre prestation de référencement naturel repose sur une obligation de moyens : nous nous engageons à réaliser les analyses, conseils et optimisations décrits dans votre devis, avec le soin attendu d’un professionnel.\n\nLe classement d’un site dépend aussi des décisions des moteurs de recherche et de facteurs que nous ne maîtrisons pas entièrement. Nous ne garantissons donc pas une position particulière sur Google, un nombre précis de visites ou un chiffre d’affaires lié aux actions menées.\n\nCette absence de garantie de résultat ne réduit pas notre obligation d’effectuer les travaux convenus, de remettre les livrables promis et de corriger les manquements qui nous sont imputables.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4639,7 +4674,14 @@
       "importantChanges": "Obligation de moyens mérite une explication sans la supprimer.",
       "proposedTitle": "Obligation de moyens",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Notre prestation de référencement naturel repose sur une obligation de moyens : nous réalisons les optimisations convenues, sans garantir une position dans les résultats, un nombre précis de visites ou un chiffre d’affaires.\n\nLes moteurs de recherche restent seuls responsables de leurs méthodes d’indexation, de classement et d’affichage.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire en attente d'approbation, non publiée",
+        "scope": "humanisation et clarification du périmètre SEO, sans résultat garanti",
+        "note": "Les obligations d'exécution et livrables au devis sont préservés; aucune métrique, fréquence ou prix inventé."
+      }
     },
     {
       "code": "SEO-NETLINKING",
@@ -4650,7 +4692,7 @@
       "sources": [
         "S26"
       ],
-      "proposal": "Nous réalisons les actions de création de liens vers votre site (netlinking) prévues au devis : stratégie, recherche et sélection de supports, conseil et pilotage.\n\nDans ce modèle, vous contractez directement avec l’éditeur ou le support et le payez pour les publications ou liens retenus. Ces coûts sont distincts de nos honoraires. Nous n’achetons pas de publication pour votre compte.\n\nLes publications publicitaires doivent être identifiables comme telles et l’annonceur doit être identifié selon les règles applicables.\n\nLa publication, l’indexation, le maintien et l’effet d’un lien sur le référencement dépendent des supports et des moteurs. Aucun maintien permanent ni classement déterminé n’est garanti. Le traitement d’un lien retiré suit le périmètre convenu, sans nous exonérer automatiquement de nos propres obligations.",
+      "proposal": "Lorsque votre devis prévoit des actions de création de liens vers votre site, nous pouvons vous accompagner dans la définition de la stratégie, la recherche de supports, leur sélection et le suivi des démarches convenues.\n\nDans le modèle de prestation retenu, vous choisissez les publications ou liens proposés et vous contractez directement avec les éditeurs concernés. Vous réglez leurs éventuels frais vous-même : ces coûts sont distincts des honoraires d’AtoumWeb. Nous n’achetons pas de publication en votre nom.\n\nLorsqu’une publication est publicitaire, sa nature commerciale et l’identité de l’annonceur doivent être signalées selon les règles applicables. Les liens et contenus restent également soumis aux conditions des supports qui les hébergent.\n\nNous ne pouvons garantir qu’un éditeur maintiendra un lien indéfiniment, que celui-ci sera indexé ou qu’il améliorera votre classement. Si un lien est refusé ou supprimé, les suites dépendent des engagements pris au devis, sans supprimer nos propres obligations.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4681,7 +4723,14 @@
       "importantChanges": "Le modèle reste conseil/pilotage avec achat et paiement directs par le client ; publicité identifiable ; pas de mandat créé.",
       "proposedTitle": "Netlinking, supports tiers et maintien des liens",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous réalisons les actions de création de liens vers votre site (netlinking) prévues au devis : stratégie, recherche et sélection de supports, conseil et pilotage.\n\nDans ce modèle, vous contractez directement avec l’éditeur ou le support et le payez pour les publications ou liens retenus. Ces coûts sont distincts de nos honoraires. Nous n’achetons pas de publication pour votre compte.\n\nLes publications publicitaires doivent être identifiables comme telles et l’annonceur doit être identifié selon les règles applicables.\n\nLa publication, l’indexation, le maintien et l’effet d’un lien sur le référencement dépendent des supports et des moteurs. Aucun maintien permanent ni classement déterminé n’est garanti. Le traitement d’un lien retiré suit le périmètre convenu, sans nous exonérer automatiquement de nos propres obligations.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire en attente d'approbation, non publiée",
+        "scope": "humanisation et clarification du périmètre SEO, sans résultat garanti",
+        "note": "Modèle de conseil et achat direct chez l'éditeur conservé, aucune dépense ou mandat d'achat créé; conformité des publications à contrôler."
+      }
     },
     {
       "code": "SEO-PERFORMANCE",
@@ -4692,7 +4741,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Nous réalisons les optimisations de vitesse et de performance prévues au devis, sur l’environnement et les pages identifiés.\n\nLes résultats dépendent notamment de l’hébergement, du thème, des extensions, des contenus, des services externes, de l’appareil utilisé et des conditions de mesure.\n\nNous effectuons les actions convenues, sans garantir durablement un score, un temps de chargement ou un indicateur déterminé lorsque des facteurs extérieurs influencent le résultat.",
+      "proposal": "Nous réalisons les améliorations de vitesse et de performance prévues au devis sur les pages et l’environnement technique qui y sont identifiés.\n\nLa vitesse d’un site peut varier selon son hébergement, son thème, ses extensions, les contenus affichés, les services extérieurs, l’appareil utilisé ou les conditions de mesure. Les résultats constatés à un moment donné ne sont donc pas nécessairement identiques dans toutes les situations.\n\nNous mettons en œuvre les optimisations convenues et vous présentons les éléments de suivi ou de vérification prévus dans la prestation. Sauf engagement précis accepté dans votre devis, nous ne garantissons pas durablement un score d’outil de mesure ou un temps de chargement déterminé.\n\nCette limite ne nous dégage pas d’un objectif expressément promis ni de la correction des défauts qui nous sont imputables.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4723,7 +4772,14 @@
       "importantChanges": "Indicateur et score peuvent être pris pour engagement.",
       "proposedTitle": "Optimisation vitesse et performances",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous réalisons les optimisations de vitesse et de performance prévues au devis, sur l’environnement et les pages identifiés.\n\nLes résultats dépendent notamment de l’hébergement, du thème, des extensions, des contenus, des services externes, de l’appareil utilisé et des conditions de mesure.\n\nNous effectuons les actions convenues, sans garantir durablement un score, un temps de chargement ou un indicateur déterminé lorsque des facteurs extérieurs influencent le résultat.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire en attente d'approbation, non publiée",
+        "scope": "humanisation et clarification du périmètre SEO, sans résultat garanti",
+        "note": "Les obligations d'exécution et livrables au devis sont préservés; aucune métrique, fréquence ou prix inventé."
+      }
     },
     {
       "code": "SERVICE-PACK-HEURES",
