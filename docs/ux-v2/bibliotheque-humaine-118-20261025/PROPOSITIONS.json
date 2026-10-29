@@ -534,7 +534,7 @@
       "sources": [
         "S8"
       ],
-      "proposal": "Nous protégeons les informations non publiques que vous nous communiquez pour votre projet. De votre côté, vous protégez celles que nous vous confions. Chacun s’engage à utiliser ces informations uniquement pour réaliser la prestation.\n\nSeules les personnes qui en ont besoin peuvent y accéder et doivent respecter une obligation de confidentialité adaptée.\n\nCette obligation ne concerne pas les informations devenues publiques sans faute, obtenues légitimement auprès d’un tiers ou dont la communication est imposée par la loi.\n\nSelon la nature du projet, nous précisons les modalités nécessaires pour restituer, supprimer ou conserver ces informations.",
+      "proposal": "Pendant notre collaboration, nous pouvons être amenés à échanger des informations qui ne sont pas publiques : documents, données techniques, informations commerciales, identifiants ou éléments propres à votre activité ou à celle d’AtoumWeb. Chacun s’engage à préserver la confidentialité des informations reçues et à ne les utiliser que pour les besoins de la prestation.\n\nL’accès à ces informations est limité aux personnes qui en ont réellement besoin pour intervenir sur le projet et qui sont tenues à une obligation de confidentialité adaptée.\n\nCette obligation ne s’applique pas aux informations déjà publiques sans faute de la partie qui les reçoit, à celles obtenues légitimement auprès d’un tiers ou à celles dont la communication est exigée par la loi. Lorsqu’une communication est légalement imposée, elle reste limitée à ce qui est nécessaire.\n\nÀ la fin de la prestation, les informations sont restituées, supprimées ou conservées selon leur nature, les modalités convenues et les obligations légales applicables. La fin du contrat ne permet pas d’utiliser ou de divulguer librement des informations qui demeurent confidentielles.\n\nLa présente clause concerne la confidentialité des échanges. Lorsque des données personnelles sont traitées pour votre compte, leurs conditions de traitement et les obligations respectives des parties sont précisées séparément lorsque cela est nécessaire.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 2,
@@ -571,13 +571,12 @@
       "proposedTitle": "Confidentialité",
       "category": "Rédaction sans changement commercial recherché",
       "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
-      "previousEditorialProposal": "Chacun de nous protège les informations non publiques reçues pour la mission et les utilise uniquement pour la réaliser. Seules les personnes qui en ont besoin peuvent y accéder, avec une obligation de confidentialité adaptée.\n\nCette protection ne couvre pas les informations devenues publiques sans faute, obtenues légalement auprès d’un tiers ou dont la communication est imposée par la loi.\n\nSelon le dossier, nous précisons les modalités nécessaires pour restituer, supprimer ou conserver ces informations.",
+      "previousEditorialProposal": "Nous protégeons les informations non publiques que vous nous communiquez pour votre projet. De votre côté, vous protégez celles que nous vous confions. Chacun s’engage à utiliser ces informations uniquement pour réaliser la prestation.\n\nSeules les personnes qui en ont besoin peuvent y accéder et doivent respecter une obligation de confidentialité adaptée.\n\nCette obligation ne concerne pas les informations devenues publiques sans faute, obtenues légitimement auprès d’un tiers ou dont la communication est imposée par la loi.\n\nSelon la nature du projet, nous précisons les modalités nécessaires pour restituer, supprimer ou conserver ces informations.",
       "editorialRevision": {
-        "date": "2026-10-28",
-        "status": "proposition révisée — en attente de validation humaine",
-        "scope": "clarification rédactionnelle uniquement",
-        "note": "Reformulation réciproque nous/vous, aucune modification des exceptions ou de la restitution.",
-        "priorProposalRetained": true
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "confidentialité réciproque, limitation d'accès, exceptions, fin du contrat et distinction RGPD",
+        "note": "Aucune nouvelle durée de conservation inventée ; confirmer les modalités propres aux missions avant adoption."
       }
     },
     {
