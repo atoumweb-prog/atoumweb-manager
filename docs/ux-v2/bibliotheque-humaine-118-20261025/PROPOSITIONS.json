@@ -4864,7 +4864,7 @@
         "S2",
         "S7"
       ],
-      "proposal": "Vous nous fournissez dans les délais convenus les éléments nécessaires au projet : textes, images, logos, coordonnées, mentions obligatoires, accès techniques et autres informations utiles.\n\nVous devez disposer des droits nécessaires sur les éléments transmis et restez responsable de leur contenu, de leur exactitude et de leur conformité.\n\nSi un contenu manque ou arrive en retard, nous vous indiquons les tâches réellement concernées et les conséquences prévisibles sur le planning. Le calendrier est réexaminé en tenant compte de ce manque et des obligations de chacun. Ce retard ne nous exonère pas automatiquement de nos propres engagements et ne supprime pas vos droits légaux.\n\nLa rédaction, la recherche d’images et la création de contenus sont incluses uniquement si elles figurent expressément au devis.",
+      "proposal": "Pour réaliser votre site dans de bonnes conditions, nous avons besoin des éléments prévus au devis : textes, photographies, logos, coordonnées, informations légales et accès techniques nécessaires. Vous nous les transmettez aux échéances convenues, dans un format exploitable.\n\nVous veillez à l’exactitude des informations fournies et vous assurez de disposer des autorisations nécessaires pour utiliser les textes, images, logos et autres contenus que vous nous confiez. De notre côté, nous utilisons ces éléments uniquement pour les besoins du projet et dans le respect de nos obligations.\n\nSi des informations ou des contenus indispensables manquent, nous vous précisons les tâches concernées et les conséquences prévisibles sur le calendrier. Nous convenons, si nécessaire, d’une adaptation du planning en fonction de l’impact réel du retard et des obligations de chacun. Un retard de transmission ne nous dégage pas automatiquement de nos propres engagements et ne prive pas le client de ses droits.\n\nLa rédaction de textes, la recherche de visuels, la retouche d’images ou la création de nouveaux contenus ne sont comprises que si elles figurent dans le devis. Toute prestation supplémentaire fait l’objet d’une proposition chiffrée et de votre accord avant réalisation.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 23,
@@ -4900,7 +4900,14 @@
       "importantChanges": "Listes répétées avec coopération/produits ; replanification administratif.",
       "proposedTitle": "Fourniture des contenus",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Vous nous fournissez dans les délais convenus les éléments nécessaires au projet : textes, images, logos, coordonnées, mentions obligatoires, accès techniques et autres informations utiles.\n\nVous devez disposer des droits nécessaires sur les éléments transmis et restez responsable de leur contenu, de leur exactitude et de leur conformité.\n\nSi un contenu manque ou arrive en retard, nous vous indiquons les tâches réellement concernées et les conséquences prévisibles sur le planning. Le calendrier est réexaminé en tenant compte de ce manque et des obligations de chacun. Ce retard ne nous exonère pas automatiquement de nos propres engagements et ne supprime pas vos droits légaux.\n\nLa rédaction, la recherche d’images et la création de contenus sont incluses uniquement si elles figurent expressément au devis.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "fourniture des contenus et droits d'usage, gestion des retards, prestations supplémentaires",
+        "note": "Révision rédactionnelle fidèle au périmètre publié ; retouche d'image explicitée comme prestation optionnelle, sans modifier responsabilités ni droits. Aucune suspension automatique."
+      }
     },
     {
       "code": "WEB-FORMULAIRE-AVANCE",
