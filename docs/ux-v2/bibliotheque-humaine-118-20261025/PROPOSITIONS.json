@@ -731,7 +731,7 @@
       "sources": [
         "S4"
       ],
-      "proposal": "Si un événement répondant aux conditions légales de la force majeure empêche l’un de nous d’exécuter une obligation, la partie concernée en informe l’autre et précise les conséquences connues.\n\nSi l’empêchement est temporaire, l’exécution de l’obligation concernée est suspendue selon les règles légales, sauf si le retard qui en résulte justifie la fin du contrat. Si l’empêchement est définitif, le contrat prend fin de plein droit dans les conditions prévues par la loi.\n\nUne panne ou la défaillance d’un prestataire extérieur ne constitue pas automatiquement un cas de force majeure.",
+      "proposal": "Si un événement exceptionnel répondant aux conditions légales de la force majeure empêche l'un de nous de respecter une obligation du contrat, la partie concernée en informe l'autre dès qu'elle le peut et lui communique les conséquences connues sur la prestation.\n\nLorsque cet empêchement est temporaire, l'obligation concernée est suspendue pendant sa durée, sauf si le retard qui en résulte justifie la résolution du contrat. Si l'empêchement est définitif, le contrat est résolu de plein droit, dans les conditions prévues par la loi.\n\nUne panne informatique, une cyberattaque ou la défaillance d'un hébergeur, d'un prestataire de paiement ou d'un autre fournisseur ne constitue pas automatiquement un cas de force majeure. La situation doit remplir les conditions légales et n'écarte pas les obligations ou responsabilités qui demeurent applicables.\n\nNous nous informons mutuellement de l'évolution de la situation et, lorsque cela reste possible, des mesures raisonnables permettant de limiter ses conséquences.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 6,
@@ -768,13 +768,12 @@
       "proposedTitle": "Force majeure",
       "category": "Rédaction, avec contrôle renforcé de portée",
       "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
-      "previousEditorialProposal": "Si un événement répondant aux conditions légales de la force majeure empêche l’un de nous de remplir une obligation, la partie concernée en informe l’autre et précise les conséquences connues.\n\nSi l’empêchement est temporaire, l’obligation concernée est suspendue dans les conditions prévues par la loi. Si l’empêchement se prolonge ou devient définitif, ses conséquences sur la fin du contrat sont traitées selon les règles applicables.\n\nUne panne ou la défaillance d’un prestataire extérieur ne constitue pas, à elle seule, un cas de force majeure.",
+      "previousEditorialProposal": "Si un événement répondant aux conditions légales de la force majeure empêche l’un de nous d’exécuter une obligation, la partie concernée en informe l’autre et précise les conséquences connues.\n\nSi l’empêchement est temporaire, l’exécution de l’obligation concernée est suspendue selon les règles légales, sauf si le retard qui en résulte justifie la fin du contrat. Si l’empêchement est définitif, le contrat prend fin de plein droit dans les conditions prévues par la loi.\n\nUne panne ou la défaillance d’un prestataire extérieur ne constitue pas automatiquement un cas de force majeure.",
       "editorialRevision": {
-        "date": "2026-10-28",
-        "status": "proposition révisée — en attente de validation humaine",
-        "scope": "clarification rédactionnelle uniquement",
-        "note": "Précision du traitement de l'empêchement temporaire/définitif selon l'article 1218 du Code civil ; revue juridique finale nécessaire.",
-        "priorProposalRetained": true
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "force majeure contractuelle, empêchement temporaire/définitif, tiers et information réciproque",
+        "note": "Article 1218 du Code civil consulté le 29/10/2026 ; ne pas assimiler automatiquement panne, cyberattaque ou défaut tiers à force majeure. Relecture juridique d'ensemble nécessaire."
       }
     },
     {
