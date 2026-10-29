@@ -1312,7 +1312,7 @@
       "sources": [
         "S7"
       ],
-      "proposal": "Nous concevons et réalisons l’animation ou les éléments graphiques animés décrits au devis, à partir des indications et des éléments validés avec vous.\n\nLa prestation couvre les séquences, variantes et formats convenus. Des adaptations à d’autres supports, des versions supplémentaires, des modifications importantes après validation ou l’ajout de sons, de voix, d’images ou de ressources non prévus peuvent nécessiter une prestation complémentaire.\n\nLes clauses associées précisent les fichiers remis et les droits accordés.",
+      "proposal": "Nous réalisons l’animation de logo ou les éléments graphiques animés décrits dans votre devis, à partir des indications et des visuels validés ensemble.\n\nLe devis précise les séquences à créer, les éventuelles versions alternatives et les formats dans lesquels le résultat doit vous être remis. Une adaptation à un nouveau support, l’ajout d’une séquence ou une modification importante après validation peut nécessiter une prestation complémentaire, soumise à votre accord avant réalisation.\n\nLes musiques, voix, photographies et autres ressources qui n’étaient pas prévues ne sont pas automatiquement comprises. Leurs éventuels coûts et conditions d’utilisation vous sont indiqués avant leur intégration.\n\nLes formats livrés, les fichiers sources éventuellement remis et les droits d’exploitation de l’animation sont définis dans les conditions correspondantes et dans votre devis.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1343,7 +1343,14 @@
       "importantChanges": "Motion design, brief et variantes peu accessibles.",
       "proposedTitle": "Animation logo / motion design",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous concevons et réalisons l’animation ou les éléments graphiques animés décrits au devis, à partir des indications et des éléments validés avec vous.\n\nLa prestation couvre les séquences, variantes et formats convenus. Des adaptations à d’autres supports, des versions supplémentaires, des modifications importantes après validation ou l’ajout de sons, de voix, d’images ou de ressources non prévus peuvent nécessiter une prestation complémentaire.\n\nLes clauses associées précisent les fichiers remis et les droits accordés.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle identité visuelle / design, droits, fichiers et étapes de correction",
+        "note": "Formats, fichiers sources, sons et droits alignés aux clauses DESIGN-LIVRAISON / BRAND-DROITS ; aucune ressource ni cession supplémentaire présumée."
+      }
     },
     {
       "code": "BRAND-CORRECTIONS",
@@ -1354,7 +1361,7 @@
       "sources": [
         "S3"
       ],
-      "proposal": "Le devis précise les cycles de corrections compris. Une correction ajuste la direction graphique retenue, sans changer les indications de départ ni créer une nouvelle proposition.\n\nSi votre demande change sensiblement ces indications, la direction validée, le périmètre ou les livrables, elle peut constituer une nouvelle proposition ou une prestation complémentaire.\n\nVous regroupez vos retours pour chaque cycle et validez les étapes selon les modalités convenues.",
+      "proposal": "Votre devis précise le nombre d’étapes de relecture et de correction comprises dans la création de votre identité visuelle.\n\nCes étapes permettent d’ajuster la proposition graphique retenue, par exemple ses couleurs, sa composition ou certains détails, dans le respect de l’orientation que nous avons validée ensemble.\n\nSi vous souhaitez ensuite changer complètement cette orientation, modifier sensiblement les consignes initiales ou demander une nouvelle proposition, nous évaluons les travaux supplémentaires et vous soumettons leur prix avant de les réaliser.\n\nPour faciliter les échanges, vous regroupez autant que possible vos remarques à chaque étape et confirmez vos validations selon les modalités prévues au devis.\n\nLes corrections nécessaires pour respecter la prestation promise ou remédier à une erreur qui nous est imputable restent dues, même lorsque les étapes de correction commerciale prévues sont terminées.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1385,7 +1392,14 @@
       "importantChanges": "Correction, nouvelle proposition et validation à distinguer.",
       "proposedTitle": "Séries d’ajustements",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Le devis précise les cycles de corrections compris. Une correction ajuste la direction graphique retenue, sans changer les indications de départ ni créer une nouvelle proposition.\n\nSi votre demande change sensiblement ces indications, la direction validée, le périmètre ou les livrables, elle peut constituer une nouvelle proposition ou une prestation complémentaire.\n\nVous regroupez vos retours pour chaque cycle et validez les étapes selon les modalités convenues.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle identité visuelle / design, droits, fichiers et étapes de correction",
+        "note": "Terme « étapes de relecture et de correction » ; distinguer les ajustements commerciaux des corrections obligatoirement dues."
+      }
     },
     {
       "code": "BRAND-DROITS",
@@ -1396,7 +1410,7 @@
       "sources": [
         "S7"
       ],
-      "proposal": "Les droits d’exploitation sur la création finale que vous retenez et que nous avons réalisée pour vous sont cédés ou accordés par licence selon le devis ou son annexe de droits. Ces documents précisent les droits, usages, supports, territoire, durée et conditions de prise d’effet.\n\nPour le logo final, ils prévoient des droits d’exploitation très larges, précisément définis pour les usages convenus. Si ces droits prennent effet après paiement intégral, cette condition doit y être indiquée expressément.\n\nLes éléments génériques, préexistants et tiers sont identifiés séparément et accompagnés des autorisations nécessaires à l’usage convenu de la création finale.\n\nLes formes originales des propositions non retenues ne vous sont pas transférées automatiquement. Cela ne nous donne aucun monopole sur les idées ou les concepts eux-mêmes. Nous ne réservons ou transmettons que les droits dont nous disposons, dans le respect des licences tierces, des droits moraux et des règles impératives.",
+      "proposal": "Les droits d’utilisation de la création graphique finale que vous retenez sont précisés dans votre devis ou son annexe. Selon ce qui a été convenu, ces droits peuvent vous être accordés par licence ou faire l’objet d’une cession. Les documents précisent notamment les usages autorisés, les supports concernés, le territoire, la durée et la date de prise d’effet.\n\nPour un logo créé spécialement pour vous, nous prévoyons des droits d’exploitation suffisamment étendus pour couvrir les usages convenus. Si leur prise d’effet dépend du paiement intégral, cette condition figure expressément dans le devis ou son annexe.\n\nNos éléments antérieurs ou réutilisables et les ressources appartenant à des tiers restent distincts de votre création finale. Nous identifions les éléments concernés et les autorisations nécessaires à l’utilisation convenue, dans le respect des licences applicables et des droits moraux.\n\nLes propositions graphiques que vous n’avez pas retenues ne vous sont pas automatiquement cédées ou concédées. Cette règle porte sur leurs formes originales et ne signifie pas qu’AtoumWeb possède les idées ou les concepts généraux qui les ont inspirées.\n\nNous ne transférons ou n’accordons que les droits dont nous disposons réellement. La remise d’un fichier ne constitue pas, à elle seule, une cession de tous les droits.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1431,7 +1445,14 @@
       "importantChanges": "La création finale, les propositions non retenues et les idées ont des régimes distincts ; ne pas tout réserver ou tout céder.",
       "proposedTitle": "Droits sur création finale et propositions non retenues",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Les droits d’exploitation sur la création finale que vous retenez et que nous avons réalisée pour vous sont cédés ou accordés par licence selon le devis ou son annexe de droits. Ces documents précisent les droits, usages, supports, territoire, durée et conditions de prise d’effet.\n\nPour le logo final, ils prévoient des droits d’exploitation très larges, précisément définis pour les usages convenus. Si ces droits prennent effet après paiement intégral, cette condition doit y être indiquée expressément.\n\nLes éléments génériques, préexistants et tiers sont identifiés séparément et accompagnés des autorisations nécessaires à l’usage convenu de la création finale.\n\nLes formes originales des propositions non retenues ne vous sont pas transférées automatiquement. Cela ne nous donne aucun monopole sur les idées ou les concepts eux-mêmes. Nous ne réservons ou transmettons que les droits dont nous disposons, dans le respect des licences tierces, des droits moraux et des règles impératives.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle identité visuelle / design, droits, fichiers et étapes de correction",
+        "note": "Préserver cession OU licence selon devis, délimitation des droits, créations non retenues et droit moral. Vérifier annexe PI avant adoption."
+      }
     },
     {
       "code": "BRAND-PERIMETRE",
@@ -1443,7 +1464,7 @@
         "S2",
         "S7"
       ],
-      "proposal": "Nous réalisons les travaux graphiques expressément indiqués au devis : création, déclinaison ou refonte.\n\nLa création conçoit un nouvel élément à partir des indications validées. La déclinaison adapte une création existante aux supports prévus. La refonte modifie sensiblement un élément existant.\n\nL’impression, le dépôt de marque, la recherche d’antériorité, une séance photo, la création de contenus et les autres prestations non mentionnées au devis ne sont pas compris.",
+      "proposal": "Nous réalisons les travaux d’identité visuelle et de création graphique expressément prévus dans votre devis.\n\nSelon votre commande, il peut s’agir de concevoir un nouvel élément, comme un logo, d’adapter une création existante à plusieurs supports ou de revoir en profondeur une identité graphique déjà utilisée. Les créations, adaptations et supports effectivement compris sont ceux que nous avons convenus.\n\nLa fabrication ou l’impression de supports physiques, le dépôt d’une marque, la recherche de marques antérieures, une séance photographique ou la rédaction de contenus ne sont pas inclus, sauf mention expresse dans le devis.\n\nEn particulier, la création d’un logo ne garantit pas à elle seule que le signe est disponible ou qu’il peut être déposé comme marque. Si vous souhaitez une prestation supplémentaire, nous en précisons les conditions et le prix avant votre accord.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1474,7 +1495,14 @@
       "importantChanges": "Création/déclinaison/refonte vocabulaire métier.",
       "proposedTitle": "Périmètre de création graphique",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous réalisons les travaux graphiques expressément indiqués au devis : création, déclinaison ou refonte.\n\nLa création conçoit un nouvel élément à partir des indications validées. La déclinaison adapte une création existante aux supports prévus. La refonte modifie sensiblement un élément existant.\n\nL’impression, le dépôt de marque, la recherche d’antériorité, une séance photo, la création de contenus et les autres prestations non mentionnées au devis ne sont pas compris.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle identité visuelle / design, droits, fichiers et étapes de correction",
+        "note": "Distinguer création / déclinaison / refonte ; dépôt de marque et recherche d'antériorité non implicitement inclus."
+      }
     },
     {
       "code": "BRAND-TIERS",
@@ -1485,7 +1513,7 @@
       "sources": [
         "S7"
       ],
-      "proposal": "Les polices, photos, icônes, modèles de présentation, musiques, vidéos et autres ressources externes restent soumis aux licences de leurs éditeurs ou titulaires de droits.\n\nNous les utilisons dans le cadre autorisé et vous signalons les restrictions connues qui peuvent affecter l’usage prévu.\n\nLes achats, abonnements, licences payantes, droits étendus et renouvellements sont compris uniquement s’ils figurent au devis. Leur maintien après la livraison dépend des conditions du fournisseur concerné.",
+      "proposal": "Pour créer votre identité visuelle ou vos supports, nous pouvons utiliser des polices de caractères, photographies, icônes, modèles de présentation, vidéos, musiques ou autres ressources fournies par des éditeurs ou des auteurs extérieurs.\n\nCes ressources restent soumises à leurs propres licences. Nous les utilisons dans les limites des autorisations dont nous disposons et vous signalons les restrictions connues qui peuvent avoir une incidence sur l’utilisation prévue de votre création.\n\nLes achats de ressources, abonnements, licences payantes, droits d’utilisation étendus et renouvellements ne sont compris que s’ils figurent dans votre devis. Leur maintien et leurs conditions d’utilisation après livraison dépendent également des règles des fournisseurs concernés.\n\nL’intégration d’une ressource extérieure ne signifie pas que ses droits vous sont intégralement cédés. Nous précisons les autorisations nécessaires à l’exploitation convenue du livrable.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1516,7 +1544,14 @@
       "importantChanges": "Mockups, premium et ayants droit à alléger.",
       "proposedTitle": "Polices, images et ressources tierces",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Les polices, photos, icônes, modèles de présentation, musiques, vidéos et autres ressources externes restent soumis aux licences de leurs éditeurs ou titulaires de droits.\n\nNous les utilisons dans le cadre autorisé et vous signalons les restrictions connues qui peuvent affecter l’usage prévu.\n\nLes achats, abonnements, licences payantes, droits étendus et renouvellements sont compris uniquement s’ils figurent au devis. Leur maintien après la livraison dépend des conditions du fournisseur concerné.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle identité visuelle / design, droits, fichiers et étapes de correction",
+        "note": "Conserver les licences d'éditeur et coûts externes seulement si vendus ; vérifier les droits des ressources utilisées."
+      }
     },
     {
       "code": "CONS-DEBUT-ANTICIPE",
@@ -2283,7 +2318,7 @@
       "sources": [
         "S1"
       ],
-      "proposal": "Nous réalisons la prestation à partir des indications graphiques validées avec vous.\n\nSi vous changez sensiblement l’orientation après avoir validé une piste, cette demande peut être traitée comme une nouvelle demande et faire l’objet d’un complément.",
+      "proposal": "Avant de commencer votre création graphique, nous définissons avec vous les éléments essentiels du projet : l’objectif, le public visé, l’ambiance recherchée, les références utiles et les éventuelles contraintes de présentation.\n\nLes indications que vous validez servent de base au travail prévu dans votre devis. Elles permettent de choisir une orientation graphique commune avant de poursuivre les étapes de création.\n\nSi vous souhaitez modifier sensiblement cette orientation après avoir validé une proposition, nous examinons les changements nécessaires et pouvons vous présenter un devis complémentaire avant leur réalisation. Les corrections nécessaires pour respecter les éléments déjà convenus restent comprises dans nos obligations.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2314,7 +2349,14 @@
       "importantChanges": "Orientation et piste graphique à expliciter.",
       "proposedTitle": "Brief graphique",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous réalisons la prestation à partir des indications graphiques validées avec vous.\n\nSi vous changez sensiblement l’orientation après avoir validé une piste, cette demande peut être traitée comme une nouvelle demande et faire l’objet d’un complément.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle identité visuelle / design, droits, fichiers et étapes de correction",
+        "note": "Clarification de brief/orientation et des modifications importantes ; éviter tout complément automatique."
+      }
     },
     {
       "code": "DESIGN-LIVRAISON",
@@ -2325,7 +2367,7 @@
       "sources": [
         "S7"
       ],
-      "proposal": "Nous vous remettons les formats prévus au devis. Les fichiers sources de travail sont transmis uniquement s’ils sont expressément compris dans la prestation.\n\nLes éléments externes utilisés sous licence restent soumis aux conditions de cette licence.",
+      "proposal": "À la fin de la prestation, nous vous remettons les fichiers dans les formats prévus au devis, adaptés aux usages qui y sont indiqués.\n\nLes fichiers de travail modifiables, également appelés fichiers sources, ne sont transmis que lorsqu’ils sont expressément compris dans votre commande. La remise d’un logo ou d’une image au format final n’implique donc pas automatiquement celle de tous les fichiers utilisés pour le créer.\n\nLorsque votre création comporte des polices, des images ou d’autres ressources provenant de tiers, leur utilisation reste soumise aux licences correspondantes.\n\nLes fichiers livrés et les droits d’exploitation qui vous sont accordés constituent deux éléments distincts : leurs conditions sont précisées dans le devis et les clauses applicables.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2356,7 +2398,14 @@
       "importantChanges": "Distinction formats/sources et licences peu expliquée.",
       "proposedTitle": "Fichiers livrés",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous vous remettons les formats prévus au devis. Les fichiers sources de travail sont transmis uniquement s’ils sont expressément compris dans la prestation.\n\nLes éléments externes utilisés sous licence restent soumis aux conditions de cette licence.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle identité visuelle / design, droits, fichiers et étapes de correction",
+        "note": "Fichiers modifiables et droits PI distincts, ne pas supposer cession ou livraison des sources."
+      }
     },
     {
       "code": "DESIGN-PROPOSITIONS",
@@ -2367,7 +2416,7 @@
       "sources": [
         "S3"
       ],
-      "proposal": "Le devis indique le nombre de propositions initiales et de cycles de corrections compris.\n\nDes adaptations supplémentaires ou de nouvelles pistes demandées après la validation d’une direction graphique peuvent faire l’objet d’une facturation complémentaire.",
+      "proposal": "Votre devis indique le nombre de propositions graphiques initiales que nous vous présentons et le nombre d’étapes de relecture et de correction comprises dans la prestation.\n\nCes étapes servent à choisir puis à ajuster une orientation graphique dans les limites du projet convenu. Vous pouvez nous transmettre vos remarques selon les modalités de validation indiquées dans le devis.\n\nSi vous demandez une nouvelle proposition après avoir validé une direction graphique, ou des adaptations supplémentaires à des supports non prévus, nous pouvons vous présenter un devis complémentaire avant de commencer.\n\nLes corrections nécessaires pour livrer une création conforme aux engagements déjà pris ne sont pas considérées comme des propositions nouvelles à facturer.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2398,7 +2447,14 @@
       "importantChanges": "Cycles et déclinaisons jargon graphique.",
       "proposedTitle": "Propositions",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Le devis indique le nombre de propositions initiales et de cycles de corrections compris.\n\nDes adaptations supplémentaires ou de nouvelles pistes demandées après la validation d’une direction graphique peuvent faire l’objet d’une facturation complémentaire.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle identité visuelle / design, droits, fichiers et étapes de correction",
+        "note": "Nombre d'étapes au devis ; aucune correction de non-conformité facturée comme proposition nouvelle."
+      }
     },
     {
       "code": "DEVWP-GARANTIE",
