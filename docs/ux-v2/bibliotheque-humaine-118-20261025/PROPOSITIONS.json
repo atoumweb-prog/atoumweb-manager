@@ -1214,7 +1214,7 @@
       "sources": [
         "S8"
       ],
-      "proposal": "Vous désignez les auteurs, contributeurs et responsables de publication de votre blog. Vous validez leurs accès et les règles de préparation, de validation et de publication des articles. Nous configurons les comptes et les rôles prévus au devis.\n\nSauf prestation éditoriale expressément commandée, vous gérez ces comptes au quotidien et validez les contenus publiés, y compris ceux de vos contributeurs.\n\nLes commentaires, profils d’auteurs et autres fonctions utilisant des données sont activés et configurés dans le seul périmètre convenu. Vous précisez les informations nécessaires à leur fonctionnement et les consignes de modération.\n\nNos interventions éditoriales, de modération ou de gestion des comptes sont limitées aux opérations expressément prévues au devis.",
+      "proposal": "Pour organiser votre blog, vous désignez les personnes autorisées à rédiger, relire et publier des articles. Vous nous indiquez les droits d’accès à leur attribuer et les règles de validation qui doivent être appliquées.\n\nNous configurons les comptes et les rôles prévus dans le devis. Sauf prestation supplémentaire convenue, vous assurez ensuite la gestion quotidienne des utilisateurs et la validation des contenus publiés par vous-même ou par vos contributeurs.\n\nSi votre blog comporte des commentaires, des profils d’auteurs ou d’autres fonctionnalités utilisant des données personnelles, nous activons et paramétrons uniquement les fonctions convenues. Vous nous précisez les règles de publication et de modération souhaitées ainsi que les informations nécessaires à leur fonctionnement.\n\nLa rédaction d’articles, la modération des commentaires et la gestion courante des comptes par AtoumWeb ne sont comprises que si elles figurent expressément au devis. Les obligations de chaque partie en matière de sécurité et de protection des données restent applicables.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1245,7 +1245,14 @@
       "importantChanges": "Rôles éditoriaux, comptes et traitements mêlés.",
       "proposedTitle": "Responsabilité sur contenus et rôles éditoriaux du blog",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Vous désignez les auteurs, contributeurs et responsables de publication de votre blog. Vous validez leurs accès et les règles de préparation, de validation et de publication des articles. Nous configurons les comptes et les rôles prévus au devis.\n\nSauf prestation éditoriale expressément commandée, vous gérez ces comptes au quotidien et validez les contenus publiés, y compris ceux de vos contributeurs.\n\nLes commentaires, profils d’auteurs et autres fonctions utilisant des données sont activés et configurés dans le seul périmètre convenu. Vous précisez les informations nécessaires à leur fonctionnement et les consignes de modération.\n\nNos interventions éditoriales, de modération ou de gestion des comptes sont limitées aux opérations expressément prévues au devis.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation de la rédaction et clarification des prestations et responsabilités de création de contenu et blog",
+        "note": "Configuration de comptes distincte de gestion éditoriale et de modération ; vérifier rôle RGPD effectif et fonctionnalités au devis."
+      }
     },
     {
       "code": "BLOG-PERIMETRE",
@@ -1256,7 +1263,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Nous mettons en place la structure de blog décrite au devis et les éléments nécessaires pour publier et afficher vos articles.\n\nLa rédaction, l’import ou la migration d’articles et l’animation du blog sont compris uniquement s’ils figurent comme prestations distinctes. Vous restez responsable des contenus que vous publiez ou faites publier.",
+      "proposal": "Nous installons et configurons l’espace Blog prévu dans votre devis afin que votre site puisse présenter et publier des articles. La prestation comprend les éléments de structure et d’affichage qui y sont décrits.\n\nLa rédaction des articles, leur optimisation éditoriale, la reprise de publications existantes et l’animation régulière du blog constituent des prestations distinctes. Elles ne sont comprises que si elles ont été expressément ajoutées au devis.\n\nVous conservez la responsabilité des contenus que vous publiez ou faites publier. De notre côté, nous restons responsables de la mise en place technique et des fonctions que nous nous sommes engagés à livrer.\n\nUne fonctionnalité supplémentaire ou une migration d’articles non prévue fait l’objet d’une proposition complémentaire et de votre accord avant réalisation.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1287,7 +1294,14 @@
       "importantChanges": "Structure technique et animation éditoriale à expliquer.",
       "proposedTitle": "Périmètre du blog technique",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous mettons en place la structure de blog décrite au devis et les éléments nécessaires pour publier et afficher vos articles.\n\nLa rédaction, l’import ou la migration d’articles et l’animation du blog sont compris uniquement s’ils figurent comme prestations distinctes. Vous restez responsable des contenus que vous publiez ou faites publier.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation de la rédaction et clarification des prestations et responsabilités de création de contenu et blog",
+        "note": "Périmètre exact et livrables définis au devis, corrections contractuelles et garanties applicables préservées."
+      }
     },
     {
       "code": "BRAND-ANIMATION",
@@ -1713,7 +1727,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Pour nous permettre de rédiger, vous nous indiquez le sujet, les objectifs, le public visé, les informations propres à votre activité, vos sources internes et vos contraintes éditoriales.\n\nNous pouvons reformuler et organiser ces informations. Vous restez responsable de la validation finale des faits qui concernent votre activité.",
+      "proposal": "Pour préparer la rédaction de votre contenu, vous nous précisez le sujet à traiter, l’objectif recherché, les personnes auxquelles vous souhaitez vous adresser et les messages importants à transmettre. Vous nous communiquez également les informations propres à votre activité, les documents disponibles et les éventuelles consignes de ton ou de présentation.\n\nNous utilisons ces éléments pour organiser et rédiger le contenu prévu au devis. Nous pouvons en améliorer la formulation et la structure afin de rendre le texte plus clair et adapté à son public.\n\nAvant la validation finale, vous vérifiez les informations factuelles propres à votre activité, notamment les caractéristiques de vos services, vos tarifs et vos affirmations commerciales. Cette vérification ne nous dispense pas de réaliser correctement le travail éditorial que nous nous sommes engagés à fournir.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1744,7 +1758,14 @@
       "importantChanges": "Brief et cible à traduire en termes directs.",
       "proposedTitle": "Brief éditorial",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Pour nous permettre de rédiger, vous nous indiquez le sujet, les objectifs, le public visé, les informations propres à votre activité, vos sources internes et vos contraintes éditoriales.\n\nNous pouvons reformuler et organiser ces informations. Vous restez responsable de la validation finale des faits qui concernent votre activité.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation de la rédaction et clarification des prestations et responsabilités de création de contenu et blog",
+        "note": "Périmètre exact et livrables définis au devis, corrections contractuelles et garanties applicables préservées."
+      }
     },
     {
       "code": "CONTENT-CORRECTIONS",
@@ -1755,7 +1776,7 @@
       "sources": [
         "S3"
       ],
-      "proposal": "Le devis ou l’offre précise le nombre de cycles de corrections compris dans la rédaction.\n\nCes corrections portent sur le texte réalisé à partir des indications initiales. Un changement important du sujet ou de ces indications après la rédaction peut nécessiter une prestation complémentaire.",
+      "proposal": "Votre devis ou votre offre précise le nombre d’étapes de relecture et de correction comprises dans la prestation de rédaction.\n\nCes étapes servent à ajuster le texte réalisé à partir du sujet et des consignes que vous avez validés : formulation, organisation des idées ou précisions nécessaires dans le périmètre convenu.\n\nSi vous souhaitez changer sensiblement le sujet, les objectifs ou les consignes après la rédaction, nous examinons les travaux supplémentaires nécessaires et vous présentons, le cas échéant, un devis avant de les réaliser.\n\nLes corrections nécessaires pour remédier à une erreur qui nous est imputable ou pour respecter les engagements du devis restent dues, indépendamment du nombre d’étapes de relecture prévu.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1786,7 +1807,14 @@
       "importantChanges": "Correction et changement de brief peu distincts.",
       "proposedTitle": "Corrections éditoriales",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Le devis ou l’offre précise le nombre de cycles de corrections compris dans la rédaction.\n\nCes corrections portent sur le texte réalisé à partir des indications initiales. Un changement important du sujet ou de ces indications après la rédaction peut nécessiter une prestation complémentaire.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation de la rédaction et clarification des prestations et responsabilités de création de contenu et blog",
+        "note": "Terminologie « étapes de relecture et de correction » harmonisée avec WEB-AR/BASE-VALIDATION ; pas de nombre de corrections inventé."
+      }
     },
     {
       "code": "CONTENT-DROITS",
@@ -1797,7 +1825,7 @@
       "sources": [
         "S7"
       ],
-      "proposal": "Vous garantissez disposer des droits nécessaires sur les documents, données, photos, marques et autres éléments que vous nous demandez d’intégrer au contenu.\n\nChacun de nous reste responsable de ses actes et de ses obligations dans leur utilisation. Si nous avons connaissance d’un risque d’atteinte aux droits, nous vous le signalons. Nous n’utilisons pas un élément lorsque l’exploitation prévue apparaît illicite.\n\nLe fait que vous fournissiez ou demandiez un contenu ne nous exonère pas automatiquement de notre responsabilité et ne prive aucun tiers de ses droits.",
+      "proposal": "Pour réaliser vos contenus, vous pouvez nous transmettre des documents, données, photographies, logos, marques ou autres ressources. Vous vous assurez de disposer des droits et autorisations nécessaires pour leur utilisation dans le cadre de votre projet.\n\nNous utilisons ces éléments uniquement pour réaliser la prestation convenue. Si nous identifions un risque concernant les droits d’un auteur, d’un photographe, d’une marque ou d’un autre titulaire, nous vous en informons. Nous n’utilisons pas un élément dont l’exploitation envisagée apparaît illicite.\n\nChacun reste responsable des obligations qui lui incombent. Le fait qu’un contenu ait été fourni ou demandé par le client ne dégage pas automatiquement AtoumWeb de ses propres responsabilités et ne porte pas atteinte aux droits d’un tiers.\n\nLes droits d’utilisation ou de cession portant sur les contenus créés par AtoumWeb sont précisés par les conditions de propriété intellectuelle applicables et par le devis.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1831,7 +1859,14 @@
       "importantChanges": "Garantie client pouvant masquer les obligations propres de l’agence.",
       "proposedTitle": "Sources et éléments fournis",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Vous garantissez disposer des droits nécessaires sur les documents, données, photos, marques et autres éléments que vous nous demandez d’intégrer au contenu.\n\nChacun de nous reste responsable de ses actes et de ses obligations dans leur utilisation. Si nous avons connaissance d’un risque d’atteinte aux droits, nous vous le signalons. Nous n’utilisons pas un élément lorsque l’exploitation prévue apparaît illicite.\n\nLe fait que vous fournissiez ou demandiez un contenu ne nous exonère pas automatiquement de notre responsabilité et ne prive aucun tiers de ses droits.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation de la rédaction et clarification des prestations et responsabilités de création de contenu et blog",
+        "note": "Clarifier les droits des ressources fournies et la portée de BASE-PI, sans transfert automatique de responsabilité."
+      }
     },
     {
       "code": "CONTENT-MISE-EN-PAGE",
@@ -1843,7 +1878,7 @@
         "S2",
         "S7"
       ],
-      "proposal": "Nous mettons en page les contenus et supports prévus au devis, à partir des textes, visuels, formats et règles graphiques validés.\n\nLa prestation ne comprend pas la création ou la refonte d’une identité visuelle, sauf mention expresse. Avant la finalisation, vous validez les contenus, leur ordre et les éléments de marque.\n\nLe devis précise les formats remis et la livraison éventuelle des fichiers sources. Une déclinaison, un nouveau format ou une modification importante après validation peut nécessiter une prestation complémentaire.",
+      "proposal": "Nous réalisons la mise en page des contenus et des supports décrits dans votre devis, à partir des textes, images, formats et éléments graphiques convenus.\n\nAvant la finalisation, vous vérifiez les informations à publier, leur ordre de présentation et l’utilisation de votre identité visuelle. La création d’un logo ou la refonte de votre identité graphique ne font pas partie de cette prestation, sauf si elles ont été commandées expressément.\n\nLe devis précise les formats que nous vous remettons et indique si les fichiers sources modifiables sont inclus. La remise d’un document final ne signifie pas automatiquement que tous les fichiers de travail sont fournis.\n\nSi vous souhaitez ensuite une version supplémentaire, un autre format ou une modification importante de la présentation validée, nous vous proposons les travaux et leur prix avant réalisation. Les corrections nécessaires à la conformité du livrable convenu restent comprises dans notre prestation.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1874,7 +1909,14 @@
       "importantChanges": "Livrables et déclinaisons à préciser.",
       "proposedTitle": "Mise en page graphique de contenus",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous mettons en page les contenus et supports prévus au devis, à partir des textes, visuels, formats et règles graphiques validés.\n\nLa prestation ne comprend pas la création ou la refonte d’une identité visuelle, sauf mention expresse. Avant la finalisation, vous validez les contenus, leur ordre et les éléments de marque.\n\nLe devis précise les formats remis et la livraison éventuelle des fichiers sources. Une déclinaison, un nouveau format ou une modification importante après validation peut nécessiter une prestation complémentaire.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation de la rédaction et clarification des prestations et responsabilités de création de contenu et blog",
+        "note": "Périmètre exact et livrables définis au devis, corrections contractuelles et garanties applicables préservées."
+      }
     },
     {
       "code": "CONTENT-RECHERCHE",
@@ -1885,7 +1927,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Nous réalisons les recherches documentaires ou techniques prévues au devis pour produire le livrable convenu.\n\nVous nous transmettez vos sources internes, informations métier et contraintes, puis validez les faits propres à votre activité. Nous sélectionnons et synthétisons les sources accessibles dans le périmètre convenu, sans garantir de les couvrir toutes.\n\nCette recherche ne remplace pas l’avis d’un professionnel du droit, de la santé, de la finance ou d’une autre profession réglementée. Un changement important du sujet ou du niveau de recherche peut nécessiter une prestation complémentaire.",
+      "proposal": "Lorsque votre prestation comprend une recherche documentaire ou technique, nous consultons et analysons les sources accessibles nécessaires pour préparer le contenu ou le document prévu au devis.\n\nVous nous transmettez les informations propres à votre activité, les documents internes utiles et les contraintes particulières dont vous avez connaissance. Vous vérifiez ensuite les faits relatifs à votre entreprise ou à votre métier que vous nous avez communiqués.\n\nNous sélectionnons et présentons les informations dans les limites du sujet et de l’étendue de recherche convenus, sans garantir qu’aucune source existante n’a été omise. Cette prestation ne remplace pas une consultation auprès d’un avocat, d’un professionnel de santé, d’un conseiller financier ou d’un autre spécialiste habilité lorsque celle-ci est nécessaire.\n\nUn changement important de sujet ou une recherche plus approfondie que celle prévue peut nécessiter une proposition complémentaire acceptée avant réalisation. Nous restons responsables de la qualité des travaux de recherche effectivement convenus.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1916,7 +1958,14 @@
       "importantChanges": "Exploitation documentaire et conseil réglementé impersonnels.",
       "proposedTitle": "Recherche documentaire / sujet technique",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous réalisons les recherches documentaires ou techniques prévues au devis pour produire le livrable convenu.\n\nVous nous transmettez vos sources internes, informations métier et contraintes, puis validez les faits propres à votre activité. Nous sélectionnons et synthétisons les sources accessibles dans le périmètre convenu, sans garantir de les couvrir toutes.\n\nCette recherche ne remplace pas l’avis d’un professionnel du droit, de la santé, de la finance ou d’une autre profession réglementée. Un changement important du sujet ou du niveau de recherche peut nécessiter une prestation complémentaire.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation de la rédaction et clarification des prestations et responsabilités de création de contenu et blog",
+        "note": "Périmètre exact et livrables définis au devis, corrections contractuelles et garanties applicables préservées."
+      }
     },
     {
       "code": "CONTENT-SEO",
@@ -1927,7 +1976,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Si vous commandez un contenu optimisé pour le référencement naturel (SEO), nous l’optimisons selon les objectifs définis au moment de la prestation.\n\nCe travail ne garantit pas une position dans les résultats des moteurs de recherche.",
+      "proposal": "Lorsque vous commandez un texte optimisé pour le référencement naturel, nous travaillons son contenu et sa structure en fonction des objectifs définis dans votre devis au moment de la prestation.\n\nCette optimisation vise à rendre le texte pertinent pour les sujets recherchés par votre public et compréhensible pour les moteurs de recherche, dans les limites des travaux convenus.\n\nLe classement d’une page dépend aussi de nombreux facteurs extérieurs, notamment de la concurrence et des décisions des moteurs de recherche. Nous ne garantissons donc pas une position précise dans les résultats ni un nombre déterminé de visites.\n\nCette absence de garantie de classement ne réduit pas notre obligation de réaliser les optimisations et de livrer le contenu convenus.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1958,7 +2007,14 @@
       "importantChanges": "SEO non développé ; phrase courte mais impersonnelle.",
       "proposedTitle": "Contenu optimisé SEO",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Si vous commandez un contenu optimisé pour le référencement naturel (SEO), nous l’optimisons selon les objectifs définis au moment de la prestation.\n\nCe travail ne garantit pas une position dans les résultats des moteurs de recherche.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation de la rédaction et clarification des prestations et responsabilités de création de contenu et blog",
+        "note": "Périmètre exact et livrables définis au devis, corrections contractuelles et garanties applicables préservées."
+      }
     },
     {
       "code": "DATA-ACCES",
