@@ -3704,7 +3704,7 @@
         "S7",
         "S24"
       ],
-      "proposal": "Vous nous fournissez les textes, photos, informations pratiques et autres éléments nécessaires à votre site de mariage.\n\nVous garantissez avoir les autorisations nécessaires pour utiliser les contenus et les photos transmis, notamment lorsque d’autres personnes y apparaissent.",
+      "proposal": "Pour créer votre site de mariage, vous nous transmettez les textes, photographies, dates, lieux, horaires et autres informations pratiques nécessaires aux pages prévues dans votre devis.\n\nVous vérifiez l’exactitude des informations et vous assurez de disposer des droits et autorisations nécessaires pour publier les images et les autres contenus transmis. Une attention particulière est nécessaire lorsque des photographies représentent des invités, notamment des enfants : le fait de posséder une photo ne signifie pas automatiquement que sa diffusion sur le site est autorisée.\n\nNous intégrons les éléments reçus dans le cadre de la prestation convenue et vous présentons le résultat pour validation. De notre côté, nous restons responsables de la bonne exécution de cette intégration et du respect de nos propres obligations.\n\nLa rédaction de nouveaux textes, la retouche de photographies ou la création d’éléments supplémentaires ne sont comprises que si elles sont prévues au devis.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -3735,7 +3735,14 @@
       "importantChanges": "Futurs mariés à remplacer sans perdre les autorisations des tiers.",
       "proposedTitle": "Contenus et photographies",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Vous nous fournissez les textes, photos, informations pratiques et autres éléments nécessaires à votre site de mariage.\n\nVous garantissez avoir les autorisations nécessaires pour utiliser les contenus et les photos transmis, notamment lorsque d’autres personnes y apparaissent.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation des contrats mariage B2C, périmètre, droits des images, données invités, durée et intégrations tierces",
+        "note": "Conserver le périmètre existant, les garanties légales et obligations d'AtoumWeb ; détail effectif au devis avant adoption."
+      }
     },
     {
       "code": "MARIAGE-DUREE",
@@ -3747,7 +3754,7 @@
         "S8",
         "S15"
       ],
-      "proposal": "Votre site de mariage reste accessible pendant la durée indiquée au devis. Celui-ci précise le début de la mise en ligne, la période comprise et les conditions de poursuite.\n\nLe renouvellement de l’hébergement nécessite un accord exprès ; il n’est pas tacite par défaut.\n\nÀ la fin de la période, nous vous informons de la fin du service et organisons la récupération, l’export ou le transfert selon la période définie au devis. Une migration ou une reconstruction complexe hors périmètre nécessite un accord complémentaire.\n\nLes données devenues inutiles sont supprimées selon leurs règles de conservation, en distinguant les sauvegardes et les archives nécessaires. La durée d’accès au site ne justifie pas, à elle seule, de conserver pendant toute cette période l’ensemble des réponses des invités.",
+      "proposal": "Votre site de mariage est mis à disposition pour la période indiquée dans le devis. Celui-ci précise le début de la mise en ligne, la durée comprise dans l’offre et les conditions éventuelles de prolongation.\n\nSi vous souhaitez conserver le site au-delà de cette période, nous vous proposons les conditions de renouvellement avant son échéance. Tout renouvellement annuel nécessite votre accord exprès : l’absence de réponse ne vaut pas acceptation.\n\nÀ la fin du service, nous vous informons des modalités de fermeture et de la période prévue pour récupérer ou transférer les éléments de votre site. Les opérations de migration ou de reconstruction qui dépassent ce qui était convenu peuvent faire l’objet d’un devis complémentaire, sous réserve des prestations et restitutions déjà dues.\n\nLes réponses des invités et les autres données personnelles ne sont pas conservées automatiquement aussi longtemps que le site reste accessible. Leur durée de conservation est déterminée selon leur utilité réelle, les modalités convenues et les règles applicables. Les sauvegardes et archives qui doivent légitimement être conservées suivent leurs propres conditions.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -3781,7 +3788,14 @@
       "importantChanges": "Durée du site, sortie et conservation RSVP confondues.",
       "proposedTitle": "Durée de mise en ligne",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Votre site de mariage reste accessible pendant la durée indiquée au devis. Celui-ci précise le début de la mise en ligne, la période comprise et les conditions de poursuite.\n\nLe renouvellement de l’hébergement nécessite un accord exprès ; il n’est pas tacite par défaut.\n\nÀ la fin de la période, nous vous informons de la fin du service et organisons la récupération, l’export ou le transfert selon la période définie au devis. Une migration ou une reconstruction complexe hors périmètre nécessite un accord complémentaire.\n\nLes données devenues inutiles sont supprimées selon leurs règles de conservation, en distinguant les sauvegardes et les archives nécessaires. La durée d’accès au site ne justifie pas, à elle seule, de conserver pendant toute cette période l’ensemble des réponses des invités.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation des contrats mariage B2C, périmètre, droits des images, données invités, durée et intégrations tierces",
+        "note": "Renouvellement exprès, durée au devis, conservation des réponses RSVP distincte. Vérifier offre mariage et échéances réelles."
+      }
     },
     {
       "code": "MARIAGE-PERIMETRE",
@@ -3793,7 +3807,7 @@
         "S2",
         "S8"
       ],
-      "proposal": "Nous créons et mettons temporairement à votre disposition le site de mariage décrit au devis, avec les pages, sections, connexions et fonctions qui y sont prévues. Nous en réalisons la conception et l’intégration technique.\n\nSauf prestation de création de contenu expressément prévue, vous fournissez et validez les textes, photos, informations pratiques et autres contenus nécessaires. Les informations sur vos invités sont limitées à ce qui est strictement nécessaire aux fonctions prévues.\n\nUne fonction, une page, une connexion ou une modification qui dépasse ce cadre peut faire l’objet d’un accord complémentaire.",
+      "proposal": "Nous créons votre site de mariage selon la formule et les éléments détaillés dans votre devis. Il s’agit d’un site événementiel accessible pendant une durée définie, et non d’un hébergement permanent compris sans limite de temps.\n\nLe devis indique les pages, rubriques et fonctionnalités prévues, comme la présentation de votre événement, les informations pratiques ou un formulaire de réponse des invités lorsque celui-ci est inclus. Nous réalisons la conception et la configuration technique de ces éléments.\n\nVous nous fournissez et validez les textes, photographies et informations nécessaires, sauf si leur création fait partie des prestations expressément commandées. Les informations relatives à vos invités sont limitées à ce qui est réellement nécessaire aux fonctionnalités prévues.\n\nSi vous souhaitez ajouter une page, une fonctionnalité ou une connexion à un service extérieur non prévue initialement, nous vous présentons les travaux et leur prix avant de les réaliser. Les corrections nécessaires pour respecter les éléments déjà convenus restent comprises dans nos obligations.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -3824,7 +3838,14 @@
       "importantChanges": "Mise à disposition et répétitions de périmètre administratives.",
       "proposedTitle": "Périmètre de l’offre mariage",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous créons et mettons temporairement à votre disposition le site de mariage décrit au devis, avec les pages, sections, connexions et fonctions qui y sont prévues. Nous en réalisons la conception et l’intégration technique.\n\nSauf prestation de création de contenu expressément prévue, vous fournissez et validez les textes, photos, informations pratiques et autres contenus nécessaires. Les informations sur vos invités sont limitées à ce qui est strictement nécessaire aux fonctions prévues.\n\nUne fonction, une page, une connexion ou une modification qui dépasse ce cadre peut faire l’objet d’un accord complémentaire.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation des contrats mariage B2C, périmètre, droits des images, données invités, durée et intégrations tierces",
+        "note": "Conserver le périmètre existant, les garanties légales et obligations d'AtoumWeb ; détail effectif au devis avant adoption."
+      }
     },
     {
       "code": "MARIAGE-POST-EVENEMENT",
@@ -3836,7 +3857,7 @@
         "S2",
         "S9"
       ],
-      "proposal": "Si votre offre comprend des éléments après le mariage, nous réalisons uniquement la galerie, les photos, la vidéo ou le diaporama, le livre d’or et les contenus associés décrits au devis.\n\nVous nous transmettez les éléments nécessaires dans les trois mois suivant la date du mariage. Au-delà, leur traitement est replanifié selon nos disponibilités et peut nécessiter une prestation complémentaire, après vous en avoir informés et avoir obtenu votre accord.\n\nAucun contenu ni aucune fonction non prévu au devis n’est ajouté automatiquement.",
+      "proposal": "Certaines formules peuvent prévoir des contenus à ajouter après votre mariage, comme une galerie de photographies, une vidéo, un diaporama ou un livre d’or. Nous réalisons uniquement les éléments et fonctionnalités expressément mentionnés dans votre devis.\n\nPour nous permettre d’organiser leur intégration, vous nous transmettez les contenus nécessaires dans les trois mois suivant la date du mariage.\n\nSi vous nous les adressez après ce délai, nous convenons d’un nouveau calendrier selon nos disponibilités. Des travaux supplémentaires peuvent être proposés si le retard exige une intervention qui n’était pas comprise dans la prestation, mais ils ne sont réalisés et facturés qu’après votre accord.\n\nCe délai de trois mois ne supprime pas automatiquement une prestation déjà convenue et ne vous impose pas de pénalité forfaitaire. Les nouveaux contenus ou fonctionnalités non prévus au devis restent soumis à un accord complémentaire.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -3867,7 +3888,14 @@
       "importantChanges": "Le délai3mois organise la remise et replanification, sans introduire de déchéance ou de pénalité automatique.",
       "proposedTitle": "Éléments fournis après le mariage et délai de 3 mois",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Si votre offre comprend des éléments après le mariage, nous réalisons uniquement la galerie, les photos, la vidéo ou le diaporama, le livre d’or et les contenus associés décrits au devis.\n\nVous nous transmettez les éléments nécessaires dans les trois mois suivant la date du mariage. Au-delà, leur traitement est replanifié selon nos disponibilités et peut nécessiter une prestation complémentaire, après vous en avoir informés et avoir obtenu votre accord.\n\nAucun contenu ni aucune fonction non prévu au devis n’est ajouté automatiquement.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation des contrats mariage B2C, périmètre, droits des images, données invités, durée et intégrations tierces",
+        "note": "Délai de 3 mois conservé, aucune pénalité ou suppression automatique de la prestation."
+      }
     },
     {
       "code": "MARIAGE-PRIVE",
@@ -3878,7 +3906,7 @@
       "sources": [
         "S8"
       ],
-      "proposal": "Si un accès protégé est prévu dans votre formule, nous mettons en place le mécanisme technique convenu.\n\nCe type d’accès ne peut garantir une confidentialité absolue si les utilisateurs transmettent leurs identifiants ou leurs liens d’accès à d’autres personnes.",
+      "proposal": "Si votre formule de site de mariage prévoit un accès privé, nous mettons en place la protection définie dans le devis, par exemple un accès réservé au moyen d’un mot de passe ou d’un lien dédié, selon la solution retenue.\n\nCette protection limite l’accès dans les conditions prévues, mais elle ne garantit pas une confidentialité absolue. Une personne qui reçoit le mot de passe ou le lien peut notamment le transmettre à quelqu’un d’autre.\n\nNous restons responsables de la bonne configuration des protections que nous nous sommes engagés à fournir et des mesures de sécurité qui nous incombent. Nous vous expliquons les limites connues du dispositif afin que vous puissiez choisir les informations et photographies que vous souhaitez mettre en ligne.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -3909,7 +3937,14 @@
       "importantChanges": "Accès grand public peut donner fausse assurance ou exonération.",
       "proposedTitle": "Accès privé",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Si un accès protégé est prévu dans votre formule, nous mettons en place le mécanisme technique convenu.\n\nCe type d’accès ne peut garantir une confidentialité absolue si les utilisateurs transmettent leurs identifiants ou leurs liens d’accès à d’autres personnes.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation des contrats mariage B2C, périmètre, droits des images, données invités, durée et intégrations tierces",
+        "note": "Conserver le périmètre existant, les garanties légales et obligations d'AtoumWeb ; détail effectif au devis avant adoption."
+      }
     },
     {
       "code": "MARIAGE-RSVP",
@@ -3921,7 +3956,7 @@
         "S8",
         "S25"
       ],
-      "proposal": "Le formulaire de réponse des invités (RSVP) demande par défaut uniquement les informations nécessaires aux réponses et à l’organisation prévue. Il ne collecte pas de données sensibles et ne comporte pas de champ libre général susceptible d’en recueillir.\n\nLes champs, les destinataires, les accès et les durées de conservation sont définis selon le fonctionnement réel du service. Les rôles et obligations de chacun en matière de données personnelles sont déterminés sur cette base, sans vous attribuer automatiquement la qualité de responsable du traitement.\n\nUne éventuelle collecte de données sensibles est une option distincte. Elle reste désactivée tant que sa nécessité et toutes ses conditions légales et techniques ne sont pas vérifiées et satisfaites. À défaut, l’invité ou son représentant transmet directement ces informations au traiteur : le site AtoumWeb ne les collecte pas, ne les stocke pas et ne les relaie pas.\n\nLa clause « Données et accès » du socle commun encadre les obligations générales applicables.",
+      "proposal": "Lorsque votre formule comprend un formulaire de réponse des invités, nous le configurons pour recueillir uniquement les informations nécessaires à l’organisation prévue, par exemple une confirmation de présence ou le nombre de personnes concernées, dans les limites du devis.\n\nPar défaut, le formulaire ne demande pas de données sensibles et ne comprend pas de champ de texte libre général susceptible d’en recueillir. Les informations demandées, les personnes qui reçoivent les réponses, les droits d’accès et les durées de conservation sont définis selon le fonctionnement réel du site.\n\nLes obligations de protection des données sont réparties selon les rôles effectivement exercés par chacun. La seule qualité de futurs mariés ne suffit pas à déterminer automatiquement votre rôle juridique dans le traitement des réponses.\n\nSi vous envisagez de demander des informations sensibles, notamment des données de santé pouvant apparaître dans certaines indications alimentaires, cette collecte constitue une option distincte qui reste désactivée tant que sa nécessité et ses conditions légales et techniques n’ont pas été vérifiées. À défaut, les invités ou leurs représentants transmettent ces informations directement au traiteur, sans passer par le formulaire ni par les outils AtoumWeb.\n\nLes règles générales relatives aux données et aux accès prévues dans votre contrat restent applicables.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -3954,7 +3989,14 @@
       "importantChanges": "Pas de santé ni champ libre par défaut ; rôle du couple non automatique ; option sensible bloquée tant que conditions non satisfaites.",
       "proposedTitle": "Réponses des invités",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Le formulaire de réponse des invités (RSVP) demande par défaut uniquement les informations nécessaires aux réponses et à l’organisation prévue. Il ne collecte pas de données sensibles et ne comporte pas de champ libre général susceptible d’en recueillir.\n\nLes champs, les destinataires, les accès et les durées de conservation sont définis selon le fonctionnement réel du service. Les rôles et obligations de chacun en matière de données personnelles sont déterminés sur cette base, sans vous attribuer automatiquement la qualité de responsable du traitement.\n\nUne éventuelle collecte de données sensibles est une option distincte. Elle reste désactivée tant que sa nécessité et toutes ses conditions légales et techniques ne sont pas vérifiées et satisfaites. À défaut, l’invité ou son représentant transmet directement ces informations au traiteur : le site AtoumWeb ne les collecte pas, ne les stocke pas et ne les relaie pas.\n\nLa clause « Données et accès » du socle commun encadre les obligations générales applicables.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation des contrats mariage B2C, périmètre, droits des images, données invités, durée et intégrations tierces",
+        "note": "Maintenir questionnaire minimal et absence de données sensibles par défaut ; analyse des rôles et conditions RGPD à faire avant toute option de collecte sensible."
+      }
     },
     {
       "code": "MARIAGE-TIERS",
@@ -3965,7 +4007,7 @@
       "sources": [
         "S8"
       ],
-      "proposal": "Votre site peut intégrer les services externes prévus au devis : carte Google Maps, vidéo hébergée, cagnotte, liste de mariage ou autre outil.\n\nCes services suivent les conditions, frais, règles de compte, limites, changements et disponibilités de leurs fournisseurs. Nous réalisons l’intégration technique convenue, sans contrôler leurs décisions ni leur fonctionnement permanent.\n\nNous n’encaissons, ne détenons et ne gérons pas les fonds versés par une cagnotte ou un service de paiement externe.",
+      "proposal": "Votre site de mariage peut comporter les liens ou intégrations de services extérieurs indiqués dans votre devis : carte d’accès, vidéo hébergée sur une autre plateforme, liste de mariage, cagnotte ou autre service prévu.\n\nCes outils fonctionnent selon les conditions de leurs fournisseurs, notamment pour l’ouverture des comptes, les frais éventuels, la disponibilité et les modifications de leurs services. Nous réalisons la connexion ou l’intégration technique prévue dans votre prestation, sans pouvoir garantir les décisions ou le fonctionnement permanent de ces fournisseurs.\n\nSi vous utilisez une cagnotte ou un service de paiement extérieur, les versements sont effectués directement auprès du prestataire concerné, selon ses conditions. AtoumWeb ne reçoit, ne détient, ne gère et ne reverse pas les fonds versés pour votre événement.\n\nNous restons responsables de la qualité de notre intégration et des erreurs qui nous seraient imputables. Tout service ou fonctionnement supplémentaire non compris dans le devis nécessite votre accord avant réalisation.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -3996,7 +4038,14 @@
       "importantChanges": "Services tiers et exclusion des fonds à rendre lisibles.",
       "proposedTitle": "Cagnotte, vidéo et services tiers",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Votre site peut intégrer les services externes prévus au devis : carte Google Maps, vidéo hébergée, cagnotte, liste de mariage ou autre outil.\n\nCes services suivent les conditions, frais, règles de compte, limites, changements et disponibilités de leurs fournisseurs. Nous réalisons l’intégration technique convenue, sans contrôler leurs décisions ni leur fonctionnement permanent.\n\nNous n’encaissons, ne détenons et ne gérons pas les fonds versés par une cagnotte ou un service de paiement externe.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation des contrats mariage B2C, périmètre, droits des images, données invités, durée et intégrations tierces",
+        "note": "Conserver le périmètre existant, les garanties légales et obligations d'AtoumWeb ; détail effectif au devis avant adoption."
+      }
     },
     {
       "code": "PHOTO-DEPLACEMENT",
