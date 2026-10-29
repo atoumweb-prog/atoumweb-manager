@@ -4754,7 +4754,7 @@
       "sources": [
         "S3"
       ],
-      "proposal": "La prestation comprend les étapes de correction et de validation prévues au devis.\n\nUne correction ajuste un élément déjà compris dans le projet initial. Une demande qui ajoute une fonction, une page, un contenu, une connexion à un autre outil ou une modification importante non prévue peut faire l’objet d’un complément de prix ou d’un nouveau devis.\n\nVous vous engagez à regrouper vos retours autant que possible pour éviter des séries de corrections successives inutiles.",
+      "proposal": "Pendant la création de votre site, nous prévoyons les étapes de relecture et de correction indiquées dans le devis. Elles vous permettent de vérifier le travail réalisé et de demander les ajustements nécessaires sur les éléments déjà compris dans le projet.\n\nUne correction peut, par exemple, porter sur la présentation d’une page, un texte intégré ou un élément graphique prévu au devis. Elle ne doit pas être confondue avec une nouvelle demande : l’ajout d’une page, d’une fonctionnalité, d’un contenu à créer, d’une connexion à un service extérieur ou une modification importante du projet peut nécessiter un devis complémentaire.\n\nPour faciliter les échanges et avancer dans de bonnes conditions, nous vous invitons à regrouper autant que possible vos observations à chaque étape de validation. Nous vous précisons les éventuels travaux supplémentaires et leur prix avant de les entreprendre.\n\nLes corrections nécessaires pour respecter les prestations promises, remédier à une erreur qui nous est imputable ou satisfaire à une garantie applicable restent dues indépendamment du nombre d’allers-retours commerciaux prévu au devis.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 24,
@@ -4790,7 +4790,14 @@
       "importantChanges": "Une correction pourrait être confondue avec une non-conformité à facturer ; répétition avec validation.",
       "proposedTitle": "Corrections et allers-retours",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "La prestation comprend les étapes de correction et de validation prévues au devis.\n\nUne correction ajuste un élément déjà compris dans le projet initial. Une demande qui ajoute une fonction, une page, un contenu, une connexion à un autre outil ou une modification importante non prévue peut faire l’objet d’un complément de prix ou d’un nouveau devis.\n\nVous vous engagez à regrouper vos retours autant que possible pour éviter des séries de corrections successives inutiles.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire en attente d'approbation",
+        "scope": "corrections et allers-retours création site, séparation ajustements/inclusions et demandes nouvelles",
+        "note": "Rédaction plus naturelle ; pas de quota ni délai inventé ; préservation explicite des corrections contractuelles et légales dues."
+      }
     },
     {
       "code": "WEB-COMPATIBILITE",
