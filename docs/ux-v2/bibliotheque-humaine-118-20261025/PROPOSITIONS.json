@@ -264,7 +264,7 @@
         "S14",
         "S15"
       ],
-      "proposal": "La maintenance de votre application est une prestation sur devis, limitée aux opérations expressément convenues. Nous distinguons la correction des anomalies, l’entretien technique et les évolutions fonctionnelles. Ces dernières sont comprises uniquement si le devis le prévoit.\n\nAucun abonnement ni renouvellement n’est présumé. Si un service récurrent est prévu, le devis en précise la durée et les conditions de résiliation. Un engagement annuel est renouvelé par accord exprès, sans reconduction tacite annuelle par défaut.\n\nLa fin du service permet de récupérer ou de transférer les éléments selon la période et les modalités convenues. Les données sont ensuite traitées selon leurs règles de conservation.\n\nUne astreinte, une surveillance continue ou un niveau de service particulier n’est pas compris s’il n’est pas prévu. Les obligations légales et corrections déjà dues restent distinctes. Les services externes suivent la clause « Dépendances et coûts de services tiers », sans nous dispenser de nos propres obligations.",
+      "proposal": "La maintenance d’une application sur mesure n’est comprise que si vous l’avez expressément commandée. Votre devis indique les opérations prévues : corrections d’anomalies, entretien technique, assistance ou évolutions fonctionnelles lorsqu’elles sont incluses. Une nouvelle fonction n’entre donc pas automatiquement dans la maintenance.\n\nAucun abonnement récurrent n’est présumé. Lorsqu’une maintenance régulière est convenue, le devis en précise la durée, les conditions de paiement et les modalités de résiliation. Tout renouvellement annuel nécessite votre accord exprès ; votre silence ne vaut pas reconduction annuelle automatique.\n\nÀ la fin de la prestation, nous organisons la récupération ou le transfert des éléments qui doivent vous être remis, selon les modalités convenues. Les données sont ensuite conservées ou supprimées conformément aux règles applicables.\n\nSauf engagement spécifique, cette maintenance ne comprend ni surveillance continue, ni astreinte permanente, ni délai garanti de rétablissement. Les corrections et garanties déjà dues restent applicables. Les limites des services extérieurs ne nous dégagent pas de nos propres responsabilités.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -297,7 +297,14 @@
       "importantChanges": "Maintenance, reconduction, sortie, astreinte et tiers imbriqués.",
       "proposedTitle": "Maintenance et support applicatif",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "La maintenance de votre application est une prestation sur devis, limitée aux opérations expressément convenues. Nous distinguons la correction des anomalies, l’entretien technique et les évolutions fonctionnelles. Ces dernières sont comprises uniquement si le devis le prévoit.\n\nAucun abonnement ni renouvellement n’est présumé. Si un service récurrent est prévu, le devis en précise la durée et les conditions de résiliation. Un engagement annuel est renouvelé par accord exprès, sans reconduction tacite annuelle par défaut.\n\nLa fin du service permet de récupérer ou de transférer les éléments selon la période et les modalités convenues. Les données sont ensuite traitées selon leurs règles de conservation.\n\nUne astreinte, une surveillance continue ou un niveau de service particulier n’est pas compris s’il n’est pas prévu. Les obligations légales et corrections déjà dues restent distinctes. Les services externes suivent la clause « Dépendances et coûts de services tiers », sans nous dispenser de nos propres obligations.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "réécriture des conditions des applications et outils métier",
+        "note": "Maintenance optionnelle, engagement annuel exprès, sortie et limites de service. Pas de reconduction tacite inventée."
+      }
     },
     {
       "code": "APP-MVP",
@@ -308,7 +315,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Le MVP est la première version utilisable de votre application. Il comprend les fonctions indispensables convenues au devis.\n\nLes fonctions secondaires, optimisations, automatisations, plateformes ou connexions qui ne figurent pas dans ce périmètre ne sont pas comprises : elles relèvent d’une évolution ou d’une version ultérieure.\n\nNous livrons cette version et la vérifions pour les utilisateurs, droits d’accès, données, règles et environnements définis pour elle.",
+      "proposal": "Une première version utilisable, parfois appelée « MVP », rassemble les fonctionnalités essentielles décrites dans votre devis. Son objectif est de vous permettre de réaliser les usages prioritaires définis pour cette étape du projet.\n\nLe devis précise les personnes concernées, leurs droits d’accès, les données nécessaires, les règles de fonctionnement et les environnements dans lesquels cette version doit être utilisée et vérifiée.\n\nLes fonctions secondaires, les automatisations, les connexions supplémentaires et les optimisations qui n’ont pas été retenues ne font pas partie de cette première livraison. Elles pourront être étudiées dans une étape ultérieure, avec un périmètre et un prix acceptés séparément.\n\nContrairement à une simple maquette, cette première version doit pouvoir être utilisée pour les usages effectivement promis dans le devis. Cela ne supprime pas les corrections dues si ces usages ne fonctionnent pas comme convenu.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -339,7 +346,14 @@
       "importantChanges": "MVP et version réellement utilisable peuvent sembler contradictoires avec prototype.",
       "proposedTitle": "Périmètre MVP et évolutions ultérieures",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Le MVP est la première version utilisable de votre application. Il comprend les fonctions indispensables convenues au devis.\n\nLes fonctions secondaires, optimisations, automatisations, plateformes ou connexions qui ne figurent pas dans ce périmètre ne sont pas comprises : elles relèvent d’une évolution ou d’une version ultérieure.\n\nNous livrons cette version et la vérifions pour les utilisateurs, droits d’accès, données, règles et environnements définis pour elle.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "réécriture des conditions des applications et outils métier",
+        "note": "Cohérence avec BASE-VALIDATION, BASE-PI, APP-EVOLUTIONS et garanties applicables."
+      }
     },
     {
       "code": "APP-PI-REUTILISATION",
@@ -350,7 +364,7 @@
       "sources": [
         "S7"
       ],
-      "proposal": "Nous distinguons les développements réalisés spécialement pour vous de nos composants, bibliothèques, outils, méthodes et savoir-faire réutilisables.\n\nLe modèle retenu vous accorde une licence suffisamment large et durable pour utiliser, exploiter, maintenir et faire modifier le livrable spécifique. Le devis ou son annexe de droits définit précisément les droits accordés, les usages, la durée, le territoire, les conditions de prise d’effet et les éventuelles restrictions. Une exclusivité ou une cession particulière nécessite un accord exprès.\n\nNous pouvons réutiliser nos éléments génériques, mais pas vos données, secrets, identifiants, contenus confidentiels ni la logique propre à votre activité. Nous ne réutilisons que les éléments dont nous détenons les droits nécessaires ou dont la licence l’autorise.\n\nLes composants génériques et tiers intégrés à la livraison sont identifiés et accompagnés des autorisations nécessaires à l’exploitation convenue. Les règles impératives et les licences tierces restent applicables.\n\nLe devis identifie séparément l’application livrée, le dépôt de développement, la documentation et les autres fichiers ou outils.",
+      "proposal": "Nous distinguons les éléments développés spécialement pour votre activité des outils, méthodes, bibliothèques et composants génériques qu’AtoumWeb utilise dans ses différents projets.\n\nLes droits accordés sur votre application spécifique vous permettent de l’utiliser, de l’exploiter, de la maintenir et de la faire modifier dans les conditions prévues au devis ou dans son annexe. Ces documents précisent les usages autorisés, la durée, le territoire, les éventuelles restrictions et la prise d’effet des droits. Une exclusivité ou une cession particulière nécessite un accord exprès.\n\nAtoumWeb peut continuer à utiliser ses éléments génériques lorsqu’elle en possède les droits nécessaires. En revanche, cette faculté ne permet pas de réutiliser vos données, identifiants, informations confidentielles ou règles de fonctionnement propres à votre activité.\n\nLes composants appartenant à des éditeurs tiers restent soumis à leurs licences. Nous identifions les ressources intégrées et les conditions permettant l’exploitation convenue du livrable. Le devis précise également ce qui est effectivement remis : application, code ou dépôt de développement, documentation et autres fichiers ou outils prévus.\n\nLa remise de l’application ne vaut pas, à elle seule, cession générale de tous les droits de propriété intellectuelle.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -381,7 +395,14 @@
       "importantChanges": "Licence suffisamment large ne suffit pas sans annexe de droits précise ; ne pas céder les composants tiers.",
       "proposedTitle": "Spécifique client vs composants génériques AtoumWeb",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous distinguons les développements réalisés spécialement pour vous de nos composants, bibliothèques, outils, méthodes et savoir-faire réutilisables.\n\nLe modèle retenu vous accorde une licence suffisamment large et durable pour utiliser, exploiter, maintenir et faire modifier le livrable spécifique. Le devis ou son annexe de droits définit précisément les droits accordés, les usages, la durée, le territoire, les conditions de prise d’effet et les éventuelles restrictions. Une exclusivité ou une cession particulière nécessite un accord exprès.\n\nNous pouvons réutiliser nos éléments génériques, mais pas vos données, secrets, identifiants, contenus confidentiels ni la logique propre à votre activité. Nous ne réutilisons que les éléments dont nous détenons les droits nécessaires ou dont la licence l’autorise.\n\nLes composants génériques et tiers intégrés à la livraison sont identifiés et accompagnés des autorisations nécessaires à l’exploitation convenue. Les règles impératives et les licences tierces restent applicables.\n\nLe devis identifie séparément l’application livrée, le dépôt de développement, la documentation et les autres fichiers ou outils.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "réécriture des conditions des applications et outils métier",
+        "note": "Droits spécifiques, composants génériques, tiers et livrables distingués ; modèle de licence à préciser dans chaque devis."
+      }
     },
     {
       "code": "APP-PROTOTYPE",
@@ -392,7 +413,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Le prototype ou la maquette fonctionnelle présente ou simule les écrans, les parcours et les comportements prévus au devis. Il sert à valider une orientation.\n\nIl ne s’agit pas nécessairement d’une application utilisable en production. Selon le périmètre convenu, il peut ne pas comprendre de véritable base de données, de sécurité complète, de performances définitives, de connexions réelles à d’autres outils, de traitements complets, de sauvegardes ou de moyens d’exploitation.",
+      "proposal": "Un prototype ou une maquette fonctionnelle sert à vous présenter et à tester une idée avant le développement complet de votre application. Selon ce qui figure dans le devis, il peut montrer les écrans, les parcours de navigation ou simuler certaines actions.\n\nCe livrable n’est pas nécessairement une application prête à être utilisée dans votre activité. Il peut notamment fonctionner avec des données fictives, sans véritable connexion à vos logiciels, sans base de données définitive ou sans les dispositifs de sécurité, de sauvegarde et de performance attendus d’une version de production.\n\nLe devis indique ce que le prototype doit réellement permettre de vérifier et les éléments qui ne font pas partie de cette étape. Si vous souhaitez ensuite une application exploitable, son développement fait l’objet du périmètre et de l’accord prévus pour cette nouvelle prestation.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -423,7 +444,14 @@
       "importantChanges": "Énumération technique des absences possibles.",
       "proposedTitle": "Prototype / maquette non assimilé au produit final",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Le prototype ou la maquette fonctionnelle présente ou simule les écrans, les parcours et les comportements prévus au devis. Il sert à valider une orientation.\n\nIl ne s’agit pas nécessairement d’une application utilisable en production. Selon le périmètre convenu, il peut ne pas comprendre de véritable base de données, de sécurité complète, de performances définitives, de connexions réelles à d’autres outils, de traitements complets, de sauvegardes ou de moyens d’exploitation.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "réécriture des conditions des applications et outils métier",
+        "note": "Bien distinguer prototype non productif et MVP utilisable, selon devis."
+      }
     },
     {
       "code": "APP-RECETTE",
@@ -435,7 +463,7 @@
         "S3",
         "S10"
       ],
-      "proposal": "La vérification de livraison, appelée recette, consiste à comparer l’application au périmètre et aux critères d’acceptation convenus. Vous nous transmettez vos constats selon les modalités et pendant la période prévues au devis.\n\nUn défaut par rapport à nos engagements ou aux exigences légales est examiné comme une anomalie ou une non-conformité. Une fonction ou un besoin réellement nouveau, hors périmètre, est une évolution à convenir séparément.\n\nVotre validation doit être explicite. Nous en conservons une preuve écrite, par exemple un email, une validation par bouton ou un document. Votre silence, la fin du délai de vérification, le paiement ou la mise en ligne ne valent pas automatiquement acceptation ni renonciation à vos recours.\n\nLa fin de cette période ne supprime pas les recours légaux ni la prise en compte d’un défaut qui n’était pas apparent.",
+      "proposal": "Avant la validation finale de votre application, nous organisons la vérification de son fonctionnement selon les critères et les étapes prévus au devis. Cette vérification, également appelée « recette », permet de comparer le résultat livré aux fonctionnalités et aux exigences convenues.\n\nVous nous signalez les difficultés observées pendant la période de vérification prévue. Un défaut concernant une fonction promise ou une exigence applicable est examiné comme une anomalie à corriger. En revanche, une nouvelle fonction ou une modification du besoin initial peut constituer une évolution à convenir séparément.\n\nVotre accord sur la livraison doit être exprimé clairement et conservé par écrit, par exemple dans un courriel ou un document de validation. Votre silence, l’expiration de la période de vérification, le paiement ou la mise en service ne valent pas automatiquement acceptation.\n\nLa fin de cette étape ne supprime pas les garanties ou recours légaux, notamment si un défaut n’était pas apparent lors des vérifications. Les corrections déjà dues par AtoumWeb ne deviennent pas des évolutions payantes.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -469,7 +497,14 @@
       "importantChanges": "Recette et non-conformité confondues pour un lecteur non technique.",
       "proposedTitle": "Recette fonctionnelle et critères d’acceptation",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "La vérification de livraison, appelée recette, consiste à comparer l’application au périmètre et aux critères d’acceptation convenus. Vous nous transmettez vos constats selon les modalités et pendant la période prévues au devis.\n\nUn défaut par rapport à nos engagements ou aux exigences légales est examiné comme une anomalie ou une non-conformité. Une fonction ou un besoin réellement nouveau, hors périmètre, est une évolution à convenir séparément.\n\nVotre validation doit être explicite. Nous en conservons une preuve écrite, par exemple un email, une validation par bouton ou un document. Votre silence, la fin du délai de vérification, le paiement ou la mise en ligne ne valent pas automatiquement acceptation ni renonciation à vos recours.\n\nLa fin de cette période ne supprime pas les recours légaux ni la prise en compte d’un défaut qui n’était pas apparent.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "réécriture des conditions des applications et outils métier",
+        "note": "Cohérence avec BASE-VALIDATION, BASE-PI, APP-EVOLUTIONS et garanties applicables."
+      }
     },
     {
       "code": "AUDIT-PERIMETRE",
