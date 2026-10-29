@@ -5049,7 +5049,7 @@
         "S7",
         "S10"
       ],
-      "proposal": "Votre site peut utiliser des outils fournis par d’autres éditeurs : WordPress, thèmes comme Divi, extensions, polices, bibliothèques de code, services externes ou outils de mesure.\n\nLe devis précise les licences comprises dans la prestation. Si une fonction dépend d’un abonnement tiers, son renouvellement peut rester à votre charge.\n\nSi un service tiers change, disparaît ou s’arrête, une adaptation peut être nécessaire. Sa prise en charge dépend du contrat, de la cause du changement et des obligations légales applicables. Seuls les travaux qui ne sont pas déjà dus peuvent faire l’objet d’une prestation complémentaire que vous acceptez.",
+      "proposal": "Votre site peut utiliser des outils et services proposés par d’autres éditeurs, comme des thèmes WordPress, Divi, des extensions, des polices ou des services externes. Le devis précise les licences et abonnements compris dans notre prestation, leur durée lorsqu’elle est définie et les éventuels frais qui restent à votre charge.\n\nCertains composants nécessitent un abonnement pour recevoir des mises à jour, bénéficier de l’assistance de leur éditeur ou continuer à utiliser certaines fonctions. Le renouvellement d’une licence peut donc vous incomber, selon ce qui a été convenu. Une licence mise à disposition par AtoumWeb ne devient pas automatiquement une licence personnelle transférable à votre nom : les conditions d’utilisation de l’éditeur et le devis déterminent les droits associés.\n\nSi un éditeur modifie ses conditions, arrête un service ou cesse de maintenir un composant, une adaptation peut être nécessaire. Nous vous expliquons les conséquences connues pour votre site et, si des travaux supplémentaires sont nécessaires, leur coût avant réalisation. Cette situation ne supprime pas les corrections, garanties ou obligations qui restent à notre charge.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 28,
@@ -5085,7 +5085,14 @@
       "importantChanges": "Énumération technique ; peut rester à charge ne tranche pas les coûts réels.",
       "proposedTitle": "Thèmes, extensions, polices et services tiers",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Votre site peut utiliser des outils fournis par d’autres éditeurs : WordPress, thèmes comme Divi, extensions, polices, bibliothèques de code, services externes ou outils de mesure.\n\nLe devis précise les licences comprises dans la prestation. Si une fonction dépend d’un abonnement tiers, son renouvellement peut rester à votre charge.\n\nSi un service tiers change, disparaît ou s’arrête, une adaptation peut être nécessaire. Sa prise en charge dépend du contrat, de la cause du changement et des obligations légales applicables. Seuls les travaux qui ne sont pas déjà dus peuvent faire l’objet d’une prestation complémentaire que vous acceptez.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle et cohérence contractuelle du périmètre WEB-LICENCES",
+        "note": "Vérifier les licences nominatives, les durées et les règles d'accès après résiliation avant publication ; aucune cession de licence inventée."
+      }
     },
     {
       "code": "WEB-MISE-EN-LIGNE",
@@ -5096,7 +5103,7 @@
       "sources": [
         "S3"
       ],
-      "proposal": "Pour mettre le site en ligne, nous devons disposer des accès nécessaires. L’hébergement, le nom de domaine et les services extérieurs requis doivent également être opérationnels.\n\nLe recours à un service extérieur ne nous dispense pas des travaux de préparation, de connexion et d’intervention prévus au contrat. Les conséquences d’un blocage dépendent de sa cause, du rôle du prestataire concerné et des règles de responsabilité applicables. Son origine extérieure ne nous exonère pas automatiquement.\n\nNous vous informons lorsqu’un tel blocage empêche ou retarde la mise en ligne.",
+      "proposal": "La mise en ligne de votre site intervient selon les étapes et les conditions prévues au devis, après la validation nécessaire du site. Pour la réaliser, nous devons disposer des accès techniques autorisés et d’un hébergement, d’un nom de domaine ainsi que des services indispensables en état de fonctionner.\n\nNous prenons en charge les opérations de préparation, de configuration et de publication qui relèvent de notre prestation. Si un accès manque ou si un fournisseur extérieur rencontre un problème bloquant, nous vous en informons et vous indiquons, dans la mesure du possible, les actions concernées et les conséquences prévisibles sur la date de mise en ligne.\n\nLe fait qu’un incident provienne d’un hébergeur, d’un registraire de domaine ou d’un autre prestataire ne nous dégage pas automatiquement de nos propres responsabilités. Tout report du calendrier doit être lié à l’empêchement rencontré et aux obligations de chacun. Les corrections déjà dues par AtoumWeb restent comprises dans notre engagement.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 26,
@@ -5132,7 +5139,14 @@
       "importantChanges": "Intégration et origine extérieure abstraites.",
       "proposedTitle": "Mise en ligne et environnement technique",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Pour mettre le site en ligne, nous devons disposer des accès nécessaires. L’hébergement, le nom de domaine et les services extérieurs requis doivent également être opérationnels.\n\nLe recours à un service extérieur ne nous dispense pas des travaux de préparation, de connexion et d’intervention prévus au contrat. Les conséquences d’un blocage dépendent de sa cause, du rôle du prestataire concerné et des règles de responsabilité applicables. Son origine extérieure ne nous exonère pas automatiquement.\n\nNous vous informons lorsqu’un tel blocage empêche ou retarde la mise en ligne.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle et cohérence contractuelle du périmètre WEB-MISE-EN-LIGNE",
+        "note": "Conserve le périmètre publié et renvoie les détails opérationnels au devis ; garanties légales et obligations dues préservées."
+      }
     },
     {
       "code": "WEB-MULTILINGUE",
@@ -5143,7 +5157,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Nous configurons les langues et intégrons les traductions prévues au devis.\n\nSauf prestation de traduction expressément commandée, vous fournissez et validez les textes traduits. Les fonctions, pages et contenus qui ne font pas partie du périmètre multilingue convenu ne sont pas compris.",
+      "proposal": "Lorsque vous choisissez un site multilingue, nous configurons les langues et intégrons les contenus traduits prévus au devis. Celui-ci précise les langues concernées ainsi que les pages, menus ou fonctionnalités à adapter.\n\nSauf si vous avez également commandé une prestation de traduction, vous nous transmettez les textes dans chaque langue et vous en validez le contenu. Notre travail d’intégration ne constitue pas une vérification linguistique ou juridique des traductions fournies.\n\nL’ajout d’une langue, la traduction de nouveaux textes ou l’adaptation de pages et de fonctionnalités non prévues initialement peuvent faire l’objet d’une proposition complémentaire, acceptée avant réalisation. Nous restons responsables de la bonne réalisation des éléments techniques et des intégrations compris dans notre prestation.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -5174,7 +5188,14 @@
       "importantChanges": "Périmètre multilingue administratif.",
       "proposedTitle": "Périmètre multilingue et traductions fournies",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous configurons les langues et intégrons les traductions prévues au devis.\n\nSauf prestation de traduction expressément commandée, vous fournissez et validez les textes traduits. Les fonctions, pages et contenus qui ne font pas partie du périmètre multilingue convenu ne sont pas compris.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle et cohérence contractuelle du périmètre WEB-MULTILINGUE",
+        "note": "Conserve le périmètre publié et renvoie les détails opérationnels au devis ; garanties légales et obligations dues préservées."
+      }
     },
     {
       "code": "WEB-NEWSLETTER-PERIMETRE",
@@ -5186,7 +5207,7 @@
         "S8",
         "S22"
       ],
-      "proposal": "Nous intégrons le formulaire d’inscription et sa connexion standard au service d’envoi indiqué au devis.\n\nVous fournissez le compte, les listes, les textes d’information et les choix de consentement applicables.\n\nLes campagnes, automatisations, segments de destinataires et transferts de données sont compris uniquement s’ils sont expressément prévus.",
+      "proposal": "Nous intégrons à votre site le formulaire d’inscription à la newsletter et sa connexion standard au service d’envoi indiqué dans le devis.\n\nVous nous communiquez les accès nécessaires, les listes de destinataires que vous êtes autorisé à utiliser ainsi que les informations à présenter aux personnes qui s’inscrivent. Les modalités de recueil du consentement, lorsqu’il est requis, et les autres règles applicables à vos communications doivent être définies en fonction de votre activité et de l’usage prévu.\n\nLa création des campagnes, la rédaction des courriels, les scénarios d’envoi automatisés, la segmentation des contacts et le transfert d’anciennes listes ne sont compris que s’ils figurent expressément au devis. Les éventuels frais du service d’envoi suivent ses propres conditions et les éléments convenus avec vous.\n\nNous assurons la configuration technique prévue dans notre prestation, sans garantir à elle seule la conformité de l’ensemble de votre activité de prospection. Cette répartition ne nous dégage pas des obligations légales qui nous incombent dans notre propre rôle.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -5217,7 +5238,14 @@
       "importantChanges": "Consentement et migrations dans une phrase technique.",
       "proposedTitle": "Périmètre d’intégration newsletter",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous intégrons le formulaire d’inscription et sa connexion standard au service d’envoi indiqué au devis.\n\nVous fournissez le compte, les listes, les textes d’information et les choix de consentement applicables.\n\nLes campagnes, automatisations, segments de destinataires et transferts de données sont compris uniquement s’ils sont expressément prévus.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle et cohérence contractuelle du périmètre WEB-NEWSLETTER-PERIMETRE",
+        "note": "Conserve le périmètre publié et renvoie les détails opérationnels au devis ; garanties légales et obligations dues préservées."
+      }
     },
     {
       "code": "WEB-OFFRE-5P-PERIMETRE",
@@ -5228,7 +5256,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Nous réalisons le site vitrine décrit au devis, avec les pages qui y sont expressément listées.\n\nLes pages légales, fonctions, contenus, connexions et services compris sont ceux de la ligne d’offre et de ses prestations associées.\n\nUne page, une fonction ou une connexion supplémentaire relève d’une option ou d’un complément que vous acceptez avant sa réalisation.",
+      "proposal": "Votre forfait « Site vitrine 5 pages » comprend la création des cinq pages identifiées dans votre devis, avec les fonctionnalités et prestations qui y sont expressément prévues.\n\nLe devis précise les pages concernées ainsi que les contenus, formulaires, éléments graphiques et éventuelles connexions à des services extérieurs compris dans l’offre. Les pages relatives aux mentions légales ou à la politique de confidentialité doivent y être identifiées pour éviter toute ambiguïté sur leur réalisation et leur prise en compte dans le nombre de pages.\n\nUne page supplémentaire, une nouvelle fonctionnalité, une prestation de rédaction ou une intégration non prévue initialement fait l’objet d’une proposition complémentaire soumise à votre accord avant réalisation.\n\nLes corrections nécessaires pour livrer les éléments convenus et les garanties applicables restent dues, indépendamment des options commerciales.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -5259,7 +5287,14 @@
       "importantChanges": "Le titre mentionne5pages ; la liste du devis reste la référence. Ne pas ajouter5pages si la vente enregistrée diffère.",
       "proposedTitle": "Périmètre du forfait Site vitrine 5 pages",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous réalisons le site vitrine décrit au devis, avec les pages qui y sont expressément listées.\n\nLes pages légales, fonctions, contenus, connexions et services compris sont ceux de la ligne d’offre et de ses prestations associées.\n\nUne page, une fonction ou une connexion supplémentaire relève d’une option ou d’un complément que vous acceptez avant sa réalisation.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle et cohérence contractuelle du périmètre WEB-OFFRE-5P-PERIMETRE",
+        "note": "Vérifier la liste réelle de cinq pages et le traitement des pages légales au devis avant publication ; pas d'inclusion implicite créée."
+      }
     },
     {
       "code": "WEB-PAGE-SUP-PERIMETRE",
