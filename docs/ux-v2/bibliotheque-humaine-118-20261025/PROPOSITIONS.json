@@ -5305,7 +5305,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Nous ajoutons la page dans la continuité graphique et technique du site, à partir des contenus fournis et pour l’objectif défini au devis.\n\nElle ne comprend pas de fonction, de connexion à un autre outil ou de volume de contenu non prévu. Une demande qui dépasse ce cadre est chiffrée séparément avant sa réalisation.",
+      "proposal": "Nous ajoutons la page supplémentaire décrite au devis dans le respect de l’identité visuelle et du fonctionnement général de votre site. Son contenu et son objectif sont ceux convenus ensemble, à partir des éléments que vous nous fournissez ou des prestations de création de contenus expressément commandées.\n\nCette prestation concerne la réalisation de la page prévue. Elle ne comprend pas automatiquement une nouvelle fonctionnalité, une connexion à un service extérieur ou la création d’un volume de contenu dépassant ce qui a été convenu.\n\nSi votre demande nécessite des travaux supplémentaires, nous vous en expliquons la portée et vous proposons un prix avant de les réaliser. Les corrections nécessaires pour rendre la page conforme au devis restent comprises dans nos obligations.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -5336,7 +5336,14 @@
       "importantChanges": "Continuité et volume non prévus à expliciter.",
       "proposedTitle": "Périmètre d’une page supplémentaire",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous ajoutons la page dans la continuité graphique et technique du site, à partir des contenus fournis et pour l’objectif défini au devis.\n\nElle ne comprend pas de fonction, de connexion à un autre outil ou de volume de contenu non prévu. Une demande qui dépasse ce cadre est chiffrée séparément avant sa réalisation.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle et cohérence contractuelle du périmètre WEB-PAGE-SUP-PERIMETRE",
+        "note": "Aucune option, prix, quota, délai ni obligation nouvelle non prévue au devis ; conformité et garanties préservées."
+      }
     },
     {
       "code": "WEB-PAIEMENT-TIERS",
@@ -5347,7 +5354,7 @@
       "sources": [
         "S8"
       ],
-      "proposal": "Nous intégrons uniquement le moyen de paiement externe prévu au devis.\n\nLe compte est à votre nom : vous contractez directement avec Stripe, PayPal ou le prestataire choisi et recevez directement les paiements de vos clients. Nous ne détenons, n’encaissons, ne conservons ni ne reversons de fonds pour votre compte.\n\nVous fournissez les accès autorisés et les informations nécessaires à la configuration. Les commissions, vérifications et règles du prestataire suivent la clause « Dépendances et coûts de services tiers », sans nous dispenser de nos propres obligations techniques.\n\nLes autorisations et circuits de paiement effectivement mis en place doivent rester compatibles avec ce rôle d’intégration.",
+      "proposal": "Lorsque votre site nécessite un paiement en ligne simple, nous intégrons la solution extérieure prévue au devis, par exemple Stripe ou PayPal, dans les limites du fonctionnement convenu.\n\nLe compte de paiement est ouvert et détenu à votre nom. Vous contractez directement avec le prestataire choisi et les sommes versées par vos clients sont reçues sur votre propre compte auprès de ce prestataire. AtoumWeb ne reçoit, ne conserve et ne reverse pas ces fonds pour votre compte.\n\nVous nous communiquez uniquement les accès et autorisations nécessaires à l’intégration. Les frais de transaction, les vérifications d’identité et les conditions de fonctionnement du service dépendent du prestataire, selon la clause commune relative aux services extérieurs et les éléments indiqués au devis.\n\nNotre rôle consiste à configurer et à vérifier l’intégration technique prévue, sans garantir les décisions du prestataire ni la disponibilité permanente de son service. Nous restons responsables des erreurs de configuration ou des manquements qui nous sont imputables. Toute fonction supplémentaire nécessite votre accord sur son prix avant réalisation.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -5380,7 +5387,14 @@
       "importantChanges": "Maintenir le circuit direct client/prestataire ; pas de détention ou de reversement de fonds par l’agence.",
       "proposedTitle": "Paiement simple via prestataire tiers",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous intégrons uniquement le moyen de paiement externe prévu au devis.\n\nLe compte est à votre nom : vous contractez directement avec Stripe, PayPal ou le prestataire choisi et recevez directement les paiements de vos clients. Nous ne détenons, n’encaissons, ne conservons ni ne reversons de fonds pour votre compte.\n\nVous fournissez les accès autorisés et les informations nécessaires à la configuration. Les commissions, vérifications et règles du prestataire suivent la clause « Dépendances et coûts de services tiers », sans nous dispenser de nos propres obligations techniques.\n\nLes autorisations et circuits de paiement effectivement mis en place doivent rester compatibles avec ce rôle d’intégration.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle et cohérence contractuelle du périmètre WEB-PAIEMENT-TIERS",
+        "note": "Schéma de paiement direct au client préservé ; contrôler les permissions et comptes réels lors du montage du devis."
+      }
     },
     {
       "code": "WEB-PORTFOLIO-PERIMETRE",
@@ -5392,7 +5406,7 @@
         "S2",
         "S7"
       ],
-      "proposal": "Nous mettons en place la structure de portfolio et la présentation des réalisations définies au devis. Vous fournissez les informations, visuels et autorisations nécessaires.\n\nL’import d’un volume important de réalisations, les filtres complexes, la recherche et les développements spécifiques sont compris uniquement s’ils sont mentionnés.",
+      "proposal": "Nous créons l’espace « Réalisations » ou « Portfolio » décrit dans votre devis pour présenter vos projets, références ou travaux. La structure des pages et le nombre de réalisations à intégrer correspondent au périmètre convenu.\n\nVous nous fournissez les textes, photographies et informations nécessaires, ainsi que les autorisations permettant leur publication. Si le devis prévoit leur rédaction, leur retouche ou leur mise en forme particulière, nous réalisons également ces prestations dans les limites indiquées.\n\nL’import d’un grand nombre de réalisations, les filtres avancés, un moteur de recherche ou un développement spécifique ne sont compris que s’ils figurent au devis. Dans le cas contraire, nous vous présentons une proposition complémentaire avant toute réalisation payante.\n\nNous assurons les corrections nécessaires pour que la présentation livrée corresponde aux éléments convenus.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -5423,7 +5437,14 @@
       "importantChanges": "Portfolio et import volumineux peu définis.",
       "proposedTitle": "Périmètre portfolio / réalisations",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous mettons en place la structure de portfolio et la présentation des réalisations définies au devis. Vous fournissez les informations, visuels et autorisations nécessaires.\n\nL’import d’un volume important de réalisations, les filtres complexes, la recherche et les développements spécifiques sont compris uniquement s’ils sont mentionnés.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle et cohérence contractuelle du périmètre WEB-PORTFOLIO-PERIMETRE",
+        "note": "Aucune option, prix, quota, délai ni obligation nouvelle non prévue au devis ; conformité et garanties préservées."
+      }
     },
     {
       "code": "WEB-RESA-EXT",
@@ -5434,7 +5455,7 @@
       "sources": [
         "S8"
       ],
-      "proposal": "Nous intégrons à votre site le service externe de réservation indiqué au devis.\n\nLa gestion des disponibilités, confirmations, paiements et données par ce service dépend de sa configuration et de ses propres conditions.\n\nUne adaptation qui dépasse ses possibilités standard fait l’objet d’un accord complémentaire.",
+      "proposal": "Nous intégrons à votre site le service de réservation extérieur indiqué dans votre devis, selon le mode de connexion et les fonctions convenus.\n\nLes disponibilités, confirmations, éventuels paiements et informations enregistrées par ce service dépendent de son paramétrage et de ses propres conditions. Le devis précise les réglages qui relèvent de notre intervention et ceux que vous gérez directement auprès du fournisseur.\n\nNous ne garantissons pas le fonctionnement permanent du service extérieur, mais nous restons responsables de la bonne réalisation de notre intégration et des corrections qui nous incombent. Si une évolution souhaitée dépasse les fonctions standard du service ou le périmètre accepté, nous vous proposons une prestation complémentaire avant sa réalisation.\n\nLes éventuels frais d’abonnement, règles de paiement et obligations concernant les données des personnes qui réservent restent soumis aux conditions convenues et aux règles applicables.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -5465,7 +5486,14 @@
       "importantChanges": "Paramétrage et service externe denses.",
       "proposedTitle": "Réservation via service externe",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous intégrons à votre site le service externe de réservation indiqué au devis.\n\nLa gestion des disponibilités, confirmations, paiements et données par ce service dépend de sa configuration et de ses propres conditions.\n\nUne adaptation qui dépasse ses possibilités standard fait l’objet d’un accord complémentaire.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle et cohérence contractuelle du périmètre WEB-RESA-EXT",
+        "note": "Aucune option, prix, quota, délai ni obligation nouvelle non prévue au devis ; conformité et garanties préservées."
+      }
     },
     {
       "code": "WEB-VALIDATION",
@@ -5477,7 +5505,7 @@
         "S3",
         "S10"
       ],
-      "proposal": "Avant la mise en ligne, nous vous présentons la version du site à valider.\n\nVous vérifiez notamment les contenus, les coordonnées, les liens, les formulaires, les informations légales et les éléments visuels liés à votre activité.\n\nVotre validation doit être explicite et conservée par écrit, selon les conditions prévues dans la clause « Validation des livrables » des conditions générales communes. La mise en ligne intervient ensuite selon les modalités convenues au devis.\n\nUne modification demandée après la validation finale peut être traitée comme une prestation complémentaire, sauf si elle corrige une anomalie relevant directement de la prestation convenue.",
+      "proposal": "Avant la mise en ligne, nous vous présentons la version du site prévue pour la livraison afin que vous puissiez la relire et vérifier qu’elle correspond au devis.\n\nNous vous invitons notamment à contrôler les textes, coordonnées, liens, formulaires, informations légales et éléments visuels relatifs à votre activité. De notre côté, nous vérifions les points techniques qui relèvent de notre prestation.\n\nVotre validation doit être exprimée clairement et conservée par écrit, conformément à la clause commune « Validation des livrables ». L’absence de réponse ne vaut pas automatiquement acceptation. La publication du site intervient ensuite selon les modalités et conditions convenues au devis.\n\nSi vous demandez après validation une nouvelle page, une fonctionnalité ou un changement qui sort du projet initial, nous pouvons vous proposer un devis complémentaire avant de le réaliser. En revanche, la validation ne supprime pas votre droit à la correction d’un défaut ou d’une non-conformité qui nous est imputable, ni les garanties applicables.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 25,
@@ -5515,7 +5543,14 @@
       "importantChanges": "Code interne BASE-VALIDATION visible ; vocabulaire technique.",
       "proposedTitle": "Validation avant mise en ligne",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Avant la mise en ligne, nous vous présentons la version du site à valider.\n\nVous vérifiez notamment les contenus, les coordonnées, les liens, les formulaires, les informations légales et les éléments visuels liés à votre activité.\n\nVotre validation doit être explicite et conservée par écrit, selon les conditions prévues dans la clause « Validation des livrables » des conditions générales communes. La mise en ligne intervient ensuite selon les modalités convenues au devis.\n\nUne modification demandée après la validation finale peut être traitée comme une prestation complémentaire, sauf si elle corrige une anomalie relevant directement de la prestation convenue.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "révision rédactionnelle et cohérence contractuelle du périmètre WEB-VALIDATION",
+        "note": "Renvoi explicite à BASE-VALIDATION, silence sans acceptation automatique, garanties préservées."
+      }
     }
   ]
 }
