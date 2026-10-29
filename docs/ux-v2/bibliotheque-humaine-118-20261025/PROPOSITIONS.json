@@ -1661,7 +1661,7 @@
       "sources": [
         "S18"
       ],
-      "proposal": "Si vous êtes un particulier qui commande une prestation pour ses besoins personnels, sans lien avec une activité professionnelle, vous avez la qualité de consommateur. En cas de difficulté, vous pouvez d'abord adresser une réclamation écrite à AtoumWeb : [CONTACT RÉCLAMATION ATOUMWEB À RENSEIGNER].\n\nSi cette démarche ne permet pas de résoudre le différend, vous pouvez saisir gratuitement, sous réserve des conditions légales de recevabilité, le médiateur de la consommation dont relève AtoumWeb :\n\n[NOM DU MÉDIATEUR — À RENSEIGNER]\n[ADRESSE — À RENSEIGNER]\n[SITE INTERNET — À RENSEIGNER]\n\nCette possibilité ne vous empêche pas de saisir un tribunal compétent. Elle ne concerne pas les prestations commandées pour les besoins d'une activité professionnelle, qui relèvent des dispositions contractuelles applicables aux professionnels.\n\nLes coordonnées du médiateur effectivement désigné doivent être communiquées sur les supports requis par la loi.",
+      "proposal": "Conformément aux articles L.612-1 et suivants du Code de la consommation, tout client ayant la qualité de consommateur peut recourir gratuitement à un médiateur de la consommation en vue de la résolution amiable d'un litige l'opposant à AtoumWeb.\n\nAprès réclamation écrite préalable adressée à AtoumWeb et en l'absence de résolution amiable, le consommateur peut saisir :\n\nCM2C – Centre de la Médiation de la Consommation de Conciliateurs de Justice\n\n49 rue de Ponthieu, 75008 Paris\n\nSite internet : https://www.cm2c.net\n\nLa demande doit être introduite dans un délai maximal d'un an à compter de la réclamation écrite adressée à AtoumWeb.\n\nLa médiation est gratuite pour le consommateur et ne prive pas celui-ci de son droit de saisir les juridictions compétentes.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1687,18 +1687,23 @@
       "adoption": false,
       "reusedFrom35": false,
       "dependenciesToReview": [],
-      "humanDecision": "En attente",
+      "humanDecision": "Validée — rédaction",
       "scopeChange": "Aucune modification volontaire de fond. Risque ou nuance à examiner : Compléter le contact et le médiateur réellement compétent auquel AtoumWeb adhère ; pas d’organisme fictif.",
       "importantChanges": "Compléter le contact et le médiateur réellement compétent avant utilisation ; la proposition ne peut pas devenir un contrat final avec ces blancs.",
       "proposedTitle": "Médiation de la consommation",
       "category": "Rédaction, avec contrôle renforcé de portée",
       "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
-      "previousEditorialProposal": "Si vous êtes consommateur et souhaitez signaler une difficulté, vous pouvez d'abord nous adresser une réclamation écrite aux coordonnées suivantes : [CONTACT RÉCLAMATION ATOUMWEB À RENSEIGNER].\n\nSi cette démarche ne permet pas de résoudre le différend, vous pouvez saisir gratuitement, sous réserve des conditions légales de recevabilité, le médiateur de la consommation dont relève AtoumWeb :\n\n[NOM DU MÉDIATEUR — À RENSEIGNER]\n[ADRESSE — À RENSEIGNER]\n[SITE INTERNET — À RENSEIGNER]\n\nCette possibilité de médiation ne vous prive pas de votre droit de saisir une juridiction compétente. Les coordonnées du médiateur effectivement désigné doivent être communiquées dans les documents et supports où la loi l'exige.",
+      "previousEditorialProposal": "Si vous êtes un particulier qui commande une prestation pour ses besoins personnels, sans lien avec une activité professionnelle, vous avez la qualité de consommateur. En cas de difficulté, vous pouvez d'abord adresser une réclamation écrite à AtoumWeb : [CONTACT RÉCLAMATION ATOUMWEB À RENSEIGNER].\n\nSi cette démarche ne permet pas de résoudre le différend, vous pouvez saisir gratuitement, sous réserve des conditions légales de recevabilité, le médiateur de la consommation dont relève AtoumWeb :\n\n[NOM DU MÉDIATEUR — À RENSEIGNER]\n[ADRESSE — À RENSEIGNER]\n[SITE INTERNET — À RENSEIGNER]\n\nCette possibilité ne vous empêche pas de saisir un tribunal compétent. Elle ne concerne pas les prestations commandées pour les besoins d'une activité professionnelle, qui relèvent des dispositions contractuelles applicables aux professionnels.\n\nLes coordonnées du médiateur effectivement désigné doivent être communiquées sur les supports requis par la loi.",
       "editorialRevision": {
         "date": "2026-10-29",
-        "status": "proposition documentaire B2C non approuvée ni publiée",
-        "scope": "médiation de la consommation uniquement pour les particuliers agissant hors activité professionnelle",
-        "note": "Le client valide une application exclusivement B2C. Le champ sourceAudience reste consumer. Avant publication : adhésion à médiateur compétent, coordonnées réelles, vérifier sélection automatique B2C/B2B du moteur de devis."
+        "status": "rédaction explicitement validée par le responsable ; non adoptée et non publiée",
+        "scope": "médiation de la consommation B2C exclusivement, organisme CM2C précisé",
+        "note": "Texte fourni et validé par l'utilisateur. Adresse, site et délai d'un an vérifiés auprès de CM2C et du Code de la consommation. Avant publication, confirmer que la convention d'adhésion d'AtoumWeb à CM2C est effective, et vérifier l'accessibilité des coordonnées de réclamation. Ne pas publier automatiquement ni appliquer aux professionnels.",
+        "sources": [
+          "https://www.cm2c.net/comment-nous-saisir.php",
+          "https://www.cm2c.net/charte.php",
+          "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000032224802/2026-07-17"
+        ]
       }
     },
     {
