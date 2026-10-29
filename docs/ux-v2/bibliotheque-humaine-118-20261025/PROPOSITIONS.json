@@ -1514,7 +1514,7 @@
         "S17",
         "S20"
       ],
-      "proposal": "Si vous êtes consommateur et souhaitez commencer la prestation payante avant la fin du délai de rétractation, nous recueillons votre demande expresse, séparément, et en conservons la preuve.\n\nLe démarrage ne vous fait pas perdre, à lui seul, votre droit de rétractation. Si vous l’exercez après avoir valablement demandé le commencement de la prestation, la part éventuellement due est calculée selon les conditions légales.\n\nVous ne pouvez perdre ce droit après l’exécution complète de la prestation que si les conditions légales sont réunies et si nous avons recueilli votre demande et les reconnaissances requises.",
+      "proposal": "Si vous êtes consommateur et souhaitez que nous commencions une prestation payante avant la fin de votre délai de rétractation, nous recueillons votre demande expresse et en conservons la preuve, selon les modalités requises pour votre contrat. Nous vous demandons également de reconnaître les conséquences légales d'une exécution complète sur ce droit.\n\nLe seul fait de commencer les travaux ne vous fait pas perdre automatiquement votre droit de rétractation. Si vous vous rétractez après avoir valablement demandé un démarrage anticipé, vous ne devez, lorsque les conditions légales sont réunies, que la part du service déjà fournie, calculée selon les règles applicables.\n\nLa perte du droit de rétractation après l'exécution complète d'une prestation ne peut intervenir que dans les cas et aux conditions prévus par la loi. Si les informations ou demandes obligatoires n'ont pas été recueillies correctement, aucune somme ne peut être réclamée au titre du service commencé dans les cas où la loi l'interdit.\n\nLes règles particulières applicables, le cas échéant, aux contenus et services numériques restent distinctes et doivent être vérifiées selon la nature réelle de la prestation.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1545,7 +1545,14 @@
       "importantChanges": "Prévoir une demande distincte et sa preuve ; le simple démarrage ne supprime pas le droit.",
       "proposedTitle": "Demande d'exécution avant la fin du délai de rétractation",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Si vous êtes consommateur et souhaitez commencer la prestation payante avant la fin du délai de rétractation, nous recueillons votre demande expresse, séparément, et en conservons la preuve.\n\nLe démarrage ne vous fait pas perdre, à lui seul, votre droit de rétractation. Si vous l’exercez après avoir valablement demandé le commencement de la prestation, la part éventuellement due est calculée selon les conditions légales.\n\nVous ne pouvez perdre ce droit après l’exécution complète de la prestation que si les conditions légales sont réunies et si nous avons recueilli votre demande et les reconnaissances requises.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée et non publiée",
+        "scope": "révision contractuelle B2C / B2B, formulation naturelle, préservation des règles existantes",
+        "note": "Vérifier demande expresse, reconnaissance de la perte du droit après exécution complète et preuve (L221-25/L221-28) ; qualification des contenus numériques distincte."
+      }
     },
     {
       "code": "CONS-INFO",
@@ -1556,7 +1563,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Avant que vous acceptiez le devis, nous vous communiquons les caractéristiques essentielles de nos prestations, leur prix total, les frais éventuels, les modalités de paiement et d’exécution, ainsi que nos coordonnées.\n\nSi vous êtes consommateur, nous vous indiquons aussi les garanties, les modalités de réclamation, la médiation et les règles de rétractation applicables à votre contrat.\n\nVous recevez le devis et les conditions acceptées sur un support durable, que vous pouvez conserver.",
+      "proposal": "Avant que vous acceptiez votre devis, nous vous communiquons les informations essentielles pour comprendre notre prestation : ce qui est compris, le prix total et les éventuels frais supplémentaires, les conditions de paiement, les délais ou dates d'exécution ainsi que nos coordonnées.\n\nLorsque vous êtes consommateur, nous vous informons également des garanties applicables, de la manière de présenter une réclamation, de la possibilité de recourir à un médiateur de la consommation et, lorsque ce droit existe, des conditions et modalités de rétractation.\n\nLe devis, les conditions contractuelles applicables et les documents requis vous sont remis sur un support durable, par exemple un fichier que vous pouvez conserver et consulter ultérieurement. Ces informations doivent vous être fournies avant votre engagement, et non seulement après le paiement.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1587,7 +1594,14 @@
       "importantChanges": "Énumération impersonnelle ; support durable à expliquer.",
       "proposedTitle": "Informations précontractuelles",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Avant que vous acceptiez le devis, nous vous communiquons les caractéristiques essentielles de nos prestations, leur prix total, les frais éventuels, les modalités de paiement et d’exécution, ainsi que nos coordonnées.\n\nSi vous êtes consommateur, nous vous indiquons aussi les garanties, les modalités de réclamation, la médiation et les règles de rétractation applicables à votre contrat.\n\nVous recevez le devis et les conditions acceptées sur un support durable, que vous pouvez conserver.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée et non publiée",
+        "scope": "révision contractuelle B2C / B2B, formulation naturelle, préservation des règles existantes",
+        "note": "Contrôler la fourniture réelle des informations, du devis, des annexes et du support durable avant signature."
+      }
     },
     {
       "code": "CONS-MEDIATION",
@@ -1598,7 +1612,7 @@
       "sources": [
         "S18"
       ],
-      "proposal": "Si vous êtes consommateur, vous pouvez nous adresser une réclamation écrite à : [CONTACT RÉCLAMATION ATOUMWEB À RENSEIGNER].\n\nSi notre tentative de résolution directe n’aboutit pas, vous pouvez saisir gratuitement le médiateur de la consommation dont nous relevons, sous réserve des conditions légales de recevabilité : [NOM DU MÉDIATEUR], [ADRESSE], [SITE INTERNET].\n\nCette démarche ne vous empêche pas de saisir le tribunal compétent.",
+      "proposal": "Si vous êtes consommateur et souhaitez signaler une difficulté, vous pouvez d'abord nous adresser une réclamation écrite aux coordonnées suivantes : [CONTACT RÉCLAMATION ATOUMWEB À RENSEIGNER].\n\nSi cette démarche ne permet pas de résoudre le différend, vous pouvez saisir gratuitement, sous réserve des conditions légales de recevabilité, le médiateur de la consommation dont relève AtoumWeb :\n\n[NOM DU MÉDIATEUR — À RENSEIGNER]\n[ADRESSE — À RENSEIGNER]\n[SITE INTERNET — À RENSEIGNER]\n\nCette possibilité de médiation ne vous prive pas de votre droit de saisir une juridiction compétente. Les coordonnées du médiateur effectivement désigné doivent être communiquées dans les documents et supports où la loi l'exige.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1629,7 +1643,14 @@
       "importantChanges": "Compléter le contact et le médiateur réellement compétent avant utilisation ; la proposition ne peut pas devenir un contrat final avec ces blancs.",
       "proposedTitle": "Médiation de la consommation",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Si vous êtes consommateur, vous pouvez nous adresser une réclamation écrite à : [CONTACT RÉCLAMATION ATOUMWEB À RENSEIGNER].\n\nSi notre tentative de résolution directe n’aboutit pas, vous pouvez saisir gratuitement le médiateur de la consommation dont nous relevons, sous réserve des conditions légales de recevabilité : [NOM DU MÉDIATEUR], [ADRESSE], [SITE INTERNET].\n\nCette démarche ne vous empêche pas de saisir le tribunal compétent.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée et non publiée",
+        "scope": "révision contractuelle B2C / B2B, formulation naturelle, préservation des règles existantes",
+        "note": "BLOCAGE DE PUBLICATION : désigner un médiateur réellement référencé/compétent et renseigner nom, adresse, site, contact réclamation ; aucun organisme fictif."
+      }
     },
     {
       "code": "CONS-RETRACTATION",
@@ -1643,7 +1664,7 @@
         "S20",
         "S21"
       ],
-      "proposal": "Si vous êtes consommateur et que le droit de rétractation s’applique à votre prestation de services conclue à distance ou hors établissement, vous disposez de quatorze jours à compter de la conclusion du contrat pour nous informer de votre décision, sans avoir à la justifier.\n\nVous pouvez utiliser le formulaire remis avec le contrat ou envoyer une déclaration exprimant clairement votre décision à : [COORDONNÉES DU DESTINATAIRE À RENSEIGNER]. Lorsque la loi l’exige, une fonctionnalité de rétractation en ligne est également disponible.\n\nNous remboursons les sommes dues sans retard injustifié, dans le délai légal de quatorze jours après avoir été informés de votre décision et selon les modalités légales. Une part correspondant à une exécution anticipée ne peut être retenue que si les conditions légales ont été respectées.\n\nL’absence d’une information obligatoire peut prolonger votre délai de rétractation dans les conditions prévues par la loi. Un service réalisé sur mesure n’est pas automatiquement exclu de ce droit : les exceptions dépendent de la nature réelle de la prestation.",
+      "proposal": "Lorsque vous êtes consommateur et que votre contrat de prestation de services a été conclu à distance ou hors établissement, vous disposez en principe de quatorze jours à compter de sa conclusion pour exercer votre droit de rétractation, sans avoir à justifier votre décision. Les éventuelles exceptions dépendent de la nature réelle de la prestation et des conditions prévues par la loi.\n\nPour vous rétracter, vous pouvez nous transmettre le formulaire prévu à cet effet ou toute déclaration exprimant clairement votre décision, à l'adresse suivante : [COORDONNÉES DU DESTINATAIRE À RENSEIGNER]. Si vous avez conclu le contrat à distance au moyen d'une interface en ligne, nous mettons également à votre disposition la fonctionnalité de rétractation exigée par la loi.\n\nNous remboursons les sommes qui vous sont dues sans retard injustifié et au plus tard dans les quatorze jours suivant la date à laquelle nous sommes informés de votre décision, dans les conditions légales. Si vous aviez expressément demandé le début de la prestation avant la fin du délai, un montant proportionné au service déjà fourni peut rester dû uniquement lorsque toutes les conditions légales sont remplies.\n\nLorsque l'information obligatoire sur ce droit fait défaut, le délai peut être prolongé conformément à la loi. Le caractère personnalisé ou sur mesure d'un service ne suffit pas, à lui seul, à supprimer automatiquement votre droit de rétractation.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -1674,7 +1695,14 @@
       "importantChanges": "Vérifier formulaire, coordonnées et parcours effectif ; ne pas présumer une exception pour service sur mesure ou mariage.",
       "proposedTitle": "Droit de rétractation",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Si vous êtes consommateur et que le droit de rétractation s’applique à votre prestation de services conclue à distance ou hors établissement, vous disposez de quatorze jours à compter de la conclusion du contrat pour nous informer de votre décision, sans avoir à la justifier.\n\nVous pouvez utiliser le formulaire remis avec le contrat ou envoyer une déclaration exprimant clairement votre décision à : [COORDONNÉES DU DESTINATAIRE À RENSEIGNER]. Lorsque la loi l’exige, une fonctionnalité de rétractation en ligne est également disponible.\n\nNous remboursons les sommes dues sans retard injustifié, dans le délai légal de quatorze jours après avoir été informés de votre décision et selon les modalités légales. Une part correspondant à une exécution anticipée ne peut être retenue que si les conditions légales ont été respectées.\n\nL’absence d’une information obligatoire peut prolonger votre délai de rétractation dans les conditions prévues par la loi. Un service réalisé sur mesure n’est pas automatiquement exclu de ce droit : les exceptions dépendent de la nature réelle de la prestation.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée et non publiée",
+        "scope": "révision contractuelle B2C / B2B, formulation naturelle, préservation des règles existantes",
+        "note": "BLOCAGE DE PUBLICATION : coordonnées réelles, formulaire, parcours de rétractation en ligne applicable depuis le 19 juin 2026, contrôle B2C et exclusions réelles. Ne pas présumer exemption sur mesure."
+      }
     },
     {
       "code": "CONTENT-BRIEF",
@@ -4163,7 +4191,7 @@
       "sources": [
         "S11"
       ],
-      "proposal": "Si vous êtes un client professionnel, nous pouvons chercher ensemble une solution amiable à partir d’une réclamation écrite décrivant le problème.\n\nCette démarche n’empêche ni l’un ni l’autre d’exercer ses recours ou de demander une mesure urgente. Si aucun accord n’est trouvé, le litige relève des tribunaux compétents selon les règles applicables. Cette clause n’impose pas de tribunal territorial particulier.",
+      "proposal": "Si vous êtes un client professionnel et qu'un désaccord survient au sujet de notre prestation, nous pouvons rechercher ensemble une solution amiable à partir d'une réclamation écrite exposant le problème.\n\nCette démarche ne vous empêche pas, pas plus qu'elle ne nous empêche, d'exercer les recours prévus par la loi ou de demander une mesure urgente lorsqu'elle est nécessaire.\n\nSi aucun accord n'est trouvé, le différend relève des juridictions compétentes selon les règles applicables. Cette clause ne désigne pas de tribunal territorial particulier.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 13,
@@ -4199,7 +4227,14 @@
       "importantChanges": "Différend, juridictions et présent module peuvent être simplifiés.",
       "proposedTitle": "Règlement des différends professionnels",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Si vous êtes un client professionnel, nous pouvons chercher ensemble une solution amiable à partir d’une réclamation écrite décrivant le problème.\n\nCette démarche n’empêche ni l’un ni l’autre d’exercer ses recours ou de demander une mesure urgente. Si aucun accord n’est trouvé, le litige relève des tribunaux compétents selon les règles applicables. Cette clause n’impose pas de tribunal territorial particulier.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée et non publiée",
+        "scope": "révision contractuelle B2C / B2B, formulation naturelle, préservation des règles existantes",
+        "note": "Aucune clause attributive de compétence territoriale, y compris à Dijon, ajoutée."
+      }
     },
     {
       "code": "PRO-PAIEMENT",
@@ -4210,7 +4245,7 @@
       "sources": [
         "S12"
       ],
-      "proposal": "Si vous êtes un client professionnel, vous réglez les sommes dues aux échéances prévues au devis et dans les conditions de règlement. L’émission d’une facture n’accorde pas automatiquement un délai supplémentaire.\n\nUn délai particulier doit être convenu expressément et respecter les limites légales. À défaut d’accord, le délai du régime général est de trente jours après l’exécution de la prestation. Lorsqu’un délai différent est convenu, il ne dépasse pas soixante jours après l’émission de la facture, ou quarante-cinq jours fin de mois si ce choix est expressément prévu et non abusif. Les factures périodiques suivent leur plafond particulier de quarante-cinq jours après émission.\n\nL’échéancier distingue les avances, les paiements intermédiaires et le solde. Une vérification ou une acceptation de la prestation ne reporte pas automatiquement le paiement : sa durée et ses effets doivent être convenus dans les limites légales. Les régimes particuliers obligatoires restent applicables.",
+      "proposal": "Si vous êtes un client professionnel, les sommes dues sont réglées aux échéances indiquées dans votre devis et les conditions de règlement. L'envoi d'une facture n'accorde pas automatiquement un délai supplémentaire.\n\nUn délai de paiement différent peut être convenu expressément, dans les limites prévues par la loi. En l'absence d'accord particulier, le délai général est de trente jours après l'exécution de la prestation. Sous réserve des régimes légaux particuliers, un délai convenu ne peut normalement pas dépasser soixante jours à compter de l'émission de la facture, ou quarante-cinq jours fin de mois lorsque cette modalité est expressément prévue et ne constitue pas un abus manifeste. Pour les factures périodiques, le plafond légal est de quarante-cinq jours après leur émission.\n\nCes durées sont des limites légales : elles ne constituent pas un délai automatiquement accordé si votre devis prévoit une échéance plus courte.\n\nLes acomptes, les paiements intermédiaires et le solde restent soumis à l'échéancier accepté. Une vérification ou une validation du travail ne reporte pas à elle seule la date de paiement. Les conditions et effets d'une telle procédure doivent respecter les règles applicables.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 14,
@@ -4246,7 +4281,14 @@
       "importantChanges": "Les plafonds légaux ne sont pas des délais automatiquement accordés au client.",
       "proposedTitle": "Délais de règlement B2B",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Si vous êtes un client professionnel, vous réglez les sommes dues aux échéances prévues au devis et dans les conditions de règlement. L’émission d’une facture n’accorde pas automatiquement un délai supplémentaire.\n\nUn délai particulier doit être convenu expressément et respecter les limites légales. À défaut d’accord, le délai du régime général est de trente jours après l’exécution de la prestation. Lorsqu’un délai différent est convenu, il ne dépasse pas soixante jours après l’émission de la facture, ou quarante-cinq jours fin de mois si ce choix est expressément prévu et non abusif. Les factures périodiques suivent leur plafond particulier de quarante-cinq jours après émission.\n\nL’échéancier distingue les avances, les paiements intermédiaires et le solde. Une vérification ou une acceptation de la prestation ne reporte pas automatiquement le paiement : sa durée et ses effets doivent être convenus dans les limites légales. Les régimes particuliers obligatoires restent applicables.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée et non publiée",
+        "scope": "révision contractuelle B2C / B2B, formulation naturelle, préservation des règles existantes",
+        "note": "Délais B2B 30 jours défaut / 60 jours ou 45 jours fin de mois dérogatoires / 45 jours facture périodique ; ne pas accorder automatiquement les plafonds."
+      }
     },
     {
       "code": "PRO-RETARD",
@@ -4258,7 +4300,7 @@
         "S12",
         "S13"
       ],
-      "proposal": "Si vous êtes un client professionnel, des pénalités de retard sont dues dès le lendemain de l’échéance, sans rappel préalable. Le taux retenu au contrat est égal à trois fois le taux d’intérêt légal applicable. Le taux et ses conditions d’application figurent dans les conditions de règlement et sur les documents requis.\n\nL’indemnité forfaitaire légale de recouvrement de 40 euros est due lorsque les conditions légales sont réunies. Des frais complémentaires ne peuvent être demandés que dans les conditions prévues par la loi et sur justification.\n\nLes exceptions légales restent applicables, notamment celles liées aux procédures de sauvegarde, de redressement ou de liquidation judiciaire. Ces dispositions ne s’appliquent pas aux clients consommateurs.",
+      "proposal": "Si vous êtes un client professionnel et qu'une somme n'est pas réglée à l'échéance convenue, des pénalités de retard sont exigibles dès le lendemain, sans qu'un rappel préalable soit nécessaire.\n\nLe taux contractuel prévu par AtoumWeb est égal à trois fois le taux d'intérêt légal applicable. Il est indiqué, avec ses modalités d'application, dans les conditions de règlement et les documents qui doivent en faire mention.\n\nLorsque les conditions légales sont réunies, une indemnité forfaitaire de 40 € pour frais de recouvrement est également due. Si les frais de recouvrement réellement engagés dépassent cette somme, une indemnisation complémentaire ne peut être demandée que dans les conditions prévues par la loi et sur justification.\n\nLes exceptions légales, notamment celles relatives à certaines procédures collectives, restent applicables. Ces dispositions concernent les clients professionnels et ne sont pas appliquées aux consommateurs.",
       "externalReview": "Prioritaire avant adoption",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 15,
@@ -4294,7 +4336,14 @@
       "importantChanges": "Taux retenu et indemnité professionnels uniquement ; ne pas les injecter dans un contrat consommateur.",
       "proposedTitle": "Retard de paiement",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Si vous êtes un client professionnel, des pénalités de retard sont dues dès le lendemain de l’échéance, sans rappel préalable. Le taux retenu au contrat est égal à trois fois le taux d’intérêt légal applicable. Le taux et ses conditions d’application figurent dans les conditions de règlement et sur les documents requis.\n\nL’indemnité forfaitaire légale de recouvrement de 40 euros est due lorsque les conditions légales sont réunies. Des frais complémentaires ne peuvent être demandés que dans les conditions prévues par la loi et sur justification.\n\nLes exceptions légales restent applicables, notamment celles liées aux procédures de sauvegarde, de redressement ou de liquidation judiciaire. Ces dispositions ne s’appliquent pas aux clients consommateurs.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée et non publiée",
+        "scope": "révision contractuelle B2C / B2B, formulation naturelle, préservation des règles existantes",
+        "note": "Taux volontairement fixé à 3 fois taux légal ; 40 euros dans les conditions légales ; ne pas confondre avec taux supplétif BCE+10."
+      }
     },
     {
       "code": "REPRISE-EXISTANT",
