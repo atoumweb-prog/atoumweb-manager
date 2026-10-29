@@ -4809,7 +4809,7 @@
         "S2",
         "S10"
       ],
-      "proposal": "Le devis ou une annexe remise avant votre acceptation précise les navigateurs, appareils et environnements pris en charge. Nous vérifions le livrable dans ce cadre.\n\nNous ne promettons pas une compatibilité illimitée avec tous les environnements anciens, abandonnés ou futurs. Une adaptation qui dépasse les engagements convenus peut relever d’une maintenance ou d’une prestation complémentaire acceptée.\n\nCette limite ne nous dispense pas de corriger une non-conformité qui nous est imputable ni de fournir les mises à jour ou garanties légalement dues.",
+      "proposal": "Votre site est conçu pour fonctionner sur les navigateurs, appareils et environnements précisés dans le devis ou dans une annexe qui vous est remise avant votre accord. Cela comprend, selon le périmètre convenu, l’affichage sur ordinateur, tablette et smartphone. Nous vérifions le site dans ces conditions avant sa livraison.\n\nDes différences mineures de présentation peuvent exister d’un navigateur ou d’un appareil à l’autre, sans empêcher le bon usage des fonctionnalités prévues. En revanche, un défaut de fonctionnement ou d’affichage qui rend le site non conforme à ce qui a été convenu doit être corrigé dans le cadre de nos obligations.\n\nNous ne pouvons pas garantir une compatibilité avec tous les appareils existants, les anciens navigateurs qui ne sont plus maintenus ou les versions de logiciels qui paraîtront après la livraison.\n\nSi vous souhaitez ensuite adapter le site à un environnement non prévu initialement, nous pouvons étudier cette demande au titre de la maintenance ou d’un devis complémentaire, avec votre accord avant toute facturation supplémentaire. Cette limite ne réduit ni les garanties légales ni les corrections et mises à jour déjà dues par AtoumWeb.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 29,
@@ -4845,7 +4845,14 @@
       "importantChanges": "Terminaux/environnements ; pas de liste effectivement convenue.",
       "proposedTitle": "Compatibilité",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Le devis ou une annexe remise avant votre acceptation précise les navigateurs, appareils et environnements pris en charge. Nous vérifions le livrable dans ce cadre.\n\nNous ne promettons pas une compatibilité illimitée avec tous les environnements anciens, abandonnés ou futurs. Une adaptation qui dépasse les engagements convenus peut relever d’une maintenance ou d’une prestation complémentaire acceptée.\n\nCette limite ne nous dispense pas de corriger une non-conformité qui nous est imputable ni de fournir les mises à jour ou garanties légalement dues.",
+      "editorialRevision": {
+        "date": "2026-10-29",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "compatibilité appareils, navigateurs et environnements convenus, variations mineures, adaptation hors périmètre",
+        "note": "Périmètre exact fixé par devis/annexe avant acceptation. Aucune liste de versions inventée ; obligation de conformité préservée."
+      }
     },
     {
       "code": "WEB-CONTENUS",
