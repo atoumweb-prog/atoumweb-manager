@@ -2520,7 +2520,7 @@
         "S10",
         "S14"
       ],
-      "proposal": "Notre garantie corrective contractuelle couvre les anomalies de la livraison qui nous sont imputables et relèvent des engagements convenus. Le devis indique sa durée et son point de départ selon la prestation.\n\nUne anomalie peut être intermittente. Vous nous transmettez les informations disponibles pour l’analyser ; il n’est pas nécessaire qu’elle se reproduise systématiquement pour que nous la prenions en compte.\n\nLes fonctions nouvelles ou les changements de besoin hors périmètre ne sont pas compris. Une modification faite par vous ou un tiers, ou le changement d’un outil externe, n’est exclu de la garantie que dans la mesure où il cause l’anomalie concernée.\n\nCette garantie ne remplace ni ne réduit les garanties légales, les mises à jour légalement dues ou notre responsabilité applicable.",
+      "proposal": "La garantie corrective contractuelle prévue au devis couvre les anomalies de notre livraison qui nous sont imputables et concernent les fonctions ou comportements convenus. Sa durée et sa date de départ sont indiquées dans votre devis.\n\nSi vous constatez un problème, communiquez-nous les informations dont vous disposez : circonstances, date, message d’erreur ou exemple, si possible. Une anomalie peut être intermittente ; nous ne vous demandons pas de prouver qu’elle apparaît à chaque tentative pour l’examiner.\n\nUne nouvelle fonction ou un changement de besoin hors du périmètre convenu n’est pas une correction comprise dans cette garantie. Un changement effectué par vous ou un tiers, ou l’évolution d’un outil extérieur, ne peut justifier une exclusion que s’il est effectivement à l’origine du problème concerné.\n\nCette garantie contractuelle ne diminue pas les garanties légales, les mises à jour qui seraient légalement dues ni les autres obligations et responsabilités d’AtoumWeb.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2551,7 +2551,14 @@
       "importantChanges": "Définition dense ; reproduction systématique peut être mal comprise.",
       "proposedTitle": "Garantie corrective",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Notre garantie corrective contractuelle couvre les anomalies de la livraison qui nous sont imputables et relèvent des engagements convenus. Le devis indique sa durée et son point de départ selon la prestation.\n\nUne anomalie peut être intermittente. Vous nous transmettez les informations disponibles pour l’analyser ; il n’est pas nécessaire qu’elle se reproduise systématiquement pour que nous la prenions en compte.\n\nLes fonctions nouvelles ou les changements de besoin hors périmètre ne sont pas compris. Une modification faite par vous ou un tiers, ou le changement d’un outil externe, n’est exclu de la garantie que dans la mesure où il cause l’anomalie concernée.\n\nCette garantie ne remplace ni ne réduit les garanties légales, les mises à jour légalement dues ou notre responsabilité applicable.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation finale : développement WordPress (6), landing pages (3), reprise de l'existant (1), services transversaux (3), migration (1)",
+        "note": "Aucun changement commercial volontaire. Vérifier les devis, licences GPL et tiers, obligations légales B2C, rôles RGPD, absence de double facturation, migration interne gratuite et conditions de sortie avant adoption."
+      }
     },
     {
       "code": "DEVWP-INTEGRATION",
@@ -2562,7 +2569,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Nous réalisons l’intégration ou l’automatisation prévue au devis avec les services identifiés : interfaces de connexion (API), notifications automatiques entre outils, CRM, Make, Zapier, Google Sheets ou autres solutions.\n\nLe fonctionnement dépend aussi de leurs disponibilités, quotas, accès, abonnements, formats de données, règles et évolutions.\n\nNous configurons et testons les échanges convenus, sans garantir le fonctionnement permanent d’un service externe ni les traitements qui dépassent notre intégration.",
+      "proposal": "Nous réalisons les connexions et automatisations indiquées au devis entre votre site WordPress et les services retenus : par exemple un CRM, un outil d’envoi d’emails, un tableur ou une plateforme d’automatisation comme Make ou Zapier. Le devis précise les données échangées et les actions attendues.\n\nNous configurons et vérifions les échanges qui relèvent de notre intervention. Leur fonctionnement dépend aussi des accès que vous nous fournissez, des abonnements et quotas disponibles, ainsi que des règles, formats et disponibilités des plateformes concernées.\n\nNous ne pouvons pas garantir la disponibilité permanente d’un service tiers ni les opérations qu’il réalise hors de notre intégration. En revanche, ces limites ne nous dispensent pas de corriger une erreur de configuration qui nous est imputable. Si une contrainte extérieure connue bloque la prestation, nous vous en informons et examinons les possibilités d’adaptation dans les conditions convenues.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2593,7 +2600,14 @@
       "importantChanges": "API/webhooks et flux à traduire en connexions.",
       "proposedTitle": "Automatisation et intégration avec service externe",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous réalisons l’intégration ou l’automatisation prévue au devis avec les services identifiés : interfaces de connexion (API), notifications automatiques entre outils, CRM, Make, Zapier, Google Sheets ou autres solutions.\n\nLe fonctionnement dépend aussi de leurs disponibilités, quotas, accès, abonnements, formats de données, règles et évolutions.\n\nNous configurons et testons les échanges convenus, sans garantir le fonctionnement permanent d’un service externe ni les traitements qui dépassent notre intégration.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation finale : développement WordPress (6), landing pages (3), reprise de l'existant (1), services transversaux (3), migration (1)",
+        "note": "Aucun changement commercial volontaire. Vérifier les devis, licences GPL et tiers, obligations légales B2C, rôles RGPD, absence de double facturation, migration interne gratuite et conditions de sortie avant adoption."
+      }
     },
     {
       "code": "DEVWP-PERIMETRE",
@@ -2605,7 +2619,7 @@
         "S2",
         "S3"
       ],
-      "proposal": "Nous développons la fonction WordPress décrite au devis, selon les besoins, règles et limites validés.\n\nSauf exigence expresse du devis, nous choisissons la solution technique adaptée : extension, thème enfant, point d’extension WordPress, portion de code ou autre mécanisme.\n\nLes fonctions, écrans, droits d’accès, processus et connexions compris sont ceux convenus. Une nouvelle fonction, une nouvelle règle ou une extension du périmètre après validation est une évolution pouvant faire l’objet d’un accord complémentaire.",
+      "proposal": "Nous développons la fonction WordPress décrite dans votre devis, en respectant les besoins, les règles et les limites que nous avons validés ensemble.\n\nSauf exigence technique expressément convenue, nous choisissons la méthode de réalisation adaptée : extension WordPress, thème enfant, personnalisation de code ou autre solution. Les écrans, les droits d’accès, les étapes de fonctionnement et les connexions à d’autres outils compris dans la prestation sont ceux indiqués au devis.\n\nSi vous souhaitez ensuite ajouter une fonction, modifier une règle ou élargir le projet, nous définissons ensemble cette évolution avant sa réalisation et son éventuelle facturation. En revanche, la correction d’un défaut de conformité au périmètre initial ne constitue pas une nouvelle prestation payante.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2636,7 +2650,14 @@
       "importantChanges": "Hook, snippet et workflow surchargent la clause.",
       "proposedTitle": "Périmètre d’un développement WordPress sur mesure",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous développons la fonction WordPress décrite au devis, selon les besoins, règles et limites validés.\n\nSauf exigence expresse du devis, nous choisissons la solution technique adaptée : extension, thème enfant, point d’extension WordPress, portion de code ou autre mécanisme.\n\nLes fonctions, écrans, droits d’accès, processus et connexions compris sont ceux convenus. Une nouvelle fonction, une nouvelle règle ou une extension du périmètre après validation est une évolution pouvant faire l’objet d’un accord complémentaire.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation finale : développement WordPress (6), landing pages (3), reprise de l'existant (1), services transversaux (3), migration (1)",
+        "note": "Aucun changement commercial volontaire. Vérifier les devis, licences GPL et tiers, obligations légales B2C, rôles RGPD, absence de double facturation, migration interne gratuite et conditions de sortie avant adoption."
+      }
     },
     {
       "code": "DEVWP-PI-REUTILISATION",
@@ -2647,7 +2668,7 @@
       "sources": [
         "S7"
       ],
-      "proposal": "Nous distinguons les éléments créés spécialement pour vous de nos composants, bibliothèques, méthodes, outils et savoir-faire réutilisables.\n\nLe modèle retenu vous accorde une licence suffisamment large et durable pour utiliser, exploiter, maintenir et faire modifier le livrable spécifique. Le devis ou son annexe de droits définit précisément les droits accordés, les usages, la durée, le territoire, les conditions de prise d’effet et les éventuelles restrictions. Une exclusivité ou une cession particulière nécessite un accord exprès.\n\nNous pouvons réutiliser nos composants et connaissances génériques, mais pas vos données, secrets, identifiants, contenus confidentiels ni la logique propre à votre activité. Nous ne réutilisons que les éléments dont nous détenons les droits nécessaires ou dont la licence l’autorise.\n\nLes éléments génériques et tiers incorporés à la livraison sont identifiés et accompagnés des droits nécessaires à l’exploitation convenue. Les règles impératives et les licences tierces restent applicables.",
+      "proposal": "Nous distinguons les éléments développés spécialement pour votre projet de nos outils, méthodes, bibliothèques et composants génériques que nous pouvons réutiliser pour d’autres missions.\n\nPour les éléments spécifiques livrés, le devis ou une annexe précise les droits qui vous sont accordés afin que vous puissiez utiliser, exploiter, faire maintenir et faire modifier votre solution dans la durée. Ce document décrit les utilisations autorisées, leur étendue, leur destination, leur durée, leur territoire et leurs éventuelles conditions. Toute cession de droits ou exclusivité particulière doit être expressément convenue et respecter les exigences légales.\n\nNous pouvons réutiliser notre savoir-faire et nos composants génériques lorsque nous en avons le droit, mais jamais vos données, identifiants, informations confidentielles ni les règles métier propres à votre activité. Nous ne pouvons accorder sur un élément que des droits dont nous disposons effectivement.\n\nLes composants tiers et logiciels libres, notamment ceux relevant de la licence GPL de WordPress, conservent leurs propres licences et les droits qu’elles accordent à leurs utilisateurs. Aucune stipulation de notre devis ne supprime ces droits. Les conditions d’exploitation du livrable tiennent compte de ces licences.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2678,7 +2699,14 @@
       "importantChanges": "Même logique de licence que APP et socle, avec contrôle des composants et licences applicables.",
       "proposedTitle": "Code spécifique client et composants génériques AtoumWeb",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous distinguons les éléments créés spécialement pour vous de nos composants, bibliothèques, méthodes, outils et savoir-faire réutilisables.\n\nLe modèle retenu vous accorde une licence suffisamment large et durable pour utiliser, exploiter, maintenir et faire modifier le livrable spécifique. Le devis ou son annexe de droits définit précisément les droits accordés, les usages, la durée, le territoire, les conditions de prise d’effet et les éventuelles restrictions. Une exclusivité ou une cession particulière nécessite un accord exprès.\n\nNous pouvons réutiliser nos composants et connaissances génériques, mais pas vos données, secrets, identifiants, contenus confidentiels ni la logique propre à votre activité. Nous ne réutilisons que les éléments dont nous détenons les droits nécessaires ou dont la licence l’autorise.\n\nLes éléments génériques et tiers incorporés à la livraison sont identifiés et accompagnés des droits nécessaires à l’exploitation convenue. Les règles impératives et les licences tierces restent applicables.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation finale : développement WordPress (6), landing pages (3), reprise de l'existant (1), services transversaux (3), migration (1)",
+        "note": "Aucun changement commercial volontaire. Vérifier les devis, licences GPL et tiers, obligations légales B2C, rôles RGPD, absence de double facturation, migration interne gratuite et conditions de sortie avant adoption."
+      }
     },
     {
       "code": "DEVWP-PLUGIN",
@@ -2691,7 +2719,7 @@
         "S10",
         "S14"
       ],
-      "proposal": "Si nous livrons une extension WordPress autonome, elle est fournie sous une forme installable et activable dans l’environnement prévu au devis, avec les fonctions d’administration et la documentation convenues.\n\nLe devis ou une annexe remise avant votre acceptation identifie les versions de WordPress, de PHP et des composants pris en charge. Nous vérifions la livraison sur cette base.\n\nNous ne garantissons pas une compatibilité illimitée avec toutes les versions futures ou avec des extensions, thèmes ou configurations non prévus. Une adaptation qui dépasse nos obligations déjà dues peut relever d’une maintenance ou d’une évolution acceptée.\n\nLes garanties, mises à jour et droits impératifs de l’utilisateur, ainsi que les exigences des licences applicables, restent préservés.",
+      "proposal": "Si votre commande prévoit une extension WordPress autonome, nous vous remettons une extension installable et activable dans l’environnement défini au devis, avec les fonctions d’administration et la documentation qui y sont prévues. Il ne s’agit pas d’un simple prototype, sauf si le devis commande expressément un prototype.\n\nAvant votre acceptation, le devis ou son annexe identifie les versions de WordPress, de PHP et des composants avec lesquelles l’extension doit fonctionner. Nous vérifions la livraison dans cet environnement de référence.\n\nUne compatibilité avec toutes les versions futures de WordPress, les autres extensions, les thèmes ou les configurations non prévus n’est pas automatiquement comprise. Les adaptations supplémentaires peuvent faire l’objet d’une maintenance ou d’une évolution acceptée lorsqu’elles dépassent nos obligations existantes.\n\nCette limitation ne réduit pas les garanties légales applicables, les éventuelles mises à jour dues ni les droits accordés par les licences des composants utilisés.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2722,7 +2750,14 @@
       "importantChanges": "Plugin autonome et environnement non accessibles.",
       "proposedTitle": "Livraison d’un plugin autonome",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Si nous livrons une extension WordPress autonome, elle est fournie sous une forme installable et activable dans l’environnement prévu au devis, avec les fonctions d’administration et la documentation convenues.\n\nLe devis ou une annexe remise avant votre acceptation identifie les versions de WordPress, de PHP et des composants pris en charge. Nous vérifions la livraison sur cette base.\n\nNous ne garantissons pas une compatibilité illimitée avec toutes les versions futures ou avec des extensions, thèmes ou configurations non prévus. Une adaptation qui dépasse nos obligations déjà dues peut relever d’une maintenance ou d’une évolution acceptée.\n\nLes garanties, mises à jour et droits impératifs de l’utilisateur, ainsi que les exigences des licences applicables, restent préservés.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation finale : développement WordPress (6), landing pages (3), reprise de l'existant (1), services transversaux (3), migration (1)",
+        "note": "Aucun changement commercial volontaire. Vérifier les devis, licences GPL et tiers, obligations légales B2C, rôles RGPD, absence de double facturation, migration interne gratuite et conditions de sortie avant adoption."
+      }
     },
     {
       "code": "DEVWP-RECETTE",
@@ -2734,7 +2769,7 @@
         "S3",
         "S10"
       ],
-      "proposal": "La vérification de livraison, appelée recette, compare le développement au périmètre et aux critères d’acceptation convenus.\n\nUne anomalie est un comportement que l’on peut constater ou reproduire et qui ne respecte pas une fonction, une règle ou un comportement attendu validé dans ce périmètre.\n\nUne nouvelle fonction, un changement de règle, une extension d’usage ou une adaptation non prévue est une évolution, et non la correction d’une anomalie. Vous effectuez les vérifications et nous transmettez vos retours selon les modalités du devis.",
+      "proposal": "À la livraison, nous vérifions ensemble le développement au regard des fonctions et des critères d’acceptation définis au devis. Cette étape est appelée « recette ».\n\nUn défaut est une fonction ou un comportement qui ne respecte pas ce qui a été convenu et que l’on peut constater ou reproduire. Un défaut intermittent peut également être signalé et examiné : il n’a pas besoin de se produire à chaque utilisation.\n\nUne demande de nouvelle fonction, un changement de règle ou un usage supplémentaire non prévu relève d’une évolution à convenir séparément, et non d’une correction du livrable initial.\n\nVous effectuez les vérifications prévues et nous adressez vos observations selon les modalités indiquées au devis. La validation doit être exprimée clairement ; une absence de réponse ne vaut pas automatiquement acceptation. Les corrections dues et les recours légaux ou contractuels restent possibles après la recette dans les conditions applicables.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2768,7 +2803,14 @@
       "importantChanges": "«Constatable ou reproductible» ne doit pas devenir «reproductible à chaque fois» ; cohérence avec garantie des défauts intermittents.",
       "proposedTitle": "Recette et critères d’acceptation",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "La vérification de livraison, appelée recette, compare le développement au périmètre et aux critères d’acceptation convenus.\n\nUne anomalie est un comportement que l’on peut constater ou reproduire et qui ne respecte pas une fonction, une règle ou un comportement attendu validé dans ce périmètre.\n\nUne nouvelle fonction, un changement de règle, une extension d’usage ou une adaptation non prévue est une évolution, et non la correction d’une anomalie. Vous effectuez les vérifications et nous transmettez vos retours selon les modalités du devis.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation finale : développement WordPress (6), landing pages (3), reprise de l'existant (1), services transversaux (3), migration (1)",
+        "note": "Aucun changement commercial volontaire. Vérifier les devis, licences GPL et tiers, obligations légales B2C, rôles RGPD, absence de double facturation, migration interne gratuite et conditions de sortie avant adoption."
+      }
     },
     {
       "code": "ECOM-CATALOGUE",
@@ -3151,7 +3193,7 @@
       "sources": [
         "S8"
       ],
-      "proposal": "Nous réalisons les formulaires avec les champs et les traitements prévus au devis.\n\nVous validez les informations demandées aux utilisateurs, leur finalité et les mentions nécessaires à la protection des données.\n\nUne connexion à un outil de relation client (CRM), d’envoi d’emails, à un agenda, à un paiement ou à un autre service externe est comprise uniquement si elle figure au devis.",
+      "proposal": "Nous réalisons le ou les formulaires de votre page avec les champs et les actions indiqués au devis : par exemple recueillir une demande de contact ou transmettre une inscription.\n\nVous validez les informations demandées aux visiteurs, leur utilisation prévue et les mentions d’information nécessaires. Les rôles et obligations de chacun au regard de la protection des données sont déterminés selon les traitements réellement effectués ; cette validation ne dispense pas AtoumWeb de ses propres obligations ni de la bonne réalisation technique convenue.\n\nUne connexion à un outil de relation client (CRM), à un service d’envoi d’emails, à un agenda, à un paiement ou à un autre service externe n’est comprise que si elle figure expressément au devis.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -3182,7 +3224,14 @@
       "importantChanges": "Traitements et CRM à expliquer ; rôle client non universel.",
       "proposedTitle": "Formulaires et collecte",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous réalisons les formulaires avec les champs et les traitements prévus au devis.\n\nVous validez les informations demandées aux utilisateurs, leur finalité et les mentions nécessaires à la protection des données.\n\nUne connexion à un outil de relation client (CRM), d’envoi d’emails, à un agenda, à un paiement ou à un autre service externe est comprise uniquement si elle figure au devis.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation finale : développement WordPress (6), landing pages (3), reprise de l'existant (1), services transversaux (3), migration (1)",
+        "note": "Aucun changement commercial volontaire. Vérifier les devis, licences GPL et tiers, obligations légales B2C, rôles RGPD, absence de double facturation, migration interne gratuite et conditions de sortie avant adoption."
+      }
     },
     {
       "code": "LANDING-GESTION",
@@ -3194,7 +3243,7 @@
         "S1",
         "S15"
       ],
-      "proposal": "Si vous souscrivez une gestion mensuelle de votre page, nous réalisons les opérations décrites dans l’offre ou le devis.\n\nLes refontes, nouvelles fonctions, nouvelles sections importantes et autres modifications qui dépassent ce périmètre peuvent être facturées séparément.",
+      "proposal": "Si vous avez expressément souscrit une gestion mensuelle de votre page, nous effectuons les opérations indiquées dans l’offre ou le devis que vous avez accepté. La fréquence, le contenu et le prix de ce service sont ceux de cet engagement.\n\nUne refonte, une nouvelle fonctionnalité, l’ajout d’une section importante ou toute autre modification dépassant les opérations prévues peut faire l’objet d’un devis complémentaire. Aucun travail supplémentaire payant n’est engagé sans votre accord préalable.\n\nCette clause ne crée pas, à elle seule, un abonnement, une reconduction automatique ou un délai de résiliation qui ne seraient pas prévus dans votre contrat.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -3225,7 +3274,14 @@
       "importantChanges": "Gestion mensuelle sans contenu détaillé ; facturation séparée vague.",
       "proposedTitle": "Gestion mensuelle",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Si vous souscrivez une gestion mensuelle de votre page, nous réalisons les opérations décrites dans l’offre ou le devis.\n\nLes refontes, nouvelles fonctions, nouvelles sections importantes et autres modifications qui dépassent ce périmètre peuvent être facturées séparément.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation finale : développement WordPress (6), landing pages (3), reprise de l'existant (1), services transversaux (3), migration (1)",
+        "note": "Aucun changement commercial volontaire. Vérifier les devis, licences GPL et tiers, obligations légales B2C, rôles RGPD, absence de double facturation, migration interne gratuite et conditions de sortie avant adoption."
+      }
     },
     {
       "code": "LANDING-PERIMETRE",
@@ -3236,7 +3292,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "La prestation de landing page porte sur une page de présentation unique, ou sur le périmètre expressément prévu au devis.\n\nUne page supplémentaire, une fonction non prévue, un parcours en plusieurs étapes, un espace membre, des règles métier particulières ou une connexion complexe à un autre outil peuvent nécessiter un complément de prix.",
+      "proposal": "Une landing page est une page conçue pour présenter une offre ou inviter ses visiteurs à réaliser une action précise. Notre prestation porte sur une seule page, sauf si votre devis prévoit expressément plusieurs pages ou un parcours plus étendu.\n\nLe devis indique les contenus, formulaires, fonctions et intégrations compris dans la commande. Une page supplémentaire, un parcours en plusieurs étapes, un espace membre, des règles de fonctionnement particulières ou une connexion complexe à un service extérieur ne sont pas inclus par défaut.\n\nSi vous souhaitez ajouter l’un de ces éléments, nous vous proposons, si nécessaire, un complément de devis à accepter avant sa réalisation. Les éléments déjà promis au devis restent compris.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -3267,7 +3323,14 @@
       "importantChanges": "Landing et tunnel multi-étapes jargon.",
       "proposedTitle": "Périmètre d’une landing page",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "La prestation de landing page porte sur une page de présentation unique, ou sur le périmètre expressément prévu au devis.\n\nUne page supplémentaire, une fonction non prévue, un parcours en plusieurs étapes, un espace membre, des règles métier particulières ou une connexion complexe à un autre outil peuvent nécessiter un complément de prix.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation finale : développement WordPress (6), landing pages (3), reprise de l'existant (1), services transversaux (3), migration (1)",
+        "note": "Aucun changement commercial volontaire. Vérifier les devis, licences GPL et tiers, obligations légales B2C, rôles RGPD, absence de double facturation, migration interne gratuite et conditions de sortie avant adoption."
+      }
     },
     {
       "code": "MAINT-INTERVENTIONS",
@@ -4618,7 +4681,7 @@
       "sources": [
         "S3"
       ],
-      "proposal": "Si nous intervenons sur un site ou un projet créé par un tiers, nous le reprenons dans son état existant.\n\nCertaines anomalies ou contraintes ne peuvent être découvertes qu’après un accès complet. Elles peuvent conduire à revoir le périmètre ou le temps nécessaire.\n\nNous vous expliquons les difficultés constatées et leurs conséquences sur les travaux convenus. Une extension du périmètre ou du prix nécessite votre accord avant sa réalisation.\n\nL’état antérieur du projet ne nous dispense pas de nos propres obligations et n’exclut pas notre responsabilité pour les défauts que nous causons.",
+      "proposal": "Lorsque nous intervenons sur un site ou un projet réalisé par un autre prestataire, nous travaillons à partir de son état au moment de la reprise et des accès disponibles.\n\nCertaines erreurs, incompatibilités ou limites techniques peuvent n’apparaître qu’après un examen plus complet. Si nous découvrons une difficulté qui change les travaux initialement envisagés, nous vous expliquons son incidence sur le périmètre, le calendrier ou le prix, avant toute intervention supplémentaire.\n\nUne modification des prestations ou de leur prix nécessite votre accord préalable. Les problèmes déjà présents ne sont pas automatiquement imputables à AtoumWeb, mais ils ne nous dispensent pas de nos obligations ni de notre responsabilité pour les défauts causés par notre propre intervention.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4649,7 +4712,14 @@
       "importantChanges": "Existant et responsabilité dispersés.",
       "proposedTitle": "Reprise d’un site existant",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Si nous intervenons sur un site ou un projet créé par un tiers, nous le reprenons dans son état existant.\n\nCertaines anomalies ou contraintes ne peuvent être découvertes qu’après un accès complet. Elles peuvent conduire à revoir le périmètre ou le temps nécessaire.\n\nNous vous expliquons les difficultés constatées et leurs conséquences sur les travaux convenus. Une extension du périmètre ou du prix nécessite votre accord avant sa réalisation.\n\nL’état antérieur du projet ne nous dispense pas de nos propres obligations et n’exclut pas notre responsabilité pour les défauts que nous causons.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation finale : développement WordPress (6), landing pages (3), reprise de l'existant (1), services transversaux (3), migration (1)",
+        "note": "Aucun changement commercial volontaire. Vérifier les devis, licences GPL et tiers, obligations légales B2C, rôles RGPD, absence de double facturation, migration interne gratuite et conditions de sortie avant adoption."
+      }
     },
     {
       "code": "SEO-ACCES",
@@ -5055,7 +5125,7 @@
         "S3",
         "S9"
       ],
-      "proposal": "Votre pack vous donne accès au volume de temps et aux demandes prévus au devis, pendant sa période de validité. Le temps utilisé est suivi selon l’unité de décompte annoncée.\n\nUne demande hors périmètre ou dépassant le solde disponible est chiffrée et acceptée avant sa réalisation.\n\nLe temps non utilisé expire normalement à l’échéance du devis. Sa seule non-utilisation ne donne pas droit à un remboursement automatique.\n\nSi vous avez effectivement demandé une intervention pendant la période de validité et que nous n’avons pas pu la réaliser pour une raison qui nous est imputable, nous prolongeons cette période de manière appropriée pour permettre l’intervention.\n\nCes règles ne réduisent pas vos droits en cas d’inexécution ni les autres droits impératifs applicables, notamment ceux du consommateur.",
+      "proposal": "Votre pack d’heures vous permet de demander, pendant la période de validité indiquée au devis, les interventions comprises dans son périmètre, dans la limite du volume de temps acheté. Le devis précise l’unité de décompte, la manière dont les heures sont suivies et la date d’expiration du solde.\n\nNous vous indiquons le temps consommé et le solde disponible selon les modalités convenues. Si une demande dépasse ce solde ou sort du périmètre du pack, nous vous proposons un chiffrage à accepter avant de réaliser les travaux supplémentaires.\n\nLe temps non utilisé à la fin de la période convenue expire normalement. La simple absence de demande d’intervention ne donne pas automatiquement droit à un remboursement. En revanche, si vous avez demandé une intervention pendant la période de validité et que nous n’avons pas pu la réaliser pour une raison qui nous est imputable, nous prolongeons cette période de manière appropriée pour permettre son exécution.\n\nCette règle n’enlève aucun droit lié à une prestation non exécutée ou à une obligation légale. Le pack d’heures est distinct des petites interventions mensuelles incluses dans une formule de maintenance, qui ne sont pas reportables d’un mois sur l’autre.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -5088,7 +5158,14 @@
       "importantChanges": "Solde/validité distincts des interventions de maintenance ; prolongation en cas d’intervention demandée empêchée par l’agence conservée.",
       "proposedTitle": "Packs d’heures : décompte, validité et solde",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Votre pack vous donne accès au volume de temps et aux demandes prévus au devis, pendant sa période de validité. Le temps utilisé est suivi selon l’unité de décompte annoncée.\n\nUne demande hors périmètre ou dépassant le solde disponible est chiffrée et acceptée avant sa réalisation.\n\nLe temps non utilisé expire normalement à l’échéance du devis. Sa seule non-utilisation ne donne pas droit à un remboursement automatique.\n\nSi vous avez effectivement demandé une intervention pendant la période de validité et que nous n’avons pas pu la réaliser pour une raison qui nous est imputable, nous prolongeons cette période de manière appropriée pour permettre l’intervention.\n\nCes règles ne réduisent pas vos droits en cas d’inexécution ni les autres droits impératifs applicables, notamment ceux du consommateur.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation finale : développement WordPress (6), landing pages (3), reprise de l'existant (1), services transversaux (3), migration (1)",
+        "note": "Aucun changement commercial volontaire. Vérifier les devis, licences GPL et tiers, obligations légales B2C, rôles RGPD, absence de double facturation, migration interne gratuite et conditions de sortie avant adoption."
+      }
     },
     {
       "code": "SERVICE-PONCTUEL-PERIMETRE",
@@ -5099,7 +5176,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Notre intervention ponctuelle couvre les travaux et livrables expressément décrits au devis, à partir des informations et des accès disponibles au démarrage.\n\nUne demande qui ajoute un objectif, un livrable, une intervention ou une contrainte non prévu nécessite un accord préalable entre nous. Elle peut faire l’objet d’un complément de prix ou d’un nouveau devis.",
+      "proposal": "Une intervention ponctuelle couvre les travaux et les livrables expressément indiqués dans votre devis. Nous intervenons à partir des informations, des éléments et des accès disponibles au démarrage, dans les conditions prévues.\n\nSi vous souhaitez ajouter un objectif, un livrable, une nouvelle intervention ou une contrainte qui n’était pas prévu, nous en discutons avant sa réalisation. Cet ajout peut nécessiter un devis ou un prix complémentaire que vous devez accepter au préalable.\n\nUne intervention ponctuelle ne comprend pas automatiquement une surveillance continue, une maintenance récurrente ou des interventions ultérieures non prévues. Les corrections qui nous sont déjà dues restent soumises aux règles applicables.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -5130,7 +5207,14 @@
       "importantChanges": "Périmètre et contraintes génériques.",
       "proposedTitle": "Périmètre d’une prestation ponctuelle",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Notre intervention ponctuelle couvre les travaux et livrables expressément décrits au devis, à partir des informations et des accès disponibles au démarrage.\n\nUne demande qui ajoute un objectif, un livrable, une intervention ou une contrainte non prévu nécessite un accord préalable entre nous. Elle peut faire l’objet d’un complément de prix ou d’un nouveau devis.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation finale : développement WordPress (6), landing pages (3), reprise de l'existant (1), services transversaux (3), migration (1)",
+        "note": "Aucun changement commercial volontaire. Vérifier les devis, licences GPL et tiers, obligations légales B2C, rôles RGPD, absence de double facturation, migration interne gratuite et conditions de sortie avant adoption."
+      }
     },
     {
       "code": "SERVICE-TIERS",
@@ -5142,7 +5226,7 @@
         "S9",
         "S10"
       ],
-      "proposal": "Si notre prestation utilise un logiciel, un hébergeur, une connexion à un service externe ou un autre fournisseur, elle dépend aussi des conditions et de la disponibilité de ce service.\n\nLes abonnements, licences, commissions et autres frais externes sont compris uniquement s’ils figurent au devis.\n\nLorsque nous avons connaissance d’un blocage qui affecte notre prestation, nous vous en informons. Nous pouvons proposer une adaptation ou une autre solution lorsque cela est techniquement et commercialement possible.",
+      "proposal": "Certaines prestations utilisent des outils ou services fournis par d’autres entreprises : hébergeur, logiciel, extension, interface de connexion ou plateforme externe. Leur disponibilité et leurs règles d’utilisation peuvent influencer le fonctionnement du service convenu.\n\nLes abonnements, licences, commissions et autres frais de ces fournisseurs ne sont compris dans notre prix que s’ils sont expressément indiqués au devis. Nous vous informons lorsque nous avons connaissance d’un blocage lié à un tiers qui affecte notre prestation.\n\nLorsque cela est techniquement et commercialement possible, nous pouvons examiner avec vous une adaptation ou une solution alternative. Les travaux ou frais supplémentaires éventuels sont soumis à votre accord. Le recours à un fournisseur tiers ne supprime pas la responsabilité d’AtoumWeb pour la partie de la prestation qui lui incombe.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "status": "proposition documentaire — non publiée, non appliquée",
       "displayNumber": 35,
@@ -5178,7 +5262,14 @@
       "importantChanges": "Accumulation de termes et possibilité d’adaptation peu lisible.",
       "proposedTitle": "Dépendances et coûts de services tiers",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées."
+      "reviewOfPrior35": "Formulation conservée ; revue transversale des audiences, renvois, garanties, droits, tiers et durées.",
+      "previousEditorialProposal": "Si notre prestation utilise un logiciel, un hébergeur, une connexion à un service externe ou un autre fournisseur, elle dépend aussi des conditions et de la disponibilité de ce service.\n\nLes abonnements, licences, commissions et autres frais externes sont compris uniquement s’ils figurent au devis.\n\nLorsque nous avons connaissance d’un blocage qui affecte notre prestation, nous vous en informons. Nous pouvons proposer une adaptation ou une autre solution lorsque cela est techniquement et commercialement possible.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation finale : développement WordPress (6), landing pages (3), reprise de l'existant (1), services transversaux (3), migration (1)",
+        "note": "Aucun changement commercial volontaire. Vérifier les devis, licences GPL et tiers, obligations légales B2C, rôles RGPD, absence de double facturation, migration interne gratuite et conditions de sortie avant adoption."
+      }
     },
     {
       "code": "TECH-HEBERGEMENT",
@@ -5269,7 +5360,7 @@
         "S2",
         "S8"
       ],
-      "proposal": "Nous transférons les éléments et services expressément identifiés entre l’environnement d’origine et la destination indiquée au devis. Nous préparons l’opération à partir des accès et des sauvegardes disponibles.\n\nDes incompatibilités, données manquantes, services externes ou contraintes découverts pendant le transfert peuvent nécessiter une adaptation, soumise à votre accord.",
+      "proposal": "Une migration consiste à transférer les éléments identifiés de votre site ou de vos services depuis l’environnement d’origine vers la destination prévus au devis. Nous organisons ce transfert à partir des accès et des sauvegardes disponibles, dans les limites du périmètre accepté.\n\nUne migration peut révéler des incompatibilités, des données manquantes ou des contraintes liées à un service externe. Nous vous expliquons leurs conséquences et soumettons à votre accord toute adaptation ou dépense supplémentaire. Nous ne promettons pas une absence totale d’interruption ni le transfert d’éléments qui n’ont pas été convenus.\n\nLorsque le transfert a lieu entre deux espaces d’hébergement AtoumWeb, notamment vers une Lune dédiée, le simple transfert interne est gratuit selon les conditions de la formule d’hébergement. L’arrivée d’un site depuis un hébergeur extérieur relève d’une migration distincte sur devis. Les refontes et corrections qui dépassent le transfert interne ne sont pas comprises automatiquement.\n\nSi vous choisissez de quitter AtoumWeb pour un autre hébergeur, les conditions de restitution des éléments et l’éventuelle assistance technique au départ sont celles du contrat et d’un devis accepté le cas échéant. Cette clause ne modifie pas les engagements déjà signés.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -5300,7 +5391,14 @@
       "importantChanges": "Sources/destination/contraintes découverts en cours de route.",
       "proposedTitle": "Migration WordPress / hébergement",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous transférons les éléments et services expressément identifiés entre l’environnement d’origine et la destination indiquée au devis. Nous préparons l’opération à partir des accès et des sauvegardes disponibles.\n\nDes incompatibilités, données manquantes, services externes ou contraintes découverts pendant le transfert peuvent nécessiter une adaptation, soumise à votre accord.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation finale : développement WordPress (6), landing pages (3), reprise de l'existant (1), services transversaux (3), migration (1)",
+        "note": "Aucun changement commercial volontaire. Vérifier les devis, licences GPL et tiers, obligations légales B2C, rôles RGPD, absence de double facturation, migration interne gratuite et conditions de sortie avant adoption."
+      }
     },
     {
       "code": "WEB-AR",
