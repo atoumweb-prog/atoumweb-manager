@@ -515,7 +515,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Notre audit analyse la situation que nous pouvons observer au moment de sa réalisation. Nos conclusions reposent sur les accès, les informations et les éléments alors disponibles.\n\nSauf mention contraire, il ne comprend pas les travaux de correction ou de mise en conformité. Ceux-ci peuvent être proposés séparément.",
+      "proposal": "L’audit porte sur les points définis dans votre devis. Nous examinons la situation telle qu’elle peut être observée au moment de notre intervention, à partir des accès, documents et informations mis à notre disposition.\n\nNous vous remettons les constats et recommandations prévus dans la commande. Les limites de l’analyse, notamment en cas d’accès incomplet ou d’information manquante, sont signalées lorsqu’elles peuvent affecter nos conclusions.\n\nSauf si le devis le prévoit expressément, l’audit n’inclut pas la réalisation des corrections, des travaux de mise en conformité ou d’une nouvelle intervention. Nous pouvons vous proposer ces prestations séparément, sans engagement de votre part. Un audit ne constitue pas, à lui seul, une certification ou une garantie de conformité générale.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -546,7 +546,14 @@
       "importantChanges": "Situation observable et mention contraire abstraites.",
       "proposedTitle": "Audit",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Notre audit analyse la situation que nous pouvons observer au moment de sa réalisation. Nos conclusions reposent sur les accès, les informations et les éléments alors disponibles.\n\nSauf mention contraire, il ne comprend pas les travaux de correction ou de mise en conformité. Ceux-ci peuvent être proposés séparément.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation du périmètre d'audit et des six clauses de mesure et analytics",
+        "note": "Préserver les droits et obligations de chacun, les limites techniques des mesures, le consentement et ses exemptions conditionnelles, la bonne configuration due par AtoumWeb. Vérifier le devis, les outils et rôles RGPD réels avant adoption."
+      }
     },
     {
       "code": "BASE-ACCEPTATION",
@@ -2065,7 +2072,7 @@
       "sources": [
         "S8"
       ],
-      "proposal": "Dans la mesure du possible, les comptes et espaces de mesure vous appartiennent ou sont créés sous votre contrôle. Vous nous donnez les accès et autorisations nécessaires à la prestation et gérez les utilisateurs ainsi que leurs droits sur vos comptes.\n\nNous utilisons et conservons seulement les accès utiles à l’intervention autorisée, pendant la durée nécessaire. Lorsqu’ils ne sont plus utiles, nous cessons de les utiliser, supprimons les éléments secrets que nous n’avons plus de raison légitime de garder et retirons les droits que nous pouvons révoquer.\n\nSi ce retrait dépend de vous ou du fournisseur, nous vous signalons les accès à supprimer et coopérons à leur clôture.",
+      "proposal": "Dans la mesure du possible, les comptes et espaces de statistiques sont créés à votre nom ou restent sous votre contrôle. Vous nous accordez les accès nécessaires à la prestation prévue, de préférence avec les droits strictement utiles.\n\nNous utilisons ces accès uniquement dans le cadre autorisé et pendant la durée nécessaire. Nous protégeons les informations de connexion qui nous sont confiées et cessons d’utiliser les accès devenus inutiles. Nous retirons les autorisations que nous pouvons révoquer et supprimons les secrets que nous n’avons plus de raison légitime de conserver, sous réserve des obligations légales applicables.\n\nLorsque la suppression d’un accès dépend de vous ou du fournisseur de l’outil, nous vous indiquons les actions à réaliser et coopérons à leur clôture. Vous gardez la maîtrise des utilisateurs et des droits que vous administrez sur vos comptes.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2096,7 +2103,14 @@
       "importantChanges": "Propriétés de mesure et révocation à expliquer sans absolu.",
       "proposedTitle": "Comptes, accès et propriété des outils de mesure",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Dans la mesure du possible, les comptes et espaces de mesure vous appartiennent ou sont créés sous votre contrôle. Vous nous donnez les accès et autorisations nécessaires à la prestation et gérez les utilisateurs ainsi que leurs droits sur vos comptes.\n\nNous utilisons et conservons seulement les accès utiles à l’intervention autorisée, pendant la durée nécessaire. Lorsqu’ils ne sont plus utiles, nous cessons de les utiliser, supprimons les éléments secrets que nous n’avons plus de raison légitime de garder et retirons les droits que nous pouvons révoquer.\n\nSi ce retrait dépend de vous ou du fournisseur, nous vous signalons les accès à supprimer et coopérons à leur clôture.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation du périmètre d'audit et des six clauses de mesure et analytics",
+        "note": "Préserver les droits et obligations de chacun, les limites techniques des mesures, le consentement et ses exemptions conditionnelles, la bonne configuration due par AtoumWeb. Vérifier le devis, les outils et rôles RGPD réels avant adoption."
+      }
     },
     {
       "code": "DATA-ANALYSE",
@@ -2107,7 +2121,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Nous analysons les données disponibles à la date ou sur la période prévue au devis pour vous remettre les constats et recommandations convenus.\n\nSauf prestation distincte expressément prévue, cette analyse ne comprend pas un audit SEO, juridique, comptable ou financier, ni une mission globale de conseil stratégique.\n\nLes conclusions dépendent de la qualité des données accessibles, de leur caractère complet et de leur contexte. Elles ne garantissent pas un résultat commercial déterminé.",
+      "proposal": "Nous analysons les statistiques et les données accessibles sur la période définie au devis. Nous vous remettons les constats, explications et recommandations convenus pour vous aider à comprendre les résultats observés.\n\nLa portée de l’analyse dépend de la qualité, de la disponibilité et du contexte des données. Nous vous signalons les limites importantes identifiées lorsque celles-ci peuvent modifier leur interprétation.\n\nSauf prestation distincte prévue au devis, cette mission ne comprend pas un audit SEO, juridique, comptable ou financier, ni un accompagnement stratégique complet. L’analyse ne garantit pas une augmentation donnée du trafic, des demandes ou du chiffre d’affaires.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2138,7 +2152,14 @@
       "importantChanges": "Constats, complétude et périmètre à alléger.",
       "proposedTitle": "Périmètre d’une analyse ponctuelle",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous analysons les données disponibles à la date ou sur la période prévue au devis pour vous remettre les constats et recommandations convenus.\n\nSauf prestation distincte expressément prévue, cette analyse ne comprend pas un audit SEO, juridique, comptable ou financier, ni une mission globale de conseil stratégique.\n\nLes conclusions dépendent de la qualité des données accessibles, de leur caractère complet et de leur contexte. Elles ne garantissent pas un résultat commercial déterminé.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation du périmètre d'audit et des six clauses de mesure et analytics",
+        "note": "Préserver les droits et obligations de chacun, les limites techniques des mesures, le consentement et ses exemptions conditionnelles, la bonne configuration due par AtoumWeb. Vérifier le devis, les outils et rôles RGPD réels avant adoption."
+      }
     },
     {
       "code": "DATA-CONSENTEMENT",
@@ -2151,7 +2172,7 @@
         "S22",
         "S23"
       ],
-      "proposal": "Nous pouvons installer et configurer l’outil de gestion du consentement et les catégories de traceurs prévus au devis, selon la solution retenue et les informations que vous fournissez ou validez.\n\nVous définissez, avec votre conseil si nécessaire, les objectifs des traitements, leurs bases légales, leurs durées, leurs catégories et les règles de consentement applicables à votre activité.\n\nCette répartition ne nous dispense pas de configurer correctement la solution convenue, de respecter les obligations liées à notre rôle réel ni de vous signaler une instruction que nous estimons contraire aux règles de protection des données.\n\nNous configurons et contrôlons les mécanismes requis pour accepter, refuser ou retirer le consentement et en conserver la preuve, dans le périmètre convenu. Notre intervention technique ne vaut pas validation juridique de l’ensemble de votre site ou de ses traitements.",
+      "proposal": "Si votre devis le prévoit, nous installons et configurons l’outil de gestion des cookies et autres traceurs retenu pour votre site, à partir de la solution et des informations convenues avec vous.\n\nSelon le rôle que vous exercez réellement, vous définissez les finalités de vos traitements, leurs bases légales et les durées applicables, avec un conseil spécialisé si nécessaire. De notre côté, nous restons responsables de la bonne exécution de la configuration commandée et des obligations qui nous incombent. Nous vous signalons les instructions qui nous paraissent contraires aux règles de protection des données.\n\nPour les traceurs qui exigent un consentement, nous configurons, dans le périmètre prévu, les possibilités d’accepter, de refuser et de retirer ce consentement, ainsi que les fonctions de conservation de sa preuve disponibles dans la solution retenue. Les traceurs concernés ne doivent pas être déclenchés avant le choix requis.\n\nCertains outils strictement limités à la mesure d’audience peuvent être dispensés de ce consentement, mais seulement si les conditions légales et techniques sont effectivement remplies et documentées. Cette dispense n’est jamais présumée du seul fait qu’un outil produit des statistiques.\n\nNotre intervention technique ne constitue pas une validation juridique globale de votre site ni de l’ensemble de vos traitements. Si AtoumWeb traite des données personnelles pour votre compte, les obligations de sous-traitance applicables sont précisées dans un accord adapté.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2185,7 +2206,14 @@
       "importantChanges": "Les choix du client ne libèrent pas l’agence de sa configuration et de son rôle réel ; pas de conformité garantie par la seule clause.",
       "proposedTitle": "Consentement cookies et déclenchement des balises",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous pouvons installer et configurer l’outil de gestion du consentement et les catégories de traceurs prévus au devis, selon la solution retenue et les informations que vous fournissez ou validez.\n\nVous définissez, avec votre conseil si nécessaire, les objectifs des traitements, leurs bases légales, leurs durées, leurs catégories et les règles de consentement applicables à votre activité.\n\nCette répartition ne nous dispense pas de configurer correctement la solution convenue, de respecter les obligations liées à notre rôle réel ni de vous signaler une instruction que nous estimons contraire aux règles de protection des données.\n\nNous configurons et contrôlons les mécanismes requis pour accepter, refuser ou retirer le consentement et en conserver la preuve, dans le périmètre convenu. Notre intervention technique ne vaut pas validation juridique de l’ensemble de votre site ou de ses traitements.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation du périmètre d'audit et des six clauses de mesure et analytics",
+        "note": "Préserver les droits et obligations de chacun, les limites techniques des mesures, le consentement et ses exemptions conditionnelles, la bonne configuration due par AtoumWeb. Vérifier le devis, les outils et rôles RGPD réels avant adoption."
+      }
     },
     {
       "code": "DATA-MESURE",
@@ -2197,7 +2225,7 @@
         "S8",
         "S22"
       ],
-      "proposal": "Nous installons ou configurons les outils de mesure, les balises, les actions suivies et les conversions prévus au devis.\n\nLes résultats dépendent notamment des plateformes, du consentement des visiteurs, des bloqueurs, des navigateurs, des réglages du site et de la qualité des données transmises.\n\nNous vérifions la configuration convenue, sans garantir de mesurer toutes les visites ni d’obtenir des chiffres parfaitement identiques entre des outils qui calculent différemment.",
+      "proposal": "Nous installons ou paramétrons les outils de mesure et les actions à suivre (par exemple une visite, l’envoi d’un formulaire ou un achat) indiqués au devis. Nous réalisons les vérifications prévues pour contrôler que la configuration fonctionne dans les conditions de test convenues.\n\nLes chiffres recueillis peuvent varier selon le consentement des visiteurs, les réglages de leur navigateur, les bloqueurs de traceurs, les plateformes utilisées et la disponibilité des données. Deux outils peuvent aussi compter différemment une même activité.\n\nNous ne promettons donc pas de mesurer chaque visite ni d’obtenir des résultats parfaitement identiques entre plateformes. En revanche, ces limites ne nous dispensent pas de corriger une erreur de paramétrage qui nous est imputable dans le cadre de nos obligations.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2228,7 +2256,14 @@
       "importantChanges": "Balises, conversions et exhaustivité peu accessibles.",
       "proposedTitle": "Mesure d’audience et événements suivis",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous installons ou configurons les outils de mesure, les balises, les actions suivies et les conversions prévus au devis.\n\nLes résultats dépendent notamment des plateformes, du consentement des visiteurs, des bloqueurs, des navigateurs, des réglages du site et de la qualité des données transmises.\n\nNous vérifions la configuration convenue, sans garantir de mesurer toutes les visites ni d’obtenir des chiffres parfaitement identiques entre des outils qui calculent différemment.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation du périmètre d'audit et des six clauses de mesure et analytics",
+        "note": "Préserver les droits et obligations de chacun, les limites techniques des mesures, le consentement et ses exemptions conditionnelles, la bonne configuration due par AtoumWeb. Vérifier le devis, les outils et rôles RGPD réels avant adoption."
+      }
     },
     {
       "code": "DATA-SUIVI",
@@ -2239,7 +2274,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Nous examinons les indicateurs, les anomalies visibles et les recommandations prévus au devis, selon la fréquence convenue.\n\nCe suivi n’est pas une surveillance continue, une astreinte ou un service d’alerte disponible vingt-quatre heures sur vingt-quatre, sauf engagement distinct et exprès.\n\nNous vous signalons les écarts repérés pendant ces revues, sous réserve de disposer des données et des accès nécessaires.",
+      "proposal": "Nous examinons les indicateurs et les éventuelles anomalies visibles selon la fréquence prévue au devis. À chaque revue convenue, nous vous communiquons les constats ou recommandations inclus dans la prestation, dans la limite des informations accessibles.\n\nUn suivi hebdomadaire ou mensuel n’est pas une surveillance permanente : il ne comprend ni contrôle continu, ni astreinte, ni alertes disponibles jour et nuit, sauf engagement distinct et exprès.\n\nNous signalons les écarts repérés lors des vérifications prévues. Les difficultés qui ne sont pas visibles à ces dates ou qui nécessitent des accès indisponibles peuvent ne pas être détectées immédiatement, sans préjudice de nos obligations sur les interventions effectivement convenues.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2270,7 +2305,14 @@
       "importantChanges": "Cadence, anomalies observables et astreinte à rendre concrets.",
       "proposedTitle": "Suivi statistique récurrent",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous examinons les indicateurs, les anomalies visibles et les recommandations prévus au devis, selon la fréquence convenue.\n\nCe suivi n’est pas une surveillance continue, une astreinte ou un service d’alerte disponible vingt-quatre heures sur vingt-quatre, sauf engagement distinct et exprès.\n\nNous vous signalons les écarts repérés pendant ces revues, sous réserve de disposer des données et des accès nécessaires.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation du périmètre d'audit et des six clauses de mesure et analytics",
+        "note": "Préserver les droits et obligations de chacun, les limites techniques des mesures, le consentement et ses exemptions conditionnelles, la bonne configuration due par AtoumWeb. Vérifier le devis, les outils et rôles RGPD réels avant adoption."
+      }
     },
     {
       "code": "DATA-TABLEAU",
@@ -2281,7 +2323,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Votre tableau de bord présente les données des sources et les indicateurs définis au devis.\n\nLes chiffres affichés dépendent de la disponibilité des plateformes connectées, de leur actualisation, de leurs définitions et de leurs méthodes de calcul.\n\nNous configurons la présentation convenue. Nous ne garantissons pas la disponibilité permanente des sources, l’exactitude absolue des données produites par un tiers ni une correspondance parfaite entre plusieurs outils.",
+      "proposal": "Le tableau de bord rassemble les indicateurs et les sources de données définis dans votre devis. Nous configurons leur affichage et les éléments de restitution convenus.\n\nLa disponibilité et l’actualisation des chiffres dépendent aussi des plateformes connectées, de leurs autorisations d’accès et de leurs méthodes de calcul. Des différences peuvent donc exister entre plusieurs services, ou entre deux dates de consultation.\n\nNous ne garantissons pas qu’une plateforme tierce reste accessible en permanence ni que ses propres données soient parfaitement exactes. Cette limite ne nous décharge pas de nos obligations concernant la configuration, les raccordements et les calculs que nous réalisons nous-mêmes dans le cadre de la prestation.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -2312,7 +2354,14 @@
       "importantChanges": "Restitution et concordance abstraites.",
       "proposedTitle": "Périmètre du tableau de bord",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Votre tableau de bord présente les données des sources et les indicateurs définis au devis.\n\nLes chiffres affichés dépendent de la disponibilité des plateformes connectées, de leur actualisation, de leurs définitions et de leurs méthodes de calcul.\n\nNous configurons la présentation convenue. Nous ne garantissons pas la disponibilité permanente des sources, l’exactitude absolue des données produites par un tiers ni une correspondance parfaite entre plusieurs outils.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation du périmètre d'audit et des six clauses de mesure et analytics",
+        "note": "Préserver les droits et obligations de chacun, les limites techniques des mesures, le consentement et ses exemptions conditionnelles, la bonne configuration due par AtoumWeb. Vérifier le devis, les outils et rôles RGPD réels avant adoption."
+      }
     },
     {
       "code": "DESIGN-BRIEF",
