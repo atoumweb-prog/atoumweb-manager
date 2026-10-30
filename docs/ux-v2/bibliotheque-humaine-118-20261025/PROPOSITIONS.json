@@ -4056,7 +4056,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "La zone de déplacement comprise est celle du Catalogue ou du devis ; elle peut notamment couvrir Dijon et Dijon Métropole.\n\nUn déplacement hors zone, un trajet supplémentaire ou une contrainte d’accès, de stationnement, de péage, d’horaire ou de transport peut entraîner des frais indiqués au devis.\n\nSi des frais supplémentaires ne font pas partie de l’engagement accepté, nous vous les communiquons et obtenons votre accord avant de les engager. Pour un consommateur, nous recueillons le consentement exprès requis pour tout paiement supplémentaire.",
+      "proposal": "La zone de déplacement comprise dans la prestation est celle indiquée au devis ou dans le catalogue applicable. Elle peut notamment couvrir Dijon et Dijon Métropole, sans que ces territoires soient systématiquement inclus.\n\nSi une séance nécessite un déplacement hors de cette zone ou des frais particuliers (trajet, stationnement, péage, accès, horaires ou transport), nous vous en informons avant de les engager. Les frais non compris dans votre commande ne sont facturés qu'après votre accord. Pour un client consommateur, tout paiement supplémentaire nécessite le consentement exprès prévu par la loi.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4087,7 +4087,14 @@
       "importantChanges": "Frais et zone listés sans dialogue direct.",
       "proposedTitle": "Zone de déplacement et frais",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "La zone de déplacement comprise est celle du Catalogue ou du devis ; elle peut notamment couvrir Dijon et Dijon Métropole.\n\nUn déplacement hors zone, un trajet supplémentaire ou une contrainte d’accès, de stationnement, de péage, d’horaire ou de transport peut entraîner des frais indiqués au devis.\n\nSi des frais supplémentaires ne font pas partie de l’engagement accepté, nous vous les communiquons et obtenons votre accord avant de les engager. Pour un consommateur, nous recueillons le consentement exprès requis pour tout paiement supplémentaire.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation des sept clauses photo, sans changement de l'offre ni transfert automatique de droits",
+        "note": "Conserver l'accord préalable sur suppléments, les droits sur les images et les obligations de chacune des parties ; vérifier les offres et contrats réels avant toute adoption."
+      }
     },
     {
       "code": "PHOTO-DROITS",
@@ -4099,7 +4106,7 @@
         "S7",
         "S24"
       ],
-      "proposal": "Pour les images que vous nous fournissez, vous obtenez les droits et autorisations nécessaires à la retouche et aux usages convenus.\n\nPour les photos que nous réalisons, le devis ou son annexe de droits précise les usages autorisés, les supports, la durée et le territoire d’exploitation.\n\nLes droits d’auteur du photographe sont distincts des droits des personnes représentées. Les autorisations nécessaires à la prise de vue et à la diffusion sont recueillies selon la situation, notamment pour les mineurs.\n\nNous ne réutilisons pas automatiquement les portraits personnels pour notre communication. Cet usage nécessite une autorisation adaptée, distincte de la commande. Les droits moraux et les autres règles impératives restent applicables.",
+      "proposal": "Lorsque vous nous fournissez des photographies à retoucher, vous devez disposer des droits et autorisations nécessaires pour nous confier ce travail et permettre les utilisations convenues. Posséder un fichier ne suffit pas toujours à autoriser sa modification ou sa diffusion.\n\nSi AtoumWeb réalise les photographies, les utilisations autorisées sont précisées dans le devis ou une annexe : supports, durée et territoire. Commander une séance ne transfère pas automatiquement tous les droits d'auteur.\n\nLes droits du photographe et le droit à l'image des personnes représentées sont distincts. Les autorisations nécessaires sont recueillies selon la situation, notamment lorsqu'un mineur apparaît sur les photographies. Chaque partie conserve les obligations qui lui incombent.\n\nNous n'utilisons pas automatiquement vos portraits ou photographies personnelles pour notre portfolio, notre site ou nos réseaux sociaux. Une telle utilisation nécessite une autorisation adaptée, distincte de la commande. Les droits moraux de l'auteur et les autres règles impératives restent applicables.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4133,7 +4140,14 @@
       "importantChanges": "Droit du photographe et droit à l’image des personnes distincts ; autorisation promotionnelle séparée, mineurs à vérifier.",
       "proposedTitle": "Droit d’utilisation",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Pour les images que vous nous fournissez, vous obtenez les droits et autorisations nécessaires à la retouche et aux usages convenus.\n\nPour les photos que nous réalisons, le devis ou son annexe de droits précise les usages autorisés, les supports, la durée et le territoire d’exploitation.\n\nLes droits d’auteur du photographe sont distincts des droits des personnes représentées. Les autorisations nécessaires à la prise de vue et à la diffusion sont recueillies selon la situation, notamment pour les mineurs.\n\nNous ne réutilisons pas automatiquement les portraits personnels pour notre communication. Cet usage nécessite une autorisation adaptée, distincte de la commande. Les droits moraux et les autres règles impératives restent applicables.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation des sept clauses photo, sans changement de l'offre ni transfert automatique de droits",
+        "note": "Conserver l'accord préalable sur suppléments, les droits sur les images et les obligations de chacune des parties ; vérifier les offres et contrats réels avant toute adoption."
+      }
     },
     {
       "code": "PHOTO-LIVRABLES",
@@ -4144,7 +4158,7 @@
       "sources": [
         "S7"
       ],
-      "proposal": "Nous vous remettons les photos finalisées dans les formats et pour les usages prévus au devis.\n\nLes fichiers de travail — catalogues Lightroom, historiques de traitement, calques, réglages, aperçus intermédiaires et autres sources internes — ne sont pas remis automatiquement. Leur transmission doit être expressément prévue au devis.\n\nLes fichiers bruts de la séance ne sont pas compris par défaut.",
+      "proposal": "À la fin de la prestation, nous vous remettons les photographies finalisées dans le nombre et les formats prévus au devis. Les utilisations autorisées sont définies par les conditions de droits applicables : recevoir un fichier ne signifie pas disposer de droits d'exploitation illimités.\n\nLes fichiers de travail (catalogues Lightroom, calques, réglages, historiques de traitement ou versions intermédiaires) ne sont pas remis automatiquement. Il en va de même pour les fichiers bruts de la séance. Leur transmission est comprise uniquement si le devis le prévoit expressément.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4175,7 +4189,14 @@
       "importantChanges": "Longue liste de sources techniques.",
       "proposedTitle": "Fichiers finaux et formats livrés",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous vous remettons les photos finalisées dans les formats et pour les usages prévus au devis.\n\nLes fichiers de travail — catalogues Lightroom, historiques de traitement, calques, réglages, aperçus intermédiaires et autres sources internes — ne sont pas remis automatiquement. Leur transmission doit être expressément prévue au devis.\n\nLes fichiers bruts de la séance ne sont pas compris par défaut.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation des sept clauses photo, sans changement de l'offre ni transfert automatique de droits",
+        "note": "Conserver l'accord préalable sur suppléments, les droits sur les images et les obligations de chacune des parties ; vérifier les offres et contrats réels avant toute adoption."
+      }
     },
     {
       "code": "PHOTO-REPORT",
@@ -4188,7 +4209,7 @@
         "S9",
         "S17"
       ],
-      "proposal": "Vous pouvez demander le report de la séance sans frais de report si nous recevons votre demande au moins quarante-huit heures avant l’horaire prévu, sous réserve de pouvoir convenir d’une nouvelle date selon nos disponibilités.\n\nPour une annulation ou un report demandé moins de quarante-huit heures avant la séance, des frais ne peuvent s’appliquer que s’ils sont expressément prévus au devis, proportionnés et juridiquement validés. Aucun forfait n’est ajouté par défaut.\n\nSi l’empêchement nous est imputable, nous proposons, selon la situation, un report sans frais, une solution adaptée ou un remboursement approprié. La force majeure est traitée séparément selon les règles applicables.\n\nSi la météo ou d’autres circonstances empêchent raisonnablement la séance, nous cherchons ensemble, de bonne foi, un report adapté. Aucun report indéfini n’est imposé si une nouvelle date est impossible ou si la date initiale est essentielle.\n\nLes droits de rétractation éventuellement applicables restent préservés.",
+      "proposal": "Vous pouvez demander le report d'une séance sans frais de report si votre demande nous parvient au moins quarante-huit heures avant l'horaire convenu. Nous cherchons alors une nouvelle date selon nos disponibilités respectives.\n\nPour une demande de report ou d'annulation faite moins de quarante-huit heures avant la séance, des frais ne peuvent s'appliquer que s'ils sont expressément prévus au devis, proportionnés et conformes aux règles applicables. Aucun forfait supplémentaire n'est facturé automatiquement.\n\nLorsque l'empêchement est imputable à AtoumWeb, nous proposons, selon les circonstances, un report sans frais, une solution adaptée ou un remboursement approprié.\n\nEn cas de météo incompatible avec la séance ou d'autres circonstances empêchant raisonnablement sa réalisation, nous cherchons de bonne foi une solution adaptée. Aucun report sans limite n'est imposé lorsqu'une nouvelle date n'est pas possible ou lorsque la date initiale est essentielle. Les cas de force majeure sont traités selon les règles applicables.\n\nLes droits de rétractation éventuellement ouverts aux consommateurs restent préservés.",
       "externalReview": "Prioritaire avant adoption",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4219,7 +4240,14 @@
       "importantChanges": "48heures, proportionnalité et réserve de validation des frais conservées ; aucun forfait inventé.",
       "proposedTitle": "Report / annulation d’une séance",
       "category": "Rédaction, avec contrôle renforcé de portée",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Vous pouvez demander le report de la séance sans frais de report si nous recevons votre demande au moins quarante-huit heures avant l’horaire prévu, sous réserve de pouvoir convenir d’une nouvelle date selon nos disponibilités.\n\nPour une annulation ou un report demandé moins de quarante-huit heures avant la séance, des frais ne peuvent s’appliquer que s’ils sont expressément prévus au devis, proportionnés et juridiquement validés. Aucun forfait n’est ajouté par défaut.\n\nSi l’empêchement nous est imputable, nous proposons, selon la situation, un report sans frais, une solution adaptée ou un remboursement approprié. La force majeure est traitée séparément selon les règles applicables.\n\nSi la météo ou d’autres circonstances empêchent raisonnablement la séance, nous cherchons ensemble, de bonne foi, un report adapté. Aucun report indéfini n’est imposé si une nouvelle date est impossible ou si la date initiale est essentielle.\n\nLes droits de rétractation éventuellement applicables restent préservés.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation des sept clauses photo, sans changement de l'offre ni transfert automatique de droits",
+        "note": "Conserver l'accord préalable sur suppléments, les droits sur les images et les obligations de chacune des parties ; vérifier les offres et contrats réels avant toute adoption."
+      }
     },
     {
       "code": "PHOTO-RETOUCHE-PERIMETRE",
@@ -4230,7 +4258,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Nous réalisons le niveau de retouche prévu au devis. La retouche essentielle comprend les ajustements généraux et les corrections simples. La retouche avancée porte sur les interventions localisées ou complexes expressément identifiées. Le détourage isole le sujet de son arrière-plan avec la précision convenue.\n\nLe résultat dépend de la définition, de l’exposition, de la compression et de l’état du fichier d’origine. Nous réalisons les corrections prévues, sans promettre une amélioration techniquement impossible à partir du fichier fourni.",
+      "proposal": "Le devis indique le niveau de retouche commandé. La retouche essentielle comprend les ajustements généraux et les corrections simples. La retouche avancée concerne des interventions localisées ou plus complexes, précisément définies dans la commande. Le détourage consiste à isoler un sujet de son arrière-plan avec le niveau de précision convenu.\n\nLe résultat dépend aussi du fichier d'origine : définition, exposition, compression et état général. Nous effectuons les corrections convenues, sans promettre de recréer des détails absents ou techniquement irrécupérables.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4261,7 +4289,14 @@
       "importantChanges": "Détourage et niveau technique à expliquer sans promesse.",
       "proposedTitle": "Périmètre de retouche et niveau de complexité",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Nous réalisons le niveau de retouche prévu au devis. La retouche essentielle comprend les ajustements généraux et les corrections simples. La retouche avancée porte sur les interventions localisées ou complexes expressément identifiées. Le détourage isole le sujet de son arrière-plan avec la précision convenue.\n\nLe résultat dépend de la définition, de l’exposition, de la compression et de l’état du fichier d’origine. Nous réalisons les corrections prévues, sans promettre une amélioration techniquement impossible à partir du fichier fourni.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation des sept clauses photo, sans changement de l'offre ni transfert automatique de droits",
+        "note": "Conserver l'accord préalable sur suppléments, les droits sur les images et les obligations de chacune des parties ; vérifier les offres et contrats réels avant toute adoption."
+      }
     },
     {
       "code": "PHOTO-SHOOTING-PERIMETRE",
@@ -4273,7 +4308,7 @@
         "S2",
         "S4"
       ],
-      "proposal": "La séance photo se déroule pendant la durée, sur les lieux et dans le cadre prévus au devis.\n\nVous rendez disponibles à l’heure convenue les lieux, les personnes, les produits, les autorisations et les autres éléments nécessaires. Un retard, une indisponibilité ou une préparation insuffisante qui vous est imputable ne prolonge pas automatiquement la séance.\n\nLe nombre de photos finalisées est celui du devis. Les fichiers bruts ne sont pas remis par défaut.",
+      "proposal": "Le devis précise la durée de la séance, les lieux, le type de prises de vue et le nombre de photographies finalisées à remettre.\n\nPour permettre la réalisation de la séance, vous rendez disponibles à l'heure convenue les personnes, lieux, produits, autorisations et autres éléments prévus. Un retard, une indisponibilité ou une préparation insuffisante qui vous est imputable ne prolonge pas automatiquement la séance.\n\nSi une difficulté ne vous est pas imputable, elle est examinée selon les dispositions relatives aux reports et les règles applicables. Les fichiers bruts ne sont pas remis par défaut, sauf mention expresse au devis.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4304,7 +4339,14 @@
       "importantChanges": "Shooting et périmètre abstraits ; retard à distinguer faute.",
       "proposedTitle": "Périmètre d’un shooting",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "La séance photo se déroule pendant la durée, sur les lieux et dans le cadre prévus au devis.\n\nVous rendez disponibles à l’heure convenue les lieux, les personnes, les produits, les autorisations et les autres éléments nécessaires. Un retard, une indisponibilité ou une préparation insuffisante qui vous est imputable ne prolonge pas automatiquement la séance.\n\nLe nombre de photos finalisées est celui du devis. Les fichiers bruts ne sont pas remis par défaut.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation des sept clauses photo, sans changement de l'offre ni transfert automatique de droits",
+        "note": "Conserver l'accord préalable sur suppléments, les droits sur les images et les obligations de chacune des parties ; vérifier les offres et contrats réels avant toute adoption."
+      }
     },
     {
       "code": "PHOTO-SOURCE",
@@ -4315,7 +4357,7 @@
       "sources": [
         "S2"
       ],
-      "proposal": "Vous nous fournissez des fichiers suffisamment utilisables pour la retouche demandée.\n\nLa qualité du résultat dépend notamment de leur définition, de leur exposition, de leur compression et de leur état d’origine.\n\nUne reconstruction importante ou un travail dépassant une retouche classique peut nécessiter une estimation complémentaire.",
+      "proposal": "Pour la retouche, vous nous transmettez les fichiers nécessaires dans un état permettant raisonnablement le travail demandé.\n\nLa définition, l'exposition, la compression et les défauts présents sur les fichiers d'origine peuvent limiter le résultat obtenu. Si la demande suppose une reconstruction importante ou des travaux dépassant la retouche commandée, nous vous proposons une estimation complémentaire avant toute prestation supplémentaire. Aucun coût additionnel n'est engagé sans votre accord.",
       "externalReview": "Recommandée dans la revue d’ensemble",
       "approval": null,
       "status": "proposition documentaire — non publiée, non appliquée",
@@ -4346,7 +4388,14 @@
       "importantChanges": "Exploitables et reconstruction à préciser.",
       "proposedTitle": "Fichiers fournis",
       "category": "Rédaction sans changement commercial recherché",
-      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents."
+      "reviewOfPrior35": "Nouvelle réécriture individuelle, revue dans les assemblages et les groupes de dépendances pertinents.",
+      "previousEditorialProposal": "Vous nous fournissez des fichiers suffisamment utilisables pour la retouche demandée.\n\nLa qualité du résultat dépend notamment de leur définition, de leur exposition, de leur compression et de leur état d’origine.\n\nUne reconstruction importante ou un travail dépassant une retouche classique peut nécessiter une estimation complémentaire.",
+      "editorialRevision": {
+        "date": "2026-10-30",
+        "status": "proposition documentaire non approuvée ni publiée",
+        "scope": "humanisation des sept clauses photo, sans changement de l'offre ni transfert automatique de droits",
+        "note": "Conserver l'accord préalable sur suppléments, les droits sur les images et les obligations de chacune des parties ; vérifier les offres et contrats réels avant toute adoption."
+      }
     },
     {
       "code": "PRO-LITIGE",
