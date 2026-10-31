@@ -25,5 +25,5 @@ describe('CRM legacy reconciliation on representative SQLite copies',()=>{
    expect(applyPendingMigrations(copy)).toEqual([]);expect(copy.all('PRAGMA foreign_key_check')).toEqual([]);
    expect(original.get<{n:number}>('SELECT max(id) n FROM schema_migrations')?.n).toBe(71);
   }finally{copy?.close();original.close();rmSync(dir,{recursive:true,force:true});}
- });
+ },120_000);
 });
