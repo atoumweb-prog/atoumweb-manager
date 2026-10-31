@@ -56,6 +56,7 @@ import { QUOTE_CONTRACT_PREPARATION_MIGRATION } from './quoteContractPreparation
 import { CONTRACT_LIBRARY_IMPORT_V1_MIGRATION } from './contractLibraryImportV1Migration';
 import { CONTRACT_EDITORIAL_DRAFT_MIGRATION } from './contractEditorialDraftMigration';
 import { CONTRACT_CONVERGENCE_APPROVAL_MIGRATION } from './contractConvergenceApprovalMigration';
+import { CONTRACT_CONVERGENCE_DECISION_HISTORY_MIGRATION } from './contractConvergenceDecisionHistoryMigration';
 
 export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
@@ -270,6 +271,7 @@ export const MIGRATIONS: Migration[] = [
     ALTER TABLE contacts ADD COLUMN city TEXT;ALTER TABLE contacts ADD COLUMN country TEXT;`},
   CONTRACT_EDITORIAL_DRAFT_MIGRATION,
   CONTRACT_CONVERGENCE_APPROVAL_MIGRATION,
+  CONTRACT_CONVERGENCE_DECISION_HISTORY_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {
