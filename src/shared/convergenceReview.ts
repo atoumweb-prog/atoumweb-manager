@@ -24,6 +24,7 @@ export interface ContractConvergenceReviewRow {
   decidedBy: string | null;
   decidedAt: string | null;
   decisionNote: string | null;
+  decisionHistory: Array<{ decision: 'approved_for_publication' | 'needs_revision'; reviewer: string; note: string; decidedAt: string }>;
 }
 
 export interface CatalogConvergenceReviewRow {
@@ -61,7 +62,7 @@ export interface ConvergenceDecisionInput {
   codes: string[];
   decision: 'approved_for_publication' | 'needs_revision';
   reviewer: string;
-  note?: string;
+  note: string;
   expectedPlanSha256: string;
 }
 
