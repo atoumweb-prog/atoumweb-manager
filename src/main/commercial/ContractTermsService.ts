@@ -62,6 +62,7 @@ interface VersionRow extends Record<string, unknown> {
   id: string;
   clause_id: string;
   version_number: number;
+  title: string | null;
   body: string;
   status: ContractClauseVersionStatus;
   published_at: string | null;
@@ -195,11 +196,19 @@ export class ContractTermsService {
          VALUES (?,?,?,?,?,'active',?,NULL,?,?,NULL)`,
         [id, code, title, input.scope, audience, Math.trunc(input.sortOrder ?? 0), now, now],
       );
+      const versionHasTitle = this.database.all<{ name: string }>('PRAGMA table_info(contract_clause_versions)')
+        .some((column) => column.name === 'title');
       this.database.run(
-        `INSERT INTO contract_clause_versions
-         (id,clause_id,version_number,body,status,published_at,created_at,review_metadata_json)
-         VALUES (?,?,1,?,'draft',NULL,?,?)`,
-        [versionId, id, firstVersion.body ?? '', now, firstVersion.review ? JSON.stringify(firstVersion.review) : null],
+        versionHasTitle
+          ? `INSERT INTO contract_clause_versions
+             (id,clause_id,version_number,title,body,status,published_at,created_at,review_metadata_json)
+             VALUES (?,?,1,?,?,'draft',NULL,?,?)`
+          : `INSERT INTO contract_clause_versions
+             (id,clause_id,version_number,body,status,published_at,created_at,review_metadata_json)
+             VALUES (?,?,1,?,'draft',NULL,?,?)`,
+        versionHasTitle
+          ? [versionId, id, clean(firstVersion.title) ?? title, firstVersion.body ?? '', now, firstVersion.review ? JSON.stringify(firstVersion.review) : null]
+          : [versionId, id, firstVersion.body ?? '', now, firstVersion.review ? JSON.stringify(firstVersion.review) : null],
       );
       this.writeActivity('contract_clause', id, 'contract_clause_created', `Clause ${code} créée`);
       this.database.exec('RELEASE SAVEPOINT contract_library_operation;');
@@ -221,9 +230,9 @@ export class ContractTermsService {
     const now = nowIso();
     this.database.run(
       `INSERT INTO contract_clause_versions
-       (id,clause_id,version_number,body,status,published_at,created_at,review_metadata_json)
-       VALUES (?,?,?,?, 'draft', NULL, ?, ?)`,
-      [id, clauseId, Number(next?.next_version ?? 1), input.body ?? '', now, input.review ? JSON.stringify(input.review) : null],
+       (id,clause_id,version_number,title,body,status,published_at,created_at,review_metadata_json)
+       VALUES (?,?,?,?,?, 'draft', NULL, ?, ?)`,
+      [id, clauseId, Number(next?.next_version ?? 1), clean(input.title) ?? template.currentVersion?.title ?? template.title, input.body ?? '', now, input.review ? JSON.stringify(input.review) : null],
     );
     this.database.run('UPDATE contract_clause_templates SET updated_at=? WHERE id=?', [now, clauseId]);
     this.writeActivity('contract_clause', clauseId, 'contract_clause_version_created', `Nouvelle version de ${template.code}`);
@@ -251,7 +260,7 @@ export class ContractTermsService {
     const now=new Date().toISOString();
     this.database.exec('SAVEPOINT contract_word_review');
     try{
-      const version=this.createVersion(template.id,{body});
+      const version=this.createVersion(template.id,{title:source.title,body});
       this.database.run(
         'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
         ['contract_clause',template.id,'contract_word_draft_approved',
@@ -801,7 +810,7 @@ export class ContractTermsService {
     const desired = new Map<string, DesiredClause>();
     const audience = this.resolveQuoteAudience(state);
     const baseRows = this.database.all<PublishedTemplateRow>(
-      `SELECT t.id,t.title,t.scope,t.sort_order,v.id AS version_id,v.body
+      `SELECT t.id,COALESCE(v.title,t.title) AS title,t.scope,t.sort_order,v.id AS version_id,v.body
        FROM contract_clause_templates t
        JOIN contract_clause_versions v ON v.id=t.current_version_id
        WHERE t.scope='base' AND t.status='active' AND v.status='published'
@@ -865,7 +874,7 @@ export class ContractTermsService {
       const placeholders = ids.map(() => '?').join(',');
       const linked = this.database.all<LinkedTemplateRow>(
         `SELECT l.catalog_item_id,l.sort_order AS link_sort_order,
-                t.id,t.title,t.scope,t.sort_order,v.id AS version_id,v.body
+                t.id,COALESCE(v.title,t.title) AS title,t.scope,t.sort_order,v.id AS version_id,v.body
          FROM catalog_contract_clause_links l
          JOIN contract_clause_templates t ON t.id=l.clause_id
          JOIN contract_clause_versions v ON v.id=t.current_version_id
@@ -1036,6 +1045,7 @@ export class ContractTermsService {
       id: row.id,
       clauseId: row.clause_id,
       versionNumber: Number(row.version_number),
+      title: row.title,
       body: row.body,
       status: row.status,
       publishedAt: row.published_at,

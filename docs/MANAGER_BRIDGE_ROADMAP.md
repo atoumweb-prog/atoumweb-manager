@@ -562,6 +562,14 @@ Critère métier : terminer librement une Page dans Divi, puis comprendre dans M
 
 ## 16. Journal partagé des consignes, décisions et validations
 
+### 31/10/2026 — CONTRATS-CONVERGENCE-118-01 — audit et préparation locale
+
+- Origine : reprise Codex demandée sur PR #159 brouillon, dépendante de #158 ; aucun chantier Bridge autorisé. Base auditée `c7f73f2c`, branche isolée `codex/contract-convergence-audit-20261031`.
+- Résultat : 118 propositions reliées exactement aux 118 versions publiées exportées ; IDs, corps, SHA-256, scopes, audiences et 28 dépendances conformes ; aucun indicateur d’approbation, publication ou adoption. Audit JSON/Markdown et commande reproductible ajoutés.
+- Provenance commerciale corrigée : les références mensuelles 49/99 € et annuelles facultatives 539/1 089 € ont été introduites ensemble le 03/10/2026 (`1ed1152c`). Deux blocages restent : hébergement 99 € face à 149 € avec Lune, migration interne gratuite non séparée de l’externe sur devis. Aucun tarif modifié arbitrairement.
+- Préparation locale : migration 76 additive, titres de clauses désormais versionnés, import éditorial atomique simulable et idempotent. Sur base mémoire, 118 brouillons créés, 118 publiées conservées, snapshots/devis non touchés, rollback et dérives refusés. Typecheck OK et suite complète 1 741/1 741 verte (206 fichiers).
+- Statut : aucune base utilisateur modifiée, aucun brouillon Catalogue ou contractuel appliqué hors fixtures, aucune publication, PDF, campagne, exécutable, push, fusion ou action Bridge. Prochaine action : versions Catalogue brouillon et raccord contrôlé de l’import, puis validations d’assemblage/PDF après convergence. Responsable : agent Manager courant.
+
 ### 08/10/2026 — CONTRATS-APERCUS-SOCLES — retour UX et réalisation
 
 - AtoumWeb demande la consultation du contrat de base pour tous les socles, pas seulement Vitrine : CGV communes + prestation de base, modules complémentaires selon les éléments réellement vendus.
