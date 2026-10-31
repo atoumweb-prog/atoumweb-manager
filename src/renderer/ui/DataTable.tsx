@@ -4,7 +4,7 @@ import { columnWidth } from '../../shared/tableViewPreference';
 import type { SortColumn, TableSort } from '../../shared/tablePresentation';
 import { AppButton } from './AppButton';
 import './table-layout.css';
-export interface TableColumn<T> extends SortColumn<T> { label: string; required?: boolean; render: (row: T) => ReactNode }
+export interface TableColumn<T> extends SortColumn<T> { label: string; fixedWidth?: number; required?: boolean; render: (row: T) => ReactNode }
 function ColumnSizer({ id, width, onPreview, onCommit }: { id: string; width: number; onPreview: (width: number | null) => void; onCommit: (width: number) => void }) {
   const dispose = useRef<(() => void) | null>(null);
   useEffect(() => () => dispose.current?.(), [id, width]);
@@ -37,12 +37,12 @@ export function DataTable<T>({ rows, columns, selectedId, getId, sort, onSort, c
   const adaptive=fitAvailable?adaptiveTableWidths(columns.map(c=>c.id),Math.max(0,available-4),widths):widths;
   const [preview, setPreview] = useState<{ id: string; width: number } | null>(null);
   useEffect(() => setPreview(null), [preferenceScope]);
-  const widthOf = (id: string) => preview?.id === id ? preview.width : adaptive[id] ?? columnWidth(id, id === 'identity' ? 260 : 180);
+  const widthOf = (id: string) => columns.find(column => column.id === id)?.fixedWidth ?? (preview?.id === id ? preview.width : adaptive[id] ?? columnWidth(id, id === 'identity' ? 260 : 180));
   return <div ref={scrollRef} className="aw-data-table-scroll" tabIndex={0} aria-label="Tableau défilable" aria-busy={loading}>
     <table className={`aw-data-table ${className}`} style={onWidth ? { tableLayout: 'fixed', width: columns.reduce((total, column) => total + widthOf(column.id), 0) } : undefined}><caption>{caption}</caption>{onWidth && <colgroup>{columns.map(column => <col key={column.id} style={{ width: widthOf(column.id) }}/>)}</colgroup>}<thead><tr>{columns.map(column => <th key={column.id} scope="col" data-column-id={column.id}
       aria-sort={column.sortValue ? sort?.columnId === column.id ? sort.direction === 'asc' ? 'ascending' : 'descending' : 'none' : undefined}>
       {column.sortValue ? <AppButton variant="quiet" aria-label={`Trier par ${column.label}`} onAction={() => onSort(column.id)}>{column.label}{sort?.columnId === column.id ? sort.direction === 'asc' ? ' ↑' : ' ↓' : ''}</AppButton> : column.label}
-      {onWidth && <ColumnSizer key={`${preferenceScope}:${column.id}`} id={column.id} width={adaptive[column.id] ?? columnWidth(column.id,column.id==='identity'?260:180)} onPreview={width => setPreview(width === null ? null : { id: column.id, width })} onCommit={width => onWidth(column.id, width)}/>}
+      {onWidth && !column.fixedWidth && <ColumnSizer key={`${preferenceScope}:${column.id}`} id={column.id} width={widthOf(column.id)} onPreview={width => setPreview(width === null ? null : { id: column.id, width })} onCommit={width => onWidth(column.id, width)}/>}
     </th>)}</tr></thead><tbody>{rows.map(row => {const attributes=rowAttributes?.(row);return <tr key={getId(row)} {...attributes} className={[attributes?.className,selectedId===getId(row)?'selected-row':''].filter(Boolean).join(' ')} data-record-id={getId(row)} data-selected={selectedId === getId(row)} tabIndex={onRowActivate?0:undefined} onClick={onRowActivate?()=>onRowActivate(row):undefined} onKeyDown={onRowActivate?event=>{if(event.target===event.currentTarget&&['Enter',' '].includes(event.key)){event.preventDefault();onRowActivate(row);}}:undefined}>{columns.map(column => <td key={column.id} data-column-id={column.id}>{column.render(row)}</td>)}</tr>;})}</tbody></table>
     {!rows.length && !loading && !unavailable && <p role="status">Aucun dossier ne correspond aux filtres. Efface les filtres pour retrouver la liste.</p>}
   </div>;

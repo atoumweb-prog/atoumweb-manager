@@ -65,7 +65,7 @@ export function QuoteProjectPanel({quote,requirePreviewBeforePrepare=false}:{quo
         </>}
   </section>;
 }
-export function QuoteConditions({quote,onSave}:{quote:QuoteDetail;onSave:(q:QuoteDetail)=>void}){
+export function QuoteConditions({quote,onSave,human=false}:{quote:QuoteDetail;onSave:(q:QuoteDetail)=>void;human?:boolean}){
   const draft=useDraftSection(quote.id,quote.prerequisitesText??'');
   const prerequisites=draft.value,setPrerequisites=draft.section.set.bind(draft.section);
   const [error,setError]=useState(''),[saving,setSaving]=useState(false);
@@ -90,12 +90,14 @@ export function QuoteConditions({quote,onSave}:{quote:QuoteDetail;onSave:(q:Quot
   }
   const editable=quote.status==='draft'&&!quote.finalizedAt;
   return <>
+    {human&&<ContractTermsBuilder human quote={quote}/>}
+    <details open={!human} className="quote-extra-options"><summary>Prérequis et éléments à fournir</summary>
     {editable?<form className="workflow-fields quote-prerequisites-form" onSubmit={event=>{event.preventDefault();void savePrerequisites();}}>
       <label>Prérequis<textarea value={prerequisites} onChange={event=>setPrerequisites(event.target.value)}/></label>
       <button className="secondary-button" disabled={saving}>{saving?'Enregistrement…':'Enregistrer les prérequis'}</button>
       {error&&<p role="alert">{error}</p>}
     </form>:quote.prerequisitesText&&<p>{quote.prerequisitesText}</p>}
-    <QuoteContractPreparationPanel quote={quote} onSave={onSave}/>
-    <ContractTermsBuilder quote={quote}/>
+    </details>
+    {!human&&<><QuoteContractPreparationPanel quote={quote} onSave={onSave}/><ContractTermsBuilder quote={quote}/></>}
   </>;
 }

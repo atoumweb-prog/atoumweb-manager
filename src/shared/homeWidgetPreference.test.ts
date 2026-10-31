@@ -7,3 +7,8 @@ describe('02D visual widget preferences only',()=>{
  it('reorders by keyboard with Today pinned',()=>{const before=defaultHomeWidgets(),next=moveHomeWidget(before,'time',-1);expect(next.order).toEqual(['today','kpis','time','pipeline','watch','actions']);expect(before.order).toEqual(HOME_WIDGET_KEYS);expect(moveHomeWidget(before,'kpis',-1)).toBe(before);expect(moveHomeWidget(before,'today',1)).toBe(before);});
  it('drop is one deterministic presentation change',()=>{const before=defaultHomeWidgets(),next=dropHomeWidget(before,'actions','kpis');expect(next.order).toEqual(['today','actions','kpis','pipeline','time','watch']);expect(dropHomeWidget(before,'time','today')).toBe(before);});
 });
+
+describe('Home collapsible presentation',()=>{
+ it('keeps Today accessible while allowing its content to fold',()=>{const p=normalizeHomeWidgets({version:1,collapsed:['today','time','time','private'],hidden:['today']});expect(p.collapsed).toEqual(['today','time']);expect(p.hidden).toEqual([]);expect(p.order[0]).toBe('today');});
+ it('roundtrips folds across ordering without retaining form content',()=>{const p=normalizeHomeWidgets({...defaultHomeWidgets(),collapsed:['watch'],notes:'private'});expect(moveHomeWidget(p,'time',-1).collapsed).toEqual(['watch']);expect(JSON.stringify(p)).not.toContain('private');});
+});

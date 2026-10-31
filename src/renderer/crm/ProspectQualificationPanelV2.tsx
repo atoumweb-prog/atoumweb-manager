@@ -80,7 +80,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
   const savedBriefRef = useRef<{ id: string; value: ProspectQualificationBrief }>({
     id: prospect.id, value: prospectQualificationBriefSnapshot(prospect),
   });
-  const qualificationValue=()=>Object.fromEntries(['originType','targetingReasonCode','targetingReasonText','initialObservation','detectedOpportunity','firstContactResultCode','firstContactResultText','interestLevel','projectSummary','projectContext'].map(k=>[k,(draft as Record<string,unknown>)[k]??null]));
+  const qualificationValue=():ProspectQualificationBrief=>prospectQualificationBriefSnapshot(draft);
   const guard=useUnsavedDraft('Qualification du prospect',qualificationValue(),{pending:busy,discard:()=>setDraft({...prospect,originType:inferOrigin(prospect)})});
 
   const previous=useRef(prospect);
@@ -89,11 +89,13 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
     const before=previous.current;previous.current=prospect;
     if (before.id !== prospect.id) {
       savedBriefRef.current = { id: prospect.id, value: prospectQualificationBriefSnapshot(prospect) };
+      guard.initial(prospectQualificationBriefSnapshot(prospect));
       conflictRef.current = false;
       setQualificationConflict(false);
       setError('');
     } else if (!guard.dirty && !conflictRef.current && !savingRef.current) {
       savedBriefRef.current = { id: prospect.id, value: prospectQualificationBriefSnapshot(prospect) };
+      guard.initial(prospectQualificationBriefSnapshot(prospect));
     }
     setDraft(current=>before.id!==prospect.id?{...prospect,originType:inferOrigin(prospect)}:{...current,...Object.fromEntries(Object.entries(prospect).filter(([key])=>JSON.stringify(current[key as keyof ProspectInput])===JSON.stringify(before[key as keyof ProspectSummary])))});
   }, [prospect.id,prospect.updatedAt]);
@@ -139,9 +141,9 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
         { key: 'interest', label: 'Intérêt confirmé', ok: draft.interestLevel === 'interested' || draft.interestLevel === 'very_interested' },
       );
     } else if (origin === 'inbound') {
-      items.push({ key: 'request', label: 'Demande initiale', ok: Boolean(draft.projectSummary?.trim()) });
+      items.push({ key: 'request', label: 'Demande initiale', ok: Boolean(draft.initialRequest?.trim()) });
     } else {
-      items.push({ key: 'context', label: 'Motif / contexte commercial', ok: Boolean(draft.projectSummary?.trim() || draft.projectContext?.trim()) });
+      items.push({ key: 'context', label: 'Motif / contexte commercial', ok: Boolean(draft.initialRequest?.trim() || draft.projectContext?.trim()) });
     }
     return items;
   }, [contactCount, decisionMakerLabel, draft, origin]);
@@ -159,7 +161,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
     || draft.decisionStatus
     || draft.decisionMakerContactId
     || draft.decisionMakerDetails?.trim()
-    || draft.projectSummary?.trim()
+    || draft.initialRequest?.trim()
     || draft.projectContext?.trim()
     || draft.budgetStatus
     || draft.timelineStatus
@@ -207,11 +209,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
       const replacement = { ...current, originType: inferOrigin(current) };
       savedBriefRef.current = { id: ownerId, value: prospectQualificationBriefSnapshot(current) };
       setDraft(replacement);
-      guard.initial(Object.fromEntries([
-        'originType','targetingReasonCode','targetingReasonText','initialObservation',
-        'detectedOpportunity','firstContactResultCode','firstContactResultText',
-        'interestLevel','projectSummary','projectContext',
-      ].map(key => [key, (replacement as Record<string, unknown>)[key] ?? null])));
+      guard.initial(prospectQualificationBriefSnapshot(replacement));
       conflictRef.current = false;
       setQualificationConflict(false);
       setError('');
@@ -284,6 +282,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
       <div><span className="eyebrow">Qualification · {ORIGIN_LABELS[origin]}</span><strong>{readiness.filter((item) => item.ok).length}/{readiness.length} éléments minimums acquis</strong></div>
     </div>
 
+    <p className="qualification-progress-note">{allReady?'Les informations minimums sont acquises.':'À préciser : '+missing.map(item=>item.label).join(', ')}. Le passage à l’étape suivante reste une action explicite.</p>
     <div className="qualification-readiness" aria-label="État de la qualification">
       {readiness.map((item) => <span key={item.key} className={item.ok ? 'ready' : 'missing'}>{item.ok ? '✓' : '○'} {item.label}</span>)}
     </div>
@@ -291,40 +290,38 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
     <div className="workflow-fields">
       {origin === 'outbound' && <>
         <label>Motif de ciblage <FieldHelp text="Pourquoi AtoumWeb a sélectionné cette entreprise pour une prise de contact ?" />
-          <select value={draft.targetingReasonCode ?? ''} onChange={(e) => setDraft({ ...draft, targetingReasonCode: e.target.value || null })} disabled={busy}>
+          <select aria-invalid={!draft.targetingReasonCode&&!draft.targetingReasonText?.trim()} value={draft.targetingReasonCode ?? ''} onChange={(e) => setDraft({ ...draft, targetingReasonCode: e.target.value || null })} disabled={busy}>
             <option value="">À préciser</option>{TARGETING_REASONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </select>
         </label>
         {draft.targetingReasonCode === 'other' && <label>Autre motif<input value={draft.targetingReasonText ?? ''} onChange={(e) => setDraft({ ...draft, targetingReasonText: e.target.value })} disabled={busy} /></label>}
         <label>Constat <FieldHelp text="Ce que tu as observé avant la prise de contact : site absent ou ancien, visibilité faible, parcours client perfectible…" />
-          <textarea value={draft.initialObservation ?? ''} onChange={(e) => setDraft({ ...draft, initialObservation: e.target.value })} disabled={busy} />
+          <textarea aria-invalid={!draft.initialObservation?.trim()&&!draft.detectedOpportunity?.trim()} value={draft.initialObservation ?? ''} onChange={(e) => setDraft({ ...draft, initialObservation: e.target.value })} disabled={busy} />
         </label>
         <label>Opportunité détectée <FieldHelp text="Ce qu’AtoumWeb pourrait concrètement améliorer ou apporter à cette entreprise." />
           <textarea value={draft.detectedOpportunity ?? ''} onChange={(e) => setDraft({ ...draft, detectedOpportunity: e.target.value })} disabled={busy} />
         </label>
         <label>Résultat du premier contact
-          <select value={draft.firstContactResultCode ?? ''} onChange={(e) => setDraft({ ...draft, firstContactResultCode: e.target.value || null })} disabled={busy}>
+          <select aria-invalid={!draft.firstContactResultCode&&!draft.firstContactResultText?.trim()} value={draft.firstContactResultCode ?? ''} onChange={(e) => setDraft({ ...draft, firstContactResultCode: e.target.value || null })} disabled={busy}>
             <option value="">À préciser</option>{CONTACT_RESULTS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </select>
         </label>
         {draft.firstContactResultCode === 'other' && <label>Préciser le résultat<input value={draft.firstContactResultText ?? ''} onChange={(e) => setDraft({ ...draft, firstContactResultText: e.target.value })} disabled={busy} /></label>}
         <label>Niveau d’intérêt
-          <select value={draft.interestLevel ?? ''} onChange={(e) => setDraft({ ...draft, interestLevel: (e.target.value || null) as ProspectInput['interestLevel'] })} disabled={busy}>
+          <select aria-invalid={!['interested','very_interested'].includes(draft.interestLevel??'')} value={draft.interestLevel ?? ''} onChange={(e) => setDraft({ ...draft, interestLevel: (e.target.value || null) as ProspectInput['interestLevel'] })} disabled={busy}>
             <option value="">À préciser</option>{INTEREST_LEVELS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
           </select>
         </label>
       </>}
 
       {origin === 'inbound' && <>
-        <label>Demande initiale <FieldHelp text="Résume ce que le prospect demande au moment où il contacte AtoumWeb. L’identification détaillée du besoin se fera à l’étape suivante." />
-          <textarea value={draft.projectSummary ?? ''} onChange={(e) => setDraft({ ...draft, projectSummary: e.target.value })} disabled={busy} />
-        </label>
-        <label>Contexte utile<textarea value={draft.projectContext ?? ''} onChange={(e) => setDraft({ ...draft, projectContext: e.target.value })} disabled={busy} /></label>
+        <div>Demande initiale <FieldHelp text="Résume ce que le prospect demande au moment où il contacte AtoumWeb. L’identification détaillée du besoin se fera à l’étape suivante." />
+          <p>{prospect.initialRequest||'Non renseignée'}</p><button type="button" className="secondary-button" onClick={()=>onGoTo?.('need')}>Renseigner dans Besoins</button>
+        </div>
       </>}
 
       {!['outbound', 'inbound'].includes(origin) && <>
-        <label>Motif de l’échange / demande initiale<textarea value={draft.projectSummary ?? ''} onChange={(e) => setDraft({ ...draft, projectSummary: e.target.value })} disabled={busy} /></label>
-        <label>Contexte commercial<textarea value={draft.projectContext ?? ''} onChange={(e) => setDraft({ ...draft, projectContext: e.target.value })} disabled={busy} /></label>
+        <div>Motif de l’échange / demande initiale<p>{prospect.initialRequest||'Non renseignée'}</p><button type="button" className="secondary-button" onClick={()=>onGoTo?.('need')}>Renseigner dans Besoins</button></div>
       </>}
 
       <div className="qualification-decision-summary">

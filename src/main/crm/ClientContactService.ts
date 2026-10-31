@@ -53,7 +53,7 @@ export class ClientContactService {
   ) {}
 
   list(clientId: string): ClientContactLink[] {
-    this.requireClient(clientId);
+    const client=this.requireClient(clientId);
     return this.database.all<LinkRow>(
       `SELECT ccr.id AS link_id, ccr.client_account_id, ccr.contact_id, ccr.role, ccr.is_primary,
         c.organization_id, c.first_name, c.last_name, c.job_title, c.email, c.phone,
@@ -63,36 +63,29 @@ export class ClientContactService {
        WHERE ccr.client_account_id=? AND c.archived_at IS NULL
        ORDER BY ccr.is_primary DESC, c.last_name COLLATE NOCASE, c.first_name COLLATE NOCASE`,
       [clientId],
-    ).map((row) => this.mapLink(row));
+    ).map((row) => this.mapLink(row,client.organization_id));
   }
 
-  add(clientId: string, input: ContactInput, role: ClientContactRole, makePrimary = false): ClientContactLink {
+  add(clientId: string, input: ContactInput, role: ClientContactRole, makePrimary = false,existingContactId?:string): ClientContactLink {
     if (!CLIENT_CONTACT_ROLES.includes(role)) throw new Error('Rôle de contact invalide.');
     const client = this.requireClient(clientId);
     const firstName = clean(input.firstName);
     const lastName = clean(input.lastName);
-    if (!firstName || !lastName) throw new Error('Le prénom et le nom sont requis.');
+    if (!existingContactId&&(!firstName || !lastName)) throw new Error('Le prénom et le nom sont requis.');
     assertEmail(input.email);
 
     const primary = makePrimary || role === 'primary';
     const storedRole: ClientContactRole = primary ? 'primary' : role;
+    if(existingContactId){const person=this.crm.getContact(existingContactId);if(person.archivedAt)throw Error('Contact archivé.');const existing=this.list(clientId).find(l=>l.contactId===existingContactId&&l.role===storedRole);if(existing){if(primary&&!existing.isPrimary)this.setPrimary(clientId,existingContactId);return this.list(clientId).find(l=>l.contactId===existingContactId&&l.role===storedRole)!;}}
     const linkId = randomUUID();
-    const contactId = randomUUID();
+    let contactId: string;
     const now = nowIso();
     const organizationId = clean(input.organizationId) ?? client.organization_id;
 
     this.database.exec('BEGIN IMMEDIATE;');
     try {
-      this.database.run(
-        `INSERT INTO contacts (
-          id, organization_id, first_name, last_name, job_title, email, phone, preferred_channel,
-          notes, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          contactId, organizationId, firstName, lastName, clean(input.jobTitle), clean(input.email),
-          clean(input.phone), clean(input.preferredChannel), clean(input.notes), now, now,
-        ],
-      );
+      contactId=existingContactId??this.crm.createContact({...input,organizationId}).id;
+      if(existingContactId&&organizationId){const link=this.crm.listOrganizationContacts(contactId).find(l=>l.organizationId===organizationId);if(!link)this.crm.saveOrganizationContact(organizationId,contactId,null,{jobTitle:null,archivedAt:null});else if(link.archivedAt)throw Error('Association entreprise archivée : rétablis-la explicitement dans l’Annuaire.');}
 
       if (primary) {
         this.database.run(
@@ -184,21 +177,8 @@ export class ClientContactService {
     return client;
   }
 
-  private mapLink(row: LinkRow): ClientContactLink {
-    const contact: Contact = {
-      id: row.contact_id,
-      organizationId: row.organization_id,
-      firstName: row.first_name,
-      lastName: row.last_name,
-      jobTitle: row.job_title,
-      email: row.email,
-      phone: row.phone,
-      preferredChannel: row.preferred_channel,
-      notes: row.notes,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      archivedAt: row.archived_at,
-    };
+  private mapLink(row: LinkRow,organizationId:string|null): ClientContactLink {
+    const contact: Contact = this.crm.getContactForOrganization(row.contact_id,organizationId);
 
     return {
       id: row.link_id,

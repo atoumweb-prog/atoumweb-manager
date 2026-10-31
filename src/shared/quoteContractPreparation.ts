@@ -20,7 +20,7 @@ export interface QuoteContractParameters {
   schemaVersion: 1;
   audience: QuoteContractAudience;
   initialPayment: { qualification: 'acompte' | 'arrhes'; dueDate: string | null };
-  payment: { preset: PaymentPreset; milestones: PaymentMilestone[]; professionalTerms: { extraDelay: string; lateRate: 'three_times_legal'; recoveryIndemnityCents: 4000 } | null };
+  payment: { lineSchedules?:{lineId:string;milestones:PaymentMilestone[]}[]; preset: PaymentPreset; milestones: PaymentMilestone[]; professionalTerms: { extraDelay: string; lateRate: 'three_times_legal'; recoveryIndemnityCents: 4000 } | null };
   milestones: { label: string; date: string; event?: string }[];
   conclusion: { channel: 'distance' | 'off_premises' | 'on_premises' | 'other' | null; context: string; purchasePurpose: string; professionalConsumerRegime: 'unknown' | 'applicable' | 'not_applicable'; offPremisesControlsVerified: boolean; otherChannelReason: string };
   digital: { kinds: ('digital_content' | 'digital_service' | 'classical_service')[]; mixed: boolean; supply: 'one_off' | 'continuous' | null; delivery: string; hosting: boolean; associatedServices: string; qualificationReason: string };

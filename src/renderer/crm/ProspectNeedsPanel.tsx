@@ -1,3 +1,8 @@
+import {ProspectIntentChecklist} from './ProspectIntentChecklist';
+import {parseEuroCents} from '../../shared/moneyInput';
+import {ProspectDialog} from './ProspectDialog';
+import {ProspectInitialRequest} from './ProspectInitialRequest';
+import {ProspectCommercialEstimate} from './ProspectCommercialEstimate';
 import {OperationIcon} from '../operations/OperationIcon';
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -158,12 +163,7 @@ function priceLabel(version?: CatalogVersion | null): string {
   return `${prefixes[version.priceMode] ?? ''}${amount}${suffixes[version.priceMode] ?? ''}`;
 }
 
-function centsFromEuros(value: string): number | null {
-  const normalized = value.trim().replace(',', '.');
-  if (!normalized) return null;
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed * 100) : null;
-}
+function centsFromEuros(value:string):number|null {return parseEuroCents(value)??null;}
 
 function deriveBudgetPreset(prospect: ProspectSummary | null): BudgetPreset {
   if (!prospect || prospect.budgetStatus === 'not_disclosed' || (!prospect.budgetStatus && prospect.budgetMinCents == null && prospect.budgetMaxCents == null)) return 'not_disclosed';
@@ -201,14 +201,8 @@ function newInformationId(): string {
   return `info-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: string; onChanged?: () => void }) {
-  const [catalog, setCatalog] = useState<CatalogItemSummary[]>([]);
-  const [needs, setNeeds] = useState<Need[]>([]);
+export function ProspectNeedsPanel({ prospectId, onChanged, section='brief', highlightMissing=false, onPrepareQuote }: { prospectId: string; onChanged?: () => void; section?:'brief'|'commercial'|'services'; highlightMissing?:boolean; onPrepareQuote?:()=>void }) {
   const [prospect, setProspect] = useState<ProspectSummary | null>(null);
-  const [category, setCategory] = useState('');
-  const [selectedId, setSelectedId] = useState('');
-  const [otherText, setOtherText] = useState('');
-  const [editingId, setEditingId] = useState<string | undefined>();
   const [projectSummary, setProjectSummary] = useState('');
   const [projectContext, setProjectContext] = useState('');
   const [budgetPreset, setBudgetPreset] = useState<BudgetPreset>('not_disclosed');
@@ -225,8 +219,11 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   const informationItemsRef = useRef<ProspectInformationItem[]>([]);
   const [newInformation, setNewInformation] = useState('');
   const [newInformationBlocking, setNewInformationBlocking] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [pending, setBusy] = useState(false);
+  const busy=pending;
   const [error, setError] = useState('');
+  const [savedNotice,setSavedNotice]=useState('');
+  useEffect(()=>setSavedNotice(''),[projectSummary,projectContext,budgetPreset,budgetMin,budgetMax,budgetExact,timelineStatus,targetDate,timelineNote,existingStatus,existingUrl,existingNotes]);
   const [savingInformation, setSavingInformation] = useState(0);
   const [informationConflict, setInformationConflict] = useState(false);
   const [projectBriefConflict, setProjectBriefConflict] = useState(false);
@@ -249,34 +246,18 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   const currentProspectId = useRef(prospectId);
   currentProspectId.current = prospectId;
 
-  const [kind,setKind]=useState<'offers'|'services'>('offers');
-  const [catalogQuery,setCatalogQuery]=useState('');
-  const choiceGuard=useUnsavedDraft('Prestation envisagée',{selectedId,otherText},{pending:busy,discard:s=>{setSelectedId(s.selectedId);setOtherText(s.otherText);}});
   const infoValue={projectSummary,projectContext,budgetPreset,budgetMin,budgetMax,budgetExact,timelineStatus,targetDate,timelineNote,existingStatus,existingUrl,existingNotes,informationItems,newInformation,newInformationBlocking};
   const savedFormBaselineRef = useRef<typeof infoValue | null>(null);
   const infoGuard=useUnsavedDraft('Identification du besoin',infoValue,{pending:busy || savingInformation > 0,discard:s=>{setProjectSummary(s.projectSummary);setProjectContext(s.projectContext);setBudgetPreset(s.budgetPreset);setBudgetMin(s.budgetMin);setBudgetMax(s.budgetMax);setBudgetExact(s.budgetExact);setTimelineStatus(s.timelineStatus);setTargetDate(s.targetDate);setTimelineNote(s.timelineNote);setExistingStatus(s.existingStatus);setExistingUrl(s.existingUrl);setExistingNotes(s.existingNotes);setInformationDraft(s.informationItems);setNewInformation(s.newInformation);setNewInformationBlocking(s.newInformationBlocking);}});
 
-  const availableByKind=catalog.filter(item=>catalogueIsOffer(item)===(kind==='offers'));
-  const categories=sortedCategories(availableByKind);
-  const selectedCategory=categories.includes(category)?category:categories[0]??'';
-  const choices=availableByKind.filter(item=>(catalogQuery.trim() ? catalogMatchesQuery(item,catalogQuery) : catalogueFamilyLabel(item)===selectedCategory)).sort((a,b)=>a.name.localeCompare(b.name,'fr'));
-  const selectedItem = catalog.find((item) => item.id === selectedId) ?? null;
 
   async function load() {
     const sequence = ++reloadSequence.current;
     try {
-      const [nextNeeds, nextCatalog, prospects] = await Promise.all([
-        window.atoumweb.workflow.needs('prospect', prospectId),
-        window.atoumweb.catalog.list({ status: 'active' }),
-        window.atoumweb.crm.prospects.list({ includeArchived: true }),
-      ]);
+      const prospects=await window.atoumweb.crm.prospects.list({includeArchived:true});
       if (sequence !== reloadSequence.current) return;
       const current = prospects.find((item) => item.id === prospectId) ?? null;
-      const available = nextCatalog.filter(catalogIsSelectable);
-      setNeeds(nextNeeds);
-      setCatalog(available);
       setProspect(current);
-      if (!category || !available.some((item) => (item.category || 'Autre') === category)) setCategory(sortedCategories(available)[0] ?? 'Autre');
       if (current && !infoGuard.dirty && activeInformationWrites.current === 0 && !informationConflictRef.current && !projectBriefConflictRef.current) {
         savedProjectBriefRef.current = { prospectId, value: prospectProjectBriefSnapshot(current) };
         savedInformationRef.current = { prospectId, value: current.missingInformation ?? null };
@@ -299,7 +280,6 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
   }
 
   useEffect(() => {
-    setEditingId(undefined); setSelectedId(''); setOtherText('');
     savedInformationRef.current = { prospectId, value: null };
     savedFormBaselineRef.current = null;
     savedProjectBriefRef.current = null;
@@ -311,26 +291,6 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
     void load();
     return () => { reloadSequence.current++; };
   }, [prospectId]);
-
-  async function saveNeed() {
-    if (!selectedId && !otherText.trim()) return;
-    setBusy(true); setError('');
-    try {
-      await window.atoumweb.workflow.saveNeed('prospect', prospectId, selectedId === 'other'
-        ? { catalogItemId: null, otherText: otherText.trim() }
-        : { catalogItemId: selectedId, otherText: null }, editingId);
-      setSelectedId(''); setOtherText(''); setEditingId(undefined); await load(); onChanged?.();
-      window.dispatchEvent(new Event('atoumweb:changed'));
-    } catch (e) { setError(cleanError(e)); }
-    finally { setBusy(false); }
-  }
-
-  async function remove(id: string) {
-    setBusy(true); setError('');
-    try { await window.atoumweb.workflow.removeNeed('prospect', prospectId, id); await load(); onChanged?.(); window.dispatchEvent(new Event('atoumweb:changed')); }
-    catch (e) { setError(cleanError(e)); }
-    finally { setBusy(false); }
-  }
 
   async function persistInformation(next: ProspectInformationItem[]) {
     // Plusieurs saisies rapides sont enregistrées dans le même ordre, avec
@@ -486,7 +446,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
     const snapshot = savedProjectBriefRef.current;
     if (!snapshot || snapshot.prospectId !== prospect.id) { setError('Le dossier doit être chargé avant enregistrement.'); return; }
     savingProjectBriefRef.current = true;
-    setBusy(true); setError('');
+    setBusy(true); setError('');setSavedNotice('');
     try {
       await pendingInformation.current; // Ne pas inverser une sauvegarde de checklist en cours.
       const next: ProspectProjectBrief = {
@@ -510,7 +470,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
       setProspect(updated);
       savedFormBaselineRef.current = { ...infoValue, informationItems: informationItemsRef.current };
       infoGuard.saved(savedFormBaselineRef.current);
-      await load(); onChanged?.(); window.dispatchEvent(new Event('atoumweb:changed'));
+      await load(); onChanged?.(); setSavedNotice('Besoin enregistré.'); window.dispatchEvent(new Event('atoumweb:changed'));
     } catch (e) {
       if (prospect.id === currentProspectId.current) {
         const message = cleanError(e);
@@ -523,23 +483,11 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
     } finally { savingProjectBriefRef.current = false; setBusy(false); }
   }
 
-  function editNeed(need: Need) {
-    setEditingId(need.id);
-    setSelectedId(need.catalogItemId ?? 'other');
-    setOtherText(need.otherText ?? '');
-    if (need.catalogItemId) {
-      const item = catalog.find((candidate) => candidate.id === need.catalogItemId);
-      if(item){setCategory(catalogueFamilyLabel(item));setKind(catalogueIsOffer(item)?'offers':'services');}
-    }
-  }
-
   const openBlockingInformation = informationItems.filter((item) => item.status === 'open' && item.isBlocking);
   const openLaterInformation = informationItems.filter((item) => item.status !== 'resolved' && !item.isBlocking);
-  const identificationReady = needs.length > 0 && Boolean(projectSummary.trim()) && Boolean(prospect?.budgetStatus) && Boolean(prospect?.timelineStatus);
 
-  return <section className="prospect-work-section needs-panel-v2">
-    <div className="work-section-heading"><div><span className="eyebrow">Besoin à identifier</span><strong>Projet & solution AtoumWeb</strong></div><span className={`status-pill ${identificationReady ? 'ready' : ''}`}>{identificationReady ? 'Base renseignée' : 'À compléter'}</span></div>
-    <p className="muted">Définis ce qu’AtoumWeb doit réellement proposer. Le catalogue reste la source des noms, tarifs et éléments inclus ; le devis ne sera créé qu’après le contrôle final.</p>
+  return <section data-needs-section={section} className="prospect-work-section needs-panel-v2"><fieldset disabled={Boolean(prospect?.clientAccountId||prospect?.archivedAt)} style={{border:0,padding:0,margin:0,minWidth:0}}> <div hidden={section!=='brief'} className="crm-initial-request">{prospect&&<ProspectInitialRequest prospect={prospect} onSaved={()=>void load()}/>}</div><div hidden={section!=='commercial'}>{prospect&&<ProspectCommercialEstimate prospect={prospect} onSaved={()=>void load()}/>}</div>
+
     {error && <p className="form-error" role="alert">{error}</p>}
     {projectBriefConflict && <div className="prospect-checklist-conflict" role="status">
       <strong>Conflit entre fenêtres : le projet, le budget ou le calendrier a été modifié.</strong>
@@ -556,48 +504,24 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
       </button>
     </div>}
 
-    <div className="need-current-list">{needs.map((need) => {
-      const item = need.catalogItemId ? catalog.find((candidate) => candidate.id === need.catalogItemId) : null;
-      const version = item?.currentVersion;
-      return <div className="need-current-row need-solution-card" key={need.id}><div><strong className="need-name">{need.label}</strong>{version&&<small className="need-price">{priceLabel(version)}</small>}<details className="need-description"><summary>Voir le contenu et les compléments</summary><CommercialScope version={version}/></details></div><div className="need-row-actions"><button className="secondary-button compact-button" type="button" onClick={()=>editNeed(need)}>Modifier</button><button className="secondary-button compact-button" type="button" disabled={busy} onClick={()=>void remove(need.id)}>Retirer</button></div></div>;
-    })}</div>
-
-    <div className="need-add-block">
-      <div className="need-selector-title"><strong>{editingId ? 'Modifier la solution' : 'Ajouter une offre / prestation au besoin'}</strong><small>Une sélection, un seul bouton de validation.</small></div>
-      <KindTabs kind={kind} onChange={k=>{setKind(k);setCategory('');setSelectedId('');}}/>
-      <label className="prospect-catalog-query">Rechercher par besoin ou mots-clés
-        <input aria-label="Rechercher par besoin ou mots-clés" value={catalogQuery}
-          onChange={event=>setCatalogQuery(event.target.value)}
-          placeholder="Ex. visibilité Google, boutique en ligne…" disabled={busy}/>
-      </label>
-      <div className="need-add-row">
-        <label>Famille de solution<select value={selectedCategory} onChange={(e) => { setCategory(e.target.value); setSelectedId(''); setOtherText(''); }} disabled={busy}>{categories.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
-        <label>Offre / prestation envisagée<select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} disabled={busy}><option value="">Choisir…</option>{choices.map((item) => <option key={item.id} value={item.id}>{item.name} · {priceLabel(item.currentVersion)}</option>)}<option value="other">Autre / sur mesure</option></select></label>
-        {selectedId === 'other' && <label>Préciser<input value={otherText} onChange={(e) => setOtherText(e.target.value)} placeholder="Décrire le besoin spécifique" disabled={busy} /></label>}
-      </div>
-      {selectedItem?.currentVersion&&<div className="selected-offer-preview"><strong>{selectedItem.name}</strong><small>{priceLabel(selectedItem.currentVersion)}</small><CommercialScope version={selectedItem.currentVersion}/></div>}
-      <div className="inline-editor-actions">{editingId && <button type="button" className="secondary-button" onClick={() => { setEditingId(undefined); setSelectedId(''); setOtherText(''); }}>Annuler</button>}<button type="button" className="primary-button" disabled={busy || (!selectedId && !otherText.trim()) || (selectedId === 'other' && !otherText.trim())} onClick={() => void saveNeed()}>{editingId ? 'Enregistrer la modification' : 'Ajouter au besoin'}</button></div>
-    </div>
-
     <div className="need-identification-fields">
-      <div className="work-section-heading"><div><span className="eyebrow">Affiner le besoin</span><strong>Périmètre nécessaire au chiffrage</strong></div></div>
       <div className="workflow-fields">
-        <label className="form-span-2">Projet / problématique<textarea value={projectSummary} onChange={(e) => setProjectSummary(e.target.value)} placeholder="Ce que le prospect veut obtenir ou résoudre" disabled={busy} /></label>
+        <div className="crm-brief-fields" hidden={section!=='brief'}><div hidden={!prospect?.legacyBriefJson} className="form-span-3">{prospect?.legacyBriefJson&&<details><summary>Informations reprises de l’ancienne fiche — sens initial non déterminé</summary><p>{Object.values(JSON.parse(prospect.legacyBriefJson) as Record<string,unknown>).filter((v,i)=>i>0&&typeof v==='string'&&v.trim()).map(v=>String(v)).join(' · ')}</p></details>}</div>{prospect?.initialRequest&&!projectSummary&&<button type="button" className="secondary-button form-span-3" disabled={busy} onClick={()=>setProjectSummary(prospect.initialRequest??'')}>Reprendre la demande initiale comme point de départ du besoin confirmé</button>}{prospect?.legacyBriefJson&&!prospect.confirmedBriefAt&&<p className="form-span-3">Le résumé ci-dessous provient de l’ancienne fiche. Son sens initial n’est pas déterminé ; relis-le avant de confirmer le besoin.</p>}<label className="form-span-2">Besoin confirmé — résultat attendu<textarea aria-label="Besoin confirmé" aria-invalid={highlightMissing&&!projectSummary.trim()} rows={3} value={projectSummary} onChange={(e) => setProjectSummary(e.target.value)} placeholder="Ce que le prospect veut obtenir ou résoudre" disabled={busy} /></label>
         <label className="form-span-2">Contexte, contraintes et éléments hors socle<textarea value={projectContext} onChange={(e) => setProjectContext(e.target.value)} placeholder="Fonctionnalité particulière, volume, intégration, contenu important, contrainte technique…" disabled={busy} /></label>
 
-        <label>Budget<select value={budgetPreset} onChange={(e) => setBudgetPreset(e.target.value as BudgetPreset)} disabled={busy}>{BUDGET_PRESETS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        </div><div className="crm-commercial-fields" hidden={section!=='commercial'}><label>Budget communiqué par le prospect<select aria-invalid={highlightMissing&&!prospect?.budgetStatus} value={budgetPreset} onChange={(e) => setBudgetPreset(e.target.value as BudgetPreset)} disabled={busy}>{BUDGET_PRESETS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         {budgetPreset === 'custom' && <div className="qualification-two-fields form-span-2"><label>Minimum (€)<input inputMode="decimal" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} disabled={busy} /></label><label>Maximum (€)<input inputMode="decimal" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} disabled={busy} /></label></div>}
         {budgetPreset === 'exact' && <label>Montant précis (€)<input inputMode="decimal" value={budgetExact} onChange={(e) => setBudgetExact(e.target.value)} disabled={busy} /></label>}
 
-        <label>Calendrier<select value={timelineStatus} onChange={(e) => setTimelineStatus(e.target.value as NonNullable<ProspectSummary['timelineStatus']>)} disabled={busy}><option value="not_disclosed">Non communiqué</option><option value="date">Date cible</option><option value="note">Période / contrainte à préciser</option></select></label>
+        <label>Calendrier<select aria-invalid={highlightMissing&&!prospect?.timelineStatus} value={timelineStatus} onChange={(e) => setTimelineStatus(e.target.value as NonNullable<ProspectSummary['timelineStatus']>)} disabled={busy}><option value="not_disclosed">Non communiqué</option><option value="date">Date cible</option><option value="note">Période / contrainte à préciser</option></select></label>
         {timelineStatus === 'date' && <label>Date cible<input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} disabled={busy} /></label>}
         {timelineStatus === 'note' && <label className="form-span-2">Précision calendrier<input value={timelineNote} onChange={(e) => setTimelineNote(e.target.value)} placeholder="Ex. avant l’ouverture du restaurant, idéalement en novembre…" disabled={busy} /></label>}
 
-        <label>Site / outil existant<select value={existingStatus} onChange={(e) => setExistingStatus(e.target.value as NonNullable<ProspectSummary['existingStatus']>)} disabled={busy}><option value="unknown">À vérifier</option><option value="yes">Oui</option><option value="no">Non</option></select></label>
-        {existingStatus === 'yes' && <label>URL / référence existante<input value={existingUrl} onChange={(e) => setExistingUrl(e.target.value)} placeholder="https://…" disabled={busy} /></label>}
+        <label>Outil ou système concerné par ce besoin<select value={existingStatus} onChange={(e) => setExistingStatus(e.target.value as NonNullable<ProspectSummary['existingStatus']>)} disabled={busy}><option value="unknown">À vérifier</option><option value="yes">Oui</option><option value="no">Non</option></select></label>
+        {existingStatus === 'yes' && <label>URL / référence existante<input value={existingUrl} onChange={(e) => setExistingUrl(e.target.value)} placeholder="Référence de l’outil ou du système à remplacer" disabled={busy} /></label>}
         {existingStatus !== 'no' && <label className="form-span-2">Précisions sur l’existant<input value={existingNotes} onChange={(e) => setExistingNotes(e.target.value)} disabled={busy} /></label>}
 
-        <div className="missing-info-checklist">
+        </div><div className="missing-info-checklist" hidden={section!=='services'}>
           <div className="need-selector-title"><strong>Informations / points à confirmer</strong><small>Garde les questions dans le dossier. Seuls les points « À obtenir » marqués bloquants empêchent le devis.</small></div>
           {informationItems.length > 0 && <div className="missing-info-list">{informationItems.map((item) => <div className={`missing-info-row ${item.status === 'resolved' ? 'resolved' : ''}`} key={item.id}>
             <strong>{item.label}</strong>
@@ -616,11 +540,12 @@ export function ProspectNeedsPanel({ prospectId, onChanged }: { prospectId: stri
           </div>
         </div>
 
-        <div className="need-scope-assessment form-span-2"><span className="eyebrow">Lecture du périmètre</span><strong>{openBlockingInformation.length > 0 ? `${openBlockingInformation.length} point${openBlockingInformation.length > 1 ? 's' : ''} bloquant${openBlockingInformation.length > 1 ? 's' : ''} avant devis` : openLaterInformation.length > 0 ? 'Périmètre prêt pour contrôle — certains points seront obtenus plus tard' : projectContext.trim() ? 'Périmètre décrit — contrôle final à effectuer' : 'Socle sélectionné — vérifier les éventuels compléments hors offre'}</strong><small>Les points résolus restent dans le dossier : aucune information n’a besoin d’être effacée pour avancer.</small></div>
-        <button type="button" className="primary-button" disabled={busy} onClick={() => void saveIdentification()}>{busy ? 'Enregistrement…' : 'Enregistrer l’identification du besoin'}</button>
+        <div hidden={section!=='services'} className="need-scope-assessment form-span-2"><span className="eyebrow">Lecture du périmètre</span><strong>{openBlockingInformation.length > 0 ? `${openBlockingInformation.length} point${openBlockingInformation.length > 1 ? 's' : ''} bloquant${openBlockingInformation.length > 1 ? 's' : ''} avant devis` : openLaterInformation.length > 0 ? 'Périmètre prêt pour contrôle — certains points seront obtenus plus tard' : projectContext.trim() ? 'Périmètre décrit — contrôle final à effectuer' : 'Aucun point bloquant déclaré'}</strong><small>Les points résolus restent dans le dossier : aucune information n’a besoin d’être effacée pour avancer.</small></div>
+        <button type="button" className="primary-button" disabled={busy} onClick={() => void saveIdentification()}>{busy ? 'Enregistrement…' : 'Enregistrer le besoin'}</button>{savedNotice&&<p role="status">{savedNotice}</p>}{error&&<p role="alert" className="form-error">{error}</p>}
       </div>
     </div>
 
-    {needs.length === 0 && <p className="muted">Commence par sélectionner au moins une solution ou prestation envisagée. Rien n’est encore envoyé au devis à ce stade.</p>}
-  </section>;
+    <div hidden={section!=='services'}><ProspectIntentChecklist prospectId={prospectId} readOnly={Boolean(prospect?.clientAccountId||prospect?.archivedAt)} onChanged={()=>{void load();onChanged?.();}}/></div>
+    {onPrepareQuote&&<div className="crm-need-footer"><button type="button" className="primary-button" onClick={onPrepareQuote}>Préparer le devis</button></div>}
+  </fieldset></section>;
 }

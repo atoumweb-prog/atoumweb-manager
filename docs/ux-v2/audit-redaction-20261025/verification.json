@@ -1,0 +1,259 @@
+{
+  "pdfPages": 10,
+  "pdfSHA256": "81ee2c7d8083259ba07faf092835a28205c692fb24bd75a789ab92329b21e090",
+  "expectedSHA256Matches": true,
+  "clauses": [
+    {
+      "code": "BASE-ACCEPTATION",
+      "versionId": "ba6a38d9-2e9e-40e2-b335-0df1899316fb",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "BASE-CONFIDENTIALITE",
+      "versionId": "57a12cb5-879f-4d74-bbc2-9a1c0a626954",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "BASE-COOPERATION",
+      "versionId": "cb723072-f2a4-4e98-99f7-6b52a907a4d9",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "BASE-DELAIS",
+      "versionId": "03879272-62d6-4c3a-8206-4d1323369f0b",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "BASE-DONNEES",
+      "versionId": "23243967-02d3-4d3a-8a0b-fb9e5adeff62",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "BASE-FORCE-MAJEURE",
+      "versionId": "0696beba-8bf9-4200-bb60-6d745a7fa569",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "BASE-OBJET",
+      "versionId": "be9149ea-f185-4a70-b1e3-1e989f6bb16f",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "BASE-PAIEMENT",
+      "versionId": "cae5b902-e682-4f81-9dd1-b741a7a90630",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "BASE-PI",
+      "versionId": "cdb80eb7-e065-4a80-a3be-717874cb3b42",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "BASE-PRIX",
+      "versionId": "8c0f03b2-d39d-433a-8c08-ce14f38d2158",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "BASE-RESPONSABILITE",
+      "versionId": "848922a2-3391-495a-a45b-4e2ec0cb6f60",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "BASE-VALIDATION",
+      "versionId": "d3ec4722-6c86-4f35-b827-74b84c682ea9",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "PRO-LITIGE",
+      "versionId": "41256f8c-835f-4722-b22b-5dc8fc7d9439",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "PRO-PAIEMENT",
+      "versionId": "3f57534e-24c2-4cf8-9fb1-47e2387ebe9c",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "PRO-RETARD",
+      "versionId": "0220659b-61e3-4bcd-854c-da5667e02210",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "MAINT-PERIMETRE",
+      "versionId": "31a0e348-abed-4d60-a58e-25f15c774c8b",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "MAINT-MAJ",
+      "versionId": "a30a9329-64ce-4569-b98f-ed011d9b7668",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "MAINT-SAUVEGARDE",
+      "versionId": "b591b87f-5b31-48d7-b006-7ff068d83efa",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "MAINT-INTERVENTIONS",
+      "versionId": "bdec7b68-1023-4c6e-a539-4a0ca2f26539",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "MAINT-URGENCE",
+      "versionId": "e3e0e595-e1a7-42ae-bd95-e3e07885026f",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "MAINT-RENOUVELLEMENT",
+      "versionId": "4fc51007-43bc-4146-ac45-354324a0af54",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "MAINT-WOOCOMMERCE",
+      "versionId": "a74f140b-a1f4-44b6-b2a8-44259c9875f8",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "WEB-CONTENUS",
+      "versionId": "b7f9e1a3-3ca6-4d6a-b5ca-a5058f1cf661",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "WEB-AR",
+      "versionId": "e15ea54a-7769-4ac4-930d-d38b9a96a902",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "WEB-VALIDATION",
+      "versionId": "2b5cd786-76cb-4b73-b04c-b318d0ae2669",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "WEB-MISE-EN-LIGNE",
+      "versionId": "905cbe51-c69b-4b14-9db1-aa1fb48b7210",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "WEB-HEBERGEMENT",
+      "versionId": "e850fb05-ec44-4d28-8c3e-2350ab431360",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "WEB-LICENCES",
+      "versionId": "0d67e6e1-40bf-413e-9748-ea398c3a0331",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "WEB-COMPATIBILITE",
+      "versionId": "48f8a75d-a6c0-4ed5-957e-da4299b10518",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "ECOM-CATALOGUE",
+      "versionId": "10d96807-2d11-4846-99d2-e5240223d9a7",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "ECOM-PAIEMENT",
+      "versionId": "ff9d3988-ae6a-4a5a-8949-964093fe563d",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "ECOM-LIVRAISON",
+      "versionId": "696d220e-89e5-4f14-aa79-1e40d47f1bc2",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "ECOM-STOCK",
+      "versionId": "898546ab-fe95-488a-a4fa-03304b53438c",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "ECOM-LEGAL",
+      "versionId": "d174ac10-c5c4-462e-bce8-e6f0badf7fc5",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    },
+    {
+      "code": "SERVICE-TIERS",
+      "versionId": "2b306910-f00e-439f-8f97-e4f95b6b4c2f",
+      "fullPublishedBodyFoundInPDF": true,
+      "hasProposal": true,
+      "approval": null
+    }
+  ],
+  "clausesUnique": 35,
+  "inventoryCount": 118,
+  "typeCount": 13,
+  "applicationCodeChanged": false,
+  "databaseWrites": false,
+  "publicationOrAdoption": false,
+  "normalization": "NFKD, lowercase, alphanumeric only; ignores extraction whitespace and punctuation, not a semantic equivalence test"
+}

@@ -70,3 +70,7 @@ Avant de considérer une fonctionnalité terminée :
 - Utiliser des commits compréhensibles.
 - Préférer des PR petites et cohérentes plutôt qu'une énorme PR multi-modules.
 - Ne pas modifier le périmètre fonctionnel sans l'inscrire dans `PROJECT_STATUS.md`.
+
+## Recette visuelle — économie de contexte (22/10/2026)
+
+Pour la refonte visuelle du Manager, lire une fois [les consignes et la reprise courte](docs/ux-v2/CONSIGNES-ET-REPRISE.md). Ce mémo synthétise les décisions utilisateur, le périmètre et la dernière livraison ; il ne remplace pas PROJECT_STATUS ni les règles métier ci-dessus. Ne pas recopier le chat complet dans les instructions.

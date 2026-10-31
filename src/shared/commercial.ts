@@ -305,7 +305,13 @@ export interface QuoteSummary {
   updatedAt: string;
 }
 
+export interface QuoteRecipient {
+  kind:'organization'|'person';organizationId:string|null;contactId:string|null;name:string;
+  addressLine1:string|null;addressLine2:string|null;postalCode:string|null;city:string|null;country:string|null;
+  identification:string|null;contactName:string|null;email:string|null;phone:string|null;contactEmail:string|null;contactPhone:string|null;
+}
 export interface QuoteDetail extends QuoteSummary {
+  recipient?:QuoteRecipient|null;
   /** Exact document recipient from preparation/transmission; absent for legacy evidence. */
   contractRecipientLabel?:string|null;
   needSummary?: string | null;
@@ -339,6 +345,7 @@ export interface QuoteApi {
   setLineParameters(lineId:string,parameters:QuoteLineParameters):Promise<QuoteDetail>;
   preparationIssues(id:string):Promise<string[]>;
   operationalSales(id:string):Promise<Record<string,unknown>[]>;
+  prepareProspectDraft(prospectId:string,expectedUpdatedAt:string,expectedNeeds:Array<{id:string;catalogItemId:string|null;otherText:string|null}>):Promise<QuoteDetail>;
   createWithLines(input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>): Promise<QuoteDetail>;
   list(filters?: QuoteFilters): Promise<QuoteSummary[]>;
   get(id: string): Promise<QuoteDetail>;

@@ -1,0 +1,183 @@
+{
+  "status": "orientation à confirmer, non appliquée",
+  "examples": [
+    {
+      "totalProducts": 10,
+      "included": 10,
+      "additional": 0,
+      "lines": [
+        {
+          "label": "Forfait e-commerce — dix produits simples inclus",
+          "quantity": 1,
+          "unitCents": 149000,
+          "totalCents": 149000
+        }
+      ],
+      "extraCents": 0,
+      "quoteTotalCents": 149000
+    },
+    {
+      "totalProducts": 15,
+      "included": 10,
+      "additional": 5,
+      "lines": [
+        {
+          "label": "Forfait e-commerce — dix produits simples inclus",
+          "quantity": 1,
+          "unitCents": 149000,
+          "totalCents": 149000
+        },
+        {
+          "label": "Produits supplémentaires — positions 11 à 20",
+          "quantity": 5,
+          "unitCents": 1900,
+          "totalCents": 9500
+        }
+      ],
+      "extraCents": 9500,
+      "quoteTotalCents": 158500
+    },
+    {
+      "totalProducts": 20,
+      "included": 10,
+      "additional": 10,
+      "lines": [
+        {
+          "label": "Forfait e-commerce — dix produits simples inclus",
+          "quantity": 1,
+          "unitCents": 149000,
+          "totalCents": 149000
+        },
+        {
+          "label": "Produits supplémentaires — positions 11 à 20",
+          "quantity": 10,
+          "unitCents": 1900,
+          "totalCents": 19000
+        }
+      ],
+      "extraCents": 19000,
+      "quoteTotalCents": 168000
+    },
+    {
+      "totalProducts": 21,
+      "included": 10,
+      "additional": 11,
+      "lines": [
+        {
+          "label": "Forfait e-commerce — dix produits simples inclus",
+          "quantity": 1,
+          "unitCents": 149000,
+          "totalCents": 149000
+        },
+        {
+          "label": "Produits supplémentaires — positions 11 à 20",
+          "quantity": 10,
+          "unitCents": 1900,
+          "totalCents": 19000
+        },
+        {
+          "label": "Produits supplémentaires — positions 21 à 50",
+          "quantity": 1,
+          "unitCents": 1700,
+          "totalCents": 1700
+        }
+      ],
+      "extraCents": 20700,
+      "quoteTotalCents": 169700
+    },
+    {
+      "totalProducts": 50,
+      "included": 10,
+      "additional": 40,
+      "lines": [
+        {
+          "label": "Forfait e-commerce — dix produits simples inclus",
+          "quantity": 1,
+          "unitCents": 149000,
+          "totalCents": 149000
+        },
+        {
+          "label": "Produits supplémentaires — positions 11 à 20",
+          "quantity": 10,
+          "unitCents": 1900,
+          "totalCents": 19000
+        },
+        {
+          "label": "Produits supplémentaires — positions 21 à 50",
+          "quantity": 30,
+          "unitCents": 1700,
+          "totalCents": 51000
+        }
+      ],
+      "extraCents": 70000,
+      "quoteTotalCents": 219000
+    },
+    {
+      "totalProducts": 51,
+      "included": 10,
+      "additional": 41,
+      "lines": [
+        {
+          "label": "Forfait e-commerce — dix produits simples inclus",
+          "quantity": 1,
+          "unitCents": 149000,
+          "totalCents": 149000
+        },
+        {
+          "label": "Produits supplémentaires — positions 11 à 20",
+          "quantity": 10,
+          "unitCents": 1900,
+          "totalCents": 19000
+        },
+        {
+          "label": "Produits supplémentaires — positions 21 à 50",
+          "quantity": 30,
+          "unitCents": 1700,
+          "totalCents": 51000
+        },
+        {
+          "label": "Produits supplémentaires — positions 51 à 100",
+          "quantity": 1,
+          "unitCents": 1500,
+          "totalCents": 1500
+        }
+      ],
+      "extraCents": 71500,
+      "quoteTotalCents": 220500
+    },
+    {
+      "totalProducts": 100,
+      "included": 10,
+      "additional": 90,
+      "lines": [
+        {
+          "label": "Forfait e-commerce — dix produits simples inclus",
+          "quantity": 1,
+          "unitCents": 149000,
+          "totalCents": 149000
+        },
+        {
+          "label": "Produits supplémentaires — positions 11 à 20",
+          "quantity": 10,
+          "unitCents": 1900,
+          "totalCents": 19000
+        },
+        {
+          "label": "Produits supplémentaires — positions 21 à 50",
+          "quantity": 30,
+          "unitCents": 1700,
+          "totalCents": 51000
+        },
+        {
+          "label": "Produits supplémentaires — positions 51 à 100",
+          "quantity": 50,
+          "unitCents": 1500,
+          "totalCents": 75000
+        }
+      ],
+      "extraCents": 145000,
+      "quoteTotalCents": 294000
+    }
+  ],
+  "beyond100": "Devis spécifique, aucune formule extrapolée"
+}

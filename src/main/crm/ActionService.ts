@@ -1,3 +1,4 @@
+import {draftFingerprint} from '../../shared/draftSection';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import {
@@ -48,7 +49,7 @@ export class ActionService {
     const where: string[] = [];
     const params: SqlValue[] = [];
 
-    if (filters.ownerType) {
+    if (filters.ownerType && !(filters.ownerType==='client'&&filters.ownerId)) {
       where.push('owner_type=?');
       params.push(filters.ownerType);
     }
@@ -57,7 +58,7 @@ export class ActionService {
       if (filters.ownerType === 'prospect') {
         where.push('prospect_id=?');
       } else if (filters.ownerType === 'client') {
-        where.push('client_account_id=?');
+        where.push('(client_account_id=? OR prospect_id IN (SELECT id FROM prospects WHERE client_account_id=?))');params.push(ownerId);
       } else {
         where.push('(prospect_id=? OR client_account_id=?)');
         params.push(ownerId);
@@ -83,7 +84,24 @@ export class ActionService {
     ).map((row) => this.map(row));
   }
 
+  private transaction<T>(work:()=>T):T {
+    this.database.exec('SAVEPOINT crm_action_write');
+    try{const result=work();this.database.exec('RELEASE crm_action_write');return result;}catch(error){this.database.exec('ROLLBACK TO crm_action_write;RELEASE crm_action_write');throw error;}
+  }
+
   create(input: CrmActionInput): CrmAction {
+    return this.transaction(()=>{
+      this.database.run('UPDATE crm_actions SET id=id WHERE id=?',['']);
+      if(input.operationId){
+        if(!/^[0-9a-f-]{36}$/i.test(input.operationId))throw Error('Identifiant d’action invalide.');
+        const replay=this.database.get<{metadata_json:string}>("SELECT metadata_json FROM activity_events WHERE action='action_created' AND json_extract(metadata_json,'$.operationId')=?",[input.operationId]);
+        if(replay){const metadata=JSON.parse(replay.metadata_json);if(metadata.fingerprint!==draftFingerprint(input))throw Error('Cette action est déjà enregistrée avec une autre saisie.');return this.get(metadata.actionId);}
+      }
+      return this.createAction(input);
+    });
+  }
+
+  private createAction(input: CrmActionInput): CrmAction {
     if (!CRM_ACTION_OWNER_TYPES.includes(input.ownerType)) throw new Error('Type de propriétaire invalide.');
     if (!CRM_ACTION_TYPES.includes(input.type)) throw new Error('Type d’action invalide.');
     const ownerId = clean(input.ownerId);
@@ -138,12 +156,16 @@ export class ActionService {
       );
     }
 
-    this.writeActivity(input.ownerType, ownerId, 'action_created', `${input.type === 'follow_up' ? 'Relance' : 'Action'} ajoutée : ${title}`);
+    this.writeActivity(input.ownerType, ownerId, 'action_created', `${input.type === 'follow_up' ? 'Relance' : 'Action'} ajoutée : ${title}`,{actionId:id,operationId:input.operationId??null,fingerprint:draftFingerprint(input)});
     this.syncLegacyNextAction(input.ownerType, ownerId);
     return this.get(id);
   }
 
   complete(id: string, input: CompleteActionInput = {}): CrmAction {
+    return this.transaction(()=>{this.database.run('UPDATE crm_actions SET id=id WHERE id=?',[id]);return this.completeAction(id,input);});
+  }
+
+  private completeAction(id:string,input:CompleteActionInput):CrmAction {
     const action = this.get(id);
     if (action.status === 'done') return action;
     const now = nowIso();
@@ -153,7 +175,7 @@ export class ActionService {
     );
     const nextInput = input.nextAction === null ? null : (input.nextAction ?? this.recurringNext(action));
     if (nextInput) this.create(nextInput);
-    this.writeActivity(action.ownerType, action.ownerId, 'action_completed', `Action terminée : ${action.title}`);
+    this.writeActivity(action.ownerType, action.ownerId, 'action_completed', `Action terminée : ${action.title}`,{actionId:id});
     this.syncLegacyNextAction(action.ownerType, action.ownerId);
     return this.get(id);
   }
@@ -243,15 +265,15 @@ export class ActionService {
     };
   }
 
-  private writeActivity(ownerType: CrmActionOwnerType, ownerId: string, action: string, summary: string): void {
+  private writeActivity(ownerType: CrmActionOwnerType, ownerId: string, action: string, summary: string,metadata?:Record<string,unknown>): void {
     const id = randomUUID();
     const now = nowIso();
     this.database.run(
       `INSERT INTO activity_events (
         id, entity_type, entity_id, action, summary, metadata_json,
         prospect_id, client_account_id, organization_id, contact_id, created_at
-      ) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, NULL, NULL, ?)`,
-      [id, ownerType, ownerId, action, summary, ownerType === 'prospect' ? ownerId : null, ownerType === 'client' ? ownerId : null, now],
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?)`,
+      [id, ownerType, ownerId, action, summary,metadata?JSON.stringify(metadata):null, ownerType === 'prospect' ? ownerId : null, ownerType === 'client' ? ownerId : null, now],
     );
   }
 
@@ -259,14 +281,15 @@ export class ActionService {
     const ownerColumn = ownerType === 'prospect' ? 'prospect_id' : 'client_account_id';
     const next = this.database.get<{ title: string; due_at: string | null }>(
       `SELECT title, due_at FROM crm_actions
-       WHERE ${ownerColumn}=? AND status='open'
+       WHERE ${ownerType==='client'?'(client_account_id=? OR prospect_id IN (SELECT id FROM prospects WHERE client_account_id=?))':ownerColumn+'=?'} AND status='open'
        ORDER BY CASE WHEN due_at IS NULL THEN 1 ELSE 0 END, due_at ASC, created_at ASC
        LIMIT 1`,
-      [ownerId],
+      ownerType==='client'?[ownerId,ownerId]:[ownerId],
     );
 
     if (ownerType === 'prospect') {
       this.database.run('UPDATE prospects SET next_action_at=?, next_action_text=?, updated_at=? WHERE id=?', [next?.due_at ?? null, next?.title ?? null, nowIso(), ownerId]);
+      const converted=this.database.get<{client_account_id:string|null}>('SELECT client_account_id FROM prospects WHERE id=?',[ownerId]);if(converted?.client_account_id)this.syncLegacyNextAction('client',converted.client_account_id);
     } else {
       this.database.run('UPDATE client_accounts SET next_action_at=?, next_action_text=?, updated_at=? WHERE id=?', [next?.due_at ?? null, next?.title ?? null, nowIso(), ownerId]);
     }

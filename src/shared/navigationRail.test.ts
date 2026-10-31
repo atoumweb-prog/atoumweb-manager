@@ -11,3 +11,8 @@ describe('02A navigation references and visual preference',()=>{
  it('uses safe default when absent',()=>expect(readNavigationPreference({getItem:()=>null,setItem(){},removeItem(){}})).toEqual(defaultNavigationPreference()));
  it('writes only rail mode and ordered module references',()=>{let raw='';writeNavigationPreference({getItem:()=>null,setItem:(_k,v)=>{raw=v;},removeItem(){}},{...defaultNavigationPreference(),draft:'secret',timerId:'private'} as ReturnType<typeof defaultNavigationPreference>);expect(JSON.parse(raw)).toEqual(defaultNavigationPreference());});
 });
+
+describe('Folded navigation groups',()=>{
+ it('persists only known distinct group names',()=>{expect(normalizeNavigationPreference({...defaultNavigationPreference(),collapsedGroups:['Commercial','Commercial','private','Ressources']})).toEqual({...defaultNavigationPreference(),collapsedGroups:['Commercial','Ressources']});});
+ it('keeps the full destination reference list when every group folds',()=>{const p=normalizeNavigationPreference({...defaultNavigationPreference(),collapsedGroups:NAVIGATION_GROUPS});expect(p.collapsedGroups).toHaveLength(5);expect(NAVIGATION_MODULES).toHaveLength(17);});
+});

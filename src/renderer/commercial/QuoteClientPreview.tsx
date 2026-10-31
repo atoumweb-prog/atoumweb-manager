@@ -1,122 +1,20 @@
 import { useEffect, useState } from 'react';
-import type { QuoteDetail, QuoteLine } from '../../shared/commercial';
-import { ContractReadPanel } from './ContractReadPanel';
+import type { QuoteDetail } from '../../shared/commercial';
 import type { ContractPresentation } from '../../shared/contractPresentation';
+import { buildQuoteHtml } from '../../shared/quoteDocumentHtml';
+import { unsavedRegistry } from '../unsaved/unsaved';
 
-function money(cents: number): string {
-  return `${(cents / 100).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €`;
-}
-
-function date(value?: string | null): string {
-  if (!value) return '—';
-  return new Date(value).toLocaleDateString('fr-FR');
-}
-
-function stringList(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
-}
-
-function offerComponents(line: QuoteLine): Array<Record<string, unknown>> {
-  const value = line.snapshot?.offerComponents;
-  return Array.isArray(value) ? value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object') : [];
-}
-
-export function QuoteClientPreview({ quote, onClose }: { quote: QuoteDetail; onClose: () => void }) {
-  const [generating, setGenerating] = useState(false);
-  const [pdfPath, setPdfPath] = useState<string | null>(null);
-  const [pdfError, setPdfError] = useState<string | null>(null);
+export function QuoteClientPreview({quote,onClose}:{quote:QuoteDetail;onClose:()=>void}) {
   const [presentation,setPresentation]=useState<ContractPresentation|null>(null);
-
-  useEffect(() => {
-    let active = true;
-    const load = async () => {
-      try {
-        const next=await window.atoumweb.contractTerms.quotes.presentation(quote.id);
-        if (active) setPresentation(next);
-      } catch {
-        if (active) setPdfError('Consultation du contrat impossible. Aucun contenu de remplacement recalculé.');
-      }
-    };
-    void load();
-    return () => { active = false; };
-  }, [quote.id, quote.status, quote.finalizedAt, quote.contractCompiledAt, quote.updatedAt, quote.contractTextSnapshot]);
-
-  async function generatePdf(): Promise<void> {
-    setGenerating(true);
-    setPdfError(null);
-    try {
-      const result = await window.atoumweb.quotes.generatePdf(quote.id);
-      setPdfPath(result.path);
-    } catch (error) {
-      setPdfError(error instanceof Error ? error.message : 'Impossible de générer le PDF.');
-    } finally {
-      setGenerating(false);
-    }
-  }
-
-  return (
-    <div className="quote-preview-overlay" role="dialog" aria-modal="true" aria-label={`Prévisualisation ${quote.number}`}>
-      <div className="quote-client-preview">
-        <div className="quote-client-preview-toolbar">
-          <div><span className="eyebrow">Prévisualisation client</span><strong>{quote.number}</strong></div>
-          <div className="quote-client-preview-actions">
-            <button className="primary-button" disabled={generating} type="button" onClick={() => void generatePdf()}>{generating ? 'Génération…' : 'Générer le PDF'}</button>
-            <button className="secondary-button" type="button" onClick={onClose}>Fermer</button>
-          </div>
-        </div>
-        {pdfPath && <div className="quote-pdf-result"><strong>PDF créé</strong><span>{pdfPath}</span></div>}
-        {pdfError && <div className="quote-pdf-error">{pdfError}</div>}
-
-        <article className="quote-document">
-          <header className="quote-document-header">
-            <div><span className="quote-document-brand">ATOUMWEB</span><small>À chacun son site. Parlez-nous du vôtre.</small></div>
-            <div className="quote-document-meta"><strong>DEVIS</strong><span>{quote.number}</span><small>Créé le {date(quote.createdAt)}</small><small>Valable jusqu’au {date(quote.validUntil)}</small></div>
-          </header>
-
-          <section className="quote-document-recipient">
-            <span>Destinataire</span>
-            <strong>{quote.contractRecipientLabel??quote.ownerLabel}</strong>
-            <h1>{quote.subject}</h1>
-            {quote.needSummary && <p>{quote.needSummary}</p>}
-          </section>
-
-          <section className="quote-document-lines">
-            {quote.lines.map((line) => {
-              const included = offerComponents(line).filter((component) => !component.isOptional);
-              const optional = offerComponents(line).filter((component) => Boolean(component.isOptional) && typeof component.componentId !== 'string');
-              return (
-                <div className="quote-document-line" key={line.id}>
-                  <div className="quote-document-line-main">
-                    <div>
-                      <strong>{line.label}</strong>
-                      {line.description && <p>{line.description}</p>}
-                      {stringList(line.snapshot?.inclusions).length > 0 && <ul>{stringList(line.snapshot?.inclusions).map((item) => <li key={item}>{item}</li>)}</ul>}
-                      {included.length > 0 && <div className="quote-document-offer"><span>Comprend</span><ul>{included.map((component) => <li key={String(component.serviceVersionId)}>{String(component.serviceName)}{Number(component.quantityMilli ?? 1000) !== 1000 ? ` × ${(Number(component.quantityMilli) / 1000).toLocaleString('fr-FR')}` : ''}</li>)}</ul></div>}
-                      {optional.length > 0 && <div className="quote-document-options"><span>Options prévues dans l’offre</span><ul>{optional.map((component) => <li key={String(component.serviceVersionId)}>{String(component.serviceName)}</li>)}</ul></div>}
-                    </div>
-                    <div className="quote-document-line-price"><span>{((line.quantityMilli ?? 1000) / 1000).toLocaleString('fr-FR')} ×</span><strong>{money(line.contractLineValueCents)}</strong></div>
-                  </div>
-                </div>
-              );
-            })}
-          </section>
-
-          <section className="quote-document-total">
-            <div><span>Total</span><strong>{money(quote.contractValueCents)}</strong></div>
-            <div><span>{quote.initialPaymentQualification==='arrhes'?'Arrhes':'Acompte'} à la commande ({quote.depositPercent ?? 0} %)</span><strong>{money(quote.depositCents)}</strong></div>
-            <div><span>Solde</span><strong>{money(quote.balanceCents)}</strong></div>
-          </section>
-
-          <section className="quote-document-conditions">
-            <h2>Conditions</h2>
-            <div><span>Délai estimé</span><strong>{quote.estimatedDelay || 'À définir ensemble'}</strong></div>
-            {quote.prerequisitesText && <div><span>Prérequis</span><p>{quote.prerequisitesText}</p></div>}
-            {presentation&&<ContractReadPanel presentation={presentation} copy={false}/>}
-          </section>
-
-          <footer className="quote-document-footer"><strong>AtoumWeb</strong><span>www.atoumweb.fr</span></footer>
-        </article>
-      </div>
-    </div>
-  );
+  const [error,setError]=useState(''),[generating,setGenerating]=useState(false),[pdfPath,setPdfPath]=useState('');
+  useEffect(()=>{let active=true;setPresentation(null);setError('');setPdfPath('');
+    void window.atoumweb.contractTerms.quotes.presentation(quote.id).then(p=>{if(active)setPresentation(p);}).catch(e=>{if(active)setError(e instanceof Error?e.message:String(e));});return()=>{active=false;};
+  },[quote.id,quote.status,quote.finalizedAt,quote.contractCompiledAt,quote.updatedAt]);
+  async function generate(){if(generating)return;if(unsavedRegistry.active('quote:'+quote.id).length){setError('Enregistre ou annule les saisies avant de générer le PDF.');return;}
+    setGenerating(true);setError('');try{const result=await window.atoumweb.quotes.generatePdf(quote.id);setPdfPath(result.path);}catch(e){setError(e instanceof Error?e.message:String(e));}finally{setGenerating(false);}}
+  return <div className="quote-preview-overlay" role="dialog" aria-modal="true" aria-label={`Prévisualisation ${quote.number}`}><div className="quote-client-preview">
+    <div className="quote-client-preview-toolbar"><div><span className="eyebrow">Aperçu du devis et de son annexe</span><strong>{quote.number}</strong></div><div className="quote-client-preview-actions"><button className="primary-button" disabled={generating||!presentation} type="button" onClick={()=>void generate()}>{generating?'Génération…':'Générer le PDF'}</button><button className="secondary-button" type="button" onClick={onClose}>Fermer</button></div></div>
+    {pdfPath&&<div className="quote-pdf-result"><strong>PDF créé</strong><span>{pdfPath}</span></div>}{error&&<div role="alert" className="quote-pdf-error">{error}</div>}
+    {presentation?<><p className="quote-preview-help">Même contenu et modèle que le PDF. La pagination est appliquée lors de la génération.</p><iframe title={`Devis et annexe ${quote.number}`} className="quote-document-frame" sandbox="allow-same-origin" srcDoc={buildQuoteHtml(quote,presentation)}/></>:!error&&<p>Chargement du document enregistré…</p>}
+  </div></div>;
 }

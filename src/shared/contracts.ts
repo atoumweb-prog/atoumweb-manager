@@ -70,10 +70,12 @@ export interface AtoumWebApi {
   unsaved: {confirmExit(labels:string[],pending:boolean):boolean;publishState(state:import('./unsavedWindows').UnsavedWindowState):boolean};
   workflow: import('./workflow').WorkflowApi;
   app: {
+    openExternalUrl(url:string):Promise<void>;
     getBootstrap(): Promise<BootstrapState>;
     openProspectReferenceWindow(id: string): Promise<void>;
   };
   visualPreferences: import("./shellVisualPreferences").ShellVisualPreferencesApi;
+  quoteDocumentSettings: import('./quoteDocumentSettings').QuoteDocumentSettingsApi;
   settings: {
     setTheme(theme: ThemeName): Promise<ThemeName>;
     setDisplayDensity(density: DisplayDensity): Promise<DisplayDensity>;

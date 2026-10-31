@@ -1,0 +1,73 @@
+/* Shared quote journey: global registry and Prospect use the exact same composition. */
+.quote-journey [hidden]{display:none!important;}
+.quote-journey-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 20px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.quote-journey-tabs button{flex:1;min-width:150px;padding:12px;background:var(--surface-soft);color:var(--text);border:1px solid var(--border);border-radius:8px;font:inherit;font-weight:600;}
+html[data-theme] .quote-journey-tabs button[aria-selected=true]{background:#ffda29!important;color:#111!important;-webkit-text-fill-color:#111!important;border-color:#ffda29;}
+.quote-journey-footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:20px;border-top:1px solid var(--border);padding-top:16px;}
+.quote-extra-options{border:1px solid var(--border);border-radius:8px;padding:12px;margin:14px 0;background:var(--surface);}
+.quote-extra-options>summary{font-weight:600;cursor:pointer;}
+.quote-extra-options[open]>summary{margin-bottom:14px;}
+.quote-document-actions{border-block:1px solid var(--border);padding:12px 0;margin:12px 0;overflow-wrap:anywhere;}
+.quote-document-actions>div{display:flex;flex-wrap:wrap;gap:8px;}
+.clause-desk-header{display:flex;align-items:start;justify-content:space-between;gap:14px;margin:10px 0 18px;flex-wrap:wrap;}
+.clause-desk-header h3{margin:0;}.clause-desk-header p{margin:6px 0;}
+.clause-desk-layout{display:grid;grid-template-columns:170px minmax(0,1fr);gap:18px;align-items:start;}
+.clause-desk-outline{display:grid;gap:8px;}
+.clause-desk-outline button{display:flex;gap:8px;justify-content:space-between;text-align:left;padding:12px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text);font:inherit;}
+.clause-desk-outline button[aria-pressed=true]{background:var(--surface-soft);border-left:3px solid #ffda29;}
+.clause-desk-outline button:disabled{opacity:.55;}
+.clause-desk-document{border:1px solid var(--border);border-radius:9px;background:var(--surface-soft);min-width:0;padding:20px;}
+.clause-desk-document article>header{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:14px;}
+.clause-desk-document h3{margin:0 0 6px;}.clause-desk-document small{color:var(--text-muted);}
+.clause-desk-document label{display:grid;gap:7px;margin:12px 0;color:var(--text-muted);font-weight:500;}
+.clause-desk-picker select{font-size:15px;max-width:100%;}
+.clause-desk-body{white-space:pre-wrap;line-height:1.85;padding:18px 0;color:var(--text);font-size:16px;overflow-wrap:anywhere;}
+.clause-desk-document textarea{min-height:260px;line-height:1.75;font-size:16px;resize:vertical;}
+.clause-desk-document input{font-size:16px;}
+.clause-desk-pagination{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+.clause-desk-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
+.clause-desk-options{margin-top:12px;}
+.contract-clause-desk>section[aria-label="Comparaison des CGV"],.contract-clause-desk>.cgv-library,.contract-clause-desk>.cgv-particular{margin:12px 0;padding:16px;border:1px solid var(--border);border-radius:8px;}
+.contract-clause-desk>section[aria-label="Comparaison des CGV"] pre{white-space:pre-wrap;overflow-wrap:anywhere;}
+.contract-clause-desk .cgv-custom-form textarea{min-height:130px;}
+.preparation-section-tabs{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0;}
+.preparation-section-tabs button[aria-pressed=true]{box-shadow:inset 0 -3px #ffda29;}
+.quote-contract-preparation.preparation-compact fieldset>details,.quote-contract-preparation.preparation-compact>details[data-contract-section]{display:none;}
+.quote-contract-preparation.preparation-compact[data-active-section="client"] [data-contract-section="client"]{display:block;}
+.quote-contract-preparation.preparation-compact[data-active-section="payment"] [data-contract-section="payment"]{display:block;}
+.quote-contract-preparation.preparation-compact[data-active-section="execution"] [data-contract-section="execution"]{display:block;}
+.quote-contract-preparation.preparation-compact[data-active-section="rights"] [data-contract-section="rights"]{display:block;}
+.quote-contract-preparation.preparation-compact[data-active-section="renewal"] [data-contract-section="renewal"]{display:block;}
+.quote-contract-preparation.preparation-compact[data-active-section="qualification"] [data-contract-section="qualification"]{display:block;}
+.quote-contract-preparation.preparation-compact[data-active-section="annexes"] [data-contract-section="annexes"]{display:block;}
+.quote-contract-preparation.preparation-compact[data-active-section="proofs"] [data-contract-section="proofs"]{display:block;}
+.quote-contract-preparation.preparation-compact[data-active-section="administration"] [data-contract-section="administration"]{display:block;}
+.quote-contract-preparation.preparation-compact[data-active-section="consumer"] [data-contract-section="consumer"]{display:block;}
+.quote-contract-preparation.preparation-compact[data-active-section="rsvp"] [data-contract-section="rsvp"]{display:block;}
+.preparation-compact fieldset>details[open]{border:0;background:transparent;padding:0;}
+.preparation-compact fieldset>details>summary{display:none;}
+.preparation-compact .contract-default-facts{margin:12px 0;}
+.preparation-compact [data-contract-section=administration][open]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.preparation-compact [data-contract-section=administration]>summary,.preparation-compact [data-contract-section=administration]>p,.preparation-compact [data-contract-section=administration]>button{grid-column:1/-1;}
+.app-shell .quote-detail-panel:has(.quote-journey){width:min(1120px,calc(100vw - 300px));}
+.app-shell .quote-detail-panel.expanded:has(.quote-journey){width:auto;}
+.quote-journey .quote-status-actions{margin-top:20px;}
+.quote-journey .quote-status-actions>.quote-finalization-check{flex-basis:100%;}
+.quote-journey .quote-lines{margin:0 0 16px;}
+.quote-detail-panel:has(.quote-journey)>.detail-panel-heading{padding-block:8px;min-height:0;}
+.quote-detail-panel:has(.quote-journey)>.detail-panel-heading h2{margin:5px 0;font-size:22px;}
+.quote-detail-panel:has(.quote-journey)>.detail-panel-heading p{margin:5px 0;}
+.quote-detail-panel:has(.quote-journey)>.detail-badges{margin:6px 0;}
+.quote-detail-panel:has(.quote-journey)>.quote-preview-button{margin:6px 0;padding:8px 12px;}
+@media(max-width:1000px){.clause-desk-layout{grid-template-columns:1fr;}.clause-desk-outline{grid-template-columns:repeat(3,minmax(0,1fr));}.app-shell .quote-detail-panel:has(.quote-journey){width:calc(100vw - 40px);}.clause-desk-document{padding:14px;}}
+@media(max-width:650px){.quote-journey-tabs button{min-width:0;padding:10px 6px;font-size:13px;}.clause-desk-outline{grid-template-columns:1fr;}.preparation-compact [data-contract-section=administration][open]{grid-template-columns:1fr;}}
+.quote-document-frame{display:block;width:100%;height:calc(100vh - 220px);min-height:450px;background:#fff;border:1px solid #d6dce2;border-radius:5px;}
+.quote-preview-help{margin:0;padding:10px 16px;font-size:12px;color:#535d67;background:#f5f6f7;}
+.app-shell .quote-client-preview-toolbar .primary-button{background:#ffda00!important;color:#111!important;-webkit-text-fill-color:#111!important;border-color:#ffda00!important;}
+
+.quote-line-parameters .quote-scope-reference{grid-column:1/-1;}
+.quote-line-parameters .quote-scope-reference p{font-size:13px;}
+.quote-line-parameters textarea{min-height:80px;}
+.quote-line-parameters .quote-line-editor-grid{min-width:0;}
+.quote-line-parameters .quote-line-editor-grid>label{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0;}
+.quote-line-parameters .quote-line-editor-grid>label>input:not([type=checkbox]),.quote-line-parameters .quote-line-editor-grid>label>select,.quote-line-parameters .quote-line-editor-grid>label>textarea{width:100%;min-width:0;max-width:100%;box-sizing:border-box;}

@@ -79,6 +79,7 @@ export interface ProspectResearchOpportunity {
 }
 
 export interface ProspectResearchSnapshotInput {
+  activityArea?: string | null;
   checkedAt?: string | null;
   source?: string | null;
   sourceUrl?: string | null;
@@ -122,6 +123,7 @@ export interface ProspectResearchSnapshotInput {
   };
   opportunities?: ProspectResearchOpportunity[];
   conversation?: {
+    objective?: string | null;
     strengths?: string | null;
     issues?: string | null;
     talkingPoints?: string | null;
@@ -133,6 +135,7 @@ export interface ProspectResearchSnapshotInput {
 export interface ProspectResearchSnapshot extends ProspectResearchSnapshotInput {
   id: string;
   prospectId: string;
+  sharedFromProspectId?:string|null;
   checkedAt: string;
   createdAt: string;
 }
@@ -157,11 +160,15 @@ export interface DirectoryOrganization extends Organization {
 }
 
 export interface ContactInput {
+  addressLine1?:string|null;addressLine2?:string|null;postalCode?:string|null;city?:string|null;country?:string|null;
   organizationId?: string | null; firstName: string; lastName: string; jobTitle?: string | null; email?: string | null; phone?: string | null; preferredChannel?: string | null; notes?: string | null;
 }
 export interface Contact extends ContactInput { id: string; createdAt: string; updatedAt: string; archivedAt?: string | null; }
 
+export interface OrganizationContactLink {organizationId:string;contactId:string;organizationName:string;jobTitle:string|null;archivedAt:string|null;}
 export interface DirectoryContact extends Contact {
+  organizationLinks?:OrganizationContactLink[];
+  legacyJobTitle?:string|null;
   organizationName?: string | null;
   activeProspectCount: number;
   activeClientCount: number;
@@ -172,7 +179,17 @@ export interface DirectoryContact extends Contact {
 
 export interface ClientContactLink { id: string; clientAccountId: string; contactId: string; role: ClientContactRole; isPrimary: boolean; contact: Contact; }
 
+export interface CrmReconciliation {id:string;ownerType:string;ownerId:string;field:string;legacyValue:string;disposition:string;methodsJson:string;createdAt:string;}
+export interface ProspectCreation {
+  operationId:string;
+  organizationId?:string|null; organization?:OrganizationInput;
+  contactId?:string|null; contact?:ContactInput;
+  prospect: Omit<ProspectInput,'organizationId'|'contactId'>;
+  research?:ProspectResearchSnapshotInput;
+  firstAction?:{title:string;dueAt?:string|null};
+}
 export interface ProspectInput {
+  initialRequest?:string|null;
   organizationId?: string | null; contactId?: string | null; stage?: ProspectStage; temperature?: ProspectTemperature; source?: ProspectSource | null; sourceDetail?: string | null;
   originType?: ProspectOrigin | null; prospectingStartedAt?: string | null; qualificationValidatedAt?: string | null;
   targetingReasonCode?: string | null; targetingReasonText?: string | null; initialObservation?: string | null; detectedOpportunity?: string | null;
@@ -195,6 +212,7 @@ export interface ProspectInput {
 }
 export interface ProspectSummary extends ProspectInput {
   id: string; clientAccountId?: string | null; lostReason?: string | null; wonAt?: string | null; lostAt?: string | null; createdAt: string; updatedAt: string; archivedAt?: string | null;
+  lastExchangeAt?:string|null; proposedServices?:string|null; legacyBriefJson?:string|null; confirmedBriefAt?:string|null;
   displayName: string; secondaryLabel?: string | null;
   organizationIndustry?: string | null;
   organizationCity?: string | null;
@@ -213,8 +231,7 @@ export interface ProspectQualificationBrief {
   firstContactResultCode: string | null;
   firstContactResultText: string | null;
   interestLevel: ProspectInput['interestLevel'];
-  projectSummary: string | null;
-  projectContext: string | null;
+  initialRequest: string | null;
 }
 
 export function prospectQualificationBriefSnapshot(prospect: Partial<ProspectInput>): ProspectQualificationBrief {
@@ -227,8 +244,7 @@ export function prospectQualificationBriefSnapshot(prospect: Partial<ProspectInp
     firstContactResultCode: prospect.firstContactResultCode ?? null,
     firstContactResultText: prospect.firstContactResultText ?? null,
     interestLevel: prospect.interestLevel ?? null,
-    projectSummary: prospect.projectSummary ?? null,
-    projectContext: prospect.projectContext ?? null,
+    initialRequest: prospect.initialRequest ?? null,
   };
 }
 
@@ -273,6 +289,7 @@ export interface ClientSummary extends ClientInput {
 export interface ClientFilters { status?: ClientStatus | null; includeArchived?: boolean; search?: string | null; }
 
 export interface CrmActionInput {
+  operationId?:string;
   ownerType: CrmActionOwnerType;
   ownerId: string;
   type: CrmActionType;
@@ -305,6 +322,7 @@ export interface ConvertProspectResult { prospectId: string; clientId: string; c
 
 export interface CrmApi {
   directory: {
+    reconciliation(owner:string,id:string):Promise<CrmReconciliation[]>;
     saveExisting(input:ExistingIdentityWrite):Promise<{organization?:DirectoryOrganization;contact?:DirectoryContact}>;
     saveOrganization(input:OrganizationInput,context:DirectoryWrite<OrganizationInput>):Promise<DirectoryOrganization>;
     saveContact(input:ContactInput,context:DirectoryWrite<ContactInput>):Promise<DirectoryContact>;
@@ -327,12 +345,18 @@ export interface CrmApi {
     createAndAttachDecisionProspect(prospectId: string, input: ContactInput): Promise<Contact>;
     update(id: string, input: ContactInput): Promise<Contact>;
   };
+  organizationContacts: {
+    list(contactId:string):Promise<OrganizationContactLink[]>;
+    save(organizationId:string,contactId:string,expected:{jobTitle:string|null;archivedAt:string|null}|null,next:{jobTitle:string|null;archivedAt:string|null}):Promise<OrganizationContactLink[]>;
+  };
   contactMethods: {
     list(owner: 'organization' | 'contact', id: string, includeArchived?: boolean): Promise<ContactMethod[]>;
-    save(input: ContactMethodInput, id?: string): Promise<ContactMethod>;
-    archive(id: string, archived?: boolean): Promise<void>;
+    save(input: ContactMethodInput, id?: string,expected?:ContactMethod): Promise<ContactMethod>;
+    archive(id: string, archived?: boolean,expected?:ContactMethod): Promise<void>;
   };
   identityAssets: {
+    chooseDraft():Promise<{token:string;preview:string;name:string}|null>;
+    attachDraft(token:string,owner:CrmIdentityOwnerType,id:string):Promise<CrmIdentityAsset|null>;
     list(owner: CrmIdentityOwnerType, id: string): Promise<CrmIdentityAsset[]>;
     importFile(owner: CrmIdentityOwnerType, id: string, role: CrmIdentityAssetRole): Promise<CrmIdentityAsset | null>;
     preview(assetId: string): Promise<CrmIdentityAssetPreview>;
@@ -341,6 +365,9 @@ export interface CrmApi {
   prospects: {
     list(filters?: ProspectFilters): Promise<ProspectSummary[]>;
     create(input: ProspectInput): Promise<ProspectSummary>;
+    createAtomic(input:ProspectCreation):Promise<ProspectSummary>;
+    patchIfUnchanged(id:string,expected:Partial<ProspectInput>,patch:Partial<ProspectInput>):Promise<ProspectSummary>;
+    updateTemperature(id:string,expected:ProspectSummary['temperature'],next:NonNullable<ProspectSummary['temperature']>):Promise<ProspectSummary>;
     update(id: string, input: ProspectInput): Promise<ProspectSummary>;
     updateQualification(id: string, input: Partial<ProspectInput>): Promise<ProspectSummary>;
     /** Atomically reject stale checklist writes from another window. */
@@ -352,7 +379,11 @@ export interface CrmApi {
     changeStage(id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification?: boolean): Promise<ProspectSummary>;
     setNextAction(id: string, at: string | null, text: string | null): Promise<ProspectSummary>;
     convertToClient(id: string): Promise<ConvertProspectResult>;
+    saveWebsite(id:string,version:string,expectedWebsite:string|null,presence:'present'|'absent'|'review',url:string|null):Promise<ProspectSummary>;
     research: {
+      adoptOpportunity(id:string,snapshotId:string,index:number,expected:string|null):Promise<ProspectSummary>;
+      context(id:string):Promise<{draft:ProspectResearchSnapshotInput;version:string;history:ProspectResearchSnapshot[]}>;
+      saveIfUnchanged(id:string,version:string,input:ProspectResearchSnapshotInput):Promise<ProspectResearchSnapshot>;
       list(id: string): Promise<ProspectResearchSnapshot[]>;
       save(id: string, input: ProspectResearchSnapshotInput): Promise<ProspectResearchSnapshot>;
     };
@@ -361,11 +392,13 @@ export interface CrmApi {
     list(filters?: ClientFilters): Promise<ClientSummary[]>;
     create(input: ClientInput): Promise<ClientSummary>;
     update(id: string, input: ClientInput): Promise<ClientSummary>;
+    updateStatus(id:string,expected:ClientStatus,next:ClientStatus):Promise<ClientSummary>;
+    scheduleAction(id:string,expected:{at:string|null;text:string|null},next:{at:string;text:string}|null):Promise<ClientSummary>;
     updateRelationshipIfUnchanged(id:string,expected:{status:ClientRelationshipStatus;note:string|null},next:{status:ClientRelationshipStatus;note:string|null}):Promise<ClientSummary>;
     archive(id: string): Promise<ClientSummary>;
     reactivate(id: string, status: Exclude<ClientStatus, 'archived'>): Promise<ClientSummary>;
     listContacts(id: string): Promise<ClientContactLink[]>;
-    addContact(id: string, input: ContactInput, role: ClientContactRole, makePrimary?: boolean): Promise<ClientContactLink>;
+    addContact(id: string, input: ContactInput, role: ClientContactRole, makePrimary?: boolean,existingContactId?:string): Promise<ClientContactLink>;
     setPrimaryContact(id: string, contactId: string): Promise<void>;
   };
   actions: {

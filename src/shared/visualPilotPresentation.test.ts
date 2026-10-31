@@ -20,7 +20,7 @@ describe('Real visual pilot: icons and registered table preferences',()=>{
  it('projects old or corrupt column preferences to the real schema with mandatory identity/open',()=>{
   const store=memory(),key=tableViewKey(scope);store.setItem(key,JSON.stringify({version:1,columnOrder:['retired','city','city'],visibleColumnIds:['city'],widths:{city:900,retired:300},sort:{columnId:'retired',direction:'asc'},selectedId:'secret',query:'private'}));
   const result=readTableView(store,key,[],[],columns);
-  expect(result.columnOrder).toEqual(['city','identity','industry','contact','status','open']);expect(result.visibleColumnIds).toEqual(['identity','city','open']);expect(result.widths).toEqual({city:600});expect(result.sort).toBeNull();
+  expect(result.columnOrder).toEqual(['city','identity','next_action','due','industry','contact','status','open']);expect(result.visibleColumnIds).toEqual(['identity','city','open']);expect(result.widths).toEqual({city:600});expect(result.sort).toBeNull();
  });
  it('persists a real personal view without record identity, query, draft or filtering data',()=>{
   const store=memory(),key=tableViewKey(scope),view={...defaultTableView(columns),sort:{columnId:'city',direction:'asc' as const},query:'PRIVATE',selectedId:'record-id',note:'draft',status:'CUSTOMER',category:'PRIVATE'};

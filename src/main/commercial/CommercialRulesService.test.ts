@@ -11,6 +11,24 @@ import type { CommercialVersionRules } from '../../shared/commercialRules';
 let db:NodeSqliteAdapter, catalog:CatalogService, quotes:QuoteService, rules:CommercialRulesService, terms:ContractTermsService, prospect:string;
 beforeEach(()=>{db=new NodeSqliteAdapter(':memory:');db.exec('PRAGMA foreign_keys=ON');applyPendingMigrations(db);const crm=new CrmService(db);catalog=new CatalogService(db);terms=new ContractTermsService(db);quotes=new QuoteService(db,crm,terms);rules=new CommercialRulesService(db);prospect=crm.createProspect({organizationId:crm.createOrganization({name:'TEST règles'}).id,primaryNeed:'Recette'}).id;});
 afterEach(()=>db.close());
+it('exige un périmètre et des exclusions autonomes pour une référence annuelle elliptique, puis conserve les engagements propres à la ligne',()=>{
+ const monthly=catalog.create({type:'service',name:'TEST mensuel'},{priceMode:'fixed',priceCents:1000,inclusions:['Mises à jour et sauvegardes'],exclusions:['Refonte exclue']});catalog.publishVersion(monthly.versions[0].id);
+ const annual=catalog.create({type:'service',name:'TEST annuel'},{priceMode:'fixed',priceCents:11000,inclusions:['Même périmètre que mensuel'],exclusions:['Mêmes exclusions']});catalog.publishVersion(annual.versions[0].id);
+ let q=quotes.addCatalogLine(quotes.create({prospectId:prospect,subject:'TEST annuel'}).id,annual.versions[0].id),line=q.lines[0];expect(rules.issues(q)).toHaveLength(2);
+ q=quotes.setLineParameters(line.id,{scope:'Mises à jour et sauvegardes',scopeExclusions:'Refonte exclue',scopeReference:{versionId:monthly.versions[0].id,label:'TEST mensuel',versionNumber:1},contractNature:'continuous',contractEvent:'Après validation écrite de la mise en ligne',serviceDuration:'12 mois',renewalTerms:'Fin au terme, sans renouvellement automatique'});
+ expect(rules.issues(q)).toEqual([]);expect(q.lines[0].snapshot?.inclusions).toEqual(['Même périmètre que mensuel']);
+ const p=terms.presentation(q.id);expect(p.text).toContain('Mises à jour et sauvegardes');expect(p.text).not.toContain('Mêmes exclusions');expect(p.text).toContain('12 mois');expect(p.text).toContain('sans renouvellement automatique');
+ expect(p.text).not.toContain('Fourniture : Continue');expect(p.text).toContain('service continu');
+ const changed=catalog.createVersion(monthly.id,{priceMode:'fixed',priceCents:3000,inclusions:['AUTRE PÉRIMÈTRE']});catalog.publishVersion(changed.id);expect(terms.presentation(q.id).text).not.toContain('AUTRE PÉRIMÈTRE');
+ const copy=quotes.duplicate(q.id);expect(copy.lines[0].parameters?.scope).toBe('Mises à jour et sauvegardes');expect(copy.lines[0].parameters?.scopeReference?.versionId).toBe(monthly.versions[0].id);
+ expect(()=>quotes.setLineParameters(line.id,{productCount:{kind:'additional',count:-1}})).toThrow(/produits/);expect(quotes.get(q.id).lines[0].parameters?.scope).toBe('Mises à jour et sauvegardes');
+});
+it('conserve une réalisation ponctuelle avec un événement objectif et ne fabrique pas de calendrier',()=>{
+ const v=service('AW-TEST-DELAI',10000);let q=quotes.addCatalogLine(quotes.create({prospectId:prospect,subject:'TEST date'}).id,v),l=q.lines[0];
+ q=quotes.setLineParameters(l.id,{contractNature:'one_off'});expect(rules.issues(q)).toEqual([expect.stringContaining('événement')]);
+ quotes.updateLine(l.id,{...l,quantityMilli:51000});
+ q=quotes.setLineParameters(l.id,{contractNature:'one_off',contractEvent:'Après accord écrit sur la maquette',productCount:{kind:'additional',count:51}});expect(rules.issues(q)).toEqual([]);expect(q.lines[0].parameters?.acceptedDeadline).toBeUndefined();
+});
 function service(code:string, price:number, configuration?:CommercialVersionRules) {
   const item=catalog.create({type:'service',name:code,canonicalCode:code},{priceMode:'fixed',priceCents:price,abbyLabel:`Abby ${code}`,unit:'image'});
   const version=item.versions[0];if(configuration)rules.configure(version.id,configuration,{decision:'TEST explicite'});catalog.publishVersion(version.id);return version.id;

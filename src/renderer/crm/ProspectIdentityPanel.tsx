@@ -1,3 +1,8 @@
+import {ProspectWebsitePanel} from './ProspectWebsitePanel';
+import {ContactSummaryCard} from './ContactSummaryCard';
+import {ProspectDecisionEditor} from './ProspectDecisionEditor';
+import {ProspectPrimaryContact} from './ProspectPrimaryContact';
+import {ProspectValue} from './ProspectValue';
 import { openEntity } from '../workflow/DossierPanel';
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useRef, useState } from 'react';
@@ -51,13 +56,15 @@ function cleanError(error: unknown): string {
     .trim();
 }
 
-export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { prospect: ProspectSummary; onSaved: () => void; focusRequest?: { target: 'decision' | 'contact'; sequence: number } | null }) {
+export function ProspectIdentityPanel({ prospect, onSaved, focusRequest, directoryLinks = true, section = 'all' }: { section?:'all'|'company'|'contacts'; directoryLinks?: boolean; prospect: ProspectSummary; onSaved: () => void; focusRequest?: { target: 'decision' | 'contact'; sequence: number } | null }) {
   const identityBaseline=useRef<WorkflowIdentity|null>(null);
+  const decisionBaseline=useRef({decisionStatus:prospect.decisionStatus??null,decisionMakerContactId:prospect.decisionMakerContactId??null,decisionMakerDetails:prospect.decisionMakerDetails??null});
   const [identity, setIdentity] = useState<WorkflowIdentity | null>(null);
   const [decision, setDecision] = useState<DecisionDraft>(() => decisionFromIdentity(prospect));
   const [decisionContactId, setDecisionContactId] = useState('');
   const [primaryDraft, setPrimaryDraft] = useState<PrimaryDraft>({ firstName: '', lastName: '', role: '' });
   const [editing, setEditing] = useState(false);
+  const [editPart,setEditPart]=useState<'organization'|'contact'>('organization');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   // Après une réponse IPC partielle, réutiliser les contacts effectivement créés
@@ -70,7 +77,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
 
   useEffect(() => {
     if (!focusRequest) return;
-    if (focusRequest.target === 'decision') setEditing(true);
+    if (focusRequest.target === 'decision') {setEditPart('contact');setEditing(true);}
     window.setTimeout(() => {
       const field = focusRequest.target === 'decision' ? document.getElementById('prospect-decision-field') : document.querySelector<HTMLElement>('.prospect-detail-v2 .contact-methods-panel');
       if (field instanceof HTMLDetailsElement) field.open = true;
@@ -95,11 +102,12 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
     };
   }
 
-  async function load(){const sequence=++loadSequence.current;try{const next=await window.atoumweb.workflow.identity('prospect',prospect.id);const separate=next.decisionMaker&&next.decisionMaker.id!==next.contact?.id?next.decisionMaker:null;const contact=prospect.decisionStatus==='no'?separate?.id??'':'';const base=decisionFromIdentity(prospect,next);const nextDecision=contact?await draftFromContact(contact,base,next):base;const primary=next.contact?{firstName:next.contact.firstName,lastName:next.contact.lastName,role:next.contact.jobTitle??''}:{firstName:'',lastName:'',role:''};if(sequence!==loadSequence.current)return;if(!guard.dirty){identityBaseline.current=structuredClone(next);guard.initial({organization:next.organization,contact:next.contact,decision:nextDecision,decisionContactId:contact,primaryDraft:primary});setIdentity(next);setPrimaryDraft(primary);setDecisionContactId(contact);setDecision(nextDecision);}}catch(e){if(sequence===loadSequence.current)setError(cleanError(e));}}
+  async function load(){const sequence=++loadSequence.current;try{const next=await window.atoumweb.workflow.identity('prospect',prospect.id);const separate=next.decisionMaker&&next.decisionMaker.id!==next.contact?.id?next.decisionMaker:null;const contact=prospect.decisionStatus==='no'?separate?.id??'':'';const base=decisionFromIdentity(prospect,next);const nextDecision=contact?await draftFromContact(contact,base,next):base;const primary=next.contact?{firstName:next.contact.firstName,lastName:next.contact.lastName,role:next.contact.jobTitle??''}:{firstName:'',lastName:'',role:''};if(sequence!==loadSequence.current)return;if(!guard.dirty){decisionBaseline.current={decisionStatus:prospect.decisionStatus??null,decisionMakerContactId:prospect.decisionMakerContactId??null,decisionMakerDetails:prospect.decisionMakerDetails??null};identityBaseline.current=structuredClone(next);guard.initial({organization:next.organization,contact:next.contact,decision:nextDecision,decisionContactId:contact,primaryDraft:primary});setIdentity(next);setPrimaryDraft(primary);setDecisionContactId(contact);setDecision(nextDecision);}}catch(e){if(sequence===loadSequence.current)setError(cleanError(e));}}
 
   useEffect(() => { setEditing(false);void load();return()=>{loadSequence.current++;}; }, [prospect.id]);
   useEffect(() => { if (identity) void load(); }, [prospect.updatedAt]);
 
+  useEffect(()=>{const changed=()=>void load();window.addEventListener('atoumweb:changed',changed);return()=>window.removeEventListener('atoumweb:changed',changed);},[prospect.id,guard.dirty]);
   const decisionEmail = validateEmail(decision.email);
   const decisionPhone = validatePhone(decision.phone);
 
@@ -196,16 +204,12 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
         }
       }
 
-      await window.atoumweb.crm.prospects.updateQualification(prospect.id, {
+      await window.atoumweb.crm.prospects.patchIfUnchanged(prospect.id,creatingDecisionContact?{...decisionBaseline.current,decisionStatus:'no',decisionMakerContactId}:decisionBaseline.current, {
         decisionStatus: decision.status ?? null,
         decisionMakerContactId,
         decisionMakerDetails: decision.status === 'yes'
           ? null
           : decision.details.trim() || (decision.status === 'no' ? 'Décisionnaire identifié dans les Contacts' : null),
-        decisionMakerName: null,
-        decisionMakerRole: null,
-        decisionMakerEmail: null,
-        decisionMakerPhone: null,
       });
       guard.saved();setEditing(false); await load(); onSaved();
       window.dispatchEvent(new Event('atoumweb:changed'));
@@ -226,7 +230,7 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
   }
 
   if (!identity) return <section className="prospect-work-section"><p className="muted">Chargement des informations…</p></section>;
-  const address = identity.organization ? [identity.organization.addressLine1, identity.organization.postalCode, identity.organization.city].filter(Boolean).join(' · ') : '';
+  const address = identity.organization ? [identity.organization.addressLine1,identity.organization.addressLine2, identity.organization.postalCode, identity.organization.city,identity.organization.country].filter(Boolean).join(' · ') : '';
   const decisionLabel = decision.status === 'yes'
     ? identity.contact ? `${identity.contact.firstName} ${identity.contact.lastName} · interlocuteur principal` : 'Interlocuteur principal à renseigner'
     : decision.status === 'no'
@@ -246,21 +250,22 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
         : `${contact.jobTitle || 'Contact'} · ${contact.firstName} ${contact.lastName}`,
   }));
 
-  return <section className="prospect-work-section identity-panel-v2">
-    <div className="identity-directory-links">{identity.organization&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'organization',entityId:identity.organization!.id,title:identity.organization!.name})}>Ouvrir l’organisation dans l’Annuaire</button>}{identity.contact&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'contact',entityId:identity.contact!.id,title:identity.contact!.firstName+' '+identity.contact!.lastName})}>Ouvrir le contact dans l’Annuaire</button>}</div>
-    <div className="work-section-heading"><div><span className="eyebrow">Entreprise & interlocuteur</span><strong>{identity.organization?.industry || identity.contact?.jobTitle || 'Informations principales'}</strong></div><button className="secondary-button compact-button" type="button" onClick={() => setEditing((value) => !value)}>{editing ? 'Fermer' : 'Modifier'}</button></div>
+  return <section data-identity-section={section} className="prospect-work-section identity-panel-v2">
+    {directoryLinks&&<div className="identity-directory-links">{identity.organization&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'organization',entityId:identity.organization!.id,title:identity.organization!.name})}>Ouvrir l’organisation dans l’Annuaire</button>}{identity.contact&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'contact',entityId:identity.contact!.id,title:identity.contact!.firstName+' '+identity.contact!.lastName})}>Ouvrir le contact dans l’Annuaire</button>}</div>}
+    <div className="work-section-heading"><div><span className="eyebrow">{section==='company'?'Entreprise':'Contacts et décideur'}</span><strong>{identity.organization?.industry || identity.contact?.jobTitle || 'Informations principales'}</strong></div><div className="button-row">{!editing?<>{section!=='contacts'&&<button className="secondary-button" type="button" onClick={()=>{setEditPart('organization');setEditing(true);}}>Modifier l'entreprise</button>}{section!=='company'&&<button className="secondary-button" type="button" onClick={()=>{setEditPart('contact');setEditing(true);}}>Identité et fonction du contact principal</button>}</>:<button className="secondary-button" type="button" disabled={busy} onClick={()=>guard.request(()=>{guard.discard();setEditing(false);})}>Annuler la modification</button>}</div></div>
     {!editing && <div className="identity-summary-grid">
-      {identity.organization && <><div><span>Société</span><strong>{identity.organization.name}</strong></div><div><span>Activité</span><strong>{identity.organization.industry || 'À préciser'}</strong></div>{identity.organization.website && <div><span>Site web</span><strong>{displayWebUrl(identity.organization.website)}</strong></div>}{address && <div className="identity-wide"><span>Adresse</span><strong>{address}</strong></div>}{identity.organization.notes && <div className="identity-wide"><span>Description</span><strong>{identity.organization.notes}</strong></div>}</>}
-      {identity.contact ? <><div><span>Interlocuteur principal</span><strong>{identity.contact.firstName} {identity.contact.lastName}</strong></div><div><span>Fonction</span><strong>{identity.contact.jobTitle || 'À préciser'}</strong></div></> : <div className="identity-wide"><span>Interlocuteur principal</span><strong>Aucun interlocuteur renseigné</strong><small>Utilise « Modifier » pour l’ajouter sans recréer le prospect.</small></div>}
-      <div className="identity-wide decision-summary"><span>Décisionnaire</span><strong>{decisionLabel}</strong>{decision.details && decision.details !== 'Décisionnaire identifié dans les Contacts' && <small>{decision.details}</small>}</div>
+      {section!=='contacts'&&identity.organization && <><div><span>Société</span><strong>{identity.organization.name}</strong></div><div><span>Activité</span><strong>{identity.organization.industry || 'À préciser'}</strong></div><div><span>Adresse</span><strong>{address||'À renseigner'}</strong></div><div><span>Raison sociale</span><strong>{identity.organization.legalName||'À renseigner'}</strong></div><div><span>SIRET</span><strong>{identity.organization.siret||'À renseigner'}</strong></div>{identity.organization.notes && <div className="identity-wide"><span>Description</span><strong>{identity.organization.notes}</strong></div>}</>}
+      {section!=='company'&&(identity.contact ? <><div><span>Interlocuteur principal</span><strong>{identity.contact.firstName} {identity.contact.lastName}</strong></div><div><span>Fonction</span><strong>{identity.contact.jobTitle || 'À préciser'}</strong></div></> : <div className="identity-wide"><span>Interlocuteur principal</span><strong>Aucun interlocuteur renseigné</strong><small>Utilise « Modifier » pour l’ajouter sans recréer le prospect.</small></div>)}
+      <div hidden={section==='company'} className="identity-wide decision-summary"><span>Décisionnaire</span><strong>{decisionLabel}</strong>{decision.details && decision.details !== 'Décisionnaire identifié dans les Contacts' && <small>{decision.details}</small>}</div>
     </div>}
-    {editing && <div className="workflow-fields identity-editor-v2">
-      <div className="form-span-2"><CrmIdentityAssetEditor organizationId={identity.organization?.id} contactId={identity.contact?.id} /></div>
+    {editing && <div className="workflow-fields identity-editor-v2" data-edit-part={editPart}>
+      <div className="identity-part form-span-2" hidden={editPart!=='organization'}><div className="workflow-fields">      <div className="form-span-2"><CrmIdentityAssetEditor organizationId={identity.organization?.id} contactId={identity.contact?.id} /></div>
       {identity.organization && <>
         <label>Société <FieldHelp text="Nom usuel de la société ou de la structure commerciale." /><input value={identity.organization.name} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, name: e.target.value } })} disabled={busy} /></label>
         <label>Activité / type de structure <FieldHelp text="Permet d’identifier rapidement le métier : artisan, restaurant, commerçant, association, profession libérale…" /><input value={identity.organization.industry ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, industry: e.target.value } })} placeholder="Ex. artisan cirier, restaurant, commerce…" disabled={busy} /></label>
         <label className="form-span-2">Description de l’activité <FieldHelp text="Quelques mots sur l’activité, le positionnement et ce que fait l’entreprise. Utile pour préparer la prospection et le devis." /><textarea value={identity.organization.notes ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, notes: e.target.value } })} disabled={busy} /></label>
-        <label>Site web <FieldHelp text="Tu peux saisir simplement exemple.fr. Le Manager ajoute https:// automatiquement. Si le site fonctionne volontairement en http://, saisis-le explicitement." /><input inputMode="url" value={displayWebUrl(identity.organization.website)} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, website: e.target.value } })} placeholder="exemple.fr" disabled={busy} /></label>
+
+        <label>Raison sociale<input value={identity.organization.legalName??''} onChange={e=>setIdentity({...identity,organization:{...identity.organization!,legalName:e.target.value}})} disabled={busy}/></label><label>SIRET<input value={identity.organization.siret??''} onChange={e=>setIdentity({...identity,organization:{...identity.organization!,siret:e.target.value}})} disabled={busy}/></label>
         <label>Adresse<input value={identity.organization.addressLine1 ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, addressLine1: e.target.value } })} disabled={busy} /></label>
         <label>Complément d’adresse<input value={identity.organization.addressLine2 ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, addressLine2: e.target.value } })} disabled={busy} /></label>
         <label>Code postal<input value={identity.organization.postalCode ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, postalCode: e.target.value } })} disabled={busy} /></label>
@@ -268,7 +273,8 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
         <label>Pays<input value={identity.organization.country ?? ''} onChange={(e) => setIdentity({ ...identity, organization: { ...identity.organization!, country: e.target.value } })} disabled={busy} /></label>
       </>}
 
-      <div className="form-span-2"><span className="eyebrow">Interlocuteur principal</span></div>
+</div></div>
+      <div className="identity-part form-span-2" hidden={editPart!=='contact'}><div className="workflow-fields">      <div className="form-span-2"><span className="eyebrow">Interlocuteur principal</span></div>
       <label id="prospect-contact-field">Prénom interlocuteur<input value={primaryDraft.firstName} onChange={(e) => setPrimaryDraft({ ...primaryDraft, firstName: e.target.value })} placeholder="Prénom" disabled={busy} /></label>
       <label>Nom interlocuteur<input value={primaryDraft.lastName} onChange={(e) => setPrimaryDraft({ ...primaryDraft, lastName: e.target.value })} placeholder="Nom" disabled={busy} /></label>
       <label>Fonction / rôle <FieldHelp text="Champ libre : gérant, patron, comptable, banquier, responsable communication…" /><input value={primaryDraft.role} onChange={(e) => setPrimaryDraft({ ...primaryDraft, role: e.target.value })} placeholder="Gérant, responsable…" disabled={busy} /></label>
@@ -301,21 +307,14 @@ export function ProspectIdentityPanel({ prospect, onSaved, focusRequest }: { pro
         {decision.status !== 'yes' && <label>Précisions / chemin de validation<input value={decision.details} onChange={(e) => setDecision({ ...decision, details: e.target.value === 'Décisionnaire identifié dans les Contacts' ? '' : e.target.value })} placeholder="Ex. associé à consulter, responsable régional, nom à confirmer…" disabled={busy} /></label>}
       </fieldset>
 
+</div></div>
       {error && <p className="form-error form-span-2">{error}</p>}
       <button className="primary-button" type="button" disabled={busy || (decision.status === 'no' && !decisionContactId && (!decisionEmail.valid || !decisionPhone.valid))} onClick={() => void save()}>{busy ? 'Enregistrement…' : 'Enregistrer les informations'}</button>
     </div>}
-    <ProspectLinkedContactsPanel
-      organizationId={identity.organization?.id}
-      contacts={identity.contacts}
-      primaryContactId={identity.contact?.id}
-      decisionMakerContactId={identity.decisionMaker?.id}
-      onChanged={() => void load()}
-    />
-    <ContactMethodsPanel
-      organizationId={identity.organization?.id}
-      contactOwners={contactOwners}
-      organizationLabel="Entreprise / accueil"
-      summaryLabel="Coordonnées"
-    />
+    {section!=='contacts'&&!editing&&<><ProspectWebsitePanel prospect={prospect} onChanged={onSaved}/><div className="crm-compact-fields"><div><small>Téléphone général</small><p>{identity.organization?.phone?<ProspectValue value={identity.organization.phone} kind="phone"/>:'À renseigner'}</p></div><div><small>Email général</small><p>{identity.organization?.email?<ProspectValue value={identity.organization.email} kind="email"/>:'À renseigner'}</p></div></div><ContactMethodsPanel organizationId={identity.organization?.id} allowOrganization contactOwners={[]} organizationLabel="Accueil de l’entreprise" summaryLabel="Téléphone et email généraux"/></>}
+    <div hidden={editing||section==='company'}><section className="crm-role-selection"><h3>Décisionnaire</h3><ProspectDecisionEditor prospect={prospect} onSaved={onSaved} onManageContacts={()=>window.dispatchEvent(new CustomEvent('atoumweb:add-related-contact',{detail:identity.organization?.id}))}/><details className="crm-primary-choice"><summary>{identity.contact?'Changer l’interlocuteur principal':'Choisir l’interlocuteur principal'}</summary><ProspectPrimaryContact prospect={prospect} onSaved={onSaved}/></details></section>
+    <div className="crm-contact-cards">{identity.contacts.filter(c=>c.id===identity.contact?.id||c.id===identity.decisionMaker?.id).map(c=><ContactSummaryCard key={c.id} contact={c} role={c.id===identity.contact?.id?(c.id===identity.decisionMaker?.id?'Interlocuteur principal · Décisionnaire':'Interlocuteur principal'):'Décisionnaire'} onChanged={()=>{void load();onSaved();}}/>)}</div>
+    <ProspectLinkedContactsPanel organizationId={identity.organization?.id} contacts={identity.contacts} primaryContactId={identity.contact?.id} decisionMakerContactId={identity.decisionMaker?.id} onChanged={()=>{void load();onSaved();}}/>
+    </div>
   </section>;
 }

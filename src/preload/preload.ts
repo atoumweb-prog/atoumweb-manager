@@ -131,6 +131,7 @@ function visualCall(op: string, key: string, value?: string): string | null | bo
 const api: AtoumWebApi = {
   unsaved:{confirmExit:(labels,pending)=>ipcRenderer.sendSync('unsaved:confirm-exit',labels,pending),publishState:state=>ipcRenderer.sendSync('unsaved:state',state)},
   app: {
+    openExternalUrl: (url: string) => ipcRenderer.invoke('app:open-external-url',url),
     getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap'),
     openProspectReferenceWindow: (id: string) => ipcRenderer.invoke('app:open-prospect-reference', id),
   },
@@ -139,6 +140,7 @@ const api: AtoumWebApi = {
     removeItem: key => { visualCall('remove', key); }, confirmReset: () => visualCall('confirm-reset', '') === true,
     subscribe: listener => { const handler = (_event: unknown, key: string) => listener(key); ipcRenderer.on('settings:visual-changed', handler); return () => { ipcRenderer.removeListener('settings:visual-changed', handler); }; },
   },
+  quoteDocumentSettings: {saveAll:(v,a,e)=>ipcRenderer.invoke('quote-model:save-all',v,a,e),applyToQuote:id=>ipcRenderer.invoke('quote-model:adopt',id),get:()=>ipcRenderer.invoke('quote-model:get'),save:(v,e)=>ipcRenderer.invoke('quote-model:save',v,e),importLogo:()=>ipcRenderer.invoke('quote-model:logo'),preview:()=>ipcRenderer.invoke('quote-model:preview'),previewQuote:id=>ipcRenderer.invoke('quote-model:preview-quote',id)},
   settings: {
     setTheme: (theme: ThemeName) => ipcRenderer.invoke('settings:set-theme', theme),
     setDisplayDensity: (density: DisplayDensity) => ipcRenderer.invoke('settings:set-display-density', density),
@@ -207,6 +209,7 @@ const api: AtoumWebApi = {
   },
   crm: {
     directory: {
+      reconciliation:(owner,id)=>ipcRenderer.invoke('crm:directory:reconciliation',owner,id),
       saveExisting:input=>ipcRenderer.invoke('crm:directory:save-existing',input),
       saveOrganization:(input,context)=>ipcRenderer.invoke('crm:directory:save-organization',input,context),
       saveContact:(input,context)=>ipcRenderer.invoke('crm:directory:save-contact',input,context),
@@ -227,18 +230,24 @@ const api: AtoumWebApi = {
       createAndAttachDecisionProspect: (prospectId: string, input: ContactInput) => ipcRenderer.invoke('crm:contacts:create-and-attach-decision-prospect', prospectId, input),
       update: (id: string, input: ContactInput) => ipcRenderer.invoke('crm:contacts:update', id, input),
     },
+    organizationContacts:{list:id=>ipcRenderer.invoke('crm:organization-contacts:list',id),save:(...args)=>ipcRenderer.invoke('crm:organization-contacts:save',...args)},
     contactMethods: {
       list:(owner,id,includeArchived)=>ipcRenderer.invoke('crm:contact-methods:list',owner,id,includeArchived),
-      save:(input,id)=>ipcRenderer.invoke('crm:contact-methods:save',input,id),
-      archive:(id,archived)=>ipcRenderer.invoke('crm:contact-methods:archive',id,archived),
+      save:(input,id,expected)=>ipcRenderer.invoke('crm:contact-methods:save',input,id,expected),
+      archive:(id,archived,expected)=>ipcRenderer.invoke('crm:contact-methods:archive',id,archived,expected),
     },
     identityAssets: {
+      chooseDraft:()=>ipcRenderer.invoke('crm:identity-assets:choose-draft'),
+      attachDraft:(...args)=>ipcRenderer.invoke('crm:identity-assets:attach-draft',...args),
       list: (owner: CrmIdentityOwnerType, id: string) => ipcRenderer.invoke('crm:identity-assets:list', owner, id),
       importFile: (owner: CrmIdentityOwnerType, id: string, role: CrmIdentityAssetRole) => ipcRenderer.invoke('crm:identity-assets:import', owner, id, role),
       preview: (assetId: string) => ipcRenderer.invoke('crm:identity-assets:preview', assetId),
       remove: (assetId: string) => ipcRenderer.invoke('crm:identity-assets:remove', assetId),
     },
     prospects: {
+      patchIfUnchanged:(...args)=>ipcRenderer.invoke('crm:prospects:patch',...args),
+      createAtomic: input=>ipcRenderer.invoke('crm:prospects:create-atomic',input),
+      updateTemperature:(...args)=>ipcRenderer.invoke('crm:prospects:temperature',...args),
       list: (filters?: ProspectFilters) => ipcRenderer.invoke('crm:prospects:list', filters),
       create: (input: ProspectInput) => ipcRenderer.invoke('crm:prospects:create', input),
       update: (id: string, input: ProspectInput) => ipcRenderer.invoke('crm:prospects:update', id, input),
@@ -249,12 +258,18 @@ const api: AtoumWebApi = {
       changeStage: (id: string, stage: ProspectStage, lostReason?: string | null, allowIncompleteQualification?: boolean) => ipcRenderer.invoke('crm:prospects:change-stage', id, stage, lostReason, allowIncompleteQualification),
       setNextAction: (id: string, at: string | null, text: string | null) => ipcRenderer.invoke('crm:prospects:set-next-action', id, at, text),
       convertToClient: (id: string) => ipcRenderer.invoke('crm:prospects:convert-to-client', id),
+      saveWebsite:(...args)=>ipcRenderer.invoke('crm:prospects:website',...args),
       research: {
+        adoptOpportunity:(...args)=>ipcRenderer.invoke('crm:prospects:research:adopt-opportunity',...args),
+        context:id=>ipcRenderer.invoke('crm:prospects:research:context',id),
+        saveIfUnchanged:(...args)=>ipcRenderer.invoke('crm:prospects:research:save-if-unchanged',...args),
         list: (id: string) => ipcRenderer.invoke('crm:prospects:research:list', id),
         save: (id: string, input: ProspectResearchSnapshotInput) => ipcRenderer.invoke('crm:prospects:research:save', id, input),
       },
     },
     clients: {
+      updateStatus:(...args)=>ipcRenderer.invoke('crm:clients:status',...args),
+      scheduleAction:(...args)=>ipcRenderer.invoke('crm:clients:schedule-action',...args),
       list: (filters?: ClientFilters) => ipcRenderer.invoke('crm:clients:list', filters),
       create: (input: ClientInput) => ipcRenderer.invoke('crm:clients:create', input),
       updateRelationshipIfUnchanged: (id,expected,next)=>ipcRenderer.invoke('crm:clients:update-relationship-if-unchanged',id,expected,next),
@@ -262,7 +277,7 @@ const api: AtoumWebApi = {
       archive: (id: string) => ipcRenderer.invoke('crm:clients:archive', id),
       reactivate: (id: string, status: Exclude<ClientStatus, 'archived'>) => ipcRenderer.invoke('crm:clients:reactivate', id, status),
       listContacts: (id: string) => ipcRenderer.invoke('crm:clients:list-contacts', id),
-      addContact: (id: string, input: ContactInput, role: ClientContactRole, makePrimary?: boolean) => ipcRenderer.invoke('crm:clients:add-contact', id, input, role, makePrimary),
+      addContact: (id, input, role, makePrimary,existingContactId) => ipcRenderer.invoke('crm:clients:add-contact', id, input, role, makePrimary,existingContactId),
       setPrimaryContact: (id: string, contactId: string) => ipcRenderer.invoke('crm:clients:set-primary-contact', id, contactId),
     },
     actions: {
@@ -397,6 +412,7 @@ const api: AtoumWebApi = {
     setLineParameters:(id:string,p:import('../shared/commercialRules').QuoteLineParameters)=>ipcRenderer.invoke('quotes:set-line-parameters',id,p),
     preparationIssues:(id:string)=>ipcRenderer.invoke('quotes:preparation-issues',id),
     operationalSales:(id:string)=>ipcRenderer.invoke('quotes:operational-sales',id),
+    prepareProspectDraft:(...args)=>ipcRenderer.invoke('quotes:prepare-prospect-draft',...args),
     createWithLines: (input,lines) => ipcRenderer.invoke('quotes:create-with-lines',input,lines),
     list: (filters?: QuoteFilters) => ipcRenderer.invoke('quotes:list', filters),
     get: (id: string) => ipcRenderer.invoke('quotes:get', id),

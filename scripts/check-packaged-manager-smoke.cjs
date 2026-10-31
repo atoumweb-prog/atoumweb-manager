@@ -1,7 +1,7 @@
 'use strict';
 // Opt-in smoke of the actual packaged Manager. The CLI profile and workspace are owned TEMP only.
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),cp=require('node:child_process'),assert=require('node:assert/strict');
-const args=process.argv.slice(2);assert(args.length===2&&args[0]==='--exe','Usage: node scripts/check-packaged-manager-smoke.cjs --exe ABSOLUTE-EXE');
+const crmOnly=process.argv.includes('--crm-only');const args=process.argv.slice(2).filter(a=>a!=='--crm-only');assert(args.length===2&&args[0]==='--exe','Usage: node scripts/check-packaged-manager-smoke.cjs --exe ABSOLUTE-EXE');
 const exe=path.resolve(args[1]);assert(fs.existsSync(exe)&&path.basename(exe).toLowerCase()==='atoumweb-manager.exe','Actual packaged Manager executable required');
 const repo=path.resolve(__dirname,'..'),root=fs.mkdtempSync(path.join(os.tmpdir(),'atoumweb-manager-package-smoke-')),profile=path.join(root,'profile'),workspace=path.join(root,'workspace');
 fs.mkdirSync(profile);fs.mkdirSync(workspace);fs.writeFileSync(path.join(profile,'workspace.json'),JSON.stringify({workspaceRoot:workspace}));
@@ -31,13 +31,13 @@ async function connect(){
 }
 function send(method,params={}){return new Promise((resolve,reject)=>{const id=++seq;pending.set(id,{resolve,reject});socket.send(JSON.stringify({id,method,params}));});}
 async function evaluate(expression){const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result.value;}
-async function navigate(page){await evaluate('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:'+JSON.stringify(page)+'}))');await until(()=>evaluate('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("data-nav-module")==='+JSON.stringify(page)),page+' selected');await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');check(await evaluate('!!document.querySelector(".aw-manager-shell")&&!document.querySelector(".renderer-fatal-shell,.fatal-screen")'),'Actual module '+page);check(await evaluate('document.querySelectorAll(".global-timer").length===1&&document.querySelector(".global-timer")===window.__packagedTimer'),'Unique mounted timer '+page);report.visits++;}
+async function navigate(page){await evaluate('window.dispatchEvent(new CustomEvent("atoumweb:open-page",{detail:'+JSON.stringify(page)+'}))');await until(()=>evaluate('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("data-nav-module")==='+JSON.stringify(page)),page+' selected');await evaluate('new Promise(resolve=>{const fallback=setTimeout(resolve,200);requestAnimationFrame(()=>requestAnimationFrame(()=>{clearTimeout(fallback);resolve();}));})');check(await evaluate('!!document.querySelector(".aw-manager-shell")&&!document.querySelector(".renderer-fatal-shell,.fatal-screen")'),'Actual module '+page);check(await evaluate('document.querySelectorAll(".global-timer").length===1&&document.querySelector(".global-timer")===window.__packagedTimer'),'Unique mounted timer '+page);report.visits++;}
 (async()=>{try{
  await connect();await until(()=>evaluate('!!window.atoumweb&&!!document.querySelector(".aw-manager-shell")'),'real Manager shell');
  const bootstrap=await evaluate('window.atoumweb.app.getBootstrap()');check(path.resolve(bootstrap.workspacePath)===path.resolve(workspace),'The actual Manager uses only the owned workspace');
  await evaluate('void(window.__packagedTimer=document.querySelector(".global-timer"))');
- const pages=['Accueil','Prospects','Clients','Offres & Tarifs','Devis','Projets','Interventions & Maintenance','Gestion des temps','Facturation','Dépenses','Documents & Contrats','Bibliothèque AtoumWeb','Sites','Sauvegardes','Annuaire','Statistiques','Réglages'];
- for(const [theme,themeTitle] of [['atoumweb','AtoumWeb'],['noir','Noir'],['blanc','Blanc']])for(const [density,title] of [['compact','Compact'],['comfort','Confort'],['comfort_plus','Confort +']]){
+ const pages=crmOnly?['Prospects','Clients','Annuaire']:['Accueil','Prospects','Clients','Offres & Tarifs','Devis','Projets','Interventions & Maintenance','Gestion des temps','Facturation','Dépenses','Documents & Contrats','Bibliothèque AtoumWeb','Sites','Sauvegardes','Annuaire','Statistiques','Réglages'];
+ for(const [theme,themeTitle] of [['atoumweb','AtoumWeb'],['noir','Noir'],['blanc','Blanc']])for(const [density,title] of (crmOnly?[['comfort','Confort']]:[['compact','Compact'],['comfort','Confort'],['comfort_plus','Confort +']])){
   await navigate('Réglages');
   await until(()=>evaluate('!!document.querySelector(".theme-card")'),'theme controls');
   await evaluate('[...document.querySelectorAll(".theme-card")].find(e=>e.querySelector("strong")?.textContent==='+JSON.stringify(themeTitle)+').click()');

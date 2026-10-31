@@ -42,7 +42,7 @@ describe('Stabilisation du parcours métier',()=>{
     expect(workflow.needs('prospect',p.id).find(n=>n.id===need.id)?.label).toBe('Accompagnement');
     workflow.removeNeed('prospect',p.id,need.id);
     expect(workflow.needs('client',client.clientId)).toHaveLength(1);
-    crm.updateOrganization(org.id,{...org,email:'apres@example.test'});
+    crm.saveContactMethod({organizationId:org.id,type:'email',value:'apres@example.test',isPrimary:true});
     expect(workflow.identity('client',client.clientId).organization?.email).toBe('apres@example.test');
     expect(workflow.identity('prospect',p.id).organization?.email).toBe('apres@example.test');
   });

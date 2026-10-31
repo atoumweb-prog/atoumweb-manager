@@ -4,6 +4,7 @@ export type OperationIconName =
   | 'record-open' | 'record-expand' | 'record-reduce' | 'rail-open' | 'rail-close' | 'header-expand' | 'header-compact'
   | 'home' | 'users' | 'file-check' | 'layers' | 'contact' | 'settings'
   | 'search' | 'filter' | 'menu' | 'plus' | 'arrow-left' | 'columns' | 'edit'
+  | 'bell'
   | 'inbox'
   | 'alert'
   | 'wrench'
@@ -42,6 +43,7 @@ export type OperationIconName =
   | 'moon';
 
 const paths: Record<OperationIconName, ReactNode> = {
+  bell: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></>,
   'record-open': <><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16m4-11 3 3-3 3m-1-3h5"/></>,
   'record-expand': <><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 17 17 7m-6 0h6v6"/></>,
   'record-reduce': <><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m16 8-8 8m0-5v5h5"/></>,
