@@ -60,10 +60,11 @@ La migration 76 rend aussi le titre propre à chaque version. Les deux nouveaux 
 
 Les contradictions commerciales ne bloquent donc plus la préparation purement technique des textes. Elles bloquent toujours leur convergence métier, leur adoption et toute publication.
 
+Un plan Catalogue séparé prépare désormais, uniquement sur base de test, six versions brouillon : les quatre maintenances avec leur détail opérationnel et leurs prix inchangés, `AW-TECH-HEBERG-WP` à 149 €/an et `AW-TECH-MIGRATION-AW` en mode « sur devis ». Le plan exige les six identifiants publiés contrôlés, refuse une dérive, est idempotent et ne publie aucune version. Il n’a pas été appliqué à la base utilisateur.
+
 Le prochain lot sûr est :
 
-1. compléter en brouillon le détail opérationnel des références mensuelles sans changer leurs prix ;
-2. préparer l’hébergement isolé à 149 € en **brouillon** ;
-3. séparer migration interne gratuite et migration externe sur devis ;
-4. raccorder l’import des 118 textes à une commande explicite de l’interface après revue de son plan ;
-5. valider les assemblages et les 14 scénarios avant toute proposition de publication.
+1. relire humainement les six brouillons Catalogue préparés ;
+2. raccorder l’import des 118 textes et le plan Catalogue à des commandes explicites de l’interface ;
+3. vérifier les assemblages après application dans une copie de recette ;
+4. valider les 14 scénarios avant toute proposition de publication.
