@@ -68,7 +68,7 @@ Les décisions sont liées au brouillon exact. Une décision ultérieure ne dét
 
 ### Dépendances Git constatées
 
-- PR #158 : `codex/internal-reference-handoff-20261027` → `main`, fusionnable mais contrôle GitHub `UNSTABLE` ;
+- PR #158 : `codex/internal-reference-handoff-20261027` → `main`, fusionnable et `CLEAN` ; CI `quality` réussie le 31 octobre ;
 - PR #159 : `chatgpt/humanisation-maintenance-socle-20261028` → branche #158, fusionnable et `CLEAN` ;
 - PR #161 : `codex/contract-convergence-audit-20261031` → branche #159, fusionnable et `CLEAN`.
 
@@ -80,7 +80,10 @@ Les décisions sont liées au brouillon exact. Une décision ultérieure ne dét
 4. Rebaser ou retargeter #159 sur le nouveau `main`, vérifier que son diff ne contient que les propositions documentaires attendues, puis la fusionner.
 5. Rebaser ou retargeter #161 sur ce nouveau `main`, résoudre uniquement les conflits mécaniques, puis exécuter les tests ciblés et complets.
 6. Déployer d’abord sur une copie de recette. Les migrations 76 et 77 sont additives.
-7. Simuler, préparer les brouillons, enregistrer les décisions humaines, puis publier seulement par une action séparée et autorisée.
+7. La migration 78 ajoute l’historique append-only des décisions ; vérifier sa reprise avant toute décision humaine.
+8. Simuler, préparer les brouillons, enregistrer les décisions humaines, puis publier seulement par une action séparée et autorisée.
+
+Les trois branches ont légèrement divergé à cause des corrections appliquées séparément, notamment le timeout CRM Windows. Elles conservent néanmoins leurs bases de PR respectives et `git merge-tree --write-tree` réussit sans conflit pour les trois couples `main + #158`, `#158 + #159` et `#159 + #161`. Après chaque fusion, la PR suivante doit être retargetée ou actualisée sur la nouvelle base avant contrôle final ; aucun cherry-pick manuel des mêmes corrections ne doit être ajouté.
 
 ### Contrôles préalables et retour arrière
 
@@ -99,6 +102,16 @@ Avant publication, le retour arrière consiste à restaurer la sauvegarde de rec
 - Recette SQLite isolée de la décision groupée : réussie ; base source SHA-256 inchangée.
 - Suite complète : 208 fichiers réussis, 1 ignoré ; 1 746 tests réussis, 1 ignoré.
 - Paquet Electron : construit avec succès.
+
+### Contrôles ciblés après migration 78
+
+- TypeScript : réussi ;
+- migration 78, registre, préservation, transmission et frontière IPC : 61/61 tests réussis ;
+- recette SQLite isolée : 1/1 réussie, empreinte SHA-256 de la source inchangée ;
+- note vide refusée sans événement supplémentaire ;
+- décision groupée avec deuxième code invalide : rollback total, zéro décision courante et zéro événement ;
+- décision groupée valide : deux décisions liées aux deux brouillons exacts ;
+- décision successive : état courant actualisé et deux événements historiques conservés pour la même version.
 
 
 ## Complément de finition du 31 octobre 2026

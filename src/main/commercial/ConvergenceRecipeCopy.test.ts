@@ -36,10 +36,14 @@ describe.skipIf(!sourcePath||!copyPath)('recette de convergence sur copie isolé
       contractService.apply(editorial,editorialReference,contractPlan.planSha256);
       catalogService.apply(catalog,catalogPlan);
       const reviewService=new ConvergenceReviewService(db),review=reviewService.simulate();
+      expect(()=>reviewService.decideContractDrafts({codes:['APP-CADRAGE','CLAUSE-INCONNUE'],decision:'approved_for_publication',reviewer:'Recette isolée',note:'Cette décision doit être annulée entièrement',expectedPlanSha256:review.contract.planSha256})).toThrow(/Clause inconnue/);
+      expect(db.get<{n:number}>('SELECT COUNT(*) n FROM contract_convergence_decisions')).toEqual({n:0});
+      expect(db.get<{n:number}>('SELECT COUNT(*) n FROM contract_convergence_decision_events')).toEqual({n:0});
       reviewService.decideContractDrafts({codes:['APP-CADRAGE','BASE-CONFIDENTIALITE'],decision:'approved_for_publication',reviewer:'Recette isolée',note:'Décision groupée de test sans publication',expectedPlanSha256:review.contract.planSha256});
       expect(db.get("SELECT clause_code,decision,reviewer FROM contract_convergence_decisions WHERE clause_code='APP-CADRAGE'")).toEqual({clause_code:'APP-CADRAGE',decision:'approved_for_publication',reviewer:'Recette isolée'});
       expect(db.get<{n:number}>('SELECT COUNT(*) n FROM contract_convergence_decisions')).toEqual({n:2});
       expect(db.get<{n:number}>('SELECT COUNT(*) n FROM contract_convergence_decision_events')).toEqual({n:2});
+      expect(db.get<{n:number}>(`SELECT COUNT(*) n FROM contract_convergence_decision_events e JOIN contract_convergence_decisions d ON d.draft_version_id=e.draft_version_id WHERE e.clause_code IN ('APP-CADRAGE','BASE-CONFIDENTIALITE')`)).toEqual({n:2});
       expect(()=>reviewService.decideContractDrafts({codes:['APP-CADRAGE'],decision:'needs_revision',reviewer:'Recette isolée',note:'   ',expectedPlanSha256:review.contract.planSha256})).toThrow(/note de décision/i);
       expect(db.get<{n:number}>('SELECT COUNT(*) n FROM contract_convergence_decision_events')).toEqual({n:2});
       reviewService.decideContractDrafts({codes:['APP-CADRAGE'],decision:'needs_revision',reviewer:'Recette isolée',note:'Nouvelle décision conservée dans l’historique',expectedPlanSha256:review.contract.planSha256});

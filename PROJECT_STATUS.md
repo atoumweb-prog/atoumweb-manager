@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 31/10/2026 — Migration 78 et préparation de fusion contrôlées
+
+Reprise après synchronisation GitHub au commit `9274811c`. Migration 78, note/relecteur obligatoires et historique append-only inspectés. Cinq attentes de registre encore arrêtées à 77 ont été étendues à 78 ; la recette couvre désormais explicitement le rollback total d’une décision groupée dont la deuxième clause est inconnue. Typecheck réussi, **61/61 tests ciblés** et recette SQLite isolée **1/1** ; note vide sans écriture, décisions successives conservées, rattachement au bon brouillon, devis/contrats/versions publiées inchangés, SHA-256 source identique.
+
+PR #158, #159 et #161 ouvertes, brouillon, fusionnables et `CLEAN` ; CI `quality` de #158 réussie. Les branches ont des commits parallèles de correction, mais les trois simulations `merge-tree` réussissent sans conflit. Ordre préparé : #158 vers main, actualiser/retargeter #159 puis la fusionner, actualiser/retargeter #161, lancer une seule campagne complète finale et seulement ensuite demander l’autorisation de fusion. Aucun merge, package, campagne complète, publication ou base active modifiée.
+
 ## 31/10/2026 — Consolidation finale et validation humaine préparée
 
 [Rapport de clôture](docs/ux-v2/CLOTURE-CONVERGENCE-CONTRACTUELLE-2026-10-31.md) et [suivi exhaustif des 118 clauses](docs/ux-v2/SUIVI-FINAL-118-CLAUSES-2026-10-31.csv) ajoutés sans nouvelle réécriture. La migration 77 conserve séparément les décisions humaines sur chaque brouillon : « prête à soumettre » ou « révision demandée », avec relecteur, note, empreinte, confirmation native et journal. La décision peut porter sur une clause ou un groupe filtré et ne publie aucune version. Cinq arbitrages concrets seulement restent documentés : adhésion CM2C, périmètre de restauration, parcours de renouvellement, non-report des interventions et accès cPanel de la Lune.
