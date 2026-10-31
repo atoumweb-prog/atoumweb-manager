@@ -24,5 +24,15 @@ describe('frontière explicite de la revue de convergence',()=>{
     expect(decisionHandler).toContain('ne publie aucune clause');
     expect(preload).toContain("ipcRenderer.invoke('convergence-review:decide-contract-drafts'");
     expect(panel).toContain('Marquer prêtes à soumettre');
+    expect(panel).toContain('Note de décision obligatoire');
+    expect(panel).toContain('!note.trim()');
+    expect(panel).toContain('Historique des décisions');
+    const service=readFileSync('src/main/commercial/ConvergenceReviewService.ts','utf8');
+    expect(service).toContain('Une note de décision est obligatoire.');
+    expect(service).toContain('INSERT INTO contract_convergence_decision_events');
+    expect(service).toContain('SELECT decision,reviewer,note,created_at FROM contract_convergence_decision_events');
+    const migration=readFileSync('src/main/database/contractConvergenceDecisionHistoryMigration.ts','utf8');
+    expect(migration).toContain('id: 78');
+    expect(migration).toContain('CREATE TABLE contract_convergence_decision_events');
   });
 });
