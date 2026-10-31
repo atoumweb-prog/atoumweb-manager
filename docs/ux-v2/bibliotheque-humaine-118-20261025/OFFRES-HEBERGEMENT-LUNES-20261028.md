@@ -114,3 +114,7 @@ Le responsable d'AtoumWeb a **approuvé le montant commercial de 50 €/an** pou
 - https://faq.o2switch.fr/guides/migrations/deplacer-site-hebergement-o2switch/
 
 **État : proposition commerciale structurée, décisions utilisateur antérieures respectées, plusieurs données tarifaires et procédures à valider. Rien n'a été appliqué à une base clients, au Catalogue publié ni aux devis acceptés.**
+
+## Décision complémentaire du 31/10/2026 — Accès cPanel de la Lune
+
+**Arbitrage explicite du responsable : accès sur demande.** Pour une Lune dédiée au site d’un client, AtoumWeb remet sur demande un accès individualisé au cPanel propre à cette Lune, par un canal sécurisé, en conservant une traçabilité de la remise. Les identifiants du compte cPanel maître et les accès aux espaces des autres clients ne sont jamais communiqués. Le devis ou les conditions de l’offre explicitent les responsabilités et les modalités pratiques. Aucune remise automatique ou accès au serveur partagé n’est instauré par cette décision. Elle concerne les nouveaux engagements et ne modifie pas rétroactivement les contrats historiques.
