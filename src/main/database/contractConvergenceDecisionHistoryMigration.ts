@@ -15,8 +15,8 @@ export const CONTRACT_CONVERGENCE_DECISION_HISTORY_MIGRATION: Migration = {
       draft_version_id TEXT NOT NULL REFERENCES contract_clause_versions(id),
       proposal_sha256 TEXT NOT NULL,
       decision TEXT NOT NULL CHECK (decision IN ('approved_for_publication','needs_revision')),
-      reviewer TEXT NOT NULL,
-      note TEXT NOT NULL,
+      reviewer TEXT NOT NULL CHECK (length(trim(reviewer)) > 0),
+      note TEXT NOT NULL CHECK (length(trim(note)) > 0),
       created_at TEXT NOT NULL
     ) STRICT;
 
