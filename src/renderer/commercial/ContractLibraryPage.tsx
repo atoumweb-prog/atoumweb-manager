@@ -8,6 +8,7 @@ import type { ContractType, ContractTypeVersionInput } from '../../shared/contra
 import type { ContractClauseTemplate, ContractClauseScope, ContractClauseAudience, WordDraftPreview } from '../../shared/contractTerms';
 import type { CatalogItemSummary } from '../../shared/commercial';
 import './contract-library.css';
+import { ConvergenceReviewPanel } from './ConvergenceReviewPanel';
 
 const empty:ContractTypeVersionInput={name:'',description:'',moduleIds:[]};
 const statusLabel=(status:string)=>({draft:'Brouillon',published:'Publiée',retired:'Retirée',active:'Actif',inactive:'Inactif',archived:'Archivé'}[status]??status);
@@ -103,6 +104,7 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
       <button type="button" className="secondary-button" disabled={busy} onClick={()=>void run(async()=>{const r=await window.atoumweb.contractTypes.initialize();onMessage(`${r.created} type(s) créés en brouillon, ${r.linked} rattachement(s), ${r.unchanged} inchangé(s).`);})}>Initialiser depuis le Catalogue</button>
     </div>
     <p>Les textes restent dans la bibliothèque de clauses existante. Le type organise les modules ; seules les prestations vendues déclenchent leurs clauses. Aucune validation juridique globale.</p>
+    <ConvergenceReviewPanel onPrepared={()=>refresh()}/>
     {error&&<p role="alert" className="form-error">{error}</p>}
     {(typeGuard.dirty||moduleGuard.dirty||newModuleGuard.dirty||wordGuard.dirty)&&<p role="status" className="contract-library-unsaved">Brouillon non enregistré — confirme l'abandon avant de quitter ou de changer de fiche.</p>}
     {showNewModule&&<fieldset disabled={busy} className="contract-type-detail"><legend>Nouveau module — brouillon uniquement</legend>

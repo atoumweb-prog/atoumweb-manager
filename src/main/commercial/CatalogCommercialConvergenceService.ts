@@ -68,11 +68,16 @@ export class CatalogCommercialConvergenceService {
     try {
       const rows = this.simulate(source);
       if (stable(rows) !== stable(expectedRows)) throw new Error('Le plan Catalogue a changé : relancer la simulation.');
+      const newlyPrepared = rows.filter((row) => !this.database.get('SELECT id FROM catalog_versions WHERE id=? AND status=\'draft\'', [row.requestId]));
       for (const row of rows) {
         const record = source.records.find((candidate) => candidate.canonicalCode === row.canonicalCode)!;
         const published = this.catalog.getItem(row.itemId).versions.find((version) => version.id === row.publishedVersionId)!;
         this.catalog.createVersion(row.itemId, { ...toVersionInput(published), ...record.overrides }, row.requestId);
       }
+      if (newlyPrepared.length) this.database.run(
+        'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
+        ['catalog_library', source.reference, 'catalog_commercial_drafts_prepared', `${newlyPrepared.length} modifications commerciales préparées en versions brouillon.`, JSON.stringify({ requestIds: newlyPrepared.map((row) => row.requestId) }), new Date().toISOString()],
+      );
       this.database.exec('COMMIT;');
       return rows;
     } catch (error) {

@@ -102,6 +102,7 @@ export interface AtoumWebApi {
   catalog: CatalogApi;
   catalogCategories: CatalogCategoryApi;
   contractTerms: ContractTermsApi;
+  convergenceReview: import('./convergenceReview').ConvergenceReviewApi;
   contractTypes: ContractTypesApi;
   quotes: QuoteApi;
   quotePreparation: import('./quoteContractPreparation').QuoteContractPreparationApi;

@@ -396,6 +396,11 @@ const api: AtoumWebApi = {
     exportWorkingDocx: (quoteId:string) => ipcRenderer.invoke('contract-terms:export-working-docx',quoteId),
     importDocxText: () => ipcRenderer.invoke('contract-terms:import-docx-text'),
   },
+  convergenceReview: {
+    simulate: () => ipcRenderer.invoke('convergence-review:simulate'),
+    prepareContractDrafts: (expectedPlanSha256:string) => ipcRenderer.invoke('convergence-review:prepare-contract-drafts', expectedPlanSha256),
+    prepareCatalogDrafts: (expectedRequestIds:string[]) => ipcRenderer.invoke('convergence-review:prepare-catalog-drafts', expectedRequestIds),
+  },
   quotePreparation: {
     get: id => ipcRenderer.invoke('quote-preparation:get',id),
     save: (id,input,expected) => ipcRenderer.invoke('quote-preparation:save',id,input,expected),

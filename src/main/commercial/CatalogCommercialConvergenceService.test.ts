@@ -30,6 +30,11 @@ beforeEach(() => {
 afterEach(() => db.close());
 
 describe('préparation Catalogue des décisions commerciales validées', () => {
+  it('simule sans écriture', () => {
+    const before = db.all('SELECT * FROM catalog_versions ORDER BY id');
+    expect(service.simulate(source)).toHaveLength(6);
+    expect(db.all('SELECT * FROM catalog_versions ORDER BY id')).toEqual(before);
+  });
   it('crée six brouillons sans modifier les versions publiées ni leurs prix', () => {
     const publishedBefore = db.all('SELECT id,price_mode,price_cents,status FROM catalog_versions WHERE status=\'published\' ORDER BY id');
     const rows = service.simulate(source);
@@ -38,6 +43,7 @@ describe('préparation Catalogue des décisions commerciales validées', () => {
 
     expect(db.all('SELECT id,price_mode,price_cents,status FROM catalog_versions WHERE status=\'published\' ORDER BY id')).toEqual(publishedBefore);
     expect(db.get<{ n: number }>('SELECT COUNT(*) n FROM catalog_versions WHERE status=\'draft\'')).toEqual({ n: 6 });
+    expect(db.get<{ n: number }>("SELECT COUNT(*) n FROM activity_log WHERE action='catalog_commercial_drafts_prepared'")).toEqual({ n: 1 });
     const wp = catalog.getItem(rows.find((row) => row.canonicalCode === 'AW-MAINT-WP-M')!.itemId).versions[0];
     expect(wp).toMatchObject({ status: 'draft', priceCents: 4900, unit: 'mois', periodicity: 'mensuelle' });
     expect(wp.inclusions).toContain('Sauvegarde hebdomadaire conservée 30 jours');
@@ -55,6 +61,7 @@ describe('préparation Catalogue des décisions commerciales validées', () => {
     service.apply(source, rows);
     service.apply(source, rows);
     expect(db.get<{ n: number }>('SELECT COUNT(*) n FROM catalog_versions WHERE status=\'draft\'')).toEqual({ n: 6 });
+    expect(db.get<{ n: number }>("SELECT COUNT(*) n FROM activity_log WHERE action='catalog_commercial_drafts_prepared'")).toEqual({ n: 1 });
     db.run("UPDATE catalog_versions SET status='retired' WHERE id=?", [source.records.find((record) => record.canonicalCode === 'AW-MAINT-WP-M')!.expectedPublishedVersionId]);
     expect(() => service.simulate(source)).toThrow(/a changé/);
   });
