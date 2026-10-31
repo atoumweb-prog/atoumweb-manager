@@ -545,6 +545,23 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('contract-terms:section:propose', (_event, versionId:string, sectionKey:import('../shared/contractSectionPolicy').ContractSectionKey, rankInSection:number, reason:string) => guardedMutation(() => database.contractSectionReviews.propose(versionId,sectionKey,rankInSection,reason)));
   ipcMain.handle('contract-terms:section:approve', (_event, versionId:string, reviewer:string) => guardedMutation(() => database.contractSectionReviews.approve(versionId,reviewer)));
   ipcMain.handle('contract-terms:library:list', (_event, includeArchived?: boolean) => database.contractTerms.listTemplates(Boolean(includeArchived)));
+  ipcMain.handle('convergence-review:simulate', () => database.convergenceReview.simulate());
+  ipcMain.handle('convergence-review:prepare-contract-drafts', async (_event, expectedPlanSha256:string) => {
+    const confirmation=await dialog.showMessageBox({type:'warning',title:'Préparer 118 brouillons contractuels',message:'Créer les nouvelles versions brouillon ?',detail:'Les versions publiées, les devis et les contrats historiques ne seront pas modifiés. Aucune clause ne sera publiée.',buttons:['Annuler','Préparer les brouillons'],defaultId:0,cancelId:0});
+    if(confirmation.response!==1) return database.convergenceReview.simulate();
+    return guardedMutation(()=>database.convergenceReview.prepareContractDrafts(expectedPlanSha256));
+  });
+  ipcMain.handle('convergence-review:prepare-catalog-drafts', async (_event, expectedRequestIds:string[]) => {
+    const confirmation=await dialog.showMessageBox({type:'warning',title:'Préparer 6 brouillons Catalogue',message:'Créer les six versions brouillon ?',detail:'Les versions publiées et les devis historiques resteront inchangés. Aucune version ne sera publiée.',buttons:['Annuler','Préparer les brouillons'],defaultId:0,cancelId:0});
+    if(confirmation.response!==1) return database.convergenceReview.simulate();
+    return guardedMutation(()=>database.convergenceReview.prepareCatalogDrafts(expectedRequestIds));
+  });
+  ipcMain.handle('convergence-review:decide-contract-drafts', async (_event, input:import('../shared/convergenceReview').ConvergenceDecisionInput) => {
+    const label=input.decision==='approved_for_publication'?'prêtes à soumettre à publication':'à réviser';
+    const confirmation=await dialog.showMessageBox({type:'warning',title:'Enregistrer une décision humaine',message:`Classer ${input.codes.length} clause(s) comme ${label} ?`,detail:'Cette décision est historisée mais ne publie aucune clause. Les versions publiées et les contrats historiques restent inchangés.',buttons:['Annuler','Enregistrer la décision'],defaultId:0,cancelId:0});
+    if(confirmation.response!==1) return database.convergenceReview.simulate();
+    return guardedMutation(()=>database.convergenceReview.decideContractDrafts(input));
+  });
   ipcMain.handle('contract-terms:library:get', (_event, id: string) => database.contractTerms.getTemplate(id));
   ipcMain.handle('contract-terms:library:create', (_event, input: ContractClauseTemplateInput, firstVersion: ContractClauseVersionInput) => guardedMutation(() => database.contractTerms.createTemplate(input, firstVersion)));
   ipcMain.handle('contract-terms:library:create-version', (_event, clauseId: string, input: ContractClauseVersionInput) => guardedMutation(() => database.contractTerms.createVersion(clauseId, input)));

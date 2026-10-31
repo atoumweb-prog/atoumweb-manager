@@ -1,5 +1,7 @@
 # Manager ↔ Bridge — Architecture, feuille de route et journal partagé
 
+**31/10 — consolidation contractuelle PR #161 :** demande autorisée limitée au chantier Manager contractuel, sans Bridge. Réutilisation des 118 propositions et six brouillons, aucune nouvelle réécriture. Migration77 additive et interface de décision humaine séparée de la publication : individuel/groupe, relecteur, note, confirmation et journal. Rapport de clôture, suivi CSV118 et plan d’intégration #158→#159→#161 préparés ; #158 fusionnable mais UNSTABLE, #159/#161 CLEAN. Typecheck, paquet Electron,32tests ciblés et suite complète1746/1746+1ignoré ; recette SQLite groupée réussie, SHA source inchangé. Aucune base active, publication, tarif, historique, merge ou déploiement modifié.
+
 **12/10 — pause02B.3, préparation consolidation86–93 :** huitHEAD/bases/commits pointés ;16simulationsmerge-tree sansconflit/arbreidentique, pasfusion/retarget. Échecmain38006715403 auSHA07dde9c8 :A→Btimeout20s,800/801 ; mêmesblobsrestore surpile, doncnoncorrigé. Anciencheckoutvert etmain mêmecontenu. Local3ciblésPASS puis35restaurationsPASS73,59s, paspreuvehosted. [Bilan86–93](UXV2_CONSOLIDATION_86_93_PREPARATION.md) avecgatesWindows/CI, coûtquota nonconfirmé/APIusage sansscopeuser ; plan6runs puis16total sousaccords, aucunworkflow déclenché. Publicationdocumentaire93 seulement ; aucuneactivitémétier/Validation-MSI/Bridge, budgets etbranchespréservés. Chaque Ready/merge/retarget/actualisation future nécessiteaccord explicite.
 
 **12/10 — 02B.1–02B.2 dans #93 draft/base92 :** audit header/chrono/horloge/recherche/notifications/clavier puis atelier autonome. Slot chrono TEST unique pendant repli/module/dialogue, contrôles02A partagés, préférenceheader01F séparée du bandeauBibliothèque, gardesUX-01 surformulaires/motifs. Codef7099aa : typecheckOK,25ciblés,884/884complet(96fichiers,117,82s,sansRPC),86natif/deuxprocessus/18captures,125rail/183UX-01/300renderer ; intégrité/FK/migrations1–66 et tables horssettings préservées surTEMP. [Bilan/limites](UXV2_LOT02B_EXECUTION.md), [inventaire](UXV2_LOT02B_INVENTAIRE.md). Aucun port App/GlobalTimer/GlobalSearch réel, accelerator global,02C/03, merge/main, CIhébergée ouValidation-MSI. Recette humaine globale différée.
@@ -561,6 +563,15 @@ Recette de référence : trois composants Manager, ajouts natifs Divi, déplacem
 Critère métier : terminer librement une Page dans Divi, puis comprendre dans Manager ce qui a changé, où et pourquoi, sans reconstruire la Page ni interpréter des UUID.
 
 ## 16. Journal partagé des consignes, décisions et validations
+
+### 31/10/2026 — CONTRATS-CONVERGENCE-118-01 — audit et préparation locale
+
+- Origine : reprise Codex demandée sur PR #159 brouillon, dépendante de #158 ; aucun chantier Bridge autorisé. Base auditée `c7f73f2c`, branche isolée `codex/contract-convergence-audit-20261031`.
+- Résultat : 118 propositions reliées exactement aux 118 versions publiées exportées ; IDs, corps, SHA-256, scopes, audiences et 28 dépendances conformes ; aucun indicateur d’approbation, publication ou adoption. Audit JSON/Markdown et commande reproductible ajoutés.
+- Provenance commerciale corrigée : les références mensuelles 49/99 € et annuelles facultatives 539/1 089 € ont été introduites ensemble le 03/10/2026 (`1ed1152c`). Deux blocages restent : hébergement 99 € face à 149 € avec Lune, migration interne gratuite non séparée de l’externe sur devis. Aucun tarif modifié arbitrairement.
+- Préparation locale : migration 76 additive, titres de clauses désormais versionnés, import éditorial atomique simulable et idempotent. Sur base mémoire, 118 brouillons créés, 118 publiées conservées, snapshots/devis non touchés, rollback et dérives refusés. Typecheck OK et suite complète 1 741/1 741 verte (206 fichiers).
+- Brouillons Catalogue préparés hors base utilisateur : six versions contrôlées (WP/Woo mensuelles et annuelles, hébergement 149 €, migration externe sur devis), prix maintenance inchangés, origines publiées vérifiées, rejeu neutre et plan périmé refusé. Tests ciblés 3/3 et typecheck verts.
+- Statut : aucune base utilisateur modifiée, aucun brouillon Catalogue ou contractuel appliqué hors fixtures, aucune publication, PDF, campagne, exécutable, fusion ou action Bridge. Branche et PR brouillon de revue uniquement. Prochaine action : raccord contrôlé des simulations dans le Manager, puis validations d’assemblage/PDF après convergence. Responsable : agent Manager courant.
 
 ### 08/10/2026 — CONTRATS-APERCUS-SOCLES — retour UX et réalisation
 

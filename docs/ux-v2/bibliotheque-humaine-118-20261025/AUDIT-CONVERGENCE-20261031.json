@@ -1,0 +1,100 @@
+{
+  "generatedAt": "2026-10-31T07:47:22.260Z",
+  "sources": {
+    "proposalsPath": "docs/ux-v2/bibliotheque-humaine-118-20261025/PROPOSITIONS.json",
+    "contractsPath": "data/handoff/2026-10-27/contrats-publies.json",
+    "catalogPath": "data/handoff/2026-10-27/catalogue.json",
+    "canonicalCatalogPath": "data/catalogue/atoumweb-catalogue-v1.json"
+  },
+  "structural": {
+    "proposals": 118,
+    "uniqueProposalCodes": 118,
+    "duplicateProposalCodes": [],
+    "publishedTemplates": 118,
+    "uniquePublishedCodes": 118,
+    "duplicatePublishedCodes": [],
+    "missingInPublishedExport": [],
+    "missingInProposals": [],
+    "originMismatches": [],
+    "dependencyEdges": 28,
+    "missingDependencies": [],
+    "selfDependencies": [],
+    "titleChanges": [
+      {
+        "code": "APP-GARANTIE",
+        "from": "Garantie corrective 90 jours",
+        "to": "Garantie corrective de l’application"
+      },
+      {
+        "code": "WEB-AR",
+        "from": "Corrections et allers-retours",
+        "to": "Étapes de relecture et de correction"
+      }
+    ],
+    "publicationFlags": {
+      "approved": 0,
+      "published": 0,
+      "adopted": 0
+    },
+    "distributions": {
+      "scope": {
+        "catalog": 99,
+        "base": 19
+      },
+      "audience": {
+        "all": 105,
+        "consumer": 10,
+        "professional": 3
+      },
+      "family": {
+        "Applications métier": 10,
+        "Audit": 1,
+        "Socle commun": 12,
+        "Blog": 2,
+        "Identité visuelle et animation": 5,
+        "Socle consommateurs": 4,
+        "Contenus": 6,
+        "Mesure et analytics": 6,
+        "Conception graphique": 3,
+        "Développement WordPress": 6,
+        "E-commerce": 7,
+        "Landing pages": 3,
+        "Maintenance": 7,
+        "Sites de mariage": 7,
+        "Photographie et retouche": 7,
+        "Socle professionnels": 3,
+        "Reprise de l’existant": 1,
+        "Référencement": 8,
+        "Services transversaux": 3,
+        "Hébergement et migration": 2,
+        "Création de sites web": 15
+      }
+    }
+  },
+  "structuralErrors": [],
+  "commercialConflicts": [
+    {
+      "code": "HOSTING-LUNE-PRICE",
+      "severity": "blocking",
+      "detail": "L’hébergement WordPress publié vaut 99 € au lieu de la formule décidée à 149 €/an (99 € + 50 € de Lune).",
+      "references": [
+        "AW-TECH-HEBERG-WP"
+      ]
+    },
+    {
+      "code": "MIGRATION-INTERNAL-EXTERNAL",
+      "severity": "blocking",
+      "detail": "La ligne publiée « Migration vers hébergement AtoumWeb » à 99 € ne distingue pas le transfert interne AtoumWeb gratuit de la migration depuis un hébergeur externe sur devis.",
+      "references": [
+        "AW-TECH-MIGRATION-AW"
+      ]
+    }
+  ],
+  "draftPreparationBlockers": [
+    "HOSTING-LUNE-PRICE",
+    "MIGRATION-INTERNAL-EXTERNAL",
+    "VERSIONED-TITLE:APP-GARANTIE",
+    "VERSIONED-TITLE:WEB-AR"
+  ],
+  "safeToPrepareAllDrafts": false
+}

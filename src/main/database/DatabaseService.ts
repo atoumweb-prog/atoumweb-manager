@@ -18,6 +18,7 @@ import { CatalogService } from '../commercial/CatalogService';
 import { CatalogRecommendationsService } from '../commercial/CatalogRecommendationsService';
 import { CatalogCategoryService } from '../commercial/CatalogCategoryService';
 import { ContractTermsService } from '../commercial/ContractTermsService';
+import { ConvergenceReviewService } from '../commercial/ConvergenceReviewService';
 import { QuoteService } from '../commercial/QuoteService';
 import { ActionService } from '../crm/ActionService';
 import { ClientContactService } from '../crm/ClientContactService';
@@ -71,6 +72,7 @@ export class DatabaseService {
   readonly catalogRecommendations: CatalogRecommendationsService;
   readonly catalogCategories: CatalogCategoryService;
   readonly contractTerms: ContractTermsService;
+  readonly convergenceReview: ConvergenceReviewService;
   readonly contractSectionReviews: ContractSectionReviewService;
   readonly contractTypes: ContractTypeService;
   readonly quotes: QuoteService;
@@ -120,6 +122,7 @@ export class DatabaseService {
     this.catalogRecommendations = new CatalogRecommendationsService(this.database);
     this.catalogCategories = new CatalogCategoryService(this.database);
     this.contractTerms = new ContractTermsService(this.database, this.clientDocuments);
+    this.convergenceReview = new ConvergenceReviewService(this.database);
     this.contractSectionReviews = new ContractSectionReviewService(this.database);
     this.contractTypes = new ContractTypeService(this.database);
     this.quoteDocumentSettings=new QuoteDocumentSettingsService(this.database);

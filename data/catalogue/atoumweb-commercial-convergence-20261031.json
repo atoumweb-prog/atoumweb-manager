@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "reference": "Décisions commerciales AtoumWeb des 28–31 octobre 2026",
+  "records": [
+    {
+      "canonicalCode": "AW-MAINT-WP-M",
+      "expectedPublishedVersionId": "atoumweb-wordpress-v1",
+      "reconcileItemId": "atoumweb-wordpress",
+      "overrides": {
+        "priceMode": "fixed",
+        "priceCents": 4900,
+        "unit": "mois",
+        "periodicity": "mensuelle",
+        "description": "Maintenance mensuelle d'un site WordPress.",
+        "inclusions": ["Vérifications et mises à jour hebdomadaires", "Sauvegarde hebdomadaire conservée 30 jours", "Contrôle après mise à jour", "2 interventions mineures par mois, 30 minutes maximum chacune, non cumulables et non reportables"],
+        "exclusions": ["Refonte", "Intervention dépassant 30 minutes", "Urgence hors horaires convenus", "Nettoyage approfondi d'un site compromis", "Hébergement sauf mention expresse au devis"],
+        "prerequisites": ["Site en état de fonctionnement ou audit de reprise", "Accès nécessaires", "Période mensuelle payée"],
+        "specialTerms": "Résiliation possible à tout moment, effective à la fin de la période mensuelle payée. Aucun renouvellement annuel sans accord exprès."
+      }
+    },
+    {
+      "canonicalCode": "AW-MAINT-WC-M",
+      "expectedPublishedVersionId": "atoumweb-woocommerce-v1",
+      "reconcileItemId": "atoumweb-woocommerce",
+      "overrides": {
+        "priceMode": "fixed",
+        "priceCents": 9900,
+        "unit": "mois",
+        "periodicity": "mensuelle",
+        "description": "Maintenance mensuelle d'une boutique WooCommerce.",
+        "inclusions": ["Vérifications et mises à jour hebdomadaires adaptées à WooCommerce", "Sauvegarde quotidienne conservée 30 jours", "Contrôle de la boutique après mise à jour", "4 interventions mineures par mois, 30 minutes maximum chacune, non cumulables et non reportables"],
+        "exclusions": ["Gestion quotidienne des commandes", "Refonte", "Intervention dépassant 30 minutes", "Urgence hors horaires convenus", "Hébergement sauf mention expresse au devis"],
+        "prerequisites": ["Site en état de fonctionnement ou audit de reprise", "Accès nécessaires", "Période mensuelle payée"],
+        "specialTerms": "Résiliation possible à tout moment, effective à la fin de la période mensuelle payée. Aucun renouvellement annuel sans accord exprès."
+      }
+    },
+    {
+      "canonicalCode": "AW-MAINT-WP-A",
+      "expectedPublishedVersionId": "1920474d-daea-47b1-9054-952145a9f638",
+      "overrides": {
+        "inclusions": ["Vérifications et mises à jour hebdomadaires", "Sauvegarde hebdomadaire conservée 30 jours", "Contrôle après mise à jour", "2 interventions mineures par mois, 30 minutes maximum chacune, non cumulables et non reportables", "Douze mois de couverture au prix de onze mensualités"],
+        "exclusions": ["Refonte", "Intervention dépassant 30 minutes", "Urgence hors horaires convenus", "Nettoyage approfondi d'un site compromis", "Hébergement sauf mention expresse au devis"],
+        "specialTerms": "Souscription annuelle uniquement sur accord exprès. Aucun renouvellement annuel tacite."
+      }
+    },
+    {
+      "canonicalCode": "AW-MAINT-WC-A",
+      "expectedPublishedVersionId": "0b1a6f26-f9cf-42f9-a8f9-8a9cf7b63f7f",
+      "overrides": {
+        "inclusions": ["Vérifications et mises à jour hebdomadaires adaptées à WooCommerce", "Sauvegarde quotidienne conservée 30 jours", "Contrôle de la boutique après mise à jour", "4 interventions mineures par mois, 30 minutes maximum chacune, non cumulables et non reportables", "Douze mois de couverture au prix de onze mensualités"],
+        "exclusions": ["Gestion quotidienne des commandes", "Refonte", "Intervention dépassant 30 minutes", "Urgence hors horaires convenus", "Hébergement sauf mention expresse au devis"],
+        "specialTerms": "Souscription annuelle uniquement sur accord exprès. Aucun renouvellement annuel tacite."
+      }
+    },
+    {
+      "canonicalCode": "AW-TECH-HEBERG-WP",
+      "expectedPublishedVersionId": "0d5bb5d6-7e33-417f-9dd0-4f1b7f8a28cc",
+      "overrides": {
+        "priceMode": "fixed",
+        "priceCents": 14900,
+        "unit": "an",
+        "periodicity": "annuelle",
+        "description": "Hébergement WordPress standard sans maintenance, avec Lune dédiée obligatoire.",
+        "inclusions": ["Hébergement WordPress standard : 99 € par an", "Mise à disposition d'une Lune dédiée : 50 € par an", "SSL", "Gestion technique de l'espace", "Sauvegardes techniques de l'hébergeur selon leur disponibilité"],
+        "exclusions": ["Maintenance WordPress", "Mises à jour applicatives", "Interventions sur le site", "Nom de domaine, facturé et renouvelé séparément", "Restauration manuelle, proposée sur devis sauf manquement imputable à AtoumWeb"],
+        "prerequisites": ["Site compatible", "Lune dédiée obligatoire en l'absence de maintenance", "Migration externe chiffrée séparément si nécessaire"],
+        "specialTerms": "Migration interne entre espaces AtoumWeb gratuite. Aucun double paiement lors d'un changement de formule ; un prorata ou une régularisation est appliqué si une maintenance incluant déjà l'hébergement est reprise. Renouvellement annuel uniquement sur accord exprès."
+      }
+    },
+    {
+      "canonicalCode": "AW-TECH-MIGRATION-AW",
+      "expectedPublishedVersionId": "7d571a59-4c06-43c2-9904-5bc44e27634b",
+      "overrides": {
+        "priceMode": "quote_only",
+        "priceCents": null,
+        "description": "Migration vers AtoumWeb depuis un hébergeur extérieur, après examen et devis.",
+        "inclusions": ["Périmètre défini au devis selon le site, les accès et l'hébergeur de départ"],
+        "exclusions": ["Migration interne entre espaces AtoumWeb, réalisée sans facturation", "Travaux non prévus au devis"],
+        "prerequisites": ["Accès à l'hébergement et au domaine", "Diagnostic préalable", "Devis accepté avant intervention"],
+        "specialTerms": "La migration interne AtoumWeb est gratuite. Une migration depuis un hébergeur extérieur est réalisée uniquement après devis accepté."
+      }
+    }
+  ]
+}
