@@ -11,7 +11,7 @@ Date : 31 octobre 2026. Branche : `codex/contract-convergence-audit-20261031`. P
 - La simulation, l’idempotence, le rollback et la conservation historique ont été contrôlés.
 - Les 14 scénarios PDF ont été exécutés avec les propositions : 202 pages inspectées, sans défaut bloquant constaté.
 - L’interface compare publié et proposé, affiche les différences, dépendances, décisions documentées et blocages.
-- La migration 77 et l’interface ajoutent une décision humaine traçable, individuelle ou groupée. Cette décision ne publie rien.
+- Les migrations 77 et 78 ajoutent une décision humaine individuelle ou groupée avec note obligatoire et un historique append-only par brouillon. Cette décision ne publie rien.
 
 Le tableau exhaustif demandé est disponible dans [SUIVI-FINAL-118-CLAUSES-2026-10-31.csv](SUIVI-FINAL-118-CLAUSES-2026-10-31.csv). Il reprend le code, le titre, la famille, la vigilance, l’état rédactionnel, le contrôle technique et le véritable blocage documenté. Il ne réécrit aucune clause.
 
@@ -39,7 +39,7 @@ Le relecteur, la date, la note, le brouillon exact et son empreinte sont conserv
 
 Aucun de ces brouillons n’est publié et aucun tarif actif n’a été modifié.
 
-## 4. Arbitrages réellement ouverts
+## 4. Arbitrages documentés et décision cPanel clôturée
 
 | Code et titre | Problème exact | Décision existante | Risque concret | Recommandation | Décision attendue |
 | --- | --- | --- | --- | --- | --- |
@@ -47,7 +47,7 @@ Aucun de ces brouillons n’est publié et aucun tarif actif n’a été modifi�
 | `MAINT-SAUVEGARDE` — Sauvegardes | La fréquence est définie par l’offre, mais la restauration et l’articulation avec l’hébergeur doivent correspondre au service réel. | Les sauvegardes ne garantissent pas à elles seules toute restauration. | Promesse opérationnelle supérieure au service fourni. | Conserver l’obligation de moyens et décrire les restaurations réellement incluses. | Confirmer le périmètre de restauration inclus. |
 | `MAINT-RENOUVELLEMENT` — Durée et renouvellement | Le texte distingue mensuel et annuel ; le parcours opérationnel de fin doit être cohérent avec l’outil. | Annuel uniquement sur accord exprès, sans reconduction annuelle automatique. | Texte exact mais parcours réel différent. | Aligner le texte sur le moyen concret de résiliation et de renouvellement. | Confirmer le parcours opérationnel prévu. |
 | `MAINT-INTERVENTIONS` — Nombre d’interventions ou temps inclus | Le non-cumul et le non-report sont rédigés mais pas encore marqués comme approuvés. | Les quotas mensuels ne forment pas une banque annuelle. | Contestation sur un solde supposé reportable. | Valider la formulation actuelle, qui respecte la décision commerciale. | Accepter la formulation ou préciser l’exception voulue. |
-| `TECH-HEBERGEMENT` — Hébergement seul sans maintenance | Le mode de remise de l’accès cPanel de la Lune reste indéterminé. | Aucun accès au compte maître ; Lune dédiée obligatoire sans maintenance. | Accès client et responsabilité opérationnelle ambigus. | Autoriser l’accès au cPanel propre sur demande, jamais au compte maître, avec traçabilité. | Choisir : automatique, sur demande, ou conservé par AtoumWeb. |
+| `TECH-HEBERGEMENT` — Hébergement seul sans maintenance | **Résolu le 31/10/2026** : accès cPanel propre à la Lune remis sur demande du client, de façon sécurisée et traçable ; jamais le compte maître AtoumWeb. | Décision explicite du responsable ; proposition `TECH-HEBERGEMENT` actualisée sur #159 et #161. | Aucune validation supplémentaire sur le principe. | Vérifier seulement les modalités opérationnelles de remise sécurisée. | Décision commerciale clôturée. |
 
 Les autres niveaux de vigilance restent visibles pour la revue humaine, sans être transformés artificiellement en 43 blocages.
 
@@ -59,10 +59,10 @@ L’interface permet maintenant :
 2. de préparer explicitement les brouillons contractuels et Catalogue ;
 3. de comparer la version publiée et le brouillon ;
 4. de filtrer et sélectionner une clause ou un groupe cohérent ;
-5. d’enregistrer « prête à soumettre » ou « révision demandée » avec relecteur et note ;
-6. de relire la dernière décision et le journal.
+5. d’enregistrer « prête à soumettre » ou « révision demandée » avec relecteur et **note obligatoire**, refusée si vide ;
+6. de relire la dernière décision, **toutes ses révisions successives dans un journal append-only**, et le journal d'activité.
 
-Les décisions sont liées au brouillon exact. Un brouillon modifié doit repasser par une décision. Aucune absence de remarque ne vaut approbation. La publication n’est pas déclenchée par ce parcours.
+Les décisions sont liées au brouillon exact. Une décision ultérieure ne détruit pas la précédente : la table d'événements créée par la migration 78 conserve chaque étape, tandis que la migration 77 maintient l'état courant. Un brouillon modifié doit repasser par une décision. Aucune absence de remarque ne vaut approbation. La publication n’est pas déclenchée par ce parcours.
 
 ## 6. Plan d’intégration des PR #158, #159 et #161
 
@@ -100,3 +100,11 @@ Avant publication, le retour arrière consiste à restaurer la sauvegarde de rec
 - Suite complète : 208 fichiers réussis, 1 ignoré ; 1 746 tests réussis, 1 ignoré.
 - Paquet Electron : construit avec succès.
 
+
+## Complément de finition du 31 octobre 2026
+
+- **Accès cPanel : décidé par le responsable** : remise sur demande au client, limitée à sa propre Lune dédiée, via un moyen sécurisé et avec traçabilité ; jamais le cPanel principal d’AtoumWeb. Le texte `TECH-HEBERGEMENT` a été mis à jour dans les deux branches #159 et #161 ; aucune version active modifiée.
+- **Historique des décisions** : migration additive 78, note obligatoire contrôlée côté interface et service ; insertion d’un événement distinct pour chaque décision, même si l’état courant est modifié. Des tests de non-régression ont été ajoutés, mais leur exécution sur le nouveau commit reste à confirmer en local.
+- **CI de la PR #158** : le journal GitHub identifie un timeout du test `crmReconciliationMigration.test.ts` (5 s, durée réelle observée 34 s sur Windows) ; délai local à ce test porté à 120 s et propagé sur les branches #158, #159 et #161. Vérifier la conclusion du nouveau workflow avant toute fusion.
+- **CM2C** : organisme choisi, mais confirmation de l’adhésion/convention effective toujours requise avant publication de la clause consommateur.
+- Ces changements ne représentent ni une approbation des 118 propositions, ni une publication, ni un feu vert de fusion.
