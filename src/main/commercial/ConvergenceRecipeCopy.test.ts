@@ -39,6 +39,17 @@ describe.skipIf(!sourcePath||!copyPath)('recette de convergence sur copie isolé
       reviewService.decideContractDrafts({codes:['APP-CADRAGE','BASE-CONFIDENTIALITE'],decision:'approved_for_publication',reviewer:'Recette isolée',note:'Décision groupée de test sans publication',expectedPlanSha256:review.contract.planSha256});
       expect(db.get("SELECT clause_code,decision,reviewer FROM contract_convergence_decisions WHERE clause_code='APP-CADRAGE'")).toEqual({clause_code:'APP-CADRAGE',decision:'approved_for_publication',reviewer:'Recette isolée'});
       expect(db.get<{n:number}>('SELECT COUNT(*) n FROM contract_convergence_decisions')).toEqual({n:2});
+      expect(db.get<{n:number}>('SELECT COUNT(*) n FROM contract_convergence_decision_events')).toEqual({n:2});
+      expect(()=>reviewService.decideContractDrafts({codes:['APP-CADRAGE'],decision:'needs_revision',reviewer:'Recette isolée',note:'   ',expectedPlanSha256:review.contract.planSha256})).toThrow(/note de décision/i);
+      expect(db.get<{n:number}>('SELECT COUNT(*) n FROM contract_convergence_decision_events')).toEqual({n:2});
+      reviewService.decideContractDrafts({codes:['APP-CADRAGE'],decision:'needs_revision',reviewer:'Recette isolée',note:'Nouvelle décision conservée dans l’historique',expectedPlanSha256:review.contract.planSha256});
+      expect(db.get<{n:number}>('SELECT COUNT(*) n FROM contract_convergence_decisions')).toEqual({n:2});
+      expect(db.get<{n:number}>('SELECT COUNT(*) n FROM contract_convergence_decision_events')).toEqual({n:3});
+      expect(db.get("SELECT decision,note FROM contract_convergence_decisions WHERE clause_code='APP-CADRAGE'")).toEqual({decision:'needs_revision',note:'Nouvelle décision conservée dans l’historique'});
+      const history=reviewService.simulate().contract.rows.find(row=>row.code==='APP-CADRAGE')!.decisionHistory;
+      expect(history).toHaveLength(2);
+      expect(history.map(entry=>entry.decision)).toContain('approved_for_publication');
+      expect(history.map(entry=>entry.decision)).toContain('needs_revision');
       expect(db.get('SELECT canonical_code FROM catalog_items WHERE id=\'atoumweb-wordpress\'')).toEqual({canonical_code:'AW-MAINT-WP-M'});
       expect(db.get<{n:number}>("SELECT COUNT(*) n FROM catalog_items WHERE canonical_code IN ('AW-MAINT-WP-M','AW-MAINT-WC-M')")).toEqual({n:2});
       const replayContract=contractService.simulate(editorial,editorialReference);
