@@ -21,6 +21,12 @@ beforeEach(() => {
   catalog = new CatalogService(db);
   for (const proposal of source.records) {
     const record = canonical.records.find((candidate) => candidate.canonicalCode === proposal.canonicalCode)!;
+    const existing=db.get<{item_id:string}>('SELECT item_id FROM catalog_versions WHERE id=?',[proposal.expectedPublishedVersionId]);
+    if(existing){
+      db.run('UPDATE catalog_items SET canonical_code=?,name=?,status=\'active\' WHERE id=?',[record.canonicalCode,record.name,existing.item_id]);
+      db.run('UPDATE catalog_versions SET status=\'published\' WHERE id=?',[proposal.expectedPublishedVersionId]);
+      continue;
+    }
     const item = catalog.create({ name: record.name, type: record.type, category: record.category, canonicalCode: record.canonicalCode, identityProvenance: (record.version as any).provenance }, record.version as any);
     db.run('UPDATE catalog_versions SET id=? WHERE id=?', [proposal.expectedPublishedVersionId, item.versions[0].id]);
     catalog.publishVersion(proposal.expectedPublishedVersionId);

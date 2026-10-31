@@ -4,8 +4,14 @@
   "records": [
     {
       "canonicalCode": "AW-MAINT-WP-M",
-      "expectedPublishedVersionId": "9e519e4a-59f1-4ead-91c5-23e45c660277",
+      "expectedPublishedVersionId": "atoumweb-wordpress-v1",
+      "reconcileItemId": "atoumweb-wordpress",
       "overrides": {
+        "priceMode": "fixed",
+        "priceCents": 4900,
+        "unit": "mois",
+        "periodicity": "mensuelle",
+        "description": "Maintenance mensuelle d'un site WordPress.",
         "inclusions": ["Vérifications et mises à jour hebdomadaires", "Sauvegarde hebdomadaire conservée 30 jours", "Contrôle après mise à jour", "2 interventions mineures par mois, 30 minutes maximum chacune, non cumulables et non reportables"],
         "exclusions": ["Refonte", "Intervention dépassant 30 minutes", "Urgence hors horaires convenus", "Nettoyage approfondi d'un site compromis", "Hébergement sauf mention expresse au devis"],
         "prerequisites": ["Site en état de fonctionnement ou audit de reprise", "Accès nécessaires", "Période mensuelle payée"],
@@ -14,8 +20,14 @@
     },
     {
       "canonicalCode": "AW-MAINT-WC-M",
-      "expectedPublishedVersionId": "be472551-4393-43bd-b0d8-0b801b9d74fc",
+      "expectedPublishedVersionId": "atoumweb-woocommerce-v1",
+      "reconcileItemId": "atoumweb-woocommerce",
       "overrides": {
+        "priceMode": "fixed",
+        "priceCents": 9900,
+        "unit": "mois",
+        "periodicity": "mensuelle",
+        "description": "Maintenance mensuelle d'une boutique WooCommerce.",
         "inclusions": ["Vérifications et mises à jour hebdomadaires adaptées à WooCommerce", "Sauvegarde quotidienne conservée 30 jours", "Contrôle de la boutique après mise à jour", "4 interventions mineures par mois, 30 minutes maximum chacune, non cumulables et non reportables"],
         "exclusions": ["Gestion quotidienne des commandes", "Refonte", "Intervention dépassant 30 minutes", "Urgence hors horaires convenus", "Hébergement sauf mention expresse au devis"],
         "prerequisites": ["Site en état de fonctionnement ou audit de reprise", "Accès nécessaires", "Période mensuelle payée"],

@@ -37,6 +37,11 @@ export class ConvergenceReviewService {
         publishedBody: proposal.origin.body, proposedTitle: row.title, proposedBody: proposal.proposal,
         action: row.action, anomaly: row.anomaly,
         dependencies: template.catalogItemIds.map((id) => this.database.get<{ canonical_code: string | null }>('SELECT canonical_code FROM catalog_items WHERE id=?', [id])?.canonical_code ?? id),
+        family: String((proposal as ContractEditorialProposalDocument['clauses'][number] & { family?: string }).family ?? 'Non classée'),
+        risk: String((proposal as ContractEditorialProposalDocument['clauses'][number] & { risk?: string }).risk ?? 'Non évalué'),
+        defect: String((proposal as ContractEditorialProposalDocument['clauses'][number] & { defect?: string }).defect ?? ''),
+        legalAssessment: String((proposal as ContractEditorialProposalDocument['clauses'][number] & { legalAssessment?: string }).legalAssessment ?? ''),
+        externalReview: String((proposal as ContractEditorialProposalDocument['clauses'][number] & { externalReview?: string }).externalReview ?? ''),
       };
     });
     const catalogRows = catalogPlan.map((row) => {

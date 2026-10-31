@@ -9,7 +9,6 @@ import { CatalogCommercialConvergenceService, type CatalogCommercialConvergenceS
 
 const sourcePath=process.env.ATOUMWEB_RECIPE_SOURCE_DB;
 const copyPath=process.env.ATOUMWEB_RECIPE_COPY_DB;
-const referencePath=process.env.ATOUMWEB_RECIPE_REFERENCE_DB;
 const root=resolve(__dirname,'../../..');
 const editorial=JSON.parse(readFileSync(resolve(root,'docs/ux-v2/bibliotheque-humaine-118-20261025/PROPOSITIONS.json'),'utf8')) as ContractEditorialProposalDocument;
 const catalog=JSON.parse(readFileSync(resolve(root,'data/catalogue/atoumweb-commercial-convergence-20261031.json'),'utf8')) as CatalogCommercialConvergenceSource;
@@ -21,25 +20,6 @@ describe.skipIf(!sourcePath||!copyPath)('recette de convergence sur copie isolé
     const db=new NodeSqliteAdapter(copyPath!);
     try{
       applyPendingMigrations(db);
-      const baselineAdditions:string[]=[];
-      if(referencePath){
-        const reference=new NodeSqliteAdapter(referencePath);
-        try{
-          for(const record of catalog.records){
-            if(db.get('SELECT id FROM catalog_versions WHERE id=?',[record.expectedPublishedVersionId]))continue;
-            const sourceVersion=reference.get<Record<string,unknown>>('SELECT * FROM catalog_versions WHERE id=?',[record.expectedPublishedVersionId]);
-            if(!sourceVersion)throw new Error(`Version de référence absente : ${record.expectedPublishedVersionId}`);
-            const itemId=String(sourceVersion.item_id),sourceItem=reference.get<Record<string,unknown>>('SELECT * FROM catalog_items WHERE id=?',[itemId]);
-            if(!sourceItem||!db.get('SELECT id FROM catalog_items WHERE id=?',[itemId]))throw new Error(`Article de référence absent de la copie : ${itemId}`);
-            db.run('UPDATE catalog_items SET canonical_code=? WHERE id=?',[record.canonicalCode,itemId]);
-            db.run("UPDATE catalog_versions SET status='retired' WHERE item_id=? AND status='published'",[itemId]);
-            sourceVersion.version_number=Number(db.get<{n:number}>('SELECT COALESCE(MAX(version_number),0)+1 n FROM catalog_versions WHERE item_id=?',[itemId])!.n);
-            const columns=Object.keys(sourceVersion),marks=columns.map(()=>'?').join(',');
-            db.run(`INSERT INTO catalog_versions (${columns.join(',')}) VALUES (${marks})`,columns.map(column=>sourceVersion[column] as never));
-            baselineAdditions.push(record.canonicalCode);
-          }
-        }finally{reference.close();}
-      }
       const before={
         quotes:db.all('SELECT * FROM quotes ORDER BY id'),
         quoteClauses:db.all('SELECT id,quote_id,source_clause_version_id,title,body,enabled,sort_order FROM quote_contract_clauses ORDER BY id'),
@@ -50,8 +30,11 @@ describe.skipIf(!sourcePath||!copyPath)('recette de convergence sur copie isolé
       const contractPlan=contractService.simulate(editorial,'Recette isolée 2026-10-31');
       expect(contractPlan.anomalies).toEqual([]);expect(contractPlan.counts.draftsToCreate).toBe(118);
       const catalogPlan=catalogService.simulate(catalog);expect(catalogPlan).toHaveLength(6);
+      expect(db.get('SELECT canonical_code FROM catalog_items WHERE id=\'atoumweb-wordpress\'')).toEqual({canonical_code:null});
       contractService.apply(editorial,'Recette isolée 2026-10-31',contractPlan.planSha256);
       catalogService.apply(catalog,catalogPlan);
+      expect(db.get('SELECT canonical_code FROM catalog_items WHERE id=\'atoumweb-wordpress\'')).toEqual({canonical_code:'AW-MAINT-WP-M'});
+      expect(db.get<{n:number}>("SELECT COUNT(*) n FROM catalog_items WHERE canonical_code IN ('AW-MAINT-WP-M','AW-MAINT-WC-M')")).toEqual({n:2});
       const replayContract=contractService.simulate(editorial,'Recette isolée 2026-10-31');
       expect(replayContract.counts).toEqual({draftsToCreate:0,draftsKept:118,conflicts:0});
       expect(()=>catalogService.apply(catalog,catalogPlan.map((row,index)=>index?row:{...row,nextVersionNumber:999}))).toThrow(/plan Catalogue a changé/);
@@ -63,7 +46,7 @@ describe.skipIf(!sourcePath||!copyPath)('recette de convergence sur copie isolé
         publishedCatalog:db.all("SELECT id,item_id,version_number,price_cents,price_mode,status FROM catalog_versions WHERE status='published' ORDER BY id"),
       };
       expect(after).toEqual(before);
-      const report={sourcePath,copyPath,referencePath,createdAt:new Date().toISOString(),baselineAdditions,beforeHashes:{quotes:hash(before.quotes),quoteClauses:hash(before.quoteClauses),publishedClauses:hash(before.publishedClauses),publishedCatalog:hash(before.publishedCatalog)},afterHashes:{quotes:hash(after.quotes),quoteClauses:hash(after.quoteClauses),publishedClauses:hash(after.publishedClauses),publishedCatalog:hash(after.publishedCatalog)},prepared:{contractDrafts:118,catalogDrafts:6},idempotence:'ok',rollback:'ok',historicalPreservation:'ok'};
+      const report={sourcePath,copyPath,createdAt:new Date().toISOString(),reconciledLegacyItems:['atoumweb-wordpress','atoumweb-woocommerce'],duplicates:0,beforeHashes:{quotes:hash(before.quotes),quoteClauses:hash(before.quoteClauses),publishedClauses:hash(before.publishedClauses),publishedCatalog:hash(before.publishedCatalog)},afterHashes:{quotes:hash(after.quotes),quoteClauses:hash(after.quoteClauses),publishedClauses:hash(after.publishedClauses),publishedCatalog:hash(after.publishedCatalog)},prepared:{contractDrafts:118,catalogDrafts:6},idempotence:'ok',rollback:'ok',historicalPreservation:'ok'};
       writeFileSync(resolve(dirname(copyPath!),'RECETTE-CONVERGENCE.json'),JSON.stringify(report,null,2)+'\n');
     }finally{db.close();}
   });

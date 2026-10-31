@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 31/10/2026 — Validation fonctionnelle des brouillons et réconciliation mensuelle
+
+La PR #161 sait maintenant réconcilier les maintenances mensuelles historiques `atoumweb-wordpress` et `atoumweb-woocommerce` avec les codes canoniques `AW-MAINT-WP-M` et `AW-MAINT-WC-M`, sans créer de nouveau produit ni doublon. La simulation reste sans écriture ; l'application sur copie isolée attribue l'identité puis crée les six brouillons dans une transaction atomique. L'interface de revue affiche aussi la famille, le défaut corrigé, la vigilance et l'avis externe des 118 propositions, sans assimiler ce classement à une validation juridique.
+
+[Validation fonctionnelle détaillée](docs/ux-v2/VALIDATION-FONCTIONNELLE-CONVERGENCE-2026-10-31.md). Base utilisateur contrôlée en lecture seule avec SHA-256 inchangé. Typecheck réussi, tests ciblés 8/8 et suite complète **1 746 réussis / 1 ignoré**. Les 14 scénarios ont été régénérés avec les brouillons : 202 pages, 0 clause sélectionnée manquante, signatures et mention BROUILLON présentes ; inspection visuelle sans anomalie bloquante. Aucune publication, adoption, modification historique, fusion ou déploiement. Restent uniquement les arbitrages humains et juridiques listés dans le rapport avant toute publication.
+
 ## 31/10/2026 — Interface de convergence, recette isolée et campagne PDF terminées
 
 La PR #161 dispose maintenant d'une interface commune en Bibliothèque contractuelle : comparaison publié/proposé des 118 clauses et des six évolutions Catalogue, anomalies et dépendances visibles, simulation sans écriture, journal de traçabilité et deux confirmations distinctes avant préparation. Les imports créent seulement des versions brouillon ; aucune publication, adoption ou modification historique n'est possible par ce parcours. La trace Catalogue est atomique avec les six brouillons et reste unique au rejeu.

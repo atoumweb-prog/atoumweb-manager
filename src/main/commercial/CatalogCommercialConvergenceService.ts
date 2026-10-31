@@ -6,6 +6,8 @@ import { CatalogService } from './CatalogService';
 export interface CatalogCommercialConvergenceRecord {
   canonicalCode: string;
   expectedPublishedVersionId: string;
+  /** Existing legacy identity to reconcile when the canonical code was never applied. */
+  reconcileItemId?: string;
   overrides: Partial<CatalogVersionInput>;
 }
 export interface CatalogCommercialConvergenceSource {
@@ -46,7 +48,11 @@ export class CatalogCommercialConvergenceService {
     return source.records.map((record) => {
       if (!/^AW-[A-Z0-9]+(?:-[A-Z0-9]+)*$/.test(record.canonicalCode) || codes.has(record.canonicalCode)) throw new Error('Code commercial absent ou dupliqué.');
       codes.add(record.canonicalCode);
-      const item = this.database.get<{ id: string }>('SELECT id FROM catalog_items WHERE canonical_code=? AND status=\'active\'', [record.canonicalCode]);
+      const canonical = this.database.get<{ id: string }>('SELECT id FROM catalog_items WHERE canonical_code=? AND status=\'active\'', [record.canonicalCode]);
+      const legacy = record.reconcileItemId ? this.database.get<{ id: string; canonical_code: string | null }>('SELECT id,canonical_code FROM catalog_items WHERE id=? AND status=\'active\'', [record.reconcileItemId]) : undefined;
+      if (canonical && legacy && canonical.id !== legacy.id) throw new Error(`Doublon Catalogue à arbitrer : ${record.canonicalCode}.`);
+      if (legacy?.canonical_code && legacy.canonical_code !== record.canonicalCode) throw new Error(`L'identité historique ${record.reconcileItemId} possède déjà un autre code.`);
+      const item = canonical ?? legacy;
       if (!item) throw new Error(`Référence Catalogue introuvable : ${record.canonicalCode}.`);
       const currentPublished = this.database.get<{ id: string }>('SELECT id FROM catalog_versions WHERE item_id=? AND status=\'published\' ORDER BY version_number DESC LIMIT 1', [item.id]);
       if (currentPublished?.id !== record.expectedPublishedVersionId) throw new Error(`La version publiée de ${record.canonicalCode} a changé : nouvelle revue requise.`);
@@ -71,6 +77,9 @@ export class CatalogCommercialConvergenceService {
       const newlyPrepared = rows.filter((row) => !this.database.get('SELECT id FROM catalog_versions WHERE id=? AND status=\'draft\'', [row.requestId]));
       for (const row of rows) {
         const record = source.records.find((candidate) => candidate.canonicalCode === row.canonicalCode)!;
+        const item = this.database.get<{ canonical_code: string | null }>('SELECT canonical_code FROM catalog_items WHERE id=?', [row.itemId]);
+        if (!item?.canonical_code) this.catalog.applyIdentityManifest({ schemaVersion: 1, assignments: [{ itemId: row.itemId, canonicalCode: row.canonicalCode,
+          provenance: { reference: source.reference, recordKey: `reconciliation:${record.reconcileItemId ?? row.itemId}` } }] });
         const published = this.catalog.getItem(row.itemId).versions.find((version) => version.id === row.publishedVersionId)!;
         this.catalog.createVersion(row.itemId, { ...toVersionInput(published), ...record.overrides }, row.requestId);
       }

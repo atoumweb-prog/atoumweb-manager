@@ -14,6 +14,11 @@ export interface ContractConvergenceReviewRow {
   action: 'create' | 'keep' | 'conflict';
   anomaly: string | null;
   dependencies: string[];
+  family: string;
+  risk: string;
+  defect: string;
+  legalAssessment: string;
+  externalReview: string;
 }
 
 export interface CatalogConvergenceReviewRow {
