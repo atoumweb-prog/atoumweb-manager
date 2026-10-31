@@ -19,6 +19,11 @@ export interface ContractConvergenceReviewRow {
   defect: string;
   legalAssessment: string;
   externalReview: string;
+  draftVersionId: string | null;
+  decision: 'approved_for_publication' | 'needs_revision' | null;
+  decidedBy: string | null;
+  decidedAt: string | null;
+  decisionNote: string | null;
 }
 
 export interface CatalogConvergenceReviewRow {
@@ -52,8 +57,17 @@ export interface ConvergenceReview {
   trace: ConvergenceTraceEntry[];
 }
 
+export interface ConvergenceDecisionInput {
+  codes: string[];
+  decision: 'approved_for_publication' | 'needs_revision';
+  reviewer: string;
+  note?: string;
+  expectedPlanSha256: string;
+}
+
 export interface ConvergenceReviewApi {
   simulate(): Promise<ConvergenceReview>;
   prepareContractDrafts(expectedPlanSha256: string): Promise<ConvergenceReview>;
   prepareCatalogDrafts(expectedRequestIds: string[]): Promise<ConvergenceReview>;
+  decideContractDrafts(input: ConvergenceDecisionInput): Promise<ConvergenceReview>;
 }

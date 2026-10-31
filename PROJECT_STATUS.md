@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 31/10/2026 — Consolidation finale et validation humaine préparée
+
+[Rapport de clôture](docs/ux-v2/CLOTURE-CONVERGENCE-CONTRACTUELLE-2026-10-31.md) et [suivi exhaustif des 118 clauses](docs/ux-v2/SUIVI-FINAL-118-CLAUSES-2026-10-31.csv) ajoutés sans nouvelle réécriture. La migration 77 conserve séparément les décisions humaines sur chaque brouillon : « prête à soumettre » ou « révision demandée », avec relecteur, note, empreinte, confirmation native et journal. La décision peut porter sur une clause ou un groupe filtré et ne publie aucune version. Cinq arbitrages concrets seulement restent documentés : adhésion CM2C, périmètre de restauration, parcours de renouvellement, non-report des interventions et accès cPanel de la Lune.
+
+Chaîne Git vérifiée : #158 vers main (fusionnable mais `UNSTABLE`), #159 vers #158 (`CLEAN`), #161 vers #159 (`CLEAN`). Plan d’intégration, sauvegardes, contrôles et retour arrière détaillés ; aucune fusion exécutée. Typecheck, paquet Electron, 32 tests ciblés et suite complète **1 746 réussis / 1 ignoré**. Recette SQLite isolée de la décision groupée réussie avec SHA-256 source inchangé. Prochaine action : validation humaine des cinq arbitrages puis intégration dans l’ordre documenté. Aucune base utilisateur, publication, tarif actif, devis ou contrat historique modifié.
+
 ## 31/10/2026 — Validation fonctionnelle des brouillons et réconciliation mensuelle
 
 La PR #161 sait maintenant réconcilier les maintenances mensuelles historiques `atoumweb-wordpress` et `atoumweb-woocommerce` avec les codes canoniques `AW-MAINT-WP-M` et `AW-MAINT-WC-M`, sans créer de nouveau produit ni doublon. La simulation reste sans écriture ; l'application sur copie isolée attribue l'identité puis crée les six brouillons dans une transaction atomique. L'interface de revue affiche aussi la famille, le défaut corrigé, la vigilance et l'avis externe des 118 propositions, sans assimiler ce classement à une validation juridique.

@@ -18,5 +18,11 @@ describe('frontière explicite de la revue de convergence',()=>{
     expect(panel).toContain('La simulation est sans écriture.');
     expect(panel).toContain('Préparer les brouillons Catalogue');
     expect(panel).toContain('Préparer {review.contract.counts.draftsToCreate} brouillons contractuels');
+    const decisionStart=ipc.indexOf("ipcMain.handle('convergence-review:decide-contract-drafts'");
+    const decisionHandler=ipc.slice(decisionStart,ipc.indexOf('\n  });',decisionStart));
+    expect(decisionHandler).toContain('dialog.showMessageBox');
+    expect(decisionHandler).toContain('ne publie aucune clause');
+    expect(preload).toContain("ipcRenderer.invoke('convergence-review:decide-contract-drafts'");
+    expect(panel).toContain('Marquer prêtes à soumettre');
   });
 });

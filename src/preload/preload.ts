@@ -400,6 +400,7 @@ const api: AtoumWebApi = {
     simulate: () => ipcRenderer.invoke('convergence-review:simulate'),
     prepareContractDrafts: (expectedPlanSha256:string) => ipcRenderer.invoke('convergence-review:prepare-contract-drafts', expectedPlanSha256),
     prepareCatalogDrafts: (expectedRequestIds:string[]) => ipcRenderer.invoke('convergence-review:prepare-catalog-drafts', expectedRequestIds),
+    decideContractDrafts: (input:import('../shared/convergenceReview').ConvergenceDecisionInput) => ipcRenderer.invoke('convergence-review:decide-contract-drafts', input),
   },
   quotePreparation: {
     get: id => ipcRenderer.invoke('quote-preparation:get',id),
