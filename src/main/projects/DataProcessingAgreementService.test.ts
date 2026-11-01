@@ -85,4 +85,14 @@ describe('DataProcessingAgreementService',()=>{
     expect(()=>service.markSigned(sent.id,'wrong-proof')).toThrow(/même client/);
     expect(service.listForSite(siteId)[0].status).toBe('sent');
   });
+
+  it('tient le registre des incidents du Site sans altérer les accords',()=>{
+    const agreement=service.createDraft(siteId);
+    const incident=service.recordIncident(siteId,{agreementId:agreement.id,summary:'Accès TEST non prévu',details:'Compte de recette concerné.',occurredAt:'2026-11-01T10:00:00.000Z',reportedAt:'2026-11-01T10:15:00.000Z'});
+    expect(service.listIncidents(siteId)).toEqual([expect.objectContaining({id:incident.id,resolvedAt:null,agreementId:agreement.id})]);
+    const resolved=service.resolveIncident(incident.id,'Accès révoqué et client informé.','2026-11-01T11:00:00.000Z');
+    expect(resolved).toMatchObject({resolution:'Accès révoqué et client informé.',resolvedAt:'2026-11-01T11:00:00.000Z'});
+    expect(()=>service.resolveIncident(incident.id,'Deuxième clôture')).toThrow(/déjà clôturé/);
+    expect(service.listForSite(siteId)[0]).toMatchObject({id:agreement.id,status:'preparation'});
+  });
 });

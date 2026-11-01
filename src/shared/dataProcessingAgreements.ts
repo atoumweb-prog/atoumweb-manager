@@ -64,6 +64,21 @@ export interface DataProcessingAgreementGate {
   agreementId: string|null;
 }
 
+export interface DataProcessingIncident {
+  id:string;
+  projectSiteId:string;
+  agreementId:string|null;
+  summary:string;
+  details:string;
+  occurredAt:string;
+  reportedAt:string|null;
+  resolvedAt:string|null;
+  resolution:string;
+  createdAt:string;
+  updatedAt:string;
+}
+export interface DataProcessingIncidentInput {summary:string;details?:string;occurredAt:string;reportedAt?:string|null;agreementId?:string|null;}
+
 export interface DataProcessingAgreementApi {
   listForSite(siteId:string):Promise<DataProcessingAgreement[]>;
   createDraft(siteId:string):Promise<DataProcessingAgreement>;
@@ -72,4 +87,7 @@ export interface DataProcessingAgreementApi {
   markSent(id:string):Promise<DataProcessingAgreement>;
   markSigned(id:string,documentId:string):Promise<DataProcessingAgreement>;
   gate(siteId:string):Promise<DataProcessingAgreementGate>;
+  listIncidents(siteId:string):Promise<DataProcessingIncident[]>;
+  recordIncident(siteId:string,input:DataProcessingIncidentInput):Promise<DataProcessingIncident>;
+  resolveIncident(id:string,resolution:string,resolvedAt?:string):Promise<DataProcessingIncident>;
 }

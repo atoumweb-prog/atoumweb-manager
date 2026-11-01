@@ -28,5 +28,21 @@ export const DATA_PROCESSING_AGREEMENT_MIGRATION: Migration = {
       ON data_processing_agreements(project_site_id, version_number DESC);
     CREATE INDEX idx_data_processing_agreements_client
       ON data_processing_agreements(client_account_id, status, updated_at DESC);
+
+    CREATE TABLE data_processing_incidents (
+      id TEXT PRIMARY KEY,
+      project_site_id TEXT NOT NULL REFERENCES project_sites(id) ON DELETE RESTRICT,
+      agreement_id TEXT REFERENCES data_processing_agreements(id) ON DELETE RESTRICT,
+      summary TEXT NOT NULL,
+      details TEXT,
+      occurred_at TEXT NOT NULL,
+      reported_at TEXT,
+      resolved_at TEXT,
+      resolution TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    ) STRICT;
+    CREATE INDEX idx_data_processing_incidents_site
+      ON data_processing_incidents(project_site_id, occurred_at DESC);
   `,
 };

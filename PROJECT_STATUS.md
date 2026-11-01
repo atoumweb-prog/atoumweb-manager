@@ -2234,5 +2234,6 @@ Quatre PDF inspectés intégralement, 49 pages : vitrine 699 €, WooCommerce 1 
 - Migration 80 ajoutée : accords versionnés par Site et client, preuve signée, historique immuable.
 - Service, frontière IPC avec confirmations explicites et panneau Projet > Sites & pages raccordés.
 - Un accord n’est jamais créé depuis un devis ni rattaché automatiquement ; seuls les traitements déclarés sont bloqués avant signature.
-- Typecheck réussi ; 25 tests ciblés réussis. Aucune base utilisateur, publication, fusion ou déploiement.
+- Registre d’incidents par Site ajouté avec dates, signalement et clôture ; les accords restent inchangés.
+- Typecheck réussi ; 26 tests ciblés réussis. Aucune base utilisateur, publication, fusion ou déploiement.
 - Détail : `docs/ux-v2/INTEGRATION-ACCORD-RGPD-V3-2026-11-01.md`.

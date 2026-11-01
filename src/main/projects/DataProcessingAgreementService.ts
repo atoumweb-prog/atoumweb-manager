@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
-import type { DataProcessingAgreement, DataProcessingAgreementGate, DataProcessingAgreementPayload, DataProcessingAgreementStatus } from '../../shared/dataProcessingAgreements';
+import type { DataProcessingAgreement, DataProcessingAgreementGate, DataProcessingAgreementPayload, DataProcessingAgreementStatus, DataProcessingIncident, DataProcessingIncidentInput } from '../../shared/dataProcessingAgreements';
 
 const SOURCE_REFERENCE = 'AtoumWeb_Accord_RGPD_V3.docx';
 const SOURCE_SHA256 = '7C646476C7F35E73D1681F2DAD602994873C018048A98ECCE086CDDD7B07B51F';
@@ -11,6 +11,7 @@ type Row = {
   source_sha256:string; payload_json:string; sent_at:string|null; signed_at:string|null;
   signed_document_id:string|null; created_at:string; updated_at:string;
 };
+type IncidentRow={id:string;project_site_id:string;agreement_id:string|null;summary:string;details:string|null;occurred_at:string;reported_at:string|null;resolved_at:string|null;resolution:string|null;created_at:string;updated_at:string};
 
 export class DataProcessingAgreementService {
   constructor(private readonly db: DatabaseAdapter) {}
@@ -89,6 +90,22 @@ export class DataProcessingAgreementService {
       : {required:true,allowed:false,reason:'L’accord RGPD doit être signé avant d’exécuter les traitements déclarés.',agreementId:agreement.id};
   }
 
+  listIncidents(siteId:string):DataProcessingIncident[]{this.requireSite(siteId);return this.db.all<IncidentRow>('SELECT * FROM data_processing_incidents WHERE project_site_id=? ORDER BY occurred_at DESC,created_at DESC',[siteId]).map(row=>this.mapIncident(row));}
+  recordIncident(siteId:string,input:DataProcessingIncidentInput):DataProcessingIncident{
+    this.requireSite(siteId);const summary=input.summary?.trim(),occurredAt=input.occurredAt?.trim();
+    if(!summary||!occurredAt)throw Error('Résumé et date de l’incident requis.');
+    if(input.agreementId){const agreement=this.get(input.agreementId);if(agreement.projectSiteId!==siteId)throw Error('Accord RGPD extérieur à ce Site.');}
+    const id=randomUUID(),now=new Date().toISOString();
+    this.db.run(`INSERT INTO data_processing_incidents(id,project_site_id,agreement_id,summary,details,occurred_at,reported_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)`,[id,siteId,input.agreementId??null,summary,input.details?.trim()||null,occurredAt,input.reportedAt?.trim()||null,now,now]);
+    this.log(id,'rgpd_incident_recorded',`Incident de données enregistré : ${summary}.`);return this.getIncident(id);
+  }
+  resolveIncident(id:string,resolution:string,resolvedAt=new Date().toISOString()):DataProcessingIncident{
+    const current=this.getIncident(id);if(current.resolvedAt)throw Error('Cet incident est déjà clôturé.');
+    const clean=resolution?.trim();if(!clean)throw Error('La résolution de l’incident est requise.');
+    const now=new Date().toISOString();this.db.run('UPDATE data_processing_incidents SET resolution=?,resolved_at=?,updated_at=? WHERE id=?',[clean,resolvedAt,now,id]);
+    this.log(id,'rgpd_incident_resolved',`Incident de données clôturé : ${current.summary}.`);return this.getIncident(id);
+  }
+
   completenessIssues(payload:DataProcessingAgreementPayload):string[] {
     const issues:string[]=[];
     if(!payload.siteReference.trim())issues.push('site');
@@ -112,6 +129,8 @@ export class DataProcessingAgreementService {
     return {...site,client_account_id:site.client_account_id};
   }
   private get(id:string):DataProcessingAgreement {const row=this.db.get<Row>('SELECT * FROM data_processing_agreements WHERE id=?',[id]);if(!row)throw Error('Accord RGPD introuvable.');return this.map(row);}
+  private getIncident(id:string):DataProcessingIncident{const row=this.db.get<IncidentRow>('SELECT * FROM data_processing_incidents WHERE id=?',[id]);if(!row)throw Error('Incident RGPD introuvable.');return this.mapIncident(row);}
+  private mapIncident(row:IncidentRow):DataProcessingIncident{return {id:row.id,projectSiteId:row.project_site_id,agreementId:row.agreement_id,summary:row.summary,details:row.details??'',occurredAt:row.occurred_at,reportedAt:row.reported_at,resolvedAt:row.resolved_at,resolution:row.resolution??'',createdAt:row.created_at,updatedAt:row.updated_at};}
   private map(row:Row):DataProcessingAgreement {return {id:row.id,projectSiteId:row.project_site_id,clientAccountId:row.client_account_id,versionNumber:Number(row.version_number),previousVersionId:row.previous_version_id,status:row.status,sourceReference:row.source_reference,sourceSha256:row.source_sha256,payload:JSON.parse(row.payload_json) as DataProcessingAgreementPayload,sentAt:row.sent_at,signedAt:row.signed_at,signedDocumentId:row.signed_document_id,createdAt:row.created_at,updatedAt:row.updated_at};}
   private defaults(name:string,domain:string|null):DataProcessingAgreementPayload {return {siteReference:name,domain:domain??'',contractReference:'',services:[],operations:[],purpose:'',instructions:'',dataSubjects:[],dataCategories:[],specialDataDetails:'',exitInstruction:'to-confirm',exitDetails:'',toolsAndAccesses:'',processingStart:'',processingEnd:'',incidentContactName:'',incidentContactEmail:'',securityNotes:'',exchangeProtection:'',backupNotes:'Sauvegardes assurées par o2switch Cloud selon le service effectivement souscrit ; aucune sauvegarde indépendante AtoumWeb n’est présumée.',providers:[{name:'o2switch',role:'Hébergement Cloud',data:'Données hébergées et sauvegardes du Site selon le service souscrit',accountHolder:'unknown',rgpdRole:'to-confirm',country:'France',authorized:false}],transfers:'to-confirm',transferDetails:'',retentionNotes:''};}
   private validatePayloadShape(payload:DataProcessingAgreementPayload):void {if(!payload||!Array.isArray(payload.operations)||!Array.isArray(payload.providers)||!Array.isArray(payload.dataSubjects)||!Array.isArray(payload.dataCategories))throw Error('Contenu RGPD invalide.');}

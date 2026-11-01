@@ -500,6 +500,9 @@ const api: AtoumWebApi = {
       markSent: (id: string) => ipcRenderer.invoke('projects:rgpd:mark-sent', id),
       markSigned: (id: string, documentId: string) => ipcRenderer.invoke('projects:rgpd:mark-signed', id, documentId),
       gate: (siteId: string) => ipcRenderer.invoke('projects:rgpd:gate', siteId),
+      listIncidents: (siteId:string) => ipcRenderer.invoke('projects:rgpd:incidents:list',siteId),
+      recordIncident: (siteId:string,input:import('../shared/dataProcessingAgreements').DataProcessingIncidentInput) => ipcRenderer.invoke('projects:rgpd:incidents:record',siteId,input),
+      resolveIncident: (id:string,resolution:string,resolvedAt?:string) => ipcRenderer.invoke('projects:rgpd:incidents:resolve',id,resolution,resolvedAt),
     },
     secrets: {
       list: (projectId: string, projectNodeId?: string | null) => ipcRenderer.invoke('projects:secrets:list', projectId, projectNodeId),

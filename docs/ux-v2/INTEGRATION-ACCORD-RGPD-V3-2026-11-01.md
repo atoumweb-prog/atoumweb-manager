@@ -16,6 +16,7 @@
 - Les versions envoyées et signées sont immuables ; une modification crée une nouvelle révision liée à la précédente.
 - La signature exige une preuve documentaire active appartenant au même client.
 - Le contrôle ne bloque que les traitements déclarés dans la dernière version. Une révision comportant des traitements doit elle-même être signée avant leur exécution.
+- Un registre d’incidents séparé par Site conserve les faits, dates, signalements et résolutions sans altérer les accords.
 - La base interne rappelle le fonctionnement actuel : sauvegardes o2switch Cloud selon le service souscrit, sans présumer une sauvegarde indépendante AtoumWeb.
 
 ## Parcours disponible
@@ -33,5 +34,5 @@ La migration 80 crée uniquement la structure nécessaire. Elle n’insère aucu
 ## Contrôles ciblés
 
 - TypeScript : réussi.
-- Migrations + service RGPD + non-régression Sites : 25 tests réussis.
+- Migrations + service RGPD + non-régression Sites : 26 tests réussis.
 - Cas couverts : consultation sans écriture, unicité du brouillon modifiable, validation de complétude, preuve du même client, immutabilité, historique, révision et contrôle limité aux traitements déclarés.

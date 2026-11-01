@@ -846,6 +846,9 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     guardedMutation(() => database.projectSites.applyBlueprint(projectId, templateVersionId)));
   ipcMain.handle('projects:rgpd:list', (_event, siteId:string) => database.dataProcessingAgreements.listForSite(siteId));
   ipcMain.handle('projects:rgpd:gate', (_event, siteId:string) => database.dataProcessingAgreements.gate(siteId));
+  ipcMain.handle('projects:rgpd:incidents:list',(_event,siteId:string)=>database.dataProcessingAgreements.listIncidents(siteId));
+  ipcMain.handle('projects:rgpd:incidents:record',(_event,siteId:string,input:import('../shared/dataProcessingAgreements').DataProcessingIncidentInput)=>guardedMutation(()=>database.dataProcessingAgreements.recordIncident(siteId,input)));
+  ipcMain.handle('projects:rgpd:incidents:resolve',(_event,id:string,resolution:string,resolvedAt?:string)=>guardedMutation(()=>database.dataProcessingAgreements.resolveIncident(id,resolution,resolvedAt)));
   ipcMain.handle('projects:rgpd:create-draft', async (_event, siteId:string) => {
     const answer=await dialog.showMessageBox({type:'question',title:'Préparer un accord RGPD',message:'Créer volontairement un accord RGPD distinct pour ce Site ?',detail:'Cette action ne rattache rien automatiquement au devis et ne publie aucun document.',buttons:['Annuler','Préparer l’accord'],defaultId:0,cancelId:0});
     if(answer.response!==1)return null;

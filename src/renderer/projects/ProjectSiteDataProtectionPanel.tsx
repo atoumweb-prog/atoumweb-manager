@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ClientDocument } from '../../shared/clientDocuments';
-import { DATA_PROCESSING_OPERATIONS, type DataProcessingAgreement, type DataProcessingAgreementPayload, type DataProcessingOperation } from '../../shared/dataProcessingAgreements';
+import { DATA_PROCESSING_OPERATIONS, type DataProcessingAgreement, type DataProcessingAgreementPayload, type DataProcessingIncident, type DataProcessingOperation } from '../../shared/dataProcessingAgreements';
 
 const OPERATION_LABELS:Record<DataProcessingOperation,string>={access:'Accès technique',hosting:'Hébergement',maintenance:'Maintenance',support:'Support',backup:'Sauvegarde',migration:'Migration',analytics:'Mesure d’audience'};
 const STATUS_LABELS={preparation:'En préparation',sent:'Envoyé',signed:'Signé',revision:'Révision'} as const;
@@ -11,6 +11,8 @@ export function ProjectSiteDataProtectionPanel({siteId,onMessage}:{siteId:string
   const [draft,setDraft]=useState<DataProcessingAgreementPayload|null>(null);
   const [documents,setDocuments]=useState<ClientDocument[]>([]);
   const [proofId,setProofId]=useState('');
+  const [incidents,setIncidents]=useState<DataProcessingIncident[]>([]);
+  const [incidentSummary,setIncidentSummary]=useState('');
   const [busy,setBusy]=useState(false);
   const latest=items[0]??null;
   const editable=latest&&(latest.status==='preparation'||latest.status==='revision')?latest:null;
@@ -18,7 +20,7 @@ export function ProjectSiteDataProtectionPanel({siteId,onMessage}:{siteId:string
 
   async function load(){
     const next=await window.atoumweb.projects.dataProcessingAgreements.listForSite(siteId);
-    setItems(next);setDraft(next[0]&&(next[0].status==='preparation'||next[0].status==='revision')?next[0].payload:null);
+    setItems(next);setDraft(next[0]&&(next[0].status==='preparation'||next[0].status==='revision')?next[0].payload:null);setIncidents(await window.atoumweb.projects.dataProcessingAgreements.listIncidents(siteId));
     const clientId=next[0]?.clientAccountId;
     setDocuments(clientId?(await window.atoumweb.clientDocuments.list(clientId)).filter(doc=>doc.category==='legal'||doc.category==='contract'):[]);
   }
@@ -48,5 +50,6 @@ export function ProjectSiteDataProtectionPanel({siteId,onMessage}:{siteId:string
       {(latest.status==='sent'||latest.status==='signed')&&<button className="secondary-button" disabled={busy} type="button" onClick={()=>void run(()=>window.atoumweb.projects.dataProcessingAgreements.createRevision(latest.id),'Révision RGPD créée sans modifier la version précédente.')}>Créer une révision</button>}
       {items.length>1&&<details><summary>Historique · {items.length} versions</summary><ul>{items.map(item=><li key={item.id}>V{item.versionNumber} · {STATUS_LABELS[item.status]} · {new Date(item.updatedAt).toLocaleDateString('fr-FR')}</li>)}</ul></details>}
     </>}
+    <details className="project-site-rgpd-incidents"><summary>Registre des incidents · {incidents.length}</summary><div><div className="project-site-rgpd-proof"><label>Nouvel incident<input value={incidentSummary} onChange={event=>setIncidentSummary(event.target.value)} placeholder="Résumé factuel" /></label><button className="secondary-button" disabled={busy||!incidentSummary.trim()} type="button" onClick={()=>void run(async()=>{await window.atoumweb.projects.dataProcessingAgreements.recordIncident(siteId,{agreementId:latest?.id??null,summary:incidentSummary,occurredAt:new Date().toISOString()});setIncidentSummary('');},'Incident enregistré dans le registre du Site.')}>Enregistrer</button></div>{incidents.length?<ul>{incidents.map(incident=><li key={incident.id}><strong>{incident.summary}</strong> · {new Date(incident.occurredAt).toLocaleString('fr-FR')} · {incident.resolvedAt?'clôturé':'à traiter'}</li>)}</ul>:<p className="muted">Aucun incident enregistré.</p>}</div></details>
   </section>;
 }
