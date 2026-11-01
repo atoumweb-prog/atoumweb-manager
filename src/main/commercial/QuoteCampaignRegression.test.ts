@@ -47,7 +47,7 @@ it('résout dans un nouveau devis consommateur le destinataire de rétractation 
  expect(resolved.compiledText).not.toContain('[COORDONNÉES DU DESTINATAIRE À RENSEIGNER]');
  expect(resolved.warnings.join(' ')).not.toMatch(/placeholder/i);
  expect(terms.presentation(quote.id).text).toContain('AtoumWeb, 10 rue Exemple, 21000 Dijon');
- expect(db.get<{body:string}>('SELECT body FROM contract_clause_versions WHERE id=?',[published.currentVersionId])!.body).toContain('[COORDONNÉES DU DESTINATAIRE À RENSEIGNER]');
+ expect(db.get<{body:string}>('SELECT body FROM contract_clause_versions WHERE id=?',[published.currentVersionId!])!.body).toContain('[COORDONNÉES DU DESTINATAIRE À RENSEIGNER]');
 });
 it('fige les coordonnées de la société contractante puis ignore une modification ultérieure du CRM',()=>{
  const q=quotes.get(id);expect(q.recipient?.name).toBe('TEST société contractante');expect(buildQuoteHtml(q,terms.presentation(id))).toContain('1 rue TEST');prepareQuoteForTest(db,id);quotes.finalize(id);db.run("UPDATE organizations SET address_line1='Nouvelle adresse' WHERE id=?",[q.recipient!.organizationId]);expect(quotes.get(id).recipient?.addressLine1).toBe('1 rue TEST');
