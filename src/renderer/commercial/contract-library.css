@@ -57,3 +57,11 @@
 .aw-word-diff-added {border-left:3px solid var(--accent);}
 .aw-word-diff-removed {border-left:3px solid var(--border-strong,var(--border));text-decoration:line-through;}
 .aw-word-diff-unchanged {color:var(--text-muted);}
+.convergence-review{border:1px solid var(--border-color,#355269);border-radius:12px;padding:1rem;margin:1rem 0;background:var(--surface-raised,var(--surface,#fff))}
+.convergence-review>summary{font-weight:800;cursor:pointer}
+.convergence-review-actions,.convergence-review-summary{display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;margin:.8rem 0}
+.convergence-review-summary span{border:1px solid var(--border-color,#355269);border-radius:8px;padding:.55rem .75rem}
+.convergence-diff-card,.convergence-clause{border:1px solid var(--border-color,#355269);border-radius:8px;padding:.7rem;margin:.6rem 0}
+.convergence-diff{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:.5rem 0}
+.convergence-diff pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface,#fff);border:1px solid var(--border-color,#355269);border-radius:8px;padding:.75rem;max-height:26rem;overflow:auto}
+@media(max-width:900px){.convergence-diff{grid-template-columns:1fr}}

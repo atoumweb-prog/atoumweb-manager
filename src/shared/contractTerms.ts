@@ -56,6 +56,9 @@ export interface ContractClauseTemplateInput {
 
 export interface ContractClauseVersionInput {
   body: string;
+  title?: string | null;
+  code?: string | null;
+  audience?: ContractClauseAudience | null;
   review?: ContractClauseReviewMetadata | null;
 }
 
@@ -63,6 +66,9 @@ export interface ContractClauseVersion {
   id: string;
   clauseId: string;
   versionNumber: number;
+  title?: string | null;
+  code?: string | null;
+  audience?: ContractClauseAudience | null;
   body: string;
   status: ContractClauseVersionStatus;
   publishedAt?: string | null;

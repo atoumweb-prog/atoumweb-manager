@@ -302,7 +302,12 @@ describe('migrations SQLite', () => {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('technical_items') WHERE name='${column}'`)?.name).toBe(column);
     }
     expect(MIGRATIONS.find(m=>m.id===70)).toMatchObject({id:70,name:'catalog_recommendation_details_v1'});
-    expect(MIGRATIONS.at(-1)).toMatchObject({id:75,name:'contact_postal_address'});
+    expect(MIGRATIONS.at(-1)).toMatchObject({id:79,name:'contract_clause_version_identity_and_code_aliases'});
+    expect(database.get<{name:string}>("SELECT name FROM sqlite_master WHERE type='table' AND name='contract_convergence_decisions'")?.name).toBe('contract_convergence_decisions');
+    expect(database.get<{name:string}>("SELECT name FROM sqlite_master WHERE type='table' AND name='contract_clause_code_aliases'")?.name).toBe('contract_clause_code_aliases');
+    for (const column of ['code', 'audience']) {
+      expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('contract_clause_versions') WHERE name='${column}'`)?.name).toBe(column);
+    }
     for(const table of ['quote_contract_preparations','quote_contract_transmissions'])expect(database.get<{name:string}>("SELECT name FROM sqlite_master WHERE type='table' AND name=?",[table])?.name).toBe(table);
     expect(MIGRATIONS.find(m=>m.id===68)?.name).toBe('catalog_version_recommendations_v1');
     expect(database.get<{name:string}>("SELECT name FROM sqlite_master WHERE type='table' AND name='catalog_categories'")?.name).toBe('catalog_categories');

@@ -164,8 +164,8 @@ describe('Lot 4 — bibliothèque contractuelle V1 uniquement en brouillon', () 
       d.run("INSERT INTO contract_clause_versions (id,clause_id,version_number,body,status,published_at,created_at) VALUES ('v-old','old',1,'Texte exact ancien','published','2026-09-14','2026-09-14')");
       const before = d.get('SELECT * FROM contract_clause_versions WHERE id=\'v-old\'')!;
       expect(applyPendingMigrations(d).map(m => m.id)).toEqual(MIGRATIONS.filter(m=>m.id>=55).map(m=>m.id));
-      const after = d.get('SELECT * FROM contract_clause_versions WHERE id=\'v-old\'')!; const {review_metadata_json,...historical} = after;
-      expect(historical).toEqual(before); expect(review_metadata_json).toBeNull();expect(applyPendingMigrations(d)).toEqual([]);
+      const after = d.get('SELECT * FROM contract_clause_versions WHERE id=\'v-old\'')!; const {review_metadata_json,title,...historical} = after;
+      expect(historical).toEqual(before); expect(review_metadata_json).toBeNull(); expect(title).toBe('Ancienne'); expect(applyPendingMigrations(d)).toEqual([]);
     } finally {d.close();}
   });
 });

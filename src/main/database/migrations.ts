@@ -54,6 +54,10 @@ import { CATALOG_IDENTITY_V1_MIGRATION } from './catalogIdentityV1Migration';
 import { CATALOG_IMPORT_V1_MIGRATION } from './catalogImportV1Migration';
 import { QUOTE_CONTRACT_PREPARATION_MIGRATION } from './quoteContractPreparationMigration';
 import { CONTRACT_LIBRARY_IMPORT_V1_MIGRATION } from './contractLibraryImportV1Migration';
+import { CONTRACT_EDITORIAL_DRAFT_MIGRATION } from './contractEditorialDraftMigration';
+import { CONTRACT_CONVERGENCE_APPROVAL_MIGRATION } from './contractConvergenceApprovalMigration';
+import { CONTRACT_CONVERGENCE_DECISION_HISTORY_MIGRATION } from './contractConvergenceDecisionHistoryMigration';
+import { CONTRACT_CLAUSE_VERSION_IDENTITY_MIGRATION } from './contractClauseVersionIdentityMigration';
 
 export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
@@ -266,6 +270,10 @@ export const MIGRATIONS: Migration[] = [
   {id:75,name:'contact_postal_address',sql:`ALTER TABLE contacts ADD COLUMN address_line1 TEXT;
     ALTER TABLE contacts ADD COLUMN address_line2 TEXT;ALTER TABLE contacts ADD COLUMN postal_code TEXT;
     ALTER TABLE contacts ADD COLUMN city TEXT;ALTER TABLE contacts ADD COLUMN country TEXT;`},
+  CONTRACT_EDITORIAL_DRAFT_MIGRATION,
+  CONTRACT_CONVERGENCE_APPROVAL_MIGRATION,
+  CONTRACT_CONVERGENCE_DECISION_HISTORY_MIGRATION,
+  CONTRACT_CLAUSE_VERSION_IDENTITY_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

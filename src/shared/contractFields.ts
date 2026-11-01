@@ -7,7 +7,10 @@ export function resolveContractFields(body:string, admin:ContractAdministration|
     if(info?.state==='filled'&&info.value.trim())body=body.replaceAll(marker,`${label} : ${info.value.trim()}`);
   };
   field('complaints','Contact pour les réclamations','[CONTACT RÉCLAMATION ATOUMWEB À RENSEIGNER]');
-  field('withdrawalRecipient','Destinataire de la rétractation','[COORDONNÉES DU DESTINATAIRE À RENSEIGNER]');
+  // The clause already says « à l'adresse suivante : »; insert the address without an extra technical label.
+  if(admin?.withdrawalRecipient.state==='filled'&&admin.withdrawalRecipient.value.trim()){
+    body=body.replaceAll('[COORDONNÉES DU DESTINATAIRE À RENSEIGNER]',admin.withdrawalRecipient.value.trim());
+  }
   if(admin?.mediator.state==='filled'&&admin.mediator.value.trim()){
     body=body.replaceAll('[NOM DU MÉDIATEUR]',admin.mediator.value.trim())
       .replaceAll('[ADRESSE]','voir les coordonnées complètes du médiateur ci-dessus')

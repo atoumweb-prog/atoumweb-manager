@@ -22,8 +22,40 @@ describe('PDF Atoum — modèle commercial et annexe',()=>{
   const q={...quote,lines:[{...quote.lines[0],parameters:{productCount:{kind:'additional' as const,count:51}}},{...quote.lines[0],id:'included',quantityMilli:1000,parameters:{productCount:{kind:'included' as const,count:10}},snapshot:{unit:'an'}}]};
   const html=buildQuoteHtml(q,presentation);expect(html).toContain('61 produits renseignés au total');expect(html).toContain('10 inclus et 51 supplémentaires');expect(html).toContain('1&nbsp;<span class="unit">an</span>');
  });
+ it('identifie les périodes mensuelle et annuelle sans prétendre à un abonnement simultané',()=>{
+  const monthly={...quote.lines[0],id:'maintenance',label:'Maintenance WordPress',contractLineValueCents:4900,catalogLineValueCents:4900,quantityMilli:1000,snapshot:{priceMode:'mensuelle',unit:'mois'}};
+  const yearly={...quote.lines[0],id:'hosting',label:'Hébergement isolé',contractLineValueCents:14900,catalogLineValueCents:14900,quantityMilli:1000,snapshot:{priceMode:'annuelle',unit:'an'}};
+  const q={...quote,contractValueCents:19800,lines:[monthly,yearly]};
+  const html=buildQuoteHtml(q,presentation);
+  expect(html).toContain('Total des périodes commandées');
+  expect(html).toContain('198,00 €');
+  expect(html).toContain('49,00 € / mois');
+  expect(html).toContain('voir les dates de début, de fin et les échéances distinctes');
+  expect(html).not.toContain('Prestations ponctuelles et première période mensuelle');
+ });
  it('présente quantité, prix unitaire et montants avec deux décimales sans changer les valeurs',()=>{const html=buildQuoteHtml(quote,presentation);expect(html).toContain('>51&nbsp;');expect(html).toContain('15,00 €');expect(html).toContain('765,00 €');expect(html).toContain('229,50 €');expect(html).toContain('535,50 €');expect(html).toContain('Prix unitaire');});
- it('imprime chaque texte conservé et le périmètre une seule fois, sans une deuxième description identique',()=>{const html=buildQuoteHtml(quote,presentation);expect(html.split('Périmètre exact du devis.')).toHaveLength(2);expect(html).not.toContain('class="description"');expect(html).toContain('<h3>1. Livraison</h3>');expect(html).toContain('Texte complet &lt;script&gt; conservé.');expect(html).toContain('Suite de la clause.');expect(html).toContain('version 2');expect(html).not.toContain('<script>');});
+ it('imprime chaque texte conservé et le périmètre une seule fois, sans une deuxième description identique',()=>{const html=buildQuoteHtml(quote,presentation);expect(html.split('Périmètre exact du devis.')).toHaveLength(2);expect(html).not.toContain('class="description"');expect(html).toContain('<h3>1. Livraison</h3>');expect(html).toContain('Texte complet &lt;script&gt; conservé.');expect(html).toContain('Suite de la clause.');expect(html).not.toContain('Références des clauses jointes');expect(html).not.toContain('version 2');expect(presentation.modules[0].version).toBe(2);expect(html).not.toContain('<script>');});
+ it('affiche les sous-titres et termes mis en valeur sans exposer le Markdown ni exécuter du HTML',()=>{
+  const p={...presentation,sections:[{id:'catalog',title:'Maintenance',text:'1. Sauvegardes\n\n**Sauvegardes réalisées par AtoumWeb**\n\nLe règlement est un **acompte** de 49,00 € ; <script>alert(1)</script>.\n\n**Restauration du site**\n\nVoir le devis.'}]};
+  const html=buildQuoteHtml(quote,p);
+  expect(html).toContain('<h4 class="contract-subheading">Sauvegardes réalisées par AtoumWeb</h4>');
+  expect(html).toContain('<h4 class="contract-subheading">Restauration du site</h4>');
+  expect(html).toContain('<strong>acompte</strong>');
+  expect(html).toContain('49,00&nbsp;€');
+  expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+  expect(html).not.toContain('<script>alert(1)</script>');
+  expect(html).not.toContain('**Sauvegardes');
+  expect(p.sections[0].text).toContain('**Sauvegardes'); // display transformation only
+ });
+ it('retire le registre imprimé mais conserve l’acceptation et nettoie l’ancien texte par défaut',()=>{
+  const legacy={...presentation,documentSettings:{schemaVersion:1 as const,brandName:'AtoumWeb',tagline:'',logoDataUrl:null,accentColor:'#ffda00',textColor:'#171b20',fontFamily:'Arial' as const,fontSize:10,marginMm:14,logoWidthMm:16,footerText:'',introduction:'',acceptanceText:'Les CGV jointes dans ce dossier, dont les versions sont référencées ci-dessus.',documentTitle:'DEVIS',scopeTitle:'Périmètre',annexTitle:'Annexe',validityDays:30,depositPercent:30}};
+  const html=buildQuoteHtml(quote,legacy);
+  expect(html).not.toContain('Références des clauses jointes');
+  expect(html).not.toContain('référencées ci-dessus');
+  expect(html).toContain('Les CGV jointes dans ce dossier.');
+  expect(html).toContain('Acceptation du devis et de son annexe contractuelle');
+  expect(legacy.documentSettings.acceptanceText).toContain('référencées ci-dessus'); // no saved data mutation
+ });
  it('utilise le symbole intégré et rattache la signature finale à ce même dossier',()=>{const html=buildQuoteHtml(quote,presentation);expect(html).toContain('data:image/svg+xml');expect(html).toContain('#ffda00');expect(html.indexOf('class="acceptance"')).toBeGreaterThan(html.indexOf('class="annex"'));expect(html).toContain('Emplacement prévu pour la version définitive');});
  it('identifie le brouillon mais ne crée pas un nouveau bloc à signer pour un devis accepté',()=>{expect(isQuoteDocumentDraft(quote,presentation)).toBe(true);const q={...quote,status:'accepted',acceptedAt:'2026-10-23'} as QuoteDetail;const html=buildQuoteHtml(q,{...presentation,state:'frozen'});expect(html).toContain('Acceptation enregistrée');expect(html).not.toContain('class="signature"');expect(html).not.toContain('BROUILLON');});
  it('conserve les historiques sans les reconstruire depuis une bibliothèque courante',()=>{const q={...quote,status:'accepted',contractTextSnapshot:'Texte ancien\nconservé',contractSnapshotJson:null} as QuoteDetail;expect(buildQuoteHtml(q)).toContain('Texte ancien<br />conservé');expect(buildQuoteHtml({...q,contractTextSnapshot:'',specialTerms:'Ne pas réintroduire'})).not.toContain('Ne pas réintroduire');});

@@ -1,4 +1,6 @@
 import {beforeEach,afterEach,it,expect} from 'vitest';
+import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
 import {NodeSqliteAdapter} from '../database/NodeSqliteAdapter';
 import {applyPendingMigrations} from '../database/migrations';
 import {CrmService} from '../crm/CrmService';
@@ -22,6 +24,30 @@ it('B2B n’exige aucun médiateur, B2C exige les informations correspondantes e
 it('détecte les champs nommés des clauses et les résout depuis la configuration sans modifier la source',()=>{
  prepareQuoteForTest(db,id);terms.addCustomQuoteClause(id,{title:'TEST médiation',body:'[NOM DU MÉDIATEUR] — [ADRESSE] — [SITE INTERNET]'});expect(prep.get(id).issues.some(i=>i.code==='CLAUSE_FIELDS')).toBe(true);expect(()=>quotes.finalize(id)).toThrow(/informations contractuelles/);
  const admin=prep.administration();admin.mediator={state:'filled',value:'TEST médiateur, adresse TEST, https://example.invalid',reason:''};prep.saveAdministration(admin);expect(terms.presentation(id).text).toContain('TEST médiateur');expect(terms.getQuoteBuild(id).compiledText).toContain('TEST médiateur');expect(terms.getQuoteBuild(id).compiledText).not.toContain('[NOM DU MÉDIATEUR]');quotes.finalize(id);expect(db.get<{body:string}>("SELECT body FROM quote_contract_clauses WHERE quote_id=? AND title='TEST médiation'",[id])!.body).toContain('[NOM DU MÉDIATEUR]');expect(JSON.parse(db.get<{snapshot_json:string}>('SELECT snapshot_json FROM quote_contract_preparations WHERE quote_id=?',[id])!.snapshot_json).presentation.text).not.toContain('[NOM DU MÉDIATEUR]');
+});
+it('résout dans un nouveau devis consommateur le destinataire de rétractation sans modifier la clause source',()=>{
+ const source=JSON.parse(readFileSync(resolve(__dirname,'../../../docs/ux-v2/bibliotheque-humaine-118-20261025/PROPOSITIONS.json'),'utf8')) as {clauses:{code:string;proposal:string}[]};
+ const realText=source.clauses.find(entry=>entry.code==='CONS-RETRACTATION')?.proposal;
+ expect(realText).toContain('[COORDONNÉES DU DESTINATAIRE À RENSEIGNER]');
+ const clause=terms.createTemplate({code:'CONS-RETRACTATION',title:'Droit de rétractation',scope:'base',audience:'consumer'},{body:realText!});
+ const published=terms.publishVersion(clause.versions[0].id);
+ const contact=crm.createContact({firstName:'TEST',lastName:'Consommateur'});
+ const prospect=crm.createProspect({contactId:contact.id,primaryNeed:'Site de mariage'});
+ const quote=quotes.create({prospectId:prospect.id,subject:'Site de mariage',contractAudience:'consumer'});
+ terms.syncQuote(quote.id);
+ const unresolved=terms.getQuoteBuild(quote.id);
+ expect(unresolved.warnings.join(' ')).toMatch(/placeholder/i);
+ expect(unresolved.compiledText).toContain('[COORDONNÉES DU DESTINATAIRE À RENSEIGNER]');
+ const admin=prep.administration();
+ admin.withdrawalRecipient={state:'filled',value:'AtoumWeb, 10 rue Exemple, 21000 Dijon',reason:''};
+ prep.saveAdministration(admin);
+ const resolved=terms.getQuoteBuild(quote.id);
+ expect(resolved.compiledText).toContain("à l'adresse suivante : AtoumWeb, 10 rue Exemple, 21000 Dijon.");
+ expect(resolved.compiledText).not.toContain('Destinataire de la rétractation :');
+ expect(resolved.compiledText).not.toContain('[COORDONNÉES DU DESTINATAIRE À RENSEIGNER]');
+ expect(resolved.warnings.join(' ')).not.toMatch(/placeholder/i);
+ expect(terms.presentation(quote.id).text).toContain('AtoumWeb, 10 rue Exemple, 21000 Dijon');
+ expect(db.get<{body:string}>('SELECT body FROM contract_clause_versions WHERE id=?',[published.currentVersionId!])!.body).toContain('[COORDONNÉES DU DESTINATAIRE À RENSEIGNER]');
 });
 it('fige les coordonnées de la société contractante puis ignore une modification ultérieure du CRM',()=>{
  const q=quotes.get(id);expect(q.recipient?.name).toBe('TEST société contractante');expect(buildQuoteHtml(q,terms.presentation(id))).toContain('1 rue TEST');prepareQuoteForTest(db,id);quotes.finalize(id);db.run("UPDATE organizations SET address_line1='Nouvelle adresse' WHERE id=?",[q.recipient!.organizationId]);expect(quotes.get(id).recipient?.addressLine1).toBe('1 rue TEST');

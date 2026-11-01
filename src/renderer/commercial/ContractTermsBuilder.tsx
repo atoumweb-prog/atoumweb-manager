@@ -471,10 +471,10 @@ export function ContractTermsBuilder({ quote,human=false }: { quote: QuoteDetail
               </summary>
               <div className="cgv-template-body">
                 <label>Public d'application<select value={template.audience} disabled={busy || template.status === 'archived'} onChange={(event) => void changeTemplateAudience(template, event.target.value as ContractClauseAudience)}><option value="all">Tous les clients</option><option value="professional">Professionnels</option><option value="consumer">Particuliers / consommateurs</option></select></label>
-                <label>Version publiée<textarea readOnly value={template.currentVersion?.body ?? 'Aucune version publiée.'} /></label>
+                <label>Version publiée — {template.currentVersion?.title ?? template.title}<textarea readOnly value={template.currentVersion?.body ?? 'Aucune version publiée.'} /></label>
                 {template.versions.filter((version) => version.status === 'draft').map((version) => (
                   <div className="cgv-version-editor" key={version.id}>
-                    <label>Brouillon · v{version.versionNumber}<textarea readOnly value={version.body} /></label>
+                    <label>Brouillon · v{version.versionNumber} — {version.title ?? template.title}<textarea readOnly value={version.body} /></label>
                     {version.review && <details className="cgv-review">
                       <summary>Revue documentaire · {version.review.level}</summary>
                       <p className="muted">Le niveau de revue décrit le brouillon ; il ne constitue ni une publication ni une déclaration de conformité juridique.</p>
