@@ -1,4 +1,6 @@
 import {beforeEach,afterEach,it,expect} from 'vitest';
+import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
 import {NodeSqliteAdapter} from '../database/NodeSqliteAdapter';
 import {applyPendingMigrations} from '../database/migrations';
 import {CrmService} from '../crm/CrmService';
@@ -24,7 +26,10 @@ it('détecte les champs nommés des clauses et les résout depuis la configurati
  const admin=prep.administration();admin.mediator={state:'filled',value:'TEST médiateur, adresse TEST, https://example.invalid',reason:''};prep.saveAdministration(admin);expect(terms.presentation(id).text).toContain('TEST médiateur');expect(terms.getQuoteBuild(id).compiledText).toContain('TEST médiateur');expect(terms.getQuoteBuild(id).compiledText).not.toContain('[NOM DU MÉDIATEUR]');quotes.finalize(id);expect(db.get<{body:string}>("SELECT body FROM quote_contract_clauses WHERE quote_id=? AND title='TEST médiation'",[id])!.body).toContain('[NOM DU MÉDIATEUR]');expect(JSON.parse(db.get<{snapshot_json:string}>('SELECT snapshot_json FROM quote_contract_preparations WHERE quote_id=?',[id])!.snapshot_json).presentation.text).not.toContain('[NOM DU MÉDIATEUR]');
 });
 it('résout dans un nouveau devis consommateur le destinataire de rétractation sans modifier la clause source',()=>{
- const clause=terms.createTemplate({code:'CONS-TEST-RETRACTATION',title:'Droit de rétractation',scope:'base',audience:'consumer'},{body:"Pour exercer votre droit, écrivez à l'adresse suivante : [COORDONNÉES DU DESTINATAIRE À RENSEIGNER]."});
+ const source=JSON.parse(readFileSync(resolve(__dirname,'../../../docs/ux-v2/bibliotheque-humaine-118-20261025/PROPOSITIONS.json'),'utf8')) as {clauses:{code:string;proposal:string}[]};
+ const realText=source.clauses.find(entry=>entry.code==='CONS-RETRACTATION')?.proposal;
+ expect(realText).toContain('[COORDONNÉES DU DESTINATAIRE À RENSEIGNER]');
+ const clause=terms.createTemplate({code:'CONS-RETRACTATION',title:'Droit de rétractation',scope:'base',audience:'consumer'},{body:realText!});
  const published=terms.publishVersion(clause.versions[0].id);
  const contact=crm.createContact({firstName:'TEST',lastName:'Consommateur'});
  const prospect=crm.createProspect({contactId:contact.id,primaryNeed:'Site de mariage'});
@@ -38,6 +43,7 @@ it('résout dans un nouveau devis consommateur le destinataire de rétractation 
  prep.saveAdministration(admin);
  const resolved=terms.getQuoteBuild(quote.id);
  expect(resolved.compiledText).toContain("à l'adresse suivante : AtoumWeb, 10 rue Exemple, 21000 Dijon.");
+ expect(resolved.compiledText).not.toContain('Destinataire de la rétractation :');
  expect(resolved.compiledText).not.toContain('[COORDONNÉES DU DESTINATAIRE À RENSEIGNER]');
  expect(resolved.warnings.join(' ')).not.toMatch(/placeholder/i);
  expect(terms.presentation(quote.id).text).toContain('AtoumWeb, 10 rue Exemple, 21000 Dijon');
