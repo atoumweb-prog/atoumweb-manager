@@ -22,6 +22,17 @@ describe('PDF Atoum — modèle commercial et annexe',()=>{
   const q={...quote,lines:[{...quote.lines[0],parameters:{productCount:{kind:'additional' as const,count:51}}},{...quote.lines[0],id:'included',quantityMilli:1000,parameters:{productCount:{kind:'included' as const,count:10}},snapshot:{unit:'an'}}]};
   const html=buildQuoteHtml(q,presentation);expect(html).toContain('61 produits renseignés au total');expect(html).toContain('10 inclus et 51 supplémentaires');expect(html).toContain('1&nbsp;<span class="unit">an</span>');
  });
+ it('identifie les périodes mensuelle et annuelle sans prétendre à un abonnement simultané',()=>{
+  const monthly={...quote.lines[0],id:'maintenance',label:'Maintenance WordPress',contractLineValueCents:4900,catalogLineValueCents:4900,quantityMilli:1000,snapshot:{priceMode:'mensuelle',unit:'mois'}};
+  const yearly={...quote.lines[0],id:'hosting',label:'Hébergement isolé',contractLineValueCents:14900,catalogLineValueCents:14900,quantityMilli:1000,snapshot:{priceMode:'annuelle',unit:'an'}};
+  const q={...quote,contractValueCents:19800,lines:[monthly,yearly]};
+  const html=buildQuoteHtml(q,presentation);
+  expect(html).toContain('Total des périodes commandées');
+  expect(html).toContain('198,00 €');
+  expect(html).toContain('49,00 € / mois');
+  expect(html).toContain('voir les dates de début, de fin et les échéances distinctes');
+  expect(html).not.toContain('Prestations ponctuelles et première période mensuelle');
+ });
  it('présente quantité, prix unitaire et montants avec deux décimales sans changer les valeurs',()=>{const html=buildQuoteHtml(quote,presentation);expect(html).toContain('>51&nbsp;');expect(html).toContain('15,00 €');expect(html).toContain('765,00 €');expect(html).toContain('229,50 €');expect(html).toContain('535,50 €');expect(html).toContain('Prix unitaire');});
  it('imprime chaque texte conservé et le périmètre une seule fois, sans une deuxième description identique',()=>{const html=buildQuoteHtml(quote,presentation);expect(html.split('Périmètre exact du devis.')).toHaveLength(2);expect(html).not.toContain('class="description"');expect(html).toContain('<h3>1. Livraison</h3>');expect(html).toContain('Texte complet &lt;script&gt; conservé.');expect(html).toContain('Suite de la clause.');expect(html).not.toContain('Références des clauses jointes');expect(html).not.toContain('version 2');expect(presentation.modules[0].version).toBe(2);expect(html).not.toContain('<script>');});
  it('affiche les sous-titres et termes mis en valeur sans exposer le Markdown ni exécuter du HTML',()=>{
