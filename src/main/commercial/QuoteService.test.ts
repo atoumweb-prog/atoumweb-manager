@@ -318,6 +318,30 @@ describe('QuoteService', () => {
     expect(withLine.contractValueCents).toBe(10000);
   });
 
+  it('préremplit les cinq pages sur un nouveau devis vitrine, sans modifier le Catalogue ni les devis précédents', () => {
+    const prospect=createProspect();
+    const offer=catalog.create(
+      {type:'offer',name:'Site vitrine de référence',category:'Web'},
+      {priceMode:'fixed',priceCents:69900,description:'Forfait 5 pages'},
+    );
+    catalog.applyIdentityManifest({
+      schemaVersion:1,
+      assignments:[{itemId:offer.id,canonicalCode:'AW-WEB-VITRINE-5P',provenance:{reference:'Recette du périmètre commercial standard'}}],
+    });
+    catalog.publishVersion(offer.versions[0].id);
+    const q=quotes.create({prospectId:prospect.id,subject:'Site vitrine commercial'});
+    const first=quotes.addCatalogLine(q.id,offer.versions[0].id);
+    expect(first.lines).toHaveLength(1);
+    expect(first.lines[0].parameters?.scope).toContain('Accueil ; Services / Prestations ; À propos ; Réalisations / Avis clients ; Contact');
+    expect(first.contractValueCents).toBe(69900);
+    quotes.setLineParameters(first.lines[0].id,{scope:'Pages personnalisées : Accueil ; Tarifs ; Équipe ; FAQ ; Contact'});
+    expect(quotes.get(q.id).lines[0].parameters?.scope).toContain('Pages personnalisées');
+    const second=quotes.create({prospectId:prospect.id,subject:'Autre devis vitrine'});
+    const next=quotes.addCatalogLine(second.id,offer.versions[0].id);
+    expect(next.lines[0].parameters?.scope).toContain('Réalisations / Avis clients');
+    expect(catalog.getItem(offer.id).currentVersion?.priceCents).toBe(69900);
+    expect(catalog.getItem(offer.id).currentVersion?.description).toBe('Forfait 5 pages');
+  });
   it('fige aussi la composition exacte d’une Offre dans le snapshot du devis', () => {
     const prospect = createProspect();
     const page = createPublishedService(9900, 'Page supplémentaire');
