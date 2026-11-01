@@ -9,6 +9,7 @@ import { ContractSectionReviewService } from './ContractSectionReviewService';
 import {decideCanonicalContractMode} from '../../shared/canonicalContractMode';
 import {assembleReviewedDraftContract,renderApprovedDraftContract} from '../../shared/reviewedDraftContract';
 import { formatContractPresentation, type ContractPresentation } from '../../shared/contractPresentation';
+import { formatSoldScope } from '../../shared/contractSoldScope';
 import type { ContractAdministration, QuoteContractParameters } from '../../shared/quoteContractPreparation';
 import type { ContractTypeReference } from '../../shared/contractTypes';
 import type { CommercialVersionRules } from '../../shared/commercialRules';
@@ -466,13 +467,17 @@ export class ContractTermsService {
     });
     const sold=build.snapshotState==='frozen'?snapshot?.soldCatalogue??[]:this.database.all<Record<string,unknown>>('SELECT id,label,quantity_milli,contract_line_value_cents,snapshot_json FROM quote_lines WHERE quote_id=? ORDER BY sort_order,created_at',[quoteId]).map(l=>({lineId:l.id,dossier:new CommercialRulesService(this.database).parameters(String(l.id)),lineValueCents:l.contract_line_value_cents,quantityMilli:l.quantity_milli,catalogue:l.snapshot_json?JSON.parse(String(l.snapshot_json)):null,label:l.label}));
     const warrantyLabels:Record<string,string>=Object.fromEntries(sold.map((l:Record<string,unknown>)=>[String(l.lineId),String((l.catalogue as Record<string,unknown>|null)?.itemName??l.label??'Prestation du devis')]));
-    const lineDetails:string[]=sold.flatMap((l:Record<string,unknown>)=>{
+    const lineDetails:string[]=sold.map((l:Record<string,unknown>)=>{
       const catalogue=l.catalogue as Record<string,unknown>|null;
       const dossier=l.dossier as Record<string,unknown>|null;
-      const description=[catalogue?.itemName??l.label,`Quantité : ${Number(l.quantityMilli??1000)/1000}`,dossier?.scope].filter(Boolean).join(' — ');
-      const inclusions=Array.isArray(catalogue?.inclusions)?catalogue.inclusions.filter(x=>typeof x==='string'&&!(dossier?.scope&&/mêmes? (périmètre|prérequis)|mêmes? .*mensuel/i.test(x))):[];
-      const exclusions=dossier?.scopeExclusions?[String(dossier.scopeExclusions)]:Array.isArray(catalogue?.exclusions)?catalogue.exclusions.filter(x=>typeof x==='string'):[];
-      return description?[[description,...inclusions.map(x=>`• Inclus : ${x}`),...exclusions.map(x=>`• Non inclus : ${x}`)].join('\n')]:[];
+      return formatSoldScope({
+        label:String(catalogue?.itemName??l.label??'Prestation'),
+        quantityMilli:Number(l.quantityMilli??1000),
+        inclusions:catalogue?.inclusions,
+        exclusions:catalogue?.exclusions,
+        scope:dossier?.scope,
+        scopeExclusions:dossier?.scopeExclusions,
+      });
     });
     const familyNames:Record<string,string>={WEB:'Site vitrine / Web',LANDING:'Landing page',ECOM:'E-commerce',CONTENU:'Contenu',IDENTITE:'Identité visuelle',PHOTO:'Photographie',DATA:'Analytics',MAINT:'Maintenance',MARIAGE:'Site mariage',APP:'Application métier',DEVWP:'Développement WordPress',TECH:'Prestations techniques',SEO:'Référencement'};
     const itemGroups:Record<string,string>=Object.fromEntries(sold.map((l:Record<string,unknown>)=>{const c=l.catalogue as Record<string,unknown>|null;return [String(c?.itemId??l.itemId??''),familyNames[String(c?.familyCode)]??'Prestations du devis'];}));
