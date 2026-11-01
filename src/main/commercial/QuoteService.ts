@@ -1,4 +1,5 @@
 import {commercialDescription} from '../../shared/commercialDescription';
+import {defaultVitrineLineScope} from '../../shared/siteVitrinePages';
 import {quotePaymentSchedule} from '../../shared/quotePaymentSchedule';
 import {quoteRecipient} from './quoteRecipient';
 import {QuoteDocumentSettingsService} from './QuoteDocumentSettingsService';
@@ -419,6 +420,7 @@ export class QuoteService {
     };
 
     const current = this.get(quoteId);
+    const existingLineIds = new Set(current.lines.map(line => line.id));
     const firstOffer = source.item_type === 'offer' && !current.lines.some((line) => line.snapshot?.itemType === 'offer');
     this.insertLine(quoteId, 'catalog', {
       ...input,
@@ -427,6 +429,16 @@ export class QuoteService {
       catalogUnitPriceCents: source.price_cents ?? proposed ?? 0,
       proposedUnitPriceCents: proposed ?? 0,
     }, source.item_id, source.version_id, snapshot);
+    // A standard five-page suggestion on NEW editable quotes only.
+    // Never amend a published Catalogue version, an existing quote, or a historical snapshot.
+    const vitrineScope = source.item_type === 'offer'
+      ? defaultVitrineLineScope(source.item_id, source.canonical_code)
+      : null;
+    if (vitrineScope) {
+      const added = this.get(quoteId).lines.find(line => !existingLineIds.has(line.id) && line.catalogVersionId === source.version_id);
+      if (!added) throw new Error('Ligne site vitrine introuvable après création.');
+      new CommercialRulesService(this.database).setParameters(added.id, {scope:vitrineScope});
+    }
     this.recalculate(quoteId);
     if (firstOffer) {
       this.updateConditions(quoteId, {
