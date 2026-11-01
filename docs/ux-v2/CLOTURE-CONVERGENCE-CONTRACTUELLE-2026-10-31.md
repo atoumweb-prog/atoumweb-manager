@@ -125,3 +125,16 @@ Avant publication, le retour arrière consiste à restaurer la sauvegarde de rec
 - Ces changements ne représentent ni une approbation des 118 propositions, ni une publication, ni un feu vert de fusion.
 
 - **Recette à relancer sur #161 après la migration 78** : vérifier `npm run typecheck`, les tests dédiés à l'historique, puis la suite complète et le paquet Electron. Ces nouveaux changements ont été versionnés sur GitHub, mais aucun résultat de CI sur ce dernier commit n'est encore disponible.
+
+## Finition éditoriale et PDF — 1er novembre 2026
+
+Ces corrections complètent la clôture du 31 octobre, sans rouvrir la réécriture des 118 clauses.
+
+- **Clauses concernées** : `MAINT-SAUVEGARDE`, `WEB-HEBERGEMENT`, `MAINT-PERIMETRE`, `MAINT-RENOUVELLEMENT` et `TECH-HEBERGEMENT`. Les changements sont synchronisés sur les branches #159 et #161. Le registre reste à 118 propositions non publiées, avec leurs identifiants et empreintes de sources inchangés.
+- **Lune dédiée** : pour rester hébergé chez AtoumWeb après résiliation de la maintenance, la souscription de l'hébergement isolé est nécessaire après accord exprès. Le client peut aussi quitter AtoumWeb. L'accès cPanel individuel à la seule Lune est remis sur demande de façon sécurisée et traçable.
+- **Sauvegardes** : suppression d'une instruction interne dans la clause client. Fréquences WordPress/WooCommerce et conservation 30 jours inchangées. Aucun lieu de stockage ni délai de reprise non vérifié n'est promis.
+- **Présentation PDF et aperçu client** : sous-titres Markdown limités (`**Titre**`) présentés en vrais sous-titres ; `**mise en évidence**` en gras ; échappement du HTML maintenu. Suppression du registre technique visible « Références des clauses jointes » ; les identifiants de versions et les sources restent enregistrés dans le dossier contractuel. Texte d'acceptation par défaut aligné, y compris correction d'affichage de l'ancienne formulation enregistrée, sans mutation des réglages utilisateur.
+- **Rétractation** : insertion de l'adresse du destinataire sans libellé redondant. Une régression basée sur la véritable proposition `CONS-RETRACTATION` vérifie la sélection sur un devis B2C neuf, le blocage du champ non résolu et sa résolution depuis les données administratives sans réécrire la clause source.
+- **Tests ajoutés / adaptés** : `ContractEditorialConsistency.test.ts`, `QuoteCampaignRegression.test.ts`, `quoteDocumentHtml.test.ts`. Contrôle statique des 118 codes, cohérence des quatre clauses d'hébergement/maintenance, source de rétractation et absence de registre visible effectué. **L'exécution TypeScript et des tests après ces nouveaux commits n'est pas encore confirmée** ; elle doit être réalisée par Codex avant autorisation de fusion.
+- **Limite de la recette antérieure** : les 14 PDF existants substituaient les nouvelles formulations dans des sélections préexistantes. Conserver un dernier essai de génération normale des nouveaux contrats (vitrine, WooCommerce, maintenance/hébergement, mariage) sur base de recette avant publication des nouvelles versions.
+- **Sécurité** : aucune modification de base utilisateur, clause publiée, contrat ou devis historique ; aucune fusion ni déploiement.
