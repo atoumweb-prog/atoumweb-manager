@@ -12,7 +12,7 @@ const countBy = (values) => values.reduce((result, value) => {
 }, {});
 
 function auditContractConvergence() {
-  const proposalsPath = 'docs/ux-v2/bibliotheque-humaine-118-20261025/PROPOSITIONS.json';
+  const proposalsPath = 'data/contracts/atoumweb-contract-library-v37.json';
   const contractsPath = 'data/handoff/2026-10-27/contrats-publies.json';
   const catalogPath = 'data/handoff/2026-10-27/catalogue.json';
   const canonicalCatalogPath = 'data/catalogue/atoumweb-catalogue-v1.json';
@@ -25,12 +25,15 @@ function auditContractConvergence() {
 
   const templatesByCode = new Map(contracts.contract_clause_templates.map((template) => [template.code, template]));
   const versionsById = new Map(contracts.contract_clause_versions.map((version) => [version.id, version]));
-  const proposalByCode = new Map(proposals.map((proposal) => [proposal.code, proposal]));
+  const proposalByCode = new Map(proposals.flatMap((proposal) => [
+    [proposal.code, proposal],
+    [proposal.origin.code ?? proposal.code, proposal],
+  ]));
   const catalogItemsById = new Map(catalog.catalog_items.map((item) => [item.id, item]));
 
   const originMismatches = [];
   for (const proposal of proposals) {
-    const template = templatesByCode.get(proposal.code);
+    const template = templatesByCode.get(proposal.origin.code ?? proposal.code);
     const version = template ? versionsById.get(template.current_version_id) : null;
     if (!template || !version) {
       originMismatches.push({ code: proposal.code, fields: ['missingPublishedOrigin'] });
@@ -45,7 +48,7 @@ function auditContractConvergence() {
       templateStatus: [proposal.origin.templateStatus, template.status],
       title: [proposal.origin.title, template.title],
       scope: [proposal.origin.scope, template.scope],
-      audience: [proposal.origin.audience, template.audience],
+      audience: [proposal.origin.audience ?? proposal.sourceAudience, template.audience],
       body: [proposal.origin.body, version.body],
       sourceBodySHA256: [proposal.sourceBodySHA256, sha256(version.body)],
     };
@@ -114,7 +117,7 @@ function auditContractConvergence() {
     publishedTemplates: contracts.contract_clause_templates.length,
     uniquePublishedCodes: new Set(contracts.contract_clause_templates.map((template) => template.code)).size,
     duplicatePublishedCodes: duplicates(contracts.contract_clause_templates.map((template) => template.code)),
-    missingInPublishedExport: proposals.filter((proposal) => !templatesByCode.has(proposal.code)).map((proposal) => proposal.code),
+    missingInPublishedExport: proposals.filter((proposal) => !templatesByCode.has(proposal.origin.code ?? proposal.code)).map((proposal) => proposal.code),
     missingInProposals: contracts.contract_clause_templates.filter((template) => !proposalByCode.has(template.code)).map((template) => template.code),
     originMismatches,
     dependencyEdges: dependencyEdges.length,
@@ -123,6 +126,12 @@ function auditContractConvergence() {
     titleChanges: proposals
       .filter((proposal) => proposal.proposedTitle && proposal.proposedTitle !== proposal.origin.title)
       .map((proposal) => ({ code: proposal.code, from: proposal.origin.title, to: proposal.proposedTitle })),
+    codeChanges: proposals
+      .filter((proposal) => (proposal.proposedCode ?? proposal.code) !== (proposal.origin.code ?? proposal.code))
+      .map((proposal) => ({ code: proposal.code, from: proposal.origin.code, to: proposal.proposedCode ?? proposal.code })),
+    audienceChanges: proposals
+      .filter((proposal) => (proposal.proposedAudience ?? proposal.sourceAudience) !== (proposal.origin.audience ?? proposal.sourceAudience))
+      .map((proposal) => ({ code: proposal.code, from: proposal.origin.audience ?? proposal.sourceAudience, to: proposal.proposedAudience })),
     publicationFlags: {
       approved: proposals.filter((proposal) => proposal.approval).length,
       published: proposals.filter((proposal) => proposal.publication).length,
@@ -130,7 +139,7 @@ function auditContractConvergence() {
     },
     distributions: {
       scope: countBy(proposals.map((proposal) => proposal.origin.scope)),
-      audience: countBy(proposals.map((proposal) => proposal.origin.audience)),
+      audience: countBy(proposals.map((proposal) => proposal.proposedAudience ?? proposal.origin.audience ?? proposal.sourceAudience)),
       family: countBy(proposals.map((proposal) => proposal.family)),
     },
   };
@@ -153,11 +162,9 @@ function auditContractConvergence() {
     structural,
     structuralErrors,
     commercialConflicts,
-    draftPreparationBlockers: [
-      ...commercialConflicts.map((conflict) => conflict.code),
-      ...structural.titleChanges.map((change) => `VERSIONED-TITLE:${change.code}`),
-    ],
-    safeToPrepareAllDrafts: structuralErrors.length === 0 && commercialConflicts.length === 0 && structural.titleChanges.length === 0,
+    draftPreparationBlockers: structuralErrors,
+    commercialDraftsRequired: commercialConflicts.map((conflict) => conflict.code),
+    safeToPrepareAllDrafts: structuralErrors.length === 0,
   };
 }
 

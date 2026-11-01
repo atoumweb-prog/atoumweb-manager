@@ -52,10 +52,10 @@ describe('préparation Catalogue des décisions commerciales validées', () => {
     expect(db.get<{ n: number }>("SELECT COUNT(*) n FROM activity_log WHERE action='catalog_commercial_drafts_prepared'")).toEqual({ n: 1 });
     const wp = catalog.getItem(rows.find((row) => row.canonicalCode === 'AW-MAINT-WP-M')!.itemId).versions[0];
     expect(wp).toMatchObject({ status: 'draft', priceCents: 4900, unit: 'mois', periodicity: 'mensuelle' });
-    expect(wp.inclusions).toContain('Sauvegarde hebdomadaire conservée 30 jours');
+    expect(wp.inclusions).toContain('Sauvegardes o2switch Cloud au moins hebdomadaires, conservées au moins 30 jours selon le périmètre contractuel, sans copie indépendante AtoumWeb');
     const woo = catalog.getItem(rows.find((row) => row.canonicalCode === 'AW-MAINT-WC-M')!.itemId).versions[0];
     expect(woo).toMatchObject({ status: 'draft', priceCents: 9900 });
-    expect(woo.inclusions).toContain('Sauvegarde quotidienne conservée 30 jours');
+    expect(woo.inclusions).toContain('Sauvegardes quotidiennes o2switch Cloud, conservées au moins 30 jours selon le périmètre contractuel, sans copie indépendante AtoumWeb');
     const hosting = catalog.getItem(rows.find((row) => row.canonicalCode === 'AW-TECH-HEBERG-WP')!.itemId).versions[0];
     expect(hosting).toMatchObject({ status: 'draft', priceCents: 14900, unit: 'an' });
     const migration = catalog.getItem(rows.find((row) => row.canonicalCode === 'AW-TECH-MIGRATION-AW')!.itemId).versions[0];

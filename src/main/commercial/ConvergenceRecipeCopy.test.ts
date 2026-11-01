@@ -11,7 +11,7 @@ import { ConvergenceReviewService } from './ConvergenceReviewService';
 const sourcePath=process.env.ATOUMWEB_RECIPE_SOURCE_DB;
 const copyPath=process.env.ATOUMWEB_RECIPE_COPY_DB;
 const root=resolve(__dirname,'../../..');
-const editorial=JSON.parse(readFileSync(resolve(root,'docs/ux-v2/bibliotheque-humaine-118-20261025/PROPOSITIONS.json'),'utf8')) as ContractEditorialProposalDocument;
+const editorial=JSON.parse(readFileSync(resolve(root,'data/contracts/atoumweb-contract-library-v37.json'),'utf8')) as ContractEditorialProposalDocument;
 const catalog=JSON.parse(readFileSync(resolve(root,'data/catalogue/atoumweb-commercial-convergence-20261031.json'),'utf8')) as CatalogCommercialConvergenceSource;
 const hash=(value:unknown)=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 
@@ -28,7 +28,7 @@ describe.skipIf(!sourcePath||!copyPath)('recette de convergence sur copie isolé
         publishedCatalog:db.all("SELECT id,item_id,version_number,price_cents,price_mode,status FROM catalog_versions WHERE status='published' ORDER BY id"),
       };
       const contractService=new ContractEditorialDraftService(db),catalogService=new CatalogCommercialConvergenceService(db);
-      const editorialReference='Bibliothèque humaine 118 — propositions du 25 octobre 2026';
+      const editorialReference='Bibliothèque contractuelle AtoumWeb — version retenue V3.7 — 1er novembre 2026';
       const contractPlan=contractService.simulate(editorial,editorialReference);
       expect(contractPlan.anomalies).toEqual([]);expect(contractPlan.counts.draftsToCreate).toBe(118);
       const catalogPlan=catalogService.simulate(catalog);expect(catalogPlan).toHaveLength(6);

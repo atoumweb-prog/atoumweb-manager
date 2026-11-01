@@ -37,14 +37,16 @@ describe('contract proposal convergence audit', () => {
     expect(result.structuralErrors).toEqual([]);
   });
 
-  it('keeps unresolved commercial decisions visible instead of preparing unsafe drafts', () => {
+  it('identifies the published commercial gaps while allowing versioned drafts', () => {
     const result = auditContractConvergence();
 
     expect(result.commercialConflicts.map((conflict) => conflict.code)).toEqual([
       'HOSTING-LUNE-PRICE',
       'MIGRATION-INTERNAL-EXTERNAL',
     ]);
-    expect(result.structural.titleChanges.map((change) => change.code)).toEqual(['APP-GARANTIE', 'WEB-AR']);
-    expect(result.safeToPrepareAllDrafts).toBe(false);
+    expect(result.structural.titleChanges.map((change) => change.code)).toEqual([
+      'APP-GARANTIE', 'BASE-OBJET', 'BASE-PI', 'CONS-DEBUT-ANTICIPE', 'SERVICE-PACK-HEURES', 'WEB-AR',
+    ]);
+    expect(result.safeToPrepareAllDrafts).toBe(true);
   });
 });

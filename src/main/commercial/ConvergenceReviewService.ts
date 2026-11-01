@@ -1,4 +1,4 @@
-import proposalsJson from '../../../docs/ux-v2/bibliotheque-humaine-118-20261025/PROPOSITIONS.json';
+import proposalsJson from '../../../data/contracts/atoumweb-contract-library-v37.json';
 import catalogJson from '../../../data/catalogue/atoumweb-commercial-convergence-20261031.json';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { ConvergenceDifference, ConvergenceReview } from '../../shared/convergenceReview';
@@ -10,7 +10,7 @@ import { createHash, randomUUID } from 'node:crypto';
 
 const proposals = proposalsJson as ContractEditorialProposalDocument;
 const catalogSource = catalogJson as CatalogCommercialConvergenceSource;
-const editorialReference = 'Bibliothèque humaine 118 — propositions du 25 octobre 2026';
+const editorialReference = 'Bibliothèque contractuelle AtoumWeb — version retenue V3.7 — 1er novembre 2026';
 
 export class ConvergenceReviewService {
   private readonly editorial: ContractEditorialDraftService;
@@ -41,7 +41,9 @@ export class ConvergenceReviewService {
         'SELECT decision,reviewer,note,created_at FROM contract_convergence_decision_events WHERE draft_version_id=? ORDER BY created_at DESC, rowid DESC LIMIT 20', [draft.id]
       ).map(entry => ({decision:entry.decision, reviewer:entry.reviewer, note:entry.note, decidedAt:entry.created_at})) : [];
       return {
-        code: row.code, title: proposal.origin.title, publishedVersion: proposal.origin.version,
+        code: row.code, publishedCode: proposal.origin.code ?? proposal.code, proposedCode: row.proposedCode,
+        publishedAudience: proposal.origin.audience ?? proposal.sourceAudience ?? 'all', proposedAudience: row.proposedAudience,
+        title: proposal.origin.title, publishedVersion: proposal.origin.version,
         publishedBody: proposal.origin.body, proposedTitle: row.title, proposedBody: proposal.proposal,
         action: row.action, anomaly: row.anomaly,
         dependencies: template.catalogItemIds.map((id) => this.database.get<{ canonical_code: string | null }>('SELECT canonical_code FROM catalog_items WHERE id=?', [id])?.canonical_code ?? id),

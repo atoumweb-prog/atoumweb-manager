@@ -57,6 +57,7 @@ import { CONTRACT_LIBRARY_IMPORT_V1_MIGRATION } from './contractLibraryImportV1M
 import { CONTRACT_EDITORIAL_DRAFT_MIGRATION } from './contractEditorialDraftMigration';
 import { CONTRACT_CONVERGENCE_APPROVAL_MIGRATION } from './contractConvergenceApprovalMigration';
 import { CONTRACT_CONVERGENCE_DECISION_HISTORY_MIGRATION } from './contractConvergenceDecisionHistoryMigration';
+import { CONTRACT_CLAUSE_VERSION_IDENTITY_MIGRATION } from './contractClauseVersionIdentityMigration';
 
 export interface Migration { id: number; name: string; sql: string; disableForeignKeys?: boolean; }
 
@@ -272,6 +273,7 @@ export const MIGRATIONS: Migration[] = [
   CONTRACT_EDITORIAL_DRAFT_MIGRATION,
   CONTRACT_CONVERGENCE_APPROVAL_MIGRATION,
   CONTRACT_CONVERGENCE_DECISION_HISTORY_MIGRATION,
+  CONTRACT_CLAUSE_VERSION_IDENTITY_MIGRATION,
 ];
 
 export function ensureMigrationTable(database: DatabaseAdapter): void {

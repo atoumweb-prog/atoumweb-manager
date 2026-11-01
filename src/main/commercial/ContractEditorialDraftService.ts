@@ -1,11 +1,15 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import { ContractTermsService } from './ContractTermsService';
+import type { ContractClauseAudience } from '../../shared/contractTerms';
 
 export interface ContractEditorialProposal {
   code: string;
+  sourceAudience?: ContractClauseAudience;
   proposal: string;
   proposedTitle?: string | null;
+  proposedCode?: string | null;
+  proposedAudience?: ContractClauseAudience | null;
   sourceBodySHA256: string;
   approval: unknown;
   publication: boolean;
@@ -18,17 +22,23 @@ export interface ContractEditorialProposal {
     versionStatus: string;
     body: string;
     title: string;
+    code?: string;
+    audience?: ContractClauseAudience;
   };
 }
 
 export interface ContractEditorialProposalDocument {
+  schemaVersion?: number;
+  reference?: string;
+  source?: { filename: string; sha256: string };
   clauses: ContractEditorialProposal[];
 }
 
 export interface ContractEditorialDraftPlan {
   payloadSha256: string;
   planSha256: string;
-  rows: Array<{ code: string; action: 'create' | 'keep' | 'conflict'; sourceVersionId: string; title: string; anomaly: string | null }>;
+  rows: Array<{ code: string; action: 'create' | 'keep' | 'conflict'; sourceVersionId: string; title: string;
+    proposedCode: string; proposedAudience: ContractClauseAudience; anomaly: string | null }>;
   counts: { draftsToCreate: number; draftsKept: number; conflicts: number };
   anomalies: string[];
 }
@@ -55,15 +65,17 @@ export class ContractEditorialDraftService {
     const rows = document.clauses.map((proposal) => {
       let sourceVersionId = proposal.origin.versionId;
       let title = proposal.proposedTitle?.trim() || proposal.origin.title;
+      const proposedCode = (proposal.proposedCode?.trim() || proposal.code).toUpperCase();
+      const proposedAudience = proposal.proposedAudience ?? proposal.origin.audience ?? 'all';
       let anomaly: string | null = null;
       let action: 'create' | 'keep' | 'conflict' = 'conflict';
-      const templateRow = this.database.get<{ id: string }>('SELECT id FROM contract_clause_templates WHERE code=? COLLATE NOCASE', [proposal.code]);
+      const templateRow = this.database.get<{ id: string; code: string }>('SELECT id,code FROM contract_clause_templates WHERE id=?', [proposal.origin.templateId]);
       if (!templateRow) anomaly = `${proposal.code} : clause publiée introuvable.`;
       else {
         const template = terms.getTemplate(templateRow.id);
         const source = template.versions.find((version) => version.id === proposal.origin.versionId);
         sourceVersionId = source?.id ?? proposal.origin.versionId;
-        if (template.id !== proposal.origin.templateId) anomaly = `${proposal.code} : identifiant du modèle source différent.`;
+        if (template.code.toUpperCase() !== (proposal.origin.code ?? proposal.code).toUpperCase()) anomaly = `${proposal.code} : code du modèle source différent.`;
         else if (!source || source.status !== 'published' || source.versionNumber !== proposal.origin.version) anomaly = `${proposal.code} : version publiée source introuvable.`;
         else if (template.currentVersionId !== proposal.origin.currentVersionId) anomaly = `${proposal.code} : la version courante a changé depuis la proposition.`;
         else if (source.body !== proposal.origin.body || textHash(source.body) !== proposal.sourceBodySHA256) anomaly = `${proposal.code} : le corps source ou son empreinte a changé.`;
@@ -74,18 +86,19 @@ export class ContractEditorialDraftService {
             `SELECT e.draft_version_id,e.source_version_id,e.proposal_sha256,r.payload_sha256
                FROM contract_editorial_import_entries e
                JOIN contract_editorial_import_runs r ON r.id=e.run_id
-              WHERE e.clause_id=? ORDER BY r.created_at DESC LIMIT 1`,
-            [template.id],
+              WHERE e.clause_id=? AND r.payload_sha256=? ORDER BY r.created_at DESC LIMIT 1`,
+            [template.id, payloadSha256],
           );
-          const proposalSha256 = stableHash({ code: proposal.code, title, body: proposal.proposal, sourceVersionId: source.id });
+          const proposalSha256 = stableHash({ code: proposedCode, audience: proposedAudience, title, body: proposal.proposal, sourceVersionId: source.id });
           const draft = entry ? template.versions.find((version) => version.id === entry.draft_version_id) : null;
           if (entry && entry.payload_sha256 === payloadSha256 && entry.source_version_id === source.id && entry.proposal_sha256 === proposalSha256
-            && draft?.status === 'draft' && draft.body === proposal.proposal && (draft.title ?? template.title) === title) action = 'keep';
+            && draft?.status === 'draft' && draft.body === proposal.proposal && (draft.title ?? template.title) === title
+            && (draft.code ?? template.code) === proposedCode && (draft.audience ?? template.audience) === proposedAudience) action = 'keep';
           else if (entry) anomaly = `${proposal.code} : un import éditorial antérieur existe mais son brouillon ou sa provenance diffère.`;
           else action = 'create';
         }
       }
-      return { code: proposal.code, action, sourceVersionId, title, anomaly };
+      return { code: proposal.code, action, sourceVersionId, title, proposedCode, proposedAudience, anomaly };
     });
     const anomalies = [...structural, ...rows.flatMap((row) => row.anomaly ? [row.anomaly] : [])];
     const counts = {
@@ -117,8 +130,10 @@ export class ContractEditorialDraftService {
         const proposal = document.clauses.find((candidate) => candidate.code === row.code)!;
         const template = terms.getTemplate(proposal.origin.templateId);
         const source = template.versions.find((version) => version.id === row.sourceVersionId)!;
-        const draft = terms.createVersion(template.id, { title: row.title, body: proposal.proposal, review: source.review });
-        const proposalSha256 = stableHash({ code: proposal.code, title: row.title, body: proposal.proposal, sourceVersionId: source.id });
+        const draft = terms.createVersion(template.id, { title: row.title, code: row.proposedCode,
+          audience: row.proposedAudience, body: proposal.proposal, review: source.review });
+        const proposalSha256 = stableHash({ code: row.proposedCode, audience: row.proposedAudience,
+          title: row.title, body: proposal.proposal, sourceVersionId: source.id });
         this.database.run(
           `INSERT INTO contract_editorial_import_entries
            (run_id,clause_code,clause_id,source_version_id,draft_version_id,source_body_sha256,proposal_sha256)
@@ -128,7 +143,7 @@ export class ContractEditorialDraftService {
       }
       this.database.run(
         'INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
-        ['contract_library', runId, 'contract_editorial_drafts_prepared', '118 propositions éditoriales préparées en nouvelles versions brouillon.', JSON.stringify({ sourceReference, counts: plan.counts }), now],
+        ['contract_library', runId, 'contract_editorial_drafts_prepared', '118 clauses V3.7 préparées en nouvelles versions brouillon.', JSON.stringify({ sourceReference, counts: plan.counts }), now],
       );
       const replay = this.simulate(document, sourceReference);
       if (replay.anomalies.length || replay.counts.draftsToCreate || replay.counts.conflicts || replay.counts.draftsKept !== 118) {

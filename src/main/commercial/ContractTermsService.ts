@@ -64,6 +64,8 @@ interface VersionRow extends Record<string, unknown> {
   clause_id: string;
   version_number: number;
   title: string | null;
+  code: string | null;
+  audience: ContractClauseAudience | null;
   body: string;
   status: ContractClauseVersionStatus;
   published_at: string | null;
@@ -197,17 +199,24 @@ export class ContractTermsService {
          VALUES (?,?,?,?,?,'active',?,NULL,?,?,NULL)`,
         [id, code, title, input.scope, audience, Math.trunc(input.sortOrder ?? 0), now, now],
       );
-      const versionHasTitle = this.database.all<{ name: string }>('PRAGMA table_info(contract_clause_versions)')
-        .some((column) => column.name === 'title');
+      const versionColumns = new Set(this.database.all<{ name: string }>('PRAGMA table_info(contract_clause_versions)').map((column) => column.name));
+      const versionHasTitle = versionColumns.has('title');
+      const versionHasIdentity = versionColumns.has('code') && versionColumns.has('audience');
       this.database.run(
-        versionHasTitle
+        versionHasIdentity
+          ? `INSERT INTO contract_clause_versions
+             (id,clause_id,version_number,title,code,audience,body,status,published_at,created_at,review_metadata_json)
+             VALUES (?,?,1,?,?,?,?,'draft',NULL,?,?)`
+          : versionHasTitle
           ? `INSERT INTO contract_clause_versions
              (id,clause_id,version_number,title,body,status,published_at,created_at,review_metadata_json)
              VALUES (?,?,1,?,?,'draft',NULL,?,?)`
           : `INSERT INTO contract_clause_versions
              (id,clause_id,version_number,body,status,published_at,created_at,review_metadata_json)
              VALUES (?,?,1,?,'draft',NULL,?,?)`,
-        versionHasTitle
+        versionHasIdentity
+          ? [versionId, id, clean(firstVersion.title) ?? title, code, audience, firstVersion.body ?? '', now, firstVersion.review ? JSON.stringify(firstVersion.review) : null]
+          : versionHasTitle
           ? [versionId, id, clean(firstVersion.title) ?? title, firstVersion.body ?? '', now, firstVersion.review ? JSON.stringify(firstVersion.review) : null]
           : [versionId, id, firstVersion.body ?? '', now, firstVersion.review ? JSON.stringify(firstVersion.review) : null],
       );
@@ -227,13 +236,21 @@ export class ContractTermsService {
       'SELECT COALESCE(MAX(version_number),0)+1 AS next_version FROM contract_clause_versions WHERE clause_id=?',
       [clauseId],
     );
+    const code = clean(input.code)?.toUpperCase() ?? template.code;
+    const audience = input.audience ?? template.audience;
+    if (!/^[A-Z0-9][A-Z0-9._-]*$/.test(code)) throw new Error('Le code de la version de clause est invalide.');
+    if (!CONTRACT_CLAUSE_AUDIENCES.includes(audience)) throw new Error('Public contractuel invalide.');
+    const codeOwner = this.database.get<{ id: string }>('SELECT id FROM contract_clause_templates WHERE code=? COLLATE NOCASE', [code]);
+    const aliasOwner = this.database.get<{ clause_id: string }>('SELECT clause_id FROM contract_clause_code_aliases WHERE alias_code=? COLLATE NOCASE', [code]);
+    if ((codeOwner && codeOwner.id !== clauseId) || (aliasOwner && aliasOwner.clause_id !== clauseId)) throw new Error('Ce code de clause est déjà utilisé.');
     const id = randomUUID();
     const now = nowIso();
     this.database.run(
       `INSERT INTO contract_clause_versions
-       (id,clause_id,version_number,title,body,status,published_at,created_at,review_metadata_json)
-       VALUES (?,?,?,?,?, 'draft', NULL, ?, ?)`,
-      [id, clauseId, Number(next?.next_version ?? 1), clean(input.title) ?? template.currentVersion?.title ?? template.title, input.body ?? '', now, input.review ? JSON.stringify(input.review) : null],
+       (id,clause_id,version_number,title,code,audience,body,status,published_at,created_at,review_metadata_json)
+       VALUES (?,?,?,?,?,?,?, 'draft', NULL, ?, ?)`,
+      [id, clauseId, Number(next?.next_version ?? 1), clean(input.title) ?? template.currentVersion?.title ?? template.title,
+        code, audience, input.body ?? '', now, input.review ? JSON.stringify(input.review) : null],
     );
     this.database.run('UPDATE contract_clause_templates SET updated_at=? WHERE id=?', [now, clauseId]);
     this.writeActivity('contract_clause', clauseId, 'contract_clause_version_created', `Nouvelle version de ${template.code}`);
@@ -291,8 +308,21 @@ export class ContractTermsService {
     if (template.status === 'archived') throw new Error('Réactive la clause avant publication.');
 
     const now = nowIso();
+    const nextCode = clean(version.code)?.toUpperCase() ?? template.code;
+    const nextAudience = version.audience ?? template.audience;
+    const nextTitle = clean(version.title) ?? template.title;
+    const codeOwner = this.database.get<{ id: string }>('SELECT id FROM contract_clause_templates WHERE code=? COLLATE NOCASE', [nextCode]);
+    const aliasOwner = this.database.get<{ clause_id: string }>('SELECT clause_id FROM contract_clause_code_aliases WHERE alias_code=? COLLATE NOCASE', [nextCode]);
+    if ((codeOwner && codeOwner.id !== template.id) || (aliasOwner && aliasOwner.clause_id !== template.id)) throw new Error('Le code proposé est déjà utilisé par une autre clause.');
     this.database.exec('BEGIN IMMEDIATE;');
     try {
+      if (nextCode !== template.code) {
+        this.database.run(
+          `INSERT INTO contract_clause_code_aliases(alias_code,clause_id,source_reference,created_at)
+           VALUES (?,?,?,?) ON CONFLICT(alias_code) DO NOTHING`,
+          [template.code, template.id, `Publication de ${nextCode}`, now],
+        );
+      }
       this.database.run(
         "UPDATE contract_clause_versions SET status='retired' WHERE clause_id=? AND status='published' AND id<>?",
         [version.clause_id, versionId],
@@ -302,8 +332,8 @@ export class ContractTermsService {
         [now, versionId],
       );
       this.database.run(
-        'UPDATE contract_clause_templates SET current_version_id=?,updated_at=? WHERE id=?',
-        [versionId, now, version.clause_id],
+        'UPDATE contract_clause_templates SET code=?,title=?,audience=?,current_version_id=?,updated_at=? WHERE id=?',
+        [nextCode, nextTitle, nextAudience, versionId, now, version.clause_id],
       );
       this.writeActivity('contract_clause', version.clause_id, 'contract_clause_version_published', `Version ${version.version_number} de ${template.code} publiée`);
       this.database.exec('COMMIT;');
@@ -1051,6 +1081,8 @@ export class ContractTermsService {
       clauseId: row.clause_id,
       versionNumber: Number(row.version_number),
       title: row.title,
+      code: row.code,
+      audience: row.audience,
       body: row.body,
       status: row.status,
       publishedAt: row.published_at,

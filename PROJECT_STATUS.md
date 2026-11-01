@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 01/11/2026 — Bibliothèque V3.7 raccordée en brouillons
+
+La bibliothèque Word V3.7 retenue par AtoumWeb remplace les propositions documentaires précédentes dans l'interface de convergence. Le référentiel structuré contient 118 clauses uniques ; 77 différences textuelles ou d'identité ont été relevées. La migration 79 versionne désormais le code et le public de chaque clause et conserve les anciens codes en alias lors d'une publication explicite. `BLOG-DONNEES → BLOG-ROLES-CONTENUS` et le public consommateur de `MARIAGE-PRIVE` restent donc sans effet sur les versions publiées tant que les brouillons ne sont pas publiés.
+
+Les six plans Catalogue ont été alignés sur les décisions consolidées : sauvegardes o2switch Cloud sans copie indépendante AtoumWeb, maintenance mensuelle 49 €/99 €, fin avec période payée et préavis AtoumWeb de 30 jours, annuel ferme 12 mois sur accord exprès, Lune 149 €/an et transition sans double facturation. Recette SQLite isolée réussie : 118 brouillons contractuels, 6 brouillons Catalogue, idempotence et rollback conformes, historiques publiés inchangés. Typecheck et tests ciblés réussis. [Bilan du lot](docs/ux-v2/INTEGRATION-CONTRACTUELLE-V37-2026-11-01.md). Aucune base active, publication, fusion, PDF ou déploiement. Prochaine action : lot RGPD V3 séparé par client/site.
+
 ## 31/10/2026 — Migration 78 et préparation de fusion contrôlées
 
 Reprise après synchronisation GitHub au commit `9274811c`. Migration 78, note/relecteur obligatoires et historique append-only inspectés. Cinq attentes de registre encore arrêtées à 77 ont été étendues à 78 ; la recette couvre désormais explicitement le rollback total d’une décision groupée dont la deuxième clause est inconnue. Typecheck réussi, **61/61 tests ciblés** et recette SQLite isolée **1/1** ; note vide sans écriture, décisions successives conservées, rattachement au bon brouillon, devis/contrats/versions publiées inchangés, SHA-256 source identique.

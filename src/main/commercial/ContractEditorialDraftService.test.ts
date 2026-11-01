@@ -7,13 +7,13 @@ import { ContractTermsService } from './ContractTermsService';
 import { ContractEditorialDraftService, type ContractEditorialProposalDocument } from './ContractEditorialDraftService';
 
 const proposals: ContractEditorialProposalDocument = JSON.parse(
-  readFileSync('docs/ux-v2/bibliotheque-humaine-118-20261025/PROPOSITIONS.json', 'utf8'),
+  readFileSync('data/contracts/atoumweb-contract-library-v37.json', 'utf8'),
 );
 const published = JSON.parse(readFileSync('data/handoff/2026-10-27/contrats-publies.json', 'utf8')).tables as {
   contract_clause_templates: Array<Record<string, unknown>>;
   contract_clause_versions: Array<Record<string, unknown>>;
 };
-const sourceReference = 'PR #159 @ c7f73f2c — PROPOSITIONS.json';
+const sourceReference = 'Bibliothèque contractuelle AtoumWeb — version retenue V3.7 — 1er novembre 2026';
 
 let db: NodeSqliteAdapter;
 let service: ContractEditorialDraftService;
@@ -52,7 +52,7 @@ afterEach(() => {
   db.close();
 });
 
-describe('préparation des 118 propositions éditoriales', () => {
+describe('préparation des 118 clauses V3.7 retenues', () => {
   it('simule sans écriture et vérifie chaque origine publiée', () => {
     const before = db.all('SELECT * FROM contract_clause_versions ORDER BY id');
     const plan = service.simulate(proposals, sourceReference);
@@ -62,7 +62,7 @@ describe('préparation des 118 propositions éditoriales', () => {
     expect(db.all('SELECT * FROM contract_clause_versions ORDER BY id')).toEqual(before);
   });
 
-  it('crée 118 nouvelles versions brouillon, conserve les publiées et versionne les deux titres révisés', () => {
+  it('crée 118 nouvelles versions brouillon et conserve les identités publiées jusqu’à publication', () => {
     const publish = vi.spyOn(ContractTermsService.prototype, 'publishVersion');
     const plan = service.simulate(proposals, sourceReference);
     service.apply(proposals, sourceReference, plan.planSha256);
@@ -78,6 +78,12 @@ describe('préparation des 118 propositions éditoriales', () => {
       .toBe('Garantie corrective de l’application');
     expect(terms.getTemplate(proposals.clauses.find((clause) => clause.code === 'WEB-AR')!.origin.templateId).versions[0].title)
       .toBe('Étapes de relecture et de correction');
+    const blog = terms.getTemplate(proposals.clauses.find((clause) => clause.code === 'BLOG-ROLES-CONTENUS')!.origin.templateId);
+    expect(blog).toMatchObject({ code: 'BLOG-DONNEES', audience: 'all' });
+    expect(blog.versions[0]).toMatchObject({ code: 'BLOG-ROLES-CONTENUS', audience: 'all', status: 'draft' });
+    const privateWedding = terms.getTemplate(proposals.clauses.find((clause) => clause.code === 'MARIAGE-PRIVE')!.origin.templateId);
+    expect(privateWedding).toMatchObject({ audience: 'all' });
+    expect(privateWedding.versions[0]).toMatchObject({ audience: 'consumer', status: 'draft' });
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
     expect(db.get('PRAGMA integrity_check')).toEqual({ integrity_check: 'ok' });
   });

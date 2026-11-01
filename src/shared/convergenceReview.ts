@@ -6,6 +6,10 @@ export interface ConvergenceDifference {
 
 export interface ContractConvergenceReviewRow {
   code: string;
+  publishedCode: string;
+  proposedCode: string;
+  publishedAudience: string;
+  proposedAudience: string;
   title: string;
   publishedVersion: number;
   publishedBody: string;
