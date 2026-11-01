@@ -492,6 +492,7 @@ export interface ProjectsApi {
     unlinkPage(projectNodeId: string): Promise<void>;
     applyBlueprint(projectId: string, templateVersionId?: string | null): Promise<ProjectBlueprintGenerationResult>;
   };
+  dataProcessingAgreements: import('./dataProcessingAgreements').DataProcessingAgreementApi;
   secrets: {
     list(projectId: string, projectNodeId?: string | null): Promise<ProjectSecretSummary[]>;
     save(input: ProjectSecretInput): Promise<ProjectSecretSummary>;

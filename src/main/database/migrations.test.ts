@@ -302,9 +302,10 @@ describe('migrations SQLite', () => {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('technical_items') WHERE name='${column}'`)?.name).toBe(column);
     }
     expect(MIGRATIONS.find(m=>m.id===70)).toMatchObject({id:70,name:'catalog_recommendation_details_v1'});
-    expect(MIGRATIONS.at(-1)).toMatchObject({id:79,name:'contract_clause_version_identity_and_code_aliases'});
+    expect(MIGRATIONS.at(-1)).toMatchObject({id:80,name:'data_processing_agreements_v3'});
     expect(database.get<{name:string}>("SELECT name FROM sqlite_master WHERE type='table' AND name='contract_convergence_decisions'")?.name).toBe('contract_convergence_decisions');
     expect(database.get<{name:string}>("SELECT name FROM sqlite_master WHERE type='table' AND name='contract_clause_code_aliases'")?.name).toBe('contract_clause_code_aliases');
+    expect(database.get<{name:string}>("SELECT name FROM sqlite_master WHERE type='table' AND name='data_processing_agreements'")?.name).toBe('data_processing_agreements');
     for (const column of ['code', 'audience']) {
       expect(database.get<{ name: string }>(`SELECT name FROM pragma_table_info('contract_clause_versions') WHERE name='${column}'`)?.name).toBe(column);
     }

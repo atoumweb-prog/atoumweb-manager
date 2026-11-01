@@ -2228,3 +2228,11 @@ Branche #161 synchronisée à 6da50a91. Correction d’un typage de test nullabl
 Recette reproductible ajoutée dans `scripts/final-contract-recipe-20261101.cjs`. Elle sauvegarde la source en lecture seule vers une copie isolée, prépare et publie les 118 propositions et 6 versions Catalogue uniquement dans cette copie, puis compose quatre dossiers par les services réels du Manager. Source SHA-256 avant/après inchangée (`964da31efac12ad54effaa9e6c22e5e591053a1185d7bc51762a02adcbfdc0cb`), intégrité OK, FK vide et devis historiques conservés.
 
 Quatre PDF inspectés intégralement, 49 pages : vitrine 699 €, WooCommerce 1 490 €, maintenance 49 €/mois suivie de Lune dédiée 149 €/an, Mariage Essentiel 399 €. Aucun placeholder, registre technique visible, texte coupé ou page vide ; acceptation présente dans les quatre. Blocages avant usage client : réclamations, prestataires/hébergeurs, RGPD, et médiateur consommateur effectif ; validation juridique finale maintenue. Aucune base active modifiée, aucune publication réelle, fusion ou déploiement.
+# 01/11/2026 — accord RGPD V3 par Site (branche dédiée, non publié)
+
+- Source RGPD V3 structurée avec provenance et empreinte ; aucun texte publié automatiquement.
+- Migration 80 ajoutée : accords versionnés par Site et client, preuve signée, historique immuable.
+- Service, frontière IPC avec confirmations explicites et panneau Projet > Sites & pages raccordés.
+- Un accord n’est jamais créé depuis un devis ni rattaché automatiquement ; seuls les traitements déclarés sont bloqués avant signature.
+- Typecheck réussi ; 25 tests ciblés réussis. Aucune base utilisateur, publication, fusion ou déploiement.
+- Détail : `docs/ux-v2/INTEGRATION-ACCORD-RGPD-V3-2026-11-01.md`.

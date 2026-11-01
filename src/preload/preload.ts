@@ -492,6 +492,15 @@ const api: AtoumWebApi = {
       unlinkPage: (projectNodeId: string) => ipcRenderer.invoke('projects:sites:unlink-page', projectNodeId),
       applyBlueprint: (projectId: string, templateVersionId?: string | null) => ipcRenderer.invoke('projects:sites:apply-blueprint', projectId, templateVersionId),
     },
+    dataProcessingAgreements: {
+      listForSite: (siteId: string) => ipcRenderer.invoke('projects:rgpd:list', siteId),
+      createDraft: (siteId: string) => ipcRenderer.invoke('projects:rgpd:create-draft', siteId),
+      updateDraft: (id: string, payload: import('../shared/dataProcessingAgreements').DataProcessingAgreementPayload) => ipcRenderer.invoke('projects:rgpd:update-draft', id, payload),
+      createRevision: (id: string) => ipcRenderer.invoke('projects:rgpd:create-revision', id),
+      markSent: (id: string) => ipcRenderer.invoke('projects:rgpd:mark-sent', id),
+      markSigned: (id: string, documentId: string) => ipcRenderer.invoke('projects:rgpd:mark-signed', id, documentId),
+      gate: (siteId: string) => ipcRenderer.invoke('projects:rgpd:gate', siteId),
+    },
     secrets: {
       list: (projectId: string, projectNodeId?: string | null) => ipcRenderer.invoke('projects:secrets:list', projectId, projectNodeId),
       save: (input: ProjectSecretInput) => ipcRenderer.invoke('projects:secrets:save', input),

@@ -844,6 +844,29 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('projects:sites:unlink-page', (_event, projectNodeId: string) => guardedMutation(() => database.projectSites.unlinkPage(projectNodeId)));
   ipcMain.handle('projects:sites:apply-blueprint', (_event, projectId: string, templateVersionId?: string | null) =>
     guardedMutation(() => database.projectSites.applyBlueprint(projectId, templateVersionId)));
+  ipcMain.handle('projects:rgpd:list', (_event, siteId:string) => database.dataProcessingAgreements.listForSite(siteId));
+  ipcMain.handle('projects:rgpd:gate', (_event, siteId:string) => database.dataProcessingAgreements.gate(siteId));
+  ipcMain.handle('projects:rgpd:create-draft', async (_event, siteId:string) => {
+    const answer=await dialog.showMessageBox({type:'question',title:'Préparer un accord RGPD',message:'Créer volontairement un accord RGPD distinct pour ce Site ?',detail:'Cette action ne rattache rien automatiquement au devis et ne publie aucun document.',buttons:['Annuler','Préparer l’accord'],defaultId:0,cancelId:0});
+    if(answer.response!==1)return null;
+    return guardedMutation(()=>database.dataProcessingAgreements.createDraft(siteId));
+  });
+  ipcMain.handle('projects:rgpd:update-draft', (_event,id:string,payload:import('../shared/dataProcessingAgreements').DataProcessingAgreementPayload) => guardedMutation(()=>database.dataProcessingAgreements.updateDraft(id,payload)));
+  ipcMain.handle('projects:rgpd:create-revision', async (_event,id:string) => {
+    const answer=await dialog.showMessageBox({type:'question',title:'Réviser l’accord RGPD',message:'Créer une nouvelle version modifiable ?',detail:'La version envoyée ou signée restera intacte dans l’historique.',buttons:['Annuler','Créer la révision'],defaultId:0,cancelId:0});
+    if(answer.response!==1)return null;
+    return guardedMutation(()=>database.dataProcessingAgreements.createRevision(id));
+  });
+  ipcMain.handle('projects:rgpd:mark-sent', async (_event,id:string) => {
+    const answer=await dialog.showMessageBox({type:'question',title:'Accord RGPD envoyé',message:'Confirmer que cette version a été transmise au client ?',detail:'La version deviendra immuable. Une révision restera possible.',buttons:['Annuler','Confirmer l’envoi'],defaultId:0,cancelId:0});
+    if(answer.response!==1)return null;
+    return guardedMutation(()=>database.dataProcessingAgreements.markSent(id));
+  });
+  ipcMain.handle('projects:rgpd:mark-signed', async (_event,id:string,documentId:string) => {
+    const answer=await dialog.showMessageBox({type:'question',title:'Accord RGPD signé',message:'Confirmer la signature et la preuve rattachée ?',detail:'Le document doit appartenir au même client. La version signée restera immuable.',buttons:['Annuler','Confirmer la signature'],defaultId:0,cancelId:0});
+    if(answer.response!==1)return null;
+    return guardedMutation(()=>database.dataProcessingAgreements.markSigned(id,documentId));
+  });
   ipcMain.handle('projects:add-node', (_event, projectId: string, input: ProjectNodeInput) => guardedMutation(() => database.projects.addProjectNode(projectId, input)));
   ipcMain.handle('projects:update-node', (_event, nodeId: string, input: Partial<ProjectNodeInput>) => guardedMutation(() => database.projects.updateProjectNode(nodeId, input)));
   ipcMain.handle('projects:move-node', (_event, nodeId: string, input: MoveProjectNodeInput) => guardedMutation(() => database.projectNodes.move(nodeId, input)));
