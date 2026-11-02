@@ -2405,3 +2405,6 @@ Typecheck/3 tests trois répétitions/35 tests restore (63,91s) verts, RPC absen
 # 01/11/2026 — Recette finale Devis & Contrats préparée sur #161
 
 Le flux Catalogue → sélection contractuelle → paramètres → PDF est validé sur quatre cas représentatifs dans une copie SQLite isolée. La publication des nouvelles versions reste soumise à validation humaine. Avant mise en production, compléter dans les réglages les réclamations, prestataires/hébergeurs, le dispositif RGPD et le médiateur consommateur réellement compétent, puis exécuter la campagne complète finale prévue avant intégration.
+# 02/11/2026 — V3.8 contrats et Catalogue (réalisation locale, non publiée)
+
+Autorisation : préparer la V3.8 depuis les deux documents de relecture, sans publier, fusionner, déployer ni toucher aux bases utilisateur. Réalisation : extraction structurée et empreintée ; comparaison V3.7/V3.8 et Catalogue V1 ; support d’une 119e clause nouvelle en brouillon atomique. Résultat : 115 clauses inchangées, 3 réécrites, 1 nouvelle ; 105 fiches Catalogue identiques, 7 à revoir et une formule Lune sans code inventé. TypeScript et 6 tests ciblés verts. Aucune action Bridge ni écriture utilisateur. Prochaine action : exposer la comparaison et les confirmations dans le Manager, sans publication automatique.

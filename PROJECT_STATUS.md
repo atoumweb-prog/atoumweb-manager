@@ -2245,3 +2245,11 @@ Quatre PDF inspectés intégralement, 49 pages : vitrine 699 €, WooCommerce 1 
 - Registre d’incidents par Site ajouté avec dates, signalement et clôture ; les accords restent inchangés.
 - Typecheck réussi ; 26 tests ciblés réussis. Aucune base utilisateur, publication, fusion ou déploiement.
 - Détail : `docs/ux-v2/INTEGRATION-ACCORD-RGPD-V3-2026-11-01.md`.
+# 02/11/2026 — préparation V3.8 distincte, sans publication
+
+- Sources DOCX de relecture extraites de façon déterministe vers `data/contracts/atoumweb-contract-library-v38-review.json` et `data/catalogue/atoumweb-catalogue-v38-review.json` ; aucune base Manager ouverte.
+- Bibliothèque : 119 clauses, dont 115 identiques à V3.7, 014/087/106 réécrites et 119 nouvelle. La clause 022 est contrôlée identique, sans plafond de responsabilité.
+- Catalogue : 112 références rapprochées par code canonique, 105 fiches identiques et 7 écarts à soumettre à validation ; formule Lune dédiée conservée sans code inventé, comme nouveau brouillon éventuel.
+- `ContractEditorialDraftService` accepte un nombre attendu versionné et sait préparer atomiquement une nouvelle clause en brouillon. V3.7 reste à 118 et tous ses tests restent valides ; aucune publication, adoption ou modification historique.
+- Contrôles exécutés : TypeScript réussi ; 6 tests ciblés réussis, dont simulation sans écriture, 119 brouillons, idempotence, absence de publication et rollback d’une clause 119 invalide.
+- Rapport : `docs/ux-v2/AUDIT-V38-2026-11-02.md`. Étape suivante : interface de comparaison V3.8 et préparation explicite des brouillons Catalogue, puis campagne devis/PDF seulement après changements correspondants.
