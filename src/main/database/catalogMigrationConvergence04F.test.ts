@@ -38,8 +38,8 @@ describe('04F — migration registry convergence guard', () => {
       const before = database.get('SELECT value_json FROM settings WHERE key=?', [
         'lot04-migration-sentinel',
       ]);
-      expect(getPendingMigrations(database).map(migration => migration.id)).toEqual([67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78]);
-      expect(applyPendingMigrations(database).map(migration => migration.id)).toEqual([67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78]);
+      expect(getPendingMigrations(database).map(migration => migration.id)).toEqual(MIGRATIONS.filter(m=>m.id>=67).map(m=>m.id));
+      expect(applyPendingMigrations(database).map(migration => migration.id)).toEqual(MIGRATIONS.filter(m=>m.id>=67).map(m=>m.id));
       expect(database.get('SELECT value_json FROM settings WHERE key=?', [
         'lot04-migration-sentinel',
       ])).toEqual(before);
@@ -54,6 +54,8 @@ describe('04F — migration registry convergence guard', () => {
           {id:76,name:'contract_editorial_drafts_and_versioned_titles'},
           {id:77,name:'contract_convergence_human_approval'},
           {id:78,name:'contract_convergence_decision_history'},
+          {id:79,name:'contract_clause_version_identity_and_code_aliases'},
+          {id:80,name:'data_processing_agreements_v3'},
         ]);
       expect(database.all('PRAGMA foreign_key_check')).toEqual([]);
       expect(applyPendingMigrations(database)).toEqual([]);

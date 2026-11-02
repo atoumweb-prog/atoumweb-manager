@@ -104,7 +104,12 @@ function applyDensity(density: DisplayDensity): void {
 
 function App() {
   useLayoutEffect(installUnsavedLifecycleBridge,[]);
-  const prospectReferenceId = new URLSearchParams(window.location.search).get('prospectReference');
+  const urlParameters = new URLSearchParams(window.location.search);
+  const prospectReferenceId = urlParameters.get('prospectReference');
+  const functionalRecipeMode = urlParameters.get('functionalRecipe') === '1';
+  useEffect(() => {
+    if (functionalRecipeMode) document.title = 'RECETTE / TEST · AtoumWeb Manager';
+  }, [functionalRecipeMode]);
   const [bootstrap, setBootstrap] = useState<BootstrapState | null>(null);
   const [activePage, setActivePage] = useState<PageName>('Accueil');
   const activePageRef=useRef(activePage);activePageRef.current=activePage;
@@ -402,7 +407,9 @@ function App() {
           timer={<GlobalTimer onMessage={setMessage} onDialogChange={setTimerDialogOpen}/>} timerDialogOpen={timerDialogOpen}
           search={close => <GlobalSearch onOpen={openSearchResult} onDismiss={close} onCancelSelection={cancelSearchNavigation} contextKey={activePage}/>} clock={<GlobalClock/>}
           libraryCollapsed={libraryHeaderCollapsed} onToggleLibrary={() => setLibraryHeaderCollapsed(value=>!value)}
-          environmentBanner={/([\\/])Validation-MSI$/i.test(bootstrap.workspacePath) ? <div role="status" className="development-environment-banner">DÉVELOPPEMENT — dossiers TEST — aucune valeur contractuelle réelle</div> : undefined}/>
+          environmentBanner={functionalRecipeMode
+            ? <div role="status" className="development-environment-banner functional-recipe-banner">RECETTE / TEST — données fictives isolées — aucune publication</div>
+            : /([\\/])Validation-MSI$/i.test(bootstrap.workspacePath) ? <div role="status" className="development-environment-banner">DÉVELOPPEMENT — dossiers TEST — aucune valeur contractuelle réelle</div> : undefined}/>
 
 
 

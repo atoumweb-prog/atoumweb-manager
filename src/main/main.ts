@@ -18,6 +18,7 @@ import { resolveWorkspace, WorkspaceAccessError } from './workspace';
 let mainWindow: BrowserWindow | null = null;
 let recipeWindow:ReturnType<typeof createOperationalRecipeWindow>|null=null;
 const recipeMode=process.argv.includes(RECIPE_FLAG);
+const functionalRecipeMode=process.argv.includes('--functional-recipe');
 let database: DatabaseService | null = null;
 const prospectReferenceWindows = new Map<string, BrowserWindow>();
 
@@ -75,7 +76,7 @@ function createMainWindow(): void {
     minWidth: 760,
     minHeight: 560,
     backgroundColor: '#0f1720',
-    title: 'AtoumWeb Manager',
+    title: functionalRecipeMode ? 'RECETTE / TEST · AtoumWeb Manager' : 'AtoumWeb Manager',
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -92,7 +93,7 @@ function createMainWindow(): void {
     }
   });
 
-  loadRendererWindow(mainWindow);
+  loadRendererWindow(mainWindow, functionalRecipeMode ? { functionalRecipe: '1' } : undefined);
 
   mainWindow.on('closed', () => {
     mainWindow = null;

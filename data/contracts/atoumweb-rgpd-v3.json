@@ -1,0 +1,326 @@
+{
+  "schemaVersion": 1,
+  "reference": "Accord de protection des données AtoumWeb — V3 — 1er novembre 2026",
+  "source": {
+    "filename": "AtoumWeb_Accord_RGPD_V3.docx",
+    "sha256": "7c646476c7f35e73d1681f2dad602994873c018048a98ecce086cddd7b07b51f",
+    "receivedPathNote": "Document Word fourni par AtoumWeb ; chemin utilisateur non conservé dans le référentiel."
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "style": "Title",
+      "text": "Accord de protection des données"
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Accord RGPD distinct du devis · maintenance, hébergement et interventions techniques"
+    },
+    {
+      "type": "paragraph",
+      "style": "SmallNote",
+      "text": "VERSION CONTRACTUELLE RETENUE PAR ATOUMWEB · V3 · 1er novembre 2026 · Fiches adaptées au site"
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Cet accord complète le contrat du site indiqué ci-dessous. Il encadre uniquement les données personnelles traitées pour le compte du client. Il ne crée ni abonnement supplémentaire ni nouvelle prestation payante."
+    },
+    {
+      "type": "table",
+      "rows": [
+        [
+          "Le client",
+          "[Nom / raison sociale] — [adresse] — [contact pour les données personnelles]"
+        ],
+        [
+          "AtoumWeb",
+          "Carlos Filipe Rafael Brochado Da Silva, entrepreneur individuel (AtoumWeb) — SIREN 938 790 607 — 9 rue du Breuil, 21440 Vaux-Saules — agence@atoumweb.fr"
+        ],
+        [
+          "Contrat concerné",
+          "Devis / contrat n° [référence] du [date] — Site : [nom de domaine]"
+        ],
+        [
+          "Entrée en vigueur",
+          "À la dernière signature, et avant la première opération concernée sur les données."
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "style": "Heading1",
+      "text": "1. Qui est responsable des données ?"
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Vous décidez quelles données votre site collecte, pourquoi et combien de temps elles sont conservées. Vous en êtes le responsable du traitement. Nous agissons uniquement pour assurer les services que vous nous avez confiés : nous sommes alors votre sous-traitant au sens du RGPD."
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Pour nos propres devis, factures et échanges commerciaux, AtoumWeb gère ses données pour son propre compte : ces usages ne sont pas couverts par cet accord."
+    },
+    {
+      "type": "paragraph",
+      "style": "Heading1",
+      "text": "2. Ce que nous sommes autorisés à faire"
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Nous hébergeons, sauvegardons, administrons ou intervenons sur les données uniquement pour réaliser les opérations cochées dans la fiche A. Vos instructions écrites sont constituées par le contrat, cette fiche et vos demandes écrites acceptées par AtoumWeb."
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Nous n’utilisons pas les données de vos visiteurs ou clients pour notre prospection, pour d’autres clients ou pour entraîner des outils d’intelligence artificielle. Nous ne transmettons pas ces données à un assistant d’IA externe pour travailler sur votre site sans vos instructions écrites et sans garanties adaptées à leur protection. Nous les consultons uniquement lorsque la prestation le nécessite."
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Si une demande paraît contraire à la réglementation, nous vous le signalons sans attendre. Nous ne suivons pas une instruction illicite. Si la loi nous impose un traitement supplémentaire, nous vous en informons avant, sauf interdiction légale."
+    },
+    {
+      "type": "paragraph",
+      "style": "Heading1",
+      "text": "3. Confidentialité et accès"
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Les accès sont organisés selon les besoins du site et les personnes autorisées. Nos comptes techniques sont protégés par double authentification lorsque le service le permet, conformément aux paramètres décrits en fiche B. Nous limitons les permissions au nécessaire, préservons la confidentialité des données et retirons les accès devenus inutiles. Les protections des comptes appartenant au client et aux autres prestataires sont précisées dans la fiche B."
+    },
+    {
+      "type": "paragraph",
+      "style": "Heading1",
+      "text": "4. Sécurité et sauvegardes"
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Nous appliquons les mesures de protection convenues dans la fiche B : gestion des accès, authentification et sécurité des interventions. Nous travaillons habituellement directement sur l’hébergement o2switch, sans conserver de copie locale du site ou de sa base de données. Si un export temporaire devient nécessaire pour un transfert ou un dépannage, nous le protégeons et le supprimons dès qu’il n’est plus utile. Les mesures indiquées en fiche B correspondent à la configuration du site concerné."
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Pour les formules de maintenance, nous prévoyons des sauvegardes au moins hebdomadaires pour WordPress ou quotidiennes pour WooCommerce, conservées au moins 30 jours. Nous utilisons actuellement les sauvegardes automatiques de l’offre o2switch Cloud, sans système indépendant d’AtoumWeb. Les modalités de récupération et de restauration sont celles prévues dans le contrat et décrites dans la fiche B."
+    },
+    {
+      "type": "paragraph",
+      "style": "Heading1",
+      "text": "5. Nos prestataires techniques"
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Pour l’hébergement et les sauvegardes, nous utilisons o2switch Cloud, mentionné dans la fiche B. Les autres services sont identifiés selon votre projet, avec leur rôle et le titulaire de leur compte. Lorsque nous faisons intervenir un prestataire pour traiter vos données pour notre compte, nous recueillons votre autorisation écrite selon les modalités convenues et nous veillons à ce que des obligations de protection équivalentes lui soient imposées par contrat. Nous restons responsables envers vous de l’exécution de ses obligations de protection des données, conformément au RGPD. Les services que vous souscrivez directement sont identifiés à part."
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Si nous prévoyons d’ajouter ou de remplacer un de nos sous-traitants ultérieurs, nous vous en informons avant le changement et vous laissons la possibilité de formuler une objection. En cas de désaccord, nous recherchons une solution conforme avant de commencer les opérations concernées. La fiche B liste les prestataires effectivement autorisés."
+    },
+    {
+      "type": "paragraph",
+      "style": "Heading1",
+      "text": "6. Données hors de l’Espace économique européen"
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Nous ne décidons pas seuls d'un transfert de vos données hors de l'Espace économique européen. Tout transfert éventuel doit figurer dans nos instructions, vous être expliqué et respecter les garanties prévues par le RGPD. Les pays et prestataires effectivement concernés sont indiqués dans la fiche B."
+    },
+    {
+      "type": "paragraph",
+      "style": "Heading1",
+      "text": "7. Demandes des personnes concernées"
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Si une personne nous demande l'accès, la correction ou la suppression de ses données, nous vous transmettons sa demande rapidement sans décider à votre place. Nous vous aidons, dans la mesure techniquement possible, à y répondre selon vos instructions."
+    },
+    {
+      "type": "paragraph",
+      "style": "Heading1",
+      "text": "8. Incidents et obligations de protection"
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Dès que nous découvrons une violation de données personnelles susceptible de concerner votre site, nous vous contactons dans les meilleurs délais, sans attendre de connaître tous les détails. Nous utilisons les coordonnées indiquées en fiche A et, lorsque cela est utile, un second moyen de contact. Nous vous communiquons d’abord les faits connus, puis les informations complémentaires à mesure de leur vérification. Nous documentons l’incident et les actions engagées. Cette obligation ne signifie pas que nous assurons une permanence technique 24 h/24."
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Nous vous aidons, selon nos informations et les moyens disponibles, à gérer les obligations liées à l'incident, à la sécurité, à une éventuelle analyse d'impact et aux échanges avec l'autorité compétente. Vous restez responsable de décider des notifications légales qui vous incombent."
+    },
+    {
+      "type": "paragraph",
+      "style": "Heading1",
+      "text": "9. Fin du contrat : récupération et suppression"
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "À la fin de l’hébergement, vous choisissez la restitution ou la suppression de vos données. Pour une échéance connue, nous vous écrivons en principe 30 jours avant la fin prévue pour organiser, selon la situation, un export ou un accès temporaire sécurisé. Vous pouvez choisir dès la signature, dans la fiche A, la consigne à appliquer si vous ne répondez pas à notre avis de fin de contrat. Sans instruction de sortie renseignée en fiche A, cet accord doit être complété avant signature. Le préavis d’information n’ajoute pas 30 jours d’hébergement après le terme du contrat. Si vous demandez un départ anticipé, nous organisons la sortie selon les conditions applicables."
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "À la fin des opérations concernées, nous suivons votre instruction écrite : vous remettre les données ou les supprimer. Si une restitution est prévue, nous convenons avant l’échéance du moyen et du délai de récupération, puis supprimons les copies actives restantes dans le respect des obligations légales. Les sauvegardes techniques d’o2switch s’effacent suivant le cycle du service Cloud, actuellement annoncé à 45 jours. Nous vous précisons les limites techniques et les éventuelles conservations imposées par la loi. Si seule la maintenance s’arrête et que l’hébergement continue, le site n’est pas supprimé."
+    },
+    {
+      "type": "paragraph",
+      "style": "Heading1",
+      "text": "10. Registre, informations et contrôles"
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Nous tenons un registre des catégories de traitements que nous réalisons pour le compte de nos clients et conservons les preuves utiles de nos instructions, des prestataires autorisés et des incidents. Nous pouvons vous communiquer les informations nécessaires pour démontrer le respect de cet accord et participer aux vérifications prévues par le RGPD, dans des conditions qui préservent la sécurité et la confidentialité des autres clients."
+    },
+    {
+      "type": "paragraph",
+      "style": "Heading1",
+      "text": "11. Durée et priorité de cet accord"
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Cet accord s'applique tant que nous traitons des données personnelles pour votre compte, y compris pendant leur restitution ou leur suppression. Il complète le contrat principal ; en cas de contradiction sur la protection des données, les obligations du RGPD et le présent accord prévalent pour ces seules questions."
+    },
+    {
+      "type": "paragraph",
+      "style": "Heading1",
+      "text": "FICHE A — VOTRE SITE ET LES DONNÉES CONCERNÉES"
+    },
+    {
+      "type": "paragraph",
+      "style": "SmallNote",
+      "text": "Renseigner les informations du site et cocher uniquement les prestations et catégories de données effectivement concernées."
+    },
+    {
+      "type": "table",
+      "rows": [
+        [
+          "Site / référence",
+          "[domaine]  —  [numéro de devis / contrat]"
+        ],
+        [
+          "Prestation",
+          "☐ Maintenance WordPress    ☐ Maintenance WooCommerce    ☐ Hébergement isolé    ☐ Création    ☐ Dépannage / migration"
+        ],
+        [
+          "Opérations autorisées",
+          "☐ Hébergement    ☐ Administration technique    ☐ Mises à jour    ☐ Sauvegarde / restauration    ☐ Diagnostic    ☐ Migration    ☐ Autre : __________"
+        ],
+        [
+          "Pourquoi ces opérations ?",
+          "Assurer l’hébergement, la disponibilité, la maintenance ou les interventions techniques prévus dans le contrat. Précisions propres au site : __________________________"
+        ],
+        [
+          "Personnes concernées",
+          "☐ Visiteurs    ☐ Prospects    ☐ Acheteurs / clients    ☐ Utilisateurs / abonnés    ☐ Salariés / contacts    ☐ Autres : __________"
+        ],
+        [
+          "Types de données",
+          "☐ Identité / coordonnées    ☐ Messages de formulaires    ☐ Comptes utilisateurs    ☐ Commandes / adresses    ☐ Identifiants techniques    ☐ IP / journaux    ☐ Autres : _______"
+        ],
+        [
+          "Données particulières",
+          "☐ Aucune donnée particulière identifiée    ☐ Données particulières : nature et protection adaptée : __________________________"
+        ],
+        [
+          "Instruction de sortie en cas de silence",
+          "Instruction convenue en cas d’absence de réponse à l’avis de fin de contrat (cocher une seule case) :☐ Restitution : préparation d’un export ou d’un accès selon les modalités suivantes (destinataire, moyen, date limite) : __________________________ ; suppression ensuite dans les conditions légales.☐ Suppression à la fin de l’hébergement après avis écrit et possibilité de demander la restitution avant l’échéance.Aucun maintien gratuit et automatique de l’hébergement au-delà de la période contractuelle."
+        ],
+        [
+          "Outils et accès utiles",
+          "☐ WordPress admin    ☐ Hébergement / cPanel    ☐ Base de données    ☐ Sauvegardes    ☐ Autre : __________"
+        ],
+        [
+          "Durée et instructions",
+          "Début : [date] — Jusqu’à : [date / événement prévu au contrat]. Instructions particulières : [référence / descriptif]"
+        ],
+        [
+          "Contact du client pour un incident",
+          "Nom : [________]   Email : [________]   Téléphone si nécessaire : [________]"
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "style": "Heading1",
+      "text": "FICHE B — SÉCURITÉ, SAUVEGARDES ET PRESTATAIRES"
+    },
+    {
+      "type": "paragraph",
+      "style": "SmallNote",
+      "text": "Cette fiche décrit les moyens techniques, les prestataires et les accès propres au site concerné. Les éléments renseignés font partie intégrante du présent accord."
+    },
+    {
+      "type": "table",
+      "rows": [
+        [
+          "Accès et authentification",
+          "Les accès sont attribués selon le site à AtoumWeb, au client ou à leurs prestataires autorisés. Comptes techniques d’AtoumWeb : authentification à deux facteurs sur les services qui la permettent. Comptes du client et des tiers : protections et niveaux d’accès définis ici. Comptes concernés, responsables et date : __________________________"
+        ],
+        [
+          "Protection des échanges",
+          "AtoumWeb intervient habituellement directement sur les serveurs o2switch, sans copie locale. Connexion HTTPS/TLS, comptes et éventuels exports exceptionnels du site : __________________________"
+        ],
+        [
+          "Sauvegardes et conservation",
+          "o2switch Cloud : sauvegardes automatiques quotidiennes, rétention annoncée de 45 jours pour les fichiers, bases de données et emails. Formules de maintenance AtoumWeb : WordPress au moins hebdomadaire ; WooCommerce quotidienne ; conservation contractuelle au moins 30 jours, via o2switch. Pas de système de sauvegarde indépendant AtoumWeb. Date et résultat du dernier contrôle de restauration ou des points disponibles : __________________________"
+        ],
+        [
+          "Stockage et opérations",
+          "Hébergement du site : o2switch Cloud (centres de données annoncés en France). Services utilisés en complément pour les formulaires, emails, statistiques ou autres fonctions : __________________________. Copies locales exceptionnelles, si elles existent : __________________________"
+        ],
+        [
+          "Restitution et fin du contrat",
+          "Information de fin d’hébergement prévue 30 jours avant l’échéance connue. Instruction du client en cas de silence : fiche A. Export ou accès temporaire selon les modalités convenues. Pas de prolongation automatique de l’hébergement. Copies techniques résiduelles traitées suivant le cycle de conservation o2switch."
+        ],
+        [
+          "Prestataires techniques autorisés",
+          "o2switch Cloud : hébergement et sauvegardes, en qualité de prestataire technique. Référence des engagements de protection des données applicables à la prestation o2switch : __________________________. Autres prestataires : nom, mission, données concernées, titulaire du compte, rôle RGPD, pays et autorisation : __________________________. Si aucun autre : « Aucun autre prestataire concerné »."
+        ],
+        [
+          "Pays et transferts",
+          "Hébergement principal : France, selon les informations d’o2switch. Autres services et éventuels transferts hors Espace économique européen : ☐ Aucun pour ce site (à cocher uniquement après vérification de tous les services utilisés, notamment formulaires, messagerie, statistiques et paiement)    ☐ Oui — prestataires, pays et garanties : __________________________"
+        ],
+        [
+          "Contact et incidents",
+          "Contact AtoumWeb : agence@atoumweb.fr. Contact du client : fiche A. Information dans les meilleurs délais après découverte d’un incident, avec compléments à mesure que les faits sont connus. Pas de service de surveillance permanente 24 h/24 inclus. Référence du suivi d’incident : __________________________"
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "style": "Heading1",
+      "text": "Signatures"
+    },
+    {
+      "type": "paragraph",
+      "style": "normal",
+      "text": "Les fiches A et B font partie du présent accord. Par leur signature, le client et AtoumWeb confirment les instructions et les mesures qui y sont indiquées."
+    },
+    {
+      "type": "table",
+      "rows": [
+        [
+          "Pour le client",
+          "Nom et qualité : _______________________  Date : __________  Signature : _____________________"
+        ],
+        [
+          "Pour AtoumWeb",
+          "Nom : ______________________________  Date : __________  Signature : _____________________"
+        ]
+      ]
+    }
+  ]
+}

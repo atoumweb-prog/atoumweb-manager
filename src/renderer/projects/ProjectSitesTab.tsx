@@ -9,6 +9,7 @@ import {
 } from '../../shared/projects';
 import type { TimeSession } from '../../shared/time';
 import { ProjectPageCompositionPanel } from './ProjectPageCompositionPanel';
+import { ProjectSiteDataProtectionPanel } from './ProjectSiteDataProtectionPanel';
 import { requestUnsavedExit, useUnsavedDraft } from '../unsaved/unsaved';
 import './ProjectSitesTab.css';
 
@@ -650,6 +651,7 @@ export function ProjectSitesTab({
               selectedSite.archivedAt ? 'Site réactivé.' : 'Site archivé. Les Pages restent rattachées.',
             )}>{selectedSite.archivedAt ? 'Réactiver le Site' : 'Archiver le Site'}</button>
           </div>
+          {!selectedSite.archivedAt && <ProjectSiteDataProtectionPanel siteId={selectedSite.id} onMessage={onMessage} />}
         </>}
 
         {selectedPage && <>

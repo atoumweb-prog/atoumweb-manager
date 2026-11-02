@@ -5,11 +5,13 @@ import type { DatabaseService } from '../database/DatabaseService';
 import type { DemoSummary } from '../../shared/workflow';
 
 // Only business records may be removed. Reference data and physical files are never deleted.
-const TABLES = ['organizations','contacts','organization_contact_links','contact_methods','client_accounts','client_contact_roles','prospects','crm_actions','crm_needs','quotes','quote_lines','quote_contract_clauses','quote_contract_preparations','quote_contract_transmissions','quote_document_links','projects','project_blueprint_plans','project_nodes','project_node_sources','project_services','project_prerequisites','project_sites','project_site_pages','project_composed_node_bindings','project_composed_site_bindings','project_composed_prerequisite_sources','file_assets','file_asset_links','technical_items','technical_item_versions','technical_item_assets','service_requests','interventions','time_sessions','time_session_pauses','maintenance_subscriptions','maintenance_periods','maintenance_checks','hour_packs','hour_pack_movements','billing_items','maintenance_overage_decisions','maintenance_report_drafts','hour_pack_shortfall_decisions','activity_events','activity_log','search_documents'];
+const TABLES = ['organizations','contacts','organization_contact_links','contact_methods','client_accounts','client_contact_roles','prospects','crm_actions','crm_needs','quotes','quote_lines','quote_line_parameters','quote_contract_clauses','quote_contract_preparations','quote_contract_transmissions','quote_document_links','projects','project_blueprint_plans','project_nodes','project_node_sources','project_services','project_prerequisites','project_sites','project_site_pages','data_processing_site_assessments','data_processing_agreements','data_processing_incidents','project_composed_node_bindings','project_composed_site_bindings','project_composed_prerequisite_sources','file_assets','file_asset_links','technical_items','technical_item_versions','technical_item_assets','service_requests','interventions','time_sessions','time_session_pauses','maintenance_subscriptions','maintenance_periods','maintenance_checks','hour_packs','hour_pack_movements','billing_items','maintenance_overage_decisions','maintenance_report_drafts','hour_pack_shortfall_decisions','activity_events','activity_log','search_documents'];
 const ident=(name:string):string=>'"'+name.replace(/"/g,'""')+'"';
 const recordKey=(table:string)=>table==='maintenance_report_drafts'?'period_id'
   : table==='project_blueprint_plans'?'project_id'
   : table==='project_site_pages'?'project_node_id'
+  : table==='quote_line_parameters'?'line_id'
+  : table==='data_processing_site_assessments'?'project_site_id'
   : table.startsWith('project_composed_')||table==='organization_contact_links'?'rowid':'id';
 type ForeignKey = { table: string; from: string; to: string } & Record<string,unknown>;
 export class DemoService {
@@ -63,6 +65,11 @@ export class DemoService {
       const deleted=this.summary().total;
       // Only the already tracked synthetic ledger may be purged, after backup and real-reference checks.
       this.db.run('UPDATE demo_context SET contract_purge=1 WHERE id=1');
+      // Parameters are normally frozen with their accepted quote. The selective
+      // demo purge may unlock only the quotes tracked in the active demo ledger,
+      // inside this transaction; any failure rolls the original state back.
+      this.db.run(`UPDATE quotes SET status='draft',finalized_at=NULL
+        WHERE id IN (SELECT record_id FROM demo_records WHERE table_name='quotes')`);
       // Delete children before parents; deferred FKs cover the quote/project and request/intervention cycles.
       for(const table of [...tables].reverse()) this.db.run(`DELETE FROM ${ident(table)} WHERE CAST(${ident(recordKey(table))} AS TEXT) IN (SELECT record_id FROM demo_records WHERE table_name=?)`,[table]);
       if(this.db.all('PRAGMA foreign_key_check').length) throw new Error('Reset annulé : intégrité relationnelle non respectée.');

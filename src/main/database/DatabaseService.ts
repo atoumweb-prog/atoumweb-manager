@@ -39,6 +39,7 @@ import { ProjectReuseExportService } from '../projects/ProjectReuseExportService
 import { ProjectSearchService } from '../projects/ProjectSearchService';
 import { ProjectService } from '../projects/ProjectService';
 import { ProjectSiteService } from '../projects/ProjectSiteService';
+import { DataProcessingAgreementService } from '../projects/DataProcessingAgreementService';
 import { ProjectTechnicalLibraryService } from '../projects/ProjectTechnicalLibraryService';
 import { AtoumWebPackageService } from '../referentials/AtoumWebPackageService';
 import { AtoumWebOccurrenceReturnService } from '../referentials/AtoumWebOccurrenceReturnService';
@@ -80,6 +81,7 @@ export class DatabaseService {
   readonly quotePreparation: QuoteContractPreparationService;
   readonly projects: ProjectService;
   readonly projectSites: ProjectSiteService;
+  readonly dataProcessingAgreements: DataProcessingAgreementService;
   readonly projectCompletion: ProjectCompletionService;
   readonly projectNodes: ProjectNodeArrangementService;
   readonly projectResources: ProjectResourceService;
@@ -129,6 +131,7 @@ export class DatabaseService {
     this.quotePreparation = new QuoteContractPreparationService(this.database, this.clientDocuments);
     this.quotes = new QuoteService(this.database, this.crm, this.contractTerms, this.quotePreparation);
     this.projectSites = new ProjectSiteService(this.database);
+    this.dataProcessingAgreements = new DataProcessingAgreementService(this.database);
     this.projects = new ProjectService(this.database, this.workspace, this.projectSites);
     this.quotes.setProjectLifecycle(this.projects.commercial);
     this.projectCompletion = new ProjectCompletionService(this.database);
