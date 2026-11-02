@@ -11,6 +11,9 @@ export interface DataProcessingProvider {
   rgpdRole: 'subprocessor'|'controller-provider'|'to-confirm';
   country: string;
   authorized: boolean;
+  outsideEea: boolean|null;
+  transferMechanism: string;
+  verifiedAt: string;
 }
 
 export interface DataProcessingAgreementPayload {
@@ -51,8 +54,16 @@ export interface DataProcessingAgreement {
   sourceSha256: string;
   payload: DataProcessingAgreementPayload;
   sentAt: string|null;
+  transmissionMode:'external_attestation'|'manager_dispatch'|null;
+  transmissionChannel:string;
+  transmissionRecipient:string;
+  transmissionReference:string;
+  sentDocumentId:string|null;
+  sentPayloadSha256:string|null;
   signedAt: string|null;
   signedDocumentId: string|null;
+  signedPayloadSha256:string|null;
+  signatureReference:string;
   createdAt: string;
   updatedAt: string;
 }
@@ -63,6 +74,11 @@ export interface DataProcessingAgreementGate {
   reason: string;
   agreementId: string|null;
 }
+
+export interface DataProcessingSiteAssessment {projectSiteId:string;state:'to_assess'|'not_required'|'required';operations:DataProcessingOperation[];rationale:string;servicesVerifiedAt:string|null;verifiedBy:string;createdAt:string;updatedAt:string;}
+export interface DataProcessingSiteAssessmentInput {state:'not_required'|'required';operations:DataProcessingOperation[];rationale:string;servicesVerifiedAt:string;verifiedBy:string;}
+export interface DataProcessingSendAttestation {channel:string;recipient:string;reference:string;sentAt:string;sentDocumentId?:string|null;}
+export interface DataProcessingSignatureAttestation {documentId:string;signedAt:string;signatureReference:string;expectedVersionNumber:number;expectedPayloadSha256:string;}
 
 export interface DataProcessingIncident {
   id:string;
@@ -84,9 +100,11 @@ export interface DataProcessingAgreementApi {
   createDraft(siteId:string):Promise<DataProcessingAgreement>;
   updateDraft(id:string,payload:DataProcessingAgreementPayload):Promise<DataProcessingAgreement>;
   createRevision(id:string):Promise<DataProcessingAgreement>;
-  markSent(id:string):Promise<DataProcessingAgreement>;
-  markSigned(id:string,documentId:string):Promise<DataProcessingAgreement>;
+  markSent(id:string,input:DataProcessingSendAttestation):Promise<DataProcessingAgreement>;
+  markSigned(id:string,input:DataProcessingSignatureAttestation):Promise<DataProcessingAgreement>;
   gate(siteId:string):Promise<DataProcessingAgreementGate>;
+  assessment(siteId:string):Promise<DataProcessingSiteAssessment>;
+  saveAssessment(siteId:string,input:DataProcessingSiteAssessmentInput):Promise<DataProcessingSiteAssessment>;
   listIncidents(siteId:string):Promise<DataProcessingIncident[]>;
   recordIncident(siteId:string,input:DataProcessingIncidentInput):Promise<DataProcessingIncident>;
   resolveIncident(id:string,resolution:string,resolvedAt?:string):Promise<DataProcessingIncident>;

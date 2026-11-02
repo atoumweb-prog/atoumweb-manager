@@ -846,6 +846,8 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     guardedMutation(() => database.projectSites.applyBlueprint(projectId, templateVersionId)));
   ipcMain.handle('projects:rgpd:list', (_event, siteId:string) => database.dataProcessingAgreements.listForSite(siteId));
   ipcMain.handle('projects:rgpd:gate', (_event, siteId:string) => database.dataProcessingAgreements.gate(siteId));
+  ipcMain.handle('projects:rgpd:assessment',(_event,siteId:string)=>database.dataProcessingAgreements.assessment(siteId));
+  ipcMain.handle('projects:rgpd:assessment:save',(_event,siteId:string,input:import('../shared/dataProcessingAgreements').DataProcessingSiteAssessmentInput)=>guardedMutation(()=>database.dataProcessingAgreements.saveAssessment(siteId,input)));
   ipcMain.handle('projects:rgpd:incidents:list',(_event,siteId:string)=>database.dataProcessingAgreements.listIncidents(siteId));
   ipcMain.handle('projects:rgpd:incidents:record',(_event,siteId:string,input:import('../shared/dataProcessingAgreements').DataProcessingIncidentInput)=>guardedMutation(()=>database.dataProcessingAgreements.recordIncident(siteId,input)));
   ipcMain.handle('projects:rgpd:incidents:resolve',(_event,id:string,resolution:string,resolvedAt?:string)=>guardedMutation(()=>database.dataProcessingAgreements.resolveIncident(id,resolution,resolvedAt)));
@@ -860,15 +862,15 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     if(answer.response!==1)return null;
     return guardedMutation(()=>database.dataProcessingAgreements.createRevision(id));
   });
-  ipcMain.handle('projects:rgpd:mark-sent', async (_event,id:string) => {
-    const answer=await dialog.showMessageBox({type:'question',title:'Accord RGPD envoyé',message:'Confirmer que cette version a été transmise au client ?',detail:'La version deviendra immuable. Une révision restera possible.',buttons:['Annuler','Confirmer l’envoi'],defaultId:0,cancelId:0});
+  ipcMain.handle('projects:rgpd:mark-sent', async (_event,id:string,input:import('../shared/dataProcessingAgreements').DataProcessingSendAttestation) => {
+    const answer=await dialog.showMessageBox({type:'question',title:'Attester un envoi externe',message:'Confirmer que cette version précise a été transmise en dehors du Manager ?',detail:`Canal : ${input.channel}\nDestinataire : ${input.recipient}\nRéférence : ${input.reference}\n\nLe Manager n’envoie pas le document : il conserve ici ton attestation et l’empreinte de la version.`,buttons:['Annuler','Enregistrer l’attestation'],defaultId:0,cancelId:0});
     if(answer.response!==1)return null;
-    return guardedMutation(()=>database.dataProcessingAgreements.markSent(id));
+    return guardedMutation(()=>database.dataProcessingAgreements.markSent(id,input));
   });
-  ipcMain.handle('projects:rgpd:mark-signed', async (_event,id:string,documentId:string) => {
-    const answer=await dialog.showMessageBox({type:'question',title:'Accord RGPD signé',message:'Confirmer la signature et la preuve rattachée ?',detail:'Le document doit appartenir au même client. La version signée restera immuable.',buttons:['Annuler','Confirmer la signature'],defaultId:0,cancelId:0});
+  ipcMain.handle('projects:rgpd:mark-signed', async (_event,id:string,input:import('../shared/dataProcessingAgreements').DataProcessingSignatureAttestation) => {
+    const answer=await dialog.showMessageBox({type:'question',title:'Attester la signature',message:`Confirmer la preuve de signature de la version V${input.expectedVersionNumber} ?`,detail:`Référence : ${input.signatureReference}\nEmpreinte attendue : ${input.expectedPayloadSha256}\n\nLa preuve restera liée à cette version exacte.`,buttons:['Annuler','Enregistrer l’attestation'],defaultId:0,cancelId:0});
     if(answer.response!==1)return null;
-    return guardedMutation(()=>database.dataProcessingAgreements.markSigned(id,documentId));
+    return guardedMutation(()=>database.dataProcessingAgreements.markSigned(id,input));
   });
   ipcMain.handle('projects:add-node', (_event, projectId: string, input: ProjectNodeInput) => guardedMutation(() => database.projects.addProjectNode(projectId, input)));
   ipcMain.handle('projects:update-node', (_event, nodeId: string, input: Partial<ProjectNodeInput>) => guardedMutation(() => database.projects.updateProjectNode(nodeId, input)));

@@ -312,7 +312,9 @@ export class ContractTermsService {
     const nextAudience = version.audience ?? template.audience;
     const nextTitle = clean(version.title) ?? template.title;
     const codeOwner = this.database.get<{ id: string }>('SELECT id FROM contract_clause_templates WHERE code=? COLLATE NOCASE', [nextCode]);
-    const aliasOwner = this.database.get<{ clause_id: string }>('SELECT clause_id FROM contract_clause_code_aliases WHERE alias_code=? COLLATE NOCASE', [nextCode]);
+    const aliasOwner = this.database.get<{name:string}>("SELECT name FROM sqlite_master WHERE type='table' AND name='contract_clause_code_aliases'")
+      ? this.database.get<{ clause_id: string }>('SELECT clause_id FROM contract_clause_code_aliases WHERE alias_code=? COLLATE NOCASE', [nextCode])
+      : undefined;
     if ((codeOwner && codeOwner.id !== template.id) || (aliasOwner && aliasOwner.clause_id !== template.id)) throw new Error('Le code proposé est déjà utilisé par une autre clause.');
     this.database.exec('BEGIN IMMEDIATE;');
     try {

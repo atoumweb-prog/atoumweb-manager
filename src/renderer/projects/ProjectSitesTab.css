@@ -46,6 +46,7 @@
 .project-site-rgpd-gate{margin:0;padding:10px 12px;border-left:3px solid var(--border);background:var(--surface-soft)}.project-site-rgpd-gate.blocked{border-color:var(--danger);color:var(--danger)}.project-site-rgpd-gate.ready{border-color:var(--success)}
 .project-site-rgpd-form{display:grid;grid-template-columns:1fr 1fr;gap:12px}.project-site-rgpd-form label,.project-site-rgpd-proof label{display:grid;gap:5px;font-size:.82rem}.project-site-rgpd-form label small{color:var(--text-muted)}
 .project-site-rgpd-form fieldset,.project-site-rgpd-form .wide{grid-column:1/-1}.project-site-rgpd-form textarea{min-height:72px}.rgpd-checks{display:flex;flex-wrap:wrap;gap:8px 14px}.rgpd-checks label{display:flex;align-items:center;gap:5px}.project-site-rgpd details ul{margin:.5rem 0 0;padding-left:1.2rem;color:var(--text-muted)}
+.rgpd-providers{display:grid;gap:10px}.rgpd-provider{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:8px;padding:10px;border:1px solid var(--border);border-radius:9px}.rgpd-provider label{display:flex;align-items:center;gap:6px}.project-site-rgpd-form.assessment{padding-top:4px}
 .project-site-rgpd-proof label{flex:1}.project-site-rgpd .rgpd-signed{color:var(--success)}
 .project-sites-empty-detail{position:relative;margin:auto;max-width:480px;text-align:center}
 @media(max-width:1100px){.project-sites-create-panel{grid-template-columns:1fr 1fr}.project-sites-page-work{align-items:center}.project-sites-time-summary>small{display:none}.project-sites-page-actions{justify-content:flex-end}}
@@ -66,6 +67,7 @@
 .project-sites-page-info-summary b{flex:0 0 auto;color:var(--accent)}
 .project-sites-page-info .project-sites-detail-form{margin-top:2px}
 @media(max-width:760px){.project-sites-workspace.tree-collapsed{grid-template-columns:1fr!important}.project-sites-tree-restore{height:38px;min-height:38px;width:100%;margin:0}.project-sites-intro.collapsed .project-sites-intro-copy{display:grid}}
+@media(max-width:760px){.rgpd-provider{grid-template-columns:1fr}.project-site-rgpd-empty,.project-site-rgpd-proof{align-items:stretch;flex-direction:column}}
 
 .project-sites-inspector-splitter{position:relative;display:grid;place-items:center;width:8px;min-width:8px;cursor:col-resize;touch-action:none;user-select:none}
 .project-sites-inspector-splitter::before{content:'';position:absolute;inset:0 -4px}
