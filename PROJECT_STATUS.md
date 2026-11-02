@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 02/11/2026 — Lanceur autonome de recette PR #161 + PR #164
+
+Un portable Windows 11 strictement isolé a été préparé depuis `codex/rgpd-v3-site-agreements-20261101`. Il impose son propre `Profil-RECETTE`, son propre `Workspace-RECETTE` et le drapeau `--functional-recipe`; le titre et le bandeau jaune affichent en permanence « RECETTE / TEST ». La base dédiée contient uniquement les fixtures de convergence : clients/projet/site/devis fictifs, 118 propositions V3.7 et six propositions Catalogue toujours en brouillon, plus le parcours RGPD signé puis révisé. Aucun profil ou workspace utilisateur n'est consulté.
+
+Le vrai `.cmd` a démarré le paquet Electron sous Windows ; contrôles CDP réussis sur le titre, le bandeau et le chemin exact du workspace isolé. La réinitialisation par double-clic a été testée : sauvegarde de la recette courante, restauration de la graine, intégrité SQLite et clés étrangères conformes. Typecheck et package réussis. [Procédure et protections](docs/ux-v2/RECETTE-FONCTIONNELLE-PR161-PR164-2026-11-02.md). Aucune base active, publication, fusion ou déploiement.
+
+Le lanceur additionnel `RECETTE_AUTO.cmd` réutilise le pilotage CDP/Electron existant et produit un rapport HTML autonome. Exécution Windows réelle réussie : **27/27 contrôles**, navigation de 13 modules sans erreur renderer, **19 tests ciblés réussis / 1 intégration opt-in ignorée**, 118 clauses et six propositions contrôlées, parcours RGPD et empreintes vérifiés, **14 PDF / 199 pages / 0 page vide / 14 zones de signature**. Les pages 1 et les écrans importants sont capturés. Les empreintes des clauses/Catalogue publiés et devis acceptés restent identiques avant/après.
+
 ## 01/11/2026 — Bibliothèque V3.7 raccordée en brouillons
 
 La bibliothèque Word V3.7 retenue par AtoumWeb remplace les propositions documentaires précédentes dans l'interface de convergence. Le référentiel structuré contient 118 clauses uniques ; 77 différences textuelles ou d'identité ont été relevées. La migration 79 versionne désormais le code et le public de chaque clause et conserve les anciens codes en alias lors d'une publication explicite. `BLOG-DONNEES → BLOG-ROLES-CONTENUS` et le public consommateur de `MARIAGE-PRIVE` restent donc sans effet sur les versions publiées tant que les brouillons ne sont pas publiés.
