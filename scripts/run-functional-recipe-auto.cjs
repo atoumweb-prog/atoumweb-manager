@@ -12,6 +12,7 @@ fs.mkdirSync(shots,{recursive:true});fs.mkdirSync(pdfOut,{recursive:true});
 const results=[],errors=[],limitations=[
  'Les contrôles juridiques confirment les règles codées ; ils ne constituent pas une validation juridique des formulations.',
  'La recette interdit tout courriel, paiement ou service externe réel : l’envoi RGPD est une attestation locale fictive.',
+ 'La navigation couvre les modules et les parcours critiques ; elle ne clique pas chaque variante de chaque bouton des modules sans lien avec Contrats, Catalogue, Devis ou RGPD.',
  'La comparaison visuelle automatique détecte pages vides, texte absent et géométrie ; l’appréciation esthétique finale reste humaine.'
 ];
 const add=(area,name,ok,detail,evidence='')=>results.push({area,name,ok:Boolean(ok),detail:String(detail??''),evidence});
