@@ -1,6 +1,20 @@
 # Manager — consignes et reprise courte
 
-## État courant et prochaine action — checkpoint du 3 novembre 2026
+## État courant et prochaine action — UX lot 1, 3 novembre 2026
+
+**Lot 1 validé officiellement par Carlos le 03/11/2026 ; commit et push de la seule branche UX autorisés.** Worktree `C:/DEV/01_PROJETS/AtoumWeb/atoumweb-manager-ux-home-shell-lot1-20261103`, branche indépendante `codex/ux-v2-home-shell-lot1-20261103`, HEAD de départ `8a24ae37d10573b7db54cc0268c6e9c0959e8532` avant le commit de validation du lot 1. Toutes les évolutions UX de #165 sont conservées dans cette ascendance ; la pile contractuelle héritée n’est pas un nouveau delta à intégrer. Autorisation limitée à l’enregistrement du lot 1 et de ses tests sur cette branche UX ; aucune fusion, intégration dans main ou modification des PR contractuelles.
+
+**Réalisé :** collision Temps & facturation corrigée selon la largeur disponible, alertes sous la hauteur réelle de l’en-tête, barre optimisée à 125/150 %, ordre et commandes de personnalisation cohérents / accessibles, rail plus lisible et groupe actif replié repérable. Logo Accueil sans plaque : réutilisation du vecteur existant, aucun original redessiné ; variante réservée à l’Accueil, symbole réduit sans plaque dans Noir/Confort seulement. Routes, fonctionnalités, préférences et chrono unique conservés ; aucun service métier, contrat, Catalogue, RGPD, migration ou donnée réelle modifié.
+
+**Validation technique locale :** typecheck, 44 tests ciblés et 96 contrôles natifs réussis ; 18 états Noir/Confort, 42 PNG après (29 homologues + 13 complémentaires), cinq compléments avant avec valeurs non nulles. Aucun chevauchement de texte Temps mesuré dans ces cas, zéro débordement global, zéro erreur renderer ; fixture TEMP nettoyée. Chrono actif/dialogue, garde UX01 et préférences contrôlés. Échantillon fonctionnel d’autres thèmes/densités distinct de toute validation graphique globale. Détails dans [PROJECT_STATUS.md](../../PROJECT_STATUS.md), banc `scripts/check-home-shell-lot1.cjs`, dossier de revue `AtoumWeb_Manager_UX_LOT1_AVANT_APRES_2026-11-03.zip` dans Downloads.
+
+**Décision visuelle prioritaire :** finaliser l’identité bleu nuit/jaune en **Noir, Confort** avant généralisation ; continuer ensuite écran par écran sur accord. Aucune refonte volontaire de Clair/Blanc ou AtoumWeb : fonctionnement partagé préservé, déclinaison graphique ultérieure dans un chantier distinct, après validation explicite. Ce lot reste limité à Accueil, en-tête et rail.
+
+**Validation du 03/11 :** Carlos valide officiellement le rendu Accueil / en-tête / navigation après revue du dossier AVANT/APRÈS. Résultats conservés : typecheck, 44 tests ciblés et 96 contrôles natifs ; aucun changement fonctionnel depuis le candidat relu, donc aucune relance de tests ou captures pour cet enregistrement documentaire.
+
+**Prochaine action après cet enregistrement autorisé :** attendre un nouvel accord. Le lot validé est destiné à la seule branche `codex/ux-v2-home-shell-lot1-20261103`. Le lot 2 et l’intégration dans main ne sont pas autorisés. Les checkpoints et autorisations ci-dessous sont historiques. Ce fichier reste le point de reprise unique, avec [AGENTS.md](../../AGENTS.md), [PROJECT_STATUS.md](../../PROJECT_STATUS.md) et la [roadmap Bridge](../MANAGER_BRIDGE_ROADMAP.md) pour son périmètre propre.
+
+## Historique — checkpoint documentaire du 3 novembre 2026
 
 **Point d’entrée unique de reprise du Manager.** Lire [AGENTS.md](../../AGENTS.md), puis ce fichier ; ne pas reprendre tout l’historique des conversations. Le dépôt et le code restent les sources de vérité techniques. [PROJECT_STATUS.md](../../PROJECT_STATUS.md) porte le suivi détaillé ; les rapports liés portent les preuves. Pour Manager ↔ Bridge, conserver la [roadmap commune](../MANAGER_BRIDGE_ROADMAP.md), sans ouvrir implicitement un chantier Bridge ni créer une feuille de route concurrente.
 

@@ -87,3 +87,23 @@
  .app-shell .aw-header-date .global-clock-copy small{overflow:hidden;text-overflow:ellipsis;max-width:150px;}
  .aw-manager-shell .aw-header-primary .aw-header-timer{flex:0 1 230px;min-width:180px;}
 }
+
+/* Shared behavior: the alert panel follows the measured header, including banners. */
+.aw-header-alerts #header-alerts-panel{box-sizing:border-box;overscroll-behavior:contain;}
+/* Visual optimisation is limited to the approved Noir/Confort shell. */
+:root[data-theme='noir'][data-density='comfort'] .app-shell .aw-header-primary{gap:8px;}
+:root[data-theme='noir'][data-density='comfort'] .app-shell .aw-header-context:not(:has(button,span)){display:none;}
+@container workspace-header (max-width:900px){
+ :root[data-theme='noir'][data-density='comfort'] .app-shell .aw-header-primary{flex-wrap:nowrap;}
+ :root[data-theme='noir'][data-density='comfort'] .app-shell .aw-header-date{flex:1 1 140px;min-width:70px;max-width:180px;}
+ :root[data-theme='noir'][data-density='comfort'] .app-shell .aw-header-date .global-clock-copy{min-width:0;}
+ :root[data-theme='noir'][data-density='comfort'] .app-shell .aw-header-date .global-clock-copy small{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+ :root[data-theme='noir'][data-density='comfort'] .app-shell .aw-header-date .global-clock{padding:0;gap:4px;}
+ :root[data-theme='noir'][data-density='comfort'] .aw-manager-shell .aw-header-primary .aw-header-timer{flex:0 1 230px;min-width:160px;}
+ :root[data-theme='noir'][data-density='comfort'] .app-shell .aw-header-timer .timer-context{max-width:150px;}
+}
+@container workspace-header (max-width:470px){
+ :root[data-theme='noir'][data-density='comfort'] .app-shell .aw-header-primary{flex-wrap:wrap;}
+ :root[data-theme='noir'][data-density='comfort'] .app-shell .aw-header-date{flex:1 1 140px;}
+ :root[data-theme='noir'][data-density='comfort'] .aw-manager-shell .aw-header-primary .aw-header-timer{flex:1 1 230px;}
+}
