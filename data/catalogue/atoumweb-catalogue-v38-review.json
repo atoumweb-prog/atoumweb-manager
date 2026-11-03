@@ -1,0 +1,2540 @@
+{
+  "schemaVersion": 1,
+  "reference": "Grille tarifaire détaillée AtoumWeb — projet V3.8 — 2 novembre 2026 — non publiée",
+  "status": "review_only_not_published",
+  "source": {
+    "filename": "AtoumWeb_Grille_Tarifaire_Detaillee_V38_PROJET_RELECTURE.docx",
+    "sha256": "63d7b09a6ea98bf8a721c03ac34294e493c3ca8501a5919dc3ffbf0941d445f2"
+  },
+  "records": [
+    {
+      "name": "Site vitrine 5 pages",
+      "canonicalCode": "AW-WEB-VITRINE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "699 €",
+      "inclusions": [
+        "5 pages de contenu",
+        "pages légales hors quota",
+        "WordPress + Divi",
+        "responsive",
+        "formulaire simple",
+        "SEO de base",
+        "SSL",
+        "hébergement 1 an",
+        "1 domaine standard 1 an",
+        "1 h de formation",
+        "2 cycles de corrections",
+        "intégration/adaptation légère des contenus fournis."
+      ],
+      "exclusions": [
+        "Rédaction complète",
+        "e-commerce",
+        "multilingue",
+        "fonctions spécifiques",
+        "maintenance après garantie",
+        "licences premium non prévues."
+      ]
+    },
+    {
+      "name": "Page supplémentaire",
+      "canonicalCode": "AW-WEB-PAGE-SUP",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "79 €",
+      "inclusions": [
+        "Création/intégration dans la continuité graphique, à partir des textes et visuels fournis."
+      ],
+      "exclusions": [
+        "Rédaction complète",
+        "fonction complexe",
+        "gros volume de contenu."
+      ]
+    },
+    {
+      "name": "Blog technique WordPress",
+      "canonicalCode": "AW-WEB-BLOG",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "149 €",
+      "inclusions": [
+        "Page Blog/archives",
+        "modèle article",
+        "catégories de base",
+        "navigation",
+        "responsive",
+        "1 article test",
+        "prise en main."
+      ],
+      "exclusions": [
+        "Rédaction d'articles",
+        "import massif",
+        "migration d'ancien blog",
+        "fonctions éditoriales complexes."
+      ]
+    },
+    {
+      "name": "Intégration newsletter standard",
+      "canonicalCode": "AW-WEB-NEWSLETTER",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "99 €",
+      "inclusions": [
+        "Formulaire d'inscription",
+        "connexion à Brevo/Mailchimp ou équivalent",
+        "intégration graphique simple",
+        "tests",
+        "consentement."
+      ],
+      "exclusions": [
+        "Séquences automatisées",
+        "segmentation complexe",
+        "migration importante",
+        "CRM avancé."
+      ]
+    },
+    {
+      "name": "Site vitrine bilingue",
+      "canonicalCode": "AW-WEB-BILINGUE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "249 €",
+      "inclusions": [
+        "Configuration multilingue jusqu'à 5 pages",
+        "menus",
+        "SEO technique de base",
+        "tests."
+      ],
+      "exclusions": [
+        "Traduction professionnelle",
+        "WooCommerce multilingue",
+        "très gros site."
+      ]
+    },
+    {
+      "name": "Langue supplémentaire site vitrine",
+      "canonicalCode": "AW-WEB-LANG-SUP",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "149 €",
+      "inclusions": [
+        "Ajout d'une langue supplémentaire jusqu'à 5 pages standard."
+      ],
+      "exclusions": [
+        "Traduction",
+        "gros volume",
+        "e-commerce."
+      ]
+    },
+    {
+      "name": "Avis Google automatiques",
+      "canonicalCode": "AW-WEB-AVIS-GOOGLE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "79 €",
+      "inclusions": [
+        "Connexion/affichage dynamique standard",
+        "présentation cohérente",
+        "tests."
+      ],
+      "exclusions": [
+        "Réponses aux avis",
+        "gestion GBP",
+        "plugin/API payante."
+      ]
+    },
+    {
+      "name": "Portfolio simple",
+      "canonicalCode": "AW-WEB-PORTFOLIO",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "99 €",
+      "inclusions": [
+        "Galerie/portfolio simple jusqu'à env. 12 éléments fournis."
+      ],
+      "exclusions": [
+        "CPT avancé",
+        "filtres",
+        "fiches projets complexes."
+      ]
+    },
+    {
+      "name": "Portfolio dynamique avancé",
+      "canonicalCode": "AW-WEB-PORTFOLIO-ADV",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 199 €",
+      "inclusions": [
+        "Cadrage léger",
+        "structure dynamique",
+        "catégories/filtres simples selon devis."
+      ],
+      "exclusions": [
+        "Gros catalogue",
+        "automatisations",
+        "import massif."
+      ]
+    },
+    {
+      "name": "Intégration réservation externe",
+      "canonicalCode": "AW-WEB-RESA-EXT",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "99 €",
+      "inclusions": [
+        "Intégration d'un outil externe déjà choisi/configuré",
+        "design simple",
+        "tests."
+      ],
+      "exclusions": [
+        "Système de réservation métier complet",
+        "paiement complexe",
+        "multi-ressources."
+      ]
+    },
+    {
+      "name": "Paiement simple",
+      "canonicalCode": "AW-WEB-PAIEMENT-SIMPLE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "79 €",
+      "inclusions": [
+        "Bouton/lien vers solution de paiement externe",
+        "intégration et test."
+      ],
+      "exclusions": [
+        "Panier, catalogue, commandes, livraison."
+      ]
+    },
+    {
+      "name": "Formulaire avancé",
+      "canonicalCode": "AW-WEB-FORM-ADV",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "99 €",
+      "inclusions": [
+        "Logique conditionnelle raisonnable",
+        "upload",
+        "plusieurs destinataires ou multi-étapes simples."
+      ],
+      "exclusions": [
+        "CRM/API",
+        "génération PDF",
+        "workflows complexes."
+      ]
+    },
+    {
+      "name": "Espace membre",
+      "canonicalCode": "AW-WEB-ESPACE-MEMBRE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Périmètre défini au devis."
+      ],
+      "exclusions": [
+        "Tout ce qui n'est pas au devis."
+      ]
+    },
+    {
+      "name": "Landing Page",
+      "canonicalCode": "AW-LP-BASE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "499 €",
+      "inclusions": [
+        "Jusqu'à 8 sections standards",
+        "WordPress/Divi",
+        "responsive",
+        "structure conversion",
+        "intégration/adaptation légère jusqu'à ~800 mots fournis",
+        "formulaire simple ou CTA",
+        "FAQ/témoignages dans le quota",
+        "visuels simples",
+        "SEO de base",
+        "SSL",
+        "hébergement 1 an",
+        "domaine standard si nécessaire",
+        "2 cycles",
+        "garantie 30 j."
+      ],
+      "exclusions": [
+        "Rédaction complète",
+        "fonctions avancées",
+        ">8 sections sans option."
+      ]
+    },
+    {
+      "name": "Section standard supplémentaire",
+      "canonicalCode": "AW-LP-SECTION",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "49 €",
+      "inclusions": [
+        "1 section standard supplémentaire."
+      ],
+      "exclusions": [
+        "Fonction complexe."
+      ]
+    },
+    {
+      "name": "Rédaction complète Landing",
+      "canonicalCode": "AW-LP-REDACTION",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "149 €",
+      "inclusions": [
+        "Jusqu'à ~800 mots",
+        "accroches",
+        "titres",
+        "bénéfices",
+        "argumentaire",
+        "CTA",
+        "structure conversion."
+      ],
+      "exclusions": [
+        "Recherche lourde",
+        "interviews",
+        "contenu très technique."
+      ]
+    },
+    {
+      "name": "Livraison prioritaire Landing",
+      "canonicalCode": "AW-LP-URGENT",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "79 €",
+      "inclusions": [
+        "Priorisation du planning sous réserve de disponibilité."
+      ],
+      "exclusions": [
+        "Garantie absolue de délai si dépendance client/tiers."
+      ]
+    },
+    {
+      "name": "Page de remerciement",
+      "canonicalCode": "AW-LP-MERCI",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "49 €",
+      "inclusions": [
+        "Page courte cohérente",
+        "confirmation",
+        "prochaine étape",
+        "CTA éventuel."
+      ],
+      "exclusions": [
+        "Seconde Landing complète."
+      ]
+    },
+    {
+      "name": "Pop-up ciblée simple",
+      "canonicalCode": "AW-LP-POPUP",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "79 €",
+      "inclusions": [
+        "Design cohérent",
+        "règle simple délai/scroll/exit intent",
+        "mobile",
+        "tests."
+      ],
+      "exclusions": [
+        "Segmentation",
+        "A/B testing",
+        "CRM",
+        "automatisations."
+      ]
+    },
+    {
+      "name": "Langue supplémentaire Landing",
+      "canonicalCode": "AW-LP-LANG-SUP",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "149 €",
+      "inclusions": [
+        "Ajout d'une langue sur la Landing",
+        "traduction fournie."
+      ],
+      "exclusions": [
+        "Traduction professionnelle."
+      ]
+    },
+    {
+      "name": "Boutique WooCommerce",
+      "canonicalCode": "AW-ECOM-BASE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 1 490 €",
+      "inclusions": [
+        "WooCommerce",
+        "design",
+        "pages essentielles",
+        "10 produits simples",
+        "2 moyens de paiement standards",
+        "livraison simple",
+        "TVA selon règles client",
+        "stock standard",
+        "comptes clients",
+        "emails transactionnels",
+        "codes promo",
+        "SEO de base",
+        "SSL",
+        "hébergement + domaine standard 1 an",
+        "mise en ligne",
+        "2 h formation",
+        "2 cycles",
+        "garantie 30 j."
+      ],
+      "exclusions": [
+        "Rédaction fiches",
+        "produits variables complexes",
+        "gros catalogue",
+        "multilingue",
+        "ERP/marketplace",
+        "juridique du commerçant."
+      ]
+    },
+    {
+      "name": "Produit simple supplémentaire",
+      "canonicalCode": "AW-ECOM-PROD-SIMPLE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "19 €",
+      "inclusions": [
+        "Intégration d'un produit simple supplémentaire, infos et visuels fournis."
+      ],
+      "exclusions": [
+        "Rédaction",
+        "retouche lourde",
+        "variantes."
+      ]
+    },
+    {
+      "name": "Produit variable",
+      "canonicalCode": "AW-ECOM-PROD-VAR",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 29 €",
+      "inclusions": [
+        "Produit variable standard avec nombre raisonnable d'attributs/variations."
+      ],
+      "exclusions": [
+        "Très nombreuses combinaisons",
+        "logique tarifaire complexe."
+      ]
+    },
+    {
+      "name": "Import catalogue volumineux",
+      "canonicalCode": "AW-ECOM-IMPORT",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Import/traitement en lot selon données disponibles."
+      ],
+      "exclusions": [
+        "Nettoyage massif non prévu",
+        "enrichissement éditorial."
+      ]
+    },
+    {
+      "name": "WooCommerce multilingue",
+      "canonicalCode": "AW-ECOM-MULTILINGUE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Périmètre défini selon produits, catégories, checkout, emails et devises."
+      ],
+      "exclusions": [
+        "Traduction et localisation juridique."
+      ]
+    },
+    {
+      "name": "Paiement avancé / passerelle spécifique",
+      "canonicalCode": "AW-ECOM-PAIEMENT-ADV",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Intégration selon compatibilité WooCommerce et contrat du client."
+      ],
+      "exclusions": [
+        "Frais prestataire",
+        "développement hors compatibilité standard."
+      ]
+    },
+    {
+      "name": "Livraison avancée",
+      "canonicalCode": "AW-ECOM-LIVRAISON-ADV",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Zones/poids/dimensions/transporteurs/points relais selon devis."
+      ],
+      "exclusions": [
+        "Contrats transporteurs",
+        "coûts externes."
+      ]
+    },
+    {
+      "name": "Maintenance WordPress mensuelle",
+      "canonicalCode": "AW-MAINT-WP-M",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "49 € / mois",
+      "inclusions": [
+        "Mises à jour",
+        "sauvegardes",
+        "surveillance de base",
+        "contrôle après MAJ",
+        "2 interventions mineures <=30 min",
+        "Sauvegardes o2switch Cloud hebdomadaires, conservation 30 jours",
+        "Premier retour humain prioritaire pendant les heures de bureau, sans délai maximal garanti",
+        "Interventions mensuelles non cumulables et non reportables"
+      ],
+      "exclusions": [
+        "Refonte",
+        "gros dépannage",
+        "urgence HNO",
+        "interventions >30 min",
+        "malware lourd."
+      ]
+    },
+    {
+      "name": "Maintenance WordPress annuelle",
+      "canonicalCode": "AW-MAINT-WP-A",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "539 € / an",
+      "inclusions": [
+        "Mises à jour",
+        "sauvegardes",
+        "surveillance de base",
+        "contrôle après MAJ",
+        "2 interventions mineures <=30 min",
+        "12 mois payés d'avance",
+        "1 mois offert.",
+        "Interventions mensuelles non cumulables et non reportables"
+      ],
+      "exclusions": [
+        "Refonte",
+        "gros dépannage",
+        "urgence HNO",
+        "interventions >30 min",
+        "malware lourd."
+      ]
+    },
+    {
+      "name": "Maintenance WooCommerce mensuelle",
+      "canonicalCode": "AW-MAINT-WC-M",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "99 € / mois",
+      "inclusions": [
+        "MAJ/sauvegardes/surveillance adaptées WooCommerce",
+        "4 interventions mineures <=30 min",
+        "Sauvegardes o2switch Cloud quotidiennes, conservation 30 jours",
+        "Premier retour humain prioritaire pendant les heures de bureau, sans délai maximal garanti",
+        "Interventions mensuelles non cumulables et non reportables"
+      ],
+      "exclusions": [
+        "Gestion quotidienne commandes",
+        "refonte",
+        "urgence HNO",
+        "gros incident."
+      ]
+    },
+    {
+      "name": "Maintenance WooCommerce annuelle",
+      "canonicalCode": "AW-MAINT-WC-A",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "1 089 € / an",
+      "inclusions": [
+        "MAJ/sauvegardes/surveillance adaptées WooCommerce",
+        "4 interventions mineures <=30 min",
+        "1 mois offert.",
+        "Interventions mensuelles non cumulables et non reportables"
+      ],
+      "exclusions": [
+        "Gestion quotidienne commandes",
+        "refonte",
+        "urgence HNO",
+        "gros incident."
+      ]
+    },
+    {
+      "name": "Hébergement isolé avec Lune dédiée",
+      "canonicalCode": null,
+      "catalogueAction": "create_draft_after_explicit_confirmation",
+      "priceLabel": "149 € / an",
+      "inclusions": [
+        "Hébergement isolé du site avec Lune dédiée (99 € + 50 €)",
+        "Administration de l’espace technique d’hébergement",
+        "Sauvegardes techniques proposées par o2switch dans les conditions de l’hébergeur",
+        "Transfert interne depuis un hébergement AtoumWeb vers la Lune dédiée, sans frais"
+      ],
+      "exclusions": [
+        "Maintenance WordPress et WooCommerce, mises à jour applicatives",
+        "Nom de domaine et son renouvellement (facturés séparément)",
+        "Restauration manuelle par AtoumWeb (sur devis, sauf manquement imputable)",
+        "Migration depuis un hébergeur extérieur ou vers un tiers avec assistance"
+      ]
+    },
+    {
+      "name": "Hébergement WordPress seul",
+      "canonicalCode": "AW-TECH-HEBERG-WP",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "99 € / an",
+      "inclusions": [
+        "Hébergement",
+        "SSL",
+        "maintien de l'espace d'hébergement."
+      ],
+      "exclusions": [
+        "Maintenance WordPress",
+        "MAJ",
+        "interventions",
+        "sauvegarde contractuelle de maintenance."
+      ]
+    },
+    {
+      "name": "Audit de reprise WordPress",
+      "canonicalCode": "AW-TECH-AUDIT-REPRISE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "149 €",
+      "inclusions": [
+        "État WP/thème/plugins/versions/sauvegardes/sécurité/SSL/users/erreurs/perf/hébergement/customisations",
+        "risques",
+        "priorités",
+        "conclusion reprise/remise à niveau/refus."
+      ],
+      "exclusions": [
+        "Corrections."
+      ]
+    },
+    {
+      "name": "Remise à niveau WordPress",
+      "canonicalCode": "AW-TECH-REMISE-WP",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 249 €",
+      "inclusions": [
+        "Corrections issues audit",
+        "MAJ encadrées",
+        "nettoyage simple",
+        "sécurisation",
+        "sauvegarde",
+        "compatibilité raisonnable."
+      ],
+      "exclusions": [
+        "Refonte",
+        "malware lourd",
+        "dev complexe."
+      ]
+    },
+    {
+      "name": "Remise à niveau WooCommerce",
+      "canonicalCode": "AW-TECH-REMISE-WC",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 299 €",
+      "inclusions": [
+        "Remise à niveau WP + contrôle WooCommerce/paiements/commandes/pages système/catalogue/extensions critiques."
+      ],
+      "exclusions": [
+        "Refonte",
+        "gros catalogue",
+        "malware lourd",
+        "intégrations complexes."
+      ]
+    },
+    {
+      "name": "Dépannage WordPress ponctuel",
+      "canonicalCode": "AW-TECH-DEPANNAGE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "69 €",
+      "inclusions": [
+        "Diagnostic ciblé et intervention ponctuelle",
+        "minimum 1 h."
+      ],
+      "exclusions": [
+        "Audit complet",
+        "gros chantier",
+        "urgence garantie."
+      ]
+    },
+    {
+      "name": "Pack interventions 3 h",
+      "canonicalCode": "AW-TECH-PACK-3H",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "189 €",
+      "inclusions": [
+        "3 h de temps AtoumWeb",
+        "décompte 15 min",
+        "valable 12 mois."
+      ],
+      "exclusions": [
+        "Projets au forfait",
+        "gros dev."
+      ]
+    },
+    {
+      "name": "Pack interventions 5 h",
+      "canonicalCode": "AW-TECH-PACK-5H",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "299 €",
+      "inclusions": [
+        "5 h",
+        "décompte 15 min",
+        "valable 12 mois."
+      ],
+      "exclusions": [
+        "Projets au forfait."
+      ]
+    },
+    {
+      "name": "Pack interventions 10 h",
+      "canonicalCode": "AW-TECH-PACK-10H",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "549 €",
+      "inclusions": [
+        "10 h",
+        "décompte 15 min",
+        "valable 12 mois."
+      ],
+      "exclusions": [
+        "Projet complet au forfait."
+      ]
+    },
+    {
+      "name": "Migration vers hébergement AtoumWeb",
+      "canonicalCode": "AW-TECH-MIGRATION-AW",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "99 €",
+      "inclusions": [
+        "Sauvegarde",
+        "transfert fichiers/base",
+        "config",
+        "DNS si besoin",
+        "SSL",
+        "vérification."
+      ],
+      "exclusions": [
+        "Messagerie complexe",
+        "gros site",
+        "multisite",
+        "WooCommerce actif complexe."
+      ]
+    },
+    {
+      "name": "Migration WordPress complexe",
+      "canonicalCode": "AW-TECH-MIGRATION-CPLX",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 199 €",
+      "inclusions": [
+        "Périmètre défini après analyse."
+      ],
+      "exclusions": [
+        "Travaux non prévus."
+      ]
+    },
+    {
+      "name": "Correction affichage / responsive",
+      "canonicalCode": "AW-TECH-RESPONSIVE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 79 €",
+      "inclusions": [
+        "Correction ciblée d'une anomalie d'affichage."
+      ],
+      "exclusions": [
+        "Refonte page/thème."
+      ]
+    },
+    {
+      "name": "Installation / réglage plugin standard",
+      "canonicalCode": "AW-TECH-PLUGIN-STD",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "69 €",
+      "inclusions": [
+        "Installation et réglage si réalisable en ~1 h."
+      ],
+      "exclusions": [
+        "Paramétrage métier complexe/API."
+      ]
+    },
+    {
+      "name": "Intervention urgente / prioritaire",
+      "canonicalCode": "AW-TECH-URGENT",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Prise en charge prioritaire selon disponibilité, sans promesse 24/7."
+      ],
+      "exclusions": [
+        "Garantie HNO/24-7."
+      ]
+    },
+    {
+      "name": "Audit technique SEO",
+      "canonicalCode": "AW-SEO-AUDIT",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "199 €",
+      "inclusions": [
+        "Indexation",
+        "sitemap/robots",
+        "balises/structure",
+        "mobile",
+        "vitesse/CWV",
+        "404/redirections",
+        "problèmes bloquants",
+        "rapport priorisé."
+      ],
+      "exclusions": [
+        "Corrections",
+        "stratégie éditoriale complète",
+        "concurrence avancée."
+      ]
+    },
+    {
+      "name": "Optimisation vitesse & performances",
+      "canonicalCode": "AW-SEO-PERF",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "149 €",
+      "inclusions": [
+        "Mesures avant/après",
+        "cache/compression si pertinent",
+        "ressources",
+        "images",
+        "réglages WP raisonnables",
+        "vérification finale."
+      ],
+      "exclusions": [
+        "Refonte",
+        "hébergement déficient",
+        "thème/plugin gravement problématique."
+      ]
+    },
+    {
+      "name": "SEO local",
+      "canonicalCode": "AW-SEO-LOCAL",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "249 €",
+      "inclusions": [
+        "Création/optimisation 1 GBP",
+        "catégories",
+        "description",
+        "services",
+        "horaires",
+        "coordonnées/zone",
+        "cohérence NAP",
+        "lien site",
+        "optimisation locale d'1 page",
+        "Title/meta",
+        "données structurées si pertinentes",
+        "avis",
+        "indexation",
+        "mini bilan."
+      ],
+      "exclusions": [
+        "Nouvelle page rédigée",
+        "gestion mensuelle",
+        "netlinking",
+        "garantie de classement."
+      ]
+    },
+    {
+      "name": "Établissement SEO local supplémentaire",
+      "canonicalCode": "AW-SEO-LOCAL-ETAB",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "79 €",
+      "inclusions": [
+        "Optimisation d'un établissement supplémentaire dans le même projet."
+      ],
+      "exclusions": [
+        "Gestion mensuelle."
+      ]
+    },
+    {
+      "name": "Page locale rédigée",
+      "canonicalCode": "AW-SEO-PAGE-LOCAL",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "149 €",
+      "inclusions": [
+        "Rédaction et optimisation d'une page locale standard."
+      ],
+      "exclusions": [
+        "Recherche lourde ou plusieurs pages."
+      ]
+    },
+    {
+      "name": "Suivi Google Business Profile mensuel",
+      "canonicalCode": "AW-SEO-GBP-M",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "79 € / mois",
+      "inclusions": [
+        "Jusqu'à 4 publications/mois",
+        "MAJ infos",
+        "photos fournies",
+        "surveillance avis",
+        "jusqu'à 10 réponses/mois",
+        "contrôle mensuel",
+        "mini bilan."
+      ],
+      "exclusions": [
+        "Gestion de crise",
+        "gros volume avis",
+        "shooting",
+        "Ads",
+        "netlinking."
+      ]
+    },
+    {
+      "name": "Suivi Google Business Profile annuel",
+      "canonicalCode": "AW-SEO-GBP-A",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "869 € / an",
+      "inclusions": [
+        "Jusqu'à 4 publications/mois",
+        "MAJ infos",
+        "photos fournies",
+        "surveillance avis",
+        "jusqu'à 10 réponses/mois",
+        "contrôle mensuel",
+        "mini bilan.",
+        "1 mois offert."
+      ],
+      "exclusions": [
+        "Gestion de crise",
+        "gros volume avis",
+        "shooting",
+        "Ads",
+        "netlinking."
+      ]
+    },
+    {
+      "name": "Établissement GBP supplémentaire en suivi",
+      "canonicalCode": "AW-SEO-GBP-ETAB-M",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "39 € / mois",
+      "inclusions": [
+        "Suivi d'un établissement supplémentaire dans le même abonnement."
+      ],
+      "exclusions": [
+        "Travail entièrement indépendant."
+      ]
+    },
+    {
+      "name": "Pack SEO Essentiel",
+      "canonicalCode": "AW-SEO-ESSENTIEL",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "299 €",
+      "inclusions": [
+        "Jusqu'à 5 pages",
+        "technique de base",
+        "contenus",
+        "requêtes principales",
+        "structure",
+        "maillage",
+        "priorisation",
+        "plan d'actions."
+      ],
+      "exclusions": [
+        "Mise en œuvre des corrections."
+      ]
+    },
+    {
+      "name": "Pack SEO Avancé",
+      "canonicalCode": "AW-SEO-AVANCE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "499 €",
+      "inclusions": [
+        "Jusqu'à 10 pages",
+        "audit technique approfondi",
+        "mots-clés principaux/secondaires",
+        "2 concurrents",
+        "structure/maillage",
+        "recommandations éditoriales",
+        "plan priorisé",
+        "restitution 45-60 min."
+      ],
+      "exclusions": [
+        "Mise en œuvre."
+      ]
+    },
+    {
+      "name": "Pack SEO Premium",
+      "canonicalCode": "AW-SEO-PREMIUM",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "899 €",
+      "inclusions": [
+        "Jusqu'à 20 pages",
+        "audit technique",
+        "stratégie requêtes",
+        "3-5 concurrents",
+        "architecture/maillage",
+        "stratégie éditoriale",
+        "feuille de route 3-6 mois",
+        "restitution",
+        "1 suivi ~30 jours."
+      ],
+      "exclusions": [
+        "Mise en œuvre des corrections",
+        "rédaction hors pack sauf mention."
+      ]
+    },
+    {
+      "name": "Netlinking",
+      "canonicalCode": "AW-SEO-NETLINKING",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Analyse profil",
+        "pages cibles",
+        "recherche supports",
+        "sélection",
+        "recommandations ancres",
+        "pilotage",
+        "contrôle",
+        "bilan selon devis."
+      ],
+      "exclusions": [
+        "Garantie positions",
+        "lien à vie",
+        "coûts médias inclus par défaut."
+      ]
+    },
+    {
+      "name": "Optimisation Google Discover",
+      "canonicalCode": "AW-SEO-DISCOVER",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Audit éligibilité/éditorial/technique",
+        "images",
+        "titres",
+        "structure",
+        "recommandations",
+        "optimisation contenus",
+        "suivi Search Console si données disponibles."
+      ],
+      "exclusions": [
+        "Garantie d'apparition",
+        "rédaction de nouveaux articles",
+        "production vidéo."
+      ]
+    },
+    {
+      "name": "Rédaction page web",
+      "canonicalCode": "AW-CONT-PAGE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "99 €",
+      "inclusions": [
+        "Env. 500-800 mots",
+        "cadrage",
+        "H1/H2/H3",
+        "ton adapté",
+        "rédaction complète",
+        "1 cycle de corrections."
+      ],
+      "exclusions": [
+        "Recherche lourde",
+        "changement complet d'angle après livraison."
+      ]
+    },
+    {
+      "name": "Réécriture page",
+      "canonicalCode": "AW-CONT-REWRITE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "79 €",
+      "inclusions": [
+        "Amélioration clarté/structure/formulation/hiérarchie à partir d'un vrai texte existant."
+      ],
+      "exclusions": [
+        "Création complète si contenu insuffisant."
+      ]
+    },
+    {
+      "name": "Article essentiel",
+      "canonicalCode": "AW-CONT-ART-ESS",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "99 €",
+      "inclusions": [
+        "700-900 mots",
+        "rédaction informative",
+        "1 aller-retour."
+      ],
+      "exclusions": [
+        "Recherche SEO approfondie."
+      ]
+    },
+    {
+      "name": "Article SEO",
+      "canonicalCode": "AW-CONT-ART-SEO",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "149 €",
+      "inclusions": [
+        "900-1200 mots",
+        "requête principale",
+        "intention",
+        "structure SEO",
+        "Title/meta",
+        "maillage",
+        "1 cycle."
+      ],
+      "exclusions": [
+        "Garantie classement",
+        "recherche experte lourde."
+      ]
+    },
+    {
+      "name": "Pack 4 articles SEO",
+      "canonicalCode": "AW-CONT-PACK4-SEO",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "549 €",
+      "inclusions": [
+        "4 articles SEO",
+        "sujets cadrés ensemble",
+        "économie de 47 € vs unité."
+      ],
+      "exclusions": [
+        "Travaux hors périmètre de chaque article."
+      ]
+    },
+    {
+      "name": "Livre blanc",
+      "canonicalCode": "AW-CONT-LIVRE-BLANC",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 590 €",
+      "inclusions": [
+        "Cadrage",
+        "plan",
+        "rédaction jusqu'à ~3500 mots",
+        "1 cycle",
+        "livraison texte structurée."
+      ],
+      "exclusions": [
+        "Interviews",
+        "recherche lourde",
+        "infographies",
+        "mise en page graphique complète",
+        "très long document."
+      ]
+    },
+    {
+      "name": "Intégration WordPress",
+      "canonicalCode": "AW-CONT-INTEG-WP",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "39 €",
+      "inclusions": [
+        "Intégration standard d'un contenu livré dans WordPress."
+      ],
+      "exclusions": [
+        "Refonte de page",
+        "design complexe."
+      ]
+    },
+    {
+      "name": "3 images optimisées",
+      "canonicalCode": "AW-CONT-IMG3",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "29 €",
+      "inclusions": [
+        "Recherche simple de 3 images exploitables légalement",
+        "compression/format web."
+      ],
+      "exclusions": [
+        "Premium payant",
+        "retouche avancée."
+      ]
+    },
+    {
+      "name": "Priorité contenu < 3 jours",
+      "canonicalCode": "AW-CONT-PRIORITE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "59 €",
+      "inclusions": [
+        "Traitement prioritaire sous réserve de disponibilité."
+      ],
+      "exclusions": [
+        "Garantie si dépendance client."
+      ]
+    },
+    {
+      "name": "Contenu urgent < 48 h",
+      "canonicalCode": "AW-CONT-URGENT-48",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Périmètre selon disponibilité et complexité."
+      ],
+      "exclusions": [
+        "Aucune garantie automatique."
+      ]
+    },
+    {
+      "name": "Mise en page graphique avancée",
+      "canonicalCode": "AW-CONT-MEP-ADV",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Périmètre selon nombre de pages et complexité."
+      ],
+      "exclusions": [
+        "Rédaction si non prévue."
+      ]
+    },
+    {
+      "name": "Recherche approfondie / sujet technique",
+      "canonicalCode": "AW-CONT-RECH-TECH",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Périmètre de recherche défini au devis."
+      ],
+      "exclusions": [
+        "Expertise réglementée non fournie par AtoumWeb."
+      ]
+    },
+    {
+      "name": "Logo Standard",
+      "canonicalCode": "AW-BRAND-LOGO",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 249 €",
+      "inclusions": [
+        "Cadrage",
+        "2 propositions",
+        "1 direction choisie",
+        "2 séries d'ajustements",
+        "couleur/monochrome",
+        "fonds clair/sombre",
+        "PNG/JPG/vectoriel",
+        "favicon si pertinent."
+      ],
+      "exclusions": [
+        "Recherche disponibilité marque/INPI",
+        "impression",
+        "pistes non retenues."
+      ]
+    },
+    {
+      "name": "Identité Visuelle Essentielle",
+      "canonicalCode": "AW-BRAND-IDENTITE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 499 €",
+      "inclusions": [
+        "Logo Standard + palette",
+        "typographies",
+        "mini-charte PDF",
+        "règles d'usage",
+        "déclinaisons web/réseaux",
+        "profil + bannière simple."
+      ],
+      "exclusions": [
+        "Charte très complète",
+        "naming",
+        "dépôt marque."
+      ]
+    },
+    {
+      "name": "Carte de visite",
+      "canonicalCode": "AW-BRAND-CARTE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "79 €",
+      "inclusions": [
+        "Design recto/verso",
+        "fichier prêt impression."
+      ],
+      "exclusions": [
+        "Impression physique."
+      ]
+    },
+    {
+      "name": "Déclinaison supplémentaire logo",
+      "canonicalCode": "AW-BRAND-DECLI-LOGO",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "49 €",
+      "inclusions": [
+        "Adaptation du logo final à un nouveau format/usage."
+      ],
+      "exclusions": [
+        "Nouveau logo."
+      ]
+    },
+    {
+      "name": "5 templates réseaux sociaux",
+      "canonicalCode": "AW-BRAND-SOCIAL-5",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "129 €",
+      "inclusions": [
+        "5 modèles réutilisables dans format convenu."
+      ],
+      "exclusions": [
+        "Abonnements premium",
+        "création continue."
+      ]
+    },
+    {
+      "name": "10 templates réseaux sociaux",
+      "canonicalCode": "AW-BRAND-SOCIAL-10",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "199 €",
+      "inclusions": [
+        "10 modèles réutilisables."
+      ],
+      "exclusions": [
+        "Création continue."
+      ]
+    },
+    {
+      "name": "Kit papeterie",
+      "canonicalCode": "AW-BRAND-PAPETERIE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "149 €",
+      "inclusions": [
+        "Papier à en-tête",
+        "signature e-mail",
+        "modèle simple document/courrier."
+      ],
+      "exclusions": [
+        "Carte de visite",
+        "impression."
+      ]
+    },
+    {
+      "name": "Mise en page document ≤ 4 pages",
+      "canonicalCode": "AW-BRAND-DOC-4P",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "99 €",
+      "inclusions": [
+        "Jusqu'à 4 pages standards à partir de contenus fournis."
+      ],
+      "exclusions": [
+        "Rédaction",
+        "brochure complexe."
+      ]
+    },
+    {
+      "name": "Page document supplémentaire",
+      "canonicalCode": "AW-BRAND-DOC-PAGE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "19 €",
+      "inclusions": [
+        "1 page supplémentaire dans la même charte."
+      ],
+      "exclusions": [
+        "Nouvelle maquette."
+      ]
+    },
+    {
+      "name": "Logo animé simple",
+      "canonicalCode": "AW-BRAND-LOGO-ANIM",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "89 €",
+      "inclusions": [
+        "Animation légère",
+        "boucle courte",
+        "export web/vidéo."
+      ],
+      "exclusions": [
+        "3D/motion design complexe."
+      ]
+    },
+    {
+      "name": "Révision supplémentaire",
+      "canonicalCode": "AW-BRAND-REVISION",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "39 €",
+      "inclusions": [
+        "1 série groupée sur direction déjà validée."
+      ],
+      "exclusions": [
+        "Nouvelle direction graphique."
+      ]
+    },
+    {
+      "name": "Traitement prioritaire identité",
+      "canonicalCode": "AW-BRAND-PRIORITE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "79 €",
+      "inclusions": [
+        "Priorisation sous réserve disponibilité."
+      ],
+      "exclusions": [
+        "Garantie absolue si dépendances."
+      ]
+    },
+    {
+      "name": "Motion design complexe",
+      "canonicalCode": "AW-BRAND-MOTION",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Périmètre défini au devis."
+      ],
+      "exclusions": [
+        "Non prévu hors devis."
+      ]
+    },
+    {
+      "name": "Retouche essentielle",
+      "canonicalCode": "AW-PHOTO-RET-ESS",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 19 €",
+      "inclusions": [
+        "Lumière",
+        "couleurs",
+        "contraste",
+        "cadrage/redressement",
+        "rendu propre."
+      ],
+      "exclusions": [
+        "Suppression complexe",
+        "reconstruction."
+      ]
+    },
+    {
+      "name": "Retouche avancée",
+      "canonicalCode": "AW-PHOTO-RET-ADV",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 39 €",
+      "inclusions": [
+        "Corrections localisées lourdes",
+        "suppression objet/personne",
+        "nettoyage selon faisabilité."
+      ],
+      "exclusions": [
+        "Reconstruction extrême non garantie."
+      ]
+    },
+    {
+      "name": "Détourage",
+      "canonicalCode": "AW-PHOTO-DETOUR",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 9 €",
+      "inclusions": [
+        "Détourage standard",
+        "minimum facturation 45 €."
+      ],
+      "exclusions": [
+        "Cheveux/objets complexes peuvent coûter plus."
+      ]
+    },
+    {
+      "name": "Pack Harmonie 10 photos",
+      "canonicalCode": "AW-PHOTO-PACK10",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "119 €",
+      "inclusions": [
+        "10 retouches essentielles cohérentes."
+      ],
+      "exclusions": [
+        "Retouches avancées."
+      ]
+    },
+    {
+      "name": "Pack 30 photos",
+      "canonicalCode": "AW-PHOTO-PACK30",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "279 €",
+      "inclusions": [
+        "30 retouches essentielles homogènes."
+      ],
+      "exclusions": [
+        "Retouches avancées."
+      ]
+    },
+    {
+      "name": "Pack 60 photos",
+      "canonicalCode": "AW-PHOTO-PACK60",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "499 €",
+      "inclusions": [
+        "60 retouches essentielles homogènes."
+      ],
+      "exclusions": [
+        "Retouches avancées."
+      ]
+    },
+    {
+      "name": "Shooting Essentiel",
+      "canonicalCode": "AW-PHOTO-SHOOT-ESS",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 199 €",
+      "inclusions": [
+        "Jusqu'à 1 h",
+        "1 lieu Dijon/Métropole",
+        "10 photos finalisées",
+        "sélection + retouche essentielle."
+      ],
+      "exclusions": [
+        "Fichiers bruts",
+        "déplacement hors zone",
+        "mise en scène complexe."
+      ]
+    },
+    {
+      "name": "Shooting Activité",
+      "canonicalCode": "AW-PHOTO-SHOOT-ACT",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 349 €",
+      "inclusions": [
+        "Jusqu'à 2 h",
+        "1 lieu principal",
+        "20 photos finalisées",
+        "équipe/locaux/activité."
+      ],
+      "exclusions": [
+        "Fichiers bruts",
+        "multi-lieux éloignés",
+        "vidéo."
+      ]
+    },
+    {
+      "name": "Photo finalisée supplémentaire",
+      "canonicalCode": "AW-PHOTO-SUP",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "15 €",
+      "inclusions": [
+        "Sélection, retouche essentielle et export d'une photo supplémentaire."
+      ],
+      "exclusions": [
+        "Retouche avancée."
+      ]
+    },
+    {
+      "name": "Shooting complexe / multilieux",
+      "canonicalCode": "AW-PHOTO-SHOOT-CPLX",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Périmètre défini au devis."
+      ],
+      "exclusions": [
+        "Non prévu hors devis."
+      ]
+    },
+    {
+      "name": "Mariage Essentiel",
+      "canonicalCode": "AW-MARIAGE-ESS",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "399 €",
+      "inclusions": [
+        "1 page responsive",
+        "date/lieu/horaires",
+        "programme court",
+        "Google Maps",
+        "RSVP simple",
+        "sous-domaine AtoumWeb",
+        "hébergement 1 an",
+        "1 cycle."
+      ],
+      "exclusions": [
+        "Nom de domaine personnalisé",
+        "grosse galerie",
+        "fonctions avancées."
+      ]
+    },
+    {
+      "name": "Mariage Grand Jour",
+      "canonicalCode": "AW-MARIAGE-GRAND",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "649 €",
+      "inclusions": [
+        "Essentiel + Notre histoire",
+        "galerie pré-mariage jusqu'à 30 photos",
+        "FAQ",
+        "RSVP repas/régimes",
+        "QR code",
+        "témoins/proches",
+        "hébergement 1 an",
+        "2 cycles."
+      ],
+      "exclusions": [
+        "Paiements",
+        "gros volumes",
+        "prise de vue mariage."
+      ]
+    },
+    {
+      "name": "Mariage Histoire",
+      "canonicalCode": "AW-MARIAGE-HISTOIRE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "899 €",
+      "inclusions": [
+        "Grand Jour + espace privé",
+        "galerie après mariage jusqu'à 100 photos",
+        "livre d'or",
+        "cagnotte/liste externe",
+        "vidéo/diaporama fourni",
+        "hébergement 2 ans",
+        "2 cycles",
+        "éléments post-mariage à fournir dans les 3 mois."
+      ],
+      "exclusions": [
+        "Gestion des paiements",
+        "montage vidéo",
+        "shooting mariage",
+        ">100 photos."
+      ]
+    },
+    {
+      "name": "Renouvellement site mariage",
+      "canonicalCode": "AW-MARIAGE-RENOUV",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "30 € / an",
+      "inclusions": [
+        "1 an d'hébergement supplémentaire du site mariage."
+      ],
+      "exclusions": [
+        "Nom de domaine personnalisé."
+      ]
+    },
+    {
+      "name": "Nom de domaine mariage personnalisé",
+      "canonicalCode": "AW-MARIAGE-DOMAINE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Achat/configuration d'un domaine standard, enregistré au nom des mariés."
+      ],
+      "exclusions": [
+        "Domaine premium."
+      ]
+    },
+    {
+      "name": "Analytics + Search Console",
+      "canonicalCode": "AW-DATA-GA-SC",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "99 €",
+      "inclusions": [
+        "GA4",
+        "balise",
+        "Search Console",
+        "sitemap",
+        "vérification collecte",
+        "accès client",
+        "mini explication."
+      ],
+      "exclusions": [
+        "Tracking avancé",
+        "dashboard",
+        "suivi mensuel."
+      ]
+    },
+    {
+      "name": "Analytics + Tag Manager avancé",
+      "canonicalCode": "AW-DATA-GTM",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "149 €",
+      "inclusions": [
+        "GA4 + Search Console + GTM",
+        "jusqu'à 5 événements personnalisés",
+        "tests."
+      ],
+      "exclusions": [
+        "Tracking e-commerce complexe",
+        "consent mode avancé."
+      ]
+    },
+    {
+      "name": "Tableau de bord simple",
+      "canonicalCode": "AW-DATA-DASH",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "149 €",
+      "inclusions": [
+        "Dashboard simple type Looker Studio: trafic",
+        "sources",
+        "pages",
+        "conversions",
+        "Search Console",
+        "filtres période."
+      ],
+      "exclusions": [
+        "Multi-sources complexes",
+        "CRM/Ads/e-commerce avancé."
+      ]
+    },
+    {
+      "name": "Analyse ponctuelle statistiques",
+      "canonicalCode": "AW-DATA-ANALYSE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "99 €",
+      "inclusions": [
+        "Lecture données",
+        "constats",
+        "anomalies",
+        "pages/sources clés",
+        "recommandations prioritaires."
+      ],
+      "exclusions": [
+        "Audit SEO complet."
+      ]
+    },
+    {
+      "name": "Suivi statistiques mensuel",
+      "canonicalCode": "AW-DATA-SUIVI-M",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "49 € / mois",
+      "inclusions": [
+        "Lecture GA + Search Console",
+        "synthèse",
+        "évolutions",
+        "anomalies",
+        "3-5 actions."
+      ],
+      "exclusions": [
+        "Mise en œuvre des actions",
+        "audit complet."
+      ]
+    },
+    {
+      "name": "Suivi statistiques annuel",
+      "canonicalCode": "AW-DATA-SUIVI-A",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "539 € / an",
+      "inclusions": [
+        "Lecture GA + Search Console",
+        "synthèse",
+        "évolutions",
+        "anomalies",
+        "3-5 actions.",
+        "1 mois offert."
+      ],
+      "exclusions": [
+        "Mise en œuvre des actions",
+        "audit complet."
+      ]
+    },
+    {
+      "name": "Ajustement technique WordPress",
+      "canonicalCode": "AW-DEVWP-AJUST",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "69 €",
+      "inclusions": [
+        "CSS/JS/PHP léger",
+        "hook/filter",
+        "Divi",
+        "petite automatisation ou réglage."
+      ],
+      "exclusions": [
+        "Vraie fonction métier",
+        "plugin complet."
+      ]
+    },
+    {
+      "name": "Fonctionnalité WordPress sur mesure",
+      "canonicalCode": "AW-DEVWP-FONCTION",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Formulaire métier",
+        "champs",
+        "workflow",
+        "import/export",
+        "PDF",
+        "logique conditionnelle, etc. selon devis."
+      ],
+      "exclusions": [
+        "Fonctions non prévues",
+        "maintenance future."
+      ]
+    },
+    {
+      "name": "Plugin WordPress sur mesure",
+      "canonicalCode": "AW-DEVWP-PLUGIN",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Plugin dédié",
+        "réglages/admin",
+        "sécurité",
+        "DB éventuelle",
+        "doc selon devis."
+      ],
+      "exclusions": [
+        "Compatibilité éternelle avec futures versions."
+      ]
+    },
+    {
+      "name": "Automatisation / intégration WordPress",
+      "canonicalCode": "AW-DEVWP-AUTO",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "API",
+        "webhooks",
+        "Make/Zapier",
+        "CRM",
+        "Sheets",
+        "synchronisations selon devis."
+      ],
+      "exclusions": [
+        "Abonnements tiers",
+        "évolutions API futures."
+      ]
+    },
+    {
+      "name": "Cadrage outil métier",
+      "canonicalCode": "AW-APP-CADRAGE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "249 €",
+      "inclusions": [
+        "Atelier besoin",
+        "utilisateurs",
+        "processus",
+        "fonctions",
+        "données",
+        "écrans",
+        "droits",
+        "intégrations",
+        "contraintes",
+        "séparation MVP/évolutions",
+        "première estimation."
+      ],
+      "exclusions": [
+        "Développement",
+        "prototype",
+        "audit réglementaire spécialisé."
+      ]
+    },
+    {
+      "name": "Prototype / maquette fonctionnelle",
+      "canonicalCode": "AW-APP-PROTOTYPE",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Dès 490 €",
+      "inclusions": [
+        "Écrans principaux",
+        "navigation",
+        "simulation des parcours",
+        "organisation données",
+        "non-production."
+      ],
+      "exclusions": [
+        "Base de données production",
+        "sécurité/industrialisation."
+      ]
+    },
+    {
+      "name": "Application / logiciel métier sur mesure",
+      "canonicalCode": "AW-APP-DEV",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "MVP puis évolutions selon cadrage",
+        "web/desktop",
+        "workflows",
+        "données",
+        "intégrations raisonnables."
+      ],
+      "exclusions": [
+        "Fonctions hors périmètre",
+        "coûts tiers",
+        "compatibilité future non prévue."
+      ]
+    },
+    {
+      "name": "Petite évolution application",
+      "canonicalCode": "AW-APP-EVOL",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "69 €",
+      "inclusions": [
+        "Petites évolutions après livraison dans un périmètre raisonnable."
+      ],
+      "exclusions": [
+        "Grosse fonctionnalité."
+      ]
+    },
+    {
+      "name": "Maintenance applicative",
+      "canonicalCode": "AW-APP-MAINT",
+      "catalogueAction": "compare_existing",
+      "priceLabel": "Sur devis",
+      "inclusions": [
+        "Périmètre adapté à criticité, utilisateurs, hébergement, API et SLA raisonnable."
+      ],
+      "exclusions": [
+        "24/7 non prévu par défaut",
+        "évolutions majeures."
+      ]
+    }
+  ],
+  "comparison": [
+    {
+      "canonicalCode": "AW-WEB-VITRINE",
+      "name": "Site vitrine 5 pages",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-WEB-PAGE-SUP",
+      "name": "Page supplémentaire",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-WEB-BLOG",
+      "name": "Blog technique WordPress",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-WEB-NEWSLETTER",
+      "name": "Intégration newsletter standard",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-WEB-BILINGUE",
+      "name": "Site vitrine bilingue",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-WEB-LANG-SUP",
+      "name": "Langue supplémentaire site vitrine",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-WEB-AVIS-GOOGLE",
+      "name": "Avis Google automatiques",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-WEB-PORTFOLIO",
+      "name": "Portfolio simple",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-WEB-PORTFOLIO-ADV",
+      "name": "Portfolio dynamique avancé",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-WEB-RESA-EXT",
+      "name": "Intégration réservation externe",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-WEB-PAIEMENT-SIMPLE",
+      "name": "Paiement simple",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-WEB-FORM-ADV",
+      "name": "Formulaire avancé",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-WEB-ESPACE-MEMBRE",
+      "name": "Espace membre",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-LP-BASE",
+      "name": "Landing Page",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-LP-SECTION",
+      "name": "Section standard supplémentaire",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-LP-REDACTION",
+      "name": "Rédaction complète Landing",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-LP-URGENT",
+      "name": "Livraison prioritaire Landing",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-LP-MERCI",
+      "name": "Page de remerciement",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-LP-POPUP",
+      "name": "Pop-up ciblée simple",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-LP-LANG-SUP",
+      "name": "Langue supplémentaire Landing",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-ECOM-BASE",
+      "name": "Boutique WooCommerce",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-ECOM-PROD-SIMPLE",
+      "name": "Produit simple supplémentaire",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-ECOM-PROD-VAR",
+      "name": "Produit variable",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-ECOM-IMPORT",
+      "name": "Import catalogue volumineux",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-ECOM-MULTILINGUE",
+      "name": "WooCommerce multilingue",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-ECOM-PAIEMENT-ADV",
+      "name": "Paiement avancé / passerelle spécifique",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-ECOM-LIVRAISON-ADV",
+      "name": "Livraison avancée",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-MAINT-WP-M",
+      "name": "Maintenance WordPress mensuelle",
+      "status": "review",
+      "differences": [
+        "inclusions"
+      ]
+    },
+    {
+      "canonicalCode": "AW-MAINT-WP-A",
+      "name": "Maintenance WordPress annuelle",
+      "status": "review",
+      "differences": [
+        "inclusions",
+        "exclusions"
+      ]
+    },
+    {
+      "canonicalCode": "AW-MAINT-WC-M",
+      "name": "Maintenance WooCommerce mensuelle",
+      "status": "review",
+      "differences": [
+        "inclusions"
+      ]
+    },
+    {
+      "canonicalCode": "AW-MAINT-WC-A",
+      "name": "Maintenance WooCommerce annuelle",
+      "status": "review",
+      "differences": [
+        "inclusions",
+        "exclusions"
+      ]
+    },
+    {
+      "canonicalCode": null,
+      "name": "Hébergement isolé avec Lune dédiée",
+      "status": "new_draft_required",
+      "differences": [
+        "new catalogue reference"
+      ]
+    },
+    {
+      "canonicalCode": "AW-TECH-HEBERG-WP",
+      "name": "Hébergement WordPress seul",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-TECH-AUDIT-REPRISE",
+      "name": "Audit de reprise WordPress",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-TECH-REMISE-WP",
+      "name": "Remise à niveau WordPress",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-TECH-REMISE-WC",
+      "name": "Remise à niveau WooCommerce",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-TECH-DEPANNAGE",
+      "name": "Dépannage WordPress ponctuel",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-TECH-PACK-3H",
+      "name": "Pack interventions 3 h",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-TECH-PACK-5H",
+      "name": "Pack interventions 5 h",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-TECH-PACK-10H",
+      "name": "Pack interventions 10 h",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-TECH-MIGRATION-AW",
+      "name": "Migration vers hébergement AtoumWeb",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-TECH-MIGRATION-CPLX",
+      "name": "Migration WordPress complexe",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-TECH-RESPONSIVE",
+      "name": "Correction affichage / responsive",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-TECH-PLUGIN-STD",
+      "name": "Installation / réglage plugin standard",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-TECH-URGENT",
+      "name": "Intervention urgente / prioritaire",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-SEO-AUDIT",
+      "name": "Audit technique SEO",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-SEO-PERF",
+      "name": "Optimisation vitesse & performances",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-SEO-LOCAL",
+      "name": "SEO local",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-SEO-LOCAL-ETAB",
+      "name": "Établissement SEO local supplémentaire",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-SEO-PAGE-LOCAL",
+      "name": "Page locale rédigée",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-SEO-GBP-M",
+      "name": "Suivi Google Business Profile mensuel",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-SEO-GBP-A",
+      "name": "Suivi Google Business Profile annuel",
+      "status": "review",
+      "differences": [
+        "inclusions",
+        "exclusions"
+      ]
+    },
+    {
+      "canonicalCode": "AW-SEO-GBP-ETAB-M",
+      "name": "Établissement GBP supplémentaire en suivi",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-SEO-ESSENTIEL",
+      "name": "Pack SEO Essentiel",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-SEO-AVANCE",
+      "name": "Pack SEO Avancé",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-SEO-PREMIUM",
+      "name": "Pack SEO Premium",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-SEO-NETLINKING",
+      "name": "Netlinking",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-SEO-DISCOVER",
+      "name": "Optimisation Google Discover",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-CONT-PAGE",
+      "name": "Rédaction page web",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-CONT-REWRITE",
+      "name": "Réécriture page",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-CONT-ART-ESS",
+      "name": "Article essentiel",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-CONT-ART-SEO",
+      "name": "Article SEO",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-CONT-PACK4-SEO",
+      "name": "Pack 4 articles SEO",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-CONT-LIVRE-BLANC",
+      "name": "Livre blanc",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-CONT-INTEG-WP",
+      "name": "Intégration WordPress",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-CONT-IMG3",
+      "name": "3 images optimisées",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-CONT-PRIORITE",
+      "name": "Priorité contenu < 3 jours",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-CONT-URGENT-48",
+      "name": "Contenu urgent < 48 h",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-CONT-MEP-ADV",
+      "name": "Mise en page graphique avancée",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-CONT-RECH-TECH",
+      "name": "Recherche approfondie / sujet technique",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-BRAND-LOGO",
+      "name": "Logo Standard",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-BRAND-IDENTITE",
+      "name": "Identité Visuelle Essentielle",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-BRAND-CARTE",
+      "name": "Carte de visite",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-BRAND-DECLI-LOGO",
+      "name": "Déclinaison supplémentaire logo",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-BRAND-SOCIAL-5",
+      "name": "5 templates réseaux sociaux",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-BRAND-SOCIAL-10",
+      "name": "10 templates réseaux sociaux",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-BRAND-PAPETERIE",
+      "name": "Kit papeterie",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-BRAND-DOC-4P",
+      "name": "Mise en page document ≤ 4 pages",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-BRAND-DOC-PAGE",
+      "name": "Page document supplémentaire",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-BRAND-LOGO-ANIM",
+      "name": "Logo animé simple",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-BRAND-REVISION",
+      "name": "Révision supplémentaire",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-BRAND-PRIORITE",
+      "name": "Traitement prioritaire identité",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-BRAND-MOTION",
+      "name": "Motion design complexe",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-PHOTO-RET-ESS",
+      "name": "Retouche essentielle",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-PHOTO-RET-ADV",
+      "name": "Retouche avancée",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-PHOTO-DETOUR",
+      "name": "Détourage",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-PHOTO-PACK10",
+      "name": "Pack Harmonie 10 photos",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-PHOTO-PACK30",
+      "name": "Pack 30 photos",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-PHOTO-PACK60",
+      "name": "Pack 60 photos",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-PHOTO-SHOOT-ESS",
+      "name": "Shooting Essentiel",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-PHOTO-SHOOT-ACT",
+      "name": "Shooting Activité",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-PHOTO-SUP",
+      "name": "Photo finalisée supplémentaire",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-PHOTO-SHOOT-CPLX",
+      "name": "Shooting complexe / multilieux",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-MARIAGE-ESS",
+      "name": "Mariage Essentiel",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-MARIAGE-GRAND",
+      "name": "Mariage Grand Jour",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-MARIAGE-HISTOIRE",
+      "name": "Mariage Histoire",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-MARIAGE-RENOUV",
+      "name": "Renouvellement site mariage",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-MARIAGE-DOMAINE",
+      "name": "Nom de domaine mariage personnalisé",
+      "status": "review",
+      "differences": [
+        "priceLabel"
+      ]
+    },
+    {
+      "canonicalCode": "AW-DATA-GA-SC",
+      "name": "Analytics + Search Console",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-DATA-GTM",
+      "name": "Analytics + Tag Manager avancé",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-DATA-DASH",
+      "name": "Tableau de bord simple",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-DATA-ANALYSE",
+      "name": "Analyse ponctuelle statistiques",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-DATA-SUIVI-M",
+      "name": "Suivi statistiques mensuel",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-DATA-SUIVI-A",
+      "name": "Suivi statistiques annuel",
+      "status": "review",
+      "differences": [
+        "inclusions",
+        "exclusions"
+      ]
+    },
+    {
+      "canonicalCode": "AW-DEVWP-AJUST",
+      "name": "Ajustement technique WordPress",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-DEVWP-FONCTION",
+      "name": "Fonctionnalité WordPress sur mesure",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-DEVWP-PLUGIN",
+      "name": "Plugin WordPress sur mesure",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-DEVWP-AUTO",
+      "name": "Automatisation / intégration WordPress",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-APP-CADRAGE",
+      "name": "Cadrage outil métier",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-APP-PROTOTYPE",
+      "name": "Prototype / maquette fonctionnelle",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-APP-DEV",
+      "name": "Application / logiciel métier sur mesure",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-APP-EVOL",
+      "name": "Petite évolution application",
+      "status": "identical",
+      "differences": []
+    },
+    {
+      "canonicalCode": "AW-APP-MAINT",
+      "name": "Maintenance applicative",
+      "status": "identical",
+      "differences": []
+    }
+  ],
+  "summary": {
+    "catalogueReferences": 112,
+    "dedicatedLuneFormula": 1,
+    "totalCards": 113,
+    "identicalCards": 105,
+    "cardsToReview": 7,
+    "newDrafts": 1
+  }
+}

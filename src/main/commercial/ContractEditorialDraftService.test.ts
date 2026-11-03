@@ -9,6 +9,9 @@ import { ContractEditorialDraftService, type ContractEditorialProposalDocument }
 const proposals: ContractEditorialProposalDocument = JSON.parse(
   readFileSync('data/contracts/atoumweb-contract-library-v37.json', 'utf8'),
 );
+const proposalsV38: ContractEditorialProposalDocument = JSON.parse(
+  readFileSync('data/contracts/atoumweb-contract-library-v38-review.json', 'utf8'),
+);
 const published = JSON.parse(readFileSync('data/handoff/2026-10-27/contrats-publies.json', 'utf8')).tables as {
   contract_clause_templates: Array<Record<string, unknown>>;
   contract_clause_versions: Array<Record<string, unknown>>;
@@ -102,5 +105,38 @@ describe('préparation des 118 clauses V3.7 retenues', () => {
     expect(conflict.anomalies.some((message) => message.includes('corps source'))).toBe(true);
     expect(() => service.apply(changed, sourceReference, conflict.planSha256)).toThrow(/refusée/);
     expect(db.get('SELECT COUNT(*) n FROM contract_clause_versions')).toEqual({ n: 236 });
+  });
+});
+
+describe('préparation distincte du projet V3.8', () => {
+  it('simule 119 clauses sans écriture, dont la nouvelle clause 119', () => {
+    const before = db.all('SELECT * FROM contract_clause_templates ORDER BY id');
+    const plan = service.simulate(proposalsV38, proposalsV38.reference!);
+    expect(plan.anomalies).toEqual([]);
+    expect(plan.counts).toEqual({ draftsToCreate: 119, draftsKept: 0, conflicts: 0 });
+    expect(plan.rows.find((row) => row.code === 'BASE-REFERENCES-AGENCE')).toMatchObject({ action: 'create' });
+    expect(db.all('SELECT * FROM contract_clause_templates ORDER BY id')).toEqual(before);
+  });
+
+  it('prépare 119 brouillons sans publier et rejoue de façon idempotente', () => {
+    const publishedBefore = db.all('SELECT id,clause_id,body,status FROM contract_clause_versions WHERE status=\'published\' ORDER BY id');
+    const plan = service.simulate(proposalsV38, proposalsV38.reference!);
+    service.apply(proposalsV38, proposalsV38.reference!, plan.planSha256);
+    expect(db.all('SELECT id,clause_id,body,status FROM contract_clause_versions WHERE status=\'published\' ORDER BY id')).toEqual(publishedBefore);
+    expect(db.get("SELECT COUNT(*) n FROM contract_clause_versions WHERE status='draft'")).toEqual({ n: 119 });
+    expect(db.get("SELECT COUNT(*) n FROM contract_clause_templates WHERE code='BASE-REFERENCES-AGENCE'")).toEqual({ n: 1 });
+    expect(db.get("SELECT COUNT(*) n FROM activity_log WHERE action='contract_clause_version_published'")).toEqual({ n: 0 });
+    expect(service.simulate(proposalsV38, proposalsV38.reference!).counts).toEqual({ draftsToCreate: 0, draftsKept: 119, conflicts: 0 });
+    expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
+  });
+
+  it('refuse atomiquement une nouvelle clause invalide', () => {
+    const invalid = structuredClone(proposalsV38);
+    invalid.clauses[118].proposal = '';
+    const plan = service.simulate(invalid, invalid.reference!);
+    expect(plan.anomalies).toContain('BASE-REFERENCES-AGENCE : proposition vide.');
+    expect(() => service.apply(invalid, invalid.reference!, plan.planSha256)).toThrow(/refusée/);
+    expect(db.get('SELECT COUNT(*) n FROM contract_editorial_import_runs')).toEqual({ n: 0 });
+    expect(db.get("SELECT COUNT(*) n FROM contract_clause_templates WHERE code='BASE-REFERENCES-AGENCE'")).toEqual({ n: 0 });
   });
 });
