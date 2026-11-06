@@ -40,6 +40,7 @@ export interface DatabaseHealth {
 }
 
 export interface BootstrapState {
+  clientTestFillAllowed?: boolean;
   appVersion: string;
   workspacePath: string;
   databasePath: string;

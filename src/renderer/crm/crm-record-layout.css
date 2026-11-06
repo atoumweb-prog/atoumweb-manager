@@ -1,6 +1,8 @@
 /* UX2-CRM-LAYOUT-001: three unequal regions; hidden panes remain mounted. */
 .app-shell .crm-record-layout{display:grid;grid-template-columns:minmax(0,1fr);min-height:0;min-width:0;flex:1}
 .crm-record-side{min-width:0;overflow-wrap:anywhere}.crm-record-side-toggle{display:flex;align-items:center;gap:8px;width:100%;border:0;background:transparent;color:var(--muted);padding:8px;text-align:left;font-weight:600}
+.crm-record-layout[data-kind=client] .client-summary-head>div{min-width:0;overflow-wrap:break-word}
+.crm-record-layout[data-kind=client] .client-summary-head h2{word-break:normal;overflow-wrap:break-word}
 .crm-record-side-body{padding:12px;display:flex;flex-direction:column;gap:18px}.crm-record-side-body[hidden]{display:none}
 .crm-record-work{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:0 20px}
 .crm-record-right{display:none}.crm-record-width{display:flex;flex-direction:column;gap:8px;font-size:var(--ui-font-secondary);color:var(--muted);margin-top:20px}.crm-record-width input{width:100%}

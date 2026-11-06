@@ -5,7 +5,8 @@
 .client-summary-panel .workflow-row{flex-wrap:wrap;overflow-wrap:anywhere;}
 .client-v2-tabs button:focus-visible{outline:2px solid currentColor;outline-offset:2px;}
 
-:root .client-summary-panel :is(input,select,textarea,label,button){font-size:var(--aw-font-functional,14px)!important;}
+:root .client-summary-panel :is(input,select,textarea,label,button),
+:root[data-theme=noir][data-density=comfort] .clients-v2>form.crm-form :is(input,select,textarea,label,button,.field-label-with-help){font-size:var(--aw-font-functional,14px)!important;}
 .client-summary-panel fieldset{min-width:0;border:0;margin:0;}
 :root .client-summary-panel .primary-button{background:var(--accent-strong);color:#fff;-webkit-text-fill-color:currentColor;}
 :root[data-theme='atoumweb'] .client-summary-panel .primary-button{background:color-mix(in srgb,var(--accent-strong) 97%,#000);}
@@ -27,3 +28,31 @@
 .client-summary-panel .client-summary-activity .activity-item{margin:10px 0}
 .client-summary-panel .client-summary-management{padding:12px 16px}
 @container client-work (min-width:600px){.client-summary-panel .client-summary-overview{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+
+/* Client V2 target: limited to the approved Noir/Confort enlarged record. */
+:root[data-theme='noir'][data-density='comfort'] .client-large-view{inset:calc(var(--aw-shell-header-height, 112px) + 12px) 14px 14px var(--client-desk-left,254px);height:auto;background:var(--surface);box-shadow:0 12px 40px #0005;border:1px solid var(--border);border-radius:12px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view .crm-record-work{padding:0 12px;border:1px solid var(--border);border-radius:12px;background:linear-gradient(145deg,#09253855,transparent)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view .client-summary-overview{gap:12px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view .client-summary-overview>.client-primary-card{padding:14px;border:1px solid var(--border);border-radius:10px;background:linear-gradient(135deg,#0c2b3e88,#071c2a55)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view .client-summary-overview h3{padding-bottom:10px;border-bottom:1px solid var(--border)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view .client-v2-tabs button{background:transparent;color:var(--muted);border-radius:0;white-space:nowrap}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view .client-v2-tabs [aria-selected=true]{color:var(--text);text-decoration:none;border-bottom:2px solid var(--accent)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view .client-summary-head{padding:10px;background:#102e4180;border:1px solid var(--border);border-radius:10px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view .client-summary-head h2{font-size:20px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view .crm-record-properties .summary-line{padding-bottom:9px;border-bottom:1px solid var(--border)}
+.client-quick-actions>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.client-quick-actions a{display:flex;flex-direction:column;align-items:center;gap:8px;text-decoration:none;text-align:center}
+.client-quick-actions button{grid-column:1/-1}
+.client-association{border:1px solid var(--border);border-radius:10px;background:var(--surface-soft)}
+.client-association summary{display:flex;align-items:center;gap:10px;padding:14px 10px;cursor:pointer;font-weight:650;list-style:none}
+.client-association summary:after{content:'›';margin-left:auto}.client-association[open] summary:after{content:'⌄'}
+.client-association>div{display:grid;gap:8px;padding:10px;border-top:1px solid var(--border)}
+.client-association button{max-width:100%;overflow-wrap:anywhere}
+.client-path-actions{padding-top:10px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2>form.crm-form .client-create-notes{grid-column:1/-1}
+.client-relation-editor{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;padding:14px 0}
+.client-relation-editor>label{display:grid;gap:8px;flex-basis:100%;font-size:14px}
+.client-relation-editor textarea{width:100%;box-sizing:border-box;min-height:100px;resize:vertical}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2>form.crm-form>fieldset{border:0;padding:0;margin:0;min-width:0}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2>form.crm-form>.crm-logo-button{justify-self:start}
+@media(max-width:1100px){:root[data-theme='noir'][data-density='comfort'] .client-large-view{inset:100px 10px 10px;height:auto}}

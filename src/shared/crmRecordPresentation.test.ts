@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {CRM_RECORD_KEYS,normalizeCrmRecordPresentation,defaultCrmRecordPresentation} from './crmRecordPresentation';
+import {CRM_RECORD_KEYS,normalizeCrmRecordPresentation,defaultCrmRecordPresentation,clientPaneDisplay} from './crmRecordPresentation';
 import {WorkspaceVisualPreferenceStore} from './workspaceVisualPreferences';
 import {assertShellVisualKey} from './shellVisualPreferences';
 describe('CRM presentation only',()=>{
@@ -34,4 +34,11 @@ describe('CRM presentation only',()=>{
   expect(JSON.stringify([...values.values()])).not.toContain('SECRET');
   const other=new WorkspaceVisualPreferenceStore({getSetting:(_k,f)=>f,setSetting(){}});expect(other.getItem(key)).toBeNull();
  });
+});
+
+describe('Client display adaptation without preference rewrite',()=>{
+ it('makes old narrow panes readable without mutating saved values',()=>{const prefs=defaultCrmRecordPresentation('client'),before=JSON.stringify(prefs);expect(clientPaneDisplay(1600,prefs)).toEqual({leftWidth:300,rightWidth:240,compact:false});expect(JSON.stringify(prefs)).toBe(before);});
+ it('keeps sufficient work width when fitting larger preferences',()=>{const prefs={...defaultCrmRecordPresentation('client'),leftWidth:380,rightWidth:380};for(const width of [1200,1280,1400,1920]){const result=clientPaneDisplay(width,prefs);expect(result.compact).toBe(false);expect(width-result.leftWidth-result.rightWidth-16).toBeGreaterThanOrEqual(640);expect(result.leftWidth).toBeGreaterThanOrEqual(300);expect(result.rightWidth).toBeGreaterThanOrEqual(240);}});
+ it('uses compact mode rather than crushing the work area',()=>expect(clientPaneDisplay(1100,defaultCrmRecordPresentation('client')).compact).toBe(true));
+ it('respects folded panes and modern widths',()=>{expect(clientPaneDisplay(1000,{...defaultCrmRecordPresentation('client'),leftClosed:true})).toEqual({leftWidth:52,rightWidth:240,compact:false});expect(clientPaneDisplay(1600,{...defaultCrmRecordPresentation('client'),leftWidth:320,rightWidth:280})).toEqual({leftWidth:320,rightWidth:280,compact:false});});
 });

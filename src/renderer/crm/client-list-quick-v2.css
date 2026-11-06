@@ -1,0 +1,77 @@
+/* Client list and quick summary only. Specific !important rules bridge legacy global overrides. */
+.client-detail-content{display:contents}
+.client-quick-crm,.aw-client-brand-v2{display:none}
+:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell:has(.clients-v2){--accent:#ffda00;--accent-strong:#ffda00;--surface:#071c2b;--surface-soft:#0d2739;--border:#254357}
+:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell:has(.clients-v2) .content-area>.page-heading{display:none}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2{gap:14px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-toolbar{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:0;border:0;background:none;box-shadow:none}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-heading{display:flex;align-items:center;gap:14px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-heading h1{display:flex;align-items:center;gap:10px;font-size:24px;letter-spacing:-.5px;margin:0}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-heading h1 svg{color:var(--accent)}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-list-count{color:var(--muted);font-size:14px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .toolbar-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .toolbar-controls .inline-search{order:0;flex:0 1 360px;min-width:200px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .toolbar-controls select{order:1}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .toolbar-controls>.secondary-button{order:2}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .toolbar-controls>.primary-button{order:4}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-table-tools{order:3;margin-left:auto}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .toolbar-controls :is(input,select,button){min-height:38px;border-radius:8px;font-size:14px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-table-preferences{padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-soft);margin:0}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-table-preferences>summary{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-table-preferences>summary>span{display:none}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-table-preferences[open]{max-width:640px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .clients-layout:not(.with-detail){grid-template-columns:minmax(0,1fr)!important}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .table-panel{padding:0;border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table-scroll{border:0;overflow:auto}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table :is(th,td){padding:10px 14px!important;border-inline:0!important;font-size:14px;line-height:1.4}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table th{background:var(--surface-soft)!important;color:var(--muted);font-size:13px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table th button{padding:3px 0;min-height:28px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table td{background:var(--surface)!important;border-bottom:1px solid var(--border)}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table tr[data-selected=true] td{background:color-mix(in srgb,var(--accent) 12%,var(--surface))!important;border-block:1px solid var(--accent)}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table tr[data-selected=true] td:first-child{box-shadow:inset 3px 0 var(--accent)}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-name-cell{display:flex;align-items:center;gap:10px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table :is(strong,small,span){font-size:13px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table .client-name-cell strong{font-size:14px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table .crm-identity-avatar{border-radius:50%;width:36px;height:36px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 :is(.aw-data-table,.client-quick-crm) .client-status{border-radius:6px;padding:3px 8px;font-size:12px;font-weight:650}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 :is(.aw-data-table,.client-quick-crm) .status-active{background:#0d503e;color:#bdffe3}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 :is(.aw-data-table,.client-quick-crm) .status-inactive{background:#344457;color:#d4e0eb}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 :is(.aw-data-table,.client-quick-crm) .status-archived{background:#403d43;color:#d4cbd9}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-summary-panel:not(.client-large-view){padding:0;max-height:calc(100dvh - 190px)!important;overflow:auto!important;scrollbar-gutter:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)!important}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-summary-panel:not(.client-large-view)>.client-detail-content{display:none}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-crm{display:block;padding:18px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-header{display:flex;align-items:center;gap:12px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-header>div{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-header h2{width:100%;font-size:21px!important;line-height:1.25;margin:0}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-header .crm-identity-avatar{width:54px;height:54px;border-radius:50%;flex-shrink:0}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-header .close-detail{align-self:flex-start;background:transparent;border:0;padding:5px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-relation button{font-size:12px!important;padding:4px 8px;min-height:26px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-command{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px;margin:16px 0}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-command :is(a,button){display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:1;min-height:36px;padding:7px 5px;font-size:12px!important;text-decoration:none;border-radius:7px;white-space:nowrap}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-command svg{width:16px;height:16px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-block{padding:14px 0;border:0;border-top:1px solid var(--border);background:none}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-block h3{display:flex;align-items:center;gap:8px;font-size:14px;margin:0 0 10px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-block h3 svg{color:var(--accent)}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-block:first-of-type h3{display:none}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-block .summary-line{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;padding:5px 0;border:0}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-block .summary-line>*{font-size:13px;font-weight:400;overflow-wrap:anywhere}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-block p{font-size:13px;line-height:1.5;margin:0}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-next time{display:block;color:var(--accent);margin-top:4px;font-size:13px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-link{display:flex;align-items:center;gap:8px;text-align:left;width:100%;border:0;background:none;padding:6px 0;font-size:13px!important}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-link span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-crm footer button{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:38px;background:var(--accent);color:#071c2b;font-weight:700;font-size:13px!important}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-crm footer p{display:none}
+:root[data-theme='noir'][data-density='comfort'] .aw-client-brand-default{display:none}
+:root[data-theme='noir'][data-density='comfort'] .aw-client-brand-v2{display:block}
+
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-heading>.primary-button{margin-left:auto;min-height:38px;background:var(--accent);color:#071c2b}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .toolbar-controls{width:100%;max-width:none;justify-content:flex-start}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-command>.aw-ui-button-wrap{flex:1;min-width:0}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-command .aw-ui-button{width:100%}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-crm footer>.aw-ui-button-wrap{display:block;width:100%}
+
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-heading h1{color:var(--text)}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-crm footer .aw-ui-button{min-width:100%}
+
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-overdue-label{color:#ffb4a9;font-size:12px;display:inline-block}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-next[data-overdue=true]{border-left:3px solid #ffb4a9;padding-left:12px}

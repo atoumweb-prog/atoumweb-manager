@@ -33,3 +33,10 @@ export async function readClientSections<T extends Record<string, () => Promise<
   });
   return { values, errors };
 }
+
+/** nextActionAt is projected from open CRM actions by CrmService. */
+export function isClientActionOverdue(nextActionAt: string | null | undefined, now = Date.now()): boolean {
+  if (!nextActionAt) return false;
+  const due = Date.parse(nextActionAt);
+  return Number.isFinite(due) && due < now;
+}

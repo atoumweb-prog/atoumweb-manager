@@ -1,0 +1,16 @@
+import type {QuoteDetail} from './commercial';
+import type {MaintenanceSubscription,HourPack,Intervention} from './operations';
+import type {OperationalSalePolicy} from './commercialRules';
+export interface EngagementSource {quote:QuoteDetail;line:QuoteDetail['lines'][number]}
+export interface ClientEngagement {id:string;name:string;status:string;start?:string|null;end?:string|null;kind:'maintenance'|'hour_pack'|'intervention';sources:EngagementSource[];amount:number;amountLabel:string;cadence?:string|null;billing?:string|null;historical:boolean}
+export function clientEngagements(quotes:QuoteDetail[],sales:Record<string,unknown>[],subscriptions:MaintenanceSubscription[],packs:HourPack[],interventions:Intervention[]){
+ const sources=new Map(quotes.filter(q=>q.status==='accepted').flatMap(quote=>quote.lines.map(line=>[line.id,{quote,line}] as const)));
+ const related=(key:string,id:string)=>sales.filter(s=>s[key]===id).flatMap(s=>{const source=sources.get(String(s.quote_line_id));return source?[source]:[];});
+ const linkedLines=new Set<string>();
+ function policy(key:string,id:string):Partial<OperationalSalePolicy>{const sale=sales.find(s=>s[key]===id&&s.kind!=='recurring_addon');try{return sale?JSON.parse(String(sale.policy_snapshot_json)):{};}catch{return {};}}
+ const rows:ClientEngagement[]=[];
+ for(const sub of subscriptions){const refs=related('subscription_id',sub.id);refs.forEach(s=>linkedLines.add(s.line.id));const p=policy('subscription_id',sub.id);const period={monthly:'mensuelle',quarterly:'trimestrielle',yearly:'annuelle',once:'ponctuelle'};const base=refs.find(r=>sales.some(s=>s.quote_line_id===r.line.id&&s.subscription_id===sub.id&&s.kind!=='recurring_addon'));const quantity=base?.line.quantityMilli;const amountLabel=!refs.length?'Prix par période du plan ('+period[sub.frequency]+')':p.quantityMeaning==='billing_periods'&&quantity!=null&&p.billingPeriod?'Total vendu · '+quantity/1000+' période(s) '+period[p.billingPeriod]:p.billingPeriod?'Prix enregistré · facturation '+period[p.billingPeriod]:'Prix de souscription enregistré';rows.push({id:sub.id,name:sub.planName,status:sub.status,start:sub.startDate,end:sub.endDate,kind:'maintenance',sources:refs,amount:sub.contractPriceCents,amountLabel,cadence:p.cadence??sub.frequency,billing:p.billingPeriod??sub.billingPeriod,historical:['ended','archived'].includes(sub.status)});}
+ for(const pack of packs){const refs=related('hour_pack_id',pack.id);refs.forEach(s=>linkedLines.add(s.line.id));rows.push({id:pack.id,name:pack.name,status:pack.status,start:pack.purchasedAt,end:pack.expiresAt,kind:'hour_pack',sources:refs,amount:pack.contractPriceCents,amountLabel:'Montant du pack',cadence:'once',billing:'once',historical:['expired','archived','exhausted'].includes(pack.status)});}
+ for(const i of interventions){const refs=related('intervention_id',i.id);if(!refs.length)continue;refs.forEach(s=>linkedLines.add(s.line.id));rows.push({id:i.id,name:i.number+' · '+i.subject,status:i.status,start:i.startedAt,end:i.completedAt,kind:'intervention',sources:refs,amount:refs[0].line.contractLineValueCents,amountLabel:'Montant de ligne vendue',cadence:'once',billing:'once',historical:['completed','cancelled','archived'].includes(i.status)});}
+ return {rows,other:[...sources.values()].filter(s=>!linkedLines.has(s.line.id))};
+}

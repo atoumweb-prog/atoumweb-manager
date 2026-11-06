@@ -1,0 +1,60 @@
+/* Contacts tab only. Existing forms, directory identities and coordinate editors retained. */
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts {padding:18px 0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .tab-content-stack{gap:20px;background:transparent!important}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contacts-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contacts-heading h3{display:flex;align-items:center;gap:10px;font-size:22px;margin:0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contacts-heading h3 svg{width:28px;height:28px;color:var(--accent)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contacts-heading h3>span{font-size:14px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--muted)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contacts-heading p{font-size:14px;color:var(--muted);margin:8px 0 0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contacts-heading>.primary-button{background:var(--accent);color:#071c2b;min-height:42px;padding:10px 16px;font-size:14px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-cards-list{gap:16px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-card{display:grid;grid-template-columns:56px minmax(170px,1fr) auto;gap:16px;align-items:center;padding:20px;background:linear-gradient(130deg,var(--surface-soft),var(--surface))!important;border:1px solid var(--border);border-radius:12px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-card>.crm-identity-avatar{width:56px;height:56px;border-radius:50%;font-size:22px;flex-shrink:0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-card-main>strong{font-size:21px!important;line-height:1.3}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-card-main>small{font-size:14px;color:var(--muted);margin-top:5px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-badges{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:8px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-badges>span{font-size:12px;padding:4px 8px;border-radius:6px;background:var(--surface-soft);border:1px solid var(--border);color:var(--text)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-badges>.client-contact-primary{background:#0d503e;color:#bdffe3;border-color:#286950}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-actions{display:flex;align-items:stretch;gap:8px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-actions .link-button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;width:104px;min-height:68px;padding:9px;border:1px solid var(--border);border-radius:8px;background:var(--surface-soft);color:var(--text);text-align:center;font-size:12px!important;line-height:1.3}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-actions svg{color:var(--accent);width:21px;height:21px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-card>.link-button{grid-column:2/-1;justify-self:start;font-size:13px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-coordinates{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:14px 0;border-block:1px solid var(--border)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-coordinates>div{display:flex;align-items:flex-start;gap:10px;min-width:0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-coordinates svg{width:22px;height:22px;flex-shrink:0;color:var(--muted)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-coordinates span{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-coordinates a{font-size:15px;color:var(--text);text-decoration:none;overflow-wrap:anywhere}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-coordinates a:hover{text-decoration:underline;color:var(--accent)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-coordinates small{font-size:14px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-card>.contact-methods-panel{grid-column:1/-1;padding:0;background:transparent!important;border:0;border-radius:0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-methods-panel>summary{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:0;cursor:pointer}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-methods-panel>summary strong{font-size:13px!important;color:var(--muted)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-methods-panel>summary small{display:block;font-size:12px;margin-top:5px;color:var(--muted)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-methods-panel .details-hint{font-size:12px;color:var(--accent)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-methods-content{padding-top:14px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-methods-content :is(strong,span,button){font-size:14px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-inline-form{padding:18px;background:var(--surface-soft)!important;border:1px solid var(--border);border-radius:12px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-inline-form :is(label,small){font-size:14px;color:var(--muted)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-source-choice{grid-column:1/-1}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-inline-form :is(input,select){font-size:14px;background:var(--surface)!important;color:var(--text)!important;border-color:var(--border);min-height:38px;padding:9px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-inline-form .primary-check input{min-height:0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contacts-help{display:flex;gap:14px;align-items:flex-start;padding:18px;border:1px solid var(--border);border-radius:12px;background:var(--surface-soft)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contacts-help>svg{width:27px;height:27px;color:var(--accent);flex-shrink:0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contacts-help strong{font-size:15px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contacts-help p{font-size:14px;line-height:1.5;color:var(--muted);margin:7px 0 0}
+@container client-work (max-width:850px){:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-card{grid-template-columns:56px minmax(0,1fr)}:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-actions{grid-column:1/-1;justify-content:flex-end}:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-actions .link-button{width:auto;min-height:38px;flex-direction:row;flex:1}}
+
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .contact-card>.crm-identity-avatar>span{font-size:22px}
+
+/* Existing coordinate editor: readable fields without changing its controls or guards. */
+:root[data-theme='noir'][data-density='comfort'] #client-panel-contacts .prospect-modal{padding:20px;width:min(760px,calc(100vw - 48px));box-sizing:border-box}
+:root[data-theme='noir'][data-density='comfort'] #client-panel-contacts .prospect-modal h3{margin:0 0 16px;font-size:18px}
+:root[data-theme='noir'][data-density='comfort'] #client-panel-contacts .contact-method-add{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:end}
+:root[data-theme='noir'][data-density='comfort'] #client-panel-contacts .contact-method-add label{display:flex;flex-direction:column;gap:6px;min-width:0}
+:root[data-theme='noir'][data-density='comfort'] #client-panel-contacts .contact-method-add label:has(input){grid-column:1/-1}
+:root[data-theme='noir'][data-density='comfort'] #client-panel-contacts .contact-method-add label:has(input[type='checkbox']){flex-direction:row;align-items:center}
+:root[data-theme='noir'][data-density='comfort'] #client-panel-contacts .contact-method-add :is(input:not([type='checkbox']),select){width:100%;box-sizing:border-box;min-height:40px}
+:root[data-theme='noir'][data-density='comfort'] #client-panel-contacts .contact-method-add>button{grid-column:1/-1;justify-self:end}
+:root[data-theme='noir'][data-density='comfort'] #client-panel-contacts .prospect-modal>button{margin-top:16px}

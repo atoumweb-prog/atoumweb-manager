@@ -1,82 +1,49 @@
-import type { QuoteSummary } from '../../shared/commercial';
-import { openEntity } from '../workflow/DossierPanel';
-
-function money(cents: number): string {
-  return `${(cents / 100).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €`;
-}
-
-export function ClientContractsPanel({
-  quotes,
-  onMessage,
-}: {
-  quotes: QuoteSummary[];
-  onMessage: (message: string) => void;
-}) {
-  const contracts = quotes
-    .filter((quote) => quote.status === 'accepted')
-    .sort((a, b) => String(b.acceptedAt ?? b.updatedAt).localeCompare(String(a.acceptedAt ?? a.updatedAt)));
-
-  async function openPdf(quote: QuoteSummary): Promise<void> {
-    try {
-      await window.atoumweb.quotes.openContractDocument(quote.id);
-    } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible d’ouvrir le PDF contractuel.');
-    }
-  }
-
-  return (
-    <div className="tab-content-stack client-contracts-tab">
-      <div className="contact-tab-heading">
-        <div>
-          <strong>{contracts.length} devis contractuel{contracts.length > 1 ? 's' : ''}</strong>
-          <p className="muted">Un devis accepté constitue la référence contractuelle ; aucun contrat séparé n’est recréé.</p>
-        </div>
-      </div>
-
-      <div className="client-contract-list">
-        {contracts.map((quote) => (
-          <article className="client-contract-card" key={quote.id}>
-            <div className="client-contract-card-heading">
-              <div>
-                <span className="eyebrow">{quote.number}</span>
-                <strong>{quote.subject}</strong>
-                <small>
-                  Accepté {quote.acceptedAt ? 'le ' + new Date(quote.acceptedAt).toLocaleDateString('fr-FR') : ''}
-                  {quote.abbyReference ? ' · Abby ' + quote.abbyReference : ''}
-                </small>
-              </div>
-              <strong>{money(quote.contractValueCents)}</strong>
-            </div>
-
-            <div className="client-contract-badges">
-              <span className="status-pill">Devis accepté</span>
-              {quote.contractDocumentId
-                ? <span className="status-pill">PDF Abby rattaché</span>
-                : <span className="muted">PDF Abby à rattacher</span>}
-            </div>
-
-            <div className="client-contract-actions">
-              <button
-                className="primary-button compact-button"
-                type="button"
-                onClick={() => openEntity({ entityType: 'quote', entityId: quote.id, title: quote.subject })}
-              >
-                Ouvrir le devis contractuel
-              </button>
-              {quote.contractDocumentId && (
-                <button className="secondary-button compact-button" type="button" onClick={() => void openPdf(quote)}>
-                  Ouvrir le PDF Abby
-                </button>
-              )}
-            </div>
-          </article>
-        ))}
-        {contracts.length === 0 && (
-          <div className="empty-table">
-            Aucun devis accepté pour ce client. Les futurs devis validés apparaîtront ici comme références contractuelles.
-          </div>
-        )}
-      </div>
-    </div>
-  );
+import {useEffect,useState} from 'react';
+import type {QuoteSummary,QuoteDetail} from '../../shared/commercial';
+import type {MaintenanceSubscription,HourPack,Intervention,MaintenancePeriod} from '../../shared/operations';
+import type {QuoteContractPreparation} from '../../shared/quoteContractPreparation';
+import type {Need} from '../../shared/workflow';
+import {readClientSections} from '../../shared/clientPresentation';
+import {clientEngagements,type ClientEngagement,type EngagementSource} from '../../shared/clientEngagementPresentation';
+import {openEntity} from '../workflow/DossierPanel';
+import {OperationIcon} from '../operations/OperationIcon';
+import {AppButton} from '../ui/AppButton';
+import './client-contracts-v2.css';
+const money=(v:number)=>Number.isFinite(v)?(v/100).toLocaleString('fr-FR',{style:'currency',currency:'EUR'}):'Non renseigné';
+const date=(v?:string|null)=>v&&Number.isFinite(Date.parse(v))?new Date(v).toLocaleDateString('fr-FR'):'Non renseignée';
+const status:Record<string,string>={active:'Actif',suspended:'Suspendu',ended:'Terminé',archived:'Archivé',expired:'Expiré',exhausted:'Épuisé',to_plan:'À planifier',planned:'Planifié',in_progress:'En cours',waiting_client:'Attente client',blocked:'Bloqué',to_validate:'À valider',completed:'Terminé',cancelled:'Annulé'};
+const cadence:Record<string,string>={monthly:'Mensuelle',yearly:'Annuelle',quarterly:'Trimestrielle',once:'Ponctuelle'};
+type State={subscriptions:MaintenanceSubscription[];packs:HourPack[];interventions:Intervention[];sales:Record<string,unknown>[];quotes:QuoteDetail[];proofs:{quote:QuoteDetail;build:QuoteContractPreparation}[];periods:MaintenancePeriod[];needs:Need[];errors:string[]};
+const empty:State={subscriptions:[],packs:[],interventions:[],sales:[],quotes:[],proofs:[],periods:[],needs:[],errors:[]};
+export function ClientContractsPanel({clientId,quotes,active,quoteError,onMessage}:{clientId:string;quotes:QuoteSummary[];active:boolean;quoteError?:string;onMessage:(message:string)=>void}){
+ const [data,setData]=useState<State>(empty),[loading,setLoading]=useState(false),[revision,setRevision]=useState(0);
+ useEffect(()=>{const changed=()=>setRevision(n=>n+1);window.addEventListener('atoumweb:changed',changed);return()=>window.removeEventListener('atoumweb:changed',changed);},[]);
+ useEffect(()=>{if(!active)return;let live=true;setLoading(true);
+ (async()=>{const accepted=quotes.filter(q=>q.status==='accepted');const result=await readClientSections({subscriptions:()=>window.atoumweb.operations.maintenance.subscriptions.list({clientAccountId:clientId,includeArchived:true}),packs:()=>window.atoumweb.operations.hourPacks.list({clientAccountId:clientId,includeArchived:true}),interventions:()=>window.atoumweb.operations.interventions.list({clientAccountId:clientId,includeArchived:true}),sales:()=>window.atoumweb.quotes.operationalSalesForClient(clientId),needs:()=>window.atoumweb.workflow.needs('client',clientId)});
+ const next:State={...empty,...result.values,quotes:[],proofs:[],periods:[],errors:Object.entries(result.errors).map(([k,v])=>k+' : '+v)};
+ if(quoteError)next.errors.push('Devis acceptés : '+quoteError);
+ const details=await Promise.allSettled(accepted.map(q=>window.atoumweb.quotes.get(q.id)));
+ details.forEach((r,i)=>{if(r.status==='fulfilled')next.quotes.push(r.value);else next.errors.push(accepted[i].number+' : détail indisponible');});
+ const proofs=await Promise.allSettled(next.quotes.map(q=>window.atoumweb.quotePreparation.get(q.id)));proofs.forEach((r,i)=>{if(r.status==='fulfilled')next.proofs.push({quote:next.quotes[i],build:r.value});else next.errors.push(next.quotes[i].number+' : preuves indisponibles');});
+ const periods=await Promise.allSettled(next.subscriptions.map(s=>window.atoumweb.operations.maintenance.periods.list(s.id)));periods.forEach((r,i)=>{if(r.status==='fulfilled')next.periods.push(...r.value);else next.errors.push(next.subscriptions[i].planName+' : périodes indisponibles');});
+ if(live){setData(next);setLoading(false);}
+ })().catch(e=>{if(live){setData({...empty,errors:[String(e)]});setLoading(false);}});return()=>{live=false;};
+ },[active,clientId,quotes,quoteError,revision]);
+ const model=clientEngagements(data.quotes,data.sales,data.subscriptions,data.packs,data.interventions),current=model.rows.filter(r=>!r.historical),history=model.rows.filter(r=>r.historical);
+ const today=new Date().toISOString().slice(0,10);
+ const deadlines=[...model.other.filter(s=>s.line.parameters?.serviceEndDate).map(s=>({id:'line:'+s.line.id,title:s.line.label,type:'Fin de service renseignée',at:s.line.parameters!.serviceEndDate!})),...data.proofs.flatMap(p=>(p.build.parameters?.milestones??[]).filter(m=>m.date).map((m,i)=>({id:'milestone:'+p.quote.id+':'+i,title:m.label,type:'Jalon prévu · '+p.quote.number,at:m.date}))),...model.rows.filter(r=>!r.historical&&r.end).map(r=>({id:r.id,title:r.name,type:r.kind==='hour_pack'?'Expiration du pack':'Fin renseignée du suivi',at:r.end!})),...data.periods.filter(p=>!['completed','closed','archived'].includes(p.status)&&p.periodEnd>=today).map(p=>({id:p.id,title:data.subscriptions.find(s=>s.id===p.subscriptionId)?.planName??'Période',type:'Fin de période opérationnelle',at:p.periodEnd}))].filter(d=>Number.isFinite(Date.parse(d.at))).sort((a,b)=>a.at.localeCompare(b.at));
+ const goQuote=(q:QuoteDetail)=>{openEntity({entityType:'quote',entityId:q.id,title:q.subject});};
+ function source(s:EngagementSource){return <AppButton key={s.line.id} variant="quiet" className="engagement-source" onAction={()=>goQuote(s.quote)}>Origine : {s.quote.number} · {s.line.label}</AppButton>;}
+ function row(r:ClientEngagement){return <article className="engagement-row" key={r.id}><div className="engagement-row-heading"><OperationIcon name={r.kind==='hour_pack'?'hourglass':r.kind==='intervention'?'wrench':'repeat'}/><strong>{r.name}</strong><span className="engagement-status">{status[r.status]??r.status}</span></div><dl><div><dt>Début</dt><dd>{date(r.start)}</dd></div><div><dt>Fin renseignée</dt><dd>{date(r.end)}</dd></div><div><dt>Service / facturation</dt><dd>{cadence[r.cadence??'']??'Non renseignée'} / {cadence[r.billing??'']??'Non renseignée'}</dd></div><div><dt>{r.amountLabel}</dt><dd>{money(r.amount)}</dd></div></dl><div className="engagement-row-actions"><AppButton variant="secondary" onAction={()=>{openEntity({entityType:r.kind==='hour_pack'?'hour_pack':r.kind==='intervention'?'intervention':'maintenance',entityId:r.id,title:r.name});}}>Voir le suivi <OperationIcon name="external-link"/></AppButton>{r.sources.map(source)}</div>{r.sources.length>0&&<details><summary>Montants vendus et conditions d’origine</summary>{r.sources.map(s=><p key={s.line.id}>{s.line.label} : {money(s.line.contractLineValueCents)} · montant total de cette ligne vendue, sans division automatique.</p>)}{r.sources.map(s=>{const renewal=data.proofs.find(p=>p.quote.id===s.quote.id)?.build.parameters?.renewal;return renewal?.reviewed&&renewal.applicable?<p key={s.line.id}>{renewal.mode==='express'?'Renouvellement sur accord exprès':'Mensuel sans engagement'}{renewal.period?' · '+renewal.period:''}{renewal.notice?' · Préavis : '+renewal.notice:''}{renewal.termination?' · Fin : '+renewal.termination:''}</p>:null;})}</details>}</article>;}
+ return <div className="client-contracts-v2"><header><OperationIcon name="file-check"/><div><h3>Contrats et prestations</h3><p>Engagements acceptés, services souscrits et échéances connues.</p></div></header>
+ {loading?<p role="status">Lecture des engagements…</p>:<>{data.errors.length>0&&<div role="alert"><p>Consultation partielle : certaines sources sont indisponibles.</p><ul>{data.errors.map(e=><li key={e}>{e}</li>)}</ul><AppButton variant="secondary" onAction={()=>setRevision(n=>n+1)}>Réessayer</AppButton></div>}
+ <div className="engagement-indicators"><div><strong>{data.errors.length?'—':data.subscriptions.filter(s=>s.status==='active').length}</strong><span>Souscriptions actives</span></div><div><strong>{data.errors.length?'—':deadlines.length}</strong><span>Échéances connues</span></div><div><strong>{data.errors.length?'—':history.length}</strong><span>Suivis terminés / archivés</span></div></div>
+ <section><h4><OperationIcon name="layers"/>Prestations et abonnements en cours</h4>{current.length?current.map(row):<p className="muted">Aucun suivi opérationnel en cours disponible.</p>}<p className="engagement-note">Les états affichés sont ceux des suivis existants. Aucun total ne mélange montants ponctuels, mensuels, annuels ou encaissements.</p></section>
+ <div className="engagement-columns"><section><h4><OperationIcon name="calendar"/>Prochaines échéances</h4>{deadlines.length?deadlines.slice(0,5).map(d=><p className="engagement-deadline" key={d.id}><strong>{d.title}</strong><span>{d.type} · {date(d.at)}{d.at.slice(0,10)<today?' · Date passée':''}</span></p>):<p className="muted">Aucune échéance fiable renseignée.</p>}{deadlines.length>5&&<details><summary>Autres échéances connues</summary>{deadlines.slice(5).map(d=><p key={d.id}>{d.title} · {d.type} · {date(d.at)}</p>)}</details>}<p className="engagement-note">Une fin de période opérationnelle ne vaut ni renouvellement ni échéance de facturation. Aucune reconduction déduite.</p></section>
+ <section><h4><OperationIcon name="file-check"/>Documents et preuves contractuelles</h4>{data.quotes.length===0?<p className="muted">Aucun engagement accepté disponible.</p>:data.quotes.map(q=>{const build=data.proofs.find(p=>p.quote.id===q.id)?.build;return <details key={q.id}><summary>{q.number} · devis accepté</summary><p>Acceptation enregistrée : {date(q.acceptedAt)}</p>{!build?<p>Preuves indisponibles.</p>:<><p>{build.documents.some(d=>d.role==='acceptance')?'Acceptation attestée enregistrée.':'Aucune attestation distincte disponible.'}</p>{build.documents.map(d=><div key={d.id}><p>{d.role==='acceptance'?'Attestation d’acceptation':d.role==='accepted_pdf'?'Document accepté rattaché':'Annexe : '+d.role}{d.supersedesId?' · remplacement historisé':''} · {date(d.occurredAt??d.attachedAt)}</p>{(d.documentId||d.relativePath)&&<AppButton variant="quiet" onAction={async()=>{try{await window.atoumweb.quotePreparation.openDocument(d.id);}catch(e){onMessage(String(e));}}}>Ouvrir la pièce</AppButton>}</div>)}</>}<p>Signature du PDF non établie par ces seules données.</p>{q.contractDocumentId&&<AppButton variant="secondary" onAction={async()=>{try{await window.atoumweb.quotes.openContractDocument(q.id);}catch(e){onMessage(String(e));}}}>Ouvrir le document contractuel rattaché</AppButton>}<AppButton variant="quiet" onAction={()=>goQuote(q)}>Gérer les preuves dans Devis</AppButton></details>;})}</section></div>
+ <section><h4><OperationIcon name="file-text"/>Autres engagements acceptés · sans suivi opérationnel disponible</h4>{model.other.length?model.other.map(s=><article className="engagement-other" key={s.line.id}><strong>{s.line.label}</strong><span>{money(s.line.contractLineValueCents)} · montant de ligne acceptée</span><p>Début : {date(s.line.parameters?.serviceStartDate)} · Fin : {date(s.line.parameters?.serviceEndDate)}</p>{source(s)}</article>):<p className="muted">Aucune autre ligne acceptée disponible.</p>}</section>
+ <details className="engagement-history"><summary><OperationIcon name="clock"/>Historique des suivis terminés ou archivés ({history.length})</summary>{history.length?history.map(row):<p>Aucun suivi terminé disponible. Le motif d’arrêt n’est pas déduit.</p>}</details>
+ <section><h4><OperationIcon name="bolt"/>Services complémentaires à proposer</h4>{data.needs.length?data.needs.map(n=><p key={n.id}>{n.label||n.otherText||'Besoin enregistré'} · besoin enregistré, qualification commerciale à vérifier</p>):<p className="muted">Aucun besoin complémentaire enregistré disponible. Aucune suggestion automatique.</p>}<p className="engagement-note">Les propositions non acceptées se consultent dans Commercial. Un besoin enregistré peut déjà être couvert : aucune opportunité nouvelle n’est déduite.</p></section>
+ </>}
+ </div>;
 }

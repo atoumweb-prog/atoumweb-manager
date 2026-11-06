@@ -1,0 +1,28 @@
+import {useEffect,useState} from 'react';
+import type {QuoteSummary} from '../../shared/commercial';
+import type {ProjectSummary} from '../../shared/projects';
+import type {Intervention} from '../../shared/operations';
+import type {ClientDocument} from '../../shared/clientDocuments';
+import type {ClientTab} from '../../shared/clientPresentation';
+import {OperationIcon,type OperationIconName} from '../operations/OperationIcon';
+import {openEntity} from '../workflow/DossierPanel';
+const labels:Record<string,string>={draft:'Brouillon',sent:'Envoyé',viewed:'Consulté',accepted:'Accepté',refused:'Refusé',expired:'Expiré',cancelled:'Annulé',to_prepare:'À préparer',to_plan:'À planifier',planned:'Planifié',in_progress:'En cours',waiting_client:'Attente client',blocked:'Bloqué',to_validate:'À valider',completed:'Terminé',archived:'Archivé'};
+type Item={id:string;title:string;status:string;open:()=>void;disabled?:boolean};
+/** Read-only context projections; the central tabs retain all editing workflows. */
+export function ClientAssociations({clientId,activeTab,quotes,projects,interventions,loading,errors,documentsRevision,onTab,onMessage}:{clientId:string;activeTab:ClientTab;quotes:QuoteSummary[];projects:ProjectSummary[];interventions:Intervention[];loading:boolean;errors:Record<string,string>;documentsRevision:number;onTab:(tab:ClientTab)=>void;onMessage:(message:string)=>void}){
+ const [manual,setManual]=useState<{clientId:string;values:Partial<Record<ClientTab,boolean>>}>({clientId,values:{}});
+ const [documents,setDocuments]=useState<ClientDocument[]>([]),[documentError,setDocumentError]=useState(''),[documentsLoading,setDocumentsLoading]=useState(true),[revision,setRevision]=useState(0);
+ useEffect(()=>{const changed=()=>setRevision(n=>n+1);window.addEventListener('atoumweb:changed',changed);return()=>window.removeEventListener('atoumweb:changed',changed);},[]);
+ useEffect(()=>{let live=true;setDocumentsLoading(true);setDocumentError('');window.atoumweb.clientDocuments.list(clientId,false).then(items=>{if(live)setDocuments(items);}).catch(error=>{if(live){setDocuments([]);setDocumentError(String(error));}}).finally(()=>{if(live)setDocumentsLoading(false);});return()=>{live=false;};},[clientId,documentsRevision,revision]);
+ const quoteItem=(q:QuoteSummary):Item=>({id:q.id,title:q.number+' · '+q.subject,status:labels[q.status]??q.status,open:()=>{openEntity({entityType:'quote',entityId:q.id,title:q.subject});}});
+ const relevant=<T extends {id:string;status:string}>(items:T[])=>[...new Map(items.map(i=>[i.id,i])).values()].sort((a,b)=>Number(['completed','archived','cancelled','refused','expired'].includes(a.status))-Number(['completed','archived','cancelled','refused','expired'].includes(b.status)));
+ function section(tab:ClientTab,title:string,icon:OperationIconName,items:Item[],busy:boolean,error?:string,note?:string,overview?:{total:number;emptyText:string}){const count=overview?.total??items.length;return <details key={tab} className="client-association-preview" data-category={tab} data-empty={!busy&&!error&&count===0} open={(manual.clientId===clientId?manual.values[tab]:undefined)??(tab!==activeTab&&(count>0||!!error))} onToggle={event=>{const opened=event.currentTarget.open;const expected=(manual.clientId===clientId?manual.values[tab]:undefined)??(tab!==activeTab&&(count>0||!!error));if(opened!==expected)setManual(current=>({clientId,values:{...(current.clientId===clientId?current.values:{}),[tab]:opened}}));}}><summary><OperationIcon name={icon}/><strong>{title}</strong><span className="association-count">{busy||error?'—':count}</span></summary><div>{note&&<p className="association-note">{note}</p>}{busy?<p className="muted">Chargement…</p>:error?<p role="alert">Lecture indisponible : {error}</p>:items.length===0?<p className="muted">{overview?.emptyText??'Aucun élément associé.'}</p>:<>{items.slice(0,2).map(item=><button key={item.id} className="association-record" type="button" disabled={item.disabled} onClick={item.open}><span>{item.title}</span><small>{item.status}</small><OperationIcon name="external-link"/></button>)}</>}{(items.length>2||count>items.length)&&!busy&&!error&&<button className="link-button association-all" type="button" onClick={()=>onTab(tab)}>{overview?'Voir tous les devis':`Voir les ${count} éléments`}</button>}</div></details>;}
+ const allQuotes=relevant(quotes);
+ return <div className="client-associations-preview">
+ {section('commercial','Devis','file-text',allQuotes.filter(q=>q.status!=='accepted').map(quoteItem),loading,errors.quotes,undefined,{total:allQuotes.length,emptyText:allQuotes.length?'Aucun devis non accepté. Consulter « Devis acceptés » pour les dossiers acceptés.':'Aucun élément associé.'})}
+ {section('contracts','Devis acceptés','file-check',quotes.filter(q=>q.status==='accepted').map(quoteItem),loading,errors.quotes,'Références : devis acceptés.')}
+ {section('projects','Projets','folder',relevant(projects).map(p=>({id:p.id,title:p.name,status:p.archivedAt?'Archivé':labels[p.status]??p.status,open:()=>{openEntity({entityType:'project',entityId:p.id,title:p.name});}})),loading,errors.projects)}
+ {section('operations','Interventions','wrench',relevant(interventions).map(i=>({id:i.id,title:i.number+' · '+i.subject,status:labels[i.status]??i.status,open:()=>{openEntity({entityType:'intervention',entityId:i.id,title:i.subject});}})),loading,errors.interventions)}
+ {section('documents','Documents','image',documents.map(d=>({id:d.id,title:d.title+' · '+d.fileName,status:d.missing?'Fichier introuvable':'Non archivé',disabled:d.missing,open:()=>{void window.atoumweb.clientDocuments.openFile(d.id).catch(e=>onMessage(String(e)));}})),documentsLoading,documentError,'Documents non archivés.')}
+ </div>;
+}

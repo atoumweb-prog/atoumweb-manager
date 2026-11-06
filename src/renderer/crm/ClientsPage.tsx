@@ -1,3 +1,12 @@
+import {ClientCommercialSummary} from './ClientCommercialSummary';
+import {ClientHistoryTab} from './ClientHistoryTab';
+import {ClientProjectsTab} from './ClientProjectsTab';
+import {ClientCommercialTab} from './ClientCommercialTab';
+import './client-contacts-v2.css';
+import {ClientAssociations} from './ClientAssociations';
+import {ClientDetailIcon} from './ClientDetailIcon';
+import './client-expanded-v2.css';
+import {ClientQuickSummary} from './ClientQuickSummary';
 import {ClientActionsHistory} from './ClientActionsHistory';
 import {CrmReconciliationPanel} from './CrmReconciliationPanel';
 import {CrmRecordLayout} from './CrmRecordLayout';
@@ -5,7 +14,7 @@ import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import {CLIENT_DIRECTORY_VIEW} from '../../shared/realTableSchemas';
 import './crm-visual-foundation.css';
 import { layoutKey, readLayout, writeLayout } from '../../shared/panelLayout';
-import { CLIENT_TABS, clientTabKey, clientHistory, readClientSections, type ClientTab } from '../../shared/clientPresentation';
+import { isClientActionOverdue, CLIENT_TABS, clientTabKey, clientHistory, readClientSections, type ClientTab } from '../../shared/clientPresentation';
 import './ClientsPageV2.css';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import {requestUnsavedExit,useUnsavedDraft} from '../unsaved/unsaved';
@@ -138,13 +147,13 @@ function dateInputValue(value?: string | null): string {
   return Number.isNaN(date.getTime()) ? new Date().toISOString().slice(0, 10) : date.toISOString().slice(0, 10);
 }
 
-export function ClientsPage(props: { onMessage: (message: string) => void; initialId?: string | null;initialRequest?:number;onEntityReady?:EntityReady }) {
+export function ClientsPage(props: { onMessage: (message: string) => void; initialId?: string | null;initialRequest?:number;onEntityReady?:EntityReady;allowTestFill?:boolean }) {
   return <ClientsPageErrorBoundary>
     <ClientsPageContent {...props} />
   </ClientsPageErrorBoundary>;
 }
 
-function ClientsPageContent({ onEntityReady, onMessage, initialId, initialRequest }: { onMessage: (message: string) => void; initialId?: string | null;initialRequest?:number;onEntityReady?:EntityReady }) {
+function ClientsPageContent({ onEntityReady, onMessage, initialId, initialRequest, allowTestFill=false }: { onMessage: (message: string) => void; initialId?: string | null;initialRequest?:number;onEntityReady?:EntityReady;allowTestFill?:boolean }) {
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [sectionErrors, setSectionErrors] = useState<Record<string,string>>({});
   const [detailLoading,setDetailLoading] = useState(false);
@@ -157,6 +166,8 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [subscriptions, setSubscriptions] = useState<MaintenanceSubscription[]>([]);
   const [interventions, setInterventions] = useState<Intervention[]>([]);
+  const [tableToolsHost,setTableToolsHost]=useState<HTMLDivElement|null>(null);
+  const [documentsRevision,setDocumentsRevision]=useState(0);
   const [largeView, setLargeView] = useState(false);
   const [relationshipMenuOpen, setRelationshipMenuOpen] = useState(false);
   const [relationshipSaving, setRelationshipSaving] = useState(false);
@@ -204,6 +215,15 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
   const [actionSaving,setActionSaving]=useState(false);
   const actionGuard=useUnsavedDraft('Prochaine action client',actionEditor,{ready:!!actionEditor||actionSaving,pending:actionSaving,resetKey:actionEditor?.clientId,discard:()=>setActionEditor(null)});
   const sidePanelRef = useRef<HTMLElement | null>(null);
+
+  useEffect(()=>{
+    if(!largeView)return;
+    const panel=sidePanelRef.current,header=document.querySelector('.aw-workspace-header'),rail=document.querySelector('.aw-navigation-rail');
+    if(!panel)return;
+    const measure=()=>{panel.style.setProperty('--client-desk-top',`${Math.max(0,header?.getBoundingClientRect().bottom??82)+10}px`);panel.style.setProperty('--client-desk-left',`${Math.max(0,rail?.getBoundingClientRect().right??0)+10}px`);};
+    const observer=new ResizeObserver(measure);if(header)observer.observe(header);if(rail)observer.observe(rail);measure();window.addEventListener('resize',measure);
+    return()=>{observer.disconnect();window.removeEventListener('resize',measure);};
+  },[largeView]);
 
   async function refresh(): Promise<void> {
     const epoch=++listEpoch.current;
@@ -348,6 +368,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
     setSaving(true);
     let demoBatch: string | null = null;
     try {
+      if(demoMode&&!allowTestFill)throw new Error('Remplissage TEST indisponible dans cet environnement.');
       if (demoMode) demoBatch = await window.atoumweb.workflow.beginDemoCapture('client saisi manuellement');
       let organizationId: string | null = null;
       let contactId: string | null = null;
@@ -553,6 +574,11 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
       return;
     }
 
+    if(!editingContactId&&contactDraft.existingContactId&&contacts.some(link=>link.contactId===contactDraft.existingContactId)){
+      setContactError('Cette personne est déjà rattachée à ce client. Utilisez « Modifier la personne » dans sa fiche contact.');
+      return;
+    }
+
     const wasEditing = Boolean(editingContactId);
     setContactSaving(true);
     try {
@@ -599,25 +625,25 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
 
   return (
     <div className="crm-stack clients-v2">
-      <div className="module-toolbar client-toolbar">
-        <div><strong>{filtered.length}</strong><span> client{filtered.length > 1 ? 's' : ''}</span></div>
-        <div className="toolbar-controls">
+      <header className="module-toolbar client-toolbar"><div className="client-heading"><h1><OperationIcon name="users"/>Clients</h1>
+        <div className="client-list-count"><strong>{filtered.length}</strong><span> client{filtered.length > 1 ? 's' : ''}</span></div>          <button className="primary-button" type="button" onClick={() => showForm?clientCreateGuard.request(()=>setShowForm(false)):setShowForm(true)}>{showForm ? 'Fermer' : '+ Nouveau client'}</button>
+        </div><div className="toolbar-controls">
           <button className="secondary-button" type="button" disabled={loading} onClick={() => void refreshAll()}><OperationIcon name="refresh"/>{loading ? 'Actualisation…' : 'Actualiser'}</button>
           <input aria-label="Rechercher les clients" className="inline-search" placeholder="Rechercher un client…" value={query} onChange={(e) => setQuery(e.target.value)} />
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | ClientStatus)}>
+          <select aria-label="Filtrer les clients par statut" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | ClientStatus)}>
             <option value="all">Tous les statuts</option>
             <option value="active">Actifs</option>
             <option value="inactive">Anciens clients</option>
             <option value="archived">Archivés</option>
           </select>
-          <button className="primary-button" type="button" onClick={() => showForm?clientCreateGuard.request(()=>setShowForm(false)):setShowForm(true)}>{showForm ? 'Fermer' : '+ Nouveau client'}</button>
+<div className="client-table-tools" ref={setTableToolsHost}/>
         </div>
-      </div>
+      </header>
 
       {showForm && (
         <form className="panel crm-form" onSubmit={(event) => void submitClient(event)}>
           <div className="panel-title"><div><span className="eyebrow">Client</span><h2>Ajouter un client directement</h2></div></div>
-          <button className="secondary-button" type="button" onClick={() => { setDemoMode(true); setDraft({ company: 'DEMO — Atelier Mercure', firstName: 'Léa', lastName: 'Durand', email: 'lea@example.test', phone: '', website: 'atelier-mercure.example', notes: 'Dossier de démonstration.' }); setNeedsDraft([{ catalogItemId: 'atoumweb-ecommerce' }]); }}>Remplir avec des données test</button>
+          {allowTestFill&&<button className="secondary-button" type="button" onClick={() => { if(!allowTestFill)return;setDemoMode(true); setDraft({ company: 'DEMO — Atelier Mercure', firstName: 'Léa', lastName: 'Durand', email: 'lea@example.test', phone: '', website: 'atelier-mercure.example', notes: 'Dossier de démonstration.' }); setNeedsDraft([{ catalogItemId: 'atoumweb-ecommerce' }]); }}>Remplir avec des données test</button>}
           <button type="button" className="crm-logo-button" aria-label="Charger le logo du client" onClick={()=>void window.atoumweb.crm.identityAssets.chooseDraft().then(setClientDraftLogo).catch(e=>setFormError(String(e)))}>{clientDraftLogo?<img src={clientDraftLogo.preview} alt="Logo choisi" style={{width:72,height:72,objectFit:'contain'}}/>:<span className="status-pill">+ Logo</span>}</button>{clientDraftLogo&&<button type="button" className="secondary-button" onClick={()=>setClientDraftLogo(null)}>Retirer le logo choisi</button>}
           <fieldset disabled={saving}><div className="form-grid">
             <label><span className="field-label-with-help">Société <FieldHelp text="Nom de l’entreprise cliente. Laisse vide uniquement pour un client particulier." /></span><input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
@@ -627,7 +653,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
             <label><span className="field-label-with-help">Téléphone <FieldHelp text="Numéro principal du client ou de l’interlocuteur." /></span><input value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} /></label>
             <label><span className="field-label-with-help">Site web <FieldHelp text="Saisis simplement exemple.fr : https:// sera ajouté automatiquement. Tu peux saisir http:// explicitement si nécessaire." /></span><input inputMode="url" value={draft.website} onChange={(e) => setDraft({ ...draft, website: e.target.value })} placeholder="exemple.fr" /></label>
             <NeedChoices value={needsDraft} onChange={setNeedsDraft}/>
-            <label><span className="field-label-with-help">Notes <FieldHelp text="Information interne utile au démarrage du dossier client." /></span><input value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} /></label>
+            <label className="client-create-notes"><span className="field-label-with-help">Notes <FieldHelp text="Information interne utile au démarrage du dossier client." /></span><input value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} /></label>
           </div>
           </fieldset>
           {formError && <p className="form-error">{formError}</p>}
@@ -639,12 +665,12 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
       {loading && clients.length===0 ? <div className="panel"><p className="muted">Chargement des clients…</p></div> : (
         <div className={selected && !largeView ? 'clients-layout with-detail' : 'clients-layout'} style={clientSplitStyle}>
           <div className="panel table-panel">
-            <ConfiguredDataTable<ClientSummary> scope={CLIENT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} className="clients-table" rows={filtered} selectedId={selectedId} getId={c=>c.id} onSelect={c=>openClient(c.id)} rowAttributes={c=>({'data-client-id':c.id,className:'client-relationship-'+(c.relationshipStatus??'neutral')})} caption="Clients · source complète des résultats filtrés" columns={[
+            <ConfiguredDataTable<ClientSummary> controlsHost={tableToolsHost} compactHiddenColumnIds={selected&&!largeView?['coordinates']:[]} scope={CLIENT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} className="clients-table" rows={filtered} selectedId={selectedId} getId={c=>c.id} onSelect={c=>openClient(c.id)} rowAttributes={c=>({'data-client-id':c.id,className:'client-relationship-'+(c.relationshipStatus??'neutral')})} caption="Clients · source complète des résultats filtrés" columns={[
               {id:'identity',label:'Client',required:true,sortValue:c=>c.displayName,render:c=><div className="client-name-cell"><CrmIdentityAvatar organizationId={c.organizationId} contactId={c.primaryContactId} name={c.displayName}/><div><strong>{c.displayName}</strong><small>Client depuis {new Date(c.becameClientAt).toLocaleDateString('fr-FR')}</small></div></div>},
               {id:'status',label:'Statut',sortValue:c=>STATUS_LABELS[c.status??'active'],render:c=><span className={'client-status status-'+c.status}>{STATUS_LABELS[c.status??'active']}</span>},
               {id:'contact',label:'Contact principal',sortValue:c=>c.contactName??null,render:c=>c.contactName||'—'},
               {id:'coordinates',label:'Coordonnées',sortValue:c=>c.email||c.phone||null,render:c=><div className="contact-stack"><span>{c.email||'—'}</span><small>{c.phone||''}</small></div>},
-              {id:'nextAction',label:'Prochaine action',sortValue:c=>c.nextActionAt??null,render:c=>c.nextActionAt?<><strong>{c.nextActionText||'Action prévue'}</strong><small>{new Date(c.nextActionAt).toLocaleDateString('fr-FR')}</small></>:<span className="muted">Aucune</span>},
+              {id:'nextAction',label:'Prochaine action',sortValue:c=>c.nextActionAt??null,render:c=>c.nextActionAt?<><strong>{c.nextActionText||'Action prévue'}</strong><small>{new Date(c.nextActionAt).toLocaleDateString('fr-FR')}{isClientActionOverdue(c.nextActionAt)&&<span className="client-overdue-label"> · En retard</span>}</small></>:<span className="muted">Aucune</span>},
               {id:'open',label:'Ouvrir',required:true,render:c=><button className="link-button" type="button" aria-label={'Ouvrir '+c.displayName} title={'Ouvrir '+c.displayName} onClick={e=>{e.stopPropagation();openClient(c.id);}}><OperationIcon name="record-open"/></button>},
             ]}/>
 
@@ -653,30 +679,28 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
           {clientSplitter}
           {selected && (
             <aside key={selected.id} tabIndex={-1} data-search-entity-type="client" data-search-entity-id={selected.id} ref={sidePanelRef} className={`panel client-summary-panel client-relationship-${selected.relationshipStatus ?? 'neutral'} ${largeView ? 'client-large-view' : ''}`} role={largeView ? 'dialog' : undefined} aria-modal={largeView ? true : undefined} aria-label={largeView ? `Fiche client ${selected.displayName}` : undefined}>
-<CrmRecordLayout kind="client" full={largeView} identity={<>              <div className="detail-panel-heading">
+{!largeView&&<ClientQuickSummary selected={selected} quotes={quotes} projects={projects} detailLoading={detailLoading} sectionErrors={sectionErrors} onClose={closeClient} onExpand={()=>setLargeView(true)} onRelation={()=>{setLargeView(true);setRelationshipMenuOpen(true);}} onAction={()=>{setLargeView(true);setActiveTab('summary');openActionEditor(selected);}}/>}
+{largeView&&<header className="client-desk-heading"><div><OperationIcon name="users"/><h2>Fiche client</h2><span>{selected.displayName}</span></div><div><button className="secondary-button" type="button" onClick={()=>setLargeView(false)}><OperationIcon name="arrow-left"/>Retour à la liste</button><button className="secondary-button" type="button" aria-label="Fermer la fiche client" onClick={closeClient}><OperationIcon name="close"/></button></div></header>}
+<div className="client-detail-content"><CrmRecordLayout defaultRightWidth={260} defaultLeftWidth={320} kind="client" full={largeView} identity={<>              <div className="detail-panel-heading">
                 <div>
                   <div className="client-summary-head"><CrmIdentityAvatar organizationId={selected.organizationId} contactId={selected.primaryContactId} name={selected.displayName} size="large" /><div><h2>{selected.displayName}</h2><span className={`client-status status-${selected.status}`}>{STATUS_LABELS[selected.status ?? 'active']}</span></div></div>
                 </div>
                 <div className="detail-heading-actions"><div className="client-relationship-picker"><button className="secondary-button client-relationship-trigger" type="button" aria-expanded={relationshipMenuOpen} aria-haspopup="true" disabled={relationshipSaving} onClick={() => setRelationshipMenuOpen((value) => !value)}><span className="client-relationship-dot" />Relation client · {RELATION_LABELS[selected.relationshipStatus ?? 'neutral']}</button>{relationshipMenuOpen && <div className="client-relationship-menu" role="group" aria-label="Qualité de la relation client">{RELATION_OPTIONS.map((option) => <button key={option} type="button" className={`client-relationship-choice client-relationship-${option}`} aria-pressed={(selected.relationshipStatus ?? 'neutral') === option} onClick={() => void updateRelationship(selected, option)}><span className="client-relationship-dot" />{RELATION_LABELS[option]}</button>)}</div>}</div><button className="operation-detail-expand client-detail-expand" type="button" title={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} aria-label={largeView ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setLargeView((value) => !value)}><OperationIcon name={largeView ? 'record-reduce' : 'record-expand'} size={18} /></button><button className="close-detail" type="button" aria-label="Fermer la fiche client" title="Fermer la fiche client" onClick={closeClient}><OperationIcon name="close"/></button></div>
               </div>
-<div className="crm-record-properties"><strong>Coordonnées essentielles</strong>{selected.contactName&&<SummaryLine label="Contact" value={selected.contactName}/>} {selected.email&&<SummaryLine label="Email" value={selected.email}/>} {selected.phone&&<SummaryLine label="Téléphone" value={selected.phone}/>}<small>Client depuis {new Date(selected.becameClientAt).toLocaleDateString('fr-FR')}</small></div>
+<div className="crm-record-properties"><strong><OperationIcon name="contact"/>Coordonnées essentielles</strong>{!largeView&&<SummaryLine label="Prochaine action" value={selected.nextActionAt?`${selected.nextActionText||'Action'} · ${new Date(selected.nextActionAt).toLocaleDateString('fr-FR')}`:'Aucune action planifiée'}/>}{selected.contactName&&<SummaryLine label="Contact" value={selected.contactName}/>} {selected.email&&<SummaryLine label="Email" value={selected.email}/>} {selected.phone&&<SummaryLine label="Téléphone" value={selected.phone}/>}{identity?.organization?.city&&<SummaryLine label="Ville" value={[identity.organization.city,identity.organization.postalCode].filter(Boolean).join(' · ')}/>}<small>Client depuis {new Date(selected.becameClientAt).toLocaleDateString('fr-FR')}</small></div>
+ {(selected.phone||selected.email||!(largeView&&activeTab==='summary'))&&<div className="client-quick-actions"><h3><OperationIcon name="bolt"/>Actions rapides</h3><div>{selected.phone&&<a className="secondary-button" href={'tel:'+selected.phone}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M5 3h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4c0 2-2 2-3 2C9 20 4 15 3 6c0-1 0-3 2-3Z"/></svg>Appeler</a>}{selected.email&&<a className="secondary-button" href={'mailto:'+selected.email}><ClientDetailIcon kind="email"/>Envoyer un email</a>}<button hidden={largeView&&activeTab==='summary'} className="secondary-button" type="button" onClick={()=>{setActiveTab('summary');openActionEditor(selected);}}><OperationIcon name="calendar"/>Programmer une action</button></div></div>}
  <CrmIdentityAssetEditor organizationId={selected.organizationId} contactId={selected.primaryContactId} onMessage={onMessage}/>
-</>} context={<><h3>Dossiers associés</h3>
- {quotes.map(item=><button className="workflow-link" type="button" key={item.id} onClick={()=>openEntity({entityType:'quote',entityId:item.id,title:item.subject})}><OperationIcon name="file-text"/> {item.number} · {item.subject}</button>)}
- {projects.map(item=><button className="workflow-link" type="button" key={item.id} onClick={()=>openEntity({entityType:'project',entityId:item.id,title:item.name})}><OperationIcon name="folder"/> {item.name}</button>)}
- <button type="button" onClick={()=>setActiveTab('contracts')}>Contrats ({quotes.filter(q=>q.status==='accepted').length} devis acceptés)</button>
- <button type="button" onClick={()=>setActiveTab('operations')}>Interventions ({interventions.length})</button>
- <button type="button" onClick={()=>setActiveTab('documents')}>Documents du client</button>
- {!quotes.length&&!projects.length&&<p className="muted">Aucun devis ni projet rattaché.</p>}</>}>
+</>} context={<ClientAssociations activeTab={activeTab} clientId={selected.id} quotes={quotes} projects={projects} interventions={interventions} loading={detailLoading} errors={sectionErrors} documentsRevision={documentsRevision} onTab={setActiveTab} onMessage={onMessage}/>}>
+
               <div role="tablist" aria-label="Rubriques du client" className="client-tabs-preview client-tabs-buttons client-v2-tabs">
                 {CLIENT_TABS.map(([id,label])=><button key={id} id={'client-tab-'+id} role="tab" aria-selected={activeTab===id} aria-controls={'client-panel-'+id} tabIndex={activeTab===id?0:-1} type="button" onClick={event=>{setActiveTab(id);event.currentTarget.scrollIntoView({block:'nearest',inline:'nearest'});}} onKeyDown={event=>{const next=clientTabKey(id,event.key);if(next){event.preventDefault();setActiveTab(next);const target=document.getElementById('client-tab-'+next);target?.focus({preventScroll:true});target?.scrollIntoView({block:'nearest',inline:'nearest'});}}}><OperationIcon name={({summary:'user',contacts:'users',commercial:'file-text',contracts:'file-check',projects:'folder',operations:'wrench',documents:'inbox',history:'clock'} as const)[id]}/>{label}</button>)}
               </div>
               <div className="client-summary-scroll">
               {detailLoading&&<p role="status">Actualisation de la fiche…</p>}
-              {Object.entries(sectionErrors).map(([zone,error])=><p role="alert" key={zone}>Chargement incomplet — {zone} : {error} <button type="button" onClick={()=>void refreshSelectedClientData(selected.id)}>Réessayer</button></p>)}
+              {Object.entries(sectionErrors).filter(([zone])=>(zone!=='quotes'||activeTab!=='commercial')&&(zone!=='projects'||activeTab!=='projects')&&(zone!=='activity'||activeTab!=='history')).map(([zone,error])=><p role="alert" key={zone}>Chargement incomplet — {zone} : {error} <button type="button" onClick={()=>void refreshSelectedClientData(selected.id)}>Réessayer</button></p>)}
               <section hidden={activeTab!=='summary'} id="client-panel-summary" className="client-summary-overview" role="tabpanel" aria-labelledby="client-tab-summary">
                 <section className="client-primary-card client-summary-priority"><h3><OperationIcon name="clock"/> À traiter · Échéances</h3>
-                  {<CrmReconciliationPanel owner="client" id={selected.id}/>}<ClientActionsHistory key={selected.id} clientId={selected.id} onChanged={()=>void refresh()}/>{selected.nextActionAt && <SummaryLine label="Prochaine action" value={`${selected.nextActionText || 'Action'} · ${new Date(selected.nextActionAt).toLocaleDateString('fr-FR')}`} />}
+                  {<CrmReconciliationPanel owner="client" id={selected.id}/>}<details className="client-path-actions"><summary>Actions et échanges du parcours</summary><ClientActionsHistory key={selected.id} clientId={selected.id} onChanged={()=>void refresh()}/></details>{largeView&&isClientActionOverdue(selected.nextActionAt)&&<p className="client-expanded-overdue"><OperationIcon name="alert"/>En retard · action ouverte</p>}{selected.nextActionAt && <SummaryLine label="Prochaine action" value={`${selected.nextActionText || 'Action'} · ${new Date(selected.nextActionAt).toLocaleDateString('fr-FR')}`} />}
                   {interventions.filter(item=>!['completed','cancelled'].includes(item.status)).map(item=><button className="workflow-link" type="button" key={item.id} onClick={()=>setActiveTab('operations')}>Intervention {item.number} · {item.subject}</button>)}
                   {!detailLoading&&!sectionErrors.interventions&&!selected.nextActionAt&&!interventions.some(item=>!['completed','cancelled'].includes(item.status))&&<p className="muted">Aucune action ni intervention à suivre.</p>}
                   {actionEditor?.clientId === selected.id && (
@@ -694,18 +718,15 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
 
                   <div className="detail-actions"><button className="secondary-button" type="button" onClick={() => openActionEditor(selected)}>Programmer une action</button></div>
                 </section>
-                <section className="client-primary-card client-summary-commercial"><h3>Prestations et suivi commercial</h3><button className="secondary-button" type="button" onClick={()=>{if(relationEditor&&!relationGuard.request(()=>{}))return;setRelationEditor({value:selected.relationshipNote??'',expected:{status:selected.relationshipStatus??'neutral',note:selected.relationshipNote??null}});}}>Modifier la note de relation</button>{relationEditor&&<fieldset disabled={relationshipSaving}><label>Note de relation<textarea value={relationEditor.value} onChange={event=>setRelationEditor({...relationEditor,value:event.target.value})}/></label><button type="button" onClick={()=>relationGuard.request(()=>setRelationEditor(null))}>Annuler</button><button type="button" onClick={()=>void saveRelationNote()}>Enregistrer la note</button></fieldset>}{selected.relationshipNote&&<SummaryLine label="Note de relation" value={selected.relationshipNote}/>}
-                  {quotes.filter((item) => !['refused', 'expired'].includes(item.status)).map((item) => <button className="workflow-link" type="button" key={item.id} onClick={() => openEntity({ entityType: 'quote', entityId: item.id, title: item.subject })}>Devis {item.number} · {item.subject}</button>)}
-                  {projects.map((item) => <button className="workflow-link" type="button" key={item.id} onClick={() => openEntity({ entityType: 'project', entityId: item.id, title: item.name })}>Projet · {item.name}</button>)}
-                  {subscriptions.filter((item) => item.status === 'active').map((item) => <div className="client-related-item" key={item.id}>Maintenance active · {item.planName}</div>)}
-                  <div className="detail-actions"><button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: 'Devis' }))}>Ouvrir les devis</button><button className="secondary-button" type="button" onClick={() => setActiveTab('contracts')}>Voir les contrats</button><button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: 'Projets' }))}>Ouvrir les projets</button></div>
+                <section className="client-primary-card client-summary-commercial"><h3><OperationIcon name="layers"/>Prestations et suivi commercial</h3>
+                  <ClientCommercialSummary quotes={quotes} subscriptions={subscriptions} loading={detailLoading} errors={sectionErrors} onTab={setActiveTab}/>
                 </section>
-                <section className="client-primary-card client-summary-activity"><h3>Activité récente</h3>
+                <section className="client-primary-card client-summary-activity"><h3><ClientDetailIcon kind="history"/>Activité récente</h3>
                   {activity.slice(0,3).map(event=><div className="activity-item" key={event.id}><span className="activity-dot"/><div><p>{event.summary}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div></div>)}
                   {!detailLoading&&!activity.length&&!sectionErrors.activity&&<p className="muted">Aucune activité enregistrée.</p>}
                   <button type="button" className="link-button" onClick={()=>setActiveTab('history')}>Voir tout l’historique</button>
                 </section>
-                <details className="client-primary-card client-summary-coordinates"><summary>Coordonnées détaillées et édition</summary><div className="contact-tab-heading">{identity?.organization&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'organization',entityId:identity.organization!.id,title:identity.organization!.name})}>Ouvrir l’organisation dans l’Annuaire</button>}<button className="secondary-button" type="button" onClick={beginCoordinateEdit}>Modifier</button></div>
+                <details className="client-primary-card client-summary-coordinates"><summary><OperationIcon name="edit"/>Coordonnées détaillées et édition</summary><div className="contact-tab-heading">{identity?.organization&&<button className="secondary-button" type="button" onClick={()=>openEntity({entityType:'organization',entityId:identity.organization!.id,title:identity.organization!.name})}>Ouvrir l’organisation dans l’Annuaire</button>}<button className="secondary-button" type="button" onClick={beginCoordinateEdit}>Modifier</button></div>
                   {selected.contactName && <SummaryLine label="Contact principal" value={selected.contactName} />}
                   {selected.phone && <SummaryLine label="Téléphone" value={selected.phone} />}
                   {selected.email && <SummaryLine label="Email" value={selected.email} />}
@@ -716,7 +737,8 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
                   {editingCoordinates && <fieldset disabled={coordinatesSaving} className="contact-inline-form"><div className="contact-form-grid">{identity?.contact && <><label>Prénom<input value={coordinateDraft.firstName} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, firstName: event.target.value })} /></label><label>Nom<input value={coordinateDraft.lastName} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, lastName: event.target.value })} /></label></>}{identity?.organization && <><label>Site web<input inputMode="url" value={coordinateDraft.website} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, website: event.target.value })} placeholder="exemple.fr" /></label><label>Adresse<input value={coordinateDraft.addressLine1} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, addressLine1: event.target.value })} /></label><label>Complément<input value={coordinateDraft.addressLine2} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, addressLine2: event.target.value })} /></label><label>Code postal<input value={coordinateDraft.postalCode} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, postalCode: event.target.value })} /></label><label>Ville<input value={coordinateDraft.city} onChange={(event) => setCoordinateDraft({ ...coordinateDraft, city: event.target.value })} /></label></>}</div><div className="inline-editor-actions"><button className="secondary-button" type="button" onClick={() => coordinateGuard.request(()=>setEditingCoordinates(false))}>Annuler</button><button className="primary-button" type="button" disabled={coordinatesSaving||(!identity?.contact && !identity?.organization)} onClick={() => void saveCoordinates()}>Enregistrer</button></div></fieldset>}
                 </details>
               </section>
-              <section hidden={activeTab!=='summary'} className="client-summary-management"><details open={archiveCandidateId===selected.id || undefined}><summary>Gestion de la relation client</summary>
+              <section hidden={activeTab!=='summary'} className="client-summary-management"><details open={archiveCandidateId===selected.id || undefined}><summary><OperationIcon name="users"/>Gestion de la relation client</summary>
+<button className="secondary-button" type="button" onClick={()=>{if(relationEditor&&!relationGuard.request(()=>{}))return;setRelationEditor({value:selected.relationshipNote??'',expected:{status:selected.relationshipStatus??'neutral',note:selected.relationshipNote??null}});}}>Modifier la note de relation</button>{relationEditor&&<fieldset className="client-relation-editor" disabled={relationshipSaving}><label>Note de relation<textarea value={relationEditor.value} onChange={event=>setRelationEditor({...relationEditor,value:event.target.value})}/></label><button className="secondary-button" type="button" onClick={()=>relationGuard.request(()=>setRelationEditor(null))}>Annuler</button><button className="primary-button" type="button" onClick={()=>void saveRelationNote()}>Enregistrer la note</button></fieldset>}{selected.relationshipNote&&<SummaryLine label="Note de relation" value={selected.relationshipNote}/>}
                   <div className="client-status-control">
                     <label>Statut du client
                       <select value={selected.status} onChange={(event) => void updateStatus(selected, event.target.value as ClientStatus)}>
@@ -742,12 +764,12 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
               </details></section>
 
               <section hidden={activeTab!=='contacts'} id="client-panel-contacts" role="tabpanel" aria-labelledby="client-tab-contacts"><div className="tab-content-stack">
-                  <div className="contact-tab-heading"><strong>{contacts.length} contact{contacts.length > 1 ? 's' : ''}</strong><button className="secondary-button compact-button" type="button" onClick={() => {if(showContactForm){contactGuard.request(()=>setShowContactForm(false));return;}setEditingContactId(null);setContactDraft(EMPTY_CONTACT_DRAFT);setShowContactForm(true);}}>{showContactForm ? 'Fermer' : '+ Ajouter'}</button></div>
+                  <div className="contact-tab-heading client-contacts-heading"><div><h3><OperationIcon name="users"/>Contacts du client <span>{contacts.length}</span></h3><p>Personnes liées à {selected.displayName}</p></div><button className="primary-button compact-button" type="button" onClick={() => {if(showContactForm){contactGuard.request(()=>setShowContactForm(false));return;}setEditingContactId(null);setContactDraft(EMPTY_CONTACT_DRAFT);setShowContactForm(true);}}>{showContactForm ? 'Fermer le formulaire' : '+ Ajouter un contact'}</button></div>
 
                   {showContactForm && (
                     <form className="contact-inline-form" onSubmit={(event) => void submitContact(event)}><fieldset disabled={contactSaving}>
                       <div className="contact-form-grid">
-                        {!editingContactId&&<label>Réutiliser un contact existant<select value={contactDraft.existingContactId??''} onChange={e=>setContactDraft({...contactDraft,existingContactId:e.target.value})}><option value="">Créer une nouvelle personne</option>{availableContacts.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName} · {c.organizationName||'Sans entreprise'}</option>)}</select></label>}
+                        {!editingContactId&&<label className="contact-source-choice">Créer ou rattacher une personne<select value={contactDraft.existingContactId??''} onChange={e=>setContactDraft({...contactDraft,existingContactId:e.target.value})}><option value="">Créer une nouvelle personne</option><optgroup label="Rattacher une personne de l’Annuaire">{availableContacts.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName} · {c.organizationName||'Sans entreprise'}</option>)}</optgroup></select><small>{contactDraft.existingContactId?(contacts.some(link=>link.contactId===contactDraft.existingContactId)?'Cette personne est déjà rattachée. Utilisez « Modifier la personne » dans sa fiche contact.':'Cette personne de l’Annuaire sera rattachée sans être recréée.'):'Cette personne sera créée dans l’Annuaire puis rattachée à ce client.'}</small></label>}
                         {!contactDraft.existingContactId&&<><label>Prénom<input value={contactDraft.firstName} onChange={(e) => setContactDraft({ ...contactDraft, firstName: e.target.value })} /></label>
                         <label>Nom<input value={contactDraft.lastName} onChange={(e) => setContactDraft({ ...contactDraft, lastName: e.target.value })} /></label>
                         <label>Fonction<input value={contactDraft.jobTitle} onChange={(e) => setContactDraft({ ...contactDraft, jobTitle: e.target.value })} /></label>
@@ -756,7 +778,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
                       </div>
                       <label className="primary-check"><input type="checkbox" checked={contactDraft.makePrimary} onChange={(e) => setContactDraft({ ...contactDraft, makePrimary: e.target.checked })} /> Définir comme contact principal</label>
                       {contactError && <p className="form-error">{contactError}</p>}
-                      <div className="form-actions"><button className="primary-button compact-button" disabled={contactSaving} type="submit">{contactSaving ? 'Enregistrement…' : editingContactId ? 'Enregistrer le contact' : 'Ajouter le contact'}</button></div></fieldset>
+                      <div className="form-actions"><button className="secondary-button" type="button" disabled={contactSaving} onClick={()=>contactGuard.request(()=>setShowContactForm(false))}>Annuler</button><button className="primary-button compact-button" disabled={contactSaving} type="submit">{contactSaving ? 'Enregistrement…' : editingContactId ? 'Enregistrer la personne' : contactDraft.existingContactId ? 'Rattacher la personne' : 'Créer et rattacher'}</button></div></fieldset>
                     </form>
                   )}
 
@@ -766,34 +788,33 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
                         <CrmIdentityAvatar contactId={link.contactId} name={`${link.contact.firstName} ${link.contact.lastName}`} />
                         <div className="contact-card-main">
                           <strong>{link.contact.firstName} {link.contact.lastName}</strong>
-                          <span>{ROLE_LABELS[link.role]}{link.isPrimary ? ' · Principal' : ''}</span>
+                          <div className="client-contact-badges">{!(link.role==='primary'&&link.isPrimary)&&<span>{ROLE_LABELS[link.role]}</span>}{link.isPrimary&&<span className="client-contact-primary">Contact principal</span>}</div>
                           {link.contact.jobTitle && <small>{link.contact.jobTitle}</small>}
-                          <small>{link.contact.email || 'Email non renseigné'}{link.contact.phone ? ` · ${link.contact.phone}` : ''}</small>
+
                         </div>
-                        <button className="link-button" type="button" onClick={()=>openEntity({entityType:'contact',entityId:link.contactId,title:link.contact.firstName+' '+link.contact.lastName})}>Ouvrir dans l’Annuaire</button><button className="link-button" type="button" onClick={() => { if(!requestUnsavedExit(()=>{}))return;contactBaseline.current=structuredClone(link.contact);setEditingContactId(link.contactId); setContactDraft({ firstName: link.contact.firstName, lastName: link.contact.lastName, jobTitle: link.contact.jobTitle ?? '', email: link.contact.email ?? '', phone: link.contact.phone ?? '', role: link.role, makePrimary: link.isPrimary }); setShowContactForm(true); }}>Modifier</button>
-                        {!link.isPrimary && <button className="link-button" type="button" onClick={() => void makePrimary(link)}>Définir principal</button>}
-                        <ContactMethodsPanel contactId={link.contactId} allowOrganization={false} summaryLabel="Téléphone et email" contactLabel={`${link.contact.firstName} ${link.contact.lastName}`} />
+                        <div className="client-contact-actions"><button className="link-button" type="button" onClick={() => { if(!requestUnsavedExit(()=>{}))return;contactBaseline.current=structuredClone(link.contact);setEditingContactId(link.contactId); setContactDraft({ firstName: link.contact.firstName, lastName: link.contact.lastName, jobTitle: link.contact.jobTitle ?? '', email: link.contact.email ?? '', phone: link.contact.phone ?? '', role: link.role, makePrimary: link.isPrimary }); setShowContactForm(true); }}><OperationIcon name="edit"/>Modifier la personne</button>
+                        <button className="link-button" type="button" onClick={()=>openEntity({entityType:'contact',entityId:link.contactId,title:link.contact.firstName+' '+link.contact.lastName})}><OperationIcon name="external-link"/>Voir dans l’Annuaire</button></div>{!link.isPrimary && <button className="link-button" type="button" onClick={() => void makePrimary(link)}>Définir principal</button>}
+                        <div className="client-contact-coordinates"><div><ClientDetailIcon kind="email"/><div><span>Email</span>{link.contact.email?<a href={'mailto:'+link.contact.email}>{link.contact.email}</a>:<small>Non renseigné</small>}</div></div><div><ClientDetailIcon kind="phone"/><div><span>Téléphone</span>{link.contact.phone?<a href={'tel:'+link.contact.phone}>{link.contact.phone}</a>:<small>Non renseigné</small>}</div></div></div>
+                        <ContactMethodsPanel contactId={link.contactId} allowOrganization={false} summaryLabel="Coordonnées supplémentaires, usages et moyens préférés" contactLabel={`${link.contact.firstName} ${link.contact.lastName}`} />
                       </div>
                     ))}
-                    {contacts.length === 0 && <p className="muted">Aucun contact rattaché à ce client.</p>}
+                    {contacts.length === 0 && <p className="muted">Aucun contact rattaché à ce client. Ajoute une personne ou réutilise une fiche de l’Annuaire.</p>}
                   </div>
+                  <aside className="client-contacts-help"><OperationIcon name="users"/><div><strong>À propos des contacts</strong><p>Rattache une personne de l’Annuaire ou crée une nouvelle personne. Le contact principal est l’interlocuteur de référence du client ; ses moyens préférés se gèrent séparément.</p></div></aside>
                 </div></section>
 
               <section hidden={activeTab!=='commercial'} id="client-panel-commercial" role="tabpanel" aria-labelledby="client-tab-commercial">
-                <h3>Commercial</h3><p className="muted">Seuls les devis acceptés représentent des prestations vendues. Les refus et négociations restent consultables.</p>
-                {quotes.map(item=><div className="workflow-row" key={item.id}><div><strong>{item.number} · {item.subject}</strong><small>{item.status} · {item.abbyReference||'Référence Abby non renseignée'}</small></div><button type="button" className="secondary-button" onClick={()=>openEntity({entityType:'quote',entityId:item.id,title:item.subject})}>Ouvrir le devis</button></div>)}
-                {!quotes.length&&!sectionErrors.quotes&&<p>Aucun devis rattaché.</p>}
+                <ClientCommercialTab quotes={quotes} loading={detailLoading} error={sectionErrors.quotes} onRetry={()=>{void refreshSelectedClientData(selected.id);}}/>
               </section>
-              <section hidden={activeTab!=='contracts'} id="client-panel-contracts" role="tabpanel" aria-labelledby="client-tab-contracts"><ClientContractsPanel quotes={quotes} onMessage={onMessage}/></section>
+              <section hidden={activeTab!=='contracts'} id="client-panel-contracts" role="tabpanel" aria-labelledby="client-tab-contracts"><ClientContractsPanel clientId={selected.id} quotes={quotes} active={activeTab==='contracts'} quoteError={sectionErrors.quotes} onMessage={onMessage}/></section>
               <section hidden={activeTab!=='projects'} id="client-panel-projects" role="tabpanel" aria-labelledby="client-tab-projects">
-                <h3>Projets</h3>{projects.map(item=><div className="workflow-row" key={item.id}><div><strong>{item.name}</strong><small>{item.archivedAt?'Archivé · ':''}{item.commercialState==='provisional'?'Prévisionnel':item.commercialState==='frozen'?'Confirmé':'Projet existant'} · {item.status} · {item.progressPercent}%</small></div><button type="button" className="secondary-button" onClick={()=>openEntity({entityType:'project',entityId:item.id,title:item.name})}>Ouvrir le projet</button>{item.sourceQuoteId&&<button type="button" className="link-button" onClick={()=>openEntity({entityType:'quote',entityId:item.sourceQuoteId!,title:item.name})}>Devis source</button>}</div>)}
-                {!projects.length&&!sectionErrors.projects&&<p>Aucun projet rattaché.</p>}
+                <ClientProjectsTab key={selected.id} projects={projects} quotes={quotes} loading={detailLoading} error={sectionErrors.projects} onRetry={()=>{void refreshSelectedClientData(selected.id);}}/>
               </section>
               <section hidden={activeTab!=='operations'} id="client-panel-operations" role="tabpanel" aria-labelledby="client-tab-operations"><ClientOperationsTab clientId={selected.id} onMessage={onMessage}/></section>
-              <section hidden={activeTab!=='documents'} id="client-panel-documents" role="tabpanel" aria-labelledby="client-tab-documents"><ClientDocumentsPanel clientId={selected.id}/></section>
-              <section hidden={activeTab!=='history'} id="client-panel-history" role="tabpanel" aria-labelledby="client-tab-history"><ActivityList activity={activity}/></section>
+              <section hidden={activeTab!=='documents'} id="client-panel-documents" role="tabpanel" aria-labelledby="client-tab-documents"><ClientDocumentsPanel clientId={selected.id} onChanged={()=>setDocumentsRevision(n=>n+1)}/></section>
+              <section hidden={activeTab!=='history'} id="client-panel-history" role="tabpanel" aria-labelledby="client-tab-history"><ClientHistoryTab key={selected.id} clientId={selected.id} activity={activity} loading={detailLoading} error={sectionErrors.activity} onRetry={()=>{void refreshSelectedClientData(selected.id);}}/></section>
               </div>
-</CrmRecordLayout>
+</CrmRecordLayout></div>
             </aside>
           )}
         </div>
@@ -803,20 +824,8 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
 }
 
 function SummaryLine({ label, value }: { label: string; value: string }) {
-  return <div className="summary-line"><span>{label}</span><strong>{value}</strong></div>;
-}
-
-function ActivityList({ activity }: { activity: ActivityEvent[] }) {
-  return (
-    <div className="activity-preview activity-full">
-      <strong>Historique du client</strong>
-      {activity.map((event) => (
-        <div className="activity-item" key={event.id}>
-          <span className="activity-dot" />
-          <div><p>{event.summary}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div>
-        </div>
-      ))}
-      {activity.length === 0 && <p className="muted">Aucune activité enregistrée.</p>}
-    </div>
-  );
+  const icons={Contact:'user','Contact principal':'user','Prochaine action':'calendar','Note de relation':'users'} as const;
+  const icon=icons[label as keyof typeof icons];
+  const kind=label==='Téléphone'?'phone':label==='Email'?'email':label==='Ville'?'city':null;
+  return <div className="summary-line"><span>{kind?<ClientDetailIcon kind={kind}/>:icon?<OperationIcon name={icon}/>:null} {label}</span><strong>{value}</strong></div>;
 }

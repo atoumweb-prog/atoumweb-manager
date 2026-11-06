@@ -1,3 +1,4 @@
+import {createPortal} from 'react-dom';
 import {useEffect,useRef,useState} from 'react';
 import type {VisualPreferenceStore} from '../../shared/panelLayout';
 import {nextTableSort,sortTableRows,normalizeTableColumns} from '../../shared/tablePresentation';
@@ -9,7 +10,8 @@ import {SavedViewPicker} from './SavedViewPicker';
 import {OperationIcon} from '../operations/OperationIcon';
 
 /** Ports the tested 01D controls to real lists. No entities or selection in storage. */
-export function ConfiguredDataTable<T>({scope,columns,rows,selectedId,getId,onSelect,store,caption,className,rowAttributes,fitAvailable=true,defaultVisibleColumnIds}:{
+export function ConfiguredDataTable<T>({scope,columns,rows,selectedId,getId,onSelect,store,caption,className,rowAttributes,fitAvailable=true,defaultVisibleColumnIds,controlsHost,compactHiddenColumnIds=[]}:{
+ controlsHost?:HTMLElement|null;compactHiddenColumnIds?:readonly string[];
  defaultVisibleColumnIds?:readonly string[];fitAvailable?:boolean;scope:string;columns:readonly TableColumn<T>[];rows:readonly T[];selectedId:string|null;
  getId:(row:T)=>string;onSelect?:(row:T)=>void;store:VisualPreferenceStore;caption:string;className?:string;
  rowAttributes?:(row:T)=>{className?:string;[key:`data-${string}`]:string|undefined};
@@ -42,13 +44,14 @@ export function ConfiguredDataTable<T>({scope,columns,rows,selectedId,getId,onSe
  }
  const ordered=options.columnOrder.map(id=>columns.find(c=>c.id===id)).filter((c):c is TableColumn<T>=>!!c);
  const visible=normalizeTableColumns(options.visibleColumnIds,schema);
- return <section className="aw-configured-table" data-table-scope={scope}>
-  <details className="aw-table-preferences"><summary><OperationIcon name="columns"/> Colonnes et vues <span>{views.find(view=>view.id===viewId)?.name||'Vue standard'} · {rows.length} résultats</span></summary>
+ const controls=(<details className="aw-table-preferences"><summary><OperationIcon name="columns"/> Colonnes et vues <span>{views.find(view=>view.id===viewId)?.name||'Vue standard'} · {rows.length} résultats</span></summary>
    {defaultVisibleColumnIds&&<p className="muted">Les changements sont enregistrés automatiquement dans la vue active. Dupliquer la vue permet de l’enregistrer sous un autre nom ; Rétablir retrouve la présentation compacte.</p>}
    <TableColumnManager columns={ordered} visible={visible} onToggle={id=>update({...latest.current,visibleColumnIds:visible.includes(id)?visible.filter(c=>c!==id):[...visible,id]})} onMove={(id,target)=>update({...latest.current,columnOrder:moveColumn(latest.current.columnOrder,id,target,schema)})} onReset={()=>update({...latest.current,visibleColumnIds:initialView().visibleColumnIds,columnOrder:schema.map(c=>c.id),widths:{}})}/>
    <SavedViewPicker views={views} selected={viewId} onSelect={choose} onCreate={(name,duplicate)=>edit(duplicate?'duplicate':'create',name)} onRename={name=>edit('rename',name)} onDelete={()=>edit('delete')} onReset={()=>{try{const next=initialView();writeTableView(store,key,next,schema);setViewId('standard');apply(next);setError('');}catch{setError('Réinitialisation non mémorisée ; fiche conservée.');}}}/>
-  </details>
+  </details>);
+ return <section className="aw-configured-table" data-table-scope={scope}>
+  {controlsHost?createPortal(controls,controlsHost):controls}
   {error&&<p role="alert">{error}</p>}
-  <DataTable fitAvailable={fitAvailable} className={className} rowAttributes={rowAttributes} rows={sortTableRows(rows,columns,options.sort,getId)} columns={ordered.filter(c=>visible.includes(c.id))} selectedId={selectedId} getId={getId} onRowActivate={onSelect} sort={options.sort} onSort={id=>update({...latest.current,sort:nextTableSort(latest.current.sort,id)})} widths={options.widths} onWidth={(id,width)=>update({...latest.current,widths:{...latest.current.widths,[id]:width}})} caption={caption} preferenceScope={scope+':'+viewId}/>
+  <DataTable fitAvailable={fitAvailable} className={className} rowAttributes={rowAttributes} rows={sortTableRows(rows,columns,options.sort,getId)} columns={ordered.filter(c=>visible.includes(c.id)&&!(viewId==='standard'&&store.getItem(key)===null&&compactHiddenColumnIds.includes(c.id)))} selectedId={selectedId} getId={getId} onRowActivate={onSelect} sort={options.sort} onSort={id=>update({...latest.current,sort:nextTableSort(latest.current.sort,id)})} widths={options.widths} onWidth={(id,width)=>update({...latest.current,widths:{...latest.current.widths,[id]:width}})} caption={caption} preferenceScope={scope+':'+viewId}/>
  </section>;
 }

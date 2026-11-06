@@ -1,5 +1,555 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 06/11/2026 — Clôture officielle Clients UX/UI V2 et passation
+
+**Clients V2 — Refonte ergonomique validée le 06/11/2026.** Validation officielle Carlos après revue des24 captures et des3 correctifs : liste, fiche rapide, fiche agrandie, huit onglets et formulaires acceptés visuellement. Aucune nouvelle correction ergonomique demandée. Derniers intitulés, aperçus sans répétition, aides Contacts, anti-double rattachement, garde TEST et largeur Notes validés.
+
+- [x] Clôture ergonomique seulement ; aucune certification de tous les parcours fonctionnels ou de l’ensemble du CRM.
+- [x] Registre CLIENT-01 à CLIENT-18 conservé ; état actuel ci-dessous, historique et réserves non supprimés. Dialogues Windows, protections documentaires en conditions réelles et périodes de maintenance demeurent à vérifier.
+- [x] Passation préparée : docs/ux-v2/REPRISE-APRES-CLIENTS-V2-2026-11-06.md, décisions, fonctionnalités, registre, inventaire exact des sources, worktrees et prochaine page Offres & Tarifs. Aucun développement de cette page commencé.
+- [x] Autorisation explicite reçue pour un commit intitulé feat(clients): finaliser la refonte UX/UI Clients V2 et push normal sur origin de codex/client-v2-ab-20261104 uniquement. Base contrôlée9ca5a7edf10f50b3a688e11f76e0c929b6bc82b1 ; branche distante absente avant publication. Pas de PR, fusion main ni opération sur un autre worktree. Le résultat et le SHA exact de cette opération sont à vérifier après exécution puis à fournir dans le rapport final ; cette entrée ne prétend pas qu’un push non exécuté est réalisé.
+- [x] Résultats techniques existants réutilisés : dernier typecheck,4 tests politique TEST,24 contrôles Electron ciblés ; précédents41 contrôles ergonomiques,12 tests de disposition et7 tests documentaires conservés. Aucun nouvel audit/test/capture. Espaces/lignes blanches superflus retirés pour git diff --check, aucun comportement modifié.
+
+### Registre courant après validation officielle
+
+| Point | État au 06/11/2026 et suite conservée |
+|---|---|
+| CLIENT-01 | Badges Principal dédupliqués, présentation validée ; rôle et contact principal restent distincts, aucune règle de service réécrite. |
+| CLIENT-02 | Accès unique aux coordonnées avancées réalisé et validé, éditeur et protections conservés. |
+| CLIENT-03 | Ouvert : création d’un devis depuis Client avec rattachement fiable à étudier dans Devis. |
+| CLIENT-04 | Ouvert : définitions métier de À traiter et Clôturés à arbitrer, aucune classification arbitraire ajoutée. |
+| CLIENT-05 | Finition du Résumé réalisée et validée : synthèse commerciale sourcée, note dans Gestion de la relation, rubrique vide masquée et raccourci Projets hors maintenances. Aucun nouvel agrégat financier. |
+| CLIENT-06 | Partiel : projection consultative conservée, catégorie Devis acceptés clarifiée ; consolidation engagements/ventes/services et périodes réelles reste ouverte. |
+| CLIENT-07 | Ouvert : renouvellement, accord exprès, préavis, résiliation et échéances contractuelles à concevoir/arbitrer. Aucun jalon de livraison assimilé à une échéance. |
+| CLIENT-08 | Partiel : montants sourcés et unités connues affichés ; agrégation initial/récurrent et multi-périodes toujours reportée. |
+| CLIENT-09 | Partiel : besoins existants consultables ; opportunités et ajout de propositions complémentaires à concevoir, aucune vente déduite. |
+| CLIENT-10 | Consultation et présentation validées : devis accepté, attestation, document et signature distingués ; réserves natives documentaires CLIENT-16 maintenues. |
+| CLIENT-11 | Partiel : lignes acceptées sans suivi et états terminés/archivés issus des sources visibles ; consolidation de l’historique des arrêts et motifs non fournis toujours ouverte. |
+| CLIENT-12 | Présentation réalisée et validée : Associations contextuelles, repli manuel prioritaire, aperçu Devis non acceptés sans répéter les acceptés ; totaux et accès complets conservés. |
+| CLIENT-13 | Sélecteur Projets unique réalisé et validé ; tous les états et archives accessibles, progression inchangée. |
+| CLIENT-14 | Documents refondu et validé graphiquement ; fonctionnalités et réserves CLIENT-16 conservées. |
+| CLIENT-15 | Éditeur documentaire V2 réalisé et validé graphiquement ; brouillons/tests TEMP vérifiés, réserves de recette native CLIENT-16 conservées. |
+| CLIENT-16 | Partiel : disponibilité, intégrité et protections testées en service/TEMP ; dialogues Windows, ouverture fichier/dossier réelle et conditions natives restent à vérifier. |
+| CLIENT-17 | Largeurs, lisibilité et défilement réalisés et validés : minima d’affichage300/240px, centre640px avant compact, préférences non écrasées, redimensionnement conservé. |
+| CLIENT-18 | Ouvert : étude distincte de l’agrégation des journaux métier activity_log, rattachements, doublons, conservation et liens ; aucune agrégation ajoutée. |
+
+Prochaine action de cette session : sécuriser les seules sources Clients V2 et cette documentation dans la branche dédiée, pousser sans force et vérifier le SHA distant. Les captures, ZIP, SQLite, profils, secrets et artefacts locaux restent hors dépôt. Ensuite terminer la session ; prochaine conversation Offres & Tarifs selon inventaire → capture → maquette → validation → développement, sans modifier les prix ni l’historique.
+
+## 06/11/2026 — Dernières corrections après revue des24 captures
+
+La présentation générale et les corrections précédentes du Résumé sont jugées satisfaisantes/validées visuellement par Carlos dans sa nouvelle consigne. Dernière passe ciblée autorisée ; validation ergonomique finale encore attendue, aucune nouvelle conception ni fonctionnalité métier.
+
+- [x] Fiche rapide : « Devis et projets liés » remplace « Prestations liées », sans toucher aux données/rattachements ni suggérer qu’un brouillon est vendu.
+- [x] Associations : compteur Devis conservé sur le même total dédupliqué ; aperçu affiche les non-acceptés, les acceptés restent dans Devis acceptés avec leur compteur inchangé. État d’aperçu explicite si seuls des acceptés existent ; Voir tous les devis conserve l’accès central. Repli manuel et dossier exact vérifiés.
+- [x] Contact : aide adaptée aux modes créer/rattacher. Service existant idempotent pour même personne/même rôle vérifié, mais rôle différent peut former un second lien. Garde local du formulaire Client ajouté pour une personne déjà rattachée : message compréhensible vers Modifier la personne, aucune sauvegarde ni perte du brouillon. Service Annuaire, modèle multi-rôles et protections existantes inchangés.
+- [x] Remplissage TEST : absence de garde réellement constatée. Capability bootstrap calculée côté principal par clientTestFillPolicy : uniquement Electron non empaqueté sur workspace exact Validation-MSI ; refus par défaut ailleurs, même si URL recette ou dossier TEST. Bouton masqué, handler et soumission protégés. Aucun garde fondé uniquement sur une chaîne fournie par le renderer.
+- [x] Notes de création : largeur de grille complète via CSS local ; aucun champ ni règle d’enregistrement remplacé.
+- [x] Typecheck réussi.4 tests ciblés de politique TEST réussis.24 contrôles Electron ciblés réussis (3 Flowers+21 Horizon) : compteurs/aperçus simples et mixtes, repli, liste complète et identifiant exact, modes de formulaire, doublon refusé, rattachement valide conservé et absence du bouton TEST en contexte non autorisé. Écritures exclusivement TEMP. Première erreur de banc : huit onglets contrôlés après navigation réelle Devis ; ordre de l’assertion corrigé, pas de changement applicatif pour ce défaut du banc.
+- [x] Trois PNG originaux Electron1920×1080 zoom100%,Noir/Confort inspectés : outputs/ClientsV2-Corrections-finales-1793932749258 (index.html,01-fiche-rapide.png,02-associations-sans-doublon.png,03-creation-contact-aide.png,RECAPITULATIF.md). Flowers existant en lecture seule et SHA inchangé ; Horizon est la recette TEST du dépôt rejouée strictement en TEMP. Les créations supplémentaires des tests de mélange/rattachement interviennent après les captures, uniquement en TEMP nettoyé. Galerie24 précédente non remplacée.
+- [ ] Validation ergonomique finale Carlos sur ces trois ajustements.
+
+Registre CLIENT-01 à CLIENT-18 et statuts/reportages antérieurs intégralement conservés ; aucune évolution métier reportée close. Contrôles restant sur périodes de maintenance, alerte packs et fichiers/dialogues natifs maintenus. Autres travaux Client et Sites & Pages préservés. Aucun changement de base utilisateur, migration, reset/clean/stash/rebase, commit/push/PR/fusion.
+
+## 06/11/2026 — Finitions restantes et galerie complète Clients V2
+
+- [x] Consigne jointe « Finitions restantes et galerie visuelle complète » appliquée dans le worktree UX Client existant. Corrections antérieures vérifiées, non reconstruites : badges Principal dédupliqués, accès aux coordonnées avancées, synthèse commerciale, Associations contextuelles/manuelles et Devis acceptés, sélecteur Projets unique, éditeur documentaire protégé, minima Identité et préférences non réécrites.
+- [x] Résumé A/B/C : rubrique Actions rapides masquée seulement si réellement vide ; Programmer une action reste au centre du Résumé et à gauche dans les autres onglets. Note de relation déplacée dans Gestion de la relation client avec le même éditeur, handlers et garde ; présentation des champs/boutons harmonisée. Raccourci Projets retiré du bloc commercial sous Maintenances actives ; onglet et Associations conservent les dossiers exacts. Aucun compteur, calcul ou service changé.
+- [x] Deux défauts mineurs constatés sur les vrais formulaires corrigés localement : bordure native de création et alignement Logo ; marges/grille de l’éditeur des coordonnées avancées. Aucun champ, validation, règle de sauvegarde ou parcours remplacé.
+- [x] Galerie de 24 PNG originaux Electron Windows,1920×1080,zoom100%,Noir/Confort : liste/rapide riche et sans coordonnées, création haut/bas, modification Client, huit onglets, bas du Résumé/Contrats et preuves, maintenance, création/rattachement Contact, coordonnées avancées, personne, éditeur documentaire et note de relation. Chaque image inspectée et fixture explicitée ; aucun ancien dossier de captures remplacé.
+- [x] Sources : Atelier des Fleurs et les deux clients RGPD/historique sur bases de recette existantes en lecture seule, sans initialize/migration ; SHA SQLite inchangés avant/après. Atelier Horizon réinstancie strictement la recette TEST existante client-contracts-scenarios.cjs dans une base TEMP ensuite nettoyée, sans enrichissement pour la galerie. Aucun formulaire de galerie enregistré. Les horodatages générés par cette recette ne sont pas présentés comme des données de la base utilisateur.
+- [x] Typecheck réussi ; recette Electron ergonomique ciblée41 contrôles réussis. Assertions des corrections A/B/C, résolution/zoom, onglets actifs et absence d’erreur renderer réussies pendant les captures. Le refus d’ouverture SHA-256 du fichier TEMP altéré est attendu ; handoff shell/dialogues interceptés, pas une recette native complète.
+- [x] Livraison : outputs/ClientsV2-Revue-2026-11-06-1793928812746/index.html ; PNG originaux, RECAPITULATIF.md et manifest.json par image. ZIP frère ClientsV2-Revue-2026-11-06-1793928812746.zip, intégrité CRC et présence des24 PNG vérifiées.
+- [ ] Validation visuelle globale Carlos via cette galerie. Aucun rendu déclaré validé à sa place.
+
+Registre CLIENT-01 à CLIENT-18 conservé intégralement avec les décisions et réserves précédentes. CLIENT-05 reçoit seulement ces trois corrections de présentation ; aucun chantier métier reporté clos. Périodes réelles de maintenance, alerte d’expiration des packs à étudier, CLIENT-16 et les réserves natives restent ouverts. Aucune migration ni modification métier, aucun commit/push/PR/fusion. Sites & Pages et tous les fichiers locaux hors périmètre préservés.
+
+## 06/11/2026 — Passe de finition ergonomique autorisée, en attente de revue humaine
+
+Consigne jointe Dernière passe de corrections ergonomiques lue. Aucune nouvelle refonte métier, migration, prix/clause ou journal modifié. Le plan de clôture précédent est historique ; seules les corrections explicitement autorisées ci-dessous ont été développées. Aucun point reporté supprimé ni abandonné.
+
+- [x] CLIENT-01/02 : badge principal équivalent dédupliqué, autres rôles/incohérences conservés ; un seul accès natif de type summary au ContactMethodsPanel existant, clavier vérifié. Aucun changement ClientContactService ou des données Contacts.
+- [x] CLIENT-05 : ClientCommercialSummary présente les situations fiables séparément sans recopier les listes du panneau droit : propositions en préparation/envoyées/consultées, nombre de devis acceptés clairement nommé (pas un compteur de prestations vendues), maintenances actives, accès aux onglets du bon Client. Suppression des boutons Tous les devis/Tous les projets qui ouvraient des listes globales ; accès aux dossiers conservés dans les onglets et Associations. Ni moteur métier ni total financier ajouté ; note de relation et son brouillon inchangés.
+- [x] CLIENT-06/12 : catégorie droite Devis acceptés, source actuelle et identifiants exacts inchangés ; repli initial de la catégorie centrale active, manipulation manuelle prioritaire et conservée lors des relectures. Projection Contrats non modifiée.
+- [x] CLIENT-13 : sélecteur unique, tous états et archives accessibles, état entre onglets conservé ; progression inchangée.
+- [x] CLIENT-17 : adaptation pure d’affichage à la largeur utile, minima Identité300px/Associations240px, centre640px réservé avant passage compact. Valeurs enregistrées conservées ; seul geste explicite souris/clavier écrit une nouvelle préférence. Prospect conserve son comportement et ses bornes par défaut. Défilement : défaut réel du Résumé long corrigé en généralisant au cadre Client la contrainte de hauteur auparavant spécifique à Contrats ; règle spécifique supprimée, onglets/en-tête restent visibles et sections inférieures accessibles.
+- [x] CLIENT-15 : éditeur local V2 sans nouveau système de sauvegarde, mêmes champs titre/date/motif et mêmes métadonnées transmises. Dates anciennes conservées exactement si non modifiées, nom physique inchangé. Garde useUnsavedDraft, Annuler/Rester/Quitter sans enregistrer, pending et erreur backend réutilisés ; autres opérations mutantes désactivées pendant l’édition pour éviter un conflit local. Aucun service documentaire modifié.
+- [x] Contrôle complémentaire : défaut typographique confirmé dans le formulaire de création Client (texte10px malgré champ42px) corrigé localement en Noir/Confort à14px, via la règle fonctionnelle existante. Aucun champ ni règle d’enregistrement changé. Création et édition existantes conservent leurs brouillons/confirmations.
+- [x] Typecheck réussi. Douze tests ciblés crmRecordPresentation dont quatre nouveaux sur adaptation/minima/centre/préférences non mutées ; sept tests existants ClientDocumentService pour les protections documentaires. Aucun test global.
+- [x] Trente-huit contrôles Electron spécifiques + trois de démarrage réussis (41total) sur fixture TEMP indépendante : création/édition et brouillons, cycle liste/rapide/agrandie/retour, sélection/onglet, souris/clavier et repli, valeurs anciennes220/190 non réécrites et valeurs modernes320/280 conservées, compact sans perte du brouillon, Associations manuelles et rafraîchissement, Contacts et coordonnées au clavier, sélecteur Projets, éditeur document réellement sauvegardé sur fixture avec métadonnées intactes. Navigation réelle vers Annuaire par l’action Contact et retour ciblé au Client via le mécanisme existant, identifiants vérifiés. Aucun nouveau mécanisme de retour intermodules ajouté.
+- [x] Intégrité documentaire : ouverture par IPC vérifie le fichier exact avant transmission à shell.openPath ; lancement système intercepté dans ce contrôle, non annoncé comme ouverture native réelle. Altération du fichier TEMP : refus SHA-256 effectivement constaté avant tout appel shell. Erreur IPC Document modifié attendue ; zéro erreur renderer. Choix des confirmations Rester/Quitter simulés dans le banc, non présentés comme recette visuelle de dialogues natifs. TEMP nettoyé.
+- [x] Capture Electron finale inspectée : outputs/client-ergonomics-final-1920x1080.png, TEST Atelier des Fleurs existant, Noir/Confort1920×1080 zoom100. Mesures320px Identité /1011px Travail /260px Associations, fiche de y93 à1066, en-tête commun visible, aucun scroll du document racine. Capture sur base existante ouverte en lecture seule sans initialize/migration, empreinte SQLite inchangée. Aucune donnée utilisateur modifiée.
+- [ ] Revue et validation ergonomique Carlos, avant recette transversale et toute opération Git de sécurisation.
+
+Réserves conservées : CLIENT-03/04/07/08/09/11/18 restent reportés ; statuts commerciaux exacts uniquement. CLIENT-10 et14 graphiquement préservés ; CLIENT-16 conserve la recette Windows réelle fichier/dossier/dialogues, non couverte par des handoffs interceptés. Périodes réelles de maintenance et alertes packs restent des vérifications ultérieures, aucune fonction nouvelle. Les changements d’affichage06/12 ne clôturent pas toute la consolidation fonctionnelle de06. Précédent/suivant et menu Actions toujours hors périmètre. Aucun calcul financier, prix, clause, mécanisme métier de temps ou agrégation de journal ajouté.
+
+Fichiers de cette passe (uniquement le worktree Client) :
+
+- src/renderer/crm/ClientsPage.tsx : raccords regroupés, badges/coordonnées et synthèse Résumé.
+- src/renderer/crm/ClientCommercialSummary.tsx : nouveau composant de synthèse sans agrégation financière.
+- src/renderer/crm/ClientAssociations.tsx : libellé et repli manuel/contextuel.
+- src/renderer/crm/ClientProjectsTab.tsx et client-projects-v2.css : sélecteur unique et retrait du style des commandes retirées.
+- src/renderer/crm/CrmRecordLayout.tsx, CrmPaneSeparator.tsx et crm-record-layout.css : adaptation commune, gestes explicites et lisibilité.
+- src/shared/crmRecordPresentation.ts et crmRecordPresentation.test.ts : projection d’affichage et tests, normalisation persistée inchangée.
+- src/renderer/crm/ClientDocumentsPanel.tsx et ClientDocumentsPanel.css : éditeur local et garde de brouillon.
+- src/renderer/crm/ClientsPageV2.css : taille fonctionnelle du formulaire de création.
+- src/renderer/crm/client-expanded-v2.css : contrainte commune de hauteur et styles de la synthèse ; client-contracts-v2.css : retrait de la contrainte devenue commune, projection Contrats intacte.
+- scripts/check-client-ergonomics.cjs et scripts/fixtures/client-ergonomics-scenarios.cjs : contrôles isolés, aucune capture de données artificielles.
+- PROJECT_STATUS.md : états et réserves actualisés, registre CLIENT-01 à CLIENT-18 intégralement conservé.
+
+Prochaine action : Carlos examine la capture et les corrections ; aucune relance de refonte ou nouveau lot fonctionnel implicite. Aucun reset/stash/clean/rebase/commit/push/PR/fusion. Travaux locaux hors périmètre et worktree Sites&Pages conservés.
+
+
+## 06/11/2026 — Historique validé ; plan de clôture globale Client V2 à approuver
+
+Carlos valide visuellement Historique V2. Les huit onglets ont reçu une première refonte graphique ; cela ne clôt pas les réserves fonctionnelles. Autorisation actuelle : étude documentaire du plan seulement. Aucun développement de finition, test, migration, capture ou publication dans cette étape. Les propositions ci-dessous attendent validation avant exécution. Le registre CLIENT-01 à CLIENT-18 historique est conservé intégralement ; aucun point n’est abandonné ou réputé clos.
+
+### Matrice de clôture CLIENT-01 à CLIENT-18
+
+Lecture : chaque ligne distingue objectif, état/réalisation, manque/proposition, composants/services, risque/arbitrage et condition de clôture. Les preuves sont celles déjà consignées, non rejouées ici. Une validation graphique ne prouve pas toutes les transitions métier et ouvertures natives.
+
+| ID et objectif exact | État réel et déjà réalisé | Manque et correction/évolution proposée | Composants et services concernés | Risque fonctionnel / arbitrage requis | Condition de validation et de clôture |
+| --- | --- | --- | --- | --- | --- |
+| CLIENT-01 — Distinguer rôle Principal et contact principal. | À corriger en présentation. Deux badges visibles ; ClientContactService.add force role=primary dès que makePrimary ou role=primary ; setPrimary impose aussi ce rôle et rétrograde l’ancien. Ce ne sont pas deux propriétés indépendantes dans ces parcours. | Afficher une seule désignation principale si les valeurs sont équivalentes ; conserver les autres rôles et les éventuelles incohérences historiques visibles pour examen, sans les réécrire. Ne pas confondre principal Client et moyen préféré. | ClientsPage/ROLE_LABELS, ClientContactService.add/setPrimary/list, CrmService.ensurePrimaryContactRole. | Risque moyen : perdre un rôle ou modifier le principal en changeant seulement l’affichage. Pas d’arbitrage métier pour dédupliquer l’affichage conforme au modèle ; dissocier réellement les deux notions exigerait une décision distincte. | Création, rattachement existant et changement de principal gardent la même personne/règle ; autres rôles inchangés, un seul badge équivalent, aucun doublon de personne. |
+| CLIENT-02 — Clarifier Gérer/Modifier les coordonnées. | À corriger en présentation. Gérer les coordonnées bascule le details ContactMethodsPanel ; son summary comporte Modifier les coordonnées. Deux accès au même panneau, pas deux moteurs d’édition. | Unifier les libellés et l’accès de commande ; conserver le summary accessible et la gestion des emails/téléphones supplémentaires, usages, préférences et archives. | ClientsPage carte Contact, ContactMethodsPanel, API contactMethods/Annuaire. | Risque moyen sur accessibilité et accès aux coordonnées avancées. Arbitrage métier non ; choix UX à valider avec CLIENT-01. | Même personne/mêmes coordonnées après ouverture depuis les deux contextes, navigation clavier, sauvegarde/concurrence et brouillon préservés. |
+| CLIENT-03 — Nouveau devis pré-rattaché au Client exact. | À développer. QuotesPage.createQuote sait transmettre clientAccountId depuis l’assistant ; initialId ouvre un devis existant et n’est pas une entrée de création Client. Aucun bouton fictif dans Commercial. | Ajouter un contexte explicite d’ouverture de l’assistant, pré-renseigner le bon Client et réutiliser le parcours Devis. Conserver l’identité Client si l’utilisateur revient ou annule, sans créer de devis à la simple navigation. | ClientCommercialTab, App/navigation, QuotesPage assistant/createQuote, API Devis, protections de brouillons. | Risque élevé : mauvais rattachement ou abandon d’un devis en cours. Pas de nouvelle règle commerciale ; validation du parcours pré-rattaché requise. | Client A → nouveau devis → sauvegarde : Client A exact ; annulation sans création, Client B jamais substitué, brouillon existant protégé et retour Client fonctionnel. |
+| CLIENT-04 — Définir À traiter et Clôturés. | À arbitrer. Total/Brouillons/Acceptés/Refusés et filtre des sept statuts exacts existent ; les groupes ambigus sont volontairement absents. | Choix recommandé : conserver les statuts exacts. Alternative à valider explicitement : À traiter=draft+sent+viewed ; Clôturés=refused+expired+cancelled, accepted séparé. Ne jamais assimiler devis accepté et engagement terminé. | ClientCommercialTab, QuoteStatus/QuoteSummary. | Risque moyen de lecture commerciale trompeuse. Arbitrage de classification oui si les groupes sont retenus. | Définition écrite approuvée, compteurs conformes sur chaque statut, absence de double compte et libellés cohérents ; ou décision explicite de conserver les seuls états exacts. |
+| CLIENT-05 — Résumé commercial sans doublons inutiles. | Partiellement réalisé. Trois zones et cartes existent ; le bloc Prestations liste encore des devis/projets et les maintenances actives, avec raccourcis déjà présents à droite. | Produire une synthèse à partir des ventes/engagements sourcés et situations de devis ; séparer vendu, en proposition, maintenance active et action à suivre. Garder les raccourcis utiles sans reproduire toutes les listes. | ClientsPage/Résumé, ClientAssociations, clientEngagementPresentation, lectures quotes/projects/subscriptions/actions. | Risque moyen : présenter une proposition comme vendue ou supprimer un accès utile. Choix UX oui, pas de nouvelle qualification métier automatique. | Chaque information possède sa source et son sens ; proposition/Brouillon distincts ; boutons devis/projets justifiés ; tous les accès métier restent disponibles et brouillon relation intact. |
+| CLIENT-06 — Lecture unifiée des engagements et suivis. | Partiellement réalisé. Projection consultative des lignes acceptées, ventes opérationnelles, souscriptions, packs, interventions liées et périodes ; regroupement des souscriptions partagé avec compléments déjà couvert par tests ciblés. | Compléter la recette réelle et aligner la sémantique du contexte droit : Contrats dans ClientAssociations compte encore des devis acceptés, pas tous les engagements affichés au centre. Réutiliser une projection commune en lecture seule, ou expliciter le libellé de cette catégorie. | ClientContractsPanel, clientEngagementPresentation, ClientAssociations, operationalSalesForClient, services maintenance/packs/interventions et devis. | Risque élevé de double compte ou de compteur Contrats mal interprété. Décision UX sur libellé/source du panneau droit ; aucune règle à inventer. | Une vente/souscription non dupliquée ; données partielles signalées ; scénario réel avec périodes et plusieurs sources ; compteur de droite explicitement conforme à sa source. |
+| CLIENT-07 — Renouvellements, accord exprès, résiliation et échéances fiables. | À développer / à arbitrer sur le workflow. Lecture de paramètres contractuels et dates existantes ; MaintenanceService possède changements de statut et périodes. Cela ne constitue pas un suivi complet accord/demande/préavis/date d’effet/preuve. | Concevoir le suivi daté et sourcé des décisions, demandes et effets, sans toucher au contrat accepté ; appliquer les règles déjà décidées, pas des dates déduites de l’acceptation. Migration éventuelle soumise à accord séparé. | ClientContractsPanel, quoteContractPreparation/ContractTerms, MaintenanceService, données de souscription et preuves. | Risque élevé, contractuel/historique. Mensuel et annuel déjà décidés ; restent à approuver workflow, champs, source de preuve et effets opérationnels, pas à revoter le principe d’accord exprès. | Cas mensuel/annuel, refus/absence d’accord, demande de résiliation et date d’effet ; preuve et source retrouvables ; aucune reconduction automatique ni modification rétroactive, jalons exclus des renouvellements. |
+| CLIENT-08 — Montants initiaux et récurrents exacts. | Partiellement réalisé. Prix de ligne/suivi et unités/cadences explicites ; quantité de périodes distinguée ; aucune division ni total récurrent fabriqué. | Définir les bases homogènes puis afficher des totaux séparés ponctuels/mensuels/annuels/trimestriels lorsque le sens est connu. Inconnus signalés hors total, lignes et souscriptions partagées non additionnées deux fois. Équivalent mensuel seulement si autorisé et libellé analytique. | clientEngagementPresentation, ClientContractsPanel, OperationalSalePolicy/snapshots, QuoteDetail et souscriptions. | Risque élevé : addition de montants multi-périodes, unités/HT-TTC ou périodes incompatibles. Arbitrage de présentation/normalisation oui ; aucune règle d’encaissement ou de prix implicite. | Fixtures homogènes et multi-périodes, zéro réel/inconnu distincts, abonnements partagés et compléments ; chaque somme reconstituable depuis ses sources, jamais assimilée à du facturé/encaissé. |
+| CLIENT-09 — Besoins, services complémentaires et propositions. | Partiellement réalisé. Besoins liés consultables avec réserve de qualification, propositions non acceptées dans Commercial ; pas de moteur d’opportunité ni ajout automatique. | Recommandation : qualifier manuellement un besoin via le parcours existant et permettre la proposition liée au bon Client via CLIENT-03. Présenter les besoins comme à qualifier tant que la couverture vendue n’est pas établie. | WorkflowService/needs, ClientContractsPanel, ClientCommercialTab et parcours Devis. | Risque moyen/élevé : vendre un service déjà couvert ou transformer une suggestion en engagement. Arbitrage oui sur parcours/qualification ; suggestions automatiques demanderaient une étude distincte. | Besoin lié → proposition → devis précis, ni doublon ni prestation vendue avant acceptation ; origine conservée et qualification explicite. |
+| CLIENT-10 — Devis accepté, attestation, pièce et signature distincts. | Réalisé et vérifié pour la projection consultative. Sources de preuve et attestations distinguées ; aucune signature certifiée déduite du titre, du rôle accepted_pdf ou d’un hash. | Achever une recette croisée des accès aux preuves réelles avec CLIENT-16 ; maintenir ces distinctions lors de CLIENT-07/18. Ne pas ajouter un système de signature. | ClientContractsPanel, QuoteContractPreparationService/liens documentaires, ClientDocumentService, Devis. | Risque élevé de fausse preuve ou perte de référence historique. Pas de nouvel arbitrage pour conserver les distinctions ; signature nouvelle hors périmètre. | Ouvrir la pièce exacte, cas absent/remplacé/archivé/modifié, attestation distincte d’une signature ; liens historiques et devis acceptés inchangés. |
+| CLIENT-11 — Ventes sans suivi et historique des arrêts. | Partiellement réalisé. Lignes acceptées sans objet opérationnel visibles ; états terminés/archivés/épuisés/expirés présentés selon source, sans motif inventé. | Rendre les éléments manquants explicites et relier l’historique disponible ; ne pas créer automatiquement un suivi opérationnel ni déduire une cause d’arrêt. Exploiter les futurs événements CLIENT-07/18 seulement après validation. | clientEngagementPresentation, ClientContractsPanel, operationalSalesForClient, historiques opérations/devis. | Risque élevé si rattrapage automatique ou réécriture d’une vente ancienne. Arbitrage nécessaire si l’on veut compléter le passé ou formaliser de nouveaux motifs. | Vente acceptée sans suivi retrouvable et sourcée ; suivi terminé/archivé conserve ses liens et dates ; absence de cause annoncée, pas de mutation historique. |
+| CLIENT-12 — Associations contextuelles sans perdre d’accès. | À corriger en présentation. Aperçus repliables, compteurs réels sur leurs sources, deux éléments pertinents et accès exacts existent ; la catégorie active n’est pas traitée contextuellement. | Préférer le repli contextuel réversible plutôt que masquer/détruire la catégorie ; laisser l’ouverture manuelle prioritaire. Traiter ensemble avec CLIENT-05/06, y compris le sens du compteur Contrats. | ClientAssociations, ClientsPage/activeTab, CrmRecordLayout. | Risque moyen sur découverte, état replié, liens et lectures. Choix UX à valider : repli manuel/contextuel plutôt que masquage imposé. | Huit onglets, catégories vides/erreurs, ouverture manuelle et accès aux dossiers préservés ; aucun formulaire démonté, contexte cohérent et compteurs correctement nommés. |
+| CLIENT-13 — Simplifier les filtres Projets. | Réalisé et vérifié fonctionnellement ; finition UX à décider. Filtres rapides et sélecteur pilotent le même état ; sélecteur couvre aussi attente client, blocage, validation. | Garder un seul état et éviter une double commande inutile ; recommandation : états fréquents en raccourcis, états supplémentaires dans un accès complémentaire lisible, ou conserver seulement le sélecteur si validé. | ClientProjectsTab. | Risque faible/moyen : rendre un statut inaccessible ou perdre le filtre sélectionné. Arbitrage UX oui ; aucune définition métier nouvelle. | Tous les statuts et archives atteignables, mêmes résultats/compteurs, état entre onglets conservé, une présentation validée sans second moteur de liste. |
+| CLIENT-14 — Refonte Documents/recherche/filtre/actions. | Réalisé et vérifié en UI, validé graphiquement. Compteurs globaux, recherche, filtre distinct de l’import, archives, tableau et handlers existants. | Conserver cette version ; ne rouvrir que les éléments touchés par CLIENT-15/16. Les validations de navigation/paramètres interceptés ne prouvent pas toutes les actions natives réelles. | ClientDocumentsPanel et son CSS, API clientDocuments. | Risque faible de présentation, moyen pour import/édition selon CLIENT-15/16. Pas d’arbitrage de nouvelle refonte. | Régressions limitées après modification d’éditeur ou de protection, puis parcours réel validé avec CLIENT-16 ; aucun nouvel audit graphique. |
+| CLIENT-15 — Harmoniser titre et conservation. | À développer, encore reporté. Prompts et annulations conservés ; catégorie/code/notes transmis sans perte. | Remplacer les prompts par un éditeur V2 protégé avec les mêmes champs et règles, annulation, erreur et retour au document ; réutiliser les composants/formulaires existants. | ClientDocumentsPanel, composants de formulaire V2, useUnsavedDraft, ClientDocumentService.update. | Risque moyen/élevé : perte de brouillon ou de métadonnées ; compatibilité des dialogues natifs à vérifier. Décision métier non, organisation de l’éditeur à valider. | Annuler/sortir/rester/enregistrer/erreur ; champs non édités et nom physique inchangés ; protections backend identiques ; validation sur vrai runtime Windows. |
+| CLIENT-16 — Disponibilité, intégrité, protections documentaires. | Partiellement réalisé et vérifié. États présent/manquant séparés de l’archivage, sept tests service réussis ; projections IPC ont vérifié les états UI. Ouvertures et dialogues natifs restent partiellement interceptés dans les recettes. | Vérifier réellement import multiple/noms uniques, ouverture fichier/dossier, empreinte altérée, fichier déplacé/manquant, archive/restauration et confirmation/refus de suppression dans une fixture temporaire isolée. | ClientDocumentService, IPC client-documents/dialog/shell, ClientDocumentsPanel, liens Devis et facturation Abby. | Risque élevé de suppression de preuve/facture ou certification abusive. Pas d’arbitrage pour conserver les protections ; toute modification de règles requiert accord spécifique. | Preuves/factures courantes et remplacées non supprimables ; fichier/hash/chemin vérifiés, archives et annulation sans perte ; date de conservation non présentée comme verrou ; aucun hash/titre assimilé à une signature. |
+| CLIENT-17 — Lisibilité/adaptation Identité. | À corriger. Appel Client avec défauts320/260px ; préférence existante normalisée autorise gauche220/droite190px et l’emporte. Compact déclenché sous1050px utiles. Captures démontrent des noms et boutons comprimés. | Mesurer espace utile, minima et compromis responsive ; prévoir une adaptation lisible des anciennes préférences sans les écraser arbitrairement, ni réduire excessivement le centre. Réviser une fois les styles de structure plutôt que par onglet. | CrmRecordLayout, CrmPaneSeparator, crmRecordPresentation, client-expanded-v2.css, ClientsPage. | Risque moyen/élevé sur redimensionnement, préférences, huit onglets et formulaires. Choix UX sur minima/comportement oui ; aucune modification de préférence dans l’étude actuelle. | Noms longs, volet replié, drag/clavier, préférences anciennes/nouvelles, centre étroit et écran27pouces ; huit onglets accessibles, brouillons persistants et redimensionnement conservé. |
+| CLIENT-18 — Agréger les journaux métier fiables. | À développer après étude/arbitrage. Historique V2 validé visuellement ; activity_events fusionné par ID et trié, quatre événements conservés. activity_log non intégré. | Adapter en lecture seule les sources fiables via rattachements explicites, conserver journal+ID d’origine et dates, namespace des IDs pour éviter collisions. Événements ambigus non attribués automatiquement ; aucune suppression sémantique de deux traces distinctes. | CrmService.listActivity, clientHistory/ActivityEvent, journaux Quote/ContractPreparation/Project/Operations, ClientHistoryTab et Résumé. | Risque élevé de mauvaise attribution Client, doublons ou perte de traces ; relations courantes et historiques à distinguer. Arbitrage sur couverture initiale et regroupement visuel ; migration éventuelle séparée. | Chaque événement relié au bon Client avec preuve de rattachement, zéro fuite entre Clients, IDs et résumés originaux conservés, ordre stable, deux conversions intactes ; recherche/filtre/liens et trois récents du Résumé cohérents sur la source validée. |
+
+### Vérifications complémentaires sans numéro — toutes conservées
+
+- Périodes réelles de maintenance : vérifier lecture et usages/temps, périodes multiples, états et erreurs partielles depuis Interventions ET Contrats. La fixture Atelier des Fleurs ne couvre pas ce cas ; préparer une recette isolée après accord, sans fabriquer des données pour un visuel présenté comme réel.
+- Alertes packs : fonction hour_pack_expiring existante dans OperationsAlertService/OperationsAlertsPanel, seuil réglable14jours par défaut, critique à3jours ou moins ; étudier un aperçu Client filtré sur son ID et un accès au pack exact, sans réécrire les seuils ni appeler actif un pack suspendu/épuisé. Valider absence d’alertes hors Client et absence d’alertes trompeuses sur archives/expiration.
+- Parcours complet : liste pleine largeur/sélection/panneau rapide/fermeture/agrandissement/retour ; recherche, vues, colonnes et largeurs manuelles conservées. Pas de nouvelle refonte de la liste déjà validée.
+- Création et édition Client : formulaires existants, Annuaire/rattachement, validations/concurrence, brouillons, sauvegarde/annulation/sortie/erreurs ; harmoniser seulement les écarts constatés, sans modifier les règles d’enregistrement ni dupliquer les personnes.
+- Huit onglets, trois zones, défilements imbriqués et accès aux sections inférieures : y compris engagements sans suivi, documents, historique et services complémentaires. Repli ne doit pas démonter un éditeur.
+- Cohérence finale des icônes, libellés, messages, boutons et cartes via composants communs ; Noir/Confort prioritaire, pas de matrice multi-thèmes. Vérifier les chemins partagés impactés sans étendre le chantier aux autres pages.
+- Échéances : actions ouvertes en retard et états exacts, jalon de livraison distinct de fin d’engagement/renouvellement, périodes de service distinctes de facturation ; ne rien déduire de la seule date d’acceptation.
+- Preuves et accès directs : Devis/Abby, Annuaire, Projet, intervention, maintenance/pack et document exact ; vérifier aussi l’arrivée réelle dans le module, car plusieurs recettes ont contrôlé seulement la transmission d’identifiants en interceptant la navigation.
+- Anciennes réserves d’en-tête : précédent/suivant et menu Actions ne sont pas autorisés implicitement par la finition. Les compteurs explicitement validés dans les onglets ne justifient aucun nouveau compteur global. Obtenir une décision d’utilité/périmètre avant ajout ; rien n’est abandonné silencieusement.
+
+### Décisions déjà applicables — ne pas les redemander
+
+Source de reprise ciblée : docs/ux-v2/CONSIGNES-ET-REPRISE.md, rubrique Décisions commerciales persistantes, et paramètres/snapshots acceptés des devis concernés ; cahier des charges V1 pour source unique, archivage et rôle d’Abby.
+
+- Maintenance mensuelle : fin de période payée ; annuel : engagement/renouvellement sur accord exprès. Aucun renouvellement automatique à inventer. Les durées de préavis non établies pour un dossier restent non renseignées ; ne pas reprendre une valeur de maquette.
+- Prix de référence consignés : WP49€/mois2×30min et WooCommerce99€/mois4×30min ; interventions non cumulables/non reportables. Hébergement Lune149€/an distinct du domaine et de la maintenance ; anciennes offres et contrats acceptés conservés, pas de double facturation de transition.
+- Ces décisions de projet ne republient pas une clause/édition de Catalogue. Les réserves documentaires de validation juridique/publiée restent celles déjà consignées ; aucune application rétroactive ni réécriture d’un snapshot accepté.
+- Abby reste la source des factures réglementaires ; montant facturable, vendu, facturé et encaissé restent des notions distinctes.
+
+### Arbitrages proposés avant les lots concernés
+
+1. CLIENT-04 : statuts exacts seuls (recommandé), ou groupes explicites À traiter=draft/sent/viewed et Clôturés=refused/expired/cancelled avec accepted séparé. Aucune option n’est activée par ce plan.
+2. CLIENT-07 : suivi manuel daté/sourcé des demandes, accords et dates d’effet (recommandé pour commencer), ou exécution opérationnelle automatisée après conception et autorisation spécifiques. Valider les effets sur une souscription existante, les champs/preuves et une éventuelle migration ; le principe mensuel/annuel ne change pas.
+3. CLIENT-08 : totaux homogènes séparés par périodicité (recommandé), ou équivalent mensuel analytique explicitement distinct du montant à payer. Ne normaliser que si prix/quantité/période/taxe sont établis ; sinon conserver l’inconnu et sa source.
+4. CLIENT-09 : qualification manuelle et proposition via besoins/Devis existants (recommandé) ; toute suggestion automatique doit faire l’objet d’une étude séparée, sans conditionner les corrections déjà possibles.
+5. CLIENT-12/17 : repli contextuel réversible des Associations plutôt que masquage (recommandé) ; validation des minima Identité/Associations et de l’adaptation des préférences. Pour Contrats à droite : libellé explicite Devis acceptés, ou aperçu de la même projection d’engagements que le centre, à choisir sans mélange de compteurs.
+6. CLIENT-18 : commencer avec les seuls événements dont le rattachement est démontré ; garder les traces distinctes visibles avec provenance (recommandé), ou regroupement visuel dépliable conservant chaque événement. Ne jamais fusionner/supprimer deux événements uniquement parce que leurs résumés se ressemblent. Le périmètre des modules inclus doit être approuvé après l’étude des jointures.
+7. CLIENT-13 et anciennes commandes d’en-tête : valider une présentation de filtres unique et l’utilité des réserves précédent/suivant/Actions ; pas de nouvelle fonction décorative.
+
+### Sous-lots proposés et recette progressive
+
+Ordre proposé, aucun sous-lot autorisé à développer par cette note :
+
+1. Composition et parcours V2 — CLIENT-01/02/05/12/13/15/17 ; contrôles liste/fiche rapide/création/édition. Préparer les interfaces communes, traiter ensemble Résumé/Associations et cadre responsive, puis Contacts/éditeur documentaire dans des unités visuellement revues. Réutiliser AppButton/OperationIcon/guards ; une feuille de structure maîtrisée, pas de retouches par onglet. Aucun nouveau calcul métier. Recette ciblée : états conservés, principal/coordonnées, filtres, minima/préférences, formulaires et annulation native remplacée.
+2. Parcours commercial — CLIENT-03/04/09. Pré-rattachement à l’assistant existant, indicateurs selon décision, besoin/proposition manuels liés. Recette : Client A/B, brouillon préalable, création/annulation, acceptation non anticipée et retour exact. Ne pas ouvrir simultanément un nouveau moteur d’opportunités.
+3. Contrats et engagements — CLIENT-06/07/08/10/11 avec raccord de09. D’abord consolider la projection/les unités et prouver les lectures ; ensuite seulement le workflow d’accord/résiliation approuvé. Garder ce volet distinct si une migration devient nécessaire : autre autorisation et sauvegarde avant toute opération importante. Recette : multi-périodes, compléments partagés, lignes sans suivi, preuves/archives, effet daté et absence d’accord.
+4. Opérations réelles — vérifications maintenance et alertes packs sans nouvel ID. Réutiliser périodes/usages/alertes existants ; vues Client et liens du module global. Recette : périodes multiples/erreur, temps exact, pack faible/expirant/suspendu/épuisé, seuils conservés, dossier exact. Ne pas refaire la refonte graphique validée.
+5. Historique élargi — CLIENT-18. Étudier les sources puis approuver le périmètre avant adaptateurs en lecture seule ; aucune réécriture des journaux. Recette : provenance, Client déplacé/historique, événements identiques dans deux sources, collision d’IDs, archives, accès exact et Résumé.
+6. Clôture documentaire et transversale — CLIENT-14/16, vérifications restantes de10/15 puis une seule recette finale proportionnée. Réaliser les ouvertures et confirmations réellement dans Electron/Windows avec données temporaires isolées. Parcours final : liste → fiche rapide → agrandie/huit onglets → Annuaire/Devis/Contrats/Projet/Intervention/Documents → retour ; sauvegarde/annulation, repli/redimensionnement, erreurs et archives. Ne rejouer les tests historiques qu’en cas de modification ou doute nouveau identifié ; pas de campagne globale de l’application ni de matrice de captures.
+
+Limiter les raccords répétés dans ClientsPage : définir les props/contexte communs au lot1, isoler les sous-composants déjà extraits et leur style local. Des changements ultérieurs du raccord seront possibles pour de nouvelles fonctions, mais sans réécrire le cadre à chaque lot. Validation humaine par unité avant passage au lot suivant. Aucun point clos uniquement sur passage de tests.
+
+### Risques et protections de clôture
+
+Rattachement Client erroné ; écrasement d’un brouillon ; duplication personne/vente/souscription ; perte de rôle/contact préféré ; compteurs ambigus ; mélange de périodicités/prix ; fausse signature ; suppression d’une preuve/facture ; attribution historique via une relation devenue différente ; perte de préférences ou d’accès après repli ; intégration accidentelle des travaux Sites&Pages.
+
+Invariants : source maître unique, devis acceptés et versions/snapshots immuables, archivage réversible et références historiques conservées, aucune qualification juridique nouvelle, pas de secrets en clair, aucun calcul de temps ou règle métier changé sans nécessité/accord. Étendre un journal en lecture ne vaut pas autorisation de purger, migrer ou publier. Tests d’écriture exclusivement sur fixtures temporaires déterministes ; données utilisateur et recettes existantes préservées. Absence de preuve de vérification reste une réserve, pas une clôture.
+
+### État Git local relevé le06/11/2026
+
+Worktree Client : C:/Users/AtoumWeb/.codex/worktrees/client-v2-ab-20261104/atoumweb-manager-ec04-validation ; branche codex/client-v2-ab-20261104 ; HEAD9ca5a7ed. Treize fichiers suivis modifiés et31non suivis, listés ci-dessous. Aucun reset/rebase/stash/nettoyage/création de worktree. Aucun commit de finition créé.
+
+Fichiers suivis modifiés :
+
+- PROJECT_STATUS.md
+- src/renderer/crm/ClientContractsPanel.tsx
+- src/renderer/crm/ClientDocumentsPanel.tsx
+- src/renderer/crm/ClientOperationsTab.css
+- src/renderer/crm/ClientOperationsTab.tsx
+- src/renderer/crm/ClientsPage.tsx
+- src/renderer/crm/ClientsPageV2.css
+- src/renderer/crm/CrmRecordLayout.tsx
+- src/renderer/main.tsx
+- src/renderer/ui/ConfiguredDataTable.tsx
+- src/renderer/ui/NavigationRail.tsx
+- src/shared/clientPresentation.test.ts
+- src/shared/clientPresentation.ts
+
+Fichiers non suivis préservés :
+
+- scripts/check-client-commercial.cjs
+- scripts/check-client-contacts.cjs
+- scripts/check-client-contracts.cjs
+- scripts/check-client-documents.cjs
+- scripts/check-client-expanded.cjs
+- scripts/check-client-history.cjs
+- scripts/check-client-interventions.cjs
+- scripts/check-client-projects.cjs
+- scripts/check-client-v2-ab.cjs
+- scripts/fixtures/client-ab-scenarios.cjs
+- scripts/fixtures/client-commercial-scenarios.cjs
+- scripts/fixtures/client-contacts-scenarios.cjs
+- scripts/fixtures/client-contracts-scenarios.cjs
+- scripts/fixtures/client-expanded-scenarios.cjs
+- src/renderer/crm/ClientAssociations.tsx
+- src/renderer/crm/ClientCommercialTab.tsx
+- src/renderer/crm/ClientDetailIcon.tsx
+- src/renderer/crm/ClientDocumentsPanel.css
+- src/renderer/crm/ClientHistoryTab.tsx
+- src/renderer/crm/ClientOperationsTab.test.ts
+- src/renderer/crm/ClientProjectsTab.tsx
+- src/renderer/crm/ClientQuickSummary.tsx
+- src/renderer/crm/client-commercial-v2.css
+- src/renderer/crm/client-contacts-v2.css
+- src/renderer/crm/client-contracts-v2.css
+- src/renderer/crm/client-expanded-v2.css
+- src/renderer/crm/client-history-v2.css
+- src/renderer/crm/client-list-quick-v2.css
+- src/renderer/crm/client-projects-v2.css
+- src/shared/clientEngagementPresentation.test.ts
+- src/shared/clientEngagementPresentation.ts
+
+Lot Sites&Pages séparé : C:/DEV/01_PROJETS/AtoumWeb/atoumweb-manager-ux-home-shell-lot1-20261103, branche codex/ux-v2-sites-pages-lot2-20261103 ;11fichiers suivis modifiés et6non suivis constatés en lecture seule. Ils couvrent notamment PROJECT_STATUS, roadmap Bridge, reprise UX, services/composants Sites&Pages, scripts et tests dédiés. Aucun fichier de ce worktree n’est touché. Les autres worktrees restent hors intervention. Captures et sorties déjà présentes dans outputs ne sont ni supprimées ni régénérées ; elles sont ignorées par Git et ne sont pas comptées dans les31fichiers non suivis.
+
+Nouveau point indispensable : aucun nouvel identifiant CLIENT-19 nécessaire à ce stade. Les constats supplémentaires sont rattachés explicitement à01/02,06/12,17 et18 ; les vérifications complémentaires restent listées et ouvertes. Cela ne vaut pas abandon des réserves anciennes. Si l’étude détaillée d’un lot révèle un changement fonctionnel non couvert, le documenter avant développement et demander décision.
+
+Prochaine action : Carlos examine la matrice, valide les arbitrages et l’ordre des sous-lots. Aucun développement de finition ne commence automatiquement. Aucun test, nouvelle capture, commit, push, PR, fusion ou remplacement de préproduction dans cette étape documentaire.
+
+
+## 06/11/2026 — Historique Client V2 : refonte autorisée, revue graphique attendue
+
+Consigne jointe et maquette autorisent la présentation du dernier onglet, sans reconstruction des journaux. Sources et clientHistory existants conservés ; aucune écriture ni agrégation intermodules.
+
+- [x] ClientHistoryTab : en-tête/compteur des événements réellement chargés, recherche sur résumés/source/date affichés, filtre dynamique sur entityType réellement présent, chronologie verticale et cartes avec icônes, résumé enregistré inchangé, source réelle, date locale et date ISO exacte dans time/dateTime et infobulle. Consultation seule, aucun auteur ni métadonnée certifiée inventé.
+- [x] Tri décroissant et dédoublonnage existants par ID conservés sans fusion sémantique ; les deux traces de conversion restent distinctes. Compteur — en lecture indisponible ; chargement/erreur/réessai, absence totale et résultat filtré vide distincts. Filtres gardés entre onglets et réinitialisés au changement de client. Résumé inchangé : mêmes trois événements récents.
+- [x] Navigation limitée aux types d’entités déjà pris en charge et identifiant non vide, jamais déduite du résumé ou des métadonnées. Pas de lien vers le Client actuellement ouvert. Fixture : liens Ouvrir le prospect vers l’ID du prospect enregistré, y compris pour l’action (pas de faux lien vers l’action).
+- [x] Typecheck réussi et six tests existants clientPresentation (dont dédoublonnage par ID, traces distinctes et lectures partielles). Quinze contrôles Electron ciblés + trois de démarrage : IDs/résumés/dates/ordre, deux conversions, recherche, filtre source et conservation, transmission exacte du prospect (événement intercepté dans le banc), absence de lien redondant Client, trois récents du Résumé, source vide/filtre vide, erreur/réessai, largeur et dimensions/zoom ; zéro erreur renderer. Réponses vides et erreur IPC Historique TEST indisponible simulées seulement en mémoire, puis lecture réelle rétablie. Aucun test global.
+- [x] Capture finale Electron inspectée : outputs/client-history-v2-1920x1080.png, TEST Client et historique conservé, Noir/Confort1920×1080 zoom100 ; quatre événements existants, aucun créé. Base schéma80 ouverte en lecture seule sans initialize/migration, empreinte inchangée et TEMP nettoyé.
+- [x] CLIENT-01 à CLIENT-18 synchronisés : lignes01–17 et statuts intégralement préservés,18ajouté comme étude reportée. CLIENT-14 Documents reste validé ;15/16/17 et contrôle des périodes de maintenance réelles conservés. Aucun report développé.
+- [x] Validation graphique Carlos reçue ; préparation documentaire de la consolidation globale autorisée, développement de finition non commencé.
+
+Écarts assumés : résumés exacts conservés au lieu des reformulations illustratives ; badge Prospect pour l’action portée par une entité prospect, sans fausse source Action. Liens explicites vers le prospect ajoutés seulement lorsqu’une destination réelle existe. Aucune prétention à un historique exhaustif ou certifié ; journaux détaillés Devis/Contrats/Projets/Interventions non agrégés. Volets étroits non modifiés (CLIENT-17).
+
+Fichiers : ClientsPage.tsx (raccord, erreur localisée et retrait du rendu Historique remplacé), nouveaux ClientHistoryTab.tsx, client-history-v2.css et scripts/check-client-history.cjs ; présent suivi. Autres onglets, Résumé, Associations, brouillons/préférences et travaux locaux/Sites&Pages préservés. Aucun commit/push/PR/fusion. Prochaine action : revue visuelle humaine ; aucune finition générale implicite.
+
+
+## 06/11/2026 — Documents validé visuellement ; Historique en étude seule
+
+Carlos valide Documents sans nouvelle correction graphique ; fonctionnalités/protections conservées. CLIENT-14 réalisé et validé visuellement, réserves fonctionnelles de CLIENT-16 maintenues ; CLIENT-15 toujours reporté. Ajout CLIENT-17 pour la lisibilité/adaptation du volet Identité, sans développement. Le contrôle des périodes réelles de maintenance reste ouvert. Historique : lecture/capture uniquement avant validation d’une maquette, aucun développement autorisé.
+
+Seul le présent suivi est modifié ; CLIENT-01 à CLIENT-13 et CLIENT-15/16 inchangés. Aucun changement de code, journal, donnée, préférence, fixture ou autre travail local. Aucun commit/push/PR/fusion. Prochaine action : préparer puis valider la maquette Historique avant développement.
+
+
+## 06/11/2026 — Documents Client V2 : présentation autorisée, validation graphique attendue
+
+Consigne jointe et maquette reçues ; référence de composition uniquement. ClientDocumentsPanel et son style local refondus sans modifier le moteur documentaire, les services ou les règles de suppression.
+
+- [x] Titre/compteur réel, trois indicateurs total/non archivés/archivés obtenus par la lecture existante list(clientId,true). Recherche titre/nom de fichier et filtre de consultation par catégorie en mémoire, indépendants de la catégorie du prochain import. Option Afficher les archives inclut les documents actifs et archivés ; compteurs globaux non affectés par les filtres. Aucun compteur Protégé ou commande décorative.
+- [x] Tableau compact, titre et nom physique séparés, vraie catégorie, conservation renseignée ou absence explicite, état d’archivage distinct de présence du fichier. Ouverture empêchée si fichier manquant ; aucun SHA assimilé à une signature. Défilement horizontal contenu si le centre est étroit ; nombreux documents pris en charge par le défilement existant. Structure commune et préférences de largeur non modifiées.
+- [x] Import multiple via le même handler, ouverture fichier/dossier client, modification titre/conservation par prompts, archivage/restauration et suppression d’archive via la confirmation native existante conservés. Relecture complète après action pour garder les archives et compteurs cohérents. Verrou d’action de présentation, erreurs capturées et réponses de chargement périmées ignorées ; aucun nouveau changement métier.
+- [x] Typecheck réussi ; sept tests existants ClientDocumentService réussis dans leurs espaces temporaires (protections devis, factures/historique, SHA modifiée, suppression autorisée et rollback métadonnées/archives). Dix-huit contrôles Electron ciblés + trois de démarrage réussis : recherche/filtres, distinction import, conservation entre onglets, identifiants fichier/client, paramètres d’import/édition/archivage/restauration, annulation de suppression, fichier absent, archives, erreur/réessai, largeur contenue et dimensions/zoom. Cas indisponible/archivé et actions simulés uniquement en mémoire par IPC ; aucun écrit sur la recette. Erreur IPC Lecture documentaire TEST indisponible volontaire, zéro erreur renderer.
+- [x] Capture finale inspectée : outputs/client-documents-v2-1920x1080.png, Electron1920×1080 Noir/Confort zoom100, TEST Recette RGPD croisée, fichier existant Accord RGPD signé classé Juridique (titre sans preuve de signature),1non archivé/0archivé. Base schéma80 existante en lecture seule sans initialize/migration, empreinte inchangée ; TEMP nettoyé. Aucune donnée ou document créé pour la capture.
+- [x] Registre CLIENT-01 à CLIENT-16 synchronisé : lignes01–13 et statuts inchangés,14réalisé techniquement/en attente visuelle,15reporté,16réalisations et limites de vérification explicites. Vérification des périodes de maintenance réelles toujours ouverte ; Associations/CLIENT-12 et redondance Projets/CLIENT-13 non traités.
+- [x] Validation graphique Carlos reçue : Documents conservé sans correction supplémentaire ; étude Historique seule autorisée.
+
+Écarts assumés : pas de compteur Protégé faute de qualification exposée ; état Non archivé distinct de Fichier présent plutôt que faux badge Actif. Catégorie réelle Juridique, pas Autres de la maquette ; choix d’import clairement séparé. Bouton Ouvrir le dossier client conservé globalement sans doublon à chaque ligne. Prompts natifs laissés sous CLIENT-15 ; paramètres testés avec prompts remplacés temporairement dans le banc, pas d’harmonisation précipitée. Aucun aperçu/versionnement/téléchargement dédié ni signature inventé.
+
+Fichiers de cette passe : src/renderer/crm/ClientDocumentsPanel.tsx ; nouveaux ClientDocumentsPanel.css et scripts/check-client-documents.cjs ; présent suivi. Autres travaux Client V2, brouillons/préférences, Sites&Pages et fichiers locaux non suivis préservés. Aucun commit/push/PR/fusion. Prochaine action : revue graphique humaine, Historique non commencé.
+
+
+## 05/11/2026 — Interventions validé graphiquement ; Documents en étude seule
+
+- [x] Carlos valide visuellement Interventions et maintenance ; aucune correction graphique supplémentaire. Documents : inventaire et capture seulement, aucun développement autorisé.
+- [ ] Vérifier ultérieurement le parcours avec périodes de maintenance réelles, absent de la fixture actuelle ; cette limite reste ouverte.
+- [ ] Piste de finition : pertinence d’un aperçu d’expiration des packs dans la fiche Client. Fonction déjà présente dans OperationsAlertService (hour_pack_expiring, seuil réglable14jours par défaut, critique à3jours ou moins), exposée par OperationsAlertsPanel dans le module global ; aucune duplication ni intégration Client développée ici.
+- [x] Capture Documents existants en lecture seule : outputs/client-documents-current-1920x1080.png,1920×1080 Noir/Confort zoom100. Fixture TEST Recette RGPD croisée (livraison60c65a2b, schéma80) : un document Juridique existant intitulé Accord RGPD signé, fichier présent ; le titre ne certifie pas une signature. Atelier des Fleurs ne possède aucun document ; les recettes compatibles consultées n’en possèdent pas plusieurs. Ancienne base schéma71 non migrée. Empreinte SQLite inchangée, zéro erreur renderer, aucun test nouveau.
+
+CLIENT-01 à CLIENT-13 préservés intégralement, Associations inchangé (CLIENT-12 reporté). Aucun code, donnée ou fixture modifié ; seul ce suivi est actualisé. Aucun commit/push/PR/fusion. Prochaine action : conception puis validation d’une maquette Documents avant développement.
+
+
+## 05/11/2026 — Interventions Client V2 : refonte autorisée, revue graphique attendue
+
+Consigne utilisateur jointe lue ; référence ergonomique validée, aucune donnée de maquette injectée. Développement limité à ClientOperationsTab et son style existant ; module Opérations, services et règles métier inchangés.
+
+- [x] En-tête Interventions et maintenance, quatre compteurs exacts, cartes avec statuts français, projet/nœud, dates renseignées, temps enregistré et accès au dossier exact. Vue d’ensemble montrant les catégories non vides et navigation fonctionnelle vers les quatre catégories, y compris vides ; catégorie conservée entre onglets, réinitialisée au changement de client.
+- [x] En cours = in_progress ; À planifier = to_plan ; Terminées = completed. Packs actifs selon état active déjà calculé en lecture par HourPackService (solde/expiration/suspension), sans nouveau calcul métier ; archives exclues des comptes actifs. Maintenances : total des souscriptions dans la navigation, nombre au statut Actif explicité dans la section.
+- [x] Quatre services initiaux conservés ; lecture des périodes maintenance existantes ajoutée sans génération. Périodes opérationnelles repliables avec usage enregistré, chargement annulé ignoré et erreurs partielles/réessai explicites. Aucun prix, condition, renouvellement ou montant facturé recopié. Consommation du pack issue de consumedSeconds, distincte du temps de l’intervention. Liens d’origine présents seulement si identifiants disponibles.
+- [x] Typecheck réussi ; deux tests déterministes ciblés des compteurs (tous états et archives). Onze contrôles Electron spécifiques + trois de démarrage : données/statuts, compteurs, catégories vides, conservation entre onglets, transmission exacte intervention/pack (interception de l’événement uniquement dans le banc), erreur de lecture volontaire sans anciens résultats/zéros trompeurs et réessai, largeur des cartes, dimensions/zoom, zéro erreur renderer. Le message IPC Lecture TEST indisponible est attendu dans cette vérification. Aucun audit/suite globale.
+- [x] Une capture finale inspectée : outputs/client-interventions-v2-1920x1080.png, TEST Atelier des Fleurs, Noir/Confort1920×1080 zoom100. Intervention réelle INT-2026-001 En cours,0min, début04/11/2026 ; pack10h restantes, consommation0min, expiration09/11/2026. Base existante schéma80 ouverte en lecture seule sans initialize/migration ; empreinte inchangée, TEMP nettoyé. Aucune donnée/fixture créée.
+- [x] Registre synchronisé CLIENT-01 à CLIENT-13 : entrées01–11 intégralement conservées, ajouts12/13 reportés, aucun point traité dans cette passe.
+- [x] Validation visuelle Carlos reçue : Interventions et maintenance conservé sans nouvelle correction graphique.
+
+Écarts/limites de vérification : Vue d’ensemble ajoutée pour présenter intervention et pack ensemble tout en conservant les quatre catégories ; pas de faux liens Voir tous. La fixture ne contient ni maintenance ni demande : la navigation vers leurs états vides est vérifiée, mais pas un parcours maintenance réel avec périodes. Pas de nouveau report fonctionnel nécessaire. Autres travaux Client V2, préférences/brouillons, Associations et Sites&Pages préservés. Aucun commit/push/PR/fusion.
+
+Fichiers de cette passe : src/renderer/crm/ClientOperationsTab.tsx, ClientOperationsTab.css ; nouveaux ClientOperationsTab.test.ts et scripts/check-client-interventions.cjs ; présent suivi. Prochaine action : revue visuelle humaine avant Documents.
+
+
+## 05/11/2026 — Projets validé visuellement ; étude Interventions seule
+
+Carlos valide visuellement Projets (indicateurs, cartes, statuts, filtres, ouvertures), sans nouvelle correction. Développement Interventions non autorisé : inventaire et capture uniquement avant maquette.
+
+- [x] Inventaire ciblé ClientOperationsTab : quatre lectures client, archives incluses, demandes/interventions/maintenance/packs ; indicateurs, états vides, erreur/réessai et actualisation ; ouvertures exactes via openEntity et cibles OperationsPage. Aucun formulaire/chrono/changement de statut dans cet onglet.
+- [x] Modèles/services vérifiés : projet/nœud, demande source, période maintenance/souscription, pack ; dates prévues/début/fin, temps réel par sessions, estimation/référence, prise en charge et montants théorique/facturable. Pas de champ technicien/responsable dans Intervention. Suivi détaillé/chrono/conclusion dans le module Opérations, pas dans Client ; facturable ne signifie pas facturé.
+- [x] Attention pour la maquette : KPI Interventions en cours compte toutes les interventions ouvertes, dont À planifier/Planifiée/Attente/Bloquée/À valider ; Maintenances inclut suspended ; Packs actifs inclut exhausted/suspended. Ne pas traduire ces comptes comme des états exacts sans revoir la présentation. Statuts techniques bruts et CSS de7–9px, grille deux colonnes pour trois cellules, boutons sur ligne suivante : ergonomie à concevoir, non corrigée ici.
+- [x] Capture Electron réelle outputs/client-interventions-current-1920x1080.png,1920×1080 Noir/Confort zoom100, fixture existante TEST Atelier des Fleurs : une intervention in_progress,0min, sans projet, et un pack10h. Pas de fixture actuelle compatible avec plusieurs interventions trouvée dans les recettes consultées ; ancienne recette schéma71 non migrée. Capture avec code courant, base schéma80 ouverte en lecture seule sans initialize ; empreinte inchangée, zéro erreur renderer. Aucun nouveau test ni donnée créée.
+
+Contrats conserve les engagements, ventes/souscriptions/packs et historique contractuel ; Interventions doit privilégier suivi opérationnel et temps, sans dupliquer la synthèse contractuelle. CLIENT-01 à CLIENT-11 intégralement conservés sans changement de statut. Aucun composant, fixture ou règle métier modifié ; seul présent suivi actualisé. Autres travaux locaux/Sites&Pages préservés. Aucun commit/push/PR/fusion. Prochaine action : concevoir puis valider la maquette Interventions avant développement.
+
+
+## 05/11/2026 — Projets Client V2 : présentation autorisée, revue visuelle attendue
+
+- [x] ClientProjectsTab raccordé aux résumés/services/handlers existants : titre, compte réel, indicateurs, cartes compactes, nature commerciale, statut français, archivage, progression réelle, type traduit, dates renseignées et devis source exact. Aucun changement du module Projets ou de la structure commune.
+- [x] En cours = strictement in_progress hors archives ; aucun legacy/to_prepare promu actif. Terminés/archivés sans double compte. Filtres rapides et sélecteur pour tous les états (attente client, blocage, validation inclus). Filtre conservé entre onglets et réinitialisé au changement de client ; chargement, erreur/réessai, vide total et vide filtré distincts.
+- [x] Typecheck réussi. Contrôles Electron ciblés : données/traductions/avancement, compte En cours, filtrage vide et À préparer, filtre entre onglets, transmission de l’identifiant exact (événement intercepté seulement dans le banc), largeur des cartes, dimensions1920×1080/zoom100, zéro erreur renderer. Pas de campagne globale ; TEMP nettoyé.
+- [x] Capture inspectée : outputs/client-projects-v2-1920x1080.png, Noir/Confort, deux projets du client TEST — Atelier des Fleurs existant, tous deux À préparer et0%. Base SQLite en lecture seule, sans initialize/migration, empreinte identique avant/après. Aucune donnée créée.
+- [x] Validation visuelle Carlos reçue ; présentation Projets conservée.
+
+Écarts : En cours remplace Actifs pour respecter le statut exact ; sélecteur supplémentaire pour couvrir tous les états. Dates absentes et aucun devis source sur ces deux dossiers ; aucune valeur illustrative ajoutée. Avancement = tâches/checklists obligatoires terminées, pas temps consommé. Aucun nouveau report nécessaire ; CLIENT-01 à CLIENT-11 conservés sans modification de leurs statuts. Contacts/Commercial/Contrats/Résumé/Associations/liste/synthèse/Sites&Pages et autres fichiers locaux préservés. Aucun commit/push/PR/fusion.
+
+Fichiers : ClientsPage.tsx (raccord et erreur localisée), nouveaux ClientProjectsTab.tsx, client-projects-v2.css, scripts/check-client-projects.cjs ; présent suivi. Prochaine action : revue humaine de la capture ; Interventions non démarré.
+
+
+## 05/11/2026 — Contrats : vérifications finales ciblées ; Projets : étude seule
+
+Carlos retient l'architecture Contrats sous réserve des trois vérifications. Aucun nouveau développement Projets autorisé.
+
+- [x] Jalons : source et libellé Jalon prévu distincts des fins de suivi et périodes ; aucune assimilation au renouvellement/résiliation/fin d'engagement. Contrôle ciblé confirmé ; aucun changement de règle.
+- [x] Un seul problème corrigé : préciser l'unité des prix lorsqu'elle est connue. Souscription manuelle : prix par période du plan avec cadence explicite (mensuelle/trimestrielle/annuelle). Vente multi-périodes : Total vendu · N périodes de facturation selon la politique et la quantité réelles, sans division. Sans unité fiable : prix enregistré neutre. CLIENT-08 reste partiel pour toute agrégation.
+- [x] Défilement : accès confirmé à Documents/preuves, Autres engagements sans suivi, Historique et Services complémentaires. En-tête dégagé, navigation inchangée. Pas de nouvelle retouche du cadre.
+- [x] Typecheck et4tests de projection réussis (dont unités et multi-périodes),8contrôles Electron ciblés +6du banc (14total), zéro erreur renderer. TEMP nettoyé. Aucun audit/campagne exhaustive.
+- [x] Projets inventorié en lecture seule : liste filtrée clientAccountId, archives incluses, ordre création décroissant ; nom/état commercial/statut brut/avancement, ouverture exacte Projet et Devis source. ProjectSummary fournit aussi numéro/type/dates/montants/estimation, non affichés actuellement. Dossier Projet porte phases/nœuds/actions, sites/pages, prérequis, prestations/contributions issues des lignes du devis et temps par projet/nœud. Pourcentage basé sur éléments requis terminés, pas sur temps consommé. Aucun bouton d'édition/création/chrono/phases dans l'onglet Client actuel.
+- [x] Capture Electron réelle Projets : `outputs/client-projects-current-1920x1080.png`,1920×1080 Noir/Confort zoom100. Atelier Horizon de la fixture existante ne possède aucun projet ; état vide montré sans fabriquer de projet pour la capture.
+
+Diagnostic ergonomique Projets : titre générique, état vide minimal ; en présence de dossiers, référence/nom/état commercial/statut technique/avancement peu hiérarchisés, dates et contexte absents, actions non regroupées. Prochaine action : concevoir/valider la maquette Projets avant développement. CLIENT-01 à CLIENT-11 intégralement conservés ; pas de nouveau point reporté ajouté à ce stade. Contacts/Résumé/Associations/Commercial/liste/synthèse/Sites&Pages et brouillons/préférences préservés. Aucun commit/push/PR/fusion.
+
+Fichiers de correction Contrats : shared/clientEngagementPresentation.ts et son test ; fixture client-contracts-scenarios.cjs (contrôles et capture Projets) ; présent suivi. Aucun composant Projets modifié.
+
+
+## 05/11/2026 — Contrats et prestations : vue de consultation finalisée pour revue
+
+Consigne jointe et registre utilisateur `AtoumWeb_Client_V2_registre_actualise_Contrats_2026-11-05.md` lus. Le visuel guide la composition, aucune donnée de maquette n'est injectée ; Contrats ne reproduit plus la liste Commercial.
+
+- [x] Projection en lecture seule des souscriptions (y compris manuelles), packs, interventions liées aux ventes opérationnelles et lignes de devis acceptés. Une souscription partagée avec compléments reste un seul suivi, toutes les lignes sources restent accessibles. Lignes acceptées sans objet opérationnel dans un bloc distinct, sans état Actif inventé.
+- [x] Début/fin enregistrés, cadence service et facturation distinctes, prix du suivi et montant total de ligne explicitement sourcés. Aucune division/agrégation mensuel-annuel ni déduction de fin depuis l'acceptation. Aucune somme assimilée à de l'encaissé.
+- [x] Échéances issues des fins enregistrées, périodes existantes et jalons contractuels renseignés ; nature affichée (fin suivi, expiration pack, fin période opérationnelle, jalon), dates passées signalées. Aucun renouvellement automatique. Conditions enregistrées consultables sur les suivis ayant une origine devis et des paramètres revus/applicables.
+- [x] Pièces et attestations via quotePreparation.get ; devis accepté, attestation d'acceptation, document rattaché et signature non établie distingués. Ouvertures existantes vers les preuves/documents, gestion détaillée dans Devis. Pas de PDF fabriqué ni de preuve de signature déduite du rôle accepted_pdf.
+- [x] Historique terminé/archivé/expiré/épuisé et besoins réellement liés consultables. Les besoins sont présentés comme enregistrés et à qualifier, pas automatiquement complémentaires ou non couverts. Aucun bouton Ajouter une proposition.
+- [x] Lecture partielle/erreur/réessai explicites ; compteurs — si source indisponible. Chargement seulement lorsque Contrats est actif ; résultats annulés ignorés. Panneau long contraint au défilement central pour conserver en-tête/onglets accessibles, ajustement limité à Contrats.
+- [x] Typecheck réussi ;3tests déterministes de projection (souscription commune sans double compte, lignes sans suivi sans date fabriquée, propositions non acceptées exclues/historique/prix zéro),6contrôles Electron ciblés +6du banc (12total), zéro erreur renderer et TEMP nettoyé. Contrôle de relecture sans duplication après changement d'onglet et attestation distincte d'une signature. Aucune suite globale.
+- [x] Capture Electron finale inspectée : `outputs/client-contracts-services-v2-1920x1080.png`, Atelier Horizon sur fixture TEST existante, Noir/Confort1920×1080 zoom100. Maintenance manuelle49€ par période de plan, début15/10/2026, facturation non renseignée ; ligne acceptée699€ sans suivi ; jalon Livraison existant de la fixture01/01/2027. Aucun hébergement149€, fin ou renouvellement de la maquette ajouté.
+- [ ] Validation visuelle Carlos ; Projets ne démarre qu'après validation.
+
+Limites restantes : pas de workflow renouvellement/résiliation ; pas d'agrégation récurrente ; pas de qualification automatique des besoins ; aucune signature certifiée si la source ne l'établit pas. Les conditions de renouvellement ne sont pas reconstruites depuis des clauses textuelles. Les interventions non liées à une ligne vendue restent dans leur onglet métier, sans promotion en prestation vendue. Associations, liste/synthèse, Contacts, Commercial, Résumé et Sites&Pages préservés. Aucun commit/push/PR/fusion/migration/base utilisateur.
+
+Fichiers de cette passe : ClientContractsPanel.tsx, raccord ClientsPage.tsx ; nouveaux client-contracts-v2.css, shared/clientEngagementPresentation.ts et son test ; scripts/check-client-contracts.cjs et scripts/fixtures/client-contracts-scenarios.cjs ; présent suivi.
+
+### Registre CLIENT-01 à CLIENT-18 synchronisé
+
+Source utilisateur reçue le05/11 ; identifiants et décisions préservés. Les états ci-dessous distinguent réalisation technique et validation graphique. Les entrées historiques du présent fichier restent intégralement conservées.
+
+| ID | Zone | Point | Statut / condition de clôture |
+| --- | --- | --- | --- |
+| CLIENT-01 | Contacts | Vérifier « Principal » / « Contact principal » : rôle métier versus désignation du contact principal. | Correction ergonomique réalisée : un seul badge Contact principal quand role=primary et isPrimary concordent ; autres rôles/incohérences non masqués. Service et données inchangés, invariant des rôles/coordonnées vérifié en fixture. Validation humaine de finition attendue. |
+| CLIENT-02 | Contacts | Vérifier les accès « Gérer les coordonnées » / « Modifier les coordonnées ». | Correction ergonomique réalisée : commande Gérer les coordonnées redondante retirée ; summary Modifier les coordonnées conservé comme accès unique au panneau avancé existant. Ouverture clavier native vérifiée, aucune duplication d’éditeur ni modification de sauvegarde. Validation humaine de finition attendue. |
+| CLIENT-03 | Commercial | Créer un devis depuis la fiche Client avec rattachement automatique fiable. | À arbitrer/développer ; aucun bouton factice ; fiabilité du parcours Devis à démontrer. |
+| CLIENT-04 | Commercial | Définir les indicateurs « À traiter » et « Clôturés ». | À arbitrer ; aucune catégorie calculée arbitrairement. |
+| CLIENT-05 | Résumé | Supprimer les redondances inutiles entre « Prestations et suivi commercial » et Associations. | Synthèse ergonomique réalisée avec situations déjà fiables : propositions draft/sent/viewed, nombre de devis acceptés explicitement nommé, maintenance au statut Actif et accès client Commercial/Contrats/Projets. Listes devis/projets répétées et boutons globaux retirés ; aucun total financier ni prestation déduite du sujet. Validation humaine de finition attendue. |
+| CLIENT-06 | Contrats | Unifier la lecture des engagements acceptés, ventes par ligne, souscriptions/services opérationnels et périodes. | Projection consultative existante conservée. Correction de cohérence droite réalisée : catégorie renommée Devis acceptés, même source et mêmes liens. Consolidation fonctionnelle des engagements et vérification avec périodes réelles restent ouvertes ; aucun nouveau compteur/agrégat créé. |
+| CLIENT-07 | Contrats | Workflow de renouvellement, accord exprès, préavis, résiliation, prochaines échéances contractuelles. | À arbitrer/développer ultérieurement ; affichage maintenant seulement si les données et échéances sont explicites et vérifiables. |
+| CLIENT-08 | Contrats | Synthèse des montants initiaux et récurrents, multi-périodes et règles d'agrégation. | Partiel réalisé : montants sourcés par ligne et suivi, cadence et facturation distinctes lorsqu’elles sont connues ; aucun total récurrent ni division. Agrégation multi-périodes toujours reportée. |
+| CLIENT-09 | Contrats | Services complémentaires à proposer : besoin/proposition existants vs suggestion nouvelle. | Partiel réalisé : lecture des besoins liés existants, avec avertissement de qualification ; propositions non acceptées accessibles dans Commercial. Aucun moteur, bouton d’ajout ou opportunité déduite. Parcours à concevoir reporté. |
+| CLIENT-10 | Contrats | Distinguer devis accepté, acceptation attestée, document rattaché et PDF effectivement signé. | Réalisé en consultation : devis accepté / attestation / pièce rattachée distingués ; signature non affirmée ; gestion détaillée et ouverture de pièces via Devis. Validation visuelle attendue. |
+| CLIENT-11 | Contrats | Lignes vendues sans objet opérationnel, ventes historiques non couvertes, historique des arrêts. | Partiel réalisé : lignes acceptées sans suivi listées et sourcées ; historique des états terminés/archivés disponible sans cause inventée. Historique unifié des arrêts reste limité aux sources existantes. |
+| CLIENT-12 | Finition Client | Éviter les doublons de navigation entre l’onglet central actif et sa catégorie dans Associations, en conservant accès manuel et liens existants. | Correction ergonomique réalisée : catégorie de l’onglet central actif repliée par défaut ; l’utilisateur peut ouvrir/replier et son choix reste prioritaire pendant la consultation, y compris après rafraîchissement. Catégories et liens conservés ; Contrats renommé Devis acceptés. Validation humaine de finition attendue. |
+| CLIENT-13 | Projets | Évaluer la redondance entre filtres rapides et sélecteur d’état. | Correction ergonomique réalisée : sélecteur unique couvrant les sept statuts opérationnels et Tous les états, archives conservées. Même état de filtre entre onglets, réinitialisé au changement de Client ; calcul de progression inchangé. Validation humaine de finition attendue. |
+| CLIENT-14 | Documents | Refonte Documents : recherche, filtre, compteurs, présentation et actions. | Réalisé techniquement : tableau V2, titre/nom de fichier, trois compteurs globaux, recherche et filtre de consultation distinct du choix d’import, archives et actions existantes. Validation graphique Carlos reçue le06/11/2026 ; réserves fonctionnelles restantes de CLIENT-16 conservées. |
+| CLIENT-15 | Documents | Harmonisation des éditeurs de titre et conservation. | Adaptation locale réalisée : éditeur V2 titre/date/motif remplace les prompts, réutilise useUnsavedDraft et confirmations existantes. Enregistrer/Annuler/Rester/Quitter, brouillon entre onglets et champ non édité conservés ; tests de confirmation simulée et vraie sauvegarde en fixture temporaire. Recette native Windows résiduelle CLIENT-16 et validation humaine restent ouvertes. |
+| CLIENT-16 | Documents | Exactitude des états de disponibilité, empreinte et protections documentaires. | États fichier présent/introuvable et archivage distincts ; aucun badge Protégé ou signature déduit. Sept tests existants du service réussis, dont protections devis/factures/historique et empreinte modifiée ; cas UI manquant/archives vérifiés par projections IPC temporaires. Ouvertures système et dialogues natifs non rejoués réellement sur la base utilisateur ; vérification manuelle reste possible. |
+| CLIENT-17 | Finition Client | Lisibilité et adaptation du volet Identité : minima de largeur, noms/rubriques/boutons, responsive et préférences enregistrées. | Adaptation d’affichage réalisée dans le cadre commun Client : minima300/240px sur espace suffisant, centre au moins640px sinon mode compact ; anciennes préférences non réécrites automatiquement. Drag/clavier/repli/préférences récentes et brouillons vérifiés. Capture320/1011/260px. Validation humaine de finition attendue. |
+| CLIENT-18 | Historique | Étudier l’agrégation future des journaux métier activity_log avec l’historique Client. | Reporté à une étude distincte : sources, rattachements, doublons, conservation et accès exacts à définir ; aucune agrégation développée dans cette passe. |
+
+Prochaine action : revue de la capture et des limites de consultation, puis seulement inventaire Projets autorisé séparément.
+
+
+## 05/11/2026 — Onglet Commercial V2 : présentation autorisée
+
+Visuel Commercial validé comme référence ergonomique ; aucun nouveau traitement métier ni réécriture Devis autorisé. Contacts reste référence provisoire ; distinction rôle Principal/contact principal et doublon de gestion coordonnées réservés à la finition, non modifiés.
+
+- [x] Nouveau ClientCommercialTab raccordé à quotes/chargement/erreur/réessai existants. Titre Commercial — Devis, sous-titre, compte réel ; cartes compactes avec référence et objet séparés, badge français correspondant exactement aux sept statuts, montant réel contractValueCents (zéro affiché comme zéro), dates création/validité, référence Abby ou absence explicite. Aucun montant HT/TTC ou état inventé.
+- [x] Indicateurs incontestables uniquement : total, Brouillons, Acceptés, Refusés. Aucun cumul arbitraire À traiter/Clôturés. Valeurs — en cas de chargement/erreur pour éviter des zéros trompeurs.
+- [x] Filtre par statut exact et tri de création récent/ancien fonctionnels, sans écriture métier, état conservé entre onglets car composant toujours monté. Liste compacte et défilable par le conteneur existant, sans pagination fictive. Ouverture de chaque devis exact via AppButton/openEntity existants.
+- [x] Chargement, absence totale de devis, résultat filtré vide et erreur/réessai disponibles. Erreur quotes affichée dans Commercial sans doublon du message global ; autres sections inchangées.
+- [x] Typecheck réussi ;8contrôles Commercial +6du banc (14total) réussis : vrai statut distinct de l'objet, montant/total, filtre vide et état entre onglets, tris, erreur de lecture simulée sans faux total et réessai, ouverture exacte. L'erreur IPC TEST volontaire est distinguée d'une anomalie renderer ; zéro erreur renderer, TEMP nettoyé. Aucune suite globale.
+- [x] Capture finale Electron inspectée : `outputs/client-commercial-v2-1920x1080.png`, Atelier Horizon, Noir/Confort1920×1080 zoom100. Données du dossier TEST existant (699€ et dates réelles de la fixture), non reprises de la maquette. Capture avant les ajouts techniques de test.
+- [ ] Validation visuelle Carlos avant Contrats.
+
+Arbitrages/écarts : À traiter et Clôturés exigent une définition métier ; non intégrés. Nouveau devis non ajouté : QuotesPage crée avec clientAccountId lorsque l'utilisateur choisit Client dans l'assistant, mais n'expose pas de paramètre de création pré-rattachée depuis cette fiche (initialId ouvre un devis existant, pas un client). Adapter ce parcours dépasserait la présentation autorisée. Aucun bouton décoratif ajouté. Rôles Commercial/Contrats/Associations conservés, aucune migration/base utilisateur modifiée.
+
+Fichiers de cette passe : ClientsPage.tsx ; nouveaux ClientCommercialTab.tsx et client-commercial-v2.css ; scripts/check-client-commercial.cjs et scripts/fixtures/client-commercial-scenarios.cjs ; présent suivi. Contacts/Résumé/Associations/liste/synthèse/préférences/Sites&Pages et tous autres travaux locaux préservés. Prochaine action : validation de la capture et arbitrages éventuels, aucun développement Contrats implicite. Aucun commit/push/PR/fusion/remplacement de préproduction.
+
+
+## 05/11/2026 — Onglet Contacts V2, refonte autorisée
+
+Carlos valide Associations comme référence à conserver ; finition commerciale du Résumé différée et non développée ici. Nouvelle autorisation limitée à Contacts selon visuel joint, sans changement métier/base/shell.
+
+- [x] Titre Contacts du client/compteur réel, ajout jaune, carte par personne : initiales/nom lisibles, fonction seulement si renseignée, badges rôle et contact principal distincts. Email/téléphone visibles avec icônes et liens réels ; aucun champ illustratif inventé.
+- [x] Actions regroupées Modifier la personne / Gérer les coordonnées / Voir dans l'Annuaire. Handler d'édition existant conservé ; gestion ouvre le panneau ContactMethodsPanel existant, avec coordonnées supplémentaires/usages/moyens préférés/archivage inchangés. Action Définir principal conservée pour les autres personnes.
+- [x] Formulaire existant conservé : choix explicite création ou rattachement depuis l'Annuaire via sélecteur groupé ; libellés Créer et rattacher / Rattacher la personne ; Annuler protégé ajouté. Champs/validations/sauvegarde/concurrence/guards existants inchangés. Aucune fonction/menu/rôle ajouté depuis l'image.
+- [x] CSS strictement limité à Contacts dans la fiche agrandie Noir/Confort ; cartes moins imbriquées, tailles lisibles, actions adaptables selon largeur utile. Encadré explicatif distingue contact principal du client et moyens préférés.
+- [x] Typecheck réussi.7contrôles Contacts +6contrôles de banc (13total) réussis, zéro erreur renderer : identité et coordonnées, gestion repliable, rattachement sans personne dupliquée, création persistée, brouillon entre onglets, rester sur confirmation de sortie, structure commune conservée. Fixture TEMP nettoyée. Un délai de rafraîchissement de création a été attendu explicitement dans le banc avant l'ouverture de l'éditeur ; aucun changement de handler.
+- [x] Capture Electron finale inspectée : `outputs/client-contacts-v2-1920x1080.png`,1920×1080 Noir/Confort zoom100, Atelier Horizon/Camille Bernard. Capture avant les écritures de test pour garder la même fiche de référence.
+- [ ] Validation visuelle utilisateur avant Commercial.
+
+Fichiers de cette passe : ClientsPage.tsx ; nouveau client-contacts-v2.css ; scripts/check-client-contacts.cjs ; scripts/fixtures/client-contacts-scenarios.cjs ; présent suivi. Écarts : pas de fonction dans les données de Camille, donc aucune fonction affichée ; source de rattachement par sélecteur groupé existant plutôt que menu illustratif ; pas de menu supplémentaire à trois points. Liste/synthèse/Résumé/Associations/huit onglets/Sites&Pages préservés. Aucun commit/push/PR/fusion. Prochaine action : revue Carlos, aucune reprise Commercial implicite.
+
+
+## 05/11/2026 — Associations Client : aperçus contextuels
+
+Autorisation ciblée de remplacer les cinq boutons de navigation par des aperçus liés au Client, sans nouvelle règle métier.
+
+- [x] Nouveau ClientAssociations : sections natives repliables, compteurs issus des listes réelles, deux dossiers maximum par aperçu, référence/nom/statut, ouverture exacte par openEntity. Priorité de présentation aux dossiers non terminés/non annulés ; ordre source conservé entre éléments équivalents. Accès liste complète via onglet existant seulement au-delà de deux éléments. Catégories vides repliées/discrètes et toujours découvrables. Échec/chargement affiche — et une indication, jamais un zéro trompeur.
+- [x] Contrats = devis acceptés, conformément à ClientContractsPanel ; aucune entité contractuelle fictive. Documents = service clientDocuments.list(clientId,false), fichiers absents indiqués et ouverture désactivée. Pas de statut de traitement documentaire inventé : non archivé/introuvable seulement. Le callback facultatif de ClientDocumentsPanel actualise l'aperçu après import/édition/archivage/suppression, sans changer les handlers métier.
+- [x] Panneau260px, redimensionnement/repli global, préférences, huit onglets et brouillons préservés. Centre inchangé ; liste/synthèse/Sites&Pages et autres travaux locaux conservés.
+- [x] Typecheck réussi.11contrôles ciblés fiche/associations +6du banc =17réussis, zéro erreur renderer. Nouveaux contrôles : compteurs devis/intervention/contrat vide, ouverture du devis exact, repli conservé entre onglets. Le test d'ouverture a été adapté à la navigation réelle puis retour Client ; aucun handler produit contourné. TEMP nettoyé. Pas de suite globale.
+- [x] Capture finale Electron inspectée : `outputs/client-expanded-v2-1920x1080.png`, Noir/Confort1920×1080 zoom100. Fixture avec1devis Brouillon,1intervention À planifier ;0contrat/projet/document réels pour ce dossier. Aucun remplissage fictif pour enrichir la capture.
+- [ ] Validation visuelle Carlos.
+
+Fichiers de cette passe : nouveau ClientAssociations.tsx ; raccord dans ClientsPage.tsx ; callback facultatif dans ClientDocumentsPanel.tsx ; styles client-expanded-v2.css ; fixture client-expanded-scenarios.cjs ; présent suivi. Prochaine action : revue visuelle utilisateur. Aucun commit/push/PR/fusion/remplacement de préproduction.
+
+
+## 05/11/2026 — Ajustements ergonomiques fiche agrandie
+
+Autorisation ciblée : mesurer puis équilibrer les zones et corriger le Résumé, sans nouvelle refonte ni changement métier.
+
+- [x] Mesure Electron avant : identité320/centre1041/associations230px. Après :320/1011/260px. Onglets864,3px pour981px disponibles après ; huit visibles à1920×1080. Identité non réduite. Répartition par défaut uniquement : préférences enregistrées prioritaires ; largeur personnalisée280px testée avec identité320px. Repli/redimensionnement et responsive existants conservés.
+- [x] Icônes adaptées contact/personne, téléphone, enveloppe email, localisation, calendrier/action, éclair/actions, historique. Nouveau ClientDetailIcon local à la fiche. Textes secondaires/dates renforcés.
+- [x] Programmation unique dans le Résumé : accès central conservé, accès gauche masqué dans Résumé mais disponible dans les autres onglets pour éviter le retour préalable au Résumé. Même handler/éditeur/garde conservé.
+- [x] Liens exacts devis/projets conservés au centre ; noms associés informatifs à droite avec accès aux onglets Client. Doublon de navigation Contrats central retiré, accès Association/onglet préservé. Raccourcis globaux explicitement libellés Tous les devis/Tous les projets, distincts des dossiers Client.
+- [x] En retard · action ouverte affiché dans Résumé via isClientActionOverdue existant, projection CRM issue des seules actions ouvertes ; aucun statut/date/report modifié.
+- [x] Typecheck réussi ;8contrôles Electron ciblés +6du banc (14total), zéro erreur renderer. Mesure initiale sans capture ; une capture après inspectée : `outputs/client-expanded-v2-1920x1080.png`. Aucune campagne générale/multi-résolutions. TEMP nettoyé.
+- [ ] Validation visuelle finale Carlos.
+
+Compromis : les anciennes largeurs personnalisées ne sont pas remplacées par260px ; onglets défilables/volets compacts et cartes empilées restent les adaptations existantes lorsque la largeur utile baisse. Les noms des associations se lisent au dépliage, sans dupliquer leurs boutons d'ouverture exacte présents au centre. Liste/fiche rapide/Sites&Pages et autres travaux locaux préservés. Aucun commit/push/PR/fusion. Prochaine action : revue de la capture par Carlos.
+
+
+## 05/11/2026 — Fiche Client agrandie : reprise visuelle autorisée
+
+Consigne jointe et visuel du 05/11 lus : périmètre fiche agrandie seulement, aucun changement métier/enregistrement/schéma/contrats, aucune publication.
+
+- [x] Bandeau « Fiche client », retour à la liste et fermeture ; fiche positionnée sous l'en-tête commun et à droite du rail selon leurs dimensions réelles observées. Chrono/recherche restent visibles.
+- [x] Volets par défaut320px identité /230px associations, via paramètres facultatifs de CrmRecordLayout ; aucune préférence enregistrée écrasée, autres appelants inchangés. Redimensionnement et repli existants conservés.
+- [x] Identité/avatar renforcés, coordonnées lisibles et iconisées, ville issue de l'organisation réelle lorsqu'elle existe, actions rapides et téléphone clarifiés. Huit onglets présents sur une ligne à1920×1080 ; associations plus nettes, sans rupture du mot Interventions.
+- [x] Résumé : cartes structurées, titres/icônes, liens devis/projets, activité récente et sections secondaires hiérarchisés. Données/handlers/onglets/détails gardés montés ; aucun compteur ni document inventé.
+- [x] Typecheck réussi. Six contrôles Electron propres à la fiche + six contrôles du banc (12total) réussis, zéro erreur renderer : en-tête dégagé, largeur gauche, huit onglets entièrement visibles, navigation, brouillon conservé entre onglets, associations dans la fiche. Fixture TEMP nettoyée ; aucune campagne multi-résolutions.
+- [x] Capture finale réelle inspectée : `outputs/client-expanded-v2-1920x1080.png`, Noir/Confort,1920×1080 zoom100. Aucune capture supplémentaire de volet nécessaire.
+- [ ] Validation visuelle Carlos.
+
+Fichiers de cette passe : ClientsPage.tsx, CrmRecordLayout.tsx, nouveau client-expanded-v2.css, scripts/check-client-expanded.cjs, scripts/fixtures/client-expanded-scenarios.cjs et présent suivi. Liste/fiche rapide et lot2 préservés ; les travaux précédents non commitées restent présents. Écart : largeur320/230 par défaut, anciennes largeurs personnalisées prioritaires ; visuel adapté aux contenus réels sans reproduire les données illustratives ni ajouter les raccourcis fictifs. Prochaine action : revue de la capture avant toute autre étape. Aucun commit/push/PR/fusion.
+
+
+## 05/11/2026 — Présentation liste/synthèse retenue, deux vérifications ciblées
+
+Carlos retient la présentation liste/fiche rapide sous réserve des deux vérifications suivantes ; aucune publication autorisée.
+
+- [x] Agrandir et Ouvrir la fiche complète appelaient le même `onExpand` (`setLargeView(true)`). Doublon supérieur retiré, bouton principal inférieur conservé. Aucun autre changement de composition.
+- [x] Source vérifiée : CrmService projette `nextActionAt/nextActionText` depuis `crm_actions status=open`, y compris les actions Prospect liées. Une action terminée/annulée ne contribue plus. Repère textuel « En retard » dans le tableau et « En retard · action ouverte » dans la synthèse si date valide strictement passée, selon la comparaison temporelle déjà utilisée en Prospection. Aucun statut, report ou écriture métier automatique.
+- [x] Typecheck ;22tests ciblés (présentation Client + source unique CRM, dont transition terminée exclue) ;28contrôles natifs réussis, zéro erreur renderer, TEMP nettoyé. Dates future/absente/invalide/égale non signalées. Bouton inférieur ouvre toujours la même fiche et conserve le brouillon.
+- [x] État actuel de la fiche agrandie capturé sans développement supplémentaire : `outputs/client-expanded-current-1920x1080.png`, Electron Noir/Confort 1920×1080 zoom100. Trois zones et huit onglets présents. Écarts constatés avec son visuel cible : absence de bandeau titre/commandes dédié, fiche recouvrant l'en-tête commun, volet identité étroit et petits textes, hiérarchie/espacements à reprendre. Aucun de ces points corrigé dans cette passe.
+
+Prochaine action : montrer cette capture à Carlos puis attendre son accord avant toute reprise du développement de la fiche agrandie. Lot2, travaux locaux et checkouts historiques préservés ; aucun commit/push/fusion.
+
+
+## 05/11/2026 — Lot structurel Clients V2 autorisé, livré à revue
+
+Autorisation explicite des quatre axes, en un lot ; aucun commit/push/PR/fusion/remplacement de préproduction.
+
+- [x] En-tête Client à deux rangées dans le flux : titre/compteur/création, puis recherche/statut/actualisation/personnalisation. Le titre shell reste dans le DOM pour les parcours existants et est masqué visuellement uniquement sur Clients Noir/Confort. Positions absolues supprimées.
+- [x] `ClientQuickSummary` extrait : données/handlers existants, identité/statut/relation regroupés, une rangée de commandes, coordonnées simples, deux sections compactes, ouverture complète pleine largeur. AppButton pour les commandes et liens métier, OperationIcon réutilisé ; téléphone en SVG cohérent. Détails agrandis toujours montés, aucun contenu métier/éditeur/guard modifié.
+- [x] Un seul ConfiguredDataTable, même scope et mêmes identifiants. Nouvelle option de présentation transitoire : coordonnées masquées à la sélection uniquement pour la vue standard sans préférence enregistrée. Personnalisation et largeur sauvegardées prioritaires. Portail facultatif pour placer les contrôles existants dans la barre Client sans recréer leur état ; comportement des autres appelants inchangé.
+- [x] CSS liste/synthèse remplacé par une feuille consolidée : jetons communs, sélecteurs séparés des détails, couleurs active/inactive/archived distinctes. Les rares !important nécessaires contre les surcharges globales historiques sont conservés et identifiés ; pas de nouvelle accumulation par passage.
+- [x] Typecheck réussi ; 27 tests ciblés table/largeurs/vues personnelles et 27 contrôles natifs réussis, zéro erreur renderer. Contrôles ajoutés : colonnes compactes par défaut, préférence explicite prioritaire, largeur300px conservée, en-tête pleine largeur. Brouillon et huit onglets toujours conservés. TEMP nettoyé, aucune base utilisateur touchée.
+- [x] Deux PNG Electron réels 1920×1080 zoom100 Noir/Confort inspectés face à Option A : `outputs/client-option-a-list-1920x1080.png` et `outputs/client-option-a-quick-1920x1080.png`. Synthèse532px de haut (avant649,5), tableau1095px/panneau505px. Header structuré et coordonnées retirées du tableau compact par défaut ; footer complet pleine largeur.
+- [ ] Validation visuelle humaine, distincte du résultat technique.
+
+Écart de compatibilité retenu : email/téléphone restent sous l'identifiant historique `coordinates` dans la présentation détaillée ; pas de migration des vues ni de nouveaux identifiants risquant de modifier les préférences. Les vues déjà personnalisées peuvent donc conserver les coordonnées à la sélection. Autres différences avec la maquette : pas de filtre fictif, pagination, sélection multiple ou menu inventé ; vraies initiales sans logo, détail date client conservé, largeur de panneau mémorisée. Aucun nouveau fichier de données fictives ; fixture technique existante seule utilisée. Lot2 Sites & Pages, checkouts historiques et travaux locaux de la fiche agrandie préservés. Prochaine action : revue de la paire finale par Carlos, sans autre développement implicite.
+
+
+## 05/11/2026 — Finition graphique Clients, rendu toujours soumis à validation
+
+Nouvelle demande : non-validation graphique du précédent rendu ; finition ciblée sans changement métier ni fiche agrandie. Seul `client-list-quick-v2.css` modifié dans cette passe, en conservant tous les travaux locaux.
+
+- [x] Personnalisation déplacée sur la ligne recherche/statut/actualisation, suppression de sa bande au-dessus du tableau ; création conservée à droite. Panneau de personnalisation ouvert en surimpression, commandes existantes conservées.
+- [x] En-tête de tableau moins haut, bordures verticales atténuées, séparateurs horizontaux discrets ; avatars ronds avec initiales réelles, statuts verts contrastés, boutons de ligne encadrés et sélection marquée à gauche en jaune.
+- [x] Synthèse : nom22px/avatar58px, coordonnées en carte, prochaine action en carte accentuée jaune, prestations en carte et liens sur surface distincte. Bouton de fiche complète jaune. Pas de données ni fonctionnalités ajoutées.
+- [x] Une nouvelle paire Electron réelle 1920×1080 zoom100 produite et inspectée directement face à la maquette : `outputs/client-option-a-list-1920x1080.png`, `outputs/client-option-a-quick-1920x1080.png`. Tableau1095px/panneau505px ; synthèse649,5px contre671px précédemment. 23 contrôles natifs ciblés réussis, zéro erreur renderer ; pas de tests globaux, pas de nouveau typecheck nécessaire pour cette passe CSS seule.
+
+Écarts restants : Coordonnées reste une colonne commune selon le schéma courant ; filtres illustratifs, cases de sélection multiple, pagination et menus supplémentaires non ajoutés. Largeurs mémorisées conservées (panneau plus large que celui illustré), avatar en initiales lorsqu'aucun logo réel n'existe. Le shell et le logo Manager actuels restent prioritaires. La mise en cartes est une adaptation du design cible et ne constitue pas une reproduction pixel à pixel. Validation humaine toujours attendue ; aucun commit/push/fusion, lot2 et worktree historique non touchés. Prochaine action : retour visuel de Carlos sur cette paire, avant toute autre étape.
+
+
+## 05/11/2026 — Correction visuelle Option A, validation humaine requise
+
+Retour utilisateur : premier rendu fonctionnel mais trop éloigné de la maquette ; correction autorisée liste/fiche rapide seulement, fiche agrandie inchangée dans cette passe, aucun commit/push/PR/fusion.
+
+- [x] Synthèse rapide distincte du contenu détaillé : avatar/nom/statut, relation, raccourcis conditionnels et bouton Agrandir explicite ; coordonnées, prochaine action et aperçu des devis/projets liés. Contenus détaillés existants toujours montés et accessibles à l'agrandissement, sans réinitialiser les brouillons ni modifier le rendu interne de la fiche agrandie. Programmation et modification de relation ouvrent les éditeurs existants dans la fiche complète.
+- [x] Hiérarchie de liste : compteur au-dessus de recherche/statuts/actualisation, création à droite ; personnalisation puis tableau. Lignes et en-têtes resserrés, alignements harmonisés ; colonnes/vues/largeurs enregistrées conservées. Aucun filtre ou compteur inventé.
+- [x] Comparaison visuelle directe des rendus Electron avec la partie supérieure Option A et la précédente capture : disparition de la longue fiche comprimée, commandes visibles en tête, suppression du défilement d'onglets dans le panneau synthèse. Mesures à 1920×1080 zoom100 : tableau1095px/panneau505px, synthèse671px de haut, toutes ses sections visibles dans cette fixture. Les deux captures finales sont livrées, sans validation graphique automatique prétendue.
+- [x] Typecheck réussi ; 23 contrôles natifs ciblés réussis, zéro erreur renderer, fixture TEMP nettoyée : pleine largeur/fermeture, accès personnalisation, huit onglets toujours montés, agrandissement et brouillon conservé, cas sans coordonnées, dimensions des deux PNG et absence de débordement global. Pas de suite complète ni audit global.
+- [ ] Validation humaine de `outputs/client-option-a-list-1920x1080.png` et `outputs/client-option-a-quick-1920x1080.png`.
+
+Limites : aperçu rapide limité aux deux premiers devis et au premier projet ; tous les éléments et fonctions restent accessibles via la fiche complète. Le panneau reste redimensionnable selon les préférences existantes ; un dossier plus fourni peut défiler. Autres thèmes, lot2 Sites & Pages, bases utilisateur et checkouts historiques préservés. Prochaine action : attendre le retour visuel de Carlos avant toute autre étape.
+
+
+## 05/11/2026 — Clients V2, option A : liste et fiche rapide
+
+Autorisation utilisateur : réaliser l'option A, sans commit/push/PR/fusion. Travail exclusivement dans le worktree Client indépendant ; adaptations locales antérieures de la fiche agrandie conservées, lot 2 Sites & Pages et checkouts historiques non modifiés.
+
+- [x] Liste : tableau plein espace sans sélection, recherche/statuts et personnalisation colonnes/vues existantes conservés ; sélection et tableau harmonisés en Noir/Confort.
+- [x] Fiche rapide : identité/statut/relation, coordonnées essentielles et prochaine action réelles ; raccourcis téléphone/email conditionnés aux données présentes, programmation existante ; prestations et huit onglets conservés, défilement vertical et accès à l'agrandissement.
+- [x] Fermeture restitue la liste pleine largeur ; agrandissement/réduction conserve la sélection et les brouillons. Aucun changement des services ou règles d'enregistrement. Logo Accueil réutilisé sur Clients Noir/Confort ; autres thèmes inchangés par les styles de ce lot.
+- [x] Typecheck ; 13 tests ciblés de présentation ; 20 contrôles App/preload/IPC natifs réussis, zéro erreur renderer, fixture TEMP nettoyée. Cas vide sans coordonnées, colonnes/vues, sélection, fermeture et brouillon contrôlés. Le premier essai natif attendait un dialogue de sortie de brouillon : réponse pilotée dans la seule fixture, protection produit conservée. Aucune suite globale.
+- [x] Capture finale réelle 1920×1080 Noir/Confort : `outputs/client-option-a-1920x1080.png`, données TEST isolées. Correction du facteur système 150 % dans le banc pour obtenir les dimensions demandées ; une seule image finale livrée.
+- [ ] Validation visuelle utilisateur de la liste/fiche rapide. Fiche agrandie et création/édition restent à valider séparément.
+
+Écarts assumés : pas de filtres Type/Relation, pagination ou menu de ligne nouveaux depuis la maquette ; commandes et données existantes seulement. Huit onglets accessibles par défilement horizontal dans la fiche étroite ; contenu vertical défilant. Compteurs, précédent/suivant et menu Actions de la fiche agrandie toujours en attente d'arbitrage. Prochaine action : revue de la capture par Carlos, puis ajustements de cette vue avant de reprendre la fiche agrandie. Aucun commit/push/PR/fusion/remplacement de préproduction.
+
+
+## 04/11/2026 — Client UX/UI V2 : reprise isolée et périmètre complet
+
+- [x] Référence `9ca5a7ed` retrouvée ; worktree indépendant créé sous `C:/Users/AtoumWeb/.codex/worktrees/client-v2-ab-20261104/atoumweb-manager-ec04-validation`, branche `codex/client-v2-ab-20261104`. Checkout historique intact ; lot 2 Sites & Pages non commité laissé intégralement dans son worktree. Planche graphique ultérieure retrouvée dans `atoumweb-manager-ux-reference-20261104`, non importée.
+- [x] Visuel cible reçu. Autorisation de développement A/B, sans commit/push/PR/fusion. Compteurs, précédent/suivant et menu Actions restent soumis à arbitrage.
+- [x] Précision utilisateur : couvrir le parcours Client complet, mais préparer d'abord le plan liste + fiche rapide ; ne pas développer simultanément toutes les vues. Aucun nouveau test ni capture pour cette préparation.
+- [ ] Premières adaptations locales de la fiche agrandie en cours : cartes Résumé, raccourcis disponibles, associations repliables. Non validées visuellement, non livrées. Premier typecheck : icône `phone` non reconnue, remplacée ; contrôle non relancé après la précision utilisateur. Aucune capture produite.
+
+Architecture conservée : `ClientsPage` porte sélection, filtres et brouillons ; `ConfiguredDataTable` porte les colonnes/préférences ; `CrmRecordLayout` porte les volets et leurs largeurs ; `CrmIdentityAvatar`, `OperationIcon`, les éditeurs et gardes existants restent les sources communes. Ne pas modifier les règles métier ni créer de données pour le visuel.
+
+Plan proposé, validations visuelles séparées : (1) liste Tous les clients : barre d'outils, hiérarchie du tableau, sélection, filtres et personnalisation existants ; (2) fiche rapide : identité/coordonnées prioritaires, boutons et accès à l'agrandissement ; (3) fiche agrandie : reprendre les adaptations locales et le visuel trois zones/huit onglets ; (4) création/édition : harmoniser les formulaires existants sans changer la sauvegarde. Styles limités à Client Noir/Confort ; ne retoucher le shell commun que si nécessaire. Écarts repérés dans le code : styles Client répartis entre plusieurs couches, barre de liste peu hiérarchisée, commandes de relation/fermeture/agrandissement regroupées dans l'identité, Résumé dense réutilisé dans le panneau étroit. Ce repérage ne constitue pas une recette visuelle.
+
+Prochaine action : harmoniser d'abord la liste, puis la soumettre à validation visuelle avant la fiche rapide. Aucun audit global ni campagne de captures ; contrôles ciblés lors de chaque réalisation seulement.
+
+
 ## 03/11/2026 — UX lot 1 Accueil / en-tête / rail : rendu officiellement validé
 
 Autorisation utilisateur : nouveau worktree `atoumweb-manager-ux-home-shell-lot1-20261103`, branche `codex/ux-v2-home-shell-lot1-20261103`, départ exact `8a24ae37d10573b7db54cc0268c6e9c0959e8532`. Autorisation initiale sans commit/push, complétée le 03/11 par la validation officielle du rendu et l’autorisation de commit/push sur la seule branche UX. Aucune fusion, modification de PR existante ou intégration à main. Le worktree a été créé avec Git après refus de rattachement du dépôt externe par l’outil desktop ; le checkout #165 reste intact.

@@ -1,0 +1,38 @@
+/* Read-only Client engagement view; no shared tab or operational editor styles. */
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .client-contracts-v2{display:grid;gap:18px;padding:20px 0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .client-contracts-v2>header{display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border);padding-bottom:14px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .client-contracts-v2>header>svg{width:32px;height:32px;color:var(--accent)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .client-contracts-v2 h3{font-size:23px;margin:0 0 7px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .client-contracts-v2 header p{margin:0;color:var(--muted);font-size:14px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .client-contracts-v2 section,.engagement-history{padding:16px;border:1px solid var(--border);border-radius:12px;background:linear-gradient(130deg,var(--surface-soft),var(--surface))}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .client-contracts-v2 h4{display:flex;align-items:center;gap:9px;font-size:17px;margin:0 0 14px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .client-contracts-v2 h4 svg{color:var(--accent);width:21px;height:21px;flex-shrink:0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .client-contracts-v2 p{font-size:14px;line-height:1.5}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-indicators{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-indicators>div{display:flex;flex-direction:column;gap:6px;align-items:center;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-indicators strong{font-size:23px;color:var(--accent)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-indicators span{font-size:13px;color:var(--muted)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-row{padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface);margin-top:10px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-row-heading{display:flex;align-items:center;gap:10px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-row-heading>strong{font-size:15px;flex:1}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-row-heading>svg{width:23px;height:23px;color:var(--accent);flex-shrink:0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-status{font-size:12px;border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);background:var(--surface-soft)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-row dl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-row dt{font-size:12px;color:var(--muted);line-height:1.4;margin-bottom:5px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-row dd{font-size:14px;margin:0;overflow-wrap:anywhere}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-row-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-row .aw-ui-button,.engagement-other .aw-ui-button{font-size:13px!important}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-source{color:var(--muted);font-size:12px!important;text-align:left}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-note{color:var(--muted);font-size:12px!important;margin:12px 0 0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-deadline{display:flex;flex-direction:column;gap:5px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-deadline span{font-size:13px;color:var(--accent)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-other{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--border);padding:12px 0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-other>span{font-size:14px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .client-contracts-v2 details>summary{cursor:pointer;font-weight:600;font-size:14px;padding:10px 0}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .client-contracts-v2 details{border-top:1px solid var(--border)}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-history>summary{display:flex;align-items:center;gap:8px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .client-contracts-v2 [role=alert]{padding:14px;border:1px solid #a66b4b;border-radius:10px}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .client-contracts-v2 .aw-ui-button{font-size:13px!important}
+:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .client-contracts-v2 .muted{font-size:14px}
+@container client-work (max-width:750px){:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-columns{grid-template-columns:minmax(0,1fr)}:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contracts .engagement-row dl{grid-template-columns:repeat(2,minmax(0,1fr))}}

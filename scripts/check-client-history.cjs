@@ -1,0 +1,42 @@
+/* Client History targeted capture against existing TEST data, read-only SQLite. */
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),{spawnSync}=require('node:child_process');
+const repo=path.resolve(__dirname,'..'),workspace=process.argv[2]||'C:/DEV/03_LIVRAISONS/AtoumWeb/Manager-RECETTE-PR161-PR164-20261102-60c65a2b/Workspace-RECETTE';
+const clientId='d501c8f3-35e6-4f7d-a5e0-e91adcbe23c5',database=path.join(workspace,'data/atoumweb-manager.sqlite');
+const hash=()=>crypto.createHash('sha256').update(fs.readFileSync(database)).digest('hex');
+const before=hash(),wrapper=path.join(repo,'outputs','readonly-client-history-'+Date.now()+'.cjs');
+let source=fs.readFileSync(path.join(repo,'scripts/check-ux-v2-lot01a-real-ui.cjs'),'utf8');
+source=source.replace('app.disableHardwareAcceleration();',"app.commandLine.appendSwitch('force-device-scale-factor','1');app.disableHardwareAcceleration();");
+source=source.replace("fs.copyFileSync(require.resolve('pdfjs-dist",String.raw`{const p=path.join(temp,'services.cjs');let b=fs.readFileSync(p,'utf8');const m=b.match(/new ([\w$.]+)\(databasePath\)/);if(!m)throw Error('Readonly seam absent');b=b.replace(m[0],'new '+m[1]+'(databasePath, {readOnly:true})');fs.writeFileSync(p,b);}fs.copyFileSync(require.resolve('pdfjs-dist`);
+source=source.replace("const workspace=S.ensureWorkspace(path.join(temp,'workspace'));",'const workspace=S.createWorkspacePaths('+JSON.stringify(workspace)+');');
+source=source.replace('db=new S.DatabaseService(workspace);await db.initialize();',String.raw`db=new S.DatabaseService(workspace);const prefs=new Map(),getter=db.getSetting.bind(db);db.getSetting=(k,...a)=>prefs.has(k)?prefs.get(k):getter(k,...a);db.setSetting=(k,v)=>{prefs.set(k,v);};`);
+const q=JSON.stringify,selector='[data-record-id="'+clientId+'"]';
+let scene=String.raw`win.setContentSize(1920,1080);win.webContents.setZoomFactor(1);await evalUI('document.documentElement.dataset.theme="noir";document.documentElement.dataset.density="comfort";');await navigate('Clients');`;
+scene+='await wait('+q('document.querySelector('+q(selector)+')')+',"Existing client");await evalUI('+q('document.querySelector('+q(selector)+').click()')+');';
+scene+=String.raw`
+await wait('document.querySelector(".client-quick-crm footer button")','Quick');await evalUI('document.querySelector(".client-quick-crm footer button").click()');await wait('document.querySelector("#client-tab-history")','Enlarged');await evalUI('document.querySelector("#client-tab-history").click()');
+const id='d501c8f3-35e6-4f7d-a5e0-e91adcbe23c5',cards='document.querySelectorAll("#client-panel-history [data-event-id]")';await wait(cards+'.length===4','Four real events');
+const expected=db.crm.listActivity('client',id).sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||a.id.localeCompare(b.id));
+test(JSON.stringify(await get('Array.from('+cards+').map(e=>({id:e.dataset.eventId,summary:e.querySelector("h4").textContent,at:e.querySelector("time").dateTime}))'))===JSON.stringify(expected.map(e=>({id:e.id,summary:e.summary,at:e.createdAt}))),'Recorded IDs, summaries and exact dates preserved in descending order');
+test(expected.filter(e=>['created_from_prospect','converted_to_client'].includes(e.action)).length===2&&await get('document.querySelector(".client-history-count").textContent==="4 événements"'),'Both conversion traces remain');
+const input=async(selector,value,select=false)=>{await evalUI('const e=document.querySelector('+JSON.stringify(selector)+');Object.getOwnPropertyDescriptor('+(select?'HTMLSelectElement':'HTMLInputElement')+'.prototype,"value").set.call(e,'+JSON.stringify(value)+');e.dispatchEvent(new Event('+(select?'"change"':'"input"')+',{bubbles:true}));');await sleep(90);};
+await input('.client-history-search input','ANCIEN ÉCHANGE');test(await get(cards+'.length===1'),'Case-insensitive summary search');
+await input('.client-history-search input','aucun-evenement-correspondant');test(await get(cards+'.length===0&&document.querySelector(".client-history-empty").textContent.includes("correspondant aux filtres")'),'Filtered empty state');
+await input('.client-history-search input','');await input('.client-history-toolbar select','client',true);test(await get(cards+'.length===1&&document.querySelector(".client-history-source").textContent==="Client"'),'Actual source filter');
+await evalUI('document.querySelector("#client-tab-documents").click();document.querySelector("#client-tab-history").click()');test(await get('document.querySelector(".client-history-toolbar select").value==="client"&&'+cards+'.length===1'),'Filter retained between tabs');
+await input('.client-history-toolbar select','',true);
+const event=expected.find(e=>e.entityType==='prospect');
+await evalUI('const dispatch=window.dispatchEvent;window.dispatchEvent=function(event){if(event.type==="atoumweb:navigate"){window.__historyTarget=event.detail;return true;}return dispatch.call(this,event);};document.querySelector("[data-event-id='+event.id+'] button").click();window.dispatchEvent=dispatch');
+test(await get('window.__historyTarget.entityType==="prospect"&&window.__historyTarget.entityId==='+JSON.stringify(event.entityId)),'Existing exact entity navigation handoff');
+test(await get('!document.querySelector(".client-history-source[data-source=client]").closest("article").querySelector("button")'),'No redundant link to current client');
+await evalUI('document.querySelector("#client-tab-summary").click()');test(JSON.stringify(await get('Array.from(document.querySelectorAll(".client-summary-activity .activity-item p")).map(e=>e.textContent)'))===JSON.stringify(expected.slice(0,3).map(e=>e.summary)),'Summary still displays same three latest events');await evalUI('document.querySelector("#client-tab-history").click()');
+const channel='crm:activity:list',handler=registered.get(channel);ipcMain.removeHandler(channel);ipcMain.handle(channel,()=>[]);await evalUI('window.dispatchEvent(new Event("atoumweb:changed"))');await wait('document.querySelector(".client-history-empty")','Actual empty source');test(await get('document.querySelector(".client-history-empty h4").textContent==="Aucun événement enregistré"'),'Empty source distinct from filtered empty');
+ipcMain.removeHandler(channel);ipcMain.handle(channel,()=>{throw Error('Historique TEST indisponible');});await evalUI('window.dispatchEvent(new Event("atoumweb:changed"))');await wait('document.querySelector("#client-panel-history [role=alert]")','Read failure');test(await get('document.querySelector(".client-history-count").textContent==="—"&&'+cards+'.length===0'),'Read error does not show stale events or false total');
+ipcMain.removeHandler(channel);ipcMain.handle(channel,handler);await evalUI('document.querySelector("#client-panel-history [role=alert] button").click()');await wait(cards+'.length===4','Retry real history');test(await get('!document.querySelector("#client-panel-history [role=alert]")'),'Retry');
+test(await get('Array.from(document.querySelectorAll(".client-history-card")).every(e=>e.scrollWidth<=e.clientWidth+1)'),'Cards fit available panel');
+await sleep(500);const frame=await win.webContents.capturePage();test(frame.getSize().width===1920&&frame.getSize().height===1080&&win.webContents.getZoomFactor()===1,'Reference size and zoom');fs.writeFileSync(path.join(repo,'outputs/client-history-v2-1920x1080.png'),frame.toPNG());
+console.log('HISTORY_REVIEW '+JSON.stringify({checks,consoleErrors,theme:await get('document.documentElement.dataset.theme'),density:await get('document.documentElement.dataset.density'),text:await get('document.querySelector("#client-panel-history").innerText')}));test(consoleErrors.length===0,'No renderer error');return;
+`;
+const start=source.indexOf('  if(searchOnly){'),end=source.indexOf('  if(lot08a){',start);if(start<0||end<0)throw Error('Capture branch absent');
+source=source.slice(0,start)+'if(searchOnly){'+scene+'}\n'+source.slice(end);fs.mkdirSync(path.dirname(wrapper),{recursive:true});fs.writeFileSync(wrapper,source);
+try{const result=spawnSync(process.execPath,[wrapper,'--search-only'],{cwd:repo,windowsHide:true,encoding:'utf8',timeout:90000,maxBuffer:1024*1024});process.stdout.write(result.stdout||'');process.stderr.write(result.stderr||'');if(result.error)throw result.error;if(result.status!==0)process.exitCode=1;}finally{fs.unlinkSync(wrapper);const unchanged=before===hash();console.log('EXISTING_DB_UNCHANGED '+unchanged);if(!unchanged)process.exitCode=1;}

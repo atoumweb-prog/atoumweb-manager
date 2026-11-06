@@ -33,6 +33,7 @@ import './pre-phase5-commercial-ux.css';
 import './prospection-commercial-v2.css';
 import './ui-typography-consistency.css';
 import './ui-consistency-v2.css';
+import './crm/client-list-quick-v2.css';
 
 const rootElement = document.getElementById('root');
 

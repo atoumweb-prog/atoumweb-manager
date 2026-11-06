@@ -1,3 +1,4 @@
+import {clientTestFillAllowed} from './clientTestFillPolicy';
 import {renderQuotePdfBuffer} from './commercial/quotePdf';
 import {formatContractPresentation} from '../shared/contractPresentation';
 import {nativeImage} from 'electron';
@@ -141,7 +142,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     const theme: ThemeName = isThemeName(storedTheme) ? storedTheme : 'atoumweb';
     const displayDensity: DisplayDensity = isDisplayDensity(storedDensity) ? storedDensity : 'comfort';
     const showHoverHelp = database.getSetting<boolean>('show_hover_help', true) !== false;
-    return { appVersion: app.getVersion(), workspacePath: workspace.root, databasePath: workspace.databaseFile, theme, displayDensity, showHoverHelp, database: database.health() };
+    return { clientTestFillAllowed:clientTestFillAllowed(app.isPackaged,workspace.root), appVersion: app.getVersion(), workspacePath: workspace.root, databasePath: workspace.databaseFile, theme, displayDensity, showHoverHelp, database: database.health() };
   });
 
   ipcMain.handle('settings:set-theme', (_event, value: unknown): ThemeName | Promise<ThemeName> => {

@@ -1,84 +1,48 @@
-.client-operations-tab {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-}
-
-.client-operations-kpis {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px;
-}
-
-.client-operation-kpi {
-  display: grid;
-  gap: 2px;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  background: var(--surface-soft);
-}
-
-.client-operation-kpi span {
-  color: var(--text-muted);
-  font-size: 7px;
-}
-
-.client-operation-kpi strong {
-  font-size: 12px;
-}
-
-.client-operation-section {
-  display: grid;
-  gap: 5px;
-}
-
-.client-operation-section > strong {
-  font-size: 9px;
-}
-
-.client-operation-section > p {
-  margin: 0;
-  font-size: 8px;
-}
-
-.client-operation-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  align-items: center;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.client-operation-row > div {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.client-operation-row strong {
-  font-size: 8px;
-  overflow-wrap: anywhere;
-}
-
-.client-operation-row small,
-.client-operation-row > span {
-  color: var(--text-muted);
-  font-size: 7px;
-}
-
-.client-operation-row > span {
-  white-space: nowrap;
-}
-
-.client-operations-refresh {
-  justify-self: start;
-}
-
-@media (max-width: 620px) {
-  .client-operations-kpis,
-  .client-operation-row {
-    grid-template-columns: 1fr;
-  }
-}
+/* Client operational summary; scoped to its existing panel, shared tokens and controls. */
+#client-panel-operations .client-operations-tab{display:grid;gap:16px;min-width:0;padding:18px 0;color:var(--text)}
+#client-panel-operations .client-operations-heading{display:flex;align-items:center;gap:14px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+#client-panel-operations .client-operations-heading>svg{width:38px;height:38px;color:var(--accent);flex-shrink:0}
+#client-panel-operations .client-operations-heading>div{flex:1;min-width:0}
+#client-panel-operations .client-operations-heading h3{font-size:23px;margin:0 0 6px;line-height:1.3}
+#client-panel-operations .client-operations-heading p{font-size:14px;line-height:1.5;margin:0;color:var(--muted)}
+#client-panel-operations .client-operations-count{font-size:13px;border:1px solid var(--border);border-radius:18px;padding:8px 12px;background:var(--surface-soft);white-space:nowrap}
+#client-panel-operations .client-operations-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+#client-panel-operations .client-operation-kpi{display:grid;grid-template-columns:auto auto;justify-content:center;align-items:center;gap:6px 10px;padding:13px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft)}
+#client-panel-operations .client-operation-kpi:first-child{border-color:var(--accent)}
+#client-panel-operations .client-operation-kpi>svg{width:23px;height:23px;color:var(--accent)}
+#client-panel-operations .client-operation-kpi>strong{font-size:23px}
+#client-panel-operations .client-operation-kpi>span{grid-column:1/-1;font-size:14px;text-align:center}
+#client-panel-operations .client-operations-navigation{display:flex;gap:8px;flex-wrap:wrap}
+#client-panel-operations .client-operations-navigation>.aw-ui-button-wrap{flex:1;min-width:125px}
+#client-panel-operations .client-operations-navigation .aw-ui-button{width:100%;min-height:40px;padding:8px;font-size:13px}
+#client-panel-operations .client-operations-navigation [aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#071c2b}
+#client-panel-operations .client-operations-navigation svg{width:17px;height:17px}
+#client-panel-operations .client-operation-section{display:grid;gap:12px;border:1px solid var(--border);border-radius:11px;padding:15px;min-width:0}
+#client-panel-operations .client-operation-section>h4{display:flex;align-items:center;gap:10px;margin:0;font-size:18px}
+#client-panel-operations .client-operation-section>h4>svg{width:23px;height:23px;color:var(--accent)}
+#client-panel-operations .client-operation-card{display:grid;grid-template-columns:42px minmax(0,1fr) auto auto;align-items:center;gap:14px;padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft);min-width:0}
+#client-panel-operations .client-operation-card>svg{width:40px;height:40px;color:var(--accent);padding:8px;box-sizing:border-box;border:1px solid var(--border);border-radius:9px}
+#client-panel-operations .client-operation-content{min-width:0}
+#client-panel-operations .client-operation-content>h5{margin:0 0 9px;font-size:16px;line-height:1.4;overflow-wrap:anywhere}
+#client-panel-operations .client-operation-meta{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;font-size:13px;line-height:1.5;color:var(--muted)}
+#client-panel-operations .client-operation-meta>span{display:inline-flex;gap:6px;align-items:center;overflow-wrap:anywhere}
+#client-panel-operations .client-operation-meta svg{width:16px;height:16px;flex-shrink:0}
+#client-panel-operations .client-operation-meta .aw-ui-button{font-size:13px;min-height:0;padding:3px 0;text-align:left}
+#client-panel-operations .client-operation-status{padding:5px 10px;font-size:13px;line-height:1.3;border-radius:18px;background:#254457;color:#dfecf4;white-space:nowrap}
+#client-panel-operations .client-operation-status[data-status=in_progress]{background:#08476c;color:#daf1ff}
+#client-panel-operations .client-operation-status[data-status=active],#client-panel-operations .client-operation-status[data-status=completed]{background:#0d503e;color:#bdffe3}
+#client-panel-operations .client-operation-status[data-status=blocked],#client-panel-operations .client-operation-status[data-status=cancelled]{background:#4b3037;color:#ffd2d4}
+#client-panel-operations .client-operation-status[data-status=suspended],#client-panel-operations .client-operation-status[data-status=expired],#client-panel-operations .client-operation-status[data-status=exhausted]{background:#49402a;color:#ffe8b6}
+#client-panel-operations .client-operation-card>.aw-ui-button-wrap>.aw-ui-button{border-color:var(--accent);min-height:36px;font-size:13px;padding:8px 12px;white-space:nowrap}
+#client-panel-operations .client-operation-card>.aw-ui-button-wrap svg{width:17px;height:17px}
+#client-panel-operations .client-operations-info{display:flex;gap:14px;padding:16px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft)}
+#client-panel-operations .client-operations-info>svg{width:25px;height:25px;color:var(--accent);flex-shrink:0}
+#client-panel-operations .client-operations-info h4{font-size:16px;margin:0 0 6px}
+#client-panel-operations .client-operations-info p,#client-panel-operations .client-operations-empty,#client-panel-operations .client-operations-section-note{font-size:14px;line-height:1.5;color:var(--muted);margin:0}
+#client-panel-operations .client-operation-periods{flex-basis:100%;font-size:13px}
+#client-panel-operations .client-operation-periods summary{cursor:pointer;color:var(--text)}
+#client-panel-operations .client-operation-periods div{display:grid;gap:4px;border-top:1px solid var(--border);margin-top:8px;padding-top:8px}
+#client-panel-operations .client-operations-refresh{justify-content:flex-start}
+#client-panel-operations .client-operations-refresh svg{width:17px;height:17px}
+@container client-work (max-width:750px){#client-panel-operations .client-operations-count{display:none}#client-panel-operations .client-operation-card{grid-template-columns:32px minmax(0,1fr) auto}#client-panel-operations .client-operation-card>svg{width:32px;height:32px;padding:5px}#client-panel-operations .client-operation-card>.aw-ui-button-wrap{grid-column:2/-1;justify-self:end}}
+@container client-work (max-width:500px){#client-panel-operations .client-operations-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#client-panel-operations .client-operations-heading h3{font-size:20px}#client-panel-operations .client-operation-card{grid-template-columns:minmax(0,1fr) auto}#client-panel-operations .client-operation-card>svg{display:none}#client-panel-operations .client-operation-card>.aw-ui-button-wrap{grid-column:1/-1}}

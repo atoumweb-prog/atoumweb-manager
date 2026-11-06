@@ -1,3 +1,4 @@
+import {isClientActionOverdue} from './clientPresentation';
 import { describe, expect, it } from 'vitest';
 import { CLIENT_TABS, clientTabKey, clientHistory, readClientSections } from './clientPresentation';
 
@@ -30,4 +31,10 @@ describe('03D Client presentation', () => {
     expect(result.errors.identity).toBe('identity refused');
     expect(result.values.activity).toEqual([]);
   });
+});
+
+it('identifies only valid past deadlines from the open-action projection',()=>{
+ const now=Date.parse('2026-11-05T12:00:00Z');
+ expect(isClientActionOverdue('2026-11-05T11:59:00Z',now)).toBe(true);
+ for(const date of [null,undefined,'invalid','2026-11-05T12:00:00Z','2026-11-06T09:00:00Z'])expect(isClientActionOverdue(date,now)).toBe(false);
 });
