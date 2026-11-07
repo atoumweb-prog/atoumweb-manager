@@ -1,5 +1,61 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 07/11/2026 — Sécurisation autorisée du lot 1
+
+Validation graphique définitive reçue, y compris les deux finitions. Autorisation de commit et push normal du seul lot 1 sur `codex/ux-v2-offres-tarifs-20261106`. Fichiers source, tests déterministes et suivi documentaire uniquement ; sorties de recette, bases et profils exclus. Premier incrément visuel du lot 2 autorisé après sécurisation, sans migration ni publication Git du lot 2. Le résultat exact du push sera communiqué après exécution.
+
+## 07/11/2026 - Lot 1 Offres & Tarifs V2 valide et finitions de cloture terminees
+
+Validation explicite Carlos : direction graphique et ergonomique Noir/Confort du lot 1 acceptee apres comparaison aux maquettes 01/02. Les trois espaces, six indicateurs, cartes, quatre familles visibles/dix depliables, navigation filtree, recherche/filtres/vues et tableau/colonnes/pagination sont valides. Cette decision remplace la suspension des entrees historiques ci-dessous ; elle ne valide pas les 39 decisions dans leur ensemble.
+
+- [x] Libelle Voir les prestations sur toutes les familles ; meme navigation au tableau filtre, sans changement des groupes/resultats.
+- [x] Scrollbar du seul tableau Catalogue Noir/Confort : piste sombre, curseur contraste et survol, largeur 14 px ; aucune modification du fonctionnement des lignes, colonnes, preferences ou pagination. Autres themes/modules exclus par selecteurs locaux.
+- [x] Typecheck et diff-check ; Electron reel Noir/Confort 1920x1080 zoom 100, deux captures dans outputs/Offres-Tarifs-Lot1-Cloture-2026-11-07. Navigation famille, libelle, styles de scrollbar et isolation blanc, defilement/pagination controles, zero erreur renderer. Tests fonctionnels deja reussis reutilises sans campagne generale. Base et WAL inchanges par comparaison des empreintes.
+- [x] Lot 1 clos ergonomiquement ; details des fonctionnalites, controles, limites et OT partiels dans [le registre](docs/ux-v2/offres-tarifs-v2/SUIVI-OT01-OT39.md). OT-02/04 livres ; OT-06/20/29/30 partiels, autres extensions reportees selon leurs lots. Pas de certification exhaustive des parcours metier ou dialogues Windows.
+- [x] [Cadrage technique du lot 2](docs/ux-v2/offres-tarifs-v2/CADRAGE-LOT2-2026-11-07.md) prepare : huit onglets, creation minimale, reprise manuelle, versions, duplication et conflits ; schema du tarif indetermine et autres migrations candidates a specifier avant execution.
+- [ ] Developpement du lot 2 : non commence, autorisation attendue. Prochaine action : examiner le cadrage.
+
+Aucun tarif, clause, donnee utilisateur ou migration modifie. Branche/worktree Offres & Tarifs preserves, aucun autre worktree modifie ; aucun commit, push, PR ou fusion.
+
+## 07/11/2026 - Reprise de conformite graphique, lot 1 non valide graphiquement
+
+Demande utilisateur lue depuis la piece jointe du 07/11 ; comparaison visuelle effective des maquettes principales 01 et 02 avec les captures Electron precedentes.
+
+- [x] Composition graphique unifiee locale au Catalogue : surfaces bleu nuit nuancees, cartes avec icones, six indicateurs avec hierarchie lisible, bordures et accents jaunes, actions et pagination harmonisees. Le fichier CSS local est recompose en un ensemble coherent.
+- [x] Quatre premieres familles dans l'ordre deja existant ; les dix suivantes depliables dans la meme section, sans nouveau classement commercial. Toutes les 14 familles et leurs liens filtres sont conserves. Offres reelles distinctes avec prix et ouverture de fiche.
+- [x] Filtres avances accessibles dans les deux vues, ouverts automatiquement si un critere avance est actif. Aucun changement des calculs, tris, preferences, colonnes, vues, protections, tarifs ou schemas.
+- [x] Typecheck et diff-check reussis. Recette Electron Windows ciblee en lecture seule : 14 familles, acces depuis une famille deployee vers son filtre, filtres actifs visibles, pagination avec preferences ouvertes et defilement des lignes, absence de debordement horizontal a 1280 px, zero erreur renderer. A 1920x1080 : debordement vertical externe nul et pagination a 1047 px. Suites metier deja reussies reutilisees sans relance.
+- [x] Trois captures Noir/Confort 1920x1080 zoom 100 dans outputs/Offres-Tarifs-Lot1-Conformite-2026-11-07 ; anciens dossiers conserves.
+- [ ] Validation graphique utilisateur suspendue, non acquise. Prochaine action : revue des trois captures. Lot 2 non commence. Aucun commit, push, PR ou fusion.
+
+Ecarts volontaires : pas de groupes fictifs offres principales/autres/services ni donnees de demonstration ; six compteurs OT-04 au lieu des trois/quatre dessines ; 14 familles avec deploiement au lieu des seules familles illustrees ; toutes les colonnes et commandes du tableau configurable conservees ; pas de panneau de raccourcis/historique fictif ni logo redessine. Les reperes tarifaires qualifies restent depliables pour eviter de confondre ponctuel et abonnement.
+
+## 07/11/2026 - Ajustements finaux de revue du lot 1 (validation visuelle en attente)
+
+- [x] Les 14 familles et leur ordre existant sont conserves : cartes compactes, reperes tarifaires depliables et acces direct aux offres presentes.
+- [x] Reperes monetaires qualifies par type, periode et unite, avec distinction des forfaits ponctuels et abonnements Maintenance. Aucun tarif ni categorie stockee modifie.
+- [x] Tableau desktop : compteurs et filtres compacts, defilement des lignes et pagination visible, y compris avec les preferences ouvertes. A 1920 x 1080 : aucun debordement vertical du contenu, bas de pagination a 1049 px.
+- [x] Verification limitee : typecheck, 9 tests du modele, recette Electron en lecture seule sans erreur renderer. Campagnes precedentes conservees sans relance globale. Trois nouvelles captures Noir/Confort, zoom 100 %, dans outputs/Offres-Tarifs-Lot1-Ajustements-2026-11-07.
+- [ ] Validation ergonomique finale utilisateur. Prochaine action : examiner ces trois captures ; lot 2 non commence. Aucun commit, push, PR ou fusion.
+
+## 07/11/2026 — Offres & Tarifs V2, lot 1 réalisé pour revue
+
+**Autorisation utilisateur du 06/11 :** développement du seul lot 1 et création d’un worktree/branche dédiés depuis Clients V2 `2fda54610aa6b204a69c6ba3b4a626e7f8dd61a5`. Branche `codex/ux-v2-offres-tarifs-20261106`, worktree `C:/Users/AtoumWeb/.codex/worktrees/offres-tarifs-v2-20261106/atoumweb-manager-ec04-validation`. Aucun commit/push/PR/fusion autorisé ou réalisé. Les autres worktrees sont préservés.
+
+- [x] Dossier des 18 maquettes et arbitrages OT-01 à OT-39 lu ; inventaire/captures précédents réutilisés. [Arbitrages intégraux](docs/ux-v2/offres-tarifs-v2/ARBITRAGES-VALIDES-OT01-OT39.md) et [registre des 39 décisions et futurs lots](docs/ux-v2/offres-tarifs-v2/SUIVI-OT01-OT39.md) conservés séparément de leurs statuts applicatifs.
+- [x] Une destination Commercial → Offres & Tarifs, trois espaces internes ; Catalogue actionnable, Pilotage honnêtement à venir, Administration donnant accès aux catégories existantes sans faux outils futurs. Actifs officiels et Noir/Confort réutilisés.
+- [x] Familles calculées depuis les sources existantes, ouverture du tableau filtré et retour organisé ; aucune modification d’identité/catégorie/tarif. Prix par mode/période/unité, offres distinguées des services pour les repères monétaires.
+- [x] Six compteurs généraux et filtrés indépendants de la pagination, états article/version/visibilité distincts. Lecture des états de toutes les versions, sans migration ni réécriture de versions.
+- [x] Tableau existant conservé : recherche/filtres, tri avant pagination 25/50/100, colonnes/ordre/largeurs, vues personnelles avec filtres. Extension de préférences limitée au domaine Catalogue, rétrocompatible et sans copie de donnée métier.
+- [x] Typecheck ; 84 tests ciblés sur 8 fichiers lors de la campagne, puis recontrôles limités aux ajustements concernés ; recette Electron ciblée 32 contrôles réussis sur TEMP, zéro erreur renderer et lignes métier inchangées après préparation. Refus de lecture IPC volontaire puis reprise, erreur TEST attendue. Gardes Rester/Quitter interceptées, pas annoncées comme dialogues Windows validés humainement.
+- [x] Fonctionnement des trois thèmes et adaptation 1280 px contrôlés ; revue réelle Noir/Confort 1920×1080 zoom 100 dans le dossier `outputs/Offres-Tarifs-Lot1-Revue-2026-11-07`. Sources TEST en lecture seule, sans initialisation/migration ; aucune donnée utilisateur, prix, clause ou version réelle modifié.
+- [ ] Validation visuelle Carlos du lot 1. Une validation de maquette et des tests ne clôturent pas cette case.
+
+Décisions d’architecture : projection des états de versions, pas d’agrégat persistant ; contexte des filtres enregistré uniquement dans les préférences Catalogue ; pagination dans le tableau partagé après tri global. [Détails et réserves](docs/ux-v2/offres-tarifs-v2/SUIVI-OT01-OT39.md). OT-20 est livré pour son périmètre lot 1, la sélection multiple/actions groupées OT-19 reste explicitement future. OT-06 et OT-30 ne sont pas déclarés entièrement clos par ce socle.
+
+**Hors périmètre réalisé :** nouveaux métiers des maquettes 03–18, brouillons incomplets, duplication d’articles, hiérarchie des catégories, promotions, import/export, reporting, comparaison/PDF, nouveau paramétrage contractuel, enrichissement production/historique. Les décisions sont conservées pour leurs lots ; Abby reste manuel et aucun contenu n’est envoyé sur WordPress. Prochaine action : revue des captures par Carlos, puis autorisation du lot suivant. Aucune migration de base utilisateur ni nouveau lot lancé.
+
+
 ## 06/11/2026 — Clôture officielle Clients UX/UI V2 et passation
 
 **Clients V2 — Refonte ergonomique validée le 06/11/2026.** Validation officielle Carlos après revue des24 captures et des3 correctifs : liste, fiche rapide, fiche agrandie, huit onglets et formulaires acceptés visuellement. Aucune nouvelle correction ergonomique demandée. Derniers intitulés, aperçus sans répétition, aides Contacts, anti-double rattachement, garde TEST et largeur Notes validés.

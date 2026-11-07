@@ -1,5 +1,5 @@
 import type { VisualPreferenceStore } from './panelLayout';
-import { readTableView, type TableColumnSchema, type TableViewPreference } from './tableViewPreference';
+import { readTableView, tableViewKey, type TableColumnSchema, type TableViewPreference } from './tableViewPreference';
 export interface PersonalTableView { id: string; name: string; preference: TableViewPreference }
 export const personalViewsKey = (module: string) => `atoumweb:table-workshop:${encodeURIComponent(module)}:personal:v1`;
 export function readPersonalViews(store: VisualPreferenceStore, module: string, statuses: readonly string[], categories: readonly string[], columns?: TableColumnSchema): PersonalTableView[] {
@@ -11,7 +11,7 @@ export function readPersonalViews(store: VisualPreferenceStore, module: string, 
     if (!view || typeof view !== 'object') continue;
     const { id, name, preference } = view as Record<string, unknown>;
     if (typeof id !== 'string' || !/^personal-[a-zA-Z0-9-]+$/.test(id) || result.some(v => v.id === id) || typeof name !== 'string' || !name.trim()) continue;
-    try { result.push({ id, name: name.trim().slice(0, 80), preference: readTableView({ getItem: () => JSON.stringify(preference), setItem() {}, removeItem() {} }, '', statuses, categories, columns) }); } catch { /* Invalid view is skipped; standard view remains available. */ }
+    try { result.push({ id, name: name.trim().slice(0, 80), preference: readTableView({ getItem: () => JSON.stringify(preference), setItem() {}, removeItem() {} }, tableViewKey(module), statuses, categories, columns) }); } catch { /* Invalid view is skipped; standard view remains available. */ }
   }
   return result;
 }

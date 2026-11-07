@@ -4,6 +4,7 @@ import { reviewCatalogPrepublication } from '../../shared/catalogVersionReview';
 import type { DatabaseAdapter, SqlValue } from '../database/DatabaseAdapter';
 import {
   CATALOG_ITEM_STATUSES,
+  CATALOG_VERSION_STATUSES,
   CATALOG_ITEM_TYPES,
   PRICE_MODES,
   CATALOG_COMMERCIAL_KINDS,
@@ -29,6 +30,7 @@ const clean = (value?: string | null): string | null => {
 };
 
 interface CatalogRow extends Record<string, unknown> {
+  version_states?: string | null;
   commercial_parameters_json: string | null;
   canonical_code: string | null;
   identity_provenance_json: string | null;
@@ -176,6 +178,7 @@ export class CatalogService {
     const rows = this.database.all<CatalogRow>(
       `SELECT
         i.*,
+        (SELECT group_concat(DISTINCT vs.status) FROM catalog_versions vs WHERE vs.item_id=i.id) AS version_states,
         v.id AS version_id,
         v.version_number,
         v.status AS version_status,
@@ -766,6 +769,7 @@ export class CatalogService {
       id: row.id,
       canonicalCode: row.canonical_code,
       identityProvenance: this.readProvenance(row.identity_provenance_json),
+      versionStates: CATALOG_VERSION_STATUSES.filter(state => (row.version_states ?? '').split(',').includes(state)),
       type: row.item_type,
       name: row.name,
       category: row.category,

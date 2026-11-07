@@ -1,6 +1,8 @@
 import type { VisualPreferenceStore } from './panelLayout';
+import {CATALOG_CONTEXT_SCOPE,normalizeCatalogContext,type CatalogTableContext} from './catalogTableContext';
 import { normalizeTableColumns, type TableSort } from './tablePresentation';
 export interface TableViewPreference {
+  catalogContext?: CatalogTableContext;
   version: 2; visibleColumnIds: string[]; columnOrder: string[]; widths: Record<string, number>; sort: TableSort | null; status: string; category: string;
 }
 export const TABLE_DEMO_COLUMNS = [
@@ -36,7 +38,7 @@ export function readTableView(store: VisualPreferenceStore, key: string, statuse
     const width = (data.widths as Record<string, unknown>)[column.id];
     if (typeof width === 'number' && Number.isFinite(width)) widths[column.id] = columnWidth(column.id, width);
   }
-  return { version: 2, columnOrder: normalizeColumnOrder(data.columnOrder, columns), widths, visibleColumnIds: normalizeTableColumns(data.visibleColumnIds, columns),
+  return { ...(key===tableViewKey(CATALOG_CONTEXT_SCOPE)&&data.catalogContext?{catalogContext:normalizeCatalogContext(data.catalogContext)}:{}), version: 2, columnOrder: normalizeColumnOrder(data.columnOrder, columns), widths, visibleColumnIds: normalizeTableColumns(data.visibleColumnIds, columns),
     sort: typeof columnId === 'string' && columnId !== 'open' && columns.some(c => c.id === columnId)
       && (sort?.direction === 'asc' || sort?.direction === 'desc') ? { columnId, direction: sort.direction } : null,
     status: typeof data.status === 'string' && statuses.includes(data.status) ? data.status : '',
@@ -44,7 +46,7 @@ export function readTableView(store: VisualPreferenceStore, key: string, statuse
   };
 }
 export function writeTableView(store: VisualPreferenceStore, key: string, view: TableViewPreference, columns: TableColumnSchema = TABLE_DEMO_COLUMNS) {
-  // Whitelist presentation fields: never serialize a query, selected record, or draft.
+  // Whitelist presentation only: never a selected record or draft. Catalogue alone may save its explicit search/filter context (OT-20).
   const clean = readTableView({ getItem: () => JSON.stringify(view), setItem() {}, removeItem() {} }, key, [view.status], [view.category], columns);
   store.setItem(key, JSON.stringify(clean));
 }

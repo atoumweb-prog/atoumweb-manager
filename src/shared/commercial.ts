@@ -133,6 +133,8 @@ export interface OfferComponent {
 }
 
 export interface CatalogItemSummary {
+  /** All recorded version states, independent of the published-first currentVersion. */
+  versionStates?: CatalogVersionStatus[];
   canonicalCode?: string | null;
   identityProvenance?: CatalogProvenance | null;
   id: string;

@@ -28,7 +28,12 @@ import {
   type PriceMode,
 } from '../../shared/commercial';
 import { FieldHelp } from '../ui/FieldHelp';
-import { CatalogOverview } from './CatalogOverview';
+import {CatalogFamiliesOverview} from './CatalogFamiliesOverview';
+import {catalogCounts,catalogFamilies,filterCatalogWorkspace,versionStatesOf} from './catalogWorkspaceModel';
+import {defaultCatalogContext,type CatalogTableContext} from '../../shared/catalogTableContext';
+import {readTableView,tableViewKey} from '../../shared/tableViewPreference';
+import {REAL_TABLE_SCHEMAS} from '../../shared/realTableSchemas';
+import './catalog-workspace-v2.css';
 import { CatalogCategoryInventory } from './CatalogCategoryInventory';
 import type { CatalogCategoryRecord } from '../../shared/catalogCategoryAdministration';
 import { catalogAdminCategories, catalogAdminFiltered } from './catalogAdminFilters';
@@ -156,10 +161,17 @@ function formatCatalogDate(value?: string | null): string {
 export function CatalogPage({ onEntityReady, onMessage, initialId, initialRequest }: { onMessage: (message: string) => void; initialId?:string|null;initialRequest?:number;onEntityReady?:EntityReady }) {
   const [items, setItems] = useState<CatalogItemSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'all' | CatalogItemType>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | CatalogItemStatus>('all');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [filters,setFilters]=useState<CatalogTableContext>(()=>{try{return readTableView(window.atoumweb.visualPreferences,tableViewKey(CATALOG_ADMIN_VIEW),[],[],REAL_TABLE_SCHEMAS[CATALOG_ADMIN_VIEW]).catalogContext??defaultCatalogContext();}catch{return defaultCatalogContext();}});
+  const [tablePage,setTablePage]=useState(1);
+  const [space,setSpace]=useState<'catalog'|'steering'|'administration'>('catalog');
+  const [listError,setListError]=useState('');
+  const [advancedFilters,setAdvancedFilters]=useState(false);
+  const query=filters.query,typeFilter=filters.type,statusFilter=filters.itemStatus,categoryFilter=filters.category;
+  function changeFilter<K extends keyof CatalogTableContext>(key:K,value:CatalogTableContext[K]){setFilters(current=>({...current,[key]:value}));setTablePage(1);}
+  const setQuery=(value:string)=>changeFilter('query',value);
+  const setTypeFilter=(value:CatalogTableContext['type'])=>changeFilter('type',value);
+  const setStatusFilter=(value:CatalogTableContext['itemStatus'])=>changeFilter('itemStatus',value);
+  const setCategoryFilter=(value:string)=>changeFilter('category',value);
   const [catalogView, setCatalogView] = useState<'organized' | 'table'>('organized');
   const [showCategoryInventory, setShowCategoryInventory] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -220,7 +232,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
 
   async function refresh(): Promise<void> {
     const epoch=++listEpoch.current,selectedAtStart=selectedId;
-    setLoading(true);
+    setLoading(true);setListError('');
     try {
       const next = await window.atoumweb.catalog.list();
       if(!mounted.current||epoch!==listEpoch.current)return;
@@ -231,7 +243,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
         else if(!identityGuard.dirty&&!versionGuard.dirty&&!saving){setSelectedId(null);setDetail(null);}
         else onMessage('La prestation n’est plus disponible ; la saisie locale est conservée.');
       }
-    }catch(error){if(mounted.current&&epoch===listEpoch.current)onMessage(error instanceof Error?error.message:'Catalogue indisponible.');
+    }catch(error){if(mounted.current&&epoch===listEpoch.current){const message=error instanceof Error?error.message:'Catalogue indisponible.';setListError(message);onMessage(message);}
     } finally {
       if(mounted.current&&epoch===listEpoch.current)setLoading(false);
     }
@@ -250,21 +262,21 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   }, [showForm]);
   useEffect(()=>{
     if(!initialId)return;
-    setSelectedId(initialId);
+    setSpace('catalog');setSelectedId(initialId);
     if(detailRef.current?.id===initialId){detailEpoch.current++;setDetailLoading(false);onEntityReady?.('catalog',initialId);return;}
     setVersionMode(false);void loadDetail(initialId).catch(e=>onMessage(String(e)));
   },[initialId,initialRequest]);
 
   const categories = useMemo(() => catalogAdminCategories(items), [items]);
-  const effectiveCategory = categoryFilter === 'all' || categories.includes(categoryFilter) ? categoryFilter : 'all';
-  const filtered = useMemo(() => catalogAdminFiltered(items, {
-    query,
-    type: typeFilter,
-    status: statusFilter,
-    category: effectiveCategory,
-  }), [items, query, typeFilter, statusFilter, effectiveCategory]);
-  const hasFilters = Boolean(query.trim()) || typeFilter !== 'all' || statusFilter !== 'all' || effectiveCategory !== 'all';
-  const resetFilters = () => { setQuery(''); setTypeFilter('all'); setStatusFilter('all'); setCategoryFilter('all'); };
+  const effectiveCategory=categoryFilter;
+  const families=useMemo(()=>catalogFamilies(items),[items]);
+  const filtered=useMemo(()=>filterCatalogWorkspace(items,filters),[items,filters]);
+  const counts=useMemo(()=>catalogCounts(items),[items]),filteredCounts=useMemo(()=>catalogCounts(filtered),[filtered]);
+  const hasFilters=Boolean(query.trim())||typeFilter!=='all'||statusFilter!=='all'||categoryFilter!=='all'||filters.family!=='all'||filters.versionState!=='all'||filters.visibility!=='all';
+  const showAdvancedFilters=advancedFilters||filters.versionState!=='all'||filters.visibility!=='all'||filters.family!=='all';
+  const resetFilters=()=>{setFilters(current=>({...defaultCatalogContext(),pageSize:current.pageSize}));setTablePage(1);};
+  function changeSpace(next:typeof space){if(next===space)return;requestUnsavedExit(()=>setSpace(next));}
+  function openFamily(id:string){requestUnsavedExit(()=>{setFilters(current=>({...current,family:id}));setTablePage(1);setCatalogView('table');closeDetailDirect();});}
 
   async function openItem(id: string): Promise<void> {
     if(detailRef.current?.id===id){detailEpoch.current++;setSelectedId(id);setDetailLoading(false);return;}
@@ -597,45 +609,40 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const offerCompositionEditable = offerCompositionVersion?.status === 'draft' && !versionMode && !saving;
 
   return (
-    <div className="catalog-stack">
-      <div className="module-toolbar catalog-toolbar">
-        <div><strong>{filtered.length}</strong><span> élément{filtered.length > 1 ? 's' : ''}</span></div>
-        <div className="toolbar-controls catalog-toolbar-controls">
-          <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh"/>Actualiser</button>
-          <input className="inline-search" placeholder="Rechercher dans le catalogue…" value={query} onChange={(e) => setQuery(e.target.value)} />
-          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as 'all' | CatalogItemType)}>
-            <option value="all">Services + Offres</option><option value="service">Services</option><option value="offer">Offres</option>
-          </select>
-          <select aria-label="Filtrer par catégorie" value={effectiveCategory} onChange={(e) => setCategoryFilter(e.target.value)}>
-            <option value="all">Toutes les catégories</option>
-            {categories.map((category) => <option value={category} key={category}>{catalogueCategoryName(category) === category ? category : `${catalogueCategoryName(category)} · ${category}`}</option>)}
-          </select>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | CatalogItemStatus)}>
-            <option value="all">Tous les statuts</option><option value="active">Actifs</option><option value="inactive">Inactifs</option><option value="archived">Archivés</option>
-          </select>
-          {hasFilters && <button className="secondary-button" type="button" onClick={resetFilters}>Réinitialiser les filtres</button>}
-          <button className="secondary-button" type="button" aria-expanded={showCategoryInventory} onClick={() => showCategoryInventory
-              ? requestUnsavedExit(() => setShowCategoryInventory(false))
-              : setShowCategoryInventory(true)}>Catégories existantes</button>
-          <div className="catalog-view-switch" role="group" aria-label="Présentation du catalogue">
-            <button type="button" className="secondary-button" aria-pressed={catalogView === 'organized'} onClick={() => setCatalogView('organized')}>Vue organisée</button>
-            <button type="button" className="secondary-button" aria-pressed={catalogView === 'table'} onClick={() => setCatalogView('table')}>Tableau d'administration</button>
-          </div>
-          <button className="primary-button" type="button" onClick={() => showForm?createGuard.request(()=>setShowForm(false)):setShowForm(true)}>{showForm ? 'Fermer' : '+ Service / Offre'}</button>
-        </div>
+    <div className={`catalog-stack ${space==='catalog'&&catalogView==='table'&&!detail&&!showForm?'ot-table-fit':''}`}>
+      <header className="ot-workspace-heading"><div className="ot-title"><span className="ot-title-icon"><OperationIcon name="package"/></span><div><span className="eyebrow">Commercial</span><h1>Offres & Tarifs</h1><p>Catalogue des offres et services AtoumWeb</p></div></div><div className="ot-heading-actions"><button type="button" className="secondary-button" onClick={()=>void refresh()}><OperationIcon name="refresh"/>Actualiser</button><button className="primary-button" type="button" onClick={()=>requestUnsavedExit(()=>{setSpace('catalog');if(showForm)createGuard.request(()=>setShowForm(false));else setShowForm(true);})}>{showForm?'Fermer la création':'+ Service / Offre'}</button></div></header>
+      <nav className="ot-spaces" aria-label="Espaces Offres et Tarifs">{([['catalog','Catalogue'],['steering','Pilotage'],['administration','Administration']] as const).map(([id,label])=><button type="button" key={id} aria-current={space===id?'page':undefined} onClick={()=>changeSpace(id)}>{label}{id==='steering'&&<small>À venir</small>}</button>)}</nav>
+      {space==='steering'&&<section className="ot-planned panel"><OperationIcon name="chart"/><h2>Pilotage</h2><p>Les statistiques commerciales, le suivi des offres et le centre À suivre seront développés dans les prochains lots.</p><p className="muted">Aucune statistique ni alerte commerciale n’est calculée dans cet espace pour le moment.</p></section>}
+      {space==='administration'&&<section className="ot-administration"><header><h2>Administration du Catalogue</h2><p>Catégories existantes et organisation des prochains lots.</p></header><div className="ot-admin-cards"><button className="panel" type="button" onClick={()=>setShowCategoryInventory(value=>!value)}><OperationIcon name="layers"/><strong>Catégories existantes</strong><span>Consulter, administrer et réconcilier les catégories.</span></button>{['Modèles commerciaux et documentaires','Import / export CSV et JSON','Santé du Catalogue','Paramètres'].map(label=><article className="panel" key={label}><strong>{label}</strong><span>Prévu dans un prochain lot · non disponible</span></article>)}</div></section>}
+      {listError&&<div className="form-error" role="alert">Catalogue non actualisé : {listError}. {items.length>0?'Les derniers résultats chargés restent affichés.':'Les compteurs ne sont pas disponibles.'}</div>}
+      {space==='catalog'&&<>
+      {!loading&&!listError&&<section className="ot-counters" aria-label="Compteurs du catalogue">{([['total','Total'],['active','Actifs'],['inactive','Inactifs'],['archived','Archivés'],['published','Avec version publiée'],['draft','Avec brouillon']] as const).map(([key,label])=><div key={key} data-catalog-count={key}><span className="ot-counter-icon"><OperationIcon name={key==='total'?'layers':key==='active'?'check-circle':key==='inactive'?'clock':key==='archived'?'archive':key==='published'?'file-check':'edit'}/></span><strong>{counts[key]}</strong><span>{label}</span>{hasFilters&&<small>{filteredCounts[key]} dans les résultats filtrés</small>}</div>)}</section>}
+      <div className={`catalog-toolbar ot-filter-bar ${showAdvancedFilters?'with-advanced':'basic-filters'}`} role="search" aria-label="Recherche et filtres du Catalogue">
+        <label className="ot-search">Rechercher<input className="inline-search" type="search" maxLength={200} aria-label="Rechercher dans le catalogue" placeholder="Nom, code, besoin, contenu…" value={query} onChange={e=>setQuery(e.target.value)}/></label>
+        <label>Type<select aria-label="Type d’article" value={typeFilter} onChange={e=>setTypeFilter(e.target.value as CatalogTableContext['type'])}><option value="all">Services + Offres</option><option value="service">Services</option><option value="offer">Offres</option></select></label>
+        <label>Catégorie<select aria-label="Filtrer par catégorie" value={effectiveCategory} onChange={e=>setCategoryFilter(e.target.value)}><option value="all">Toutes les catégories</option>{effectiveCategory!=='all'&&!categories.includes(effectiveCategory)&&<option value={effectiveCategory}>{effectiveCategory} (indisponible)</option>}{categories.map(category=><option key={category} value={category}>{catalogueCategoryName(category)===category?category:`${catalogueCategoryName(category)} · ${category}`}</option>)}</select></label>
+        <label>Article<select aria-label="Statut d’article" value={statusFilter} onChange={e=>setStatusFilter(e.target.value as CatalogTableContext['itemStatus'])}><option value="all">Tous les statuts</option><option value="active">Actifs</option><option value="inactive">Inactifs</option><option value="archived">Archivés</option></select></label>
+        {showAdvancedFilters&&<><label>Version enregistrée<select aria-label="État de version" value={filters.versionState} onChange={e=>changeFilter('versionState',e.target.value as CatalogTableContext['versionState'])}><option value="all">Tous les états</option><option value="published">Avec version publiée</option><option value="draft">Avec brouillon</option><option value="retired">Avec version retirée</option><option value="none">Sans version</option></select></label>
+        <label>Visibilité site<select aria-label="Visibilité site" value={filters.visibility} onChange={e=>changeFilter('visibility',e.target.value as CatalogTableContext['visibility'])}><option value="all">Toutes les visibilités</option><option value="public">Visible site</option><option value="internal">Interne</option></select></label>
+        <label>Famille<select aria-label="Famille commerciale" value={filters.family} onChange={e=>changeFilter('family',e.target.value)}><option value="all">Toutes les familles</option>{filters.family!=='all'&&!families.some(f=>f.id===filters.family)&&<option value={filters.family}>{filters.family} (indisponible)</option>}{families.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}</select></label>
+        </>}
+        <div className="ot-filter-actions"><button type="button" className="secondary-button" aria-expanded={showAdvancedFilters} onClick={()=>setAdvancedFilters(value=>!value)}>Filtres avancés</button><button className="secondary-button" type="button" disabled={!hasFilters} onClick={resetFilters}>Réinitialiser les filtres</button></div>
       </div>
+      <div className="ot-view-row"><div className="catalog-view-switch" role="group" aria-label="Présentation du catalogue"><button type="button" className="secondary-button" aria-pressed={catalogView==='organized'} onClick={()=>requestUnsavedExit(()=>{closeDetailDirect();setCatalogView('organized');})}><OperationIcon name="layers"/>Vue organisée</button><button type="button" className="secondary-button" aria-pressed={catalogView==='table'} onClick={()=>requestUnsavedExit(()=>{closeDetailDirect();setCatalogView('table');})}><OperationIcon name="columns"/>Tableau d’administration</button></div><p role="status">{loading?'Chargement…':`${filtered.length} résultats / ${items.length} articles`}{filters.family!=='all'&&` · ${filters.family}`}</p></div>
+      {!loading&&<p className="ot-count-help">Publié et brouillon peuvent concerner le même article. Les compteurs portent sur tous les articles, indépendamment de la page affichée.</p>}
+      </>}
 
-      {showCategoryInventory && (
+      {space==='administration' && showCategoryInventory && (
         <CatalogCategoryInventory items={items}
           onChanged={refresh}
           onClose={() => requestUnsavedExit(() => setShowCategoryInventory(false))}
           onFilter={category => requestUnsavedExit(() => {
             setQuery(''); setTypeFilter('all'); setStatusFilter('all'); setCategoryFilter(category);
-            setShowCategoryInventory(false);
+            setShowCategoryInventory(false);setSpace('catalog');setCatalogView('table');closeDetailDirect();
           })} />
       )}
 
-      {showForm && (
+      {space==='catalog' && showForm && (
         <form className="panel catalog-form" onSubmit={(event) => void createItem(event)}>
           <div className="panel-title"><div><span className="eyebrow">Catalogue</span><h2>Créer un Service ou une Offre</h2><p className="muted">La première version est créée en brouillon. Tu la publies après vérification.</p></div></div>
           <fieldset disabled={saving}>
@@ -665,7 +672,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
         </form>
       )}
 
-      {loading ? <div className="panel"><p className="muted">Chargement du catalogue…</p></div> : (
+      {space==='catalog' && (loading ? <div className="panel"><p className="muted">Chargement du catalogue…</p></div> : (
         <div
           className={detail ? `catalog-layout with-detail ${detailExpanded ? 'detail-expanded' : ''}` : 'catalog-layout'}
           style={detail && !detailExpanded ? { gridTemplateColumns: `${detailSplitPercent}% 8px minmax(0, 1fr)` } : undefined}
@@ -699,9 +706,9 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 {filtered.length === 0 && <div className="empty-table">Aucune offre ou service pour ces filtres.</div>}
               </div>
             ) : catalogView === 'organized' ? (
-              <CatalogOverview items={filtered} formatPrice={formatPrice} onOpen={(id) => void openItem(id)} />
+              <CatalogFamiliesOverview items={filtered} formatPrice={formatPrice} onFamily={openFamily} onOpen={(id) => void openItem(id)} />
             ) : (
-              <ConfiguredDataTable<CatalogItemSummary> scope={CATALOG_ADMIN_VIEW} store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>void openItem(item.id)} className="catalog-table" caption="Administration du catalogue · source complète · tri sur tous les résultats filtrés" columns={[
+              <ConfiguredDataTable<CatalogItemSummary> scope={CATALOG_ADMIN_VIEW} catalogContext={{value:filters,onApply:context=>{setFilters(context);setTablePage(1);}}} pagination={{page:tablePage,pageSize:filters.pageSize,onPage:setTablePage,onSize:size=>changeFilter('pageSize',size)}} store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>void openItem(item.id)} className="catalog-table" caption="Administration du catalogue · source complète · tri sur tous les résultats filtrés" columns={[
                 {id:'category',label:'Catégorie',sortValue:item=>item.category||null,render:item=>item.category||'—'},
                 {id:'identity',label:'Nom',required:true,sortValue:item=>item.name,render:item=><><strong>{item.name}</strong>{item.canonicalCode&&<small className="catalog-canonical-code">{item.canonicalCode}</small>}</>},
                 {id:'type',label:'Type',sortValue:item=>item.type,render:item=><span className="status-pill">{item.currentVersion?.commercialKind?KIND_LABELS[item.currentVersion.commercialKind]:item.type==='offer'?'Offre':'Service'}</span>},
@@ -710,7 +717,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 {id:'priceMode',label:'Mode',sortValue:item=>item.currentVersion?PRICE_LABELS[item.currentVersion.priceMode]:null,render:item=>item.currentVersion?PRICE_LABELS[item.currentVersion.priceMode]:'—'},
                 {id:'status',label:'Statut',sortValue:item=>STATUS_LABELS[item.status],render:item=><span className={`catalog-status catalog-${item.status}`}>{STATUS_LABELS[item.status]}</span>},
                 {id:'public',label:'Site',sortValue:item=>item.visiblePublic?1:0,render:item=>item.visiblePublic?'Oui':'Non'},
-                {id:'version',label:'Version',sortValue:item=>item.currentVersion?.versionNumber??null,render:item=>item.currentVersion?`v${item.currentVersion.versionNumber} · ${VERSION_STATUS_LABELS[item.currentVersion.status]}`:'—'},
+                {id:'version',label:'Version de référence',sortValue:item=>item.currentVersion?.versionNumber??null,render:item=><>{item.currentVersion?`v${item.currentVersion.versionNumber} · ${VERSION_STATUS_LABELS[item.currentVersion.status]}`:'—'}{versionStatesOf(item).includes('draft')&&item.currentVersion?.status!=='draft'&&<small>Brouillon disponible</small>}</>},
                 {id:'open',label:'Ouvrir',required:true,render:item=><button type="button" className="link-button" aria-label={'Ouvrir '+item.name} onClick={event=>{event.stopPropagation();void openItem(item.id);}}><OperationIcon name="record-open"/></button>},
               ]}/>
 
@@ -897,7 +904,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
             </aside>
           )}
         </div>
-      )}
+      ))}
     </div>
   );
 }
