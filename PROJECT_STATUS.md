@@ -1,5 +1,15 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 08/11/2026 — PR #166 : corrections ciblées après revue indépendante
+
+- [x] Cause NaN corrigée dans la fixture (`contractValueCents`), désormais incluse au typecheck ; présentation normale Manager contrôlée sur les 14 recettes TEMP.
+- [x] Échéanciers OFF-007/SQ-24 et règles récurrentes explicités sans date fictive ; documents de travail affichant tous les jalons sauvegardés. Historiques figés et prix source préservés.
+- [x] Deux CSV régénérés avec encodage UTF-8 explicite ; 130/18/47 et identifiants conservés.
+- [x] Typecheck et 77 tests ciblés réussis ; 14 PDF + 14 DOCX régénérés, 14 rendus Word, contrôles sémantiques des montants/échéances/encodages et empreintes source. Les anciennes simulations sont remplacées : les contrôles précédents avaient omis NaN.
+- [x] [Bilan du correctif](docs/integration-v394-v15-20261108/CORRECTIF-PR166-2026-11-08.md). Bibliothèque 119 clauses brouillon et cartographie inactive conservées ; aucune migration réelle ni publication commerciale.
+- [ ] Revue utilisateur du correctif sur la PR #166 existante ; aucune fusion/activation autorisée.
+
+
 ## 08/11/2026 — Intégration officielle V3.9.4 / V1.5 autorisée, en cours
 
 Autorisation métier expresse du pack (rectificatif 019), intégration sur branche dédiée et préparation de PR ; aucune nouvelle validation globale ou consultation juridique préalable. Pas de certification de conformité, de RC Pro présumée, de fusion main, de déploiement ni de mutation de la préproduction.

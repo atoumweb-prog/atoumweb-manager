@@ -1,5 +1,7 @@
 # Intégration AtoumWeb V3.9.4 / V1.5 — 8 novembre 2026
 
+> Correctif après revue indépendante : les simulations et CSV de la première livraison contenaient des montants NaN, des échéanciers uniformes et un encodage altéré. Ils sont remplacés par le [dossier corrigé](CORRECTIF-PR166-2026-11-08.md), avec contrôles sémantiques dédiés. Les résultats historiques ci-dessous ne valent pas validation de ces anciens fichiers.
+
 État : intégration technique et recette sur copies TEMP réalisées ; aucune activation de la préproduction. Branche locale `codex/integration-v394-v15-20261108`. Diffusion GitHub publique expressément autorisée par Carlos le 08/11/2026 après information ; push/PR de revue autorisés, sans fusion ni activation. Commit technique : abbe41f4f2af3170bcb48331b98f59aad68391a6.
 
 ## Références effectivement lues et conservation du lot 2
