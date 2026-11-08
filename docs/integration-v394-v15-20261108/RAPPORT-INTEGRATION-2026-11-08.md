@@ -88,3 +88,7 @@ Incidents corrigés pendant recette : noms de méthodes/paramètres et type d’
 7. Échec pendant import/migration : rollback transactionnel. Après succès : restauration cohérente base/code/profil après décision et préservation des écritures postérieures ; pas d’ancien binaire seul ni de downgrade destructif.
 
 Aucun audit général, développement du lot 3 UX/UI, travail d’un autre worktree, déploiement ou fusion n’a été engagé. Les 39 décisions OT et leurs limites restent distinctes de cette intégration métier.
+
+## Publication GitHub autorisée et réalisée
+
+Le 08/11/2026, Carlos a expressément autorisé le push et la PR sur le dépôt public. Branche poussée normalement sur origin/codex/integration-v394-v15-20261108 ; [PR #166](https://github.com/atoumweb-prog/atoumweb-manager/pull/166) ouverte en brouillon vers codex/ux-v2-offres-tarifs-20261106. GitHub indique MERGEABLE/CLEAN, aucun contrôle CI distant sur cette base ; les validations rapportées sont locales. Aucun merge, activation habituelle ou déploiement. Les commits documentaires de suivi ne modifient pas le code testé.

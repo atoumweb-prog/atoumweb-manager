@@ -146,3 +146,5 @@ Validation lot 2 dans le périmètre TEMP confirmée. Backup/restauration et mig
 ## 08/11/2026 — Intégration métier V3.9.4 / V1.5 sur branche distincte
 
 Lot 2 préservé dans le commit préalable c7ee0a3c51b77d6bb92769f3614cecef4528daa7, puis intégration volontaire du pack officiel sur copies TEMP. Les 130 références/119 clauses et contrôles métier ciblés ne valent pas clôture UX/UI des lots suivants ; les 39 lignes et leurs statuts sont conservés. Voir docs/integration-v394-v15-20261108/RAPPORT-INTEGRATION-2026-11-08.md. Aucun abandon historique automatique, aucune activation habituelle, aucune fusion ; publication GitHub à décider du fait de la visibilité publique constatée.
+
+08/11/2026 — Diffusion du pack sur GitHub public expressément autorisée par Carlos puis réalisée : branche dédiée poussée, PR #166 en brouillon (https://github.com/atoumweb-prog/atoumweb-manager/pull/166). Aucune fusion, activation habituelle ou nouvelle clôture OT ; résultats techniques antérieurs conservés.
