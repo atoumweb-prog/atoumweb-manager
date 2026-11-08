@@ -851,6 +851,7 @@ export class ContractTermsService {
        FROM contract_clause_templates t
        JOIN contract_clause_versions v ON v.id=t.current_version_id
        WHERE t.scope='base' AND t.status='active' AND v.status='published'
+         AND COALESCE(v.code,t.code)<>'BASE-REFERENCES-AGENCE'
          AND t.audience IN ('all', ?)
        ORDER BY t.sort_order,t.title COLLATE NOCASE`,
       [audience],

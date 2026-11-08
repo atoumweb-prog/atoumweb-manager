@@ -142,3 +142,7 @@ Conception graphique validée et fonctionnalités acceptées sur TEMP. 19 contr�
 ## 08/11/2026 — Préparation sur copie de la préproduction confirmée
 
 Validation lot 2 dans le périmètre TEMP confirmée. Backup/restauration et migration 81 sur copie isolée de la PRÉPRODUCTION UX V2 du 04/11 réussis, source inchangée. Aucun brouillon multiple ; 142 tables historiques conservées et contrôles fonctionnels ciblés concluants. Réserve : bibliothèque CGV/types vide dans cette source, aucune importation automatique. [Rapport](PREPARATION-ACTIVATION81-PREPRODUCTION-2026-11-08.md). Activation réelle, livraison runtime et Git attendent autorisation ; aucun OT des lots suivants n’est déclaré terminé.
+
+## 08/11/2026 — Intégration métier V3.9.4 / V1.5 sur branche distincte
+
+Lot 2 préservé dans le commit préalable c7ee0a3c51b77d6bb92769f3614cecef4528daa7, puis intégration volontaire du pack officiel sur copies TEMP. Les 130 références/119 clauses et contrôles métier ciblés ne valent pas clôture UX/UI des lots suivants ; les 39 lignes et leurs statuts sont conservés. Voir docs/integration-v394-v15-20261108/RAPPORT-INTEGRATION-2026-11-08.md. Aucun abandon historique automatique, aucune activation habituelle, aucune fusion ; publication GitHub à décider du fait de la visibilité publique constatée.

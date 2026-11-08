@@ -1,5 +1,19 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 08/11/2026 — Intégration officielle V3.9.4 / V1.5 autorisée, en cours
+
+Autorisation métier expresse du pack (rectificatif 019), intégration sur branche dédiée et préparation de PR ; aucune nouvelle validation globale ou consultation juridique préalable. Pas de certification de conformité, de RC Pro présumée, de fusion main, de déploiement ni de mutation de la préproduction.
+
+- [x] 50 fichiers locaux du lot 2 préservés dans un ZIP/patch/inventaire avec empreintes avant opération Git ; commit préalable `c7ee0a3c51b77d6bb92769f3614cecef4528daa7` sur la seule nouvelle branche `codex/integration-v394-v15-20261108`. Ancienne branche Offres & Tarifs conservée à `57ad50fd`.
+- [x] Pack : 22 empreintes contrôlées ; extraits des trois Word effectivement comparés (923/959/379 paragraphes), 130 références, 119 clauses, 47 statuts délégués, 6 à vérifier, 18 V39 ; clause 019 sans PAY-005 dans le corps client. Préaudit distinct non présent dans les ZIP : emplacement demandé, rapports de préparation lus.
+- [x] Adaptateurs sur CatalogImportService/ContractEditorialDraftService existants, transaction globale et idempotence ; sources Word/JSON finales conservées avec empreintes. Codes provisoires conservés comme références de provenance, sans canonicalisation/alias AW inventés.
+- [x] Premier essai sur copie TEMP du backup confirmé : 21 IDs repris, 109 créations, 119 clauses brouillon ; aucune publication/archive. Source habituelle non ouverte/modifiée pour ce nouveau chantier. Contrôle complet : les 44 versions historiques sont publiées, les 21 reprises ajoutent un brouillon ; aucun brouillon opérationnel multiple. L’hypothèse initiale de 21 paires de brouillons a été corrigée avant livraison, sans aucun reclassement.
+- [x] Préaudit séparé reçu/lu et exécuté en lecture seule sur la préproduction confirmée : empreintes DB/WAL inchangées. Rapport, CSV 130/18 et cartographie historique 409 proposée (non appliquée) préparés dans docs/integration-v394-v15-20261108.
+- [x] 172 tests distincts ciblés, typecheck et paquet Windows x64 ; 13 contrôles Electron dans les trois thèmes ; 14 PDF + 14 DOCX de simulation, 154 pages finales, aucune page blanche/caractère hors page/PAY-005 client. Adaptation locale de l’export Word A4/fin vide ; sources Word métier inchangées. Aucune certification légale.
+- [x] Migration 81 après import sur seconde copie TEMP : sauvegarde/restauration, conservation, FK/intégrité et parcours minimaux/duplication concluants ; zéro brouillon multiple. Aucune migration habituelle.
+- [ ] Point GitHub à décider avant push/PR : dépôt PUBLIC (API et gh confirment isPrivate=false), commits contenant les 130 tarifs/119 clauses/Word validés pour intégration interne. Préparation et commits locaux autorisés, diffusion publique à confirmer ou cible privée à désigner. Aucune nouvelle validation métier/prix/clauses demandée ; aucune modification de visibilité effectuée. Activation future soumise à autorisation distincte.
+
+
 ## 08/11/2026 — Lot 2 validé sur TEMP ; préparation migration sur copie PRÉPRODUCTION
 
 - [x] Source confirmée par Carlos : PRÉPRODUCTION UX V2 du 04/11, Workspace-TEST/Profil-TEST ; autres environnements distingués, aucune base Validation-MSI ouverte. Données client fictives ; Catalogue/tarifs/CGV/référentiels/paramètres à préserver, aucune suppression automatique.

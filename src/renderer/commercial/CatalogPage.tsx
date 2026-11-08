@@ -44,6 +44,7 @@ import './catalog-workspace-v2.css';
 import './catalog-editor-v2.css';
 import { CatalogCategoryInventory } from './CatalogCategoryInventory';
 import type { CatalogCategoryRecord } from '../../shared/catalogCategoryAdministration';
+import {ApprovedPackReference} from './ApprovedPackReference';
 import { catalogAdminCategories, catalogAdminFiltered } from './catalogAdminFilters';
 import { catalogueCategoryName } from './catalogDisplay';
 
@@ -647,6 +648,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       <header className="ot-workspace-heading"><div className="ot-title"><span className="ot-title-icon"><OperationIcon name="package"/></span><div><span className="eyebrow">Commercial</span><h1>Offres & Tarifs</h1><p>Catalogue des offres et services AtoumWeb</p></div></div><div className="ot-heading-actions"><button type="button" className="secondary-button" onClick={()=>void refresh()}><OperationIcon name="refresh"/>Actualiser</button><button className="primary-button" type="button" onClick={()=>requestUnsavedExit(()=>{setSpace('catalog');if(showForm)createGuard.request(()=>setShowForm(false));else {setCreationStep('identity');setCreationPriceChosen(false);setShowDrafts(false);setShowForm(true);}})}>{showForm?'Fermer la création':'+ Service / Offre'}</button></div></header>
       <nav className="ot-spaces" aria-label="Espaces Offres et Tarifs">{([['catalog','Catalogue'],['steering','Pilotage'],['administration','Administration']] as const).map(([id,label])=><button type="button" key={id} aria-current={space===id?'page':undefined} onClick={()=>changeSpace(id)}>{label}{id==='steering'&&<small>À venir</small>}</button>)}</nav>
       {space==='steering'&&<section className="ot-planned panel"><OperationIcon name="chart"/><h2>Pilotage</h2><p>Les statistiques commerciales, le suivi des offres et le centre À suivre seront développés dans les prochains lots.</p><p className="muted">Aucune statistique ni alerte commerciale n’est calculée dans cet espace pour le moment.</p></section>}
+      {space==='administration'&&<ApprovedPackReference/>}
       {space==='administration'&&<section className="ot-administration"><header><h2>Administration du Catalogue</h2><p>Catégories existantes et organisation des prochains lots.</p></header><div className="ot-admin-cards"><button className="panel" type="button" onClick={()=>setShowCategoryInventory(value=>!value)}><OperationIcon name="layers"/><strong>Catégories existantes</strong><span>Consulter, administrer et réconcilier les catégories.</span></button>{['Modèles commerciaux et documentaires','Import / export CSV et JSON','Santé du Catalogue','Paramètres'].map(label=><article className="panel" key={label}><strong>{label}</strong><span>Prévu dans un prochain lot · non disponible</span></article>)}</div></section>}
       {listError&&<div className="form-error" role="alert">Catalogue non actualisé : {listError}. {items.length>0?'Les derniers résultats chargés restent affichés.':'Les compteurs ne sont pas disponibles.'}</div>}
       {space==='catalog'&&<>
@@ -955,6 +957,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
 function CommercialParametersSummary({ parameters }: { parameters?: CatalogCommercialParameters | null }) {
   if (!parameters) return null;
   const labels: Record<keyof CatalogCommercialParameters, string> = {
+    sourceStatus:'Statut documentaire de source', sourceVersion:'Version documentaire de source',
     clientNeed: 'Besoin client', benefits: 'Bénéfices client', salesPitch: 'Argumentaire commercial', qualificationQuestions: 'Questions de qualification', objections: 'Objections et réponses', relevantSituations: 'Situations pertinentes', commercialCautions: 'Vigilances commerciales', keywords: 'Mots-clés métier', work: 'Travail prévu', options: 'Options / compléments',
     quoteRequiredWhen: 'Cas nécessitant un devis', deliverables: 'Livrables', deliveryTerms: 'Modalités / délai',
     reviewTerms: 'Corrections / recette', correctiveWarranty: 'Garantie corrective prévue',

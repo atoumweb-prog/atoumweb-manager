@@ -2,6 +2,7 @@ import {useEffect,useState} from 'react';
 import type {QuoteDetail} from '../../shared/commercial';
 import type {QuoteContractPreparation} from '../../shared/quoteContractPreparation';
 import {focusContractField} from './contractFieldNavigation';
+import {approvedBusinessReview} from '../../shared/approvedBusinessPolicy';
 
 export function QuoteFinalizationPanel({quote,onFinalize}:{quote:QuoteDetail;onFinalize:(canonicalReview?:boolean)=>void}){
   const [review,setReview]=useState<QuoteContractPreparation|null>(null),[error,setError]=useState(''),[lineIssues,setLineIssues]=useState<string[]>([]);
@@ -11,6 +12,7 @@ export function QuoteFinalizationPanel({quote,onFinalize}:{quote:QuoteDetail;onF
     <strong>{error?'Vérification impossible':!review?'Vérification avant finalisation…':blocking.length?`Finalisation impossible — ${blocking.length} élément${blocking.length>1?'s':''} à compléter`:'Les informations enregistrées permettent la finalisation technique'}</strong>
     <p>Les contrôles portent sur les valeurs enregistrées. Enregistre ta préparation pour actualiser cette liste.</p>
     {error&&<p role="alert">{error}</p>}
+    {approvedBusinessReview(quote).warnings.length>0&&<details open><summary>Vigilances métier V1.5 — contrôles restant à satisfaire</summary><ul>{approvedBusinessReview(quote).warnings.map(message=><li key={message}>{message}</li>)}</ul></details>}
     {blocking.length>0&&<ul>{blocking.map((i,index)=><li key={i.code+index}><button type="button" className="contract-issue-link" data-issue-code={i.code} onClick={()=>i.code.startsWith('LINE_')?window.dispatchEvent(new CustomEvent('atoumweb:quote-lines',{detail:{quoteId:quote.id}})):focusContractField(quote.id,i.code)}>{i.message} →</button></li>)}</ul>}
     <button type="button" className="primary-button" disabled={!review||!!error||blocking.length>0} onClick={()=>onFinalize(false)}>Finaliser le devis</button>
     <details><summary>Contrôle du classement des clauses</summary><button type="button" className="secondary-button" disabled={!review||!!error||blocking.length>0} onClick={()=>onFinalize(true)}>Finaliser avec le classement approuvé</button><p className="muted">Option destinée aux bibliothèques disposant d’un classement approuvé.</p></details>

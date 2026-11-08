@@ -59,6 +59,9 @@ export function reviewCatalogPrepublication(
 ): { blocking: string[]; warnings: string[] } {
   const blocking: string[]=[];
   const warnings: string[]=[];
+  const sourceStatus=version.commercialParameters?.sourceStatus;
+  if(sourceStatus&&/^(A_VERIFIER|ANCIEN_|BASE_INTERNE)/.test(sourceStatus))blocking.push('Référence source restreinte : '+sourceStatus+' ; publication commerciale interdite sans nouvel arbitrage ciblé.');
+  if(sourceStatus==='RETENU_SUR_DELEGATION_07_11_2026')warnings.push('Tarif retenu sur délégation ; aucune validation tarifaire individuelle ni autorisation de publication implicite.');
   if (version.itemId!==item.id || !item.versions.some(row=>row.id===version.id))
     blocking.push('La version sélectionnée ne correspond pas à cette fiche.');
   if (version.status!=='draft') blocking.push('Seul un brouillon peut être publié.');

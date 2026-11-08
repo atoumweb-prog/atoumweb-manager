@@ -38,6 +38,9 @@ export interface CatalogCommercialIdentity {
 }
 // Descriptive commercial data, never injected as contract clauses by this field.
 export interface CatalogCommercialParameters {
+  /** Documentary status is distinct from publication and individual price approval. */
+  sourceStatus?: string | null;
+  sourceVersion?: string | null;
   clientNeed?: string | null;
   /** Versioned commercial benefits, descriptive only and never contract clauses. */
   benefits?: string | null;

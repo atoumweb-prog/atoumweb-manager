@@ -11,11 +11,12 @@ function crc32(data:Buffer):number {
 }
 export function createWorkingContractDocx(text:string):Buffer {
   if(!text.trim()||text.length>1_000_000)throw new Error('Texte contractuel absent ou trop volumineux.');
-  const paras=text.replace(/\r\n?/g,'\n').split('\n').map(line=>'<w:p><w:r><w:t xml:space="preserve">'+xmlEscape(line)+'</w:t></w:r></w:p>').join('');
+  // A trailing layout-only paragraph can spill onto an otherwise blank final Word page.
+  const paras=text.replace(/\r\n?/g,'\n').replace(/(?:\n[ \t]*)+$/u,'').split('\n').map(line=>'<w:p><w:r><w:t xml:space="preserve">'+xmlEscape(line)+'</w:t></w:r></w:p>').join('');
   const entries:[string,string][]=[
     ['[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'],
     ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'],
-    ['word/document.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+paras+'<w:sectPr/></w:body></w:document>'],
+    ['word/document.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+paras+'<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1021" w:right="1021" w:bottom="1021" w:left="1021" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr></w:body></w:document>'],
   ];
   const local:Buffer[]=[],central:Buffer[]=[];let offset=0;
   for(const [name,xml] of entries){

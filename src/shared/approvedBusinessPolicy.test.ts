@@ -1,0 +1,15 @@
+import {describe,it,expect} from 'vitest';
+import type {QuoteDetail,QuoteLine} from './commercial';
+import {approvedBusinessReview} from './approvedBusinessPolicy';
+import {approvedVersionRules} from '../main/commercial/ApprovedPackSource';
+
+const line=(code:string,parameters?:QuoteLine['parameters'])=>({id:code,label:code,parameters,snapshot:{commercialRules:approvedVersionRules(code,'VALIDE_RECENT')}} as unknown as QuoteLine);
+const quote=(lines:QuoteLine[],audience:'professional'|'consumer'='professional')=>({lines,contractAudience:audience}) satisfies Pick<QuoteDetail,'lines'|'contractAudience'>;
+describe('Contrôles V1.5 sur snapshots volontairement préparés',()=>{
+ it('does not apply new policy to any historical snapshot',()=>expect(approvedBusinessReview(quote([{snapshot:{canonicalCode:'AW-ECOM-BASE'},label:'Historique'} as unknown as QuoteLine]))).toEqual({blocking:[],warnings:[]}));
+ it('prevents charging newsletter, analytics and Google reviews twice in Business',()=>{const r=approvedBusinessReview(quote([line('V39-ECOM-BUSINESS'),line('AW-WEB-NEWSLETTER'),line('AW-DATA-GA-SC'),line('AW-WEB-AVIS-GOOGLE')]));expect(r.blocking).toHaveLength(3);});
+ it('checks 10 versus 25 products as a total, not an additional quantity',()=>{expect(approvedBusinessReview(quote([line('AW-ECOM-BASE',{productCount:{kind:'included',count:10}})])).blocking).toEqual([]);expect(approvedBusinessReview(quote([line('V39-ECOM-BUSINESS',{productCount:{kind:'included',count:35}})])).blocking[0]).toContain('25 produits simples au total');expect(approvedBusinessReview(quote([line('V39-ECOM-VISIBILITE',{productCount:{kind:'included',count:25}})])).blocking).toEqual([]);});
+ it('keeps consumer legal prerequisites and no insurance/marketing consent visible without inventing certificates',()=>{const r=approvedBusinessReview(quote([line('V39-HOST-LUNE')],'consumer'));expect(r.warnings.join(' ')).toContain('aucune couverture active attestée');expect(r.warnings.join(' ')).toContain('consentement distinct');expect(r.warnings.join(' ')).toContain('médiation non attestée');expect(r.warnings.join(' ')).toContain('Aucun envoi automatique');});
+ it('distinguishes express maintenance/domain renewal from contractual Lune renewal and monthly versus annual price change',()=>{const r=approvedBusinessReview(quote([line('AW-MAINT-WP-A'),line('V39-HOST-DOMAINE'),line('V39-HOST-LUNE'),line('AW-MAINT-WC-M')]));expect(r.warnings.filter(w=>w.includes('uniquement sur accord exprès'))).toHaveLength(2);expect(r.warnings.join(' ')).toContain('nouvelle annualité sur accord écrit');expect(r.warnings.join(' ')).toContain('au moins 30 jours');});
+ it('preserves delegated status and blocks historical/internal/restricted source use',()=>{const l=line('AW-TECH-HEBERG-WP');l.snapshot!.commercialRules=approvedVersionRules('AW-TECH-HEBERG-WP','ANCIEN_A_RECONCILIER');expect(approvedBusinessReview(quote([l])).blocking[0]).toContain('non commercialisable');l.snapshot!.commercialRules=approvedVersionRules('AW-WEB-FORM-ADV','RETENU_SUR_DELEGATION_07_11_2026');expect(approvedBusinessReview(quote([l])).warnings.join(' ')).toContain('sans validation individuelle');});
+});

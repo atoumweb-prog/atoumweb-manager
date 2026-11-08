@@ -1,4 +1,5 @@
 import { paymentMilestones, type QuoteContractParameters } from './quoteContractPreparation';
+import type {CommercialVersionRules} from './commercialRules';
 
 export interface ContractDefaultLine { id:string;label:string;snapshot:Record<string,unknown>|null }
 export interface ContractDefaultFact {
@@ -23,6 +24,8 @@ export function deriveQuoteContractDefaults(input:{subject:string;needSummary:st
   let hasContinuous=false,hasOneOff=false;
   for(const line of input.lines){
     const s=line.snapshot??{},commercial=(s.commercialParameters??{}) as Record<string,unknown>;
+    const policy=(s.commercialRules as CommercialVersionRules|undefined)?.approvedPack;
+    if(policy?.version==='V3.9.4/V1.5'&&policy.renewal!=='none')add('RENEWAL','confirm',`${line.label} : ${policy.renewal==='express'?'renouvellement sur accord exprès':'reconduction seulement si prévue au contrat, avec contrôles de notification/résiliation applicables'}. Confirmer les conditions propres à cette prestation.`,'Pack approuvé V1.5 — version vendue');
     const source=`${String(s.canonicalCode??line.label)} · v${String(s.versionNumber??'historique')}`;
     if(typeof commercial.deliverables==='string'&&commercial.deliverables.trim())deliveries.push(`${line.label} : ${commercial.deliverables}`);
     if(s.periodicity==='ponctuelle')hasOneOff=true;

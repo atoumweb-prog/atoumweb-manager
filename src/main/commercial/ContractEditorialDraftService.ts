@@ -1,9 +1,12 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import { ContractTermsService } from './ContractTermsService';
-import type { ContractClauseAudience } from '../../shared/contractTerms';
+import type { ContractClauseAudience, ContractClauseReviewMetadata } from '../../shared/contractTerms';
 
 export interface ContractEditorialProposal {
+  /** Explicit versioned source pack, including a historical unpublished source. */
+  allowUnpublishedSource?: boolean;
+  review?: ContractClauseReviewMetadata;
   code: string;
   sourceAudience?: ContractClauseAudience;
   proposal: string;
@@ -16,7 +19,7 @@ export interface ContractEditorialProposal {
   adoption: boolean;
   origin: {
     templateId: string;
-    currentVersionId: string;
+    currentVersionId: string | null;
     versionId: string;
     version: number;
     versionStatus: string;
@@ -93,11 +96,13 @@ export class ContractEditorialDraftService {
           );
           const proposalSha256 = stableHash({ code: proposedCode, audience: proposedAudience, title, body: proposal.proposal, sourceVersionId });
           const draft = entry ? template.versions.find((version) => version.id === entry.draft_version_id) : null;
-          if (entry && entry.proposal_sha256 === proposalSha256 && draft?.status === 'draft' && draft.body === proposal.proposal) action = 'keep';
+          if (entry && entry.proposal_sha256 === proposalSha256 && draft?.status === 'draft' && draft.body === proposal.proposal
+            && (draft.title??template.title)===title && (draft.code??template.code)===proposedCode && (draft.audience??template.audience)===proposedAudience
+            && (!proposal.review||stableHash(draft.review)===stableHash(proposal.review))) action = 'keep';
           else anomaly = `${proposal.code} : la nouvelle clause existe déjà sans provenance identique.`;
         }
         else if (template.code.toUpperCase() !== (proposal.origin.code ?? proposal.code).toUpperCase()) anomaly = `${proposal.code} : code du modèle source différent.`;
-        else if (!source || source.status !== 'published' || source.versionNumber !== proposal.origin.version) anomaly = `${proposal.code} : version publiée source introuvable.`;
+        else if (!source || (source.status !== 'published' && !(proposal.allowUnpublishedSource&&source.status==='draft'&&proposal.origin.versionStatus==='draft')) || source.versionNumber !== proposal.origin.version) anomaly = `${proposal.code} : version source autorisée introuvable.`;
         else if (template.currentVersionId !== proposal.origin.currentVersionId) anomaly = `${proposal.code} : la version courante a changé depuis la proposition.`;
         else if (source.body !== proposal.origin.body || textHash(source.body) !== proposal.sourceBodySHA256) anomaly = `${proposal.code} : le corps source ou son empreinte a changé.`;
         else if (!proposal.proposal?.trim()) anomaly = `${proposal.code} : proposition vide.`;
@@ -114,7 +119,8 @@ export class ContractEditorialDraftService {
           const draft = entry ? template.versions.find((version) => version.id === entry.draft_version_id) : null;
           if (entry && entry.payload_sha256 === payloadSha256 && entry.source_version_id === source.id && entry.proposal_sha256 === proposalSha256
             && draft?.status === 'draft' && draft.body === proposal.proposal && (draft.title ?? template.title) === title
-            && (draft.code ?? template.code) === proposedCode && (draft.audience ?? template.audience) === proposedAudience) action = 'keep';
+            && (draft.code ?? template.code) === proposedCode && (draft.audience ?? template.audience) === proposedAudience
+            && (!proposal.review||stableHash(draft.review)===stableHash(proposal.review))) action = 'keep';
           else if (entry) anomaly = `${proposal.code} : un import éditorial antérieur existe mais son brouillon ou sa provenance diffère.`;
           else action = 'create';
         }
@@ -130,32 +136,33 @@ export class ContractEditorialDraftService {
     return { payloadSha256, planSha256: stableHash({ payloadSha256, rows, counts, anomalies }), rows, counts, anomalies };
   }
 
-  apply(document: ContractEditorialProposalDocument, sourceReference: string, expectedPlanSha256: string): ContractEditorialDraftPlan {
-    this.database.exec('BEGIN IMMEDIATE;');
+  apply(document: ContractEditorialProposalDocument, sourceReference: string, expectedPlanSha256: string, withinTransaction=false): ContractEditorialDraftPlan {
+    const finish=()=>this.database.exec(withinTransaction?'RELEASE SAVEPOINT contract_pack_import;':'COMMIT;');
+    this.database.exec(withinTransaction?'SAVEPOINT contract_pack_import;':'BEGIN IMMEDIATE;');
     try {
       const plan = this.simulate(document, sourceReference);
       if (plan.planSha256 !== expectedPlanSha256) throw new Error('Plan éditorial périmé : relancer la simulation.');
       if (plan.anomalies.length) throw new Error(`Préparation éditoriale refusée : ${plan.anomalies.join(' ; ')}`);
       if (!plan.counts.draftsToCreate) {
-        this.database.exec('COMMIT;');
+        finish();
         return plan;
       }
       const now = new Date().toISOString();
       const runId = randomUUID();
       this.database.run(
         'INSERT INTO contract_editorial_import_runs (id,payload_sha256,source_reference,summary_json,created_at) VALUES (?,?,?,?,?)',
-        [runId, plan.payloadSha256, sourceReference, JSON.stringify(plan.counts), now],
+        [runId, plan.payloadSha256, sourceReference, JSON.stringify({...plan.counts,origins:document.clauses.map(p=>({code:p.code,templateId:p.origin.templateId,currentVersionId:p.origin.currentVersionId,versionId:p.origin.versionId,newClause:p.newClause}))}), now],
       );
       const terms = new ContractTermsService(this.database);
       for (const row of plan.rows.filter((candidate) => candidate.action === 'create')) {
         const proposal = document.clauses.find((candidate) => candidate.code === row.code)!;
         const template = proposal.newClause
           ? terms.createTemplate({ code: row.proposedCode, title: row.title, scope: proposal.newClause.scope,
-              audience: row.proposedAudience, sortOrder: proposal.newClause.sortOrder }, { title: row.title, body: proposal.proposal })
+              audience: row.proposedAudience, sortOrder: proposal.newClause.sortOrder }, { title: row.title, body: proposal.proposal, review:proposal.review })
           : terms.getTemplate(proposal.origin.templateId);
         const source = proposal.newClause ? template.versions[0] : template.versions.find((version) => version.id === row.sourceVersionId)!;
         const draft = proposal.newClause ? source : terms.createVersion(template.id, { title: row.title, code: row.proposedCode,
-          audience: row.proposedAudience, body: proposal.proposal, review: source.review });
+          audience: row.proposedAudience, body: proposal.proposal, review: proposal.review??source.review });
         const proposalSha256 = stableHash({ code: row.proposedCode, audience: row.proposedAudience,
           title: row.title, body: proposal.proposal, sourceVersionId: source.id });
         this.database.run(
@@ -173,10 +180,10 @@ export class ContractEditorialDraftService {
       if (replay.anomalies.length || replay.counts.draftsToCreate || replay.counts.conflicts || replay.counts.draftsKept !== document.clauses.length) {
         throw new Error('Contrôle post-import éditorial non conforme ; rollback complet.');
       }
-      this.database.exec('COMMIT;');
+      finish();
       return replay;
     } catch (error) {
-      this.database.exec('ROLLBACK;');
+      this.database.exec(withinTransaction?'ROLLBACK TO SAVEPOINT contract_pack_import; RELEASE SAVEPOINT contract_pack_import;':'ROLLBACK;');
       throw error;
     }
   }

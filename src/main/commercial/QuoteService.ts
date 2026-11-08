@@ -425,7 +425,7 @@ export class QuoteService {
     const firstOffer = source.item_type === 'offer' && !current.lines.some((line) => line.snapshot?.itemType === 'offer');
     this.insertLine(quoteId, 'catalog', {
       ...input,
-      label: clean(input.label) ?? source.item_name,
+      label: clean(input.label) ?? (new CommercialRulesService(this.database).rules(source.version_id)?.approvedPack?clean(source.abby_label):null) ?? source.item_name,
       description: input.description ?? commercialDescription(source.description,snapshot),
       catalogUnitPriceCents: source.price_cents ?? proposed ?? 0,
       proposedUnitPriceCents: proposed ?? 0,

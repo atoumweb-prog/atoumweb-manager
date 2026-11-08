@@ -10,6 +10,10 @@ export interface CatalogImportRecord {
 }
 export interface CatalogImportSource {
   schemaVersion: 1;
+  /** Source-only provisional IDs: never assigned as AW canonical codes or aliases. */
+  provisionalCodes?: string[];
+  preserveItemMetadata?: boolean;
+  expectedRecordCount?: 112 | 130;
   source: { reference: string; sha256: string; sheet: string };
   records: CatalogImportRecord[];
 }
@@ -58,7 +62,11 @@ export class CatalogImportService {
     const rows: CatalogImportPlanRow[] = [];
     for (const record of source.records) {
       const mapping = manifest.entries.find(entry => entry.canonicalCode === record.canonicalCode);
-      const assigned = this.database.get<{ id: string }>('SELECT id FROM catalog_items WHERE canonical_code=?', [record.canonicalCode]);
+      const provisional=source.provisionalCodes?.includes(record.canonicalCode);
+      const owners=provisional?this.database.all<{id:string}>(`SELECT item_id AS id FROM catalog_versions WHERE json_extract(provenance_json,'$.recordKey')=?
+        UNION SELECT item_id AS id FROM catalog_import_entries WHERE entry_key=? AND to_version_id IS NOT NULL`,[record.canonicalCode,record.canonicalCode]):[];
+      if(owners.length>1)throw Error(`Code provisoire associé à plusieurs articles : ${record.canonicalCode}`);
+      const assigned = provisional?owners[0]:this.database.get<{ id: string }>('SELECT id FROM catalog_items WHERE canonical_code=?', [record.canonicalCode]);
       const itemId = assigned?.id ?? mapping?.itemId ?? null;
       const blocked = blockedCanonicalCodes.includes(record.canonicalCode);
       rows.push(this.planRecord(record, itemId, mapping, blocked, source));
@@ -95,15 +103,16 @@ export class CatalogImportService {
   }
 
   /** Explicit call only. Caller must supply the exact preview token; unresolved rows are never executed. */
-  apply(source: CatalogImportSource, manifest: CatalogImportManifest, options: { expectedPlanSha256: string; allowPartial?: boolean }): CatalogImportPlan {
-    this.database.exec('BEGIN IMMEDIATE;');
+  apply(source: CatalogImportSource, manifest: CatalogImportManifest, options: { expectedPlanSha256: string; allowPartial?: boolean; withinTransaction?:boolean }): CatalogImportPlan {
+    const finish=()=>this.database.exec(options.withinTransaction?'RELEASE SAVEPOINT catalog_pack_import;':'COMMIT;');
+    this.database.exec(options.withinTransaction?'SAVEPOINT catalog_pack_import;':'BEGIN IMMEDIATE;');
     try {
       const plan = this.simulate(source, manifest);
       if (options.expectedPlanSha256 !== plan.planSha256) throw new Error('La simulation a changé : recalculer et valider le dry-run.');
       if (plan.anomalies.length) throw new Error(`Import refusé : ${plan.anomalies.join(' ; ')}`);
       if (plan.pendingMappings && !options.allowPartial) throw new Error('Rapprochements À VÉRIFIER : décision métier requise, import intégral refusé.');
       const actionable = plan.rows.filter(row => ['create', 'update', 'archive'].includes(row.action) && !row.pending);
-      if (!actionable.length) { this.database.exec('COMMIT;'); return plan; }
+      if (!actionable.length) { finish(); return plan; }
       const runId = randomUUID(), now = new Date().toISOString();
       this.database.run('INSERT INTO catalog_import_runs (id,payload_sha256,source_sha256,manifest_sha256,summary_json,created_at) VALUES (?,?,?,?,?,?)',
         [runId, plan.payloadSha256, plan.sourceSha256, plan.manifestSha256, JSON.stringify(plan.counts), now]);
@@ -115,13 +124,13 @@ export class CatalogImportService {
           const record = source.records.find(record => record.canonicalCode === row.canonicalCode)!;
           if (row.action === 'create') {
             const item = this.catalog.create({ type: record.type, name: record.name, category: record.category,
-              canonicalCode: record.canonicalCode, identityProvenance: record.version.provenance }, record.version);
+              canonicalCode: source.provisionalCodes?.includes(record.canonicalCode)?null:record.canonicalCode, identityProvenance: record.version.provenance, visiblePublic:false }, record.version);
             itemId = item.id; toVersionId = item.versions[0].id;
           } else {
-            this.catalog.applyIdentityManifest({ schemaVersion: 1, assignments: [{ itemId, canonicalCode: record.canonicalCode, provenance: record.version.provenance! }] });
+            if(!source.provisionalCodes?.includes(record.canonicalCode))this.catalog.applyIdentityManifest({ schemaVersion: 1, assignments: [{ itemId, canonicalCode: record.canonicalCode, provenance: record.version.provenance! }] });
             toVersionId = this.catalog.createVersion(itemId, record.version).id;
             // Item labels are live metadata; old names are preserved in the import ledger and quote snapshots.
-            this.database.run('UPDATE catalog_items SET name=?,category=?,updated_at=? WHERE id=?', [record.name, record.category, now, itemId]);
+            if(!source.preserveItemMetadata)this.database.run('UPDATE catalog_items SET name=?,category=?,updated_at=? WHERE id=?', [record.name, record.category, now, itemId]);
           }
         }
         const after = this.database.get('SELECT * FROM catalog_items WHERE id=?', [itemId])!;
@@ -133,9 +142,9 @@ export class CatalogImportService {
       this.database.run('INSERT INTO activity_log (entity_type,entity_id,action,summary,metadata_json,created_at) VALUES (?,?,?,?,?,?)',
         ['catalog', runId, 'catalog_v1_imported', 'Reprise explicite catalogue V1 en brouillon ; aucune clause importée.',
           JSON.stringify({ source: source.source, manifest: manifest.reference, counts: plan.counts, pendingMappings: plan.pendingMappings }), now]);
-      this.database.exec('COMMIT;');
+      finish();
       return plan;
-    } catch (error) { this.database.exec('ROLLBACK;'); throw error; }
+    } catch (error) { this.database.exec(options.withinTransaction?'ROLLBACK TO SAVEPOINT catalog_pack_import; RELEASE SAVEPOINT catalog_pack_import;':'ROLLBACK;'); throw error; }
   }
 
   private planRecord(record: CatalogImportRecord, itemId: string | null, mapping: CatalogImportMapping | undefined, blocked: boolean, source: CatalogImportSource): CatalogImportPlanRow {
@@ -149,13 +158,13 @@ export class CatalogImportService {
     if (blocked) { action = 'verify'; anomaly = 'Création/reprise suspendue : rapprochement métier non décidé.'; }
     else if (mapping && this.database.get<{ id: string }>('SELECT id FROM catalog_items WHERE canonical_code=? AND id<>?', [record.canonicalCode, mapping.itemId])) anomaly = 'Le code est déjà attribué à un autre ID ; aucun rapprochement automatique.';
     else if (mapping && !item) anomaly = 'Ancien ID absent : aucune création de remplacement automatique.';
-    else if (item?.canonical_code && item.canonical_code !== record.canonicalCode) anomaly = 'Ancien ID déjà attribué à un autre code.';
+    else if (item?.canonical_code && item.canonical_code !== record.canonicalCode && !source.provisionalCodes?.includes(record.canonicalCode)) anomaly = 'Ancien ID déjà attribué à un autre code.';
     else if (imported) {
       if (version?.id !== imported.to_version_id || !this.matchesImportedVersion(version.id, record)
         || !this.matchesCopiedRelations(imported.from_version_id, imported.to_version_id)
-        || item?.name !== record.name || item?.category !== record.category || item?.status !== 'active') anomaly = 'Référence importée modifiée depuis : ne pas écraser les changements manuels.';
+        || (!source.preserveItemMetadata&&(item?.name !== record.name || item?.category !== record.category)) || item?.status !== 'active') anomaly = 'Référence importée modifiée depuis : ne pas écraser les changements manuels.';
       else action = 'keep';
-    } else if (item?.canonical_code) anomaly = 'Code existant sans provenance de cette reprise : validation explicite requise.';
+    } else if (item?.canonical_code && !mapping) anomaly = 'Code existant sans provenance de cette reprise : validation explicite requise.';
     else if (mapping && version?.id !== mapping.expectedVersionId) anomaly = 'Version historique différente de la version contrôlée.';
     if (record.version.provenance?.sha256 !== source.source.sha256) anomaly = 'Empreinte de provenance différente de la source.';
     return { key: record.canonicalCode, canonicalCode: record.canonicalCode, action, itemId, name: record.name,
@@ -193,10 +202,11 @@ export class CatalogImportService {
 
   private validate(source: CatalogImportSource, manifest: CatalogImportManifest): void {
     if (source.schemaVersion !== 1 || manifest.schemaVersion !== 1 || !/^[a-f0-9]{64}$/.test(source.source.sha256)) throw new Error('Source/manifeste V1 invalide.');
-    if (source.records.length !== 112) throw new Error('Le référentiel V1 doit contenir exactement 112 codes.');
+    if (source.records.length !== (source.expectedRecordCount??112)) throw new Error('Nombre de références différent du registre attendu.');
+    if(source.provisionalCodes&&(new Set(source.provisionalCodes).size!==source.provisionalCodes.length||source.provisionalCodes.some(code=>!source.records.some(r=>r.canonicalCode===code))))throw Error('Registre des codes provisoires incohérent.');
     const codes = new Set<string>();
     for (const record of source.records) {
-      if (!/^AW-[A-Z0-9]+(?:-[A-Z0-9]+)*$/.test(record.canonicalCode) || codes.has(record.canonicalCode)) throw new Error('Code AW invalide ou dupliqué.');
+      if ((!/^AW-[A-Z0-9]+(?:-[A-Z0-9]+)*$/.test(record.canonicalCode) && !(source.provisionalCodes?.includes(record.canonicalCode)&&/^V39-[A-Z0-9]+(?:-[A-Z0-9]+)*$/.test(record.canonicalCode))) || codes.has(record.canonicalCode)) throw new Error('Code source invalide ou dupliqué.');
       codes.add(record.canonicalCode);
       if (!record.name.trim() || !['offer','service'].includes(record.type)) throw new Error('Identité commerciale invalide.');
       this.catalog.validateVersion(record.version);
