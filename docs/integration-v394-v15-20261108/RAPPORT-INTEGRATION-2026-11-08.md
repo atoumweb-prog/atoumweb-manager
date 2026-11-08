@@ -1,6 +1,6 @@
 # Intégration AtoumWeb V3.9.4 / V1.5 — 8 novembre 2026
 
-État : intégration technique et recette sur copies TEMP réalisées ; aucune activation de la préproduction. Branche locale `codex/integration-v394-v15-20261108`. Publication GitHub en attente d’une décision sur la visibilité publique du dépôt, distincte de la validation métier déjà acquise.
+État : intégration technique et recette sur copies TEMP réalisées ; aucune activation de la préproduction. Branche locale `codex/integration-v394-v15-20261108`. Diffusion GitHub publique expressément autorisée par Carlos le 08/11/2026 après information ; push/PR de revue autorisés, sans fusion ni activation. Commit technique : abbe41f4f2af3170bcb48331b98f59aad68391a6.
 
 ## Références effectivement lues et conservation du lot 2
 
@@ -79,7 +79,7 @@ Incidents corrigés pendant recette : noms de méthodes/paramètres et type d’
 
 ## Activation et retour arrière — aucune exécution habituelle
 
-1. Décider d’abord la destination Git : dépôt **PUBLIC**, confirmé par connecteur et `gh repo view` (isPrivate=false). Le pack est approuvé pour intégration interne/non publié. Les commits locaux contiennent Word, prix, clauses et règles : un push les rendrait consultables publiquement. Aucune nouvelle validation métier n’est demandée ; seule cette diffusion doit être décidée avant PR distante.
+1. Décider d’abord la destination Git : dépôt **PUBLIC**, confirmé par connecteur et `gh repo view` (isPrivate=false). Le pack est approuvé pour intégration interne/non publié. Les commits locaux contiennent Word, prix, clauses et règles : un push les rendrait consultables publiquement. Cette diffusion a été expressément autorisée par Carlos le 08/11/2026. Aucune modification de visibilité du dépôt n’est effectuée.
 2. Après revue/autorisation séparée, fermer les écritures, vérifier le profil/chemin exact, renouveler la sauvegarde SQLite/WAL et tester sa restauration. Le backup de travail reste local ; aucun SQLite/profil/secret dans Git/ZIP de revue.
 3. Répéter sur copie récente le plan importé, les 21 mappings et les contraintes 81. Aucune incompatibilité sur la copie actuelle ; si plusieurs brouillons apparaissent ailleurs, arrêt et décision ciblée, jamais abandon/reclassement automatique.
 4. Choisir et faire autoriser le mécanisme d’application sur la base habituelle : le CLI livré reste **TEMP-only**, la migration 81 garde sa restriction et reste hors démarrage automatique. Aucun handler d’activation réel exposé. Ne pas contourner ces gardes avec un changement de chemin.

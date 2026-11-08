@@ -11,7 +11,7 @@ Autorisation métier expresse du pack (rectificatif 019), intégration sur branc
 - [x] Préaudit séparé reçu/lu et exécuté en lecture seule sur la préproduction confirmée : empreintes DB/WAL inchangées. Rapport, CSV 130/18 et cartographie historique 409 proposée (non appliquée) préparés dans docs/integration-v394-v15-20261108.
 - [x] 172 tests distincts ciblés, typecheck et paquet Windows x64 ; 13 contrôles Electron dans les trois thèmes ; 14 PDF + 14 DOCX de simulation, 154 pages finales, aucune page blanche/caractère hors page/PAY-005 client. Adaptation locale de l’export Word A4/fin vide ; sources Word métier inchangées. Aucune certification légale.
 - [x] Migration 81 après import sur seconde copie TEMP : sauvegarde/restauration, conservation, FK/intégrité et parcours minimaux/duplication concluants ; zéro brouillon multiple. Aucune migration habituelle.
-- [ ] Point GitHub à décider avant push/PR : dépôt PUBLIC (API et gh confirment isPrivate=false), commits contenant les 130 tarifs/119 clauses/Word validés pour intégration interne. Préparation et commits locaux autorisés, diffusion publique à confirmer ou cible privée à désigner. Aucune nouvelle validation métier/prix/clauses demandée ; aucune modification de visibilité effectuée. Activation future soumise à autorisation distincte.
+- [x] Décision explicite du 08/11/2026 : Carlos autorise le push et la PR sur ce dépôt PUBLIC, après information sur les trois Word, 130 tarifs et 119 clauses. Fusion main, publication commerciale et activation habituelle restent non autorisées. Commit technique abbe41f4f2af3170bcb48331b98f59aad68391a6 ; push et PR de revue à finaliser.
 
 
 ## 08/11/2026 — Lot 2 validé sur TEMP ; préparation migration sur copie PRÉPRODUCTION
