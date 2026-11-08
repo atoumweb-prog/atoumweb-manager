@@ -34,6 +34,7 @@ export function catalogMatchesQuery(
     params?.work, params?.deliverables,
   ];
   const adminFields = [
+    version?.provenance?.recordKey, params?.sourceStatus, params?.sourceVersion,
     version?.unit, version?.periodicity, version?.contractType,
     version?.specialTerms, version?.internalAdvice, params?.options,
     params?.quoteRequiredWhen, params?.deliveryTerms, params?.reviewTerms,

@@ -1,15 +1,15 @@
 # Offres & Tarifs V2 — suivi des 39 décisions
 
-Décisions utilisateur du 06/11/2026 ; lancement du lot 1 autorisé explicitement dans la mission de la session. État technique au 07/11/2026. [Texte intégral des arbitrages](ARBITRAGES-VALIDES-OT01-OT39.md), conservé sans modification depuis le dossier utilisateur. Les illustrations ne remplacent pas ces décisions.
+Décisions utilisateur du 06/11/2026 ; lancement du lot 1 autorisé explicitement dans la mission de la session. État technique complété au 08/11/2026. [Texte intégral des arbitrages](ARBITRAGES-VALIDES-OT01-OT39.md), conservé sans modification depuis le dossier utilisateur. Les illustrations ne remplacent pas ces décisions.
 
-Le registre distingue décision fonctionnelle validée, livraison et validation visuelle de l’application. « Partiel » signifie uniquement le périmètre indiqué ; aucun OT n’est clos par un bouton ou un test. Les états se cumulent (un existant peut être conservé et son extension rester à développer). Validation graphique et ergonomique du seul lot 1 reçue de Carlos le 07/11/2026 ; deux finitions de clôture contrôlées techniquement ensuite. Les autres lots ne sont pas validés par cette décision.
+Le registre distingue décision fonctionnelle validée, livraison et validation visuelle de l’application. « Partiel » signifie uniquement le périmètre indiqué ; aucun OT n’est clos par un bouton ou un test. Les états se cumulent (un existant peut être conservé et son extension rester à développer). Validation graphique et ergonomique du seul lot 1 reçue de Carlos le 07/11/2026 ; deux finitions de clôture contrôlées techniquement ensuite. Les autres lots ne sont pas validés par cette décision. Le 08/11/2026, Carlos valide la conception graphique du lot 2 et accepte ses réalisations fonctionnelles dans leur périmètre TEMP. Aucune activation réelle ni clôture Git autorisée.
 
 | Décision | Existant conservé | À développer | En cours | Développé | Vérifié techniquement | Validé visuellement par Carlos | Suite |
 |---|---|---|---|---|---|---|---|
-| OT-01 — Création | Oui | Oui — extensions/lots suivants | — | — | — | Non reçue | Lot 2 : création guidée et reprise persistante incomplète. |
+| OT-01 — Création | Oui | — dans le périmètre lot 2 TEMP | Activation réelle non autorisée | Lot 2 livré — TEMP | Oui — ciblé | Oui — lot 2, périmètre TEMP | Création guidée et minimale, sauvegarde/reprise ; accepté sur TEMP, pas d’activation réelle. |
 | OT-02 — Familles | Oui | Non - lot 1 valide | Lot 1 clos | Lot 1 | Oui — lot 1 | Oui - lot 1 uniquement | Lot 1 : familles réelles → tableau filtré, retour organisé ; validation graphique reçue. |
-| OT-03 — Duplication | — | Oui — extensions/lots suivants | — | — | — | Non reçue | Lot 2 : nouvel article brouillon indépendant, pas copie de vue de tableau. |
-| OT-04 — Compteurs | Oui | Non - lot 1 valide | Lot 1 clos | Lot 1 | Oui — lot 1 | Oui - lot 1 uniquement | Lot 1 : six compteurs généraux et filtrés, article avec publié ET brouillon non exclusif. |
+| OT-03 — Duplication | — | — dans le périmètre lot 2 TEMP | Activation réelle non autorisée | Lot 2 livré — TEMP | Oui — duplication et rollback | Oui — lot 2, périmètre TEMP | Version choisie, nouvel article/v1, sans code/historique ; références explicites, opérationnel à reconfigurer. |
+| OT-04 — Compteurs | Oui | Non - lot 1 valide | Incrément 2 en revue | Lot 1 + exclusion abandonnés | Oui — lot 1 et TEMP | Oui - lot 1 uniquement | Brouillon = opérationnel non abandonné ; abandonnés consultables en historique. Validation visuelle lot 1 conservée. |
 | OT-05 — Utilisations | Oui | Oui — extensions/lots suivants | — | — | — | Non reçue | Lot 3/5 : utilisations sourcées par version, sans recalcul. |
 | OT-06 — Formules | Oui | Oui — extensions/lots suivants | Lot 1 clos | Partiel — lot 1 | Partiel — projection/préférences | Oui - lot 1 uniquement | Lot 1 : regroupements de présentation depuis famille/catégorie existante ; regroupement/comparaison de formules à compléter au lot 3/5. |
 | OT-07 — Catégories | — | Oui — extensions/lots suivants | — | — | — | Non reçue | Lot 4 : deux niveaux et migration à étudier/autoriser séparément. |
@@ -17,7 +17,7 @@ Le registre distingue décision fonctionnelle validée, livraison et validation 
 | OT-09 — Abby | Oui | Oui — extensions/lots suivants | — | — | Existant ciblé | Non reçue | Manuel conservé : aucun connecteur/API ni synchronisation. |
 | OT-10 — Contrat & CGV | Oui | Oui — extensions/lots suivants | — | — | — | Non reçue | Lot 3 : guidage des types/règles/clauses depuis source unique. |
 | OT-11 — Publication | Oui | Oui — extensions/lots suivants | — | — | — | Non reçue | Lot 3 : revue assistée enrichie ; revue actuelle préservée. |
-| OT-12 — Versions | Oui | Oui — extensions/lots suivants | — | — | — | Non reçue | Lot 2 : sélecteur principal, contextes et sauvegardes spécifiques préservés. |
+| OT-12 — Versions | Oui | — dans le périmètre lot 2 TEMP | Activation réelle non autorisée | Lot 2 livré — TEMP | Oui — huit onglets/contextes | Oui — lot 2, périmètre TEMP | Sélecteur principal et reprises exactes ; contextes/sauvegardes locaux conservés. |
 | OT-13 — Import/export | — | Oui — extensions/lots suivants | — | — | — | Non reçue | Lot 4 : simulation CSV/JSON, mapping et confirmations ; OT-40 à spécifier dans ce lot. |
 | OT-14 — Associations | Oui | Oui — extensions/lots suivants | — | — | — | Non reçue | Lot 3 : rubriques inclus/optionnel/recommandé et versions ; moteurs actuels conservés. |
 | OT-15 — Contenu & périmètre | Oui | Oui — extensions/lots suivants | — | — | — | Non reçue | Lot 3 : éditeur guidé et prévisualisation. |
@@ -36,11 +36,11 @@ Le registre distingue décision fonctionnelle validée, livraison et validation 
 | OT-28 — Sécurité | Oui | Oui — extensions/lots suivants | — | — | Existant ciblé | Non reçue | Gardes existantes conservées ; sécurité et bilan des nouvelles opérations à compléter par lot. |
 | OT-29 — Paramètres | Oui | Oui — extensions/lots suivants | Lot 1 clos | Partiel — lot 1 | Partiel — projection/préférences | Oui - lot 1 uniquement | Préférences de tableaux conservées/étendues au lot 1 ; espace de paramètres complet au lot 4. |
 | OT-30 — Navigation | Oui | Oui — extensions/lots suivants | Lot 1 clos | Partiel — lot 1 | Oui — lot 1 | Oui - lot 1 uniquement | Lot 1 : une entrée latérale, trois espaces internes ; futurs parcours explicitement indisponibles. |
-| OT-31 — Premier brouillon | — | Oui — extensions/lots suivants | — | — | — | Non reçue | Lot 2 : nom et type seuls pour sauvegarde durable. |
-| OT-32 — Sauvegarde | Oui | Oui — extensions/lots suivants | — | — | Existant ciblé | Non reçue | Sauvegarde manuelle actuelle conservée ; nouveau parcours enregistrer/poursuivre/abandonner à réaliser au lot 2. |
-| OT-33 — Code | Oui | Oui — extensions/lots suivants | — | — | Existant ciblé | Non reçue | Code distinct de l’ID conservé ; parcours de création incomplet à compléter au lot 2. |
-| OT-34 — Concurrence | Oui | Oui — extensions/lots suivants | — | — | Existant ciblé | Non reçue | CAS existants préservés ; comparaison/résolution manuelle enrichie au lot 2. |
-| OT-35 — Brouillons | Oui | Oui — extensions/lots suivants | — | — | — | Non reçue | Lot 2 : Mes brouillons, reprise, recherche, suggestions et abandon confirmé. |
+| OT-31 — Premier brouillon | — | — dans le périmètre lot 2 TEMP | Activation réelle non autorisée | Lot 2 livré — TEMP | Oui — persistance et redémarrage | Oui — lot 2, périmètre TEMP | Nom/type seuls réellement persistants sur TEMP ; aucun mode/prix/catégorie fictifs. |
+| OT-32 — Sauvegarde | Oui | — dans le périmètre lot 2 TEMP | Activation réelle non autorisée | Lot 2 livré — TEMP | Oui — gardes et échecs | Oui — lot 2, périmètre TEMP | Enregistrer/poursuivre/abandonner ; sauvegardes par section, échec bloquant et saisie conservée. |
+| OT-33 — Code | Oui | — dans le périmètre lot 2 TEMP | Activation réelle non autorisée | Existant + intégration lot 2 | Oui — ciblé | Oui — lot 2, périmètre TEMP | ID immédiat, code facultatif attribuable plus tard ; unicité/immutabilité conservées, aucun code dupliqué. |
+| OT-34 — Concurrence | Oui | — dans le périmètre lot 2 TEMP | Activation réelle non autorisée | Lot 2 — champs versionnés | Oui — deuxième conflit inclus | Oui — lot 2, périmètre TEMP | Choix local/distant, révision et nouveau conflit ; listes/blocs entiers, commandes des sous-domaines distinctes. |
+| OT-35 — Brouillons | Oui | — dans le périmètre lot 2 TEMP | Activation réelle non autorisée | Lot 2 livré — TEMP | Oui — recherche/reprise/suggestions | Oui — lot 2, périmètre TEMP | Suggestions consultatives complétées ; reprise exacte, abandon/restauration, aucune fusion automatique. |
 | OT-36 — Comparateur | — | Oui — extensions/lots suivants | — | — | — | Non reçue | Lot 5 : comparateur 2–4 offres/versions et périodes séparées. |
 | OT-37 — Export PDF comparatif | — | Oui — extensions/lots suivants | — | — | — | Non reçue | Lot 5 : PDF comparatif Client/Interne, notes internes exclues côté client. |
 | OT-38 — Modèles documentaires | — | Oui — extensions/lots suivants | — | — | — | Non reçue | Lot 4/5 : modèles documentaires distincts des modèles commerciaux/production. |
@@ -106,3 +106,45 @@ Controles finaux : typecheck ; Electron reel 1920x1080 zoom 100, deux captures s
 OT-02 et OT-04 : realises et valides pour le lot 1. OT-06 : presentation des familles seulement, regroupement/comparaison de formules reportes. OT-20 : tableau/filtres/vues/pagination valides, actions groupees OT-19 reportees. OT-29 : preferences seulement, parametres complets reportes. OT-30 : navigation des trois espaces seulement, futurs parcours reportes. OT-08 : reperes tarifaires qualifies, pas de nouvelle gestion des tarifs mixtes. OT-28 : protections existantes conservees, pas de certification globale de securite.
 
 [Le cadrage du lot 2](CADRAGE-LOT2-2026-11-07.md) est documentaire : OT-01/03/12/31-35 non developpes, migrations candidates identifiees mais non executees. Aucun prix, clause ou donnee utilisateur modifie ; aucun commit, push, PR ou fusion. Les entrees precedentes sont historiques et ne remplacent pas cette validation datee.
+
+## 07/11/2026 — Publication lot 1 et premier incrément du lot 2
+
+Lot 1 définitivement validé par Carlos, finitions incluses. Commit/push normal `57ad50fd41c2de038015b346edae0751c7f8b785` sur `origin/codex/ux-v2-offres-tarifs-20261106`, référence distante vérifiée. Aucun autre commit créé, aucune PR/fusion.
+
+Lot 2 incrément 1 autorisé et développé localement : fiche/Identité, huit onglets, contexte de version consultée et sélecteur protégé ; création guidée sur les champs existants et barre manuelle. Les sélections locales métier ne sont pas remplacées. Aucun mode/prix fictif pour simuler OT-31. Le mode tarifaire doit être explicitement confirmé avant la création actuelle.
+
+Vérifications : typecheck, 25 contrôles Electron ciblés TEMP, trois confirmations de garde interceptées, zéro erreur renderer. Trois captures réelles Noir/Confort 1920×1080 zoom 100 dans outputs/Offres-Tarifs-Lot2-Increment1-2026-11-07. Revue visuelle utilisateur du lot 2 non reçue. OT-01/12/32 partiels uniquement ; OT-03/31/33-35 ne deviennent pas réalisés. Le code durable existant reste conservé ; la duplication, Mes brouillons et la résolution manuelle complète ne sont pas livrés.
+
+[Spécification de persistance à approuver](SPEC-PERSISTANCE-BROUILLONS-LOT2-2026-11-07.md) : mode absent uniquement pour brouillon, métadonnées, abandon réversible, reçus d'idempotence, protections et retour arrière. Pas de fichier de migration créé ni nouvelle migration exécutée. Aucun commit/push du lot 2, aucun changement des autres worktrees.
+
+## 07/11/2026 — Incrément 2 fonctionnel, TEMP uniquement
+
+Direction graphique incrément 1 et direction de la spécification validées par Carlos. Autorisation de réaliser la persistance sur TEMP uniquement. [Rapport détaillé](RAPPORT-LOT2-INCREMENT2-2026-11-07.md), [compatibilité avant index unique](COMPATIBILITE-BROUILLON-UNIQUE.md). Les lignes datées précédentes sont historiques : la création/reprise minimale n'est plus simulée ni simplement future sur le périmètre TEMP livré.
+
+Nom/type seuls sauvegardables ; mode/prix absents ; sauvegarde manuelle, révision/date fiable, reprise après redémarrage, Mes brouillons/recherche, abandon/restauration, contrôle de concurrence et reçus durables de création. Un seul brouillon opérationnel par article, aucun abandon historique automatique. OT-04 exclut les abandonnés sans les effacer. Aucun devis/projet/contrat ni tarif publié réécrit.
+
+Vérification : 44 tests ciblés dont 14 nouveaux, 18 contrôles Electron réels TEMP, typecheck et diff-check. Deux captures Noir/Confort 1920×1080 zoom 100 ; erreurs IPC attendues de rejeu/conflit, zéro erreur renderer. Migration 81 expérimentale non automatique ; tests de préservation, FK/intégrité et rollback concluants. Aucune base utilisateur ni Validation-MSI ouverte/migrée.
+
+Validation visuelle de l'incrément 2 non encore reçue. OT-03 duplication et suggestions OT-35 restent reportées ; aucune clôture des 39 décisions. Le dialogue global de sortie n'est pas remplacé par trois boutons : sauvegarde manuelle disponible, refus de sortie pour poursuivre, abandon confirmé restent les mécanismes actifs. Aucun commit/push/PR/fusion, autres worktrees conservés. Prochaine action : revue des captures et du rapport TEMP.
+
+## 08/11/2026 — Recette finale reprise, consolidation sans nouveau développement
+
+La vérification interrompue s'était achevée : 74 tests ciblés et 18 contrôles Electron de persistance réussis, récupérés sans relance. Les 24 contrôles de finalisation et trois captures restent exploitables. Un seul complément de 25 contrôles Electron TEMP sans capture vérifie le deuxième conflit distant et les sauvegardes réelles distinctes contrat/version, recommandations/identité, ainsi que les huit onglets. Zéro erreur renderer ; conflits IPC provoqués attendus ; intégrité ok et FK vide.
+
+Duplication (références non vides incluses), choix des valeurs de conflit, protection de sortie à trois choix et suggestions de brouillons similaires livrés. Aucun fichier applicatif préexistant src/ modifié lors de la reprise. Analyse des brouillons historiques multiples produite sans traitement, migration réelle ou reclassement automatique.
+
+[Bilan consolidé et limites](BILAN-CONSOLIDE-LOT2-2026-11-07.md). Les huit décisions concernées sont renseignées pour le périmètre du lot 2 sur TEMP ; les 39 lignes sont conservées et les autres lots restent partiels/reportés selon leurs rubriques. Acceptation incrément 2/présentation des captures ne vaut pas validation définitive du lot 2. Revue globale encore attendue. Aucun commit, push, PR, fusion ou travail sur un autre worktree.
+
+## 08/11/2026 — Compatibilité historique après revue globale
+
+Conception graphique validée et fonctionnalités acceptées sur TEMP. 19 contrôles Electron complémentaires réussis sans migration 81 ; aucune nouvelle capture. [Fonctions indisponibles et activation future](COMPATIBILITE-ACTIVATION-LOT2-2026-11-08.md). Résultats précédents conservés ; aucune fonction des lots suivants déclarée terminée. Activation réelle et clôture Git restent non autorisées.
+
+## 08/11/2026 — Préparation sur copie de la préproduction confirmée
+
+Validation lot 2 dans le périmètre TEMP confirmée. Backup/restauration et migration 81 sur copie isolée de la PRÉPRODUCTION UX V2 du 04/11 réussis, source inchangée. Aucun brouillon multiple ; 142 tables historiques conservées et contrôles fonctionnels ciblés concluants. Réserve : bibliothèque CGV/types vide dans cette source, aucune importation automatique. [Rapport](PREPARATION-ACTIVATION81-PREPRODUCTION-2026-11-08.md). Activation réelle, livraison runtime et Git attendent autorisation ; aucun OT des lots suivants n’est déclaré terminé.
+
+## 08/11/2026 — Intégration métier V3.9.4 / V1.5 sur branche distincte
+
+Lot 2 préservé dans le commit préalable c7ee0a3c51b77d6bb92769f3614cecef4528daa7, puis intégration volontaire du pack officiel sur copies TEMP. Les 130 références/119 clauses et contrôles métier ciblés ne valent pas clôture UX/UI des lots suivants ; les 39 lignes et leurs statuts sont conservés. Voir docs/integration-v394-v15-20261108/RAPPORT-INTEGRATION-2026-11-08.md. Aucun abandon historique automatique, aucune activation habituelle, aucune fusion ; publication GitHub à décider du fait de la visibilité publique constatée.
+
+08/11/2026 — Diffusion du pack sur GitHub public expressément autorisée par Carlos puis réalisée : branche dédiée poussée, PR #166 en brouillon (https://github.com/atoumweb-prog/atoumweb-manager/pull/166). Aucune fusion, activation habituelle ou nouvelle clôture OT ; résultats techniques antérieurs conservés.

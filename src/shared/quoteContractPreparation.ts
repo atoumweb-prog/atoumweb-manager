@@ -27,7 +27,7 @@ export interface QuoteContractParameters {
   warranties: { lineId: string; kind: 'small_adjustment' | 'wordpress_custom' | 'business_app' | 'not_applicable'; days: 30 | 60 | 90 | null; startEvent: string; statutoryRightsUnaffected: true }[];
   acceptance: { mode: 'explicit'; silenceHasEffect: false };
   rights: { reviewed: boolean; applicable: boolean; uses: string; duration: string; territory: string; sourceDelivery: string; exclusivity: string };
-  renewal: { reviewed: boolean; applicable: boolean; mode: 'express' | 'monthly_no_commitment'; period: string; notice: string; termination: string; restitution: string };
+  renewal: { reviewed: boolean; applicable: boolean; mode: 'express' | 'monthly_no_commitment' | 'contractual_automatic'; period: string; notice: string; termination: string; restitution: string };
   consumer: { informationDelivered: boolean; withdrawal: 'applicable' | 'not_applicable' | 'unknown'; exceptionReason: string; earlyStartRequested: boolean; onlineWithdrawal: 'not_applicable' | 'verified' | 'unconfigured'; onlineWithdrawalReason: string };
   annexes: { role: ContractDocumentRole; required: boolean; documentId: string | null }[];
   rsvp: { applicable: boolean; mode: 'minimal'; sensitiveEnabled: false; sensitiveRoute: 'disabled' | 'direct_caterer'; roles: string };

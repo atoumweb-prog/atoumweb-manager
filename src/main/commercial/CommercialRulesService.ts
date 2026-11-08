@@ -1,6 +1,7 @@
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import { validateCommercialRules, type CommercialVersionRules, type QuoteLineParameters } from '../../shared/commercialRules';
 import type { QuoteDetail } from '../../shared/commercial';
+import {approvedBusinessReview} from '../../shared/approvedBusinessPolicy';
 
 export class CommercialRulesService {
   constructor(private readonly database: DatabaseAdapter) {}
@@ -71,7 +72,7 @@ export class CommercialRulesService {
   }
 
   issues(quote: QuoteDetail): string[] {
-    const issues: string[] = [];
+    const issues: string[] = [...approvedBusinessReview(quote).blocking];
     for (const line of quote.lines) {
       const rules = line.snapshot?.commercialRules as CommercialVersionRules | undefined;
       const params = this.parameters(line.id);

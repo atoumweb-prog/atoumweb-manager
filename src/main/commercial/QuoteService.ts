@@ -338,6 +338,7 @@ export class QuoteService {
     );
     if (!source) throw new Error('Version catalogue introuvable.');
     if(source.version_status!=='published'||source.item_status!=='active')throw Error('Seule une version publiée d’une prestation active peut être ajoutée au devis.');
+    if(source.price_mode==null)throw Error('Version Catalogue incomplète : utilisation commerciale interdite.');
 
     const proposed = input.proposedUnitPriceCents ?? source.price_cents;
     if (proposed == null && source.price_mode !== 'free') throw new Error('Renseigne un prix proposé pour cette prestation sur devis.');
@@ -424,7 +425,7 @@ export class QuoteService {
     const firstOffer = source.item_type === 'offer' && !current.lines.some((line) => line.snapshot?.itemType === 'offer');
     this.insertLine(quoteId, 'catalog', {
       ...input,
-      label: clean(input.label) ?? source.item_name,
+      label: clean(input.label) ?? (new CommercialRulesService(this.database).rules(source.version_id)?.approvedPack?clean(source.abby_label):null) ?? source.item_name,
       description: input.description ?? commercialDescription(source.description,snapshot),
       catalogUnitPriceCents: source.price_cents ?? proposed ?? 0,
       proposedUnitPriceCents: proposed ?? 0,

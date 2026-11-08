@@ -1,0 +1,1575 @@
+{
+  "type": "EXTRACTION_DOCUMENTAIRE_NON_PUBLICATION",
+  "version": "V3.9.4 - rectificatif 019",
+  "source_word": "AtoumWeb_03_Bibliotheque_CGV_119_clauses_V3.9.4_RECTIFICATIF_019_2026-11-08.docx",
+  "sha256_word": "dc8b11e5bbdbc9c87db8dca0cd3235cd643015a82d84c0485220f9a0060be58e",
+  "nombre_clauses": 119,
+  "instruction": "Paragraphes destinés au client uniquement. Les annexes et notes internes du Word source ne doivent pas être ajoutées automatiquement au texte contractuel.",
+  "clauses": [
+    {
+      "numero": 1,
+      "numero_affiche": "001",
+      "titre": "Cadrage fonctionnel et livrable de cadrage",
+      "code_contractuel": "APP-CADRAGE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Le cadrage constitue une prestation à part entière. Il permet de comprendre votre besoin et de le décrire clairement avant d’envisager le développement d’une application ou d’un outil métier.",
+        "Nous préparons le document fonctionnel prévu au devis. Il présente notamment les utilisateurs concernés, leurs tâches, les fonctionnalités attendues, les données nécessaires, les droits d’accès, les contraintes connues et les échanges envisagés avec d’autres outils. Ce document sert de base aux choix à effectuer pour la suite du projet.",
+        "La remise du cadrage ne signifie pas automatiquement qu’AtoumWeb est engagé pour réaliser l’application. Sauf accord exprès au devis, elle ne fixe pas non plus le prix ni le calendrier d’un développement ultérieur. Celui-ci fait l’objet d’une proposition distincte avant tout engagement."
+      ]
+    },
+    {
+      "numero": 2,
+      "numero_affiche": "002",
+      "titre": "Compatibilité future et dépendances externes",
+      "code_contractuel": "APP-COMPATIBILITE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Votre application est conçue pour les appareils, systèmes, logiciels, navigateurs, bases de données et services extérieurs précisés dans votre devis ou dans une annexe communiquée avant votre accord. Lors de la livraison, nous indiquons ces environnements pris en charge et effectuons les vérifications prévues dans ce cadre.",
+        "Nous ne pouvons pas garantir qu’elle fonctionnera sans adaptation avec toutes les configurations possibles, les versions logicielles futures ou les services extérieurs qui seraient ensuite modifiés ou arrêtés.",
+        "Si un nouvel environnement ou une évolution d’un service nécessite des travaux non compris dans nos engagements, nous pouvons vous proposer une prestation de maintenance ou d’évolution, après votre accord. Cette limite ne supprime pas notre obligation de corriger les défauts qui nous sont imputables, ni les garanties et mises à jour légalement dues."
+      ]
+    },
+    {
+      "numero": 3,
+      "numero_affiche": "003",
+      "titre": "Données, secrets et environnement client",
+      "code_contractuel": "APP-ENVIRONNEMENTS-ACCES",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Pour réaliser votre application, vous mettez à notre disposition les comptes et autorisations nécessaires dans les environnements de développement, de test et, lorsque le devis le prévoit, de production. Les droits accordés doivent être suffisants pour la prestation, mais limités à ce qui est utile.",
+        "Nous protégeons les mots de passe, clés de connexion et autres informations sensibles qui nous sont confiés. Ces éléments sont transmis et conservés par des moyens adaptés : ils ne sont pas inscrits en clair dans le devis ni dans ses copies contractuelles.",
+        "Pour les essais, nous utilisons uniquement les données nécessaires et privilégions des données fictives ou anonymisées lorsqu’elles suffisent. Si l’utilisation de données personnelles réelles est nécessaire, elle doit être justifiée, autorisée et sécurisée selon les règles applicables.",
+        "Lorsque nos accès ne sont plus nécessaires, nous cessons de les utiliser et organisons leur suppression ou leur révocation, sous réserve des obligations de conservation applicables. Le devis ou le dossier technique précise les responsabilités de chacun concernant les différents environnements, les sauvegardes et les mises en service."
+      ]
+    },
+    {
+      "numero": 4,
+      "numero_affiche": "004",
+      "titre": "Évolutions après livraison",
+      "code_contractuel": "APP-EVOLUTIONS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Après la livraison, vous pouvez souhaiter enrichir votre application : ajouter une fonctionnalité, modifier une règle de travail, accueillir de nouveaux utilisateurs ou la connecter à un autre logiciel.",
+        "Lorsque ces demandes dépassent ce qui avait été convenu, elles constituent des évolutions. Les modifications simples peuvent être réalisées au temps passé ou dans le cadre d’un forfait d’heures prévu au devis. Pour les évolutions plus importantes, nous vous présentons une estimation et les conditions de réalisation avant de commencer.",
+        "Une correction nécessaire pour respecter les fonctionnalités initialement promises n’est pas considérée comme une évolution payante au seul motif qu’elle est demandée après la livraison. Les garanties et obligations qui nous incombent restent applicables."
+      ]
+    },
+    {
+      "numero": 5,
+      "numero_affiche": "005",
+      "titre": "Garantie corrective de l’application",
+      "code_contractuel": "APP-GARANTIE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "La garantie corrective prévue dans votre devis concerne les défauts de l’application livrée qui nous sont imputables et qui portent sur les fonctionnalités ou exigences convenues. Le devis précise la durée de cette garantie et la date à partir de laquelle elle commence.",
+        "Lorsque vous signalez un dysfonctionnement, nous examinons les éléments disponibles pour en rechercher l’origine, y compris s’il ne se produit que de temps à autre. Les nouvelles fonctionnalités ou les changements de règles non prévus initialement peuvent faire l’objet d’une prestation d’évolution distincte.",
+        "Une modification effectuée par vous, par un autre intervenant ou par un service extérieur n’exclut notre garantie que dans la mesure où elle est réellement à l’origine du défaut concerné.",
+        "Cette garantie contractuelle s’ajoute aux droits qui vous sont reconnus par la loi. Elle ne supprime pas les garanties légales, les mises à jour légalement dues ni nos autres responsabilités applicables."
+      ]
+    },
+    {
+      "numero": 6,
+      "numero_affiche": "006",
+      "titre": "Maintenance et support applicatif",
+      "code_contractuel": "APP-MAINTENANCE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "La maintenance d’une application sur mesure n’est comprise que si vous l’avez expressément commandée. Votre devis indique les opérations prévues : corrections d’anomalies, entretien technique, assistance ou évolutions fonctionnelles lorsqu’elles sont incluses. Une nouvelle fonction n’entre donc pas automatiquement dans la maintenance.",
+        "Aucun abonnement récurrent n’est présumé. Lorsqu’une maintenance régulière est convenue, le devis en précise la durée, les conditions de paiement et les modalités de résiliation. Le renouvellement annuel de cette maintenance applicative nécessite votre accord exprès ; votre silence ne vaut pas acceptation d’une nouvelle période de maintenance.",
+        "À la fin de la prestation, nous organisons la récupération ou le transfert des éléments qui doivent vous être remis, selon les modalités convenues. Les données sont ensuite conservées ou supprimées conformément aux règles applicables.",
+        "Sauf engagement spécifique, cette maintenance ne comprend ni surveillance continue, ni astreinte permanente, ni délai garanti de rétablissement. Les corrections et garanties déjà dues restent applicables. Les limites des services extérieurs ne nous dégagent pas de nos propres responsabilités."
+      ]
+    },
+    {
+      "numero": 7,
+      "numero_affiche": "007",
+      "titre": "Périmètre MVP et évolutions ultérieures",
+      "code_contractuel": "APP-MVP",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Une première version utilisable, parfois appelée « MVP », rassemble les fonctionnalités essentielles décrites dans votre devis. Son objectif est de vous permettre de réaliser les usages prioritaires définis pour cette étape du projet.",
+        "Le devis précise les personnes concernées, leurs droits d’accès, les données nécessaires, les règles de fonctionnement et les environnements dans lesquels cette version doit être utilisée et vérifiée.",
+        "Les fonctions secondaires, les automatisations, les connexions supplémentaires et les optimisations qui n’ont pas été retenues ne font pas partie de cette première livraison. Elles pourront être étudiées dans une étape ultérieure, avec un périmètre et un prix acceptés séparément.",
+        "Contrairement à une simple maquette, cette première version doit pouvoir être utilisée pour les usages effectivement promis dans le devis. Cela ne supprime pas les corrections dues si ces usages ne fonctionnent pas comme convenu."
+      ]
+    },
+    {
+      "numero": 8,
+      "numero_affiche": "008",
+      "titre": "Spécifique client vs composants génériques AtoumWeb",
+      "code_contractuel": "APP-PI-REUTILISATION",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous distinguons les éléments développés spécialement pour votre activité des outils, méthodes, bibliothèques et composants génériques qu’AtoumWeb utilise dans ses différents projets.",
+        "Les droits accordés sur votre application spécifique vous permettent de l’utiliser, de l’exploiter, de la maintenir et de la faire modifier dans les conditions prévues au devis ou dans son annexe. Ces documents précisent les usages autorisés, la durée, le territoire, les éventuelles restrictions et la prise d’effet des droits. Une exclusivité ou une cession particulière nécessite un accord exprès.",
+        "AtoumWeb peut continuer à utiliser ses éléments génériques lorsqu’elle en possède les droits nécessaires. En revanche, cette faculté ne permet pas de réutiliser vos données, identifiants, informations confidentielles ou règles de fonctionnement propres à votre activité.",
+        "Les composants appartenant à des éditeurs tiers restent soumis à leurs licences. Nous identifions les ressources intégrées et les conditions permettant l’exploitation convenue du livrable. Le devis précise également ce qui est effectivement remis : application, code ou dépôt de développement, documentation et autres fichiers ou outils prévus.",
+        "La remise de l’application ne vaut pas, à elle seule, cession générale de tous les droits de propriété intellectuelle."
+      ]
+    },
+    {
+      "numero": 9,
+      "numero_affiche": "009",
+      "titre": "Prototype / maquette non assimilé au produit final",
+      "code_contractuel": "APP-PROTOTYPE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Un prototype ou une maquette fonctionnelle sert à vous présenter et à tester une idée avant le développement complet de votre application. Selon ce qui figure dans le devis, il peut montrer les écrans, les parcours de navigation ou simuler certaines actions.",
+        "Ce livrable n’est pas nécessairement une application prête à être utilisée dans votre activité. Il peut notamment fonctionner avec des données fictives, sans véritable connexion à vos logiciels, sans base de données définitive ou sans les dispositifs de sécurité, de sauvegarde et de performance attendus d’une version de production.",
+        "Le devis indique ce que le prototype doit réellement permettre de vérifier et les éléments qui ne font pas partie de cette étape. Si vous souhaitez ensuite une application exploitable, son développement fait l’objet du périmètre et de l’accord prévus pour cette nouvelle prestation."
+      ]
+    },
+    {
+      "numero": 10,
+      "numero_affiche": "010",
+      "titre": "Recette fonctionnelle et critères d’acceptation",
+      "code_contractuel": "APP-RECETTE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Avant de livrer votre application, nous vérifions ensemble qu’elle correspond aux fonctions et aux critères prévus au devis.",
+        "Vous nous signalez les problèmes constatés pendant le délai de vérification convenu. Nous corrigeons les défauts relevant de notre prestation. Les nouvelles demandes font l’objet d’un accord séparé.",
+        "Nous conservons votre validation écrite. Votre silence, un paiement ou l’utilisation de l’application ne valent pas, à eux seuls, acceptation. Sans réponse, nous appliquons la procédure de relance de la clause 014. Les corrections dues et vos garanties restent applicables."
+      ]
+    },
+    {
+      "numero": 11,
+      "numero_affiche": "011",
+      "titre": "Audit",
+      "code_contractuel": "AUDIT-PERIMETRE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "L’audit porte sur les points définis dans votre devis. Nous examinons la situation telle qu’elle peut être observée au moment de notre intervention, à partir des accès, documents et informations mis à notre disposition.",
+        "Nous vous remettons les constats et recommandations prévus dans la commande. Les limites de l’analyse, notamment en cas d’accès incomplet ou d’information manquante, sont signalées lorsqu’elles peuvent affecter nos conclusions.",
+        "Sauf si le devis le prévoit expressément, l’audit n’inclut pas la réalisation des corrections, des travaux de mise en conformité ou d’une nouvelle intervention. Nous pouvons vous proposer ces prestations séparément, sans engagement de votre part. Un audit ne constitue pas, à lui seul, une certification ou une garantie de conformité générale."
+      ]
+    },
+    {
+      "numero": 12,
+      "numero_affiche": "012",
+      "titre": "Formation du contrat",
+      "code_contractuel": "BASE-ACCEPTATION",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Dans ce contrat, « nous » désigne AtoumWeb, nom commercial de l’entrepreneur individuel (EI) identifié sur votre devis. « Vous » désigne le client indiqué sur ce même devis.",
+        "Votre contrat prend effet lorsque vous acceptez le devis et les conditions qui vous ont été communiquées. Nous conservons une copie datée de ces documents et de votre accord, y compris lorsqu’il est donné en ligne.",
+        "Nous ne changeons pas seuls le prix, les prestations ou les conditions acceptées. Toute modification se fait avec votre accord écrit, dans un nouveau devis ou un avenant.",
+        "Le devis émis par AtoumWeb est normalement valable 30 jours calendaires à compter de son émission, sauf durée différente expressément indiquée. Un devis expiré ne réserve aucun prix ni créneau ; toute nouvelle proposition fait l’objet d’une version distincte. L’envoi du devis ne constitue pas une réservation de capacité de production.",
+        "L’acceptation se fait par signature du devis ou confirmation écrite explicite ; AtoumWeb ne propose pas de souscription automatisée avec panier sur son site. Cela ne supprime pas les obligations applicables aux contrats à distance, ni celles d’une éventuelle conclusion électronique du contrat. Les pièces, versions et preuves d’accord sont conservées dans AtoumWeb Manager."
+      ]
+    },
+    {
+      "numero": 13,
+      "numero_affiche": "013",
+      "titre": "Confidentialité",
+      "code_contractuel": "BASE-CONFIDENTIALITE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Pendant notre collaboration, nous pouvons être amenés à échanger des informations qui ne sont pas publiques : documents, données techniques, informations commerciales, identifiants ou éléments propres à votre activité ou à celle d’AtoumWeb. Chacun s’engage à préserver la confidentialité des informations reçues et à ne les utiliser que pour les besoins de la prestation.",
+        "L’accès à ces informations est limité aux personnes qui en ont réellement besoin pour intervenir sur le projet et qui sont tenues à une obligation de confidentialité adaptée.",
+        "Cette obligation ne s’applique pas aux informations déjà publiques sans faute de la partie qui les reçoit, à celles obtenues légitimement auprès d’un tiers ou à celles dont la communication est exigée par la loi. Lorsqu’une communication est légalement imposée, elle reste limitée à ce qui est nécessaire.",
+        "À la fin de la prestation, les informations sont restituées, supprimées ou conservées selon leur nature, les modalités convenues et les obligations légales applicables. La fin du contrat ne permet pas d’utiliser ou de divulguer librement des informations qui demeurent confidentielles.",
+        "La présente clause concerne la confidentialité des échanges. Lorsque des données personnelles sont traitées pour votre compte, leurs conditions de traitement et les obligations respectives des parties sont précisées séparément lorsque cela est nécessaire."
+      ]
+    },
+    {
+      "numero": 14,
+      "numero_affiche": "014",
+      "titre": "Obligations et coopération du client",
+      "code_contractuel": "BASE-COOPERATION",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Pour avancer dans votre projet, nous avons besoin des contenus, autorisations, accès et validations prévus dans votre devis. Nous vous indiquons par écrit les éléments manquants et les conséquences prévisibles sur le calendrier.",
+        "Si l’absence d’un élément indispensable empêche les travaux de progresser, nous pouvons suspendre la partie concernée après vous en avoir informé. Votre silence ne vaut pas validation du travail réalisé.",
+        "Si le blocage imputable à l’absence de coopération dure 60 jours à compter de notre première demande écrite restée sans réponse utile, nous vous adressons une dernière relance indiquant précisément ce qui manque, un délai supplémentaire de 15 jours calendaires et la possibilité de mettre fin au projet. Ces délais ne courent pas pendant une impossibilité qui nous serait imputable.",
+        "En l’absence de régularisation à l’expiration de ce délai, nous pouvons notifier la fin du contrat dans le respect des règles applicables. Nous établissons alors un bilan écrit du travail effectué, des dépenses engagées et justifiées et des sommes déjà versées. Les acomptes s’imputent sur ce bilan ; un trop-perçu est remboursé et un solde justifié peut rester dû. Aucune pénalité forfaitaire d’abandon n’est appliquée.",
+        "La restitution et le sort des contenus, accès et données sont organisés selon la commande, les obligations de conservation applicables et, lorsqu’il existe, l’accord de protection des données. Une reprise ultérieure peut faire l’objet d’un calendrier actualisé ou d’un nouveau devis, accepté avant tout travail supplémentaire.",
+        "Pour les maquettes prévues au devis, nous demandons un retour indicatif regroupé sous 10 jours ouvrés ; une relance peut être adressée vers le septième jour ouvré. Ce délai ne crée pas d’acceptation tacite. En cas d’absence de réponse, le calendrier peut être ajusté avec information écrite ; la procédure de blocage de 60 puis 15 jours demeure distincte."
+      ]
+    },
+    {
+      "numero": 15,
+      "numero_affiche": "015",
+      "titre": "Délais et planning",
+      "code_contractuel": "BASE-DELAIS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Votre devis indique quand les travaux commencent et la date ou le délai de livraison convenu.",
+        "Si un contenu, un accès, une validation ou un service extérieur bloque le calendrier, nous vous en informons et expliquons les conséquences possibles.",
+        "Nous convenons des adaptations nécessaires selon la cause du retard, sans supprimer les droits de chacun. Un projet ne reste pas sans échéance du seul fait d’un élément manquant.",
+        "Un créneau de production n’est confirmé qu’après acceptation écrite du devis, réception du premier versement contractuellement exigible et confirmation écrite de la période disponible. Le début effectif dépend des contenus et accès indispensables ainsi que des règles légales relatives au démarrage anticipé, lorsqu’elles s’appliquent."
+      ]
+    },
+    {
+      "numero": 16,
+      "numero_affiche": "016",
+      "titre": "Données et accès",
+      "code_contractuel": "BASE-DONNEES",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Pour réaliser votre prestation, nous utilisons uniquement les données et les accès nécessaires, dans les limites de votre autorisation.",
+        "Si nous devons traiter des données personnelles pour votre compte (maintenance, sauvegardes, hébergement ou dépannage), un accord RGPD séparé précise nos engagements et les vôtres. Vous pouvez le consulter avant d’accepter le devis.",
+        "Nous le faisons signer séparément avant toute opération concernée. Le devis et le contrat prévoient cette étape ; l’accord RGPD n’est pas joint automatiquement au devis.",
+        "Sans cet accord, nous ne commençons pas les opérations qui le nécessitent. Nous convenons alors de la suite du contrat selon les conditions déjà acceptées et les droits de chacun.",
+        "Vous restez responsable des usages que vous décidez pour les données de votre activité. Nous restons responsables de la sécurité et des obligations qui nous incombent pendant notre intervention."
+      ]
+    },
+    {
+      "numero": 17,
+      "numero_affiche": "017",
+      "titre": "Force majeure",
+      "code_contractuel": "BASE-FORCE-MAJEURE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Si un événement exceptionnel répondant aux conditions légales de la force majeure empêche l’un de nous de respecter une obligation du contrat, la partie concernée en informe l’autre dès qu’elle le peut et lui communique les conséquences connues sur la prestation.",
+        "Lorsque cet empêchement est temporaire, l’obligation concernée est suspendue pendant sa durée, sauf si le retard qui en résulte justifie la résolution du contrat. Si l’empêchement est définitif, le contrat est résolu de plein droit, dans les conditions prévues par la loi.",
+        "Une panne informatique, une cyberattaque ou la défaillance d’un hébergeur, d’un prestataire de paiement ou d’un autre fournisseur ne constitue pas automatiquement un cas de force majeure. La situation doit remplir les conditions légales et n’écarte pas les obligations ou responsabilités qui demeurent applicables.",
+        "Nous nous informons mutuellement de l’évolution de la situation et, lorsque cela reste possible, des mesures raisonnables permettant de limiter ses conséquences."
+      ]
+    },
+    {
+      "numero": 18,
+      "numero_affiche": "018",
+      "titre": "Objet et champ d’application",
+      "code_contractuel": "BASE-OBJET",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Votre contrat comprend le devis que vous avez accepté, ses éventuelles conditions particulières, les clauses applicables à la prestation et les annexes expressément mentionnées qui vous ont été communiquées. Il définit les services et les livrables qu’AtoumWeb s’engage à fournir. Les définitions utiles et les éventuelles conditions tarifaires sont communiquées avant votre acceptation ; leurs versions applicables sont conservées avec le devis.",
+        "Si deux dispositions contractuelles sont contradictoires, nous appliquons d’abord les conditions particulières de votre devis, puis les clauses propres à la prestation concernée et enfin les conditions générales communes.",
+        "Cette organisation ne permet pas d’écarter les règles légales auxquelles il n’est pas possible de déroger. Une prestation ou une option supplémentaire ne fait partie du contrat que si elle a été convenue."
+      ]
+    },
+    {
+      "numero": 19,
+      "numero_affiche": "019",
+      "titre": "Modalités générales de paiement",
+      "code_contractuel": "BASE-PAIEMENT",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Le prix, les échéances et les moyens de paiement figurent dans votre devis. Tout versement anticipé prévu par AtoumWeb y est expressément désigné comme un acompte et déduit du prix total.",
+        "Si un acompte conditionne le début des travaux, nous le précisons avant votre accord et respectons les délais légaux applicables.",
+        "En cas d’impayé, nous vous relançons par écrit. Si le manquement est suffisamment important et persiste, nous pouvons suspendre les seules prestations concernées, après vous avoir prévenu.",
+        "Nous ne retenons pas abusivement votre domaine, vos données ou vos accès. Vos droits légaux, notamment à rétractation ou remboursement lorsque ces droits s’appliquent, restent préservés.",
+        "Sous réserve des règles impératives propres au contrat, les prestations ponctuelles de 300 € ou moins sont payables intégralement à la commande ; au-delà, un échéancier 40 % / 60 % constitue la règle par défaut, sauf échéancier propre à l’offre, notamment 40 % / 60 % pour les sites vitrines et 30 % / 40 % / 30 % pour les boutiques WooCommerce. L’échéancier applicable figure obligatoirement au devis.",
+        "Le prélèvement SEPA peut être proposé pour les sommes ponctuelles ou récurrentes dans le cadre du mandat et des formalités applicables. Les tarifs AtoumWeb sont identiques quel que soit le moyen de paiement : aucun supplément ni remise spécifique au SEPA n’est prévu.",
+        "Pour les abonnements récurrents, l’échéance contractuelle est le 5 ou le 15 du mois selon le choix indiqué au devis, avec prorata de démarrage si nécessaire ; pour GBP, statistiques et newsletters, la date de prise en charge effective détermine la période puis l’échéance convenue. Les renouvellements annuels Lune, GBP, statistiques et newsletters sont facturés et payables à leur échéance, sans encaissement anticipé définitif. Le SEPA exige un mandat en vigueur ; sinon les moyens acceptés au devis s’appliquent.",
+        "En cas d’impayé récurrent : relance écrite à J+7, mise en demeure à J+15, suspension possible à J+30 selon la gravité et après information, puis résiliation possible, non automatique, à J+60 sur notification écrite. Les données, domaines et accès ne sont jamais supprimés immédiatement du seul fait de l’impayé ; les droits légaux et modalités de sortie propres au service s’appliquent. Une réactivation simple après paiement vérifié est gratuite ; un travail technique exceptionnel requiert l’accord sur un devis.",
+        "Pour une PRESTATION PONCTUELLE uniquement : relance écrite J+7, mise en demeure J+15 laissant huit jours, puis suspension éventuellement possible des seules tâches non exécutées à compter de J+23, après examen de la gravité et du litige, notification et sous réserve des obligations impératives. Cette échéance ne s’applique pas aux mensualités et annualités récurrentes, pour lesquelles la procédure J+30/J+60 ci-dessus prévaut. Elle ne crée aucun droit de conservation abusif du domaine ni de suppression immédiate des données."
+      ]
+    },
+    {
+      "numero": 20,
+      "numero_affiche": "020",
+      "titre": "Propriété intellectuelle et droits d’utilisation",
+      "code_contractuel": "BASE-PI",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Les contenus que vous nous fournissez restent les vôtres.",
+        "Une fois votre site entièrement payé, vous pouvez l’utiliser, le modifier et faire assurer sa maintenance ou son évolution par le prestataire de votre choix, sans autorisation supplémentaire d’AtoumWeb. Nous vous remettons les accès et les éléments convenus nécessaires à cette autonomie.",
+        "Nos méthodes, outils et composants génériques réutilisables restent les nôtres. Ceux intégrés à votre site peuvent être utilisés et adaptés pour ce site, dans les limites des licences applicables.",
+        "Les thèmes, extensions, images, polices et services de tiers restent soumis à leurs propres licences.",
+        "Pour un logo, des photos, un développement particulier ou toute autre création nécessitant une cession de droits, le devis précise les usages, les supports, la durée, le territoire et la prise d’effet des droits accordés. Un transfert de droits n’est pas présumé par la simple remise d’un fichier."
+      ]
+    },
+    {
+      "numero": 21,
+      "numero_affiche": "021",
+      "titre": "Prix et périmètre",
+      "code_contractuel": "BASE-PRIX",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Le prix et les prestations compris dans votre commande sont ceux du devis que vous avez accepté. La présentation des taxes respecte le régime fiscal applicable à AtoumWeb et à l’opération concernée.",
+        "Si vous souhaitez ajouter une prestation ou si un coût extérieur non prévu devient nécessaire, nous vous expliquons ce qu’il couvre et son prix avant de vous demander votre accord. Aucun travail supplémentaire payant n’est engagé sur la seule base d’une nouvelle demande ou sans accord sur ses conditions.",
+        "Une évolution du projet ou du catalogue ne change pas le prix d’un devis déjà accepté, ni celui d’une période déjà convenue. Un nouveau tarif ne s’applique que selon les conditions et accords prévus dans votre contrat. Les corrections et obligations déjà à notre charge restent comprises dans notre engagement.",
+        "Si vous souhaitez annuler votre projet après son démarrage, nous faisons le bilan du travail réalisé et des dépenses engagées et justifiées. Nous tenons compte des acomptes déjà versés pour déterminer les sommes restant dues ou à rembourser.",
+        "Aucune pénalité automatique d’annulation n’est appliquée. Une éventuelle indemnisation complémentaire ne peut être demandée que si la loi le permet et dans les conditions qu’elle prévoit.",
+        "Vos droits légaux, notamment en matière de rétractation, restent applicables.",
+        "Les prix sont présentés clairement en fonction du régime réel de TVA d’AtoumWeb à la date du document et du montant total dû, sans altérer les documents antérieurement acceptés. Une augmentation de prix pour un client déjà engagé nécessite l’accord requis et ne peut pas être imposée rétroactivement. La facturation réglementaire reste émise via le logiciel de facturation désigné par AtoumWeb, et non par le suivi interne de Manager.",
+        "Le prix d’une période annuelle déjà engagée demeure inchangé. Toute hausse d’un abonnement mensuel est annoncée par écrit au moins trente jours avant son application, avec possibilité effective de résiliation avant cette date et sous réserve des délais raisonnables ou droits impératifs applicables. Une nouvelle année à tarif augmenté exige l’accord écrit du client ; l’absence d’accord ne vaut pas acceptation tacite d’un nouveau prix."
+      ]
+    },
+    {
+      "numero": 22,
+      "numero_affiche": "022",
+      "titre": "Responsabilités générales",
+      "code_contractuel": "BASE-RESPONSABILITE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous nous engageons chacun à respecter les obligations qui nous concernent. Nous vous signalons les difficultés connues qui peuvent affecter votre projet.",
+        "Si une panne ou une difficulté vient d’un hébergeur, d’un éditeur ou d’un autre prestataire, nous vous expliquons son effet sur notre intervention. Cela ne nous dégage pas des erreurs ou des engagements qui relèvent de notre responsabilité.",
+        "Les règles propres aux contenus, sauvegardes, accès et services techniques sont précisées dans les clauses de votre prestation.",
+        "Aucune de ces dispositions ne supprime vos droits ou nos responsabilités lorsque la loi les rend obligatoires."
+      ]
+    },
+    {
+      "numero": 23,
+      "numero_affiche": "023",
+      "titre": "Validation des livrables",
+      "code_contractuel": "BASE-VALIDATION",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "À chaque étape prévue au devis, nous vous présentons les éléments à vérifier et vous pouvez nous envoyer vos remarques.",
+        "Nous corrigeons ce qui ne correspond pas à la commande. Une nouvelle fonctionnalité ou un changement important fait l’objet d’un accord complémentaire.",
+        "Nous conservons une preuve de vos validations. Votre silence ne vaut pas, à lui seul, acceptation : sans réponse, nous suivons la procédure de relance prévue à la clause 014.",
+        "Les corrections et garanties qui nous incombent restent applicables.",
+        "La validation d’une maquette ou de la livraison intervient par signature ou accord écrit explicite, y compris courrier électronique, dont une preuve est conservée. L’acceptation d’une étape ne dispense pas AtoumWeb de remédier aux anomalies qui lui sont imputables et des garanties légales applicables."
+      ]
+    },
+    {
+      "numero": 24,
+      "numero_affiche": "024",
+      "titre": "Responsabilité sur contenus et rôles éditoriaux du blog",
+      "code_contractuel": "BLOG-ROLES-CONTENUS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Pour organiser votre blog, vous désignez les personnes autorisées à rédiger, relire et publier des articles. Vous nous indiquez les droits d’accès à leur attribuer et les règles de validation qui doivent être appliquées.",
+        "Nous configurons les comptes et les rôles prévus dans le devis. Sauf prestation supplémentaire convenue, vous assurez ensuite la gestion quotidienne des utilisateurs et la validation des contenus publiés par vous-même ou par vos contributeurs.",
+        "Si votre blog comporte des commentaires, des profils d’auteurs ou d’autres fonctionnalités utilisant des données personnelles, nous activons et paramétrons uniquement les fonctions convenues. Vous nous précisez les règles de publication et de modération souhaitées ainsi que les informations nécessaires à leur fonctionnement.",
+        "La rédaction d’articles, la modération des commentaires et la gestion courante des comptes par AtoumWeb ne sont comprises que si elles figurent expressément au devis. Les obligations de chaque partie en matière de sécurité et de protection des données restent applicables."
+      ]
+    },
+    {
+      "numero": 25,
+      "numero_affiche": "025",
+      "titre": "Périmètre du blog technique",
+      "code_contractuel": "BLOG-PERIMETRE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous installons et configurons l’espace Blog prévu dans votre devis afin que votre site puisse présenter et publier des articles. La prestation comprend les éléments de structure et d’affichage qui y sont décrits.",
+        "La rédaction des articles, leur optimisation éditoriale, la reprise de publications existantes et l’animation régulière du blog constituent des prestations distinctes. Elles ne sont comprises que si elles ont été expressément ajoutées au devis.",
+        "Vous conservez la responsabilité des contenus que vous publiez ou faites publier. De notre côté, nous restons responsables de la mise en place technique et des fonctions que nous nous sommes engagés à livrer.",
+        "Une fonctionnalité supplémentaire ou une migration d’articles non prévue fait l’objet d’une proposition complémentaire et de votre accord avant réalisation."
+      ]
+    },
+    {
+      "numero": 26,
+      "numero_affiche": "026",
+      "titre": "Animation logo / motion design",
+      "code_contractuel": "BRAND-ANIMATION",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous réalisons l’animation de logo ou les éléments graphiques animés décrits dans votre devis, à partir des indications et des visuels validés ensemble.",
+        "Le devis précise les séquences à créer, les éventuelles versions alternatives et les formats dans lesquels le résultat doit vous être remis. Une adaptation à un nouveau support, l’ajout d’une séquence ou une modification importante après validation peut nécessiter une prestation complémentaire, soumise à votre accord avant réalisation.",
+        "Les musiques, voix, photographies et autres ressources qui n’étaient pas prévues ne sont pas automatiquement comprises. Leurs éventuels coûts et conditions d’utilisation vous sont indiqués avant leur intégration.",
+        "Les formats livrés, les fichiers sources éventuellement remis et les droits d’exploitation de l’animation sont définis dans les conditions correspondantes et dans votre devis."
+      ]
+    },
+    {
+      "numero": 27,
+      "numero_affiche": "027",
+      "titre": "Séries d’ajustements",
+      "code_contractuel": "BRAND-CORRECTIONS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Votre devis précise le nombre d’étapes de relecture et de correction comprises dans la création de votre identité visuelle.",
+        "Ces étapes permettent d’ajuster la proposition graphique retenue, par exemple ses couleurs, sa composition ou certains détails, dans le respect de l’orientation que nous avons validée ensemble.",
+        "Si vous souhaitez ensuite changer complètement cette orientation, modifier sensiblement les consignes initiales ou demander une nouvelle proposition, nous évaluons les travaux supplémentaires et vous soumettons leur prix avant de les réaliser.",
+        "Pour faciliter les échanges, vous regroupez autant que possible vos remarques à chaque étape et confirmez vos validations selon les modalités prévues au devis.",
+        "Les corrections nécessaires pour respecter la prestation promise ou remédier à une erreur qui nous est imputable restent dues, même lorsque les étapes de correction commerciale prévues sont terminées."
+      ]
+    },
+    {
+      "numero": 28,
+      "numero_affiche": "028",
+      "titre": "Droits sur création finale et propositions non retenues",
+      "code_contractuel": "BRAND-DROITS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Le devis indique les droits qui vous sont accordés sur la création finale que vous avez retenue, ainsi que leurs usages, supports, durée et territoire.",
+        "Lorsque ces droits prennent effet après le paiement complet, le devis le précise. Vous pouvez alors exploiter votre création conformément aux droits convenus.",
+        "Les propositions non retenues, nos éléments réutilisables et les ressources de tiers ne sont pas automatiquement compris dans ce transfert. Nous respectons les licences et les droits des auteurs concernés.",
+        "Nous ne pouvons vous transmettre que les droits dont nous disposons. La remise de fichiers ne vaut pas cession générale de tous les droits."
+      ]
+    },
+    {
+      "numero": 29,
+      "numero_affiche": "029",
+      "titre": "Périmètre de création graphique",
+      "code_contractuel": "BRAND-PERIMETRE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous réalisons les travaux d’identité visuelle et de création graphique expressément prévus dans votre devis.",
+        "Selon votre commande, il peut s’agir de concevoir un nouvel élément, comme un logo, d’adapter une création existante à plusieurs supports ou de revoir en profondeur une identité graphique déjà utilisée. Les créations, adaptations et supports effectivement compris sont ceux que nous avons convenus.",
+        "La fabrication ou l’impression de supports physiques, le dépôt d’une marque, la recherche de marques antérieures, une séance photographique ou la rédaction de contenus ne sont pas inclus, sauf mention expresse dans le devis.",
+        "En particulier, la création d’un logo ne garantit pas à elle seule que le signe est disponible ou qu’il peut être déposé comme marque. Si vous souhaitez une prestation supplémentaire, nous en précisons les conditions et le prix avant votre accord."
+      ]
+    },
+    {
+      "numero": 30,
+      "numero_affiche": "030",
+      "titre": "Polices, images et ressources tierces",
+      "code_contractuel": "BRAND-TIERS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Pour créer votre identité visuelle ou vos supports, nous pouvons utiliser des polices de caractères, photographies, icônes, modèles de présentation, vidéos, musiques ou autres ressources fournies par des éditeurs ou des auteurs extérieurs.",
+        "Ces ressources restent soumises à leurs propres licences. Nous les utilisons dans les limites des autorisations dont nous disposons et vous signalons les restrictions connues qui peuvent avoir une incidence sur l’utilisation prévue de votre création.",
+        "Les achats de ressources, abonnements, licences payantes, droits d’utilisation étendus et renouvellements ne sont compris que s’ils figurent dans votre devis. Leur maintien et leurs conditions d’utilisation après livraison dépendent également des règles des fournisseurs concernés.",
+        "L’intégration d’une ressource extérieure ne signifie pas que ses droits vous sont intégralement cédés. Nous précisons les autorisations nécessaires à l’exploitation convenue du livrable."
+      ]
+    },
+    {
+      "numero": 31,
+      "numero_affiche": "031",
+      "titre": "Demande d’exécution avant la fin du délai de rétractation",
+      "code_contractuel": "CONS-DEBUT-ANTICIPE",
+      "public": "Consommateurs",
+      "paragraphes_contractuels": [
+        "Si vous êtes consommateur et souhaitez que nous commencions une prestation payante avant la fin de votre délai de rétractation, nous recueillons d’abord votre demande expresse et les confirmations prévues par la loi.",
+        "Si vous vous rétractez ensuite, une somme correspondant au service réellement effectué peut être due uniquement lorsque les conditions légales sont réunies.",
+        "Le démarrage des travaux ne supprime pas automatiquement votre droit de rétractation. Une perte éventuelle de ce droit après exécution complète ne peut intervenir que dans les cas et conditions prévus par la loi."
+      ]
+    },
+    {
+      "numero": 32,
+      "numero_affiche": "032",
+      "titre": "Informations précontractuelles",
+      "code_contractuel": "CONS-INFO",
+      "public": "Consommateurs",
+      "paragraphes_contractuels": [
+        "Avant que vous acceptiez le devis, nous vous indiquons clairement la prestation, le prix total, les éventuels frais, les paiements prévus, le calendrier et nos coordonnées.",
+        "Pour un client consommateur, nous précisons aussi les garanties, les modalités de réclamation, la médiation et le droit de rétractation lorsqu’il s’applique.",
+        "Vous recevez les documents utiles avant de vous engager, dans un format que vous pouvez conserver."
+      ]
+    },
+    {
+      "numero": 33,
+      "numero_affiche": "033",
+      "titre": "Médiation de la consommation",
+      "code_contractuel": "CONS-MEDIATION",
+      "public": "Consommateurs",
+      "paragraphes_contractuels": [
+        "Tout client consommateur bénéficie de la possibilité de recourir gratuitement à un médiateur de la consommation après une réclamation écrite préalable non résolue auprès d’AtoumWeb, conformément aux textes applicables.",
+        "À COMPLÉTER AVANT COMMERCIALISATION AUX CONSOMMATEURS : AtoumWeb n’a pas justifié d’une convention de médiation en vigueur à la date de cette consolidation. Aucune référence à CM2C comme médiateur contractuellement désigné ne peut être remise au client tant qu’une convention valable n’est pas effectivement conclue. Après conventionnement, insérer identité, adresse, site internet du médiateur compétent et les mentions réglementaires dans les CGV et sur les supports concernés.",
+        "L’accès à la médiation reste gratuit pour le consommateur et ne le prive pas des voies de recours devant les juridictions compétentes."
+      ]
+    },
+    {
+      "numero": 34,
+      "numero_affiche": "034",
+      "titre": "Droit de rétractation",
+      "code_contractuel": "CONS-RETRACTATION",
+      "public": "Consommateurs",
+      "paragraphes_contractuels": [
+        "Si vous êtes consommateur et concluez votre contrat à distance ou hors établissement, vous disposez en principe de 14 jours pour vous rétracter à compter de sa conclusion, sauf exceptions prévues par la loi.",
+        "Vous pouvez nous adresser le formulaire de rétractation ou un message clair à agence@atoumweb.fr. Si votre contrat est conclu au moyen d’une interface en ligne et que ce droit existe, nous mettons aussi à votre disposition la fonction de rétractation en ligne prévue par la loi.",
+        "Nous vous remboursons les sommes dues dans les délais légaux. Si vous avez demandé expressément le début des travaux pendant ces 14 jours, seule la part légalement due du travail accompli peut, le cas échéant, rester à votre charge.",
+        "La personnalisation de votre site ne supprime pas automatiquement ce droit. Les délais et exceptions légaux restent applicables.",
+        "Un devis accepté par courrier électronique ou à distance peut relever des règles de rétractation même si la commande n’est pas réalisée via un panier en ligne. Le parcours réel de vente doit être vérifié. Pour toute demande d’exécution anticipée, les confirmations légales sont recueillies et archivées avant travaux."
+      ]
+    },
+    {
+      "numero": 35,
+      "numero_affiche": "035",
+      "titre": "Brief éditorial",
+      "code_contractuel": "CONTENT-BRIEF",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Pour préparer la rédaction de votre contenu, vous nous précisez le sujet à traiter, l’objectif recherché, les personnes auxquelles vous souhaitez vous adresser et les messages importants à transmettre. Vous nous communiquez également les informations propres à votre activité, les documents disponibles et les éventuelles consignes de ton ou de présentation.",
+        "Nous utilisons ces éléments pour organiser et rédiger le contenu prévu au devis. Nous pouvons en améliorer la formulation et la structure afin de rendre le texte plus clair et adapté à son public.",
+        "Avant la validation finale, vous vérifiez les informations factuelles propres à votre activité, notamment les caractéristiques de vos services, vos tarifs et vos affirmations commerciales. Cette vérification ne nous dispense pas de réaliser correctement le travail éditorial que nous nous sommes engagés à fournir."
+      ]
+    },
+    {
+      "numero": 36,
+      "numero_affiche": "036",
+      "titre": "Corrections éditoriales",
+      "code_contractuel": "CONTENT-CORRECTIONS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Votre devis ou votre offre précise le nombre d’étapes de relecture et de correction comprises dans la prestation de rédaction.",
+        "Ces étapes servent à ajuster le texte réalisé à partir du sujet et des consignes que vous avez validés : formulation, organisation des idées ou précisions nécessaires dans le périmètre convenu.",
+        "Si vous souhaitez changer sensiblement le sujet, les objectifs ou les consignes après la rédaction, nous examinons les travaux supplémentaires nécessaires et vous présentons, le cas échéant, un devis avant de les réaliser.",
+        "Les corrections nécessaires pour remédier à une erreur qui nous est imputable ou pour respecter les engagements du devis restent dues, indépendamment du nombre d’étapes de relecture prévu.",
+        "Pour les offres standards actuellement retenues : une page web à 99 € couvre environ 250 à 450 mots et un cycle de correction ; un article SEO à 149 € couvre environ 600 à 900 mots et un cycle de correction. La mise en ligne dans un WordPress existant compatible est comprise dans les conditions prévues dans le devis ; elle ne doit pas être facturée deux fois. Les autres formats rédactionnels sont définis par leurs fiches et commandes respectives."
+      ]
+    },
+    {
+      "numero": 37,
+      "numero_affiche": "037",
+      "titre": "Sources et éléments fournis",
+      "code_contractuel": "CONTENT-DROITS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Pour réaliser vos contenus, vous pouvez nous transmettre des documents, données, photographies, logos, marques ou autres ressources. Vous vous assurez de disposer des droits et autorisations nécessaires pour leur utilisation dans le cadre de votre projet.",
+        "Nous utilisons ces éléments uniquement pour réaliser la prestation convenue. Si nous identifions un risque concernant les droits d’un auteur, d’un photographe, d’une marque ou d’un autre titulaire, nous vous en informons. Nous n’utilisons pas un élément dont l’exploitation envisagée apparaît illicite.",
+        "Chacun reste responsable des obligations qui lui incombent. Le fait qu’un contenu ait été fourni ou demandé par le client ne dégage pas automatiquement AtoumWeb de ses propres responsabilités et ne porte pas atteinte aux droits d’un tiers.",
+        "Les droits d’utilisation ou de cession portant sur les contenus créés par AtoumWeb sont précisés par les conditions de propriété intellectuelle applicables et par le devis."
+      ]
+    },
+    {
+      "numero": 38,
+      "numero_affiche": "038",
+      "titre": "Mise en page graphique de contenus",
+      "code_contractuel": "CONTENT-MISE-EN-PAGE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous réalisons la mise en page des contenus et des supports décrits dans votre devis, à partir des textes, images, formats et éléments graphiques convenus.",
+        "Avant la finalisation, vous vérifiez les informations à publier, leur ordre de présentation et l’utilisation de votre identité visuelle. La création d’un logo ou la refonte de votre identité graphique ne font pas partie de cette prestation, sauf si elles ont été commandées expressément.",
+        "Le devis précise les formats que nous vous remettons et indique si les fichiers sources modifiables sont inclus. La remise d’un document final ne signifie pas automatiquement que tous les fichiers de travail sont fournis.",
+        "Si vous souhaitez ensuite une version supplémentaire, un autre format ou une modification importante de la présentation validée, nous vous proposons les travaux et leur prix avant réalisation. Les corrections nécessaires à la conformité du livrable convenu restent comprises dans notre prestation."
+      ]
+    },
+    {
+      "numero": 39,
+      "numero_affiche": "039",
+      "titre": "Recherche documentaire / sujet technique",
+      "code_contractuel": "CONTENT-RECHERCHE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Lorsque votre prestation comprend une recherche documentaire ou technique, nous consultons et analysons les sources accessibles nécessaires pour préparer le contenu ou le document prévu au devis.",
+        "Vous nous transmettez les informations propres à votre activité, les documents internes utiles et les contraintes particulières dont vous avez connaissance. Vous vérifiez ensuite les faits relatifs à votre entreprise ou à votre métier que vous nous avez communiqués.",
+        "Nous sélectionnons et présentons les informations dans les limites du sujet et de l’étendue de recherche convenus, sans garantir qu’aucune source existante n’a été omise. Cette prestation ne remplace pas une consultation auprès d’un avocat, d’un professionnel de santé, d’un conseiller financier ou d’un autre spécialiste habilité lorsque celle-ci est nécessaire.",
+        "Un changement important de sujet ou une recherche plus approfondie que celle prévue peut nécessiter une proposition complémentaire acceptée avant réalisation. Nous restons responsables de la qualité des travaux de recherche effectivement convenus."
+      ]
+    },
+    {
+      "numero": 40,
+      "numero_affiche": "040",
+      "titre": "Contenu optimisé SEO",
+      "code_contractuel": "CONTENT-SEO",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Lorsque vous commandez un texte optimisé pour le référencement naturel, nous travaillons son contenu et sa structure en fonction des objectifs définis dans votre devis au moment de la prestation.",
+        "Cette optimisation vise à rendre le texte pertinent pour les sujets recherchés par votre public et compréhensible pour les moteurs de recherche, dans les limites des travaux convenus.",
+        "Le classement d’une page dépend aussi de nombreux facteurs extérieurs, notamment de la concurrence et des décisions des moteurs de recherche. Nous ne garantissons donc pas une position précise dans les résultats ni un nombre déterminé de visites.",
+        "Cette absence de garantie de classement ne réduit pas notre obligation de réaliser les optimisations et de livrer le contenu convenus."
+      ]
+    },
+    {
+      "numero": 41,
+      "numero_affiche": "041",
+      "titre": "Comptes, accès et propriété des outils de mesure",
+      "code_contractuel": "DATA-ACCES",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Dans la mesure du possible, les comptes et espaces de statistiques sont créés à votre nom ou restent sous votre contrôle. Vous nous accordez les accès nécessaires à la prestation prévue, de préférence avec les droits strictement utiles.",
+        "Nous utilisons ces accès uniquement dans le cadre autorisé et pendant la durée nécessaire. Nous protégeons les informations de connexion qui nous sont confiées et cessons d’utiliser les accès devenus inutiles. Nous retirons les autorisations que nous pouvons révoquer et supprimons les secrets que nous n’avons plus de raison légitime de conserver, sous réserve des obligations légales applicables.",
+        "Lorsque la suppression d’un accès dépend de vous ou du fournisseur de l’outil, nous vous indiquons les actions à réaliser et coopérons à leur clôture. Vous gardez la maîtrise des utilisateurs et des droits que vous administrez sur vos comptes.",
+        "Les comptes Google Analytics, Google Search Console et outils de mesure utilisés pour la prestation restent au nom et sous le contrôle du client, avec délégation limitée et révocable à AtoumWeb. Les accès sont retirés ou restitués à la fin des prestations dans les conditions convenues."
+      ]
+    },
+    {
+      "numero": 42,
+      "numero_affiche": "042",
+      "titre": "Périmètre d’une analyse ponctuelle",
+      "code_contractuel": "DATA-ANALYSE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous analysons les statistiques et les données accessibles sur la période définie au devis. Nous vous remettons les constats, explications et recommandations convenus pour vous aider à comprendre les résultats observés.",
+        "La portée de l’analyse dépend de la qualité, de la disponibilité et du contexte des données. Nous vous signalons les limites importantes identifiées lorsque celles-ci peuvent modifier leur interprétation.",
+        "Sauf prestation distincte prévue au devis, cette mission ne comprend pas un audit SEO, juridique, comptable ou financier, ni un accompagnement stratégique complet. L’analyse ne garantit pas une augmentation donnée du trafic, des demandes ou du chiffre d’affaires."
+      ]
+    },
+    {
+      "numero": 43,
+      "numero_affiche": "043",
+      "titre": "Consentement cookies et déclenchement des balises",
+      "code_contractuel": "DATA-CONSENTEMENT",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Si votre devis le prévoit, nous installons et configurons l’outil de gestion des cookies et autres traceurs retenu pour votre site, à partir de la solution et des informations convenues avec vous.",
+        "Selon le rôle que vous exercez réellement, vous définissez les finalités de vos traitements, leurs bases légales et les durées applicables, avec un conseil spécialisé si nécessaire. De notre côté, nous restons responsables de la bonne exécution de la configuration commandée et des obligations qui nous incombent. Nous vous signalons les instructions qui nous paraissent contraires aux règles de protection des données.",
+        "Pour les traceurs qui exigent un consentement, nous configurons, dans le périmètre prévu, les possibilités d’accepter, de refuser et de retirer ce consentement, ainsi que les fonctions de conservation de sa preuve disponibles dans la solution retenue. Les traceurs concernés ne doivent pas être déclenchés avant le choix requis.",
+        "Certains outils strictement limités à la mesure d’audience peuvent être dispensés de ce consentement, mais seulement si les conditions légales et techniques sont effectivement remplies et documentées. Cette dispense n’est jamais présumée du seul fait qu’un outil produit des statistiques.",
+        "Notre intervention technique ne constitue pas une validation juridique globale de votre site ni de l’ensemble de vos traitements. Si AtoumWeb traite des données personnelles pour votre compte, les obligations de sous-traitance applicables sont précisées dans un accord adapté."
+      ]
+    },
+    {
+      "numero": 44,
+      "numero_affiche": "044",
+      "titre": "Mesure d’audience et événements suivis",
+      "code_contractuel": "DATA-MESURE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous installons ou paramétrons les outils de mesure et les actions à suivre (par exemple une visite, l’envoi d’un formulaire ou un achat) indiqués au devis. Nous réalisons les vérifications prévues pour contrôler que la configuration fonctionne dans les conditions de test convenues.",
+        "Les chiffres recueillis peuvent varier selon le consentement des visiteurs, les réglages de leur navigateur, les bloqueurs de traceurs, les plateformes utilisées et la disponibilité des données. Deux outils peuvent aussi compter différemment une même activité.",
+        "Nous ne promettons donc pas de mesurer chaque visite ni d’obtenir des résultats parfaitement identiques entre plateformes. En revanche, ces limites ne nous dispensent pas de corriger une erreur de paramétrage qui nous est imputable dans le cadre de nos obligations."
+      ]
+    },
+    {
+      "numero": 45,
+      "numero_affiche": "045",
+      "titre": "Suivi statistique récurrent",
+      "code_contractuel": "DATA-SUIVI",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous examinons les indicateurs et les éventuelles anomalies visibles selon la fréquence prévue au devis. À chaque revue convenue, nous vous communiquons les constats ou recommandations inclus dans la prestation, dans la limite des informations accessibles.",
+        "Un suivi hebdomadaire ou mensuel n’est pas une surveillance permanente : il ne comprend ni contrôle continu, ni astreinte, ni alertes disponibles jour et nuit, sauf engagement distinct et exprès.",
+        "Nous signalons les écarts repérés lors des vérifications prévues. Les difficultés qui ne sont pas visibles à ces dates ou qui nécessitent des accès indisponibles peuvent ne pas être détectées immédiatement, sans préjudice de nos obligations sur les interventions effectivement convenues.",
+        "Les abonnements de suivi statistique peuvent être souscrits selon les formules mensuelles ou annuelles précisées au devis. La prise d’effet et la facturation débutent lorsque les accès et éléments indispensables sont disponibles, à la date confirmée par écrit. Si la prestation devient partiellement impossible en cours d’exécution, AtoumWeb informe le client, poursuit les tâches possibles et recherche une régularisation proportionnée aux responsabilités et au contrat.",
+        "Les abonnements annuels de suivi statistique prévus comme reconductibles automatiquement sont soumis aux conditions d’information et de résiliation légalement applicables ; ils ne doivent pas être confondus avec la maintenance annuelle, qui exige un accord exprès de renouvellement.",
+        "La configuration initiale ou la création des comptes Analytics et Search Console, lorsqu’elle est nécessaire, fait l’objet d’un devis préalable distinct. La date de prise en charge effective, une fois les comptes et accès utilisables, marque le démarrage du suivi et de ses échéances. En fin d’abonnement, AtoumWeb fournit la clôture standard, le dernier bilan normalement prévu et les éléments nécessaires, puis retire ses accès ; un audit de sortie supplémentaire reste sur devis.",
+        "Si les mesures deviennent indisponibles du fait d’une modification du client ou d’un tiers, nous vous alertons et réalisons les analyses encore possibles en signalant leurs limites ; le suivi contractuel demeure facturé et une correction technique extérieure à notre périmètre peut être proposée sur devis. Si l’anomalie nous est imputable, sa correction est sans supplément et les prestations affectées sont régularisées selon la situation. Les résultats commerciaux, trafics et classements ne sont pas garantis."
+      ]
+    },
+    {
+      "numero": 46,
+      "numero_affiche": "046",
+      "titre": "Périmètre du tableau de bord",
+      "code_contractuel": "DATA-TABLEAU",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Le tableau de bord rassemble les indicateurs et les sources de données définis dans votre devis. Nous configurons leur affichage et les éléments de restitution convenus.",
+        "La disponibilité et l’actualisation des chiffres dépendent aussi des plateformes connectées, de leurs autorisations d’accès et de leurs méthodes de calcul. Des différences peuvent donc exister entre plusieurs services, ou entre deux dates de consultation.",
+        "Nous ne garantissons pas qu’une plateforme tierce reste accessible en permanence ni que ses propres données soient parfaitement exactes. Cette limite ne nous décharge pas de nos obligations concernant la configuration, les raccordements et les calculs que nous réalisons nous-mêmes dans le cadre de la prestation."
+      ]
+    },
+    {
+      "numero": 47,
+      "numero_affiche": "047",
+      "titre": "Brief graphique",
+      "code_contractuel": "DESIGN-BRIEF",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Avant de commencer votre création graphique, nous définissons avec vous les éléments essentiels du projet : l’objectif, le public visé, l’ambiance recherchée, les références utiles et les éventuelles contraintes de présentation.",
+        "Les indications que vous validez servent de base au travail prévu dans votre devis. Elles permettent de choisir une orientation graphique commune avant de poursuivre les étapes de création.",
+        "Si vous souhaitez modifier sensiblement cette orientation après avoir validé une proposition, nous examinons les changements nécessaires et pouvons vous présenter un devis complémentaire avant leur réalisation. Les corrections nécessaires pour respecter les éléments déjà convenus restent comprises dans nos obligations."
+      ]
+    },
+    {
+      "numero": 48,
+      "numero_affiche": "048",
+      "titre": "Fichiers livrés",
+      "code_contractuel": "DESIGN-LIVRAISON",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "À la fin de la prestation, nous vous remettons les fichiers dans les formats prévus au devis, adaptés aux usages qui y sont indiqués.",
+        "Les fichiers de travail modifiables, également appelés fichiers sources, ne sont transmis que lorsqu’ils sont expressément compris dans votre commande. La remise d’un logo ou d’une image au format final n’implique donc pas automatiquement celle de tous les fichiers utilisés pour le créer.",
+        "Lorsque votre création comporte des polices, des images ou d’autres ressources provenant de tiers, leur utilisation reste soumise aux licences correspondantes.",
+        "Les fichiers livrés et les droits d’exploitation qui vous sont accordés constituent deux éléments distincts : leurs conditions sont précisées dans le devis et les clauses applicables."
+      ]
+    },
+    {
+      "numero": 49,
+      "numero_affiche": "049",
+      "titre": "Propositions",
+      "code_contractuel": "DESIGN-PROPOSITIONS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Votre devis indique le nombre de propositions graphiques initiales que nous vous présentons et le nombre d’étapes de relecture et de correction comprises dans la prestation.",
+        "Ces étapes servent à choisir puis à ajuster une orientation graphique dans les limites du projet convenu. Vous pouvez nous transmettre vos remarques selon les modalités de validation indiquées dans le devis.",
+        "Si vous demandez une nouvelle proposition après avoir validé une direction graphique, ou des adaptations supplémentaires à des supports non prévus, nous pouvons vous présenter un devis complémentaire avant de commencer.",
+        "Les corrections nécessaires pour livrer une création conforme aux engagements déjà pris ne sont pas considérées comme des propositions nouvelles à facturer."
+      ]
+    },
+    {
+      "numero": 50,
+      "numero_affiche": "050",
+      "titre": "Garantie corrective",
+      "code_contractuel": "DEVWP-GARANTIE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "La garantie corrective contractuelle prévue au devis couvre les anomalies de notre livraison qui nous sont imputables et concernent les fonctions ou comportements convenus. Sa durée et sa date de départ sont indiquées dans votre devis.",
+        "Si vous constatez un problème, communiquez-nous les informations dont vous disposez : circonstances, date, message d’erreur ou exemple, si possible. Une anomalie peut être intermittente ; nous ne vous demandons pas de prouver qu’elle apparaît à chaque tentative pour l’examiner.",
+        "Une nouvelle fonction ou un changement de besoin hors du périmètre convenu n’est pas une correction comprise dans cette garantie. Un changement effectué par vous ou un tiers, ou l’évolution d’un outil extérieur, ne peut justifier une exclusion que s’il est effectivement à l’origine du problème concerné.",
+        "Cette garantie contractuelle ne diminue pas les garanties légales, les mises à jour qui seraient légalement dues ni les autres obligations et responsabilités d’AtoumWeb."
+      ]
+    },
+    {
+      "numero": 51,
+      "numero_affiche": "051",
+      "titre": "Automatisation et intégration avec service externe",
+      "code_contractuel": "DEVWP-INTEGRATION",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous réalisons les connexions et automatisations indiquées au devis entre votre site WordPress et les services retenus : par exemple un CRM, un outil d’envoi d’emails, un tableur ou une plateforme d’automatisation comme Make ou Zapier. Le devis précise les données échangées et les actions attendues.",
+        "Nous configurons et vérifions les échanges qui relèvent de notre intervention. Leur fonctionnement dépend aussi des accès que vous nous fournissez, des abonnements et quotas disponibles, ainsi que des règles, formats et disponibilités des plateformes concernées.",
+        "Nous ne pouvons pas garantir la disponibilité permanente d’un service tiers ni les opérations qu’il réalise hors de notre intégration. En revanche, ces limites ne nous dispensent pas de corriger une erreur de configuration qui nous est imputable. Si une contrainte extérieure connue bloque la prestation, nous vous en informons et examinons les possibilités d’adaptation dans les conditions convenues."
+      ]
+    },
+    {
+      "numero": 52,
+      "numero_affiche": "052",
+      "titre": "Périmètre d’un développement WordPress sur mesure",
+      "code_contractuel": "DEVWP-PERIMETRE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous développons la fonction WordPress décrite dans votre devis, en respectant les besoins, les règles et les limites que nous avons validés ensemble.",
+        "Sauf exigence technique expressément convenue, nous choisissons la méthode de réalisation adaptée : extension WordPress, thème enfant, personnalisation de code ou autre solution. Les écrans, les droits d’accès, les étapes de fonctionnement et les connexions à d’autres outils compris dans la prestation sont ceux indiqués au devis.",
+        "Si vous souhaitez ensuite ajouter une fonction, modifier une règle ou élargir le projet, nous définissons ensemble cette évolution avant sa réalisation et son éventuelle facturation. En revanche, la correction d’un défaut de conformité au périmètre initial ne constitue pas une nouvelle prestation payante."
+      ]
+    },
+    {
+      "numero": 53,
+      "numero_affiche": "053",
+      "titre": "Code spécifique client et composants génériques AtoumWeb",
+      "code_contractuel": "DEVWP-PI-REUTILISATION",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous distinguons les éléments développés spécialement pour votre site de nos outils et composants génériques réutilisables.",
+        "Après paiement complet, vous pouvez utiliser et faire modifier les éléments du site dans les conditions prévues par la clause 020 et le devis. Nos composants génériques restent notre propriété, mais ceux intégrés au site peuvent être utilisés et adaptés pour les besoins de ce site.",
+        "Les bibliothèques, thèmes et extensions de tiers restent soumis à leurs propres licences. Le devis précise les fichiers sources, dépôts de code ou documentations effectivement remis, lorsqu’ils sont inclus."
+      ]
+    },
+    {
+      "numero": 54,
+      "numero_affiche": "054",
+      "titre": "Livraison d’un plugin autonome",
+      "code_contractuel": "DEVWP-PLUGIN",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Si votre commande prévoit une extension WordPress autonome, nous vous remettons une extension installable et activable dans l’environnement défini au devis, avec les fonctions d’administration et la documentation qui y sont prévues. Il ne s’agit pas d’un simple prototype, sauf si le devis commande expressément un prototype.",
+        "Avant votre acceptation, le devis ou son annexe identifie les versions de WordPress, de PHP et des composants avec lesquelles l’extension doit fonctionner. Nous vérifions la livraison dans cet environnement de référence.",
+        "Une compatibilité avec toutes les versions futures de WordPress, les autres extensions, les thèmes ou les configurations non prévus n’est pas automatiquement comprise. Les adaptations supplémentaires peuvent faire l’objet d’une maintenance ou d’une évolution acceptée lorsqu’elles dépassent nos obligations existantes.",
+        "Cette limitation ne réduit pas les garanties légales applicables, les éventuelles mises à jour dues ni les droits accordés par les licences des composants utilisés."
+      ]
+    },
+    {
+      "numero": 55,
+      "numero_affiche": "055",
+      "titre": "Recette et critères d’acceptation",
+      "code_contractuel": "DEVWP-RECETTE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "À la livraison, nous vérifions avec vous les fonctions prévues au devis. Vous pouvez nous signaler les défauts observés, même s’ils apparaissent seulement de temps en temps.",
+        "Nous corrigeons les défauts relevant de notre prestation. Les demandes nouvelles ou les changements du besoin initial font l’objet d’un devis complémentaire.",
+        "Votre validation est conservée par écrit. Le silence ne vaut pas acceptation automatique ; sans réponse, la clause 014 s’applique. Les garanties et recours applicables restent préservés."
+      ]
+    },
+    {
+      "numero": 56,
+      "numero_affiche": "056",
+      "titre": "Données produits",
+      "code_contractuel": "ECOM-CATALOGUE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Pour préparer votre boutique en ligne, vous nous transmettez les informations nécessaires à la présentation de vos produits : noms, descriptions, prix, taux de TVA, références, déclinaisons, quantités disponibles, poids, dimensions, photographies et autres éléments prévus au devis.",
+        "Vous veillez à l’exactitude de ces informations et nous signalez les corrections nécessaires. Nous sommes responsables de leur intégration correcte dans la boutique, dans les limites de la prestation convenue. Après la livraison, l’actualisation des prix, des produits et des stocks vous revient, sauf si vous avez souscrit un service de gestion distinct.",
+        "La création ou la reprise d’un catalogue important, l’import automatisé de produits et la rédaction de nouvelles fiches sont compris uniquement lorsqu’ils figurent expressément au devis. Toute demande supplémentaire vous est présentée avec son prix avant réalisation."
+      ]
+    },
+    {
+      "numero": 57,
+      "numero_affiche": "057",
+      "titre": "Import / migration de catalogue",
+      "code_contractuel": "ECOM-IMPORT",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Lorsque votre projet prévoit l’import ou la migration d’un catalogue de produits, nous reprenons uniquement les données et les volumes définis dans le devis.",
+        "Vous nous fournissez des fichiers exploitables, complets et suffisamment organisés. Avant l’import définitif, nous vous présentons la manière dont les informations seront réparties dans les champs de la nouvelle boutique, ainsi qu’un résultat de contrôle pour que vous puissiez les vérifier et les valider.",
+        "Si les données transmises nécessitent un nettoyage important, une réécriture, des corrections de contenu ou une reprise manuelle non prévue, nous vous soumettons une proposition complémentaire avant d’entreprendre ces travaux. En revanche, les corrections nécessaires pour remédier à une erreur d’importation qui nous est imputable restent à notre charge.",
+        "Le résultat de l’import dépend également de la qualité des données fournies et des fonctionnalités effectivement prévues au devis."
+      ]
+    },
+    {
+      "numero": 58,
+      "numero_affiche": "058",
+      "titre": "Contenus juridiques du marchand",
+      "code_contractuel": "ECOM-LEGAL",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "En tant que commerçant, vous êtes responsable des informations et des documents juridiques propres à votre activité : notamment les conditions générales de vente de votre boutique, les règles de livraison, les possibilités de retour, les remboursements et les informations obligatoires relatives à vos produits.",
+        "Vous nous transmettez les textes que vous avez préparés ou fait vérifier par un professionnel compétent. Lorsque leur intégration est prévue au devis, nous les mettons en place sur votre site et vérifions leur affichage dans le cadre de notre prestation.",
+        "Cette intégration technique ne constitue pas une validation juridique des textes ni une garantie de conformité de l’ensemble de votre activité commerciale. Elle ne nous dispense toutefois pas de réaliser correctement les fonctionnalités et les affichages que nous avons convenus avec vous, ni de respecter nos propres obligations.",
+        "Les conditions générales de vente de votre boutique sont distinctes des conditions contractuelles qui encadrent votre relation avec AtoumWeb."
+      ]
+    },
+    {
+      "numero": 59,
+      "numero_affiche": "059",
+      "titre": "Livraison et transporteurs",
+      "code_contractuel": "ECOM-LIVRAISON",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous configurons les modes de livraison et de retrait prévus dans votre devis à partir des informations que vous nous communiquez : transporteurs, zones desservies, frais d’expédition, seuils de livraison gratuite, délais annoncés et conditions de retrait.",
+        "Vous validez ces règles commerciales avant leur mise en service. Lorsqu’un mode de livraison utilise un module ou un service extérieur, son fonctionnement dépend également des conditions et des possibilités du fournisseur concerné. Nous restons responsables de la configuration et des intégrations que nous nous sommes engagés à réaliser.",
+        "La mise en place de règles particulières, d’une connexion complexe avec un transporteur ou la modification ultérieure de votre organisation de livraison peuvent nécessiter un devis complémentaire. Nous vous présentons ces travaux et leur prix avant de les entreprendre.",
+        "Les délais réellement assurés par les transporteurs et les engagements que vous prenez envers vos acheteurs ne doivent pas être confondus avec notre prestation de configuration technique."
+      ]
+    },
+    {
+      "numero": 60,
+      "numero_affiche": "060",
+      "titre": "WooCommerce multilingue",
+      "code_contractuel": "ECOM-MULTILINGUE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Si votre boutique doit être disponible dans plusieurs langues, nous mettons en place les langues, les pages et les paramètres prévus dans votre devis.",
+        "Sauf prestation de traduction expressément commandée, vous nous transmettez et validez les textes traduits, les informations sur les produits et les documents juridiques correspondant aux marchés que vous souhaitez desservir. Nous intégrons ces éléments dans les limites convenues, sans certifier leur traduction ni leur conformité juridique.",
+        "La vente dans plusieurs pays peut nécessiter des règles particulières concernant notamment la fiscalité, les moyens de paiement, la livraison ou les informations destinées aux acheteurs. Vous déterminez et validez les règles applicables à votre activité, avec les conseils spécialisés nécessaires le cas échéant. Nous configurons les paramètres que vous nous fournissez lorsque cette intervention figure au devis.",
+        "L’ajout d’un pays, d’une langue, d’une règle commerciale ou d’une connexion non prévue initialement peut faire l’objet d’une proposition complémentaire acceptée avant réalisation. Cette répartition ne réduit pas notre responsabilité concernant les configurations techniques qui nous incombent."
+      ]
+    },
+    {
+      "numero": 61,
+      "numero_affiche": "061",
+      "titre": "Solution de paiement",
+      "code_contractuel": "ECOM-PAIEMENT",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Pour permettre à vos clients de payer leurs commandes, nous intégrons à votre boutique la solution de paiement indiquée dans le devis.",
+        "Vous devez disposer d’un compte compatible auprès du prestataire retenu et effectuer les vérifications demandées par celui-ci. Ses conditions déterminent notamment les commissions, l’ouverture ou la suspension du compte et les services de paiement qu’il propose. Dans le modèle d’intégration convenu, votre compte de paiement reste à votre nom et les règlements de vos clients vous sont versés directement par ce prestataire : AtoumWeb n’encaisse pas et ne reverse pas ces sommes pour votre compte.",
+        "Nous réalisons la configuration et les vérifications techniques prévues au devis. Un dysfonctionnement du prestataire ne nous exonère pas automatiquement d’une erreur d’intégration ou d’un autre manquement qui nous serait imputable.",
+        "Toute fonction supplémentaire, connexion particulière ou modification sortant du périmètre accepté fait l’objet d’un accord sur les travaux et leur prix avant réalisation.",
+        "Les comptes du prestataire de paiement appartiennent au commerçant ; il lui appartient notamment d’assurer ses vérifications d’identité, la relation avec sa clientèle, les remboursements, les contestations de paiement et les frais contractuels. AtoumWeb configure et teste l’intégration convenue, sans conserver de clés d’accès sensibles en clair ni manipuler les fonds du commerçant."
+      ]
+    },
+    {
+      "numero": 62,
+      "numero_affiche": "062",
+      "titre": "Stock et données catalogue",
+      "code_contractuel": "ECOM-STOCK",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous configurons le suivi des stocks de votre boutique selon les règles prévues au devis : quantités disponibles, conditions de vente et affichage des disponibilités.",
+        "Vous nous transmettez les quantités initiales et les règles de gestion à appliquer, puis vous en vérifiez l’exactitude. Si une synchronisation avec un logiciel de gestion, un fournisseur ou une autre plateforme est prévue, son fonctionnement dépend aussi des données et des possibilités techniques de ce service extérieur. Nous restons responsables de la connexion et des réglages que nous nous sommes engagés à réaliser.",
+        "Après la livraison, la mise à jour quotidienne des stocks reste à votre charge, sauf si vous avez expressément commandé une prestation de gestion ou de synchronisation continue.",
+        "Les règles particulières de stock, les nouvelles automatisations ou les connexions supplémentaires non prévues font l’objet d’une proposition chiffrée et de votre accord avant réalisation. Les corrections nécessaires pour respecter le fonctionnement initialement convenu ne sont pas facturées en supplément."
+      ]
+    },
+    {
+      "numero": 63,
+      "numero_affiche": "063",
+      "titre": "Formulaires et collecte",
+      "code_contractuel": "LANDING-FORM",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous réalisons le ou les formulaires de votre page avec les champs et les actions indiqués au devis : par exemple recueillir une demande de contact ou transmettre une inscription.",
+        "Vous validez les informations demandées aux visiteurs, leur utilisation prévue et les mentions d’information nécessaires. Les rôles et obligations de chacun au regard de la protection des données sont déterminés selon les traitements réellement effectués ; cette validation ne dispense pas AtoumWeb de ses propres obligations ni de la bonne réalisation technique convenue.",
+        "Une connexion à un outil de relation client (CRM), à un service d’envoi d’emails, à un agenda, à un paiement ou à un autre service externe n’est comprise que si elle figure expressément au devis."
+      ]
+    },
+    {
+      "numero": 64,
+      "numero_affiche": "064",
+      "titre": "Gestion mensuelle",
+      "code_contractuel": "LANDING-GESTION",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Si vous avez expressément souscrit une gestion mensuelle de votre page, nous effectuons les opérations indiquées dans l’offre ou le devis que vous avez accepté. La fréquence, le contenu et le prix de ce service sont ceux de cet engagement.",
+        "Une refonte, une nouvelle fonctionnalité, l’ajout d’une section importante ou toute autre modification dépassant les opérations prévues peut faire l’objet d’un devis complémentaire. Aucun travail supplémentaire payant n’est engagé sans votre accord préalable.",
+        "Cette clause ne crée pas, à elle seule, un abonnement, une reconduction automatique ou un délai de résiliation qui ne seraient pas prévus dans votre contrat."
+      ]
+    },
+    {
+      "numero": 65,
+      "numero_affiche": "065",
+      "titre": "Périmètre d’une landing page",
+      "code_contractuel": "LANDING-PERIMETRE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Une landing page est une page conçue pour présenter une offre ou inviter ses visiteurs à réaliser une action précise. Notre prestation porte sur une seule page, sauf si votre devis prévoit expressément plusieurs pages ou un parcours plus étendu.",
+        "Le devis indique les contenus, formulaires, fonctions et intégrations compris dans la commande. Une page supplémentaire, un parcours en plusieurs étapes, un espace membre, des règles de fonctionnement particulières ou une connexion complexe à un service extérieur ne sont pas inclus par défaut.",
+        "Pour tout ajout, nous vous proposons un devis complémentaire à accepter avant réalisation. Ce qui était prévu au devis initial reste inclus.",
+        "La landing page standard à 499 € comprend une page unique de six sections adaptables au maximum, avec formulaire simple ou bouton d’action. Les textes de base sont fournis par le client ; leur adaptation légère est comprise, mais une rédaction intégrale est distincte. L’ajout de sections ou de fonctionnalités complexes est chiffré séparément. Un cycle de corrections est inclus pour cette formule. Sur un site WordPress existant compatible, l’intégration peut être incluse ; pour une page autonome, l’hébergement et le domaine éventuel sont détaillés et acceptés séparément au devis."
+      ]
+    },
+    {
+      "numero": 66,
+      "numero_affiche": "066",
+      "titre": "Nombre d’interventions ou temps inclus",
+      "code_contractuel": "MAINT-INTERVENTIONS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "La formule WordPress comprend deux interventions mineures par mois et la formule WooCommerce en comprend quatre. Chaque intervention dure au maximum 30 minutes. Le prix de votre formule est indiqué dans votre devis.",
+        "Les interventions non utilisées ne sont ni cumulables ni reportables. Cette règle reste la même si la formule est facturée annuellement.",
+        "Les mises à jour, contrôles et sauvegardes déjà inclus ne diminuent pas ce quota. Toute demande supplémentaire est chiffrée avant intervention et nécessite votre accord.",
+        "Les corrections dues au titre de notre prestation, d’une garantie ou de la loi ne sont pas décomptées du quota."
+      ]
+    },
+    {
+      "numero": 67,
+      "numero_affiche": "067",
+      "titre": "Mises à jour",
+      "code_contractuel": "MAINT-MAJ",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Chaque semaine, nous vérifions et réalisons les mises à jour prévues de WordPress, des thèmes et des extensions, après les contrôles techniques utiles.",
+        "Les correctifs de sécurité urgents sont traités en priorité pendant nos horaires de bureau. Nous mettons en œuvre les mesures de sécurité prévues dans votre formule. Aucun site ne peut être garanti contre toute attaque ou panne ; cela ne réduit pas nos engagements ni nos obligations légales. Nous ne garantissons pas une réparation dans un délai précis, sauf engagement particulier au devis.",
+        "Si une mise à jour risque de perturber le site, nous pouvons la différer en vous indiquant le risque et la suite proposée. Les travaux supplémentaires nécessitent votre accord, sauf corrections déjà dues.",
+        "L’hébergement isolé sans maintenance ne comprend pas ces mises à jour WordPress.",
+        "Les horaires de référence de l’agence sont du lundi au vendredi, de 9 h à 17 h, hors jours fériés et fermetures annoncées. Une intervention prioritaire n’implique ni réponse immédiate garantie, ni prise en charge hors de ces horaires, ni temps maximal de résolution garanti."
+      ]
+    },
+    {
+      "numero": 68,
+      "numero_affiche": "068",
+      "titre": "Périmètre de maintenance",
+      "code_contractuel": "MAINT-PERIMETRE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "La maintenance comprend les prestations indiquées dans votre devis : vérifications et mises à jour hebdomadaires, sauvegardes selon la formule et interventions mineures comprises.",
+        "Les interventions mineures comprises dans votre formule sont celles de la clause 066 : elles ne sont ni cumulables ni reportables.",
+        "Lorsque l’hébergement est compris dans la maintenance, il n’est pas facturé une seconde fois. Le nom de domaine est facturé séparément.",
+        "Une refonte, une nouvelle fonction, une intervention hors forfait ou une migration extérieure nécessite un devis complémentaire accepté. Les corrections déjà dues restent comprises.",
+        "Si la maintenance prend fin, à votre demande ou à la nôtre, les solutions pour poursuivre l’hébergement ou récupérer le site sont précisées aux clauses 069 et 108."
+      ]
+    },
+    {
+      "numero": 69,
+      "numero_affiche": "069",
+      "titre": "Durée et renouvellement",
+      "code_contractuel": "MAINT-RENOUVELLEMENT",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Votre devis indique la durée, le prix et les modalités de résiliation de la maintenance.",
+        "Vous pouvez arrêter votre maintenance mensuelle à tout moment. Elle prend fin à l’expiration de la période déjà payée, sous réserve de vos droits légaux.",
+        "Nous pouvons également mettre fin à la maintenance mensuelle avec un préavis écrit d’au moins 30 jours. Nous maintenons les prestations jusqu’à la date effective de fin, sans écourter la période déjà payée. Si cette formule comprend l’hébergement, nous vous indiquons dès le préavis les solutions pour garder le site hébergé ou organiser son transfert. Si vous refusez un nouveau tarif, le prix actuel reste applicable tant que le contrat se poursuit. Les autres possibilités légales de résiliation restent applicables.",
+        "Si vous choisissez une maintenance annuelle, vous vous engagez pour 12 mois et réglez cette période à l’avance. Si vous souhaitez l’arrêter plus tôt pour convenance personnelle, la période payée n’est pas remboursée. Nous continuons à assurer les prestations jusqu’à l’échéance, sauf si vous nous demandez de les arrêter plus tôt. Vos droits légaux, notamment en cas de rétractation applicable ou de manquement de notre part, restent préservés.",
+        "Nous vous proposons le renouvellement annuel 30 jours avant l’échéance. Il n’a lieu qu’avec votre accord exprès : sans réponse, le contrat prend fin à son terme.",
+        "À la fin de la maintenance, vous pouvez choisir un hébergeur extérieur ou souscrire, par un engagement distinct et exprès, l'offre « Hébergement isolé avec Lune dédiée » décrite à la clause 102. La nouvelle période d'hébergement débute après la fin de la maintenance, sans double facturation. Les modalités propres à l'hébergement isolé, notamment son renouvellement, ne sont pas régies par la présente clause de maintenance. Le nom de domaine conserve sa propre échéance.",
+        "Si vous revenez à une maintenance comprenant l'hébergement avant la fin d'une année d'hébergement isolé déjà payée, nous régularisons au prorata la période non utilisée, selon les conditions convenues et les droits applicables.",
+        "Toute nouvelle période annuelle de maintenance WordPress ou WooCommerce suppose l’accord exprès du client ; aucune reconduction tacite annuelle de maintenance n’est mise en place. Le passage mensuel vers annuel intervient à la prochaine échéance mensuelle sur accord écrit ; le passage annuel vers mensuel à l’issue de la période annuelle. Aucune double facturation.",
+        "L’arrêt de la maintenance mensuelle prend effet à la fin de la période payée ; la suite de l’hébergement nécessite un engagement Lune distinct ou un hébergement extérieur, sans substitution automatique."
+      ]
+    },
+    {
+      "numero": 70,
+      "numero_affiche": "070",
+      "titre": "Sauvegardes",
+      "code_contractuel": "MAINT-SAUVEGARDE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Votre maintenance comprend des sauvegardes au moins hebdomadaires pour WordPress ou quotidiennes pour WooCommerce, conservées pendant au moins 30 jours. Nous utilisons pour cela les sauvegardes automatiques d’o2switch Cloud. Si nous constatons qu’un point prévu manque ou n’est pas exploitable, nous vous en informons et recherchons une solution adaptée. La restauration d’une copie doit être vérifiée au moment de l’intervention : la présence d’une sauvegarde ne garantit pas à elle seule une récupération complète. Cela ne réduit pas nos obligations ni vos droits en cas de manquement.",
+        "Nous n’utilisons pas de système de sauvegarde indépendant d’o2switch à ce jour. Un incident affectant cet hébergeur peut donc également toucher les copies disponibles.",
+        "En hébergement isolé sans maintenance, seules les sauvegardes techniques prévues par l’hébergeur sont incluses.",
+        "Une restauration manuelle par AtoumWeb fait l’objet d’un devis accepté, sauf si elle sert à corriger une erreur qui nous est imputable ou si elle est déjà comprise dans votre contrat. Nous vous précisons les possibilités réelles de récupération avant toute intervention."
+      ]
+    },
+    {
+      "numero": 71,
+      "numero_affiche": "071",
+      "titre": "Incident urgent",
+      "code_contractuel": "MAINT-URGENCE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Vous pouvez nous signaler une panne importante, une indisponibilité ou un problème de sécurité par les moyens indiqués au devis.",
+        "Nous traitons ces demandes en priorité pendant nos horaires de bureau. Nous vous répondons humainement dès que possible, sans promettre de délai maximal ou d’astreinte permanente.",
+        "Nous vous indiquons le diagnostic et les interventions utiles. Les travaux hors contrat nécessitent votre accord avant toute facturation, sauf obligations déjà à notre charge.",
+        "Les obligations légales de sécurité et de notification d’un incident de données personnelles restent applicables.",
+        "Lors de la qualification des demandes, AtoumWeb utilise trois niveaux indicatifs : P1 critique (indisponibilité majeure ou sécurité grave), P2 important (fonction essentielle défaillante), et P3 courant (modification ou assistance planifiée). La priorité est déterminée selon l’impact réel et peut être réévaluée. Cette classification n’institue pas à elle seule de délai contractuel de prise en charge ou de résolution."
+      ]
+    },
+    {
+      "numero": 72,
+      "numero_affiche": "072",
+      "titre": "Périmètre spécifique WooCommerce",
+      "code_contractuel": "MAINT-WOOCOMMERCE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "La maintenance WooCommerce couvre les mises à jour et contrôles techniques prévus pour votre boutique, ainsi que les interventions mineures mensuelles indiquées à la clause 066.",
+        "Nous portons une attention particulière au fonctionnement du parcours de commande et aux connexions couvertes par votre devis. Une panne d’un prestataire de paiement ou de livraison ne nous dégage pas de nos propres erreurs éventuelles.",
+        "La gestion des produits, des stocks, des commandes, des remboursements, des livraisons et du service client reste à votre charge, sauf prestation prévue séparément.",
+        "Une mise à jour à risque peut être différée avec information du client. Les travaux supplémentaires font l’objet d’un devis, sans refacturer les corrections déjà dues."
+      ]
+    },
+    {
+      "numero": 73,
+      "numero_affiche": "073",
+      "titre": "Contenus et photographies",
+      "code_contractuel": "MARIAGE-CONTENUS",
+      "public": "Consommateurs",
+      "paragraphes_contractuels": [
+        "Pour créer votre site de mariage, vous nous transmettez les textes, photographies, dates, lieux, horaires et autres informations pratiques nécessaires aux pages prévues dans votre devis.",
+        "Vous vérifiez l’exactitude des informations et vous assurez de disposer des droits et autorisations nécessaires pour publier les images et les autres contenus transmis. Une attention particulière est nécessaire lorsque des photographies représentent des invités, notamment des enfants : le fait de posséder une photo ne signifie pas automatiquement que sa diffusion sur le site est autorisée.",
+        "Nous intégrons les éléments reçus dans le cadre de la prestation convenue et vous présentons le résultat pour validation. De notre côté, nous restons responsables de la bonne exécution de cette intégration et du respect de nos propres obligations.",
+        "La rédaction de nouveaux textes, la retouche de photographies ou la création d’éléments supplémentaires ne sont comprises que si elles sont prévues au devis."
+      ]
+    },
+    {
+      "numero": 74,
+      "numero_affiche": "074",
+      "titre": "Durée de mise en ligne",
+      "code_contractuel": "MARIAGE-DUREE",
+      "public": "Consommateurs",
+      "paragraphes_contractuels": [
+        "Le site de mariage Essentiel (399 €) et Grand Jour (649 €) comprend une durée initiale de douze mois ; la formule L’Histoire (899 €) comprend vingt-quatre mois. Le point de départ est la date officielle de mise en ligne, confirmée par écrit. Le devis précise la période correspondante et un calendrier adapté à la date du mariage.",
+        "À la fin de la durée initiale comprise dans la formule, le renouvellement du site est fixé à 59 € par an, selon les conditions de reconduction automatique prévues au devis et les règles légales applicables. Les formules Essentiel et Grand Jour comprennent chacune un nom de domaine standard pendant leur première année ; L’Histoire le comprend pendant les deux années initiales. Le domaine est enregistré au nom des mariés après choix et vérification de sa disponibilité. Le forfait de 59 € comprend le maintien en ligne et le renouvellement de ce domaine standard pour une année supplémentaire. Aucun surcoût de gestion du domaine standard ne s'ajoute à ce forfait. Un domaine premium, un domaine supplémentaire ou une prestation hors formule nécessite un devis distinct et l’accord du client. La première reconduction intervient après un an pour Essentiel/Grand Jour et après deux ans pour L’Histoire.",
+        "À la fin du service, nous vous informons des modalités de fermeture et de la période prévue pour récupérer ou transférer les éléments de votre site. Les opérations de migration ou de reconstruction qui dépassent ce qui était convenu peuvent faire l’objet d’un devis complémentaire, sous réserve des prestations et restitutions déjà dues.",
+        "Les réponses des invités et les autres données personnelles ne sont pas conservées automatiquement aussi longtemps que le site reste accessible. Leur durée de conservation est déterminée selon leur utilité réelle, les modalités convenues et les règles applicables. Les sauvegardes et archives qui doivent légitimement être conservées suivent leurs propres conditions."
+      ]
+    },
+    {
+      "numero": 75,
+      "numero_affiche": "075",
+      "titre": "Périmètre de l’offre mariage",
+      "code_contractuel": "MARIAGE-PERIMETRE",
+      "public": "Consommateurs",
+      "paragraphes_contractuels": [
+        "Nous créons votre site de mariage selon la formule et les éléments détaillés dans votre devis. Il s’agit d’un site événementiel accessible pendant une durée définie, et non d’un hébergement permanent compris sans limite de temps.",
+        "Le devis indique les pages, rubriques et fonctionnalités prévues, comme la présentation de votre événement, les informations pratiques ou un formulaire de réponse des invités lorsque celui-ci est inclus. Nous réalisons la conception et la configuration technique de ces éléments.",
+        "Vous nous fournissez et validez les textes, photographies et informations nécessaires, sauf si leur création fait partie des prestations expressément commandées. Les informations relatives à vos invités sont limitées à ce qui est réellement nécessaire aux fonctionnalités prévues.",
+        "Si vous souhaitez ajouter une page, une fonctionnalité ou une connexion à un service extérieur non prévue initialement, nous vous présentons les travaux et leur prix avant de les réaliser. Les corrections nécessaires pour respecter les éléments déjà convenus restent comprises dans nos obligations."
+      ]
+    },
+    {
+      "numero": 76,
+      "numero_affiche": "076",
+      "titre": "Éléments fournis après le mariage et délai de 3 mois",
+      "code_contractuel": "MARIAGE-POST-EVENEMENT",
+      "public": "Consommateurs",
+      "paragraphes_contractuels": [
+        "Certaines formules peuvent prévoir des contenus à ajouter après votre mariage, comme une galerie de photographies, une vidéo, un diaporama ou un livre d’or. Nous réalisons uniquement les éléments et fonctionnalités expressément mentionnés dans votre devis.",
+        "Pour nous permettre d’organiser leur intégration, vous nous transmettez les contenus nécessaires dans les trois mois suivant la date du mariage.",
+        "Si vous nous les adressez après ce délai, nous convenons d’un nouveau calendrier selon nos disponibilités. Des travaux supplémentaires peuvent être proposés si le retard exige une intervention qui n’était pas comprise dans la prestation, mais ils ne sont réalisés et facturés qu’après votre accord.",
+        "Ce délai de trois mois ne supprime pas automatiquement une prestation déjà convenue et ne vous impose pas de pénalité forfaitaire. Les nouveaux contenus ou fonctionnalités non prévus au devis restent soumis à un accord complémentaire."
+      ]
+    },
+    {
+      "numero": 77,
+      "numero_affiche": "077",
+      "titre": "Accès privé",
+      "code_contractuel": "MARIAGE-PRIVE",
+      "public": "Consommateurs",
+      "paragraphes_contractuels": [
+        "Si votre formule de site de mariage prévoit un accès privé, nous mettons en place la protection définie dans le devis, par défaut un accès protégé par mot de passe pour les galeries de photographies après mariage comprises dans la formule L’Histoire. Les accès individuels nominatifs de chaque invité ne sont pas inclus.",
+        "Cette protection limite l’accès dans les conditions prévues, mais elle ne garantit pas une confidentialité absolue. Une personne qui reçoit le mot de passe ou le lien peut notamment le transmettre à quelqu’un d’autre.",
+        "Nous restons responsables de la bonne configuration des protections que nous nous sommes engagés à fournir et des mesures de sécurité qui nous incombent. Nous vous expliquons les limites connues du dispositif afin que vous puissiez choisir les informations et photographies que vous souhaitez mettre en ligne.",
+        "Avant publication, les mariés sélectionnent les photographies et confirment les autorisations de diffusion nécessaires. Une proposition d’export des contenus et photographies est faite avant la fermeture du service, dans les limites techniques et contractuelles du site."
+      ]
+    },
+    {
+      "numero": 78,
+      "numero_affiche": "078",
+      "titre": "Réponses des invités",
+      "code_contractuel": "MARIAGE-RSVP",
+      "public": "Consommateurs",
+      "paragraphes_contractuels": [
+        "Lorsque votre formule comprend un formulaire de réponse des invités, nous le configurons pour recueillir uniquement les informations nécessaires à l’organisation prévue, par exemple une confirmation de présence ou le nombre de personnes concernées, dans les limites du devis.",
+        "Par défaut, le formulaire ne demande pas de données sensibles et ne comprend pas de champ de texte libre général susceptible d’en recueillir. Les informations demandées, les personnes qui reçoivent les réponses, les droits d’accès et les durées de conservation sont définis selon le fonctionnement réel du site.",
+        "Les obligations de protection des données sont réparties selon les rôles effectivement exercés par chacun. La seule qualité de futurs mariés ne suffit pas à déterminer automatiquement votre rôle juridique dans le traitement des réponses.",
+        "Si vous envisagez de demander des informations sensibles, notamment des données de santé pouvant apparaître dans certaines indications alimentaires, cette collecte constitue une option distincte qui reste désactivée tant que sa nécessité et ses conditions légales et techniques n’ont pas été vérifiées. À défaut, les invités ou leurs représentants transmettent ces informations directement au traiteur, sans passer par le formulaire ni par les outils AtoumWeb.",
+        "Les règles générales relatives aux données et aux accès prévues dans votre contrat restent applicables.",
+        "Sauf nécessité légale ou contractuelle documentée, les données RSVP sont conservées au plus jusqu’à 90 jours après la date du mariage. Les mariés reçoivent une information sur la clôture et une possibilité d’export avant la purge. Les choix de repas standards ne doivent pas collecter d’allergies, de données de santé ou d’autres données sensibles par défaut."
+      ]
+    },
+    {
+      "numero": 79,
+      "numero_affiche": "079",
+      "titre": "Cagnotte, vidéo et services tiers",
+      "code_contractuel": "MARIAGE-TIERS",
+      "public": "Consommateurs",
+      "paragraphes_contractuels": [
+        "Votre site de mariage peut comporter les liens ou intégrations de services extérieurs indiqués dans votre devis : carte d’accès, vidéo hébergée sur une autre plateforme, liste de mariage, cagnotte ou autre service prévu.",
+        "Ces outils fonctionnent selon les conditions de leurs fournisseurs, notamment pour l’ouverture des comptes, les frais éventuels, la disponibilité et les modifications de leurs services. Nous réalisons la connexion ou l’intégration technique prévue dans votre prestation, sans pouvoir garantir les décisions ou le fonctionnement permanent de ces fournisseurs.",
+        "Si vous utilisez une cagnotte ou un service de paiement extérieur, les versements sont effectués directement auprès du prestataire concerné, selon ses conditions. AtoumWeb ne reçoit, ne détient, ne gère et ne reverse pas les fonds versés pour votre événement.",
+        "Nous restons responsables de la qualité de notre intégration et des erreurs qui nous seraient imputables. Tout service ou fonctionnement supplémentaire non compris dans le devis nécessite votre accord avant réalisation."
+      ]
+    },
+    {
+      "numero": 80,
+      "numero_affiche": "080",
+      "titre": "Zone de déplacement et frais",
+      "code_contractuel": "PHOTO-DEPLACEMENT",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "La zone de déplacement comprise dans la prestation est celle indiquée au devis ou dans le catalogue applicable. Elle peut notamment couvrir Dijon et Dijon Métropole, sans que ces territoires soient systématiquement inclus.",
+        "Si une séance nécessite un déplacement hors de cette zone ou des frais particuliers (trajet, stationnement, péage, accès, horaires ou transport), nous vous en informons avant de les engager. Les frais non compris dans votre commande ne sont facturés qu’après votre accord. Pour un client consommateur, tout paiement supplémentaire nécessite le consentement exprès prévu par la loi."
+      ]
+    },
+    {
+      "numero": 81,
+      "numero_affiche": "081",
+      "titre": "Droit d’utilisation",
+      "code_contractuel": "PHOTO-DROITS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Lorsque vous nous fournissez des photographies à retoucher, vous devez disposer des droits et autorisations nécessaires pour nous confier ce travail et permettre les utilisations convenues. Posséder un fichier ne suffit pas toujours à autoriser sa modification ou sa diffusion.",
+        "Si AtoumWeb réalise les photographies, les utilisations autorisées sont précisées dans le devis ou une annexe : supports, durée et territoire. Commander une séance ne transfère pas automatiquement tous les droits d’auteur.",
+        "Les droits du photographe et le droit à l’image des personnes représentées sont distincts. Les autorisations nécessaires sont recueillies selon la situation, notamment lorsqu’un mineur apparaît sur les photographies. Chaque partie conserve les obligations qui lui incombent.",
+        "Nous n’utilisons pas automatiquement vos portraits ou photographies personnelles pour notre portfolio, notre site ou nos réseaux sociaux. Une telle utilisation nécessite une autorisation adaptée, distincte de la commande. Les droits moraux de l’auteur et les autres règles impératives restent applicables."
+      ]
+    },
+    {
+      "numero": 82,
+      "numero_affiche": "082",
+      "titre": "Fichiers finaux et formats livrés",
+      "code_contractuel": "PHOTO-LIVRABLES",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "À la fin de la prestation, nous vous remettons les photographies finalisées dans le nombre et les formats prévus au devis. Les utilisations autorisées sont définies par les conditions de droits applicables : recevoir un fichier ne signifie pas disposer de droits d’exploitation illimités.",
+        "Les fichiers de travail (catalogues Lightroom, calques, réglages, historiques de traitement ou versions intermédiaires) ne sont pas remis automatiquement. Il en va de même pour les fichiers bruts de la séance. Leur transmission est comprise uniquement si le devis le prévoit expressément.",
+        "Pour les séances photo, les fichiers remis sont les clichés sélectionnés et finalisés en JPEG haute résolution et, si utile, dans une version adaptée au web ; les fichiers RAW et vues écartées ne sont pas compris. Les retouches livrées sont fournies au format JPEG ou PNG adapté, notamment PNG avec transparence pour le détourage ; les fichiers de travail éditables sont exclus sauf accord spécifique."
+      ]
+    },
+    {
+      "numero": 83,
+      "numero_affiche": "083",
+      "titre": "Report / annulation d’une séance",
+      "code_contractuel": "PHOTO-REPORT",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Vous pouvez demander le report d’une séance sans frais de report si votre demande nous parvient au moins quarante-huit heures avant l’horaire convenu. Nous cherchons alors une nouvelle date selon nos disponibilités respectives.",
+        "Pour une demande de report ou d’annulation faite moins de quarante-huit heures avant la séance, des frais ne peuvent s’appliquer que s’ils sont expressément prévus au devis, proportionnés et conformes aux règles applicables. Aucun forfait supplémentaire n’est facturé automatiquement.",
+        "Lorsque l’empêchement est imputable à AtoumWeb, nous proposons, selon les circonstances, un report sans frais, une solution adaptée ou un remboursement approprié.",
+        "En cas de météo incompatible avec la séance ou d’autres circonstances empêchant raisonnablement sa réalisation, nous cherchons de bonne foi une solution adaptée. Aucun report sans limite n’est imposé lorsqu’une nouvelle date n’est pas possible ou lorsque la date initiale est essentielle. Les cas de force majeure sont traités selon les règles applicables.",
+        "Les droits de rétractation éventuellement ouverts aux consommateurs restent préservés.",
+        "Pour la première demande de report présentée au moins 48 heures avant une séance, le report est gratuit, sous réserve de disponibilité. En cas d’annulation, les éventuelles sommes retenues ou dues ne peuvent correspondre qu’aux dépenses et travaux réels, justifiés et légalement admissibles ; aucune pénalité forfaitaire automatique n’est appliquée."
+      ]
+    },
+    {
+      "numero": 84,
+      "numero_affiche": "084",
+      "titre": "Périmètre de retouche et niveau de complexité",
+      "code_contractuel": "PHOTO-RETOUCHE-PERIMETRE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Le devis indique le niveau de retouche commandé. La retouche essentielle comprend les ajustements généraux et les corrections simples. La retouche avancée concerne des interventions localisées ou plus complexes, précisément définies dans la commande. Le détourage consiste à isoler un sujet de son arrière-plan avec le niveau de précision convenu.",
+        "Le résultat dépend aussi du fichier d’origine : définition, exposition, compression et état général. Nous effectuons les corrections convenues, sans promettre de recréer des détails absents ou techniquement irrécupérables.",
+        "Les catégories de prix de référence sont : retouche essentielle 19 € par photographie, avancée 39 € par photographie, détourage 9 € par photographie avec minimum de commande 45 €. Les packs Harmonie (10 photographies, 119 €), Souvenirs (30 photographies, 279 €) et Événement (60 photographies, 499 €) sont réservés aux ajustements simples et homogènes. Un cycle de corrections mineures demandé sous sept jours calendaires est compris, sans limiter la correction d’une erreur imputable à AtoumWeb. Les interventions complexes requièrent un devis accepté."
+      ]
+    },
+    {
+      "numero": 85,
+      "numero_affiche": "085",
+      "titre": "Périmètre d’un shooting",
+      "code_contractuel": "PHOTO-SHOOTING-PERIMETRE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Le devis précise la durée de la séance, les lieux, le type de prises de vue et le nombre de photographies finalisées à remettre.",
+        "Pour permettre la réalisation de la séance, vous rendez disponibles à l’heure convenue les personnes, lieux, produits, autorisations et autres éléments prévus. Un retard, une indisponibilité ou une préparation insuffisante qui vous est imputable ne prolonge pas automatiquement la séance.",
+        "Si une difficulté ne vous est pas imputable, elle est examinée selon les dispositions relatives aux reports et les règles applicables. Les fichiers bruts ne sont pas remis par défaut, sauf mention expresse au devis.",
+        "La prise de vue professionnelle n’est proposée que lorsque sa faisabilité, le matériel, la disponibilité et le périmètre sont confirmés par un devis adapté. Les anciens forfaits de prise de vue publiés ne constituent pas un engagement automatique. Les obligations relatives aux personnes photographiées et aux lieux sont vérifiées selon le projet."
+      ]
+    },
+    {
+      "numero": 86,
+      "numero_affiche": "086",
+      "titre": "Fichiers fournis",
+      "code_contractuel": "PHOTO-SOURCE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Pour la retouche, vous nous transmettez les fichiers nécessaires dans un état permettant raisonnablement le travail demandé.",
+        "La définition, l’exposition, la compression et les défauts présents sur les fichiers d’origine peuvent limiter le résultat obtenu. Si la demande suppose une reconstruction importante ou des travaux dépassant la retouche commandée, nous vous proposons une estimation complémentaire avant toute prestation supplémentaire. Aucun coût additionnel n’est engagé sans votre accord."
+      ]
+    },
+    {
+      "numero": 87,
+      "numero_affiche": "087",
+      "titre": "Règlement des différends professionnels",
+      "code_contractuel": "PRO-LITIGE",
+      "public": "Professionnels",
+      "paragraphes_contractuels": [
+        "En cas de désaccord concernant une prestation réalisée pour votre activité professionnelle, contactez-nous par écrit en précisant les difficultés rencontrées. Nous recherchons avec vous une solution amiable et répondons dans un délai raisonnable.",
+        "Lorsque les conditions du dispositif sont réunies, chacune des parties peut proposer la saisine du Médiateur des entreprises, service public gratuit destiné aux litiges entre acteurs économiques. Une médiation suppose l’accord et la participation des parties ; elle ne prive personne de la possibilité de prendre les mesures urgentes ou conservatoires nécessaires.",
+        "À défaut de solution amiable, les tribunaux compétents sont déterminés selon les règles légales. Le contrat relève du droit français dans les conditions applicables."
+      ]
+    },
+    {
+      "numero": 88,
+      "numero_affiche": "088",
+      "titre": "Délais de règlement B2B",
+      "code_contractuel": "PRO-PAIEMENT",
+      "public": "Professionnels",
+      "paragraphes_contractuels": [
+        "Pour un client professionnel, les factures sont payables aux dates indiquées dans le devis. Les acomptes et paiements intermédiaires suivent l’échéancier accepté.",
+        "Un autre délai ne s’applique que s’il a été convenu et reste dans les limites légales. La vérification d’un livrable ne reporte pas à elle seule une échéance de paiement."
+      ]
+    },
+    {
+      "numero": 89,
+      "numero_affiche": "089",
+      "titre": "Retard de paiement",
+      "code_contractuel": "PRO-RETARD",
+      "public": "Professionnels",
+      "paragraphes_contractuels": [
+        "Pour un client professionnel, une somme non payée à l’échéance entraîne des pénalités de retard dès le lendemain, sans rappel préalable.",
+        "Le taux prévu est de trois fois le taux d’intérêt légal applicable. Lorsque la loi le prévoit, une indemnité forfaitaire de 40 € pour frais de recouvrement s’ajoute, avec un éventuel complément justifié dans les conditions légales.",
+        "Ces règles ne s’appliquent pas aux consommateurs. Un impayé ne nous autorise pas à retenir abusivement votre domaine, vos données ou vos accès."
+      ]
+    },
+    {
+      "numero": 90,
+      "numero_affiche": "090",
+      "titre": "Reprise d’un site existant",
+      "code_contractuel": "REPRISE-EXISTANT",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Lorsque nous intervenons sur un site ou un projet réalisé par un autre prestataire, nous travaillons à partir de son état au moment de la reprise et des accès disponibles.",
+        "Certaines erreurs, incompatibilités ou limites techniques peuvent n’apparaître qu’après un examen plus complet. Si nous découvrons une difficulté qui change les travaux initialement envisagés, nous vous expliquons son incidence sur le périmètre, le calendrier ou le prix, avant toute intervention supplémentaire.",
+        "Une modification des prestations ou de leur prix nécessite votre accord préalable. Les problèmes déjà présents ne sont pas automatiquement imputables à AtoumWeb, mais ils ne nous dispensent pas de nos obligations ni de notre responsabilité pour les défauts causés par notre propre intervention."
+      ]
+    },
+    {
+      "numero": 91,
+      "numero_affiche": "091",
+      "titre": "Accès et données",
+      "code_contractuel": "SEO-ACCES",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Pour réaliser les actions de référencement prévues au devis, nous pouvons avoir besoin d’accéder à votre site et à certains outils de suivi, comme Google Search Console, Google Analytics ou leurs équivalents. Vous nous accordez les autorisations nécessaires, dans la limite des interventions convenues.",
+        "Vos comptes et vos données restent sous votre contrôle. Nous utilisons les accès reçus uniquement pour la mission, protégeons les identifiants qui nous sont confiés et cessons d’utiliser ces accès lorsqu’ils ne sont plus nécessaires.",
+        "Cette organisation ne supprime pas les obligations de chacune des parties en matière de sécurité et de protection des données personnelles."
+      ]
+    },
+    {
+      "numero": 92,
+      "numero_affiche": "092",
+      "titre": "Délais de résultat",
+      "code_contractuel": "SEO-DELAIS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Le référencement naturel évolue progressivement : une amélioration du contenu ou de la structure de votre site ne produit pas nécessairement des effets visibles immédiatement.",
+        "Les résultats peuvent notamment dépendre de l’ancienneté du site, de la concurrence, de sa situation technique, de la qualité des contenus et des changements décidés par les moteurs de recherche.",
+        "L’absence de progression rapide ne signifie donc pas, à elle seule, que la prestation a été mal exécutée. Nous restons néanmoins tenus de réaliser les actions et de remettre les livrables effectivement prévus au devis."
+      ]
+    },
+    {
+      "numero": 93,
+      "numero_affiche": "093",
+      "titre": "Optimisation Google Discover sans garantie d’apparition",
+      "code_contractuel": "SEO-DISCOVER",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Si votre devis prévoit une optimisation pour Google Discover, nous intervenons sur les éléments techniques et éditoriaux convenus afin de rendre vos contenus plus adaptés aux critères de ce service.",
+        "Google décide seul des contenus qu’il explore, sélectionne et présente aux internautes. Même après les optimisations, nous ne pouvons pas garantir qu’un article apparaîtra dans Google Discover, qu’il y restera pendant une durée déterminée ou qu’il générera un nombre précis de visites.",
+        "Nous restons responsables de l’exécution des optimisations comprises dans votre prestation."
+      ]
+    },
+    {
+      "numero": 94,
+      "numero_affiche": "094",
+      "titre": "Suivi Google Business Profile",
+      "code_contractuel": "SEO-GBP-SUIVI",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous assurons les interventions convenues sur votre fiche Google Business Profile, selon le contenu et la fréquence précisés dans votre devis.",
+        "Vous nous accordez un accès adapté à la fiche et validez les informations relatives à votre entreprise ainsi que les contenus ou réponses qui doivent être publiés en votre nom. Nous réalisons les actions de suivi, de mise à jour ou d’accompagnement effectivement comprises dans la prestation.",
+        "Google conserve la maîtrise des procédures de vérification, des suspensions, des refus, des délais de traitement et de l’affichage de la fiche. Nous ne pouvons donc garantir ni sa disponibilité permanente, ni son classement local, ni l’acceptation d’une publication ou d’une modification par Google.",
+        "Ces limites ne nous dispensent pas d’effectuer correctement les actions dont nous avons la charge.",
+        "Les suivis GBP Essentiel et Premium peuvent être choisis au mois ou à l’année selon la grille validée. Les abonnements annuels reconduits automatiquement respectent leurs conditions légales d’information et de sortie. Les opérations ne commencent à être facturées qu’à partir de la prise en charge effective confirmée par écrit, les accès et contenus indispensables étant disponibles. Tout blocage d’accès pendant le service est signalé et documenté ; les tâches encore possibles se poursuivent, et la régularisation est proportionnée.",
+        "Les fiches GBP et les comptes associés restent au nom du client. AtoumWeb reçoit un accès délégué et révocable et ne garantit aucun classement ni décision de la plateforme.",
+        "La création initiale et la configuration d’une fiche Google Business Profile, si nécessaires, ne sont pas incluses dans l’abonnement de suivi et sont chiffrées séparément après accord écrit. Le suivi commence à la prise en charge effective de la fiche et des accès. Les publications rendues impossibles par des éléments ou validations manquants du client, malgré relance raisonnable, ne sont pas reportées automatiquement ; les retards imputables à AtoumWeb sont régularisés sans supplément.",
+        "La résiliation mensuelle prend effet à la fin de la période déjà payée, sans pénalité ; la clôture standard et le dernier bilan normalement prévu sont inclus. Les accès AtoumWeb sont retirés à la sortie, le compte et ses droits restant au client. Nous ne garantissons ni positionnement Google ni nombre de contacts ou de ventes."
+      ]
+    },
+    {
+      "numero": 95,
+      "numero_affiche": "095",
+      "titre": "Périmètre SEO local",
+      "code_contractuel": "SEO-LOCAL-PERIMETRE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous travaillons sur la visibilité locale de votre activité dans les limites définies par votre devis : établissements concernés, villes ou zones desservies, pages du site et plateformes prévues.",
+        "Vous nous communiquez et validez les informations nécessaires, notamment votre adresse ou votre zone d’intervention, vos horaires, vos coordonnées, vos catégories d’activité et les contenus à présenter.",
+        "Nous réalisons les optimisations convenues pour améliorer la présentation et la pertinence de ces informations. Nous ne pouvons toutefois promettre une place précise dans les résultats locaux, un volume garanti de contacts ou une visibilité constante : les plateformes décident de la manière dont elles vérifient, sélectionnent et affichent les informations.",
+        "Les actions et livrables prévus au devis restent dus, indépendamment de ces résultats."
+      ]
+    },
+    {
+      "numero": 96,
+      "numero_affiche": "096",
+      "titre": "Obligation de moyens",
+      "code_contractuel": "SEO-MOYENS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Notre prestation de référencement naturel repose sur une obligation de moyens : nous nous engageons à réaliser les analyses, conseils et optimisations décrits dans votre devis, avec le soin attendu d’un professionnel.",
+        "Le classement d’un site dépend aussi des décisions des moteurs de recherche et de facteurs que nous ne maîtrisons pas entièrement. Nous ne garantissons donc pas une position particulière sur Google, un nombre précis de visites ou un chiffre d’affaires lié aux actions menées.",
+        "Cette absence de garantie de résultat ne réduit pas notre obligation d’effectuer les travaux convenus, de remettre les livrables promis et de corriger les manquements qui nous sont imputables.",
+        "Nos prestations d’optimisation et de suivi garantissent la réalisation des actions, rapports et livrables stipulés au devis, non un classement, un trafic, un nombre de contacts ou un chiffre d’affaires. Les manquements à nos prestations restent rectifiés conformément au contrat et aux droits du client."
+      ]
+    },
+    {
+      "numero": 97,
+      "numero_affiche": "097",
+      "titre": "Netlinking, supports tiers et maintien des liens",
+      "code_contractuel": "SEO-NETLINKING",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Lorsque votre devis prévoit des actions de création de liens vers votre site, nous pouvons vous accompagner dans la définition de la stratégie, la recherche de supports, leur sélection et le suivi des démarches convenues.",
+        "Dans le modèle de prestation retenu, vous choisissez les publications ou liens proposés et vous contractez directement avec les éditeurs concernés. Vous réglez leurs éventuels frais vous-même : ces coûts sont distincts des honoraires d’AtoumWeb. Nous n’achetons pas de publication en votre nom.",
+        "Lorsqu’une publication est publicitaire, sa nature commerciale et l’identité de l’annonceur doivent être signalées selon les règles applicables. Les liens et contenus restent également soumis aux conditions des supports qui les hébergent.",
+        "Nous ne pouvons garantir qu’un éditeur maintiendra un lien indéfiniment, que celui-ci sera indexé ou qu’il améliorera votre classement. Si un lien est refusé ou supprimé, les suites dépendent des engagements pris au devis, sans supprimer nos propres obligations.",
+        "Les actions de netlinking proposées sur devis privilégient des partenariats et citations locales pertinentes et licites. Elles excluent la création systématique de liens artificiels ou les montages de liens payants destinés à contourner les règles des moteurs de recherche. Aucun résultat de classement ni maintien indéfini d’un lien tiers n’est garanti."
+      ]
+    },
+    {
+      "numero": 98,
+      "numero_affiche": "098",
+      "titre": "Optimisation vitesse et performances",
+      "code_contractuel": "SEO-PERFORMANCE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous réalisons les améliorations de vitesse et de performance prévues au devis sur les pages et l’environnement technique qui y sont identifiés.",
+        "La vitesse d’un site peut varier selon son hébergement, son thème, ses extensions, les contenus affichés, les services extérieurs, l’appareil utilisé ou les conditions de mesure. Les résultats constatés à un moment donné ne sont donc pas nécessairement identiques dans toutes les situations.",
+        "Nous mettons en œuvre les optimisations convenues et vous présentons les éléments de suivi ou de vérification prévus dans la prestation. Sauf engagement précis accepté dans votre devis, nous ne garantissons pas durablement un score d’outil de mesure ou un temps de chargement déterminé.",
+        "Cette limite ne nous dégage pas d’un objectif expressément promis ni de la correction des défauts qui nous sont imputables."
+      ]
+    },
+    {
+      "numero": 99,
+      "numero_affiche": "099",
+      "titre": "Packs d’heures : décompte, validité et solde",
+      "code_contractuel": "SERVICE-PACK-HEURES",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Votre pack d’heures couvre les interventions prévues au devis pendant sa durée de validité. Le devis indique le nombre d’heures, la méthode de décompte et la date limite d’utilisation.",
+        "Nous suivons le temps utilisé et vous communiquons le solde prévu. Les demandes qui dépassent votre pack nécessitent votre accord sur un nouveau devis.",
+        "Les heures non utilisées peuvent expirer à la date acceptée. Si nous n’avons pas pu réaliser à temps une intervention valablement demandée pour une raison qui nous est imputable, nous adaptons la durée afin de permettre son exécution.",
+        "Vos droits en cas de prestation non réalisée restent préservés. Les petites interventions de maintenance mensuelle suivent leurs propres règles et ne constituent pas un pack d’heures.",
+        "Les packs d’interventions 3 h (189 €), 5 h (299 €) et 10 h (549 €) sont décomptés par quarts d’heure. Leur validité commerciale est de 24 mois, avec possibilité d’une prolongation de trois mois dans les conditions prévues au devis. Aucun décompte n’est réalisé pour la correction d’une faute imputable à AtoumWeb."
+      ]
+    },
+    {
+      "numero": 100,
+      "numero_affiche": "100",
+      "titre": "Périmètre d’une prestation ponctuelle",
+      "code_contractuel": "SERVICE-PONCTUEL-PERIMETRE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Une intervention ponctuelle couvre les travaux et les livrables expressément indiqués dans votre devis. Nous intervenons à partir des informations, des éléments et des accès disponibles au démarrage, dans les conditions prévues.",
+        "Si vous souhaitez ajouter un objectif, un livrable, une nouvelle intervention ou une contrainte qui n’était pas prévu, nous en discutons avant sa réalisation. Cet ajout peut nécessiter un devis ou un prix complémentaire que vous devez accepter au préalable.",
+        "Une intervention ponctuelle ne comprend pas automatiquement une surveillance continue, une maintenance récurrente ou des interventions ultérieures non prévues. Les corrections qui nous sont déjà dues restent soumises aux règles applicables."
+      ]
+    },
+    {
+      "numero": 101,
+      "numero_affiche": "101",
+      "titre": "Dépendances et coûts de services tiers",
+      "code_contractuel": "SERVICE-TIERS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Certaines prestations utilisent des outils ou services fournis par d’autres entreprises : hébergeur, logiciel, extension, interface de connexion ou plateforme externe. Leur disponibilité et leurs règles d’utilisation peuvent influencer le fonctionnement du service convenu.",
+        "Les abonnements, licences, commissions et autres frais de ces fournisseurs ne sont compris dans notre prix que s’ils sont expressément indiqués au devis. Nous vous informons lorsque nous avons connaissance d’un blocage lié à un tiers qui affecte notre prestation.",
+        "Lorsque cela est techniquement et commercialement possible, nous pouvons examiner avec vous une adaptation ou une solution alternative. Les travaux ou frais supplémentaires éventuels sont soumis à votre accord. Le recours à un fournisseur tiers ne supprime pas la responsabilité d’AtoumWeb pour la partie de la prestation qui lui incombe.",
+        "Sauf inclusion expressément précisée au devis, les forfaits Brevo, licences, abonnements, crédits d’envoi et frais de plateforme sont directement souscrits et réglés par le client sur ses propres comptes. Nous l’alertons avant tout frais tiers nécessaire. En cas de changement ou panne durable d’un fournisseur, nous cherchons une solution raisonnable et proposons les travaux importants sur devis ; lorsque le service ne peut plus être exécuté, les parties organisent son arrêt et une régularisation conforme aux obligations de chacune."
+      ]
+    },
+    {
+      "numero": 102,
+      "numero_affiche": "102",
+      "titre": "Hébergement seul sans maintenance",
+      "code_contractuel": "TECH-HEBERGEMENT",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Si vous souhaitez rester hébergé chez AtoumWeb sans maintenance, vous devez accepter notre formule « Hébergement isolé avec Lune dédiée », ou choisir librement un autre hébergeur.",
+        "Pour un site WordPress standard, le tarif annuel de l’hébergement isolé avec Lune dédiée (voir les définitions) figure dans votre devis et dans la grille tarifaire applicable. Le nom de domaine et sa gestion éventuelle sont facturés à part. Une boutique WooCommerce avec des besoins particuliers peut nécessiter un devis adapté.",
+        "Cette offre couvre l’environnement technique convenu et l’accès aux sauvegardes techniques proposées par l’hébergeur dans leurs limites. Elle ne comprend pas les mises à jour ou la maintenance de WordPress, des thèmes et des extensions. Une restauration manuelle par AtoumWeb est sur devis, sauf correction d’une erreur qui nous est imputable.",
+        "Si votre site est déjà hébergé chez AtoumWeb, son transfert interne vers la Lune dédiée est gratuit. Un transfert depuis un hébergeur extérieur, une refonte ou des travaux supplémentaires sont chiffrés séparément.",
+        "À votre demande, nous pouvons fournir un accès cPanel limité à votre Lune, sans exposer les comptes des autres clients.",
+        "La nouvelle année d’hébergement commence à la fin effective de la maintenance, seulement après votre accord exprès et selon les conditions de paiement convenues. Après cette souscription initiale, le renouvellement annuel est automatique selon les modalités communiquées et les règles applicables. Vous pouvez vous opposer au renouvellement avant échéance, sans préavis contractuel spécifique ; le service déjà payé se poursuit jusqu’à son terme. Nous organisons la restitution des éléments qui vous appartiennent en cas de départ.",
+        "La formule Lune dédiée à 149 € par an s’applique par client et espace cPanel isolé ; plusieurs sites appartenant au même client peuvent y être hébergés après vérification de faisabilité, sans second forfait Lune automatique. Les domaines et les prestations de maintenance restent distincts. Un accès cPanel du client à sa propre Lune peut être remis avec une authentification renforcée ; aucun accès au compte principal de l’hébergeur n’est communiqué.",
+        "Le nom de domaine standard demeure la propriété du client. Hors formule mariage comprenant expressément le domaine standard, sa gestion est tarifée 29 € par an en plus des frais du registrar, et son renouvellement n’est effectué qu’après consentement exprès, avec rappels d’échéance si possible.",
+        "Les renouvellements de la Lune dédiée sont facturés et payables à l’échéance annuelle. Le client peut s’opposer à la reconduction au plus tard la veille de cette échéance. En cas de demande d’arrêt anticipé pour convenance personnelle, il n’existe pas de remboursement automatique au prorata, sous réserve des droits légaux, du contrat et d’une éventuelle inexécution. Aucune pause n’est accordée automatiquement ; un accord écrit peut aménager exceptionnellement la période.",
+        "Si une augmentation tarifaire est envisagée pour l’année suivante, elle ne s’applique qu’après acceptation écrite du nouveau prix. Aucune exclusion automatique des accès et aucune suppression immédiate des données ne résulte d’un simple impayé ; les opérations de restitution et la durée de conservation technique sont prévues séparément."
+      ]
+    },
+    {
+      "numero": 103,
+      "numero_affiche": "103",
+      "titre": "Migration WordPress / hébergement",
+      "code_contractuel": "TECH-MIGRATION",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Une migration consiste à transférer les fichiers, données et éléments décrits au devis vers un nouvel hébergement.",
+        "Nous vous signalons les incompatibilités, interruptions ou frais supplémentaires prévisibles et demandons votre accord avant les travaux hors périmètre.",
+        "Le transfert interne d’un site déjà hébergé chez AtoumWeb vers sa Lune dédiée (voir les définitions) est inclus. Une arrivée depuis un hébergeur extérieur ou une assistance au départ vers un tiers fait l’objet d’un devis, si elle n’est pas déjà comprise.",
+        "Nous vous remettons les éléments restituables de votre site. Les corrections qui nous incombent ne deviennent pas payantes du seul fait du transfert.",
+        "Une migration WordPress standard depuis un hébergeur extérieur est proposée à 99 € lorsqu’elle entre dans ce périmètre ; une migration complexe est facturée à partir de 199 €, selon devis accepté. Le transfert interne vers une Lune AtoumWeb reste gratuit. À la fin d’un hébergement, l’export standard et une conservation sécurisée de 30 jours suivent les conditions de sortie convenues ; l’assistance à une migration extérieure peut être facturée à part."
+      ]
+    },
+    {
+      "numero": 104,
+      "numero_affiche": "104",
+      "titre": "Étapes de relecture et de correction",
+      "code_contractuel": "WEB-AR",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Pendant la création de votre site, nous prévoyons les étapes de relecture et de correction indiquées dans le devis. Elles vous permettent de vérifier le travail réalisé et de demander les ajustements nécessaires sur les éléments déjà compris dans le projet.",
+        "Une correction peut, par exemple, porter sur la présentation d’une page, un texte intégré ou un élément graphique prévu au devis. Elle ne doit pas être confondue avec une nouvelle demande : l’ajout d’une page, d’une fonctionnalité, d’un contenu à créer, d’une connexion à un service extérieur ou une modification importante du projet peut nécessiter un devis complémentaire.",
+        "Pour faciliter les échanges et avancer dans de bonnes conditions, nous vous invitons à regrouper autant que possible vos observations à chaque étape de validation. Nous vous précisons les éventuels travaux supplémentaires et leur prix avant de les entreprendre.",
+        "Les corrections nécessaires pour respecter les prestations promises, remédier à une erreur qui nous est imputable ou satisfaire à une garantie applicable restent dues indépendamment du nombre d’étapes de relecture et de correction prévu au devis.",
+        "Pour un site vitrine, le déroulement standard prévoit un cycle après présentation de la maquette puis un cycle avant livraison, sauf stipulation différente. Les ajustements destinés à corriger les erreurs imputables à AtoumWeb ne réduisent pas le nombre de cycles. Les validations sont écrites ; le délai indicatif de retour sur maquette est de 10 jours ouvrés, avec relance vers le septième jour ouvré."
+      ]
+    },
+    {
+      "numero": 105,
+      "numero_affiche": "105",
+      "titre": "Compatibilité",
+      "code_contractuel": "WEB-COMPATIBILITE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Votre site est conçu pour fonctionner sur les navigateurs, appareils et environnements précisés dans le devis ou dans une annexe qui vous est remise avant votre accord. Cela comprend, selon le périmètre convenu, l’affichage sur ordinateur, tablette et smartphone. Nous vérifions le site dans ces conditions avant sa livraison.",
+        "Des différences mineures de présentation peuvent exister d’un navigateur ou d’un appareil à l’autre, sans empêcher le bon usage des fonctionnalités prévues. En revanche, un défaut de fonctionnement ou d’affichage qui rend le site non conforme à ce qui a été convenu doit être corrigé dans le cadre de nos obligations.",
+        "Nous ne pouvons pas garantir une compatibilité avec tous les appareils existants, les anciens navigateurs qui ne sont plus maintenus ou les versions de logiciels qui paraîtront après la livraison.",
+        "Si vous souhaitez ensuite adapter le site à un environnement non prévu initialement, nous pouvons étudier cette demande au titre de la maintenance ou d’un devis complémentaire, avec votre accord avant toute facturation supplémentaire. Cette limite ne réduit ni les garanties légales ni les corrections et mises à jour déjà dues par AtoumWeb."
+      ]
+    },
+    {
+      "numero": 106,
+      "numero_affiche": "106",
+      "titre": "Fourniture des contenus",
+      "code_contractuel": "WEB-CONTENUS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Vous nous fournissez les textes, images, logos, photographies, vidéos et informations prévus au devis. Vous vérifiez leur exactitude et vous assurez de disposer des droits et autorisations nécessaires pour les utiliser et les publier, notamment lorsque des personnes identifiables figurent sur des images.",
+        "Nous utilisons ces éléments uniquement pour réaliser les prestations convenues. Si nous détectons un risque apparent concernant les droits ou l’utilisation d’un contenu, nous vous le signalons avant sa publication. Nous restons responsables de nos propres créations, erreurs et interventions.",
+        "Si un tiers formule une réclamation liée à un contenu que vous avez fourni, nous vous en informons sans délai injustifié et recherchons une solution adaptée. Nous pouvons retirer ou suspendre temporairement le seul contenu contesté si cela est nécessaire et proportionné.",
+        "Pour un client professionnel, les conséquences financières directement causées par la fourniture d’un contenu utilisé sans les droits requis peuvent être mises à sa charge dans la mesure où sa responsabilité est établie. Elles excluent nos propres fautes et doivent être justifiées. Aucun frais ou règlement transactionnel décidé unilatéralement par AtoumWeb n’est automatiquement opposable au client.",
+        "Une création de contenu supplémentaire et une nouvelle autorisation d’exploitation ne sont pas comprises dans la commande si elles ne figurent pas au devis."
+      ]
+    },
+    {
+      "numero": 107,
+      "numero_affiche": "107",
+      "titre": "Formulaire avancé et traitement des données",
+      "code_contractuel": "WEB-FORMULAIRE-AVANCE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous créons et configurons votre formulaire selon les fonctionnalités décrites dans le devis : champs à remplir, conditions d’affichage, messages de confirmation et traitements des réponses prévus pour votre projet.",
+        "Vous nous indiquez quelles informations doivent être demandées aux utilisateurs, pourquoi elles sont nécessaires, à qui les réponses seront destinées et quelles informations doivent être affichées au moment de leur collecte. Nous vous présentons le fonctionnement prévu afin que vous puissiez le vérifier avant la mise en ligne.",
+        "L’enregistrement des réponses, leur durée de conservation technique, les notifications, les automatisations et les connexions à des services extérieurs ne sont compris que lorsqu’ils sont expressément prévus au devis. Toute fonctionnalité supplémentaire est proposée et chiffrée avant sa réalisation.",
+        "La mise en place technique d’un formulaire ne garantit pas, à elle seule, la conformité de votre activité aux règles de protection des données personnelles. Les responsabilités respectives concernant les données collectées, les mentions à fournir, leur conservation et les éventuelles instructions de traitement doivent être précisées selon le fonctionnement réel du projet et les obligations applicables. Cette clause ne réduit pas les obligations légales qui incombent à AtoumWeb dans son propre rôle."
+      ]
+    },
+    {
+      "numero": 108,
+      "numero_affiche": "108",
+      "titre": "Hébergement et nom de domaine",
+      "code_contractuel": "WEB-HEBERGEMENT",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Le devis précise si l’hébergement ou l’enregistrement initial d’un domaine est compris dans la création du site, pour combien de temps et à quel prix. Une période incluse ou offerte n’est pas refacturée.",
+        "Le nom de domaine est distinct de l’hébergement. Son renouvellement et sa gestion éventuelle sont facturés séparément, selon sa propre échéance. Il reste au nom de son titulaire.",
+        "Si votre maintenance comprend l’hébergement, vous ne payez aucun supplément d’hébergement isolé pendant cette même période.",
+        "Lorsque la maintenance prend fin, qu’elle s’arrête à votre demande ou à la nôtre, nous organisons avec vous la suite de l’hébergement. Vous pouvez partir chez un autre hébergeur ou accepter séparément notre formule « Hébergement isolé avec Lune dédiée » (voir les définitions), au prix du devis. Si nous mettons fin à une maintenance mensuelle comprenant l’hébergement, notre préavis écrit d’au moins 30 jours sert aussi à préparer la transition. La formule isolée ne commence qu’après la maintenance et votre accord exprès, avec sa propre date anniversaire et sans double facturation.",
+        "Le transfert interne vers la Lune dédiée est inclus. Le départ vers un hébergeur extérieur reste libre ; une assistance technique supplémentaire peut faire l’objet d’un devis.",
+        "L’hébergement isolé comprend l’administration de l’espace technique prévu, mais pas les mises à jour WordPress. Seules les sauvegardes techniques de l’hébergeur sont incluses ; les restaurations manuelles par AtoumWeb sont proposées sur devis, sauf correction d’un manquement qui nous est imputable.",
+        "En cas de retour à une maintenance comprenant l’hébergement alors qu’une année d’hébergement isolé est déjà réglée, la période restante est régularisée au prorata.",
+        "Hors site de mariage, le renouvellement d’un domaine standard suppose l’accord exprès du client, indépendamment du renouvellement de l’hébergement. Pour les sites de mariage, le renouvellement annuel de 59 € comprend expressément le domaine standard dans la limite des conditions de l’offre ; aucun double renouvellement de domaine ne doit être facturé."
+      ]
+    },
+    {
+      "numero": 109,
+      "numero_affiche": "109",
+      "titre": "Thèmes, extensions, polices et services tiers",
+      "code_contractuel": "WEB-LICENCES",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Votre site peut utiliser des outils et services proposés par d’autres éditeurs, comme des thèmes WordPress, Divi, des extensions, des polices ou des services externes. Le devis précise les licences et abonnements compris dans notre prestation, leur durée lorsqu’elle est définie et les éventuels frais qui restent à votre charge.",
+        "Certains composants nécessitent un abonnement pour recevoir des mises à jour, bénéficier de l’assistance de leur éditeur ou continuer à utiliser certaines fonctions. Le renouvellement d’une licence peut donc vous incomber, selon ce qui a été convenu. Une licence mise à disposition par AtoumWeb ne devient pas automatiquement une licence personnelle transférable à votre nom : les conditions d’utilisation de l’éditeur et le devis déterminent les droits associés.",
+        "Si un éditeur modifie ses conditions, arrête un service ou cesse de maintenir un composant, une adaptation peut être nécessaire. Nous vous expliquons les conséquences connues pour votre site et, si des travaux supplémentaires sont nécessaires, leur coût avant réalisation. Cette situation ne supprime pas les corrections, garanties ou obligations qui restent à notre charge."
+      ]
+    },
+    {
+      "numero": 110,
+      "numero_affiche": "110",
+      "titre": "Mise en ligne et environnement technique",
+      "code_contractuel": "WEB-MISE-EN-LIGNE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "La mise en ligne de votre site intervient selon les étapes et les conditions prévues au devis, après la validation nécessaire du site. Pour la réaliser, nous devons disposer des accès techniques autorisés et d’un hébergement, d’un nom de domaine ainsi que des services indispensables en état de fonctionner.",
+        "Nous prenons en charge les opérations de préparation, de configuration et de publication qui relèvent de notre prestation. Si un accès manque ou si un fournisseur extérieur rencontre un problème bloquant, nous vous en informons et vous indiquons, dans la mesure du possible, les actions concernées et les conséquences prévisibles sur la date de mise en ligne.",
+        "Le fait qu’un incident provienne d’un hébergeur, d’un registraire de domaine ou d’un autre prestataire ne nous dégage pas automatiquement de nos propres responsabilités. Tout report du calendrier doit être lié à l’empêchement rencontré et aux obligations de chacun. Les corrections déjà dues par AtoumWeb restent comprises dans notre engagement."
+      ]
+    },
+    {
+      "numero": 111,
+      "numero_affiche": "111",
+      "titre": "Périmètre multilingue et traductions fournies",
+      "code_contractuel": "WEB-MULTILINGUE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Lorsque vous choisissez un site multilingue, nous configurons les langues et intégrons les contenus traduits prévus au devis. Celui-ci précise les langues concernées ainsi que les pages, menus ou fonctionnalités à adapter.",
+        "Sauf si vous avez également commandé une prestation de traduction, vous nous transmettez les textes dans chaque langue et vous en validez le contenu. Notre travail d’intégration ne constitue pas une vérification linguistique ou juridique des traductions fournies.",
+        "L’ajout d’une langue, la traduction de nouveaux textes ou l’adaptation de pages et de fonctionnalités non prévues initialement peuvent faire l’objet d’une proposition complémentaire, acceptée avant réalisation. Nous restons responsables de la bonne réalisation des éléments techniques et des intégrations compris dans notre prestation."
+      ]
+    },
+    {
+      "numero": 112,
+      "numero_affiche": "112",
+      "titre": "Périmètre d’intégration newsletter",
+      "code_contractuel": "WEB-NEWSLETTER-PERIMETRE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous intégrons à votre site le formulaire d’inscription à la newsletter et sa connexion standard au service d’envoi indiqué dans le devis.",
+        "Vous nous communiquez les accès nécessaires, les listes de destinataires que vous êtes autorisé à utiliser ainsi que les informations à présenter aux personnes qui s’inscrivent. Les modalités de recueil du consentement, lorsqu’il est requis, et les autres règles applicables à vos communications doivent être définies en fonction de votre activité et de l’usage prévu.",
+        "La création des campagnes, la rédaction des courriels, les scénarios d’envoi automatisés, la segmentation des contacts et le transfert d’anciennes listes ne sont compris que s’ils figurent expressément au devis. Les éventuels frais du service d’envoi suivent ses propres conditions et les éléments convenus avec vous.",
+        "Nous assurons la configuration technique prévue dans notre prestation, sans garantir à elle seule la conformité de l’ensemble de votre activité de prospection. Cette répartition ne nous dégage pas des obligations légales qui nous incombent dans notre propre rôle.",
+        "La présente clause concerne l’intégration technique d’un formulaire de newsletter et ne crée pas à elle seule un abonnement à la rédaction et à l’envoi des campagnes. Les contrats de campagne ponctuelle et de suivi récurrent font l’objet de fiches et d’engagements distincts."
+      ]
+    },
+    {
+      "numero": 113,
+      "numero_affiche": "113",
+      "titre": "Périmètre du forfait Site vitrine 5 pages",
+      "code_contractuel": "WEB-OFFRE-5P-PERIMETRE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Le forfait « Site vitrine 5 pages », au prix indiqué dans votre devis, comprend, sauf adaptation acceptée ensemble : Accueil, Services, À propos, Réalisations et Contact.",
+        "Ces cinq pages peuvent être adaptées à votre activité. Votre devis précise les fonctionnalités, contenus, visuels et formulaires compris.",
+        "La création et l’intégration des pages « Mentions légales » et « Politique de confidentialité » sont incluses dans le forfait, sans supplément. Ces pages ne comptent pas parmi les cinq pages commerciales. Vous nous fournissez les informations légales propres à votre activité et vous en validez l’exactitude ; nous les intégrons et les mettons en forme sur votre site.",
+        "Le forfait comprend également la première année d’hébergement du site. La maintenance WordPress n’est pas incluse dans le prix de création : elle peut être souscrite séparément. Les conditions concernant le nom de domaine figurent dans votre devis.",
+        "Au moins 30 jours avant la fin de la première année d’hébergement, nous vous informons par écrit de son échéance. Pour la suite, vous pouvez choisir une maintenance comprenant l’hébergement, accepter séparément notre formule « Hébergement isolé avec Lune dédiée » (voir les définitions), ou transférer votre site chez un autre hébergeur. Nous organisons avec vous la récupération du site si nécessaire. Aucun renouvellement n’est automatique et aucune nouvelle formule n’est facturée sans votre accord exprès.",
+        "Toute page ou prestation supplémentaire nécessite votre accord sur son prix. Les corrections déjà dues restent comprises."
+      ]
+    },
+    {
+      "numero": 114,
+      "numero_affiche": "114",
+      "titre": "Périmètre d’une page supplémentaire",
+      "code_contractuel": "WEB-PAGE-SUP-PERIMETRE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous ajoutons la page supplémentaire décrite au devis dans le respect de l’identité visuelle et du fonctionnement général de votre site. Son contenu et son objectif sont ceux convenus ensemble, à partir des éléments que vous nous fournissez ou des prestations de création de contenus expressément commandées.",
+        "Cette prestation concerne la réalisation de la page prévue. Elle ne comprend pas automatiquement une nouvelle fonctionnalité, une connexion à un service extérieur ou la création d’un volume de contenu dépassant ce qui a été convenu.",
+        "Si votre demande nécessite des travaux supplémentaires, nous vous en expliquons la portée et vous proposons un prix avant de les réaliser. Les corrections nécessaires pour rendre la page conforme au devis restent comprises dans nos obligations."
+      ]
+    },
+    {
+      "numero": 115,
+      "numero_affiche": "115",
+      "titre": "Paiement simple via prestataire tiers",
+      "code_contractuel": "WEB-PAIEMENT-TIERS",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Lorsque votre site nécessite un paiement en ligne simple, nous intégrons la solution extérieure prévue au devis, par exemple Stripe ou PayPal, dans les limites du fonctionnement convenu.",
+        "Le compte de paiement est ouvert et détenu à votre nom. Vous contractez directement avec le prestataire choisi et les sommes versées par vos clients sont reçues sur votre propre compte auprès de ce prestataire. AtoumWeb ne reçoit, ne conserve et ne reverse pas ces fonds pour votre compte.",
+        "Vous nous communiquez uniquement les accès et autorisations nécessaires à l’intégration. Les frais de transaction, les vérifications d’identité et les conditions de fonctionnement du service dépendent du prestataire, selon la clause commune relative aux services extérieurs et les éléments indiqués au devis.",
+        "Notre rôle consiste à configurer et à vérifier l’intégration technique prévue, sans garantir les décisions du prestataire ni la disponibilité permanente de son service. Nous restons responsables des erreurs de configuration ou des manquements qui nous sont imputables. Toute fonction supplémentaire nécessite votre accord sur son prix avant réalisation."
+      ]
+    },
+    {
+      "numero": 116,
+      "numero_affiche": "116",
+      "titre": "Périmètre portfolio / réalisations",
+      "code_contractuel": "WEB-PORTFOLIO-PERIMETRE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous créons l’espace « Réalisations » ou « Portfolio » décrit dans votre devis pour présenter vos projets, références ou travaux. La structure des pages et le nombre de réalisations à intégrer correspondent au périmètre convenu.",
+        "Vous nous fournissez les textes, photographies et informations nécessaires, ainsi que les autorisations permettant leur publication. Si le devis prévoit leur rédaction, leur retouche ou leur mise en forme particulière, nous réalisons également ces prestations dans les limites indiquées.",
+        "L’import d’un grand nombre de réalisations, les filtres avancés, un moteur de recherche ou un développement spécifique ne sont compris que s’ils figurent au devis. Dans le cas contraire, nous vous présentons une proposition complémentaire avant toute réalisation payante.",
+        "Nous assurons les corrections nécessaires pour que la présentation livrée corresponde aux éléments convenus."
+      ]
+    },
+    {
+      "numero": 117,
+      "numero_affiche": "117",
+      "titre": "Réservation via service externe",
+      "code_contractuel": "WEB-RESA-EXT",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous intégrons à votre site le service de réservation extérieur indiqué dans votre devis, selon le mode de connexion et les fonctions convenus.",
+        "Les disponibilités, confirmations, éventuels paiements et informations enregistrées par ce service dépendent de son paramétrage et de ses propres conditions. Le devis précise les réglages qui relèvent de notre intervention et ceux que vous gérez directement auprès du fournisseur.",
+        "Nous ne garantissons pas le fonctionnement permanent du service extérieur, mais nous restons responsables de la bonne réalisation de notre intégration et des corrections qui nous incombent. Si une évolution souhaitée dépasse les fonctions standard du service ou le périmètre accepté, nous vous proposons une prestation complémentaire avant sa réalisation.",
+        "Les éventuels frais d’abonnement, règles de paiement et obligations concernant les données des personnes qui réservent restent soumis aux conditions convenues et aux règles applicables."
+      ]
+    },
+    {
+      "numero": 118,
+      "numero_affiche": "118",
+      "titre": "Validation avant mise en ligne",
+      "code_contractuel": "WEB-VALIDATION",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Avant la mise en ligne, nous vous présentons le site pour que vous puissiez vérifier les contenus, coordonnées, liens, formulaires et informations propres à votre activité.",
+        "Nous vérifions les aspects techniques prévus à notre charge. Votre validation est demandée clairement et conservée par écrit ; le silence ne vaut pas acceptation.",
+        "Sans réponse, nous suivons les relances prévues à la clause 014. La mise en ligne intervient ensuite selon les conditions convenues. Les corrections et garanties qui nous incombent restent applicables.",
+        "La livraison officielle est datée et constatée par signature ou accord écrit explicite, y compris e-mail, et la confirmation peut intervenir à une date différente. La garantie corrective contractuelle standard de 30 jours court à compter de cette livraison officielle documentée, sans réduire les garanties légales impératives. La fiche de livraison précise les éléments remis, notamment accès, hébergement, licences et modalités de sortie."
+      ]
+    },
+    {
+      "numero": 119,
+      "numero_affiche": "119",
+      "titre": "Autorisation de références commerciales",
+      "code_contractuel": "BASE-REFERENCES-AGENCE",
+      "public": "Tous publics",
+      "paragraphes_contractuels": [
+        "Nous pouvons souhaiter présenter une réalisation effectuée pour vous dans notre portfolio, sur notre site ou dans nos supports commerciaux. Nous n’utilisons pas votre nom, votre logo, des captures de votre site ou des informations non publiques à cette fin sans votre autorisation préalable et distincte.",
+        "Cette autorisation précise les éléments que nous pouvons montrer et les supports concernés. Elle est facultative : votre refus n’a aucune conséquence sur le prix ni sur l’exécution de votre commande.",
+        "Vous pouvez retirer cette autorisation pour l’avenir par simple demande écrite. Nous retirons alors les références des supports numériques sous notre contrôle dans un délai raisonnable, sans pouvoir reprendre les documents physiques déjà diffusés ni les copies indépendantes de tiers.",
+        "Nous n’ajoutons pas de signature « Site réalisé par AtoumWeb » sur votre site sans votre accord spécifique. Les règles de confidentialité, de protection des données et de droits à l’image restent applicables."
+      ]
+    }
+  ]
+}

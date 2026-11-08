@@ -38,6 +38,9 @@ export interface CatalogCommercialIdentity {
 }
 // Descriptive commercial data, never injected as contract clauses by this field.
 export interface CatalogCommercialParameters {
+  /** Documentary status is distinct from publication and individual price approval. */
+  sourceStatus?: string | null;
+  sourceVersion?: string | null;
   clientNeed?: string | null;
   /** Versioned commercial benefits, descriptive only and never contract clauses. */
   benefits?: string | null;
@@ -91,7 +94,7 @@ export interface CatalogVersionInput extends CatalogCommercialIdentity {
   inclusions?: string[];
   exclusions?: string[];
   prerequisites?: string[];
-  priceMode: PriceMode;
+  priceMode: PriceMode | null;
   priceCents?: number | null;
   recommendedPriceCents?: number | null;
   estimatedMinutes?: number | null;
@@ -109,6 +112,9 @@ export interface CatalogVersion extends CatalogVersionInput {
   status: CatalogVersionStatus;
   publishedAt?: string | null;
   createdAt: string;
+  lastSavedAt?:string|null;
+  saveRevision?:number;
+  abandonedAt?:string|null;
 }
 
 export interface OfferComponentInput {
@@ -155,6 +161,10 @@ export interface CatalogItemDetail extends CatalogItemSummary {
   versions: CatalogVersion[];
 }
 
+export interface CatalogDraftEntry {item:CatalogItemSummary;version:CatalogVersion;}
+export interface CatalogDuplicationPreview {itemId:string;name:string;version:CatalogVersion;references:Record<string,number>;referenceFingerprint:string;}
+export interface CatalogDuplicationInput {sourceItemId:string;sourceVersionId:string;expected:CatalogVersion;referenceFingerprint:string;name:string;copyReferences:boolean;copyCategory:boolean;}
+
 export interface CatalogFilters {
   search?: string | null;
   type?: CatalogItemType | null;
@@ -197,6 +207,12 @@ export interface CatalogRecommendationLink {
 
 export interface CatalogApi {
   assignCanonicalCode(itemId: string, canonicalCode: string): Promise<CatalogItemDetail>;
+  persistenceAvailable():Promise<boolean>;
+  listDrafts():Promise<CatalogDraftEntry[]>;
+  createPersistent(input:CatalogItemInput,version:CatalogVersionInput,requestId:string):Promise<CatalogItemDetail>;
+  duplicationPreview(itemId:string,versionId:string):Promise<CatalogDuplicationPreview>;
+  duplicate(input:CatalogDuplicationInput,requestId:string):Promise<CatalogItemDetail>;
+  setDraftAbandoned(versionId:string,expected:CatalogVersion,abandoned:boolean):Promise<CatalogVersion>;
   list(filters?: CatalogFilters): Promise<CatalogItemSummary[]>;
   getItem(id: string): Promise<CatalogItemDetail>;
   create(input: CatalogItemInput, firstVersion: CatalogVersionInput): Promise<CatalogItemDetail>;

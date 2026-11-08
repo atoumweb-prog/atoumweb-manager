@@ -68,7 +68,7 @@ export interface RestoreScheduleResult {
 }
 
 export interface AtoumWebApi {
-  unsaved: {confirmExit(labels:string[],pending:boolean):boolean;publishState(state:import('./unsavedWindows').UnsavedWindowState):boolean};
+  unsaved: {onSaveExit(listener:(kind:'close'|'quit')=>void):()=>void;finishExit(kind:'close'|'quit'):void;confirmExit(labels:string[],pending:boolean):boolean;publishState(state:import('./unsavedWindows').UnsavedWindowState):boolean};
   workflow: import('./workflow').WorkflowApi;
   app: {
     openExternalUrl(url:string):Promise<void>;

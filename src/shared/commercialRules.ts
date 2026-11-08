@@ -1,5 +1,11 @@
 /** Explicit, versioned business configuration. Never resolve rules by a label. */
 export interface CommercialVersionRules {
+  approvedPack?: {
+    version:'V3.9.4/V1.5'; sourceCode:string; sourceStatus:string;
+    includedCodes?:string[]; includedProducts?:number;
+    renewal?:'express'|'contractual_automatic'|'none';
+    priceChange?:'monthly_30_days'|'annual_written_agreement'|'none';
+  };
   schemaVersion: 1;
   minimumLineCents?: number;
   minimumBilledQuantityMilli?: number;
@@ -62,6 +68,13 @@ export function validateOperationalSalePolicy(policy:OperationalSalePolicy):void
 
 export function validateCommercialRules(rules: CommercialVersionRules): void {
   if (rules.schemaVersion !== 1) throw Error('Version de règles commerciales inconnue.');
+  if(rules.approvedPack){const p=rules.approvedPack;
+    if(p.version!=='V3.9.4/V1.5'||!/^(AW|V39)-[A-Z0-9]+(?:-[A-Z0-9]+)*$/.test(p.sourceCode)||!['ANCIEN_A_RECONCILIER','ANCIEN_SUR_DEVIS','A_VERIFIER_AVANT_COMMERCIALISATION','BASE_INTERNE_DEVIS','RETENU_SUR_DELEGATION_07_11_2026','VALIDE_EXPLICITEMENT_07_11_2026','VALIDE_PAR_ARBITRAGE_ANTERIEUR','VALIDE_RECENT'].includes(p.sourceStatus)
+      ||p.includedProducts!=null&&(!Number.isSafeInteger(p.includedProducts)||p.includedProducts<0)
+      ||p.renewal!=null&&!['express','contractual_automatic','none'].includes(p.renewal)
+      ||p.priceChange!=null&&!['monthly_30_days','annual_written_agreement','none'].includes(p.priceChange)
+      ||p.includedCodes?.some(code=>!/^(AW|V39)-[A-Z0-9-]+$/.test(code)))throw Error('Règles du pack approuvé invalides.');
+  }
   if (rules.minimumLineCents != null && (!Number.isSafeInteger(rules.minimumLineCents) || rules.minimumLineCents < 0)) throw Error('Minimum de facturation invalide.');
   if (rules.minimumBilledQuantityMilli != null && (!Number.isSafeInteger(rules.minimumBilledQuantityMilli) || rules.minimumBilledQuantityMilli < 1)) throw Error('Quantité minimale facturée invalide.');
   if (rules.particularTerms && (!rules.particularTerms.title.trim() || !rules.particularTerms.body.trim())) throw Error('Conditions particulières incomplètes.');

@@ -11,10 +11,10 @@ export function CatalogContractPanel({item}:{item:CatalogItemDetail}) {
   const [clauses,setClauses]=useState<ContractClauseTemplate[]>([]);
   const [message,setMessage]=useState('');
   const [loaded,setLoaded]=useState(false),[saving,setSaving]=useState(false);
-  const version=item.versions.find(v=>v.id===versionId),editable=version?.status==='draft';
+  const version=item.versions.find(v=>v.id===versionId),editable=version?.status==='draft'&&!version.abandonedAt;
   const guard=useUnsavedDraft('Rattachements contractuels Catalogue',selected,{
     group:'catalog:contract:'+item.id,ready:!!editable&&loaded,pending:saving,
-    resetKey:item.id+':'+versionId,discard:setSelected,
+    save:()=>persist(),resetKey:item.id+':'+versionId,discard:setSelected,
   });
   useEffect(()=>{
     let alive=true;setLoaded(false);setMessage('');
@@ -32,12 +32,12 @@ export function CatalogContractPanel({item}:{item:CatalogItemDetail}) {
     return()=>{alive=false;};
   },[item.id,versionId]);
   const persist=async()=>{
-    if(!editable||!loaded||saving)return;
+    if(!editable||!loaded||saving)return false;
     setSaving(true);setMessage('');
     try{
       await window.atoumweb.contractTypes.setCatalog(versionId,selected);
-      guard.saved(selected);setMessage('Rattachement enregistré pour cette version Catalogue.');
-    }catch(e){setMessage(String(e));}
+      guard.saved(selected);setMessage('Rattachement enregistré pour cette version Catalogue.');return true;
+    }catch(e){setMessage(String(e));return false;}
     finally{setSaving(false);}
   };
   return <section className="catalog-detail-section contract-type-detail">
@@ -45,7 +45,7 @@ export function CatalogContractPanel({item}:{item:CatalogItemDetail}) {
     <label>Version Catalogue
       <select aria-label="Version Catalogue contractuelle" value={versionId}
         disabled={saving} onChange={e=>guard.request(()=>{setLoaded(false);setVersionId(e.target.value);})}>
-        {item.versions.map(v=><option key={v.id} value={v.id}>v{v.versionNumber} — {v.status==='draft'?'Brouillon':v.status==='published'?'Publiée':'Retirée'}</option>)}
+        {item.versions.map(v=><option key={v.id} value={v.id}>v{v.versionNumber} — {v.abandonedAt?'Abandonné':v.status==='draft'?'Brouillon':v.status==='published'?'Publiée':'Retirée'}</option>)}
       </select>
     </label>
     {!editable&&<p>Rattachement versionné en lecture seule. Crée un nouveau brouillon pour modifier ces références.</p>}

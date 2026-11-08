@@ -1,0 +1,3 @@
+# Preserve the exact approved-source bytes and their SHA256 on every checkout.
+# Original Markdown hard breaks and CRLF are part of these archival source bytes.
+* -text whitespace=-blank-at-eol,cr-at-eol

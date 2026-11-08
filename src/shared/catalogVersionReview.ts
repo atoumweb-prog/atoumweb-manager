@@ -59,12 +59,16 @@ export function reviewCatalogPrepublication(
 ): { blocking: string[]; warnings: string[] } {
   const blocking: string[]=[];
   const warnings: string[]=[];
+  const sourceStatus=version.commercialParameters?.sourceStatus;
+  if(sourceStatus&&/^(A_VERIFIER|ANCIEN_|BASE_INTERNE)/.test(sourceStatus))blocking.push('Référence source restreinte : '+sourceStatus+' ; publication commerciale interdite sans nouvel arbitrage ciblé.');
+  if(sourceStatus==='RETENU_SUR_DELEGATION_07_11_2026')warnings.push('Tarif retenu sur délégation ; aucune validation tarifaire individuelle ni autorisation de publication implicite.');
   if (version.itemId!==item.id || !item.versions.some(row=>row.id===version.id))
     blocking.push('La version sélectionnée ne correspond pas à cette fiche.');
   if (version.status!=='draft') blocking.push('Seul un brouillon peut être publié.');
   if (version.priceBasis==='actual_cost' && (version.priceMode!=='quote_only'||version.priceCents!=null))
     blocking.push('Un coût tiers réel doit rester sur devis sans prix fixe.');
-  if (!['quote_only','free'].includes(version.priceMode) &&
+  if(version.priceMode===null||version.abandonedAt)blocking.push('Brouillon incomplet ou abandonné : publication impossible.');
+  if (version.priceMode!==null && !['quote_only','free'].includes(version.priceMode) &&
     (version.priceCents==null||!Number.isSafeInteger(version.priceCents)||version.priceCents<0))
     blocking.push('Le montant de la prestation doit être un nombre entier de centimes valide.');
   if (version.priceMode==='free' && version.priceCents!==0 && version.priceCents!=null)

@@ -3,9 +3,10 @@ export interface UnsavedWindowState {
     revision: number;
     labels: string[];
     pending: boolean;
+    saveAvailable?:boolean;
 }
 export type ExitTicket = Map<number, string>;
-const signature = (state: UnsavedWindowState) => JSON.stringify([state.epoch, state.revision, state.labels, state.pending]);
+const signature = (state: UnsavedWindowState) => JSON.stringify([state.epoch, state.revision, state.labels, state.pending,state.saveAvailable===true]);
 export class UnsavedWindows {
     private states = new Map<number, UnsavedWindowState>();
     private approved = new Map<number, string>();
@@ -53,5 +54,5 @@ export function isUnsavedWindowState(value: unknown): value is UnsavedWindowStat
     if (!value || typeof value !== 'object')
         return false;
     const state = value as UnsavedWindowState;
-    return typeof state.epoch === 'string' && state.epoch.length > 0 && state.epoch.length <= 100 && Number.isSafeInteger(state.revision) && state.revision >= 0 && typeof state.pending === 'boolean' && Array.isArray(state.labels) && state.labels.length <= 40 && state.labels.every(label => typeof label === 'string' && label.length <= 160);
+    return (state.saveAvailable===undefined||typeof state.saveAvailable==='boolean') && typeof state.epoch === 'string' && state.epoch.length > 0 && state.epoch.length <= 100 && Number.isSafeInteger(state.revision) && state.revision >= 0 && typeof state.pending === 'boolean' && Array.isArray(state.labels) && state.labels.length <= 40 && state.labels.every(label => typeof label === 'string' && label.length <= 160);
 }

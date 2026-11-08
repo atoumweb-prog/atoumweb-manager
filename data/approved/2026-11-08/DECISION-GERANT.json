@@ -1,0 +1,26 @@
+{
+  "package": "AtoumWeb - passation à Codex",
+  "date": "2026-11-08",
+  "decision_utilisateur": "Je valide tel quel pour préparer l’intégration au Manager, sans solliciter de juriste.",
+  "portee": "APPROBATION_METIER_DU_LOT_POUR_INTEGRATION_INTERNE",
+  "versions_retenues": {
+    "catalogue": "V3.9.4",
+    "referentiel_metier": "V1.5",
+    "clauses": "V3.9.4 rectificatif clause 019"
+  },
+  "statut_publication": "NON_PUBLIE",
+  "statut_verification_juridique": "NON_REALISEE — ne pas présenter comme conformité ou avis juridique",
+  "perimetre_approbation": "Utiliser le pack comme base de développement, préparer brouillons/catalogue/clauses versionnés, faire recettes. Aucun avenant rétroactif.",
+  "ne_vaut_pas_pour": [
+    "validation individuelle des 47 prix délégués",
+    "activation des 6 références à vérifier",
+    "preuve de convention CM2C",
+    "souscription effective RC Pro",
+    "déploiement en production",
+    "publication client ou site",
+    "modification des devis ou contrats déjà signés"
+  ],
+  "pas_de_blocage_pour_absence_de_juriste": true,
+  "decision_rc_pro": "NON ARBITREE : absence de couverture attestée ; ne pas inventer une souscription ni déclarer l’absence d’assurance autorisée",
+  "mode_codex": "INTEGRATION_SUR_BRANCHE_DE_TRAVAIL_ET_PR — aucune fusion main ni activation commerciale sans autorisation distincte"
+}

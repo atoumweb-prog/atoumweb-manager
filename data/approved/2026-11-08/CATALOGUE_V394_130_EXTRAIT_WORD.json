@@ -1,0 +1,3443 @@
+{
+  "type": "EXTRACTION_DOCUMENTAIRE_NON_IMPORT_AUTOMATIQUE",
+  "version": "V3.9.4 - rectificatif 019",
+  "date_decision_metier": "2026-11-08",
+  "source_word": "AtoumWeb_01_Grille_tarifaire_CONSOLIDEE_V3.9.4_RELECTURE_2026-11-08.docx",
+  "sha256_word": "96f4df6875174979c1769825dade5b1e73e91002b4fb8fafc7d15b4eb4eebc80",
+  "nombre_references": 130,
+  "statuts_source": {
+    "ANCIEN_A_RECONCILIER": 2,
+    "ANCIEN_SUR_DEVIS": 2,
+    "A_VERIFIER_AVANT_COMMERCIALISATION": 6,
+    "BASE_INTERNE_DEVIS": 2,
+    "RETENU_SUR_DELEGATION_07_11_2026": 47,
+    "VALIDE_EXPLICITEMENT_07_11_2026": 9,
+    "VALIDE_PAR_ARBITRAGE_ANTERIEUR": 9,
+    "VALIDE_RECENT": 53
+  },
+  "nombre_identifiants_provisoires_V39": 18,
+  "identifiants_provisoires_V39": [
+    "V39-WEB-BUSINESS",
+    "V39-WEB-VISIBILITE",
+    "V39-ECOM-BUSINESS",
+    "V39-ECOM-VISIBILITE",
+    "V39-HOST-LUNE",
+    "V39-GBP-ESS-M",
+    "V39-GBP-ESS-A",
+    "V39-STAT-ESS-M",
+    "V39-STAT-ESS-A",
+    "V39-NL-1-M",
+    "V39-NL-1-A",
+    "V39-NL-2-M",
+    "V39-NL-2-A",
+    "V39-BRAND-CHARTE",
+    "V39-BRAND-DUO",
+    "V39-HOST-DOMAINE",
+    "V39-NL-PONCT-SIMPLE",
+    "V39-NL-PONCT-COMPLETE"
+  ],
+  "instruction": "Fichier de rapprochement. Ne pas insérer automatiquement dans le catalogue actif ; préserver statuts, prix, ID historiques et contrôles de publication.",
+  "references": [
+    {
+      "code_source": "AW-WEB-VITRINE",
+      "nom": "Site vitrine 5 pages",
+      "prix_affiche": "699 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "5 pages commerciales + intégration standard des pages légales hors quota",
+        "WordPress/Divi, responsive, formulaire simple, SEO de base, SSL",
+        "Hébergement et domaine standard première année",
+        "1 h de formation, 1 cycle après maquette et 1 avant livraison",
+        "Garantie corrective de 30 jours après livraison officielle."
+      ],
+      "exclusions": [
+        "Rédaction complète",
+        "e-commerce",
+        "multilingue",
+        "fonctions spécifiques",
+        "maintenance après garantie",
+        "licences premium non prévues.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Vitrine Essentiel : 699 € ; autres formules distinctes ci-après."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : 5 pages commerciales + intégration standard des pages légales hors quota ; WordPress/Divi, responsive, formulaire simple, SEO de base, SSL ; Hébergement et domaine standard première année ; 1 h de formation, 1 cycle après maquette et 1 avant livraison ; Garantie corrective de 30 jours après livraison officielle.",
+        "Exclus : Rédaction complète ; e-commerce ; multilingue ; fonctions spécifiques ; maintenance après garantie ; licences premium non prévues..",
+        "Note de convergence : Vitrine Essentiel : 699 € ; autres formules distinctes ci-après."
+      ]
+    },
+    {
+      "code_source": "AW-WEB-PAGE-SUP",
+      "nom": "Page supplémentaire",
+      "prix_affiche": "79 €",
+      "statut_source": "VALIDE_EXPLICITEMENT_07_11_2026",
+      "inclusions": [
+        "Création/intégration d’une page WordPress/Divi standard, dans la continuité graphique du site",
+        "Textes et visuels fournis par le client",
+        "Vérification responsive de la page."
+      ],
+      "exclusions": [
+        "Rédaction complète",
+        "Fonctionnalité particulière ou conception complexe",
+        "Prestation déjà comprise au devis initial."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "validation utilisateur ; Q01 | 79 € : page WP/Divi standard, contenus fournis, rédaction complète et complexité sur devis. Conditions : Devis client habituel / bon de commande explicite. Q01 : 79 € par page supplémentaire standard ; rédaction et travaux complexes sur devis. | Pas de double facturation d’une page déjà comprise au devis."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Création/intégration d’une page WordPress/Divi standard, dans la continuité graphique du site ; Textes et visuels fournis par le client ; Vérification responsive de la page.",
+        "Exclus : Rédaction complète ; Fonctionnalité particulière ou conception complexe ; Prestation déjà comprise au devis initial.",
+        "Traçabilité : validation utilisateur ; Q01 | 79 € : page WP/Divi standard, contenus fournis, rédaction complète et complexité sur devis. Conditions : Devis client habituel / bon de commande explicite. Q01 : 79 € par page supplémentaire standard ; rédaction et travaux complexes sur devis. | Pas de double facturation d’une page déjà comprise au devis."
+      ]
+    },
+    {
+      "code_source": "AW-WEB-BLOG",
+      "nom": "Blog technique WordPress",
+      "prix_affiche": "149 €",
+      "statut_source": "VALIDE_EXPLICITEMENT_07_11_2026",
+      "inclusions": [
+        "Page Blog/archives sur WordPress/Divi",
+        "Modèle d’article et catégories de base",
+        "Navigation et adaptation responsive",
+        "Un article de démonstration à contenu fictif ou fourni",
+        "tests et prise en main simple."
+      ],
+      "exclusions": [
+        "Rédaction de véritables articles et articles SEO",
+        "Migration d’ancien blog et import massif",
+        "Fonctions éditoriales complexes ou blog déjà inclus au devis."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "validation utilisateur ; Q02 | 149 € : page Blog, modèle, catégories, navigation, responsive et article de démonstration sans rédaction. Conditions : Devis client habituel / bon de commande explicite. Q02 : installation technique 149 € sans rédaction ; ne pas facturer deux fois. | Ne pas refacturer lorsque blog inclus dans une formule Visibilité."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Page Blog/archives sur WordPress/Divi ; Modèle d’article et catégories de base ; Navigation et adaptation responsive ; Un article de démonstration à contenu fictif ou fourni ; tests et prise en main simple.",
+        "Exclus : Rédaction de véritables articles et articles SEO ; Migration d’ancien blog et import massif ; Fonctions éditoriales complexes ou blog déjà inclus au devis.",
+        "Traçabilité : validation utilisateur ; Q02 | 149 € : page Blog, modèle, catégories, navigation, responsive et article de démonstration sans rédaction. Conditions : Devis client habituel / bon de commande explicite. Q02 : installation technique 149 € sans rédaction ; ne pas facturer deux fois. | Ne pas refacturer lorsque blog inclus dans une formule Visibilité."
+      ]
+    },
+    {
+      "code_source": "AW-WEB-NEWSLETTER",
+      "nom": "Intégration newsletter standard",
+      "prix_affiche": "99 €",
+      "statut_source": "VALIDE_PAR_ARBITRAGE_ANTERIEUR",
+      "inclusions": [
+        "Formulaire d'inscription",
+        "connexion à Brevo/Mailchimp ou équivalent",
+        "intégration graphique simple",
+        "tests",
+        "consentement.."
+      ],
+      "exclusions": [
+        "Séquences automatisées",
+        "segmentation complexe",
+        "migration importante",
+        "CRM avancé.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "arbitrage antérieur ; NL-001 | 99 € intégration standard Brevo/Mailchimp, déjà incluse dans certaines Woo. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : Ne pas facturer en double si inclus en Woo Business/Visibilité. Compte tiers client."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Formulaire d'inscription ; connexion à Brevo/Mailchimp ou équivalent ; intégration graphique simple ; tests ; consentement..",
+        "Exclus : Séquences automatisées ; segmentation complexe ; migration importante ; CRM avancé..",
+        "Traçabilité : arbitrage antérieur ; NL-001 | 99 € intégration standard Brevo/Mailchimp, déjà incluse dans certaines Woo. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : Ne pas facturer en double si inclus en Woo Business/Visibilité. Compte tiers client."
+      ]
+    },
+    {
+      "code_source": "AW-WEB-BILINGUE",
+      "nom": "Site vitrine bilingue",
+      "prix_affiche": "249 €",
+      "statut_source": "VALIDE_EXPLICITEMENT_07_11_2026",
+      "inclusions": [
+        "Configuration d’une deuxième langue sur site vitrine WordPress/Divi",
+        "Intégration de traductions fournies par le client sur 5 pages commerciales maximum",
+        "Menus, sélecteur de langue, liens et vérifications responsive."
+      ],
+      "exclusions": [
+        "Traduction par AtoumWeb",
+        "Licence multilingue payante",
+        "Pages supplémentaires ou architecture multilingue complexe."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "validation utilisateur ; Q03 | 249 € : 2e langue sur 5 pages vitrines, traductions client, licences en supplément. Conditions : Devis client habituel / bon de commande explicite. Q03 : 249 € jusqu’à cinq pages et traductions fournies par le client. | 249 € pour deuxième langue et cinq pages au maximum, traductions client et licences tierces séparées."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Configuration d’une deuxième langue sur site vitrine WordPress/Divi ; Intégration de traductions fournies par le client sur 5 pages commerciales maximum ; Menus, sélecteur de langue, liens et vérifications responsive.",
+        "Exclus : Traduction par AtoumWeb ; Licence multilingue payante ; Pages supplémentaires ou architecture multilingue complexe.",
+        "Traçabilité : validation utilisateur ; Q03 | 249 € : 2e langue sur 5 pages vitrines, traductions client, licences en supplément. Conditions : Devis client habituel / bon de commande explicite. Q03 : 249 € jusqu’à cinq pages et traductions fournies par le client. | 249 € pour deuxième langue et cinq pages au maximum, traductions client et licences tierces séparées."
+      ]
+    },
+    {
+      "code_source": "AW-WEB-LANG-SUP",
+      "nom": "Langue supplémentaire site vitrine",
+      "prix_affiche": "149 €",
+      "statut_source": "VALIDE_EXPLICITEMENT_07_11_2026",
+      "inclusions": [
+        "Ajout technique d’une langue au-delà des deux premières",
+        "Intégration des traductions fournies sur 5 pages commerciales maximum",
+        "Menus, liens et tests responsive."
+      ],
+      "exclusions": [
+        "Traduction de contenu",
+        "Licences tierces supplémentaires",
+        "Pages supplémentaires et travaux complexes."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "validation utilisateur ; Q04 | 149 € par langue au-delà de la seconde, 5 pages maximum, traductions client. Conditions : Devis client habituel / bon de commande explicite. Q04 : 149 € pour chaque langue additionnelle au-delà du bilingue. | 149 € par langue au-delà des deux premières, cinq pages au maximum, traductions client fournies."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Ajout technique d’une langue au-delà des deux premières ; Intégration des traductions fournies sur 5 pages commerciales maximum ; Menus, liens et tests responsive.",
+        "Exclus : Traduction de contenu ; Licences tierces supplémentaires ; Pages supplémentaires et travaux complexes.",
+        "Traçabilité : validation utilisateur ; Q04 | 149 € par langue au-delà de la seconde, 5 pages maximum, traductions client. Conditions : Devis client habituel / bon de commande explicite. Q04 : 149 € pour chaque langue additionnelle au-delà du bilingue. | 149 € par langue au-delà des deux premières, cinq pages au maximum, traductions client fournies."
+      ]
+    },
+    {
+      "code_source": "AW-WEB-AVIS-GOOGLE",
+      "nom": "Avis Google automatiques",
+      "prix_affiche": "79 €",
+      "statut_source": "VALIDE_EXPLICITEMENT_07_11_2026",
+      "inclusions": [
+        "Intégration standard d’un affichage dynamique d’avis Google sur WordPress/Divi compatible",
+        "Adaptation graphique et tests ordinateur/mobile",
+        "Un ajustement mineur selon le devis."
+      ],
+      "exclusions": [
+        "Gestion de la fiche Google Business Profile et réponses aux avis",
+        "Licences, API et abonnements tiers payants",
+        "Développement spécifique ou garantie de synchronisation permanente."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "validation utilisateur ; Q05 | 79 € : affichage des avis par solution standard, API/plugin tiers en supplément. Conditions : Devis client habituel / bon de commande explicite. Q05 : 79 € hors coûts tiers et fonctions sur mesure. | N’inclut pas gestion GBP ; aucun engagement de disponibilité gratuite d’une API tierce ; ne pas facturer si inclus."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Intégration standard d’un affichage dynamique d’avis Google sur WordPress/Divi compatible ; Adaptation graphique et tests ordinateur/mobile ; Un ajustement mineur selon le devis.",
+        "Exclus : Gestion de la fiche Google Business Profile et réponses aux avis ; Licences, API et abonnements tiers payants ; Développement spécifique ou garantie de synchronisation permanente.",
+        "Traçabilité : validation utilisateur ; Q05 | 79 € : affichage des avis par solution standard, API/plugin tiers en supplément. Conditions : Devis client habituel / bon de commande explicite. Q05 : 79 € hors coûts tiers et fonctions sur mesure. | N’inclut pas gestion GBP ; aucun engagement de disponibilité gratuite d’une API tierce ; ne pas facturer si inclus."
+      ]
+    },
+    {
+      "code_source": "AW-WEB-PORTFOLIO",
+      "nom": "Portfolio simple",
+      "prix_affiche": "99 €",
+      "statut_source": "VALIDE_EXPLICITEMENT_07_11_2026",
+      "inclusions": [
+        "Portfolio/galerie standard jusqu’à 12 réalisations fournies par le client",
+        "Mise en page en grille ou galerie responsive",
+        "Un cycle d’ajustements mineurs."
+      ],
+      "exclusions": [
+        "Rédaction complète, retouche photo avancée",
+        "Filtres dynamiques et fiches projets complexes",
+        "Fonction déjà comprise dans une formule de site."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "validation utilisateur ; Q06 | 99 € : galerie jusqu’à 12 réalisations client, sans filtres/fiches complexes. Conditions : Devis client habituel / bon de commande explicite. Q06 : 99 € pour 12 réalisations au maximum, sans double facturation. | Si la page Réalisations déjà comprise, ne facturer que la fonctionnalité additionnelle réellement demandée."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Portfolio/galerie standard jusqu’à 12 réalisations fournies par le client ; Mise en page en grille ou galerie responsive ; Un cycle d’ajustements mineurs.",
+        "Exclus : Rédaction complète, retouche photo avancée ; Filtres dynamiques et fiches projets complexes ; Fonction déjà comprise dans une formule de site.",
+        "Traçabilité : validation utilisateur ; Q06 | 99 € : galerie jusqu’à 12 réalisations client, sans filtres/fiches complexes. Conditions : Devis client habituel / bon de commande explicite. Q06 : 99 € pour 12 réalisations au maximum, sans double facturation. | Si la page Réalisations déjà comprise, ne facturer que la fonctionnalité additionnelle réellement demandée."
+      ]
+    },
+    {
+      "code_source": "AW-WEB-PORTFOLIO-ADV",
+      "nom": "Portfolio dynamique avancé",
+      "prix_affiche": "Dès 199 €",
+      "statut_source": "VALIDE_EXPLICITEMENT_07_11_2026",
+      "inclusions": [
+        "Cadrage léger et structure dynamique des réalisations",
+        "Catégories et filtres simples définis au devis",
+        "Intégration WordPress/Divi et tests selon le devis."
+      ],
+      "exclusions": [
+        "Imports massifs",
+        "Automatisations et fonctionnalités complexes",
+        "Licences premium éventuelles."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "validation utilisateur ; Q07 | Dès 199 € : structure dynamique et filtres simples selon devis. Conditions : Devis client habituel / bon de commande explicite. Q07 : dès 199 € ; prix définitif et périmètre détaillés au devis. | « Dès » impose un devis explicite ; vérifier les droits/licences des éléments fournis."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Cadrage léger et structure dynamique des réalisations ; Catégories et filtres simples définis au devis ; Intégration WordPress/Divi et tests selon le devis.",
+        "Exclus : Imports massifs ; Automatisations et fonctionnalités complexes ; Licences premium éventuelles.",
+        "Traçabilité : validation utilisateur ; Q07 | Dès 199 € : structure dynamique et filtres simples selon devis. Conditions : Devis client habituel / bon de commande explicite. Q07 : dès 199 € ; prix définitif et périmètre détaillés au devis. | « Dès » impose un devis explicite ; vérifier les droits/licences des éléments fournis."
+      ]
+    },
+    {
+      "code_source": "AW-WEB-RESA-EXT",
+      "nom": "Intégration réservation externe",
+      "prix_affiche": "99 €",
+      "statut_source": "VALIDE_EXPLICITEMENT_07_11_2026",
+      "inclusions": [
+        "Intégration sur WordPress/Divi d’un système de réservation externe déjà configuré par le client",
+        "Bouton, lien ou calendrier",
+        "adaptation graphique simple",
+        "Tests sur ordinateur et mobile."
+      ],
+      "exclusions": [
+        "Création/configuration complète du compte et règles métier complexes",
+        "Abonnements du fournisseur",
+        "Réservation multi-ressources, paiement complexe ou développement métier."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "validation utilisateur ; Q08 | 99 € : intégration outil externe, compte déjà configuré, frais tiers exclus. Conditions : Devis client habituel / bon de commande explicite. Q08 : 99 € ; compte de réservation client déjà configuré. | Compte et règles de réservation configurés par le client ; tests fonctionnels standard."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Intégration sur WordPress/Divi d’un système de réservation externe déjà configuré par le client ; Bouton, lien ou calendrier ; adaptation graphique simple ; Tests sur ordinateur et mobile.",
+        "Exclus : Création/configuration complète du compte et règles métier complexes ; Abonnements du fournisseur ; Réservation multi-ressources, paiement complexe ou développement métier.",
+        "Traçabilité : validation utilisateur ; Q08 | 99 € : intégration outil externe, compte déjà configuré, frais tiers exclus. Conditions : Devis client habituel / bon de commande explicite. Q08 : 99 € ; compte de réservation client déjà configuré. | Compte et règles de réservation configurés par le client ; tests fonctionnels standard."
+      ]
+    },
+    {
+      "code_source": "AW-WEB-PAIEMENT-SIMPLE",
+      "nom": "Paiement simple",
+      "prix_affiche": "79 €",
+      "statut_source": "VALIDE_EXPLICITEMENT_07_11_2026",
+      "inclusions": [
+        "Intégration sur le site du client d’un bouton ou lien de paiement externe",
+        "Compte de paiement appartenant au client",
+        "montant déjà défini",
+        "Adaptation graphique WordPress/Divi et tests."
+      ],
+      "exclusions": [
+        "Panier, boutique ou gestion des commandes",
+        "Frais de transaction, abonnement et licences du prestataire",
+        "Paiement complexe ou intégration sur mesure."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "validation utilisateur ; Q09 | 79 € : bouton/lien de paiement client externe, hors boutique et frais tiers. Conditions : Devis client habituel / bon de commande explicite. Q09 : 79 € ; concerne les sites des clients, NON les souscriptions aux prestations AtoumWeb. | Compte de paiement au nom du client ; frais prestataire à sa charge ; indépendant des souscriptions AtoumWeb."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Intégration sur le site du client d’un bouton ou lien de paiement externe ; Compte de paiement appartenant au client ; montant déjà défini ; Adaptation graphique WordPress/Divi et tests.",
+        "Exclus : Panier, boutique ou gestion des commandes ; Frais de transaction, abonnement et licences du prestataire ; Paiement complexe ou intégration sur mesure.",
+        "Traçabilité : validation utilisateur ; Q09 | 79 € : bouton/lien de paiement client externe, hors boutique et frais tiers. Conditions : Devis client habituel / bon de commande explicite. Q09 : 79 € ; concerne les sites des clients, NON les souscriptions aux prestations AtoumWeb. | Compte de paiement au nom du client ; frais prestataire à sa charge ; indépendant des souscriptions AtoumWeb."
+      ]
+    },
+    {
+      "code_source": "AW-WEB-FORM-ADV",
+      "nom": "Formulaire avancé",
+      "prix_affiche": "99 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Un formulaire WordPress/Divi avancé standard avec champs personnalisés",
+        "Logique conditionnelle simple, notifications et destinataires",
+        "Dépôt de fichiers si l’extension le prend en charge de façon standard",
+        "Tests et responsive."
+      ],
+      "exclusions": [
+        "Intégration CRM/API, génération PDF et automatisations complexes",
+        "Licences premium et traitements de données sensibles hors périmètre",
+        "Formulaire de contact de base déjà inclus."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Q10 retenue par délégation : 99 €, pas une nouvelle approbation nominative du tarif. | 99 € pour logique simple et tests, sans CRM/API/PDF automatisé ; RGPD et consentement adaptés."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Un formulaire WordPress/Divi avancé standard avec champs personnalisés ; Logique conditionnelle simple, notifications et destinataires ; Dépôt de fichiers si l’extension le prend en charge de façon standard ; Tests et responsive.",
+        "Exclus : Intégration CRM/API, génération PDF et automatisations complexes ; Licences premium et traitements de données sensibles hors périmètre ; Formulaire de contact de base déjà inclus.",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Q10 retenue par délégation : 99 €, pas une nouvelle approbation nominative du tarif. | 99 € pour logique simple et tests, sans CRM/API/PDF automatisé ; RGPD et consentement adaptés."
+      ]
+    },
+    {
+      "code_source": "AW-WEB-ESPACE-MEMBRE",
+      "nom": "Espace membre",
+      "prix_affiche": "Sur devis",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Périmètre défini au devis.."
+      ],
+      "exclusions": [
+        "Tout ce qui n'est pas au devis.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis avec description des rôles, données, sécurité et accès."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Périmètre défini au devis..",
+        "Exclus : Tout ce qui n'est pas au devis..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis avec description des rôles, données, sécurité et accès."
+      ]
+    },
+    {
+      "code_source": "AW-LP-BASE",
+      "nom": "Landing Page",
+      "prix_affiche": "499 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Une landing page WordPress/Divi responsive, jusqu’à 6 sections adaptables",
+        "Contenus fournis par le client, adaptation légère",
+        "rédaction complète séparée",
+        "Formulaire simple ou bouton d’action et SEO de base",
+        "1 cycle de corrections, garantie corrective selon devis",
+        "Intégration sur WordPress existant compatible possible."
+      ],
+      "exclusions": [
+        "Section supplémentaire ou fonction complexe",
+        "Rédaction complète",
+        "Hébergement et nom de domaine d’un nouveau site autonome, à préciser séparément au devis."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Remplace 8 sections / 2 cycles / hébergement autonome prétendument inclus V3.8."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Une landing page WordPress/Divi responsive, jusqu’à 6 sections adaptables ; Contenus fournis par le client, adaptation légère ; rédaction complète séparée ; Formulaire simple ou bouton d’action et SEO de base ; 1 cycle de corrections, garantie corrective selon devis ; Intégration sur WordPress existant compatible possible.",
+        "Exclus : Section supplémentaire ou fonction complexe ; Rédaction complète ; Hébergement et nom de domaine d’un nouveau site autonome, à préciser séparément au devis.",
+        "Note de convergence : Remplace 8 sections / 2 cycles / hébergement autonome prétendument inclus V3.8."
+      ]
+    },
+    {
+      "code_source": "AW-LP-SECTION",
+      "nom": "Section standard supplémentaire",
+      "prix_affiche": "49 €",
+      "statut_source": "BASE_INTERNE_DEVIS",
+      "inclusions": [
+        "1 section standard supplémentaire.."
+      ],
+      "exclusions": [
+        "Fonction complexe.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; SQ-52 | 49 € conservés comme REPÈRE INTERNE pour une section standard ; chaque section additionnelle est soumise à un devis écrit ; fonctions complexes chiffrées sur devis. Conditions : Sur devis écrit. Rapprochement 67 : La formule landing comprend 6 sections ; au-delà, accord écrit et devis, y compris si le repère 49 € est utilisé. | 49 € = base de chiffrage interne seulement ; accord écrit sur le prix final."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : 1 section standard supplémentaire..",
+        "Exclus : Fonction complexe..",
+        "Traçabilité : décision déléguée sans changement de prix ; SQ-52 | 49 € conservés comme REPÈRE INTERNE pour une section standard ; chaque section additionnelle est soumise à un devis écrit ; fonctions complexes chiffrées sur devis. Conditions : Sur devis écrit. Rapprochement 67 : La formule landing comprend 6 sections ; au-delà, accord écrit et devis, y compris si le repère 49 € est utilisé. | 49 € = base de chiffrage interne seulement ; accord écrit sur le prix final."
+      ]
+    },
+    {
+      "code_source": "AW-LP-REDACTION",
+      "nom": "Rédaction complète Landing",
+      "prix_affiche": "149 €",
+      "statut_source": "BASE_INTERNE_DEVIS",
+      "inclusions": [
+        "Jusqu'à ~800 mots",
+        "accroches",
+        "titres",
+        "bénéfices",
+        "argumentaire",
+        "CTA",
+        "structure conversion.."
+      ],
+      "exclusions": [
+        "Recherche lourde",
+        "interviews",
+        "contenu très technique.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; SQ-01 | 149 € conservés comme REPÈRE INTERNE pour une rédaction standard ; rédaction complète distincte avec devis écrit et périmètre précisé. Conditions : Sur devis écrit. Rapprochement 67 : Landing de base à 499 € inclut contenus client et reformulation légère, pas rédaction complète. | 149 € = base de chiffrage interne seulement ; accord écrit sur le prix final."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Jusqu'à ~800 mots ; accroches ; titres ; bénéfices ; argumentaire ; CTA ; structure conversion..",
+        "Exclus : Recherche lourde ; interviews ; contenu très technique..",
+        "Traçabilité : décision déléguée sans changement de prix ; SQ-01 | 149 € conservés comme REPÈRE INTERNE pour une rédaction standard ; rédaction complète distincte avec devis écrit et périmètre précisé. Conditions : Sur devis écrit. Rapprochement 67 : Landing de base à 499 € inclut contenus client et reformulation légère, pas rédaction complète. | 149 € = base de chiffrage interne seulement ; accord écrit sur le prix final."
+      ]
+    },
+    {
+      "code_source": "AW-LP-URGENT",
+      "nom": "Livraison prioritaire Landing",
+      "prix_affiche": "79 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Priorisation du planning sous réserve de disponibilité.."
+      ],
+      "exclusions": [
+        "Garantie absolue de délai si dépendance client/tiers.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 79 € sous réserve de disponibilité et d’un calendrier confirmé par écrit ; aucune garantie de délai par défaut."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Priorisation du planning sous réserve de disponibilité..",
+        "Exclus : Garantie absolue de délai si dépendance client/tiers..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 79 € sous réserve de disponibilité et d’un calendrier confirmé par écrit ; aucune garantie de délai par défaut."
+      ]
+    },
+    {
+      "code_source": "AW-LP-MERCI",
+      "nom": "Page de remerciement",
+      "prix_affiche": "49 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Page courte cohérente",
+        "confirmation",
+        "prochaine étape",
+        "CTA éventuel.."
+      ],
+      "exclusions": [
+        "Seconde Landing complète.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 49 € si page de remerciement non comprise initialement ; périmètre simple."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Page courte cohérente ; confirmation ; prochaine étape ; CTA éventuel..",
+        "Exclus : Seconde Landing complète..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 49 € si page de remerciement non comprise initialement ; périmètre simple."
+      ]
+    },
+    {
+      "code_source": "AW-LP-POPUP",
+      "nom": "Pop-up ciblée simple",
+      "prix_affiche": "79 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Design cohérent",
+        "règle simple délai/scroll/exit intent",
+        "mobile",
+        "tests.."
+      ],
+      "exclusions": [
+        "Segmentation",
+        "A/B testing",
+        "CRM",
+        "automatisations.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 79 € pop-up simple ; conformité cookies/consentements à vérifier selon usage."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Design cohérent ; règle simple délai/scroll/exit intent ; mobile ; tests..",
+        "Exclus : Segmentation ; A/B testing ; CRM ; automatisations..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 79 € pop-up simple ; conformité cookies/consentements à vérifier selon usage."
+      ]
+    },
+    {
+      "code_source": "AW-LP-LANG-SUP",
+      "nom": "Langue supplémentaire Landing",
+      "prix_affiche": "149 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Ajout d'une langue sur la Landing",
+        "traduction fournie.."
+      ],
+      "exclusions": [
+        "Traduction professionnelle.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 149 € par langue landing, traduction fournie ; 6 sections standard maximum."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Ajout d'une langue sur la Landing ; traduction fournie..",
+        "Exclus : Traduction professionnelle..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 149 € par langue landing, traduction fournie ; 6 sections standard maximum."
+      ]
+    },
+    {
+      "code_source": "AW-ECOM-BASE",
+      "nom": "Boutique WooCommerce",
+      "prix_affiche": "1 490 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "WooCommerce",
+        "design",
+        "pages essentielles",
+        "10 produits simples",
+        "2 moyens de paiement standards",
+        "livraison simple",
+        "TVA selon règles client",
+        "stock standard",
+        "comptes clients",
+        "emails transactionnels",
+        "codes promo",
+        "SEO de base",
+        "SSL",
+        "hébergement + domaine standard 1 an",
+        "mise en ligne",
+        "2 h formation",
+        "2 cycles",
+        "garantie 30 j.."
+      ],
+      "exclusions": [
+        "Rédaction fiches",
+        "produits variables complexes",
+        "gros catalogue",
+        "multilingue",
+        "ERP/marketplace",
+        "juridique du commerçant.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Formule Essentiel ; acompte 30/40/30 ; formation 2 h ; commerçant responsable du commerce/paiements."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : WooCommerce ; design ; pages essentielles ; 10 produits simples ; 2 moyens de paiement standards ; livraison simple ; TVA selon règles client ; stock standard ; comptes clients ; emails transactionnels ; codes promo ; SEO de base ; SSL ; hébergement + domaine standard 1 an ; mise en ligne ; 2 h formation ; 2 cycles ; garantie 30 j..",
+        "Exclus : Rédaction fiches ; produits variables complexes ; gros catalogue ; multilingue ; ERP/marketplace ; juridique du commerçant..",
+        "Note de convergence : Formule Essentiel ; acompte 30/40/30 ; formation 2 h ; commerçant responsable du commerce/paiements."
+      ]
+    },
+    {
+      "code_source": "AW-ECOM-PROD-SIMPLE",
+      "nom": "Produit simple supplémentaire",
+      "prix_affiche": "19 €",
+      "statut_source": "VALIDE_PAR_ARBITRAGE_ANTERIEUR",
+      "inclusions": [
+        "Intégration d'un produit simple supplémentaire, infos et visuels fournis.."
+      ],
+      "exclusions": [
+        "Rédaction",
+        "retouche lourde",
+        "variantes.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "arbitrage antérieur ; OFF-011 | 19 € par produit simple après livraison. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 19 € par produit simple APRÈS quota inclus dans la formule ; distinct de maintenance."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Intégration d'un produit simple supplémentaire, infos et visuels fournis..",
+        "Exclus : Rédaction ; retouche lourde ; variantes..",
+        "Traçabilité : arbitrage antérieur ; OFF-011 | 19 € par produit simple après livraison. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 19 € par produit simple APRÈS quota inclus dans la formule ; distinct de maintenance."
+      ]
+    },
+    {
+      "code_source": "AW-ECOM-PROD-VAR",
+      "nom": "Produit variable",
+      "prix_affiche": "Dès 29 €",
+      "statut_source": "VALIDE_PAR_ARBITRAGE_ANTERIEUR",
+      "inclusions": [
+        "Produit variable standard avec nombre raisonnable d'attributs/variations.."
+      ],
+      "exclusions": [
+        "Très nombreuses combinaisons",
+        "logique tarifaire complexe.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "arbitrage antérieur ; OFF-011 | Dès 29 € pour produit variable après livraison. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : Dès 29 € par produit variable ; catalogue volumineux / variation complexe sur devis."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Produit variable standard avec nombre raisonnable d'attributs/variations..",
+        "Exclus : Très nombreuses combinaisons ; logique tarifaire complexe..",
+        "Traçabilité : arbitrage antérieur ; OFF-011 | Dès 29 € pour produit variable après livraison. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : Dès 29 € par produit variable ; catalogue volumineux / variation complexe sur devis."
+      ]
+    },
+    {
+      "code_source": "AW-ECOM-IMPORT",
+      "nom": "Import catalogue volumineux",
+      "prix_affiche": "Sur devis",
+      "statut_source": "VALIDE_PAR_ARBITRAGE_ANTERIEUR",
+      "inclusions": [
+        "Import/traitement en lot selon données disponibles.."
+      ],
+      "exclusions": [
+        "Nettoyage massif non prévu",
+        "enrichissement éditorial.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "arbitrage antérieur ; OFF-003; OFF-010 | Import volumineux hors formule, sur devis. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Données structurées et risques de migration évalués dans devis."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Import/traitement en lot selon données disponibles..",
+        "Exclus : Nettoyage massif non prévu ; enrichissement éditorial..",
+        "Traçabilité : arbitrage antérieur ; OFF-003; OFF-010 | Import volumineux hors formule, sur devis. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Données structurées et risques de migration évalués dans devis."
+      ]
+    },
+    {
+      "code_source": "AW-ECOM-MULTILINGUE",
+      "nom": "WooCommerce multilingue",
+      "prix_affiche": "Sur devis",
+      "statut_source": "VALIDE_PAR_ARBITRAGE_ANTERIEUR",
+      "inclusions": [
+        "Périmètre défini selon produits, catégories, checkout, emails et devises.."
+      ],
+      "exclusions": [
+        "Traduction et localisation juridique.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "arbitrage antérieur ; OFF-003 | Woo multilingue hors formule, sur devis. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Traductions et licences tierces non comprises par défaut."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Périmètre défini selon produits, catégories, checkout, emails et devises..",
+        "Exclus : Traduction et localisation juridique..",
+        "Traçabilité : arbitrage antérieur ; OFF-003 | Woo multilingue hors formule, sur devis. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Traductions et licences tierces non comprises par défaut."
+      ]
+    },
+    {
+      "code_source": "AW-ECOM-PAIEMENT-ADV",
+      "nom": "Paiement avancé / passerelle spécifique",
+      "prix_affiche": "Sur devis",
+      "statut_source": "VALIDE_PAR_ARBITRAGE_ANTERIEUR",
+      "inclusions": [
+        "Intégration selon compatibilité WooCommerce et contrat du client.."
+      ],
+      "exclusions": [
+        "Frais prestataire",
+        "développement hors compatibilité standard.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "arbitrage antérieur ; OFF-003; OFF-008 | Passerelle spécifique hors deux paiements standard, sur devis. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Deux moyens de paiement standard inclus initialement ; frais prestataires client."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Intégration selon compatibilité WooCommerce et contrat du client..",
+        "Exclus : Frais prestataire ; développement hors compatibilité standard..",
+        "Traçabilité : arbitrage antérieur ; OFF-003; OFF-008 | Passerelle spécifique hors deux paiements standard, sur devis. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Deux moyens de paiement standard inclus initialement ; frais prestataires client."
+      ]
+    },
+    {
+      "code_source": "AW-ECOM-LIVRAISON-ADV",
+      "nom": "Livraison avancée",
+      "prix_affiche": "Sur devis",
+      "statut_source": "VALIDE_PAR_ARBITRAGE_ANTERIEUR",
+      "inclusions": [
+        "Zones/poids/dimensions/transporteurs/points relais selon devis.."
+      ],
+      "exclusions": [
+        "Contrats transporteurs",
+        "coûts externes.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "arbitrage antérieur ; OFF-003; OFF-009 | Livraison avancée hors modes standards, sur devis. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Deux zones et trois modes standards déjà inclus au départ, pas de double facturation."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Zones/poids/dimensions/transporteurs/points relais selon devis..",
+        "Exclus : Contrats transporteurs ; coûts externes..",
+        "Traçabilité : arbitrage antérieur ; OFF-003; OFF-009 | Livraison avancée hors modes standards, sur devis. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Deux zones et trois modes standards déjà inclus au départ, pas de double facturation."
+      ]
+    },
+    {
+      "code_source": "AW-MAINT-WP-M",
+      "nom": "Maintenance WordPress mensuelle",
+      "prix_affiche": "49 €/mois",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Mises à jour WordPress/thèmes/extensions hebdomadaires, sécurité prioritaire",
+        "2 interventions mineures de 30 min/mois",
+        "Sauvegardes Hebdomadaires o2switch, conservation 30 jours",
+        "Priorité des incidents 9 h-17 h en semaine, sans délai garanti",
+        "Interventions non reportables et non cumulables."
+      ],
+      "exclusions": [
+        "Refonte, développement majeur, intervention hors quota, astreinte HNO."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Maintenance mensuelle résiliable à échéance de la période payée."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Mises à jour WordPress/thèmes/extensions hebdomadaires, sécurité prioritaire ; 2 interventions mineures de 30 min/mois ; Sauvegardes Hebdomadaires o2switch, conservation 30 jours ; Priorité des incidents 9 h-17 h en semaine, sans délai garanti ; Interventions non reportables et non cumulables.",
+        "Exclus : Refonte, développement majeur, intervention hors quota, astreinte HNO.",
+        "Note de convergence : Maintenance mensuelle résiliable à échéance de la période payée."
+      ]
+    },
+    {
+      "code_source": "AW-MAINT-WP-A",
+      "nom": "Maintenance WordPress annuelle",
+      "prix_affiche": "539 €/an",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Mises à jour WordPress/thèmes/extensions hebdomadaires, sécurité prioritaire",
+        "2 interventions mineures de 30 min/mois",
+        "Sauvegardes Hebdomadaires o2switch, conservation 30 jours",
+        "Priorité des incidents 9 h-17 h en semaine, sans délai garanti",
+        "Interventions non reportables et non cumulables."
+      ],
+      "exclusions": [
+        "Refonte, développement majeur, intervention hors quota, astreinte HNO."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Renouvellement annuel sur accord exprès ; mensuel selon résiliation validée."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Mises à jour WordPress/thèmes/extensions hebdomadaires, sécurité prioritaire ; 2 interventions mineures de 30 min/mois ; Sauvegardes Hebdomadaires o2switch, conservation 30 jours ; Priorité des incidents 9 h-17 h en semaine, sans délai garanti ; Interventions non reportables et non cumulables.",
+        "Exclus : Refonte, développement majeur, intervention hors quota, astreinte HNO.",
+        "Note de convergence : Renouvellement annuel sur accord exprès ; mensuel selon résiliation validée."
+      ]
+    },
+    {
+      "code_source": "AW-MAINT-WC-M",
+      "nom": "Maintenance WooCommerce mensuelle",
+      "prix_affiche": "99 €/mois",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Mises à jour WordPress/thèmes/extensions hebdomadaires, sécurité prioritaire",
+        "4 interventions mineures de 30 min/mois",
+        "Sauvegardes Quotidiennes o2switch, conservation 30 jours",
+        "Priorité des incidents 9 h-17 h en semaine, sans délai garanti",
+        "Interventions non reportables et non cumulables."
+      ],
+      "exclusions": [
+        "Refonte, développement majeur, intervention hors quota, astreinte HNO."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Maintenance mensuelle résiliable à échéance de la période payée."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Mises à jour WordPress/thèmes/extensions hebdomadaires, sécurité prioritaire ; 4 interventions mineures de 30 min/mois ; Sauvegardes Quotidiennes o2switch, conservation 30 jours ; Priorité des incidents 9 h-17 h en semaine, sans délai garanti ; Interventions non reportables et non cumulables.",
+        "Exclus : Refonte, développement majeur, intervention hors quota, astreinte HNO.",
+        "Note de convergence : Maintenance mensuelle résiliable à échéance de la période payée."
+      ]
+    },
+    {
+      "code_source": "AW-MAINT-WC-A",
+      "nom": "Maintenance WooCommerce annuelle",
+      "prix_affiche": "1 089 €/an",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Mises à jour WordPress/thèmes/extensions hebdomadaires, sécurité prioritaire",
+        "4 interventions mineures de 30 min/mois",
+        "Sauvegardes Quotidiennes o2switch, conservation 30 jours",
+        "Priorité des incidents 9 h-17 h en semaine, sans délai garanti",
+        "Interventions non reportables et non cumulables."
+      ],
+      "exclusions": [
+        "Refonte, développement majeur, intervention hors quota, astreinte HNO."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Renouvellement annuel sur accord exprès ; mensuel selon résiliation validée."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Mises à jour WordPress/thèmes/extensions hebdomadaires, sécurité prioritaire ; 4 interventions mineures de 30 min/mois ; Sauvegardes Quotidiennes o2switch, conservation 30 jours ; Priorité des incidents 9 h-17 h en semaine, sans délai garanti ; Interventions non reportables et non cumulables.",
+        "Exclus : Refonte, développement majeur, intervention hors quota, astreinte HNO.",
+        "Note de convergence : Renouvellement annuel sur accord exprès ; mensuel selon résiliation validée."
+      ]
+    },
+    {
+      "code_source": "AW-TECH-HEBERG-WP",
+      "nom": "Hébergement WordPress seul",
+      "prix_affiche": "99 €/an — ANCIENNE REFERENCE",
+      "statut_source": "ANCIEN_A_RECONCILIER",
+      "inclusions": [
+        "Hébergement",
+        "SSL",
+        "maintien de l'espace d'hébergement.."
+      ],
+      "exclusions": [
+        "Maintenance WordPress",
+        "MAJ",
+        "interventions",
+        "sauvegarde contractuelle de maintenance.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Ne pas commercialiser comme alternative autonome à la Lune dédiée ; fiche historique à archiver/requalifier."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Hébergement ; SSL ; maintien de l'espace d'hébergement..",
+        "Exclus : Maintenance WordPress ; MAJ ; interventions ; sauvegarde contractuelle de maintenance..",
+        "Note de convergence : Ne pas commercialiser comme alternative autonome à la Lune dédiée ; fiche historique à archiver/requalifier."
+      ]
+    },
+    {
+      "code_source": "AW-TECH-AUDIT-REPRISE",
+      "nom": "Audit de reprise WordPress",
+      "prix_affiche": "149 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "État WP/thème/plugins/versions/sauvegardes/sécurité/SSL/users/erreurs/perf/hébergement/customisations",
+        "risques",
+        "priorités",
+        "conclusion reprise/remise à niveau/refus.."
+      ],
+      "exclusions": [
+        "Corrections.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 149 € pour audit de reprise, pas remise en état ni maintenance automatique."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : État WP/thème/plugins/versions/sauvegardes/sécurité/SSL/users/erreurs/perf/hébergement/customisations ; risques ; priorités ; conclusion reprise/remise à niveau/refus..",
+        "Exclus : Corrections..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 149 € pour audit de reprise, pas remise en état ni maintenance automatique."
+      ]
+    },
+    {
+      "code_source": "AW-TECH-REMISE-WP",
+      "nom": "Remise à niveau WordPress",
+      "prix_affiche": "Dès 249 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Corrections issues audit",
+        "MAJ encadrées",
+        "nettoyage simple",
+        "sécurisation",
+        "sauvegarde",
+        "compatibilité raisonnable.."
+      ],
+      "exclusions": [
+        "Refonte",
+        "malware lourd",
+        "dev complexe.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : Dès 249 €, préciser diagnostic, corrections incluses, sauvegardes et limites."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Corrections issues audit ; MAJ encadrées ; nettoyage simple ; sécurisation ; sauvegarde ; compatibilité raisonnable..",
+        "Exclus : Refonte ; malware lourd ; dev complexe..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : Dès 249 €, préciser diagnostic, corrections incluses, sauvegardes et limites."
+      ]
+    },
+    {
+      "code_source": "AW-TECH-REMISE-WC",
+      "nom": "Remise à niveau WooCommerce",
+      "prix_affiche": "Dès 299 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Remise à niveau WP + contrôle WooCommerce/paiements/commandes/pages système/catalogue/extensions critiques.."
+      ],
+      "exclusions": [
+        "Refonte",
+        "gros catalogue",
+        "malware lourd",
+        "intégrations complexes.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : Dès 299 €, tenir compte commandes et données sensibles aux restaurations."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Remise à niveau WP + contrôle WooCommerce/paiements/commandes/pages système/catalogue/extensions critiques..",
+        "Exclus : Refonte ; gros catalogue ; malware lourd ; intégrations complexes..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : Dès 299 €, tenir compte commandes et données sensibles aux restaurations."
+      ]
+    },
+    {
+      "code_source": "AW-TECH-DEPANNAGE",
+      "nom": "Dépannage WordPress ponctuel",
+      "prix_affiche": "69 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Diagnostic ciblé et intervention ponctuelle",
+        "minimum 1 h.."
+      ],
+      "exclusions": [
+        "Audit complet",
+        "gros chantier",
+        "urgence garantie.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 69 € = taux d’intervention ponctuelle pour 1 h minimum ; temps supplémentaire selon accord, ne pas promettre un dépannage illimité."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Diagnostic ciblé et intervention ponctuelle ; minimum 1 h..",
+        "Exclus : Audit complet ; gros chantier ; urgence garantie..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 69 € = taux d’intervention ponctuelle pour 1 h minimum ; temps supplémentaire selon accord, ne pas promettre un dépannage illimité."
+      ]
+    },
+    {
+      "code_source": "AW-TECH-PACK-3H",
+      "nom": "Pack interventions 3 h",
+      "prix_affiche": "189 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "3 heures utilisables sur les sites du même client",
+        "Décompte par quarts d’heure",
+        "Validité 24 mois + prolongation de 3 mois selon conditions."
+      ],
+      "exclusions": [
+        "Projet complet au forfait",
+        "Correction de défaut imputable à AtoumWeb."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Supprime durée de 12 mois du Catalogue V3.8."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : 3 heures utilisables sur les sites du même client ; Décompte par quarts d’heure ; Validité 24 mois + prolongation de 3 mois selon conditions.",
+        "Exclus : Projet complet au forfait ; Correction de défaut imputable à AtoumWeb.",
+        "Note de convergence : Supprime durée de 12 mois du Catalogue V3.8."
+      ]
+    },
+    {
+      "code_source": "AW-TECH-PACK-5H",
+      "nom": "Pack interventions 5 h",
+      "prix_affiche": "299 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "5 heures utilisables sur les sites du même client",
+        "Décompte par quarts d’heure",
+        "Validité 24 mois + prolongation de 3 mois selon conditions."
+      ],
+      "exclusions": [
+        "Projet complet au forfait",
+        "Correction de défaut imputable à AtoumWeb."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Supprime durée de 12 mois du Catalogue V3.8."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : 5 heures utilisables sur les sites du même client ; Décompte par quarts d’heure ; Validité 24 mois + prolongation de 3 mois selon conditions.",
+        "Exclus : Projet complet au forfait ; Correction de défaut imputable à AtoumWeb.",
+        "Note de convergence : Supprime durée de 12 mois du Catalogue V3.8."
+      ]
+    },
+    {
+      "code_source": "AW-TECH-PACK-10H",
+      "nom": "Pack interventions 10 h",
+      "prix_affiche": "549 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "10 heures utilisables sur les sites du même client",
+        "Décompte par quarts d’heure",
+        "Validité 24 mois + prolongation de 3 mois selon conditions."
+      ],
+      "exclusions": [
+        "Projet complet au forfait",
+        "Correction de défaut imputable à AtoumWeb."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Supprime durée de 12 mois du Catalogue V3.8."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : 10 heures utilisables sur les sites du même client ; Décompte par quarts d’heure ; Validité 24 mois + prolongation de 3 mois selon conditions.",
+        "Exclus : Projet complet au forfait ; Correction de défaut imputable à AtoumWeb.",
+        "Note de convergence : Supprime durée de 12 mois du Catalogue V3.8."
+      ]
+    },
+    {
+      "code_source": "AW-TECH-MIGRATION-AW",
+      "nom": "Migration WordPress externe standard vers AtoumWeb",
+      "prix_affiche": "99 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Sauvegarde",
+        "transfert fichiers/base",
+        "config",
+        "DNS si besoin",
+        "SSL",
+        "vérification.."
+      ],
+      "exclusions": [
+        "Messagerie complexe",
+        "gros site",
+        "multisite",
+        "WooCommerce actif complexe.",
+        "Transfert entre hébergements AtoumWeb : gratuit (non facturé 99 €)."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : Sauvegarde ; transfert fichiers/base ; config ; DNS si besoin ; SSL ; vérification..",
+        "Exclus : Messagerie complexe ; gros site ; multisite ; WooCommerce actif complexe. ; Transfert entre hébergements AtoumWeb : gratuit (non facturé 99 €)."
+      ]
+    },
+    {
+      "code_source": "AW-TECH-MIGRATION-CPLX",
+      "nom": "Migration WordPress complexe",
+      "prix_affiche": "Dès 199 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Périmètre défini après analyse.."
+      ],
+      "exclusions": [
+        "Travaux non prévus.."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : Périmètre défini après analyse..",
+        "Exclus : Travaux non prévus.."
+      ]
+    },
+    {
+      "code_source": "AW-TECH-RESPONSIVE",
+      "nom": "Correction affichage / responsive",
+      "prix_affiche": "Dès 79 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Correction ciblée d'une anomalie d'affichage.."
+      ],
+      "exclusions": [
+        "Refonte page/thème.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : Dès 79 € pour correctif ciblé ; corrections des défauts AtoumWeb encore dus non facturables."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Correction ciblée d'une anomalie d'affichage..",
+        "Exclus : Refonte page/thème..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : Dès 79 € pour correctif ciblé ; corrections des défauts AtoumWeb encore dus non facturables."
+      ]
+    },
+    {
+      "code_source": "AW-TECH-PLUGIN-STD",
+      "nom": "Installation / réglage plugin standard",
+      "prix_affiche": "69 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Installation et réglage si réalisable en ~1 h.."
+      ],
+      "exclusions": [
+        "Paramétrage métier complexe/API.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 69 € pour une installation/réglage simple, typiquement jusqu’à 1 h ; licences exclues ; inclusions initiales non refacturées."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Installation et réglage si réalisable en ~1 h..",
+        "Exclus : Paramétrage métier complexe/API..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 69 € pour une installation/réglage simple, typiquement jusqu’à 1 h ; licences exclues ; inclusions initiales non refacturées."
+      ]
+    },
+    {
+      "code_source": "AW-TECH-URGENT",
+      "nom": "Intervention urgente / prioritaire",
+      "prix_affiche": "Sur devis",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Prise en charge prioritaire selon disponibilité, sans promesse 24/7.."
+      ],
+      "exclusions": [
+        "Garantie HNO/24-7.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis, selon horaires/possibilité ; aucune astreinte implicite."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Prise en charge prioritaire selon disponibilité, sans promesse 24/7..",
+        "Exclus : Garantie HNO/24-7..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis, selon horaires/possibilité ; aucune astreinte implicite."
+      ]
+    },
+    {
+      "code_source": "AW-SEO-AUDIT",
+      "nom": "Audit technique SEO",
+      "prix_affiche": "199 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Indexation",
+        "sitemap/robots",
+        "balises/structure",
+        "mobile",
+        "vitesse/CWV",
+        "404/redirections",
+        "problèmes bloquants",
+        "rapport priorisé.."
+      ],
+      "exclusions": [
+        "Corrections",
+        "stratégie éditoriale complète",
+        "concurrence avancée.."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : Indexation ; sitemap/robots ; balises/structure ; mobile ; vitesse/CWV ; 404/redirections ; problèmes bloquants ; rapport priorisé..",
+        "Exclus : Corrections ; stratégie éditoriale complète ; concurrence avancée.."
+      ]
+    },
+    {
+      "code_source": "AW-SEO-PERF",
+      "nom": "Optimisation vitesse & performances",
+      "prix_affiche": "149 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Optimisation standard du site WordPress créé et maîtrisé techniquement par AtoumWeb",
+        "Jusqu’à 3 URL et 10 images selon faisabilité",
+        "Contrôles avant/après et retour J+7 selon périmètre validé."
+      ],
+      "exclusions": [
+        "Refonte",
+        "hébergement déficient",
+        "thème/plugin gravement problématique.",
+        "Sites extérieurs non créés ou non maîtrisés par AtoumWeb : sur devis après audit de faisabilité",
+        "Aucune garantie de score ou de positionnement."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : Optimisation standard du site WordPress créé et maîtrisé techniquement par AtoumWeb ; Jusqu’à 3 URL et 10 images selon faisabilité ; Contrôles avant/après et retour J+7 selon périmètre validé.",
+        "Exclus : Refonte ; hébergement déficient ; thème/plugin gravement problématique. ; Sites extérieurs non créés ou non maîtrisés par AtoumWeb : sur devis après audit de faisabilité ; Aucune garantie de score ou de positionnement."
+      ]
+    },
+    {
+      "code_source": "AW-SEO-LOCAL",
+      "nom": "SEO local",
+      "prix_affiche": "249 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Création/optimisation 1 GBP",
+        "catégories",
+        "description",
+        "services",
+        "horaires",
+        "coordonnées/zone",
+        "cohérence NAP",
+        "lien site",
+        "optimisation locale d'1 page",
+        "Title/meta",
+        "données structurées si pertinentes",
+        "avis",
+        "indexation",
+        "mini bilan.."
+      ],
+      "exclusions": [
+        "Nouvelle page rédigée",
+        "gestion mensuelle",
+        "netlinking",
+        "garantie de classement.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 249 € pour intervention locale simple avec périmètre explicite ; aucune promesse de classement."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Création/optimisation 1 GBP ; catégories ; description ; services ; horaires ; coordonnées/zone ; cohérence NAP ; lien site ; optimisation locale d'1 page ; Title/meta ; données structurées si pertinentes ; avis ; indexation ; mini bilan..",
+        "Exclus : Nouvelle page rédigée ; gestion mensuelle ; netlinking ; garantie de classement..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 249 € pour intervention locale simple avec périmètre explicite ; aucune promesse de classement."
+      ]
+    },
+    {
+      "code_source": "AW-SEO-LOCAL-ETAB",
+      "nom": "Établissement SEO local supplémentaire",
+      "prix_affiche": "79 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Optimisation d'un établissement supplémentaire dans le même projet.."
+      ],
+      "exclusions": [
+        "Gestion mensuelle.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 79 € par établissement local supplémentaire, si réellement hors périmètre inclus."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Optimisation d'un établissement supplémentaire dans le même projet..",
+        "Exclus : Gestion mensuelle..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 79 € par établissement local supplémentaire, si réellement hors périmètre inclus."
+      ]
+    },
+    {
+      "code_source": "AW-SEO-PAGE-LOCAL",
+      "nom": "Page locale rédigée",
+      "prix_affiche": "149 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Rédaction et optimisation d'une page locale standard.."
+      ],
+      "exclusions": [
+        "Recherche lourde ou plusieurs pages.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 149 € pour page locale spécifiquement travaillée ; distinguer page web standard à 99 € et audit SEO."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Rédaction et optimisation d'une page locale standard..",
+        "Exclus : Recherche lourde ou plusieurs pages..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 149 € pour page locale spécifiquement travaillée ; distinguer page web standard à 99 € et audit SEO."
+      ]
+    },
+    {
+      "code_source": "AW-SEO-GBP-M",
+      "nom": "Google Business Profile Premium — mensuel",
+      "prix_affiche": "79 €/mois",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Jusqu'à 4 publications/mois",
+        "MAJ infos",
+        "photos fournies",
+        "surveillance avis",
+        "jusqu'à 10 réponses/mois",
+        "contrôle mensuel",
+        "mini bilan.."
+      ],
+      "exclusions": [
+        "Gestion de crise",
+        "gros volume avis",
+        "shooting",
+        "Ads",
+        "netlinking.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Référence Premium existante (4 publications, 10 réponses) ; Essentiel ajouté sous nouveau code provisoire. | Le nom Premium distingue cette offre de la formule Essentiel ajoutée en V3.9."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Jusqu'à 4 publications/mois ; MAJ infos ; photos fournies ; surveillance avis ; jusqu'à 10 réponses/mois ; contrôle mensuel ; mini bilan..",
+        "Exclus : Gestion de crise ; gros volume avis ; shooting ; Ads ; netlinking..",
+        "Note de convergence : Référence Premium existante (4 publications, 10 réponses) ; Essentiel ajouté sous nouveau code provisoire. | Le nom Premium distingue cette offre de la formule Essentiel ajoutée en V3.9."
+      ]
+    },
+    {
+      "code_source": "AW-SEO-GBP-A",
+      "nom": "Google Business Profile Premium — annuel",
+      "prix_affiche": "869 €/an",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Jusqu'à 4 publications/mois",
+        "MAJ infos",
+        "photos fournies",
+        "surveillance avis",
+        "jusqu'à 10 réponses/mois",
+        "contrôle mensuel",
+        "mini bilan.",
+        "1 mois offert.."
+      ],
+      "exclusions": [
+        "Gestion de crise",
+        "gros volume avis",
+        "shooting",
+        "Ads",
+        "netlinking.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Premium existant ; renouvellement automatique annuel selon conditions ; Essentiel annuel ajouté sous nouveau code provisoire. | Le nom Premium distingue cette offre de la formule Essentiel ajoutée en V3.9."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Jusqu'à 4 publications/mois ; MAJ infos ; photos fournies ; surveillance avis ; jusqu'à 10 réponses/mois ; contrôle mensuel ; mini bilan. ; 1 mois offert..",
+        "Exclus : Gestion de crise ; gros volume avis ; shooting ; Ads ; netlinking..",
+        "Note de convergence : Premium existant ; renouvellement automatique annuel selon conditions ; Essentiel annuel ajouté sous nouveau code provisoire. | Le nom Premium distingue cette offre de la formule Essentiel ajoutée en V3.9."
+      ]
+    },
+    {
+      "code_source": "AW-SEO-GBP-ETAB-M",
+      "nom": "Établissement GBP supplémentaire en suivi",
+      "prix_affiche": "39 € / mois",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Suivi d'un établissement supplémentaire dans le même abonnement.."
+      ],
+      "exclusions": [
+        "Travail entièrement indépendant.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 39 €/mois par établissement additionnel dans le même abonnement, après accord ; reconduction selon contrat."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Suivi d'un établissement supplémentaire dans le même abonnement..",
+        "Exclus : Travail entièrement indépendant..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 39 €/mois par établissement additionnel dans le même abonnement, après accord ; reconduction selon contrat."
+      ]
+    },
+    {
+      "code_source": "AW-SEO-ESSENTIEL",
+      "nom": "Pack SEO Essentiel",
+      "prix_affiche": "299 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Jusqu'à 5 pages",
+        "technique de base",
+        "contenus",
+        "requêtes principales",
+        "structure",
+        "maillage",
+        "priorisation",
+        "plan d'actions.."
+      ],
+      "exclusions": [
+        "Mise en œuvre des corrections.."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : Jusqu'à 5 pages ; technique de base ; contenus ; requêtes principales ; structure ; maillage ; priorisation ; plan d'actions..",
+        "Exclus : Mise en œuvre des corrections.."
+      ]
+    },
+    {
+      "code_source": "AW-SEO-AVANCE",
+      "nom": "Pack SEO Avancé",
+      "prix_affiche": "499 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Jusqu'à 10 pages",
+        "audit technique approfondi",
+        "mots-clés principaux/secondaires",
+        "2 concurrents",
+        "structure/maillage",
+        "recommandations éditoriales",
+        "plan priorisé",
+        "restitution 45-60 min.."
+      ],
+      "exclusions": [
+        "Mise en œuvre.."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : Jusqu'à 10 pages ; audit technique approfondi ; mots-clés principaux/secondaires ; 2 concurrents ; structure/maillage ; recommandations éditoriales ; plan priorisé ; restitution 45-60 min..",
+        "Exclus : Mise en œuvre.."
+      ]
+    },
+    {
+      "code_source": "AW-SEO-PREMIUM",
+      "nom": "Pack SEO Premium",
+      "prix_affiche": "899 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Jusqu'à 20 pages",
+        "audit technique",
+        "stratégie requêtes",
+        "3-5 concurrents",
+        "architecture/maillage",
+        "stratégie éditoriale",
+        "feuille de route 3-6 mois",
+        "restitution",
+        "1 suivi ~30 jours.."
+      ],
+      "exclusions": [
+        "Mise en œuvre des corrections",
+        "rédaction hors pack sauf mention.."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : Jusqu'à 20 pages ; audit technique ; stratégie requêtes ; 3-5 concurrents ; architecture/maillage ; stratégie éditoriale ; feuille de route 3-6 mois ; restitution ; 1 suivi ~30 jours..",
+        "Exclus : Mise en œuvre des corrections ; rédaction hors pack sauf mention.."
+      ]
+    },
+    {
+      "code_source": "AW-SEO-NETLINKING",
+      "nom": "Netlinking",
+      "prix_affiche": "Sur devis",
+      "statut_source": "VALIDE_PAR_ARBITRAGE_ANTERIEUR",
+      "inclusions": [
+        "Analyse profil",
+        "pages cibles",
+        "recherche supports",
+        "sélection",
+        "recommandations ancres",
+        "pilotage",
+        "contrôle",
+        "bilan selon devis.."
+      ],
+      "exclusions": [
+        "Garantie positions",
+        "lien à vie",
+        "coûts médias inclus par défaut.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "arbitrage antérieur ; SQ-12 | Netlinking sur devis, cadre éthique. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis, pratiques conformes aux règles moteurs de recherche ; aucune garantie de ranking."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Analyse profil ; pages cibles ; recherche supports ; sélection ; recommandations ancres ; pilotage ; contrôle ; bilan selon devis..",
+        "Exclus : Garantie positions ; lien à vie ; coûts médias inclus par défaut..",
+        "Traçabilité : arbitrage antérieur ; SQ-12 | Netlinking sur devis, cadre éthique. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis, pratiques conformes aux règles moteurs de recherche ; aucune garantie de ranking."
+      ]
+    },
+    {
+      "code_source": "AW-SEO-DISCOVER",
+      "nom": "Optimisation Google Discover",
+      "prix_affiche": "Sur devis",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Audit éligibilité/éditorial/technique",
+        "images",
+        "titres",
+        "structure",
+        "recommandations",
+        "optimisation contenus",
+        "suivi Search Console si données disponibles.."
+      ],
+      "exclusions": [
+        "Garantie d'apparition",
+        "rédaction de nouveaux articles",
+        "production vidéo.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis ; pas de promesse de présence dans Discover."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Audit éligibilité/éditorial/technique ; images ; titres ; structure ; recommandations ; optimisation contenus ; suivi Search Console si données disponibles..",
+        "Exclus : Garantie d'apparition ; rédaction de nouveaux articles ; production vidéo..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis ; pas de promesse de présence dans Discover."
+      ]
+    },
+    {
+      "code_source": "AW-CONT-PAGE",
+      "nom": "Rédaction page web",
+      "prix_affiche": "99 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "250 à 450 mots",
+        "Un cycle de corrections",
+        "Intégration dans une page WP existante et compatible."
+      ],
+      "exclusions": [
+        "Création d’une nouvelle page WordPress",
+        "Recherche technique lourde",
+        "Travail d’intégration déjà inclus refacturé."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Remplace ancienne plage 500-800 mots."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : 250 à 450 mots ; Un cycle de corrections ; Intégration dans une page WP existante et compatible.",
+        "Exclus : Création d’une nouvelle page WordPress ; Recherche technique lourde ; Travail d’intégration déjà inclus refacturé.",
+        "Note de convergence : Remplace ancienne plage 500-800 mots."
+      ]
+    },
+    {
+      "code_source": "AW-CONT-REWRITE",
+      "nom": "Réécriture page",
+      "prix_affiche": "79 €",
+      "statut_source": "A_VERIFIER_AVANT_COMMERCIALISATION",
+      "inclusions": [
+        "Amélioration clarté/structure/formulation/hiérarchie à partir d'un vrai texte existant.."
+      ],
+      "exclusions": [
+        "Création complète si contenu insuffisant.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Ancienne offre maintenue comme base ; tarif et périmètre à vérifier avant diffusion nouvelle."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Amélioration clarté/structure/formulation/hiérarchie à partir d'un vrai texte existant..",
+        "Exclus : Création complète si contenu insuffisant..",
+        "Note de convergence : Ancienne offre maintenue comme base ; tarif et périmètre à vérifier avant diffusion nouvelle."
+      ]
+    },
+    {
+      "code_source": "AW-CONT-ART-ESS",
+      "nom": "Article essentiel",
+      "prix_affiche": "99 €",
+      "statut_source": "A_VERIFIER_AVANT_COMMERCIALISATION",
+      "inclusions": [
+        "700-900 mots",
+        "rédaction informative",
+        "1 aller-retour.."
+      ],
+      "exclusions": [
+        "Recherche SEO approfondie.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Ancienne offre maintenue comme base ; tarif et périmètre à vérifier avant diffusion nouvelle."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : 700-900 mots ; rédaction informative ; 1 aller-retour..",
+        "Exclus : Recherche SEO approfondie..",
+        "Note de convergence : Ancienne offre maintenue comme base ; tarif et périmètre à vérifier avant diffusion nouvelle."
+      ]
+    },
+    {
+      "code_source": "AW-CONT-ART-SEO",
+      "nom": "Article SEO",
+      "prix_affiche": "149 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "600 à 900 mots",
+        "Recherche simple, requête principale et structuration SEO",
+        "Métadonnées, maillage interne adapté",
+        "Un cycle de corrections",
+        "Publication dans WordPress compatible après validation écrite."
+      ],
+      "exclusions": [
+        "Recherche experte réglementée",
+        "Résultat de référencement garanti",
+        "Mise en ligne sur plateforme non compatible sans devis."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Remplace ancienne plage 900-1 200 mots ; intégration WP déjà comprise non refacturable."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : 600 à 900 mots ; Recherche simple, requête principale et structuration SEO ; Métadonnées, maillage interne adapté ; Un cycle de corrections ; Publication dans WordPress compatible après validation écrite.",
+        "Exclus : Recherche experte réglementée ; Résultat de référencement garanti ; Mise en ligne sur plateforme non compatible sans devis.",
+        "Note de convergence : Remplace ancienne plage 900-1 200 mots ; intégration WP déjà comprise non refacturable."
+      ]
+    },
+    {
+      "code_source": "AW-CONT-PACK4-SEO",
+      "nom": "Pack 4 articles SEO",
+      "prix_affiche": "549 €",
+      "statut_source": "A_VERIFIER_AVANT_COMMERCIALISATION",
+      "inclusions": [
+        "4 articles SEO",
+        "sujets cadrés ensemble",
+        "économie de 47 € vs unité.."
+      ],
+      "exclusions": [
+        "Travaux hors périmètre de chaque article.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Ancienne offre maintenue comme base ; tarif et périmètre à vérifier avant diffusion nouvelle."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : 4 articles SEO ; sujets cadrés ensemble ; économie de 47 € vs unité..",
+        "Exclus : Travaux hors périmètre de chaque article..",
+        "Note de convergence : Ancienne offre maintenue comme base ; tarif et périmètre à vérifier avant diffusion nouvelle."
+      ]
+    },
+    {
+      "code_source": "AW-CONT-LIVRE-BLANC",
+      "nom": "Livre blanc",
+      "prix_affiche": "Dès 590 €",
+      "statut_source": "A_VERIFIER_AVANT_COMMERCIALISATION",
+      "inclusions": [
+        "Cadrage",
+        "plan",
+        "rédaction jusqu'à ~3500 mots",
+        "1 cycle",
+        "livraison texte structurée.."
+      ],
+      "exclusions": [
+        "Interviews",
+        "recherche lourde",
+        "infographies",
+        "mise en page graphique complète",
+        "très long document.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Ancienne offre maintenue comme base ; tarif et périmètre à vérifier avant diffusion nouvelle."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Cadrage ; plan ; rédaction jusqu'à ~3500 mots ; 1 cycle ; livraison texte structurée..",
+        "Exclus : Interviews ; recherche lourde ; infographies ; mise en page graphique complète ; très long document..",
+        "Note de convergence : Ancienne offre maintenue comme base ; tarif et périmètre à vérifier avant diffusion nouvelle."
+      ]
+    },
+    {
+      "code_source": "AW-CONT-INTEG-WP",
+      "nom": "Intégration WordPress",
+      "prix_affiche": "39 €",
+      "statut_source": "A_VERIFIER_AVANT_COMMERCIALISATION",
+      "inclusions": [
+        "Intégration standard d'un contenu livré dans WordPress.."
+      ],
+      "exclusions": [
+        "Refonte de page",
+        "design complexe.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Ancienne offre maintenue comme base ; tarif et périmètre à vérifier avant diffusion nouvelle."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Intégration standard d'un contenu livré dans WordPress..",
+        "Exclus : Refonte de page ; design complexe..",
+        "Note de convergence : Ancienne offre maintenue comme base ; tarif et périmètre à vérifier avant diffusion nouvelle."
+      ]
+    },
+    {
+      "code_source": "AW-CONT-IMG3",
+      "nom": "3 images optimisées",
+      "prix_affiche": "29 €",
+      "statut_source": "A_VERIFIER_AVANT_COMMERCIALISATION",
+      "inclusions": [
+        "Recherche simple de 3 images exploitables légalement",
+        "compression/format web.."
+      ],
+      "exclusions": [
+        "Premium payant",
+        "retouche avancée.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Ancienne offre maintenue comme base ; tarif et périmètre à vérifier avant diffusion nouvelle."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Recherche simple de 3 images exploitables légalement ; compression/format web..",
+        "Exclus : Premium payant ; retouche avancée..",
+        "Note de convergence : Ancienne offre maintenue comme base ; tarif et périmètre à vérifier avant diffusion nouvelle."
+      ]
+    },
+    {
+      "code_source": "AW-CONT-PRIORITE",
+      "nom": "Priorité contenu < 3 jours",
+      "prix_affiche": "59 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Traitement prioritaire sous réserve de disponibilité.."
+      ],
+      "exclusions": [
+        "Garantie si dépendance client.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 59 € en supplément, uniquement si créneau confirmé ; calendrier au devis."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Traitement prioritaire sous réserve de disponibilité..",
+        "Exclus : Garantie si dépendance client..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 59 € en supplément, uniquement si créneau confirmé ; calendrier au devis."
+      ]
+    },
+    {
+      "code_source": "AW-CONT-URGENT-48",
+      "nom": "Contenu urgent < 48 h",
+      "prix_affiche": "Sur devis",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Périmètre selon disponibilité et complexité.."
+      ],
+      "exclusions": [
+        "Aucune garantie automatique.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis selon faisabilité, aucune garantie générale sous 48 h."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Périmètre selon disponibilité et complexité..",
+        "Exclus : Aucune garantie automatique..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis selon faisabilité, aucune garantie générale sous 48 h."
+      ]
+    },
+    {
+      "code_source": "AW-CONT-MEP-ADV",
+      "nom": "Mise en page graphique avancée",
+      "prix_affiche": "Sur devis",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Périmètre selon nombre de pages et complexité.."
+      ],
+      "exclusions": [
+        "Rédaction si non prévue.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis uniquement si mise en page dépassant le forfait éditorial inclus."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Périmètre selon nombre de pages et complexité..",
+        "Exclus : Rédaction si non prévue..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis uniquement si mise en page dépassant le forfait éditorial inclus."
+      ]
+    },
+    {
+      "code_source": "AW-CONT-RECH-TECH",
+      "nom": "Recherche approfondie / sujet technique",
+      "prix_affiche": "Sur devis",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Périmètre de recherche défini au devis.."
+      ],
+      "exclusions": [
+        "Expertise réglementée non fournie par AtoumWeb.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis, recherche approfondie distincte du contenu standard."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Périmètre de recherche défini au devis..",
+        "Exclus : Expertise réglementée non fournie par AtoumWeb..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis, recherche approfondie distincte du contenu standard."
+      ]
+    },
+    {
+      "code_source": "AW-BRAND-LOGO",
+      "nom": "Logo Standard",
+      "prix_affiche": "249 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "1 proposition créative de logo",
+        "2 cycles de corrections",
+        "Déclinaisons couleur et monochrome, fonds adaptés",
+        "Livrables PNG/JPG/PDF/SVG."
+      ],
+      "exclusions": [
+        "Fichiers sources natifs éditables",
+        "Mini-charte graphique et dépôt de marque",
+        "Recherche de disponibilité de marque."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Remplace ancienne promesse 2 propositions."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : 1 proposition créative de logo ; 2 cycles de corrections ; Déclinaisons couleur et monochrome, fonds adaptés ; Livrables PNG/JPG/PDF/SVG.",
+        "Exclus : Fichiers sources natifs éditables ; Mini-charte graphique et dépôt de marque ; Recherche de disponibilité de marque.",
+        "Note de convergence : Remplace ancienne promesse 2 propositions."
+      ]
+    },
+    {
+      "code_source": "AW-BRAND-IDENTITE",
+      "nom": "Identité Visuelle Essentielle",
+      "prix_affiche": "À vérifier — ancienne offre 499 €",
+      "statut_source": "ANCIEN_A_RECONCILIER",
+      "inclusions": [
+        "Logo Standard + palette",
+        "typographies",
+        "mini-charte PDF",
+        "règles d'usage",
+        "déclinaisons web/réseaux",
+        "profil + bannière simple.."
+      ],
+      "exclusions": [
+        "Charte très complète",
+        "naming",
+        "dépôt marque.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Ancien ensemble à 499 € NON reconfirmé, remplacé commercialement par logo 249 € + mini-charte 249 € (=498 €)."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Logo Standard + palette ; typographies ; mini-charte PDF ; règles d'usage ; déclinaisons web/réseaux ; profil + bannière simple..",
+        "Exclus : Charte très complète ; naming ; dépôt marque..",
+        "Note de convergence : Ancien ensemble à 499 € NON reconfirmé, remplacé commercialement par logo 249 € + mini-charte 249 € (=498 €)."
+      ]
+    },
+    {
+      "code_source": "AW-BRAND-CARTE",
+      "nom": "Carte de visite",
+      "prix_affiche": "79 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Design recto/verso",
+        "fichier prêt impression.."
+      ],
+      "exclusions": [
+        "Impression physique.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 79 € pour un design de carte, impression/fabrication exclues sauf devis."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Design recto/verso ; fichier prêt impression..",
+        "Exclus : Impression physique..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 79 € pour un design de carte, impression/fabrication exclues sauf devis."
+      ]
+    },
+    {
+      "code_source": "AW-BRAND-DECLI-LOGO",
+      "nom": "Déclinaison supplémentaire logo",
+      "prix_affiche": "49 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Adaptation du logo final à un nouveau format/usage.."
+      ],
+      "exclusions": [
+        "Nouveau logo.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 49 € pour une déclinaison non incluse dans le pack logo."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Adaptation du logo final à un nouveau format/usage..",
+        "Exclus : Nouveau logo..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 49 € pour une déclinaison non incluse dans le pack logo."
+      ]
+    },
+    {
+      "code_source": "AW-BRAND-SOCIAL-5",
+      "nom": "5 templates réseaux sociaux",
+      "prix_affiche": "129 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "5 modèles réutilisables dans format convenu.."
+      ],
+      "exclusions": [
+        "Abonnements premium",
+        "création continue.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 129 € pour 5 gabarits ; cadrage des formats et livrables au devis."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : 5 modèles réutilisables dans format convenu..",
+        "Exclus : Abonnements premium ; création continue..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 129 € pour 5 gabarits ; cadrage des formats et livrables au devis."
+      ]
+    },
+    {
+      "code_source": "AW-BRAND-SOCIAL-10",
+      "nom": "10 templates réseaux sociaux",
+      "prix_affiche": "199 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "10 modèles réutilisables.."
+      ],
+      "exclusions": [
+        "Création continue.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 199 € pour 10 gabarits ; ne pas facturer si contenus déjà inclus."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : 10 modèles réutilisables..",
+        "Exclus : Création continue..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 199 € pour 10 gabarits ; ne pas facturer si contenus déjà inclus."
+      ]
+    },
+    {
+      "code_source": "AW-BRAND-PAPETERIE",
+      "nom": "Kit papeterie",
+      "prix_affiche": "149 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Papier à en-tête",
+        "signature e-mail",
+        "modèle simple document/courrier.."
+      ],
+      "exclusions": [
+        "Carte de visite",
+        "impression.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 149 € pour le kit graphique défini au devis ; impression exclue."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Papier à en-tête ; signature e-mail ; modèle simple document/courrier..",
+        "Exclus : Carte de visite ; impression..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 149 € pour le kit graphique défini au devis ; impression exclue."
+      ]
+    },
+    {
+      "code_source": "AW-BRAND-DOC-4P",
+      "nom": "Mise en page document ≤ 4 pages",
+      "prix_affiche": "99 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Jusqu'à 4 pages standards à partir de contenus fournis.."
+      ],
+      "exclusions": [
+        "Rédaction",
+        "brochure complexe.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 99 € pour mise en page jusqu’à 4 pages hors rédaction complète."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Jusqu'à 4 pages standards à partir de contenus fournis..",
+        "Exclus : Rédaction ; brochure complexe..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 99 € pour mise en page jusqu’à 4 pages hors rédaction complète."
+      ]
+    },
+    {
+      "code_source": "AW-BRAND-DOC-PAGE",
+      "nom": "Page document supplémentaire",
+      "prix_affiche": "19 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "1 page supplémentaire dans la même charte.."
+      ],
+      "exclusions": [
+        "Nouvelle maquette.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 19 € par page graphique additionnelle."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : 1 page supplémentaire dans la même charte..",
+        "Exclus : Nouvelle maquette..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 19 € par page graphique additionnelle."
+      ]
+    },
+    {
+      "code_source": "AW-BRAND-LOGO-ANIM",
+      "nom": "Logo animé simple",
+      "prix_affiche": "89 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Animation légère",
+        "boucle courte",
+        "export web/vidéo.."
+      ],
+      "exclusions": [
+        "3D/motion design complexe.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 89 € pour animation simple d’un logo fourni/existant, pas motion design complexe."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Animation légère ; boucle courte ; export web/vidéo..",
+        "Exclus : 3D/motion design complexe..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 89 € pour animation simple d’un logo fourni/existant, pas motion design complexe."
+      ]
+    },
+    {
+      "code_source": "AW-BRAND-REVISION",
+      "nom": "Révision supplémentaire",
+      "prix_affiche": "39 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "1 série groupée sur direction déjà validée.."
+      ],
+      "exclusions": [
+        "Nouvelle direction graphique.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 39 € pour demande hors cycles déjà inclus ; anomalies imputables non comptées."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : 1 série groupée sur direction déjà validée..",
+        "Exclus : Nouvelle direction graphique..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 39 € pour demande hors cycles déjà inclus ; anomalies imputables non comptées."
+      ]
+    },
+    {
+      "code_source": "AW-BRAND-PRIORITE",
+      "nom": "Traitement prioritaire identité",
+      "prix_affiche": "79 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Priorisation sous réserve disponibilité.."
+      ],
+      "exclusions": [
+        "Garantie absolue si dépendances.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 79 € sur disponibilité et date confirmée au devis."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Priorisation sous réserve disponibilité..",
+        "Exclus : Garantie absolue si dépendances..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 79 € sur disponibilité et date confirmée au devis."
+      ]
+    },
+    {
+      "code_source": "AW-BRAND-MOTION",
+      "nom": "Motion design complexe",
+      "prix_affiche": "Sur devis",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Périmètre défini au devis.."
+      ],
+      "exclusions": [
+        "Non prévu hors devis.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis selon durée, animation et livrables."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Périmètre défini au devis..",
+        "Exclus : Non prévu hors devis..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis selon durée, animation et livrables."
+      ]
+    },
+    {
+      "code_source": "AW-PHOTO-RET-ESS",
+      "nom": "Retouche essentielle",
+      "prix_affiche": "19 €/photo",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Corrections simples de lumière, cadrage et couleurs",
+        "1 cycle de corrections mineures demandé sous 7 jours",
+        "JPEG ou PNG livré selon prestation."
+      ],
+      "exclusions": [
+        "Travaux complexes non chiffrés",
+        "Fichiers de travail éditables."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Complexités sur devis ; correction des erreurs AtoumWeb hors quota."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Corrections simples de lumière, cadrage et couleurs ; 1 cycle de corrections mineures demandé sous 7 jours ; JPEG ou PNG livré selon prestation.",
+        "Exclus : Travaux complexes non chiffrés ; Fichiers de travail éditables.",
+        "Note de convergence : Complexités sur devis ; correction des erreurs AtoumWeb hors quota."
+      ]
+    },
+    {
+      "code_source": "AW-PHOTO-RET-ADV",
+      "nom": "Retouche avancée",
+      "prix_affiche": "39 €/photo",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Retouches locales/complexes dans les limites du devis",
+        "1 cycle de corrections mineures demandé sous 7 jours",
+        "JPEG ou PNG livré selon prestation."
+      ],
+      "exclusions": [
+        "Travaux complexes non chiffrés",
+        "Fichiers de travail éditables."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Complexités sur devis ; correction des erreurs AtoumWeb hors quota."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Retouches locales/complexes dans les limites du devis ; 1 cycle de corrections mineures demandé sous 7 jours ; JPEG ou PNG livré selon prestation.",
+        "Exclus : Travaux complexes non chiffrés ; Fichiers de travail éditables.",
+        "Note de convergence : Complexités sur devis ; correction des erreurs AtoumWeb hors quota."
+      ]
+    },
+    {
+      "code_source": "AW-PHOTO-DETOUR",
+      "nom": "Détourage",
+      "prix_affiche": "9 €/photo — min. commande 45 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Isolation du sujet sur fond transparent/uni",
+        "1 cycle de corrections mineures demandé sous 7 jours",
+        "JPEG ou PNG livré selon prestation."
+      ],
+      "exclusions": [
+        "Travaux complexes non chiffrés",
+        "Fichiers de travail éditables."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Complexités sur devis ; correction des erreurs AtoumWeb hors quota."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Isolation du sujet sur fond transparent/uni ; 1 cycle de corrections mineures demandé sous 7 jours ; JPEG ou PNG livré selon prestation.",
+        "Exclus : Travaux complexes non chiffrés ; Fichiers de travail éditables.",
+        "Note de convergence : Complexités sur devis ; correction des erreurs AtoumWeb hors quota."
+      ]
+    },
+    {
+      "code_source": "AW-PHOTO-PACK10",
+      "nom": "Pack Harmonie 10 photos",
+      "prix_affiche": "119 € / 10 photos",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Corrections simples et homogènes",
+        "1 cycle de corrections mineures demandé sous 7 jours",
+        "JPEG ou PNG livré selon prestation."
+      ],
+      "exclusions": [
+        "Travaux complexes non chiffrés",
+        "Fichiers de travail éditables."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Complexités sur devis ; correction des erreurs AtoumWeb hors quota."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Corrections simples et homogènes ; 1 cycle de corrections mineures demandé sous 7 jours ; JPEG ou PNG livré selon prestation.",
+        "Exclus : Travaux complexes non chiffrés ; Fichiers de travail éditables.",
+        "Note de convergence : Complexités sur devis ; correction des erreurs AtoumWeb hors quota."
+      ]
+    },
+    {
+      "code_source": "AW-PHOTO-PACK30",
+      "nom": "Pack 30 photos",
+      "prix_affiche": "279 € / 30 photos",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Corrections simples et homogènes",
+        "1 cycle de corrections mineures demandé sous 7 jours",
+        "JPEG ou PNG livré selon prestation."
+      ],
+      "exclusions": [
+        "Travaux complexes non chiffrés",
+        "Fichiers de travail éditables."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Complexités sur devis ; correction des erreurs AtoumWeb hors quota."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Corrections simples et homogènes ; 1 cycle de corrections mineures demandé sous 7 jours ; JPEG ou PNG livré selon prestation.",
+        "Exclus : Travaux complexes non chiffrés ; Fichiers de travail éditables.",
+        "Note de convergence : Complexités sur devis ; correction des erreurs AtoumWeb hors quota."
+      ]
+    },
+    {
+      "code_source": "AW-PHOTO-PACK60",
+      "nom": "Pack 60 photos",
+      "prix_affiche": "499 € / 60 photos",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Corrections simples et homogènes",
+        "1 cycle de corrections mineures demandé sous 7 jours",
+        "JPEG ou PNG livré selon prestation."
+      ],
+      "exclusions": [
+        "Travaux complexes non chiffrés",
+        "Fichiers de travail éditables."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Complexités sur devis ; correction des erreurs AtoumWeb hors quota."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Corrections simples et homogènes ; 1 cycle de corrections mineures demandé sous 7 jours ; JPEG ou PNG livré selon prestation.",
+        "Exclus : Travaux complexes non chiffrés ; Fichiers de travail éditables.",
+        "Note de convergence : Complexités sur devis ; correction des erreurs AtoumWeb hors quota."
+      ]
+    },
+    {
+      "code_source": "AW-PHOTO-SHOOT-ESS",
+      "nom": "Shooting Essentiel",
+      "prix_affiche": "Sur devis — ancien prix non retenu",
+      "statut_source": "ANCIEN_SUR_DEVIS",
+      "inclusions": [
+        "Jusqu'à 1 h",
+        "1 lieu Dijon/Métropole",
+        "10 photos finalisées",
+        "sélection + retouche essentielle.."
+      ],
+      "exclusions": [
+        "Fichiers bruts",
+        "déplacement hors zone",
+        "mise en scène complexe.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Prises de vue uniquement selon matériel, compétences et disponibilité ; ne pas promettre forfait public ancien."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Jusqu'à 1 h ; 1 lieu Dijon/Métropole ; 10 photos finalisées ; sélection + retouche essentielle..",
+        "Exclus : Fichiers bruts ; déplacement hors zone ; mise en scène complexe..",
+        "Note de convergence : Prises de vue uniquement selon matériel, compétences et disponibilité ; ne pas promettre forfait public ancien."
+      ]
+    },
+    {
+      "code_source": "AW-PHOTO-SHOOT-ACT",
+      "nom": "Shooting Activité",
+      "prix_affiche": "Sur devis — ancien prix non retenu",
+      "statut_source": "ANCIEN_SUR_DEVIS",
+      "inclusions": [
+        "Jusqu'à 2 h",
+        "1 lieu principal",
+        "20 photos finalisées",
+        "équipe/locaux/activité.."
+      ],
+      "exclusions": [
+        "Fichiers bruts",
+        "multi-lieux éloignés",
+        "vidéo.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Prises de vue uniquement selon matériel, compétences et disponibilité ; ne pas promettre forfait public ancien."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Jusqu'à 2 h ; 1 lieu principal ; 20 photos finalisées ; équipe/locaux/activité..",
+        "Exclus : Fichiers bruts ; multi-lieux éloignés ; vidéo..",
+        "Note de convergence : Prises de vue uniquement selon matériel, compétences et disponibilité ; ne pas promettre forfait public ancien."
+      ]
+    },
+    {
+      "code_source": "AW-PHOTO-SUP",
+      "nom": "Photo finalisée supplémentaire",
+      "prix_affiche": "15 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Sélection, retouche essentielle et export d'une photo supplémentaire.."
+      ],
+      "exclusions": [
+        "Retouche avancée.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 15 € par photo supplémentaire finalisée d’un shooting ; distinct de retouche essentielle à 19 €."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Sélection, retouche essentielle et export d'une photo supplémentaire..",
+        "Exclus : Retouche avancée..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 15 € par photo supplémentaire finalisée d’un shooting ; distinct de retouche essentielle à 19 €."
+      ]
+    },
+    {
+      "code_source": "AW-PHOTO-SHOOT-CPLX",
+      "nom": "Shooting complexe / multilieux",
+      "prix_affiche": "Sur devis",
+      "statut_source": "VALIDE_PAR_ARBITRAGE_ANTERIEUR",
+      "inclusions": [
+        "Périmètre défini au devis.."
+      ],
+      "exclusions": [
+        "Non prévu hors devis.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "arbitrage antérieur ; SQ-07; SQ-21 à SQ-23 | Shooting complexe sur devis, selon faisabilité. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis selon lieu, droits d’image et déplacements."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Périmètre défini au devis..",
+        "Exclus : Non prévu hors devis..",
+        "Traçabilité : arbitrage antérieur ; SQ-07; SQ-21 à SQ-23 | Shooting complexe sur devis, selon faisabilité. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis selon lieu, droits d’image et déplacements."
+      ]
+    },
+    {
+      "code_source": "AW-MARIAGE-ESS",
+      "nom": "Mariage Essentiel",
+      "prix_affiche": "399 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "1 page responsive",
+        "date/lieu/horaires",
+        "programme court",
+        "Google Maps",
+        "RSVP simple",
+        "hébergement 1 an",
+        "1 cycle.",
+        "Un nom de domaine standard au nom des mariés, sous réserve de disponibilité, compris pendant 1 an."
+      ],
+      "exclusions": [
+        "grosse galerie",
+        "fonctions avancées.",
+        "Domaine premium ou domaine supplémentaire non prévu au devis."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "domaine standard inclus dès la création, pendant la première année, selon disponibilité. 59 €/an ensuite, domaine standard compris."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : 1 page responsive ; date/lieu/horaires ; programme court ; Google Maps ; RSVP simple ; hébergement 1 an ; 1 cycle. ; Un nom de domaine standard au nom des mariés, sous réserve de disponibilité, compris pendant 1 an.",
+        "Exclus : grosse galerie ; fonctions avancées. ; Domaine premium ou domaine supplémentaire non prévu au devis.",
+        "Note de convergence : domaine standard inclus dès la création, pendant la première année, selon disponibilité. 59 €/an ensuite, domaine standard compris."
+      ]
+    },
+    {
+      "code_source": "AW-MARIAGE-GRAND",
+      "nom": "Mariage Grand Jour",
+      "prix_affiche": "649 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Essentiel + Notre histoire",
+        "galerie pré-mariage jusqu'à 30 photos",
+        "FAQ",
+        "Choix de repas simple par options prédéfinies, sans champ de régime, allergie ou autre donnée sensible",
+        "QR code",
+        "témoins/proches",
+        "hébergement 1 an",
+        "2 cycles.",
+        "Un nom de domaine standard au nom des mariés, sous réserve de disponibilité, compris pendant 1 an."
+      ],
+      "exclusions": [
+        "Paiements",
+        "gros volumes",
+        "prise de vue mariage.",
+        "Collecte de données de santé, de religion ou de régimes personnels, hors périmètre standard RSVP",
+        "Domaine premium ou domaine supplémentaire non prévu au devis."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Un an inclus à compter de la mise en ligne officielle ; renouvellement 59 €/an ensuite."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Essentiel + Notre histoire ; galerie pré-mariage jusqu'à 30 photos ; FAQ ; Choix de repas simple par options prédéfinies, sans champ de régime, allergie ou autre donnée sensible ; QR code ; témoins/proches ; hébergement 1 an ; 2 cycles. ; Un nom de domaine standard au nom des mariés, sous réserve de disponibilité, compris pendant 1 an.",
+        "Exclus : Paiements ; gros volumes ; prise de vue mariage. ; Collecte de données de santé, de religion ou de régimes personnels, hors périmètre standard RSVP ; Domaine premium ou domaine supplémentaire non prévu au devis.",
+        "Note de convergence : Un an inclus à compter de la mise en ligne officielle ; renouvellement 59 €/an ensuite."
+      ]
+    },
+    {
+      "code_source": "AW-MARIAGE-HISTOIRE",
+      "nom": "Mariage Histoire",
+      "prix_affiche": "899 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Grand Jour + espace privé et galerie après mariage protégée par mot de passe",
+        "Livre d’or",
+        "jusqu’à 100 photos selon dossier",
+        "Hébergement initial de 2 ans à compter de la mise en ligne officielle",
+        "2 cycles selon le devis",
+        "remise des contenus post-mariage dans les 3 mois",
+        "Un nom de domaine standard au nom des mariés, sous réserve de disponibilité, compris pendant 2 ans."
+      ],
+      "exclusions": [
+        "Shooting de mariage privé",
+        "Comptes individuels invités",
+        "Photo au-delà du quota et fonctionnalités non commandées",
+        "Domaine premium ou domaine supplémentaire non prévu au devis."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Deux ans inclus ; galerie après mariage protégée par mot de passe ; export avant clôture ; renouvellement 59 €/an ensuite."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Grand Jour + espace privé et galerie après mariage protégée par mot de passe ; Livre d’or ; jusqu’à 100 photos selon dossier ; Hébergement initial de 2 ans à compter de la mise en ligne officielle ; 2 cycles selon le devis ; remise des contenus post-mariage dans les 3 mois ; Un nom de domaine standard au nom des mariés, sous réserve de disponibilité, compris pendant 2 ans.",
+        "Exclus : Shooting de mariage privé ; Comptes individuels invités ; Photo au-delà du quota et fonctionnalités non commandées ; Domaine premium ou domaine supplémentaire non prévu au devis.",
+        "Note de convergence : Deux ans inclus ; galerie après mariage protégée par mot de passe ; export avant clôture ; renouvellement 59 €/an ensuite."
+      ]
+    },
+    {
+      "code_source": "AW-MARIAGE-RENOUV",
+      "nom": "Renouvellement site mariage",
+      "prix_affiche": "59 €/an",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Maintien du site mariage une année supplémentaire",
+        "Renouvellement du domaine standard de la formule, dans la limite de ce service",
+        "Reconduction automatique uniquement si convenue, avec informations et résiliation prévues par la loi."
+      ],
+      "exclusions": [
+        "Domaine premium ou domaine supplémentaire",
+        "Refonte et maintenance applicative hors périmètre."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "59 €/an pour maintien en ligne et domaine standard ; après un an pour Essentiel/Grand Jour, deux ans pour L’Histoire."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Maintien du site mariage une année supplémentaire ; Renouvellement du domaine standard de la formule, dans la limite de ce service ; Reconduction automatique uniquement si convenue, avec informations et résiliation prévues par la loi.",
+        "Exclus : Domaine premium ou domaine supplémentaire ; Refonte et maintenance applicative hors périmètre.",
+        "Note de convergence : 59 €/an pour maintien en ligne et domaine standard ; après un an pour Essentiel/Grand Jour, deux ans pour L’Histoire."
+      ]
+    },
+    {
+      "code_source": "AW-MARIAGE-DOMAINE",
+      "nom": "Domaine premium ou supplémentaire — mariage",
+      "prix_affiche": "Domaine premium/sur devis",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Enregistrement ou renouvellement d’un domaine premium ou d’un domaine supplémentaire selon devis."
+      ],
+      "exclusions": [
+        "Domaine standard déjà compris dans la formule mariage et son renouvellement annuel."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Ancien code à qualifier : le domaine standard est compris dans le renouvellement mariage."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Enregistrement ou renouvellement d’un domaine premium ou d’un domaine supplémentaire selon devis.",
+        "Exclus : Domaine standard déjà compris dans la formule mariage et son renouvellement annuel.",
+        "Note de convergence : Ancien code à qualifier : le domaine standard est compris dans le renouvellement mariage."
+      ]
+    },
+    {
+      "code_source": "AW-DATA-GA-SC",
+      "nom": "Analytics + Search Console",
+      "prix_affiche": "99 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "GA4",
+        "balise",
+        "Search Console",
+        "sitemap",
+        "vérification collecte",
+        "accès client",
+        "mini explication.."
+      ],
+      "exclusions": [
+        "Tracking avancé",
+        "dashboard",
+        "suivi mensuel.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 99 € pour installation/configuration standard GA4/Search Console, hors fonctionnalités déjà incluses."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : GA4 ; balise ; Search Console ; sitemap ; vérification collecte ; accès client ; mini explication..",
+        "Exclus : Tracking avancé ; dashboard ; suivi mensuel..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 99 € pour installation/configuration standard GA4/Search Console, hors fonctionnalités déjà incluses."
+      ]
+    },
+    {
+      "code_source": "AW-DATA-GTM",
+      "nom": "Analytics + Tag Manager avancé",
+      "prix_affiche": "149 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "GA4 + Search Console + GTM",
+        "jusqu'à 5 événements personnalisés",
+        "tests.."
+      ],
+      "exclusions": [
+        "Tracking e-commerce complexe",
+        "consent mode avancé.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 149 € pour configuration avancée GTM simple ; consentement/RGPD à respecter."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : GA4 + Search Console + GTM ; jusqu'à 5 événements personnalisés ; tests..",
+        "Exclus : Tracking e-commerce complexe ; consent mode avancé..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 149 € pour configuration avancée GTM simple ; consentement/RGPD à respecter."
+      ]
+    },
+    {
+      "code_source": "AW-DATA-DASH",
+      "nom": "Tableau de bord simple",
+      "prix_affiche": "149 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Dashboard simple type Looker Studio: trafic",
+        "sources",
+        "pages",
+        "conversions",
+        "Search Console",
+        "filtres période.."
+      ],
+      "exclusions": [
+        "Multi-sources complexes",
+        "CRM/Ads/e-commerce avancé.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 149 € tableau de bord simple, hors suivi mensuel récurrent."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Dashboard simple type Looker Studio: trafic ; sources ; pages ; conversions ; Search Console ; filtres période..",
+        "Exclus : Multi-sources complexes ; CRM/Ads/e-commerce avancé..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 149 € tableau de bord simple, hors suivi mensuel récurrent."
+      ]
+    },
+    {
+      "code_source": "AW-DATA-ANALYSE",
+      "nom": "Analyse ponctuelle statistiques",
+      "prix_affiche": "99 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Lecture données",
+        "constats",
+        "anomalies",
+        "pages/sources clés",
+        "recommandations prioritaires.."
+      ],
+      "exclusions": [
+        "Audit SEO complet.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 99 € pour analyse ponctuelle, différente du suivi statistique récurrent."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Lecture données ; constats ; anomalies ; pages/sources clés ; recommandations prioritaires..",
+        "Exclus : Audit SEO complet..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 99 € pour analyse ponctuelle, différente du suivi statistique récurrent."
+      ]
+    },
+    {
+      "code_source": "AW-DATA-SUIVI-M",
+      "nom": "Suivi statistiques Premium — mensuel",
+      "prix_affiche": "49 €/mois",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Lecture GA + Search Console",
+        "synthèse",
+        "évolutions",
+        "anomalies",
+        "3-5 actions.."
+      ],
+      "exclusions": [
+        "Mise en œuvre des actions",
+        "audit complet.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Référence Premium existante ; Essentiel ajouté sous code provisoire. | Le nom Premium distingue cette offre de la formule Essentiel ajoutée en V3.9."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Lecture GA + Search Console ; synthèse ; évolutions ; anomalies ; 3-5 actions..",
+        "Exclus : Mise en œuvre des actions ; audit complet..",
+        "Note de convergence : Référence Premium existante ; Essentiel ajouté sous code provisoire. | Le nom Premium distingue cette offre de la formule Essentiel ajoutée en V3.9."
+      ]
+    },
+    {
+      "code_source": "AW-DATA-SUIVI-A",
+      "nom": "Suivi statistiques Premium — annuel",
+      "prix_affiche": "539 €/an",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Lecture GA + Search Console",
+        "synthèse",
+        "évolutions",
+        "anomalies",
+        "3-5 actions.",
+        "1 mois offert.."
+      ],
+      "exclusions": [
+        "Mise en œuvre des actions",
+        "audit complet.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Référence Premium annuelle existante. Reconduction automatique annuelle, à distinguer de la maintenance. | Le nom Premium distingue cette offre de la formule Essentiel ajoutée en V3.9."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Lecture GA + Search Console ; synthèse ; évolutions ; anomalies ; 3-5 actions. ; 1 mois offert..",
+        "Exclus : Mise en œuvre des actions ; audit complet..",
+        "Note de convergence : Référence Premium annuelle existante. Reconduction automatique annuelle, à distinguer de la maintenance. | Le nom Premium distingue cette offre de la formule Essentiel ajoutée en V3.9."
+      ]
+    },
+    {
+      "code_source": "AW-DEVWP-AJUST",
+      "nom": "Ajustement technique WordPress",
+      "prix_affiche": "69 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "CSS/JS/PHP léger",
+        "hook/filter",
+        "Divi",
+        "petite automatisation ou réglage.."
+      ],
+      "exclusions": [
+        "Vraie fonction métier",
+        "plugin complet.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 69 € minimum 1 h pour ajustement ponctuel ; devis si développement supérieur."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : CSS/JS/PHP léger ; hook/filter ; Divi ; petite automatisation ou réglage..",
+        "Exclus : Vraie fonction métier ; plugin complet..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 69 € minimum 1 h pour ajustement ponctuel ; devis si développement supérieur."
+      ]
+    },
+    {
+      "code_source": "AW-DEVWP-FONCTION",
+      "nom": "Fonctionnalité WordPress sur mesure",
+      "prix_affiche": "Sur devis",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Formulaire métier",
+        "champs",
+        "workflow",
+        "import/export",
+        "PDF",
+        "logique conditionnelle, etc. selon devis.."
+      ],
+      "exclusions": [
+        "Fonctions non prévues",
+        "maintenance future.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis selon cahier des charges, tests et sécurité."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Formulaire métier ; champs ; workflow ; import/export ; PDF ; logique conditionnelle, etc. selon devis..",
+        "Exclus : Fonctions non prévues ; maintenance future..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis selon cahier des charges, tests et sécurité."
+      ]
+    },
+    {
+      "code_source": "AW-DEVWP-PLUGIN",
+      "nom": "Plugin WordPress sur mesure",
+      "prix_affiche": "Sur devis",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Plugin dédié",
+        "réglages/admin",
+        "sécurité",
+        "DB éventuelle",
+        "doc selon devis.."
+      ],
+      "exclusions": [
+        "Compatibilité éternelle avec futures versions.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis, droits sur code tiers et licences clarifiés."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Plugin dédié ; réglages/admin ; sécurité ; DB éventuelle ; doc selon devis..",
+        "Exclus : Compatibilité éternelle avec futures versions..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis, droits sur code tiers et licences clarifiés."
+      ]
+    },
+    {
+      "code_source": "AW-DEVWP-AUTO",
+      "nom": "Automatisation / intégration WordPress",
+      "prix_affiche": "Sur devis",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "API",
+        "webhooks",
+        "Make/Zapier",
+        "CRM",
+        "Sheets",
+        "synchronisations selon devis.."
+      ],
+      "exclusions": [
+        "Abonnements tiers",
+        "évolutions API futures.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis, dépendances et maintenance ultérieure clarifiées."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : API ; webhooks ; Make/Zapier ; CRM ; Sheets ; synchronisations selon devis..",
+        "Exclus : Abonnements tiers ; évolutions API futures..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis, dépendances et maintenance ultérieure clarifiées."
+      ]
+    },
+    {
+      "code_source": "AW-APP-CADRAGE",
+      "nom": "Cadrage outil métier",
+      "prix_affiche": "249 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Atelier besoin",
+        "utilisateurs",
+        "processus",
+        "fonctions",
+        "données",
+        "écrans",
+        "droits",
+        "intégrations",
+        "contraintes",
+        "séparation MVP/évolutions",
+        "première estimation.."
+      ],
+      "exclusions": [
+        "Développement",
+        "prototype",
+        "audit réglementaire spécialisé.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 249 € pour cadrage fonctionnel autonome ; n’engage pas au développement."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Atelier besoin ; utilisateurs ; processus ; fonctions ; données ; écrans ; droits ; intégrations ; contraintes ; séparation MVP/évolutions ; première estimation..",
+        "Exclus : Développement ; prototype ; audit réglementaire spécialisé..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 249 € pour cadrage fonctionnel autonome ; n’engage pas au développement."
+      ]
+    },
+    {
+      "code_source": "AW-APP-PROTOTYPE",
+      "nom": "Prototype / maquette fonctionnelle",
+      "prix_affiche": "Dès 490 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Écrans principaux",
+        "navigation",
+        "simulation des parcours",
+        "organisation données",
+        "non-production.."
+      ],
+      "exclusions": [
+        "Base de données production",
+        "sécurité/industrialisation.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : Dès 490 € pour prototype décrit au devis ; pas promesse de produit fini."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Écrans principaux ; navigation ; simulation des parcours ; organisation données ; non-production..",
+        "Exclus : Base de données production ; sécurité/industrialisation..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : Dès 490 € pour prototype décrit au devis ; pas promesse de produit fini."
+      ]
+    },
+    {
+      "code_source": "AW-APP-DEV",
+      "nom": "Application / logiciel métier sur mesure",
+      "prix_affiche": "Sur devis",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "MVP puis évolutions selon cadrage",
+        "web/desktop",
+        "workflows",
+        "données",
+        "intégrations raisonnables.."
+      ],
+      "exclusions": [
+        "Fonctions hors périmètre",
+        "coûts tiers",
+        "compatibilité future non prévue.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis, périmètre et jalons contractuels propres."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : MVP puis évolutions selon cadrage ; web/desktop ; workflows ; données ; intégrations raisonnables..",
+        "Exclus : Fonctions hors périmètre ; coûts tiers ; compatibilité future non prévue..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis, périmètre et jalons contractuels propres."
+      ]
+    },
+    {
+      "code_source": "AW-APP-EVOL",
+      "nom": "Petite évolution application",
+      "prix_affiche": "69 €",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Petites évolutions après livraison dans un périmètre raisonnable.."
+      ],
+      "exclusions": [
+        "Grosse fonctionnalité.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 69 € minimum 1 h pour évolution simple ; développement plus long sur devis."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Petites évolutions après livraison dans un périmètre raisonnable..",
+        "Exclus : Grosse fonctionnalité..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis client habituel / bon de commande explicite. Rapprochement 67 : 69 € minimum 1 h pour évolution simple ; développement plus long sur devis."
+      ]
+    },
+    {
+      "code_source": "AW-APP-MAINT",
+      "nom": "Maintenance applicative",
+      "prix_affiche": "Sur devis",
+      "statut_source": "RETENU_SUR_DELEGATION_07_11_2026",
+      "inclusions": [
+        "Périmètre adapté à criticité, utilisateurs, hébergement, API et SLA raisonnable.."
+      ],
+      "exclusions": [
+        "24/7 non prévu par défaut",
+        "évolutions majeures.."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Traçabilité",
+          "texte": "décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis distinct, selon niveau et fréquence de service."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Périmètre adapté à criticité, utilisateurs, hébergement, API et SLA raisonnable..",
+        "Exclus : 24/7 non prévu par défaut ; évolutions majeures..",
+        "Traçabilité : décision déléguée sans changement de prix ; Instruction utilisateur du 07/11/2026 : choisir sans repose de questions ; ne proposer changement de tarif qu’avec justification et approbation.. Conditions : Devis détaillé obligatoire. Rapprochement 67 : Sur devis distinct, selon niveau et fréquence de service."
+      ]
+    },
+    {
+      "code_source": "V39-WEB-BUSINESS",
+      "nom": "Vitrine Business",
+      "prix_affiche": "1 149 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Socle vitrine Essentiel",
+        "Rédaction de 3 pages sur brief",
+        "Avis Google standards, GA4 et Search Console selon consentement",
+        "1 h de formation."
+      ],
+      "exclusions": [
+        "Travaux externes, fonction complexe, abonnements premium."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Code commercial définitif à rattacher dans Manager."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Socle vitrine Essentiel ; Rédaction de 3 pages sur brief ; Avis Google standards, GA4 et Search Console selon consentement ; 1 h de formation.",
+        "Exclus : Travaux externes, fonction complexe, abonnements premium.",
+        "Note de convergence : Code commercial définitif à rattacher dans Manager."
+      ]
+    },
+    {
+      "code_source": "V39-WEB-VISIBILITE",
+      "nom": "Vitrine Visibilité",
+      "prix_affiche": "1 449 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Socle Business",
+        "Blog technique",
+        "1 article SEO avec publication adaptée",
+        "1 h de formation."
+      ],
+      "exclusions": [
+        "SEO récurrent et résultats de référencement garantis."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Code commercial définitif à rattacher dans Manager."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Socle Business ; Blog technique ; 1 article SEO avec publication adaptée ; 1 h de formation.",
+        "Exclus : SEO récurrent et résultats de référencement garantis.",
+        "Note de convergence : Code commercial définitif à rattacher dans Manager."
+      ]
+    },
+    {
+      "code_source": "V39-ECOM-BUSINESS",
+      "nom": "WooCommerce Business",
+      "prix_affiche": "1 990 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Tous les éléments de WooCommerce Essentiel, avec 25 produits simples au total (et non 25 en supplément)",
+        "Intégration newsletter standard (formulaire, connexion Brevo/Mailchimp ou équivalent, tests, explication courte) déjà comprise — valeur isolée 99 €, sans double facturation",
+        "Configuration GA4/Search Console adaptée aux exigences de consentement",
+        "Intégration standard des avis Google",
+        "Formation 2 h",
+        "Tests des deux paiements et des livraisons standards, livraison documentée, 2 cycles de corrections et garantie corrective de 30 jours à compter de la livraison officielle."
+      ],
+      "exclusions": [
+        "Gestion quotidienne des commandes, stocks et remboursements (commerçant)",
+        "Maintenance technique après livraison non souscrite",
+        "Automatisations newsletter, segmentation avancée et licences tierces non prévues",
+        "Produits et fonctions au-delà des inclusions listées (devis distinct)."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "OFF-003 (référentiel V1.3) + NL-001 : 25 produits au total, newsletter standard incluse, GA4/Search Console et avis Google. Les éventuelles adaptations particulières sont précisées au devis, sans transformer les inclusions en options payantes."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Tous les éléments de WooCommerce Essentiel, avec 25 produits simples au total (et non 25 en supplément) ; Intégration newsletter standard (formulaire, connexion Brevo/Mailchimp ou équivalent, tests, explication courte) déjà comprise — valeur isolée 99 €, sans double facturation ; Configuration GA4/Search Console adaptée aux exigences de consentement ; Intégration standard des avis Google ; Formation 2 h ; Tests des deux paiements et des livraisons standards, livraison documentée, 2 cycles de corrections et garantie corrective de 30 jours à compter de la livraison officielle.",
+        "Exclus : Gestion quotidienne des commandes, stocks et remboursements (commerçant) ; Maintenance technique après livraison non souscrite ; Automatisations newsletter, segmentation avancée et licences tierces non prévues ; Produits et fonctions au-delà des inclusions listées (devis distinct).",
+        "Note de convergence : OFF-003 (référentiel V1.3) + NL-001 : 25 produits au total, newsletter standard incluse, GA4/Search Console et avis Google. Les éventuelles adaptations particulières sont précisées au devis, sans transformer les inclusions en options payantes."
+      ]
+    },
+    {
+      "code_source": "V39-ECOM-VISIBILITE",
+      "nom": "WooCommerce Visibilité",
+      "prix_affiche": "2 390 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Tous les éléments de WooCommerce Business, dont 25 produits simples au total, newsletter standard incluse, GA4/Search Console et avis Google",
+        "Blog technique",
+        "Rédaction et publication d’un article SEO",
+        "Optimisation initiale des performances dans le périmètre standard",
+        "Formation 2 h",
+        "Tests de mise en ligne, 2 cycles de corrections et garantie corrective de 30 jours à compter de la livraison officielle."
+      ],
+      "exclusions": [
+        "Engagement de résultat SEO, SEO récurrent, publicité et prestations de visibilité supplémentaires",
+        "Gestion des commandes, stocks, remboursements et ventes par le commerçant",
+        "Maintenance WooCommerce distincte",
+        "Licences et fonctionnalités spécifiques non prévues."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "OFF-003 (V1.3) : Woo Business + blog technique, un article SEO et optimisation initiale standard. Il ne faut pas facturer une deuxième fois la newsletter standard incluse dans Business et Visibilité."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Tous les éléments de WooCommerce Business, dont 25 produits simples au total, newsletter standard incluse, GA4/Search Console et avis Google ; Blog technique ; Rédaction et publication d’un article SEO ; Optimisation initiale des performances dans le périmètre standard ; Formation 2 h ; Tests de mise en ligne, 2 cycles de corrections et garantie corrective de 30 jours à compter de la livraison officielle.",
+        "Exclus : Engagement de résultat SEO, SEO récurrent, publicité et prestations de visibilité supplémentaires ; Gestion des commandes, stocks, remboursements et ventes par le commerçant ; Maintenance WooCommerce distincte ; Licences et fonctionnalités spécifiques non prévues.",
+        "Note de convergence : OFF-003 (V1.3) : Woo Business + blog technique, un article SEO et optimisation initiale standard. Il ne faut pas facturer une deuxième fois la newsletter standard incluse dans Business et Visibilité."
+      ]
+    },
+    {
+      "code_source": "V39-HOST-LUNE",
+      "nom": "Hébergement isolé avec Lune dédiée",
+      "prix_affiche": "149 €/an",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Hébergement par client dans un espace cPanel isolé",
+        "Services d’hébergement et accès aux sauvegardes techniques o2switch",
+        "Transfert interne AtoumWeb gratuit",
+        "Renouvellement annuel automatique selon contrat et obligations légales."
+      ],
+      "exclusions": [
+        "Maintenance WordPress/WooCommerce",
+        "Domaine standard et frais de gestion",
+        "Restauration manuelle par AtoumWeb (sur devis sauf imputabilité)."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Une même Lune peut héberger plusieurs sites du même propriétaire selon contraintes techniques."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Hébergement par client dans un espace cPanel isolé ; Services d’hébergement et accès aux sauvegardes techniques o2switch ; Transfert interne AtoumWeb gratuit ; Renouvellement annuel automatique selon contrat et obligations légales.",
+        "Exclus : Maintenance WordPress/WooCommerce ; Domaine standard et frais de gestion ; Restauration manuelle par AtoumWeb (sur devis sauf imputabilité).",
+        "Note de convergence : Une même Lune peut héberger plusieurs sites du même propriétaire selon contraintes techniques."
+      ]
+    },
+    {
+      "code_source": "V39-GBP-ESS-M",
+      "nom": "Google Business Profile Essentiel — mensuel",
+      "prix_affiche": "49 €/mois",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Jusqu’à 2 publications/mois et 5 réponses aux avis/mois",
+        "Gestion et bilan simples selon offre",
+        "Démarrage sur prise en charge effective confirmée par écrit."
+      ],
+      "exclusions": [
+        "Campagnes Ads, shooting, gestion de crise."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Note de convergence",
+          "texte": "Réf. définitive à attribuer dans Manager."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Jusqu’à 2 publications/mois et 5 réponses aux avis/mois ; Gestion et bilan simples selon offre ; Démarrage sur prise en charge effective confirmée par écrit.",
+        "Exclus : Campagnes Ads, shooting, gestion de crise.",
+        "Note de convergence : Réf. définitive à attribuer dans Manager."
+      ]
+    },
+    {
+      "code_source": "V39-GBP-ESS-A",
+      "nom": "Google Business Profile Essentiel — annuel",
+      "prix_affiche": "539 €/an",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Même périmètre Essentiel mensuel",
+        "12 mois, prix équivalant à 11 mensualités",
+        "Reconduction annuelle automatique selon contrat."
+      ],
+      "exclusions": [
+        "Ads, shooting, gestion de crise."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : Même périmètre Essentiel mensuel ; 12 mois, prix équivalant à 11 mensualités ; Reconduction annuelle automatique selon contrat.",
+        "Exclus : Ads, shooting, gestion de crise."
+      ]
+    },
+    {
+      "code_source": "V39-STAT-ESS-M",
+      "nom": "Suivi statistiques Essentiel — mensuel",
+      "prix_affiche": "29 €/mois",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Suivi simplifié GA4/Search Console",
+        "Bilan simple selon offre",
+        "Prise d’effet sur accès opérationnels confirmés."
+      ],
+      "exclusions": [
+        "Corrections SEO/techniques et audit complet."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : Suivi simplifié GA4/Search Console ; Bilan simple selon offre ; Prise d’effet sur accès opérationnels confirmés.",
+        "Exclus : Corrections SEO/techniques et audit complet."
+      ]
+    },
+    {
+      "code_source": "V39-STAT-ESS-A",
+      "nom": "Suivi statistiques Essentiel — annuel",
+      "prix_affiche": "319 €/an",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Même périmètre Essentiel mensuel",
+        "12 mois, prix équivalant à 11 mensualités",
+        "Reconduction automatique selon contrat."
+      ],
+      "exclusions": [
+        "Corrections et audit complet."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : Même périmètre Essentiel mensuel ; 12 mois, prix équivalant à 11 mensualités ; Reconduction automatique selon contrat.",
+        "Exclus : Corrections et audit complet."
+      ]
+    },
+    {
+      "code_source": "V39-NL-1-M",
+      "nom": "Newsletter récurrente — 1 envoi(s)/mois",
+      "prix_affiche": "229 €/mois",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "1 newsletter(s) envoyée(s)/mois après BAT écrit",
+        "Compte Brevo au nom du client",
+        "Suivi simplifié des envois."
+      ],
+      "exclusions": [
+        "Liste de contacts non conforme",
+        "Abonnement tiers premium, prestations de conception avancée."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : 1 newsletter(s) envoyée(s)/mois après BAT écrit ; Compte Brevo au nom du client ; Suivi simplifié des envois.",
+        "Exclus : Liste de contacts non conforme ; Abonnement tiers premium, prestations de conception avancée."
+      ]
+    },
+    {
+      "code_source": "V39-NL-1-A",
+      "nom": "Newsletter récurrente annuelle — 1 envoi(s)/mois",
+      "prix_affiche": "2 519 €/an",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "1 newsletter(s) par mois",
+        "12 mois au tarif de 11 mensualités",
+        "Renouvellement annuel automatique selon contrat."
+      ],
+      "exclusions": [
+        "Travaux hors périmètre",
+        "Liste de contacts illicite."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : 1 newsletter(s) par mois ; 12 mois au tarif de 11 mensualités ; Renouvellement annuel automatique selon contrat.",
+        "Exclus : Travaux hors périmètre ; Liste de contacts illicite."
+      ]
+    },
+    {
+      "code_source": "V39-NL-2-M",
+      "nom": "Newsletter récurrente — 2 envoi(s)/mois",
+      "prix_affiche": "429 €/mois",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "2 newsletter(s) envoyée(s)/mois après BAT écrit",
+        "Compte Brevo au nom du client",
+        "Suivi simplifié des envois."
+      ],
+      "exclusions": [
+        "Liste de contacts non conforme",
+        "Abonnement tiers premium, prestations de conception avancée."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : 2 newsletter(s) envoyée(s)/mois après BAT écrit ; Compte Brevo au nom du client ; Suivi simplifié des envois.",
+        "Exclus : Liste de contacts non conforme ; Abonnement tiers premium, prestations de conception avancée."
+      ]
+    },
+    {
+      "code_source": "V39-NL-2-A",
+      "nom": "Newsletter récurrente annuelle — 2 envoi(s)/mois",
+      "prix_affiche": "4 719 €/an",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "2 newsletter(s) par mois",
+        "12 mois au tarif de 11 mensualités",
+        "Renouvellement annuel automatique selon contrat."
+      ],
+      "exclusions": [
+        "Travaux hors périmètre",
+        "Liste de contacts illicite."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : 2 newsletter(s) par mois ; 12 mois au tarif de 11 mensualités ; Renouvellement annuel automatique selon contrat.",
+        "Exclus : Travaux hors périmètre ; Liste de contacts illicite."
+      ]
+    },
+    {
+      "code_source": "V39-BRAND-CHARTE",
+      "nom": "Mini-charte graphique en option",
+      "prix_affiche": "249 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "5 à 8 pages PDF",
+        "Couleurs, typographies, règles d’usage",
+        "Un cycle de corrections."
+      ],
+      "exclusions": [
+        "Fichiers natifs des créations non fournis automatiquement."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : 5 à 8 pages PDF ; Couleurs, typographies, règles d’usage ; Un cycle de corrections.",
+        "Exclus : Fichiers natifs des créations non fournis automatiquement."
+      ]
+    },
+    {
+      "code_source": "V39-BRAND-DUO",
+      "nom": "Logo + mini-charte",
+      "prix_affiche": "498 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Logo standard 249 € + mini-charte optionnelle 249 €",
+        "Livrables associés et corrections prévues."
+      ],
+      "exclusions": [
+        "Dépôt de marque, fichiers sources natifs."
+      ],
+      "commentaires_documentaires": [],
+      "paragraphes_source": [
+        "Inclus : Logo standard 249 € + mini-charte optionnelle 249 € ; Livrables associés et corrections prévues.",
+        "Exclus : Dépôt de marque, fichiers sources natifs."
+      ]
+    },
+    {
+      "code_source": "V39-HOST-DOMAINE",
+      "nom": "Gestion annuelle d’un domaine standard — hors mariage",
+      "prix_affiche": "29 €/an + prix du registrar",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Gestion technique et suivi d’échéance du domaine standard appartenant au client",
+        "Rappels avant renouvellement si possibles",
+        "Renouvellement uniquement sur accord exprès préalable."
+      ],
+      "exclusions": [
+        "Prix facturé par le registrar, en plus des 29 € de gestion",
+        "Domaines premium sur devis",
+        "Ne pas ajouter ce forfait aux 59 €/an du mariage quand le domaine standard est compris."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Fondement",
+          "texte": "HOST-002 et arbitrages du 3 novembre 2026 ; Code provisoire V39 ; alias décisionnel HOST-002, sans recoder rétroactivement un article existant."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Gestion technique et suivi d’échéance du domaine standard appartenant au client ; Rappels avant renouvellement si possibles ; Renouvellement uniquement sur accord exprès préalable.",
+        "Exclus : Prix facturé par le registrar, en plus des 29 € de gestion ; Domaines premium sur devis ; Ne pas ajouter ce forfait aux 59 €/an du mariage quand le domaine standard est compris.",
+        "Fondement : HOST-002 et arbitrages du 3 novembre 2026 ; Code provisoire V39 ; alias décisionnel HOST-002, sans recoder rétroactivement un article existant."
+      ]
+    },
+    {
+      "code_source": "V39-NL-PONCT-SIMPLE",
+      "nom": "Newsletter ponctuelle — simple",
+      "prix_affiche": "149 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Conception/mise en page d’un envoi ponctuel selon éléments fournis par le client",
+        "1 cycle de corrections avant BAT écrit",
+        "Envoi uniquement après accord BAT",
+        "Bilan simplifié après envoi dans le périmètre prévu."
+      ],
+      "exclusions": [
+        "Rédaction complète du contenu",
+        "Licence Brevo payante ou import complexe",
+        "Visuels élaborés, segmentation complexe et envois supplémentaires."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Fondement",
+          "texte": "NL-002, décisions métier antérieures consolidées ; Le client possède son outil d’envoi ; les exclusions exactes sont indiquées au devis."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Conception/mise en page d’un envoi ponctuel selon éléments fournis par le client ; 1 cycle de corrections avant BAT écrit ; Envoi uniquement après accord BAT ; Bilan simplifié après envoi dans le périmètre prévu.",
+        "Exclus : Rédaction complète du contenu ; Licence Brevo payante ou import complexe ; Visuels élaborés, segmentation complexe et envois supplémentaires.",
+        "Fondement : NL-002, décisions métier antérieures consolidées ; Le client possède son outil d’envoi ; les exclusions exactes sont indiquées au devis."
+      ]
+    },
+    {
+      "code_source": "V39-NL-PONCT-COMPLETE",
+      "nom": "Newsletter ponctuelle — complète",
+      "prix_affiche": "249 €",
+      "statut_source": "VALIDE_RECENT",
+      "inclusions": [
+        "Rédaction complète de la newsletter ponctuelle selon brief validé",
+        "Mise en page et programmation selon créneau convenu",
+        "1 cycle de corrections avant BAT écrit",
+        "Envoi sous réserve du BAT écrit et bilan simplifié."
+      ],
+      "exclusions": [
+        "Licence Brevo payante, gestion de listes anciennes non qualifiées",
+        "Séquences automatisées ou campagne marketing approfondie",
+        "Visuels élaborés ou import important sans devis."
+      ],
+      "commentaires_documentaires": [
+        {
+          "type": "Fondement",
+          "texte": "NL-002, décisions métier antérieures consolidées ; Compte et données d’envoi restent au nom du client ; faire préciser le volume par devis."
+        }
+      ],
+      "paragraphes_source": [
+        "Inclus : Rédaction complète de la newsletter ponctuelle selon brief validé ; Mise en page et programmation selon créneau convenu ; 1 cycle de corrections avant BAT écrit ; Envoi sous réserve du BAT écrit et bilan simplifié.",
+        "Exclus : Licence Brevo payante, gestion de listes anciennes non qualifiées ; Séquences automatisées ou campagne marketing approfondie ; Visuels élaborés ou import important sans devis.",
+        "Fondement : NL-002, décisions métier antérieures consolidées ; Compte et données d’envoi restent au nom du client ; faire préciser le volume par devis."
+      ]
+    }
+  ]
+}

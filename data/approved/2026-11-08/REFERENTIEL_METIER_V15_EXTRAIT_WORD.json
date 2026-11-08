@@ -1,0 +1,1446 @@
+{
+  "type": "EXTRACTION_DOCUMENTAIRE",
+  "version": "V1.5",
+  "source_word": "AtoumWeb_02_Referentiel_metier_V1.5_RELECTURE_2026-11-08.docx",
+  "sha256_word": "de245acc5bf4e1441f08bc7ce682995a162f7fdc120897fff9f84ffdac345677",
+  "blocs_dans_ordre_paragraphes_puis_tableaux": [
+    {
+      "style": "Title",
+      "texte": "Référentiel métier AtoumWeb — V1.5"
+    },
+    {
+      "style": "Subtitle",
+      "texte": "RÈGLES COMMERCIALES · CONTRATS · OPÉRATIONS · MANAGER"
+    },
+    {
+      "style": "Normal",
+      "texte": "8 novembre 2026 | Relecture corrective V1.5 ; document interne NON PUBLIÉ. Base V1.4 + vérification contre référentiel V1.3 du 7 novembre ; aucune synchronisation automatique avec Manager."
+    },
+    {
+      "style": "Heading 1",
+      "texte": "Priorités V1.5 — décisions et contrôles de cohérence"
+    },
+    {
+      "style": "Normal",
+      "texte": "67 références rapprochées : 9 validations Q01–Q09, 9 arbitrages antérieurs, 47 reprises à prix constant sur délégation, 2 bases internes sur devis écrit."
+    },
+    {
+      "style": "Normal",
+      "texte": "Formulaire avancé Q10 : 99 € conservés par délégation, sans validation nominative de l’utilisateur."
+    },
+    {
+      "style": "Normal",
+      "texte": "Aucun abonnement AtoumWeb souscrit en ligne : devis, acceptation par signature ou écrit explicite. Les boutons de paiement des clients sont un service différent."
+    },
+    {
+      "style": "Normal",
+      "texte": "RC PRO — ÉTAT ACTUEL : aucune police active attestée ; la décision opérationnelle la plus récente indique qu’aucune souscription n’est prévue à ce stade. La décision historique LEGAL-006 de souscrire avant le début des prestations demeure documentée comme décision antérieure, NON comme attestation de couverture ni comme décision actuelle certaine. Avant le premier contrat client, demander une décision explicite sur le niveau de risque et la souscription ; ne jamais prétendre être assuré. CM2C : choisi mais aucune convention active attestée ; interdiction de le présenter comme partenaire conventionné tant que cela n’est pas établi."
+    },
+    {
+      "style": "Normal",
+      "texte": "Domaine standard inclus dans les trois sites de mariage dès l’origine : Essentiel/Grand Jour 1 an ; L’Histoire 2 ans. Renouvellement 59 €/an incluant le domaine standard."
+    },
+    {
+      "style": "Normal",
+      "texte": "Renouvellements de domaines standards hors mariage : consentement exprès ; HOST-003 ancienne ligne historique abrogée par SQ-31/SQ-39."
+    },
+    {
+      "style": "Normal",
+      "texte": "Tous les montants de la grille source V3.9.2 sont repris sans modification dans la grille V3.9.4. Les 47 tarifs délégués conservent leur statut distinct : le choix délégué de prix constant ne vaut ni validation individuelle, ni publication du catalogue, ni modification des contrats existants."
+    },
+    {
+      "style": "Normal",
+      "texte": "Versions de relecture du 8 novembre 2026 : grille V3.9.4 (130 références), bibliothèque V3.9.4 (119 clauses), présent référentiel V1.5. Sources historiques V3.9.2 / V1.3 conservées et non modifiées ; aucune publication commerciale ou contractuelle n’est impliquée."
+    },
+    {
+      "style": "Heading 1",
+      "texte": "Guide de lecture"
+    },
+    {
+      "style": "Normal",
+      "texte": "Le registre regroupe 148 entrées initiales, 58 décisions complémentaires et 39 décisions fonctionnelles Offres & Tarifs. Des sujets se recoupent : ces 245 enregistrements ne constituent pas 245 obligations indépendantes. Les informations détaillées (inclus/exclus/notes) sont disponibles dans le fichier Markdown intégral et le JSON structurés associés."
+    },
+    {
+      "style": "Heading 1",
+      "texte": "Arbitrages de clôture validés le 8 novembre 2026"
+    },
+    {
+      "style": "Normal",
+      "texte": "Les règles CL-01 à CL-25 ci-dessous complètent les 148 décisions historiques, 58 décisions complémentaires, 39 décisions Offres & Tarifs et les 67 références traitées sur délégation. En cas de chevauchement documentaire, les droits impératifs et les derniers arbitrages explicites priment pour les nouveaux devis ; les anciens contrats signés conservent leurs droits."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-01 · Renouvellements annuels : Lune, GBP, statistiques, newsletters — Facture et paiement à la date anniversaire annuelle ; SEPA uniquement si mandat autorisé, sinon moyen accepté. Pas d’encaissement définitif anticipé. Reconduction automatique uniquement pour les offres qui la prévoient et sous réserve des informations légales. Résiliation sans préavis contractuel jusqu’à la veille de l’échéance."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-02 · Mariage : renouvellement annuel — Après période initiale incluse (1 an Essentiel/Grand Jour, 2 ans L’Histoire), 59 € par an, domaine standard inclus ; résiliation jusqu’à la veille de l’échéance, sans frais ni préavis contractuel. Domaine titulaire client, coûts standard d’enregistrement maîtrisés ; autres extensions/premium sur devis."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-03 · Maintenance annuelle — Toute nouvelle période annuelle de maintenance WordPress ou WooCommerce exige un accord exprès du client ; pas de reconduction automatique. Périmètre et quotas identiques entre mensualisation et formule annuelle."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-04 · Abonnements mensuels GBP et statistiques — Résiliation possible à tout moment, effet à la fin de la période mensuelle payée, sans pénalité ni nouveau mois. Le client conserve la maîtrise de ses comptes Google."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-05 · Changement de périodicité — Mensuel → annuel à la prochaine échéance mensuelle après accord écrit ; annuel → mensuel seulement à la fin de la période annuelle engagée ; pas de double facturation. Pour maintenance annuelle, accord exprès renouvelé."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-06 · Début GBP et statistiques — Prise d’effet lors de la prise en charge effective : comptes et accès fonctionnels ; la date fixe les échéances. Toute création ou configuration initiale des comptes GBP, Analytics, Search Console, si nécessaire, fait l’objet d’un devis séparé accepté."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-07 · Début newsletter récurrente — Prise d’effet lorsque les accès, contenus et informations nécessaires permettent le début effectif de la production ; dates anniversaires correspondantes. Retard de validation du client ne décale pas automatiquement la facturation."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-08 · Calendrier et non-report newsletters — Contenus attendus J-10 jours ouvrés, BAT transmis J-3, validation J-2 ; envoi sur BAT écrit. Si absence d’éléments ou de validation malgré relance raisonnable, envoi non reporté automatiquement. Faute AtoumWeb : envoi reprogrammé sans supplément."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-09 · Publications GBP non réalisées — Si contenus ou validation nécessaires manquent malgré une relance raisonnable, pas de report automatique sur le mois suivant ; faute AtoumWeb : publication reprogrammée sans supplément."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-10 · Urgences newsletters/GBP — Demandes imprévues acceptées selon disponibilités, sans majoration automatique ; prestations supplémentaires sur devis accepté, pas de date garantie sans confirmation écrite."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-11 · Newsletter supplémentaire hors abonnement — Tarifs ponctuels existants : simple 149 € / complète 249 €, accord préalable ; abonnement inchangé. Proposer formule supérieure si demandes régulières."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-12 · Plateformes et frais tiers — Abonnements Brevo, crédits d’envoi, licences et autres dépenses de plateformes souscrits sur le compte du client et payés directement par celui-ci, sauf inclusion expresse au devis. AtoumWeb informe avant engagement."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-13 · Interruption d’un service tiers — Informer, rechercher solution raisonnable dans le périmètre existant ; migration majeure sur devis accepté ; si prestation durablement impossible, organiser la fin et régulariser les services non réalisés suivant le contrat, les responsabilités et les droits impératifs."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-14 · Données et conformité newsletter — Le client justifie l’origine licite de ses contacts et les bases légales ; AtoumWeb contrôle la cohérence, bloque l’envoi en cas d’irrégularité sérieuse ou de justificatif indispensable manquant ; audit approfondi et mise en conformité distincts sur devis."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-15 · Désinscription newsletter — Configuration et contrôle technique des liens et oppositions automatisées inclus ; demandes directes à AtoumWeb traitées dans son périmètre autorisé et signalées au client ; celui-ci répercute les oppositions dans ses autres fichiers."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-16 · Fin newsletter et données — Restitution, retrait des accès AtoumWeb, suppression de ses copies de travail sous 30 jours, sous réserve des obligations légales et de l’accord RGPD. Ne pas supprimer les contacts/campagnes du compte Brevo du client."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-17 · Clôture GBP et statistiques — Clôture ordinaire sans frais : remettre éléments nécessaires et dernier bilan déjà contractuellement prévu, retirer les accès d’AtoumWeb ; rapport spécifique, audit ou assistance à un repreneur sur devis."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-18 · Indisponibilité des statistiques — Informer ; poursuivre les contrôles et rapports possibles en signalant les lacunes. Si cause client/tiers, abonnement maintenu et correction technique sur devis ; si cause AtoumWeb, correction gratuite et solution proportionnée aux prestations touchées."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-19 · SEO, GBP et statistiques : résultats — Exécution diligente des prestations promises, sans garantie de classement, trafic, leads ou ventes ; corrections des erreurs ou travaux non conformes imputables à AtoumWeb."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-20 · Impayés mensualités et annualités — Relance écrite J+7 ; mise en demeure J+15 ; suspension possible des seules prestations concernées J+30 ; résiliation éventuelle J+60, après notification écrite, sans suppression immédiate des données. Réactivation simple sans frais après paiement vérifié ; récupération technique importante sur devis. Droits légaux réservés."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-21 · Arrêt anticipé annuel — Année engagée : pas de remboursement automatique au prorata pour convenance personnelle. Droit de rétractation, inexécution, impossibilité de service et autres dispositions impératives préservés."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-22 · Pause exceptionnelle — Aucun droit automatique à une pause. Exception possible seulement par accord écrit fixant dates, éléments suspendus, prix et reprise."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-23 · Modifications tarifaires — Tarifs annuels garantis pendant période engagée ; hausse mensuelle annoncée au moins 30 jours avant son application avec faculté de résiliation, sous réserve de délais légalement raisonnables ; nouveau tarif annuel soumis à accord écrit préalable."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-24 · Protection des données et accès — Comptes Google et Brevo sous contrôle client ; accès AtoumWeb individualisés et retirés après service ; sous-traitance RGPD par accord distinct adapté au traitement. Temporaire générique 90 jours sauf règles plus spécifiques (copies newsletter : 30 jours ; fin RGPD selon accord)."
+    },
+    {
+      "style": "Normal",
+      "texte": "CL-25 · Périmètre et continuité technique — Mises à jour WordPress, thèmes/extensions distinctes de l’hébergement isolé Lune. Sauvegardes et rétention selon outils o2switch effectivement disponibles ; pas de sauvegarde AtoumWeb indépendante annoncée. Restauration manuelle sur devis sauf erreur imputable à AtoumWeb."
+    },
+    {
+      "style": "Normal",
+      "texte": "JUR-03/JUR-04 — CONTRÔLES À METTRE EN PLACE, NON DÉVELOPPÉS : identifier le mode réel de conclusion de chaque contrat (e-mail, signature électronique, site), vérifier l’éventuelle obligation de résiliation électronique et de rétractation selon le parcours ; pour les consommateurs avec tacite reconduction, prévoir une information nominative dédiée entre 3 et 1 mois avant la date LIMITE d’opposition à la reconduction, et archiver preuve de l’envoi et date limite en évidence. En cas de défaut d’information, analyser la faculté légale de résiliation après reconduction. Manager : seulement besoin fonctionnel, pas fonctionnalité attestée."
+    },
+    {
+      "style": "Normal",
+      "texte": "POINTS DE CONTRÔLE AVANT DIFFUSION — Les devis Woo Business/Visibilité doivent reprendre les inclusions OFF-003 et NL-001, pas une mention générique « au devis » qui les rendrait optionnelles. Les 47 tarifs sur délégation restent séparés des neuf choix Q01–Q09 confirmés. Les 15 codes V39- provisoires et l’ancienne fiche Hébergement WordPress seul 99 €/an ne doivent pas remplacer des références actives sans contrôle ni choix de publication."
+    },
+    {
+      "style": "Heading 1",
+      "texte": "Décisions métier — registre historique"
+    },
+    {
+      "style": "Heading 2",
+      "texte": "01 — Catalogue et offres de création"
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-001 — Formules vitrines  Trois formules validées : Essentiel 699 €, Business 1 149 €, Visibilité 1 449 €."
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-002 — Cinq pages vitrines personnalisables  Structure par défaut : Accueil, Services, À propos, Réalisations, Contact ; client peut substituer une autre page standard tout en restant à cinq pages."
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-003 — Formules e-commerce  Trois formules validées : Essentiel 1 490 €, Business 1 990 €, Visibilité 2 390 €."
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-003 — DÉTAIL DES INCLUSIONS VALIDÉES ET PRIORITAIRES : Essentiel 1 490 € : WooCommerce responsive, pages système, 10 produits simples, deux moyens de paiement standards, livraison standard (jusqu’à deux zones et trois modes simples), stocks/commandes, e-mails transactionnels, coupons, SEO de base, SSL, hébergement/domaine standard première année, formation 2 h, deux cycles de corrections et garantie corrective 30 jours après livraison officielle. Business 1 990 € : socle Essentiel + 25 produits simples AU TOTAL + intégration newsletter standard NL-001 (99 € déjà compris, ne pas refacturer) + GA4/Search Console + avis Google standards. Visibilité 2 390 € : socle Business + blog technique + un article SEO rédigé et publié + optimisation initiale des performances dans le périmètre standard. Les fonctionnalités supplémentaires requièrent un devis spécifique."
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-004 — Cycles de corrections  Un cycle après la maquette et un second avant livraison pour vitrines et e-commerce."
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-005 — Calendrier projet  Indiquer une date estimée de livraison, les étapes, les apports attendus du client et les ajustements écrits justifiés."
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-006 — Accompagnement légal de base  AtoumWeb identifie les éléments informatifs/légaux normalement nécessaires au site, guide le client, collecte les données, prépare la présentation documentaire standard et réalise l’intégration technique."
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-007 — Échéanciers sites  Vitrines : 40 % à la commande, 60 % avant mise en ligne. E-commerce : 30 % à la commande, 40 % à validation du design, 30 % avant mise en ligne."
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-008 — Paiements WooCommerce  AtoumWeb aide le commerçant à créer et configurer jusqu’à deux moyens de paiement standards."
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-009 — Livraison WooCommerce  Dans les trois formules e-commerce, jusqu’à deux zones géographiques et trois modes simples (tarif fixe, franco à partir d’un montant, retrait sur place)."
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-010 — Fiches produits initiales  AtoumWeb remet un modèle, organise les données fournies, adapte légèrement les textes, optimise les images pour le web et intègre les produits de la formule."
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-011 — Catalogue après livraison  Ajouts de produits et modifications commerciales après livraison ne font pas partie de la maintenance technique WooCommerce."
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-012 — Gestion quotidienne e-commerce  Le commerçant gère ses commandes, stocks, prix, remboursements et relations clients ; AtoumWeb prend en charge la mise en place, les tests, la formation et les obligations correctives."
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-013 — Garanties et réception  Garantie corrective commerciale de 30 jours à partir de la livraison officielle documentée ; réception par signature ou e-mail explicite."
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-014 — Droits sur créations  Après paiement intégral, les droits d’exploitation des créations originales spécifiques sont accordés au client selon un périmètre, territoire, durée et usages précisés au contrat."
+    },
+    {
+      "style": "Normal",
+      "texte": "OFF-015 — Licences logiciels : gestion mixte  AtoumWeb utilise ses propres licences quand leurs conditions le permettent ; le client souscrit certaines licences spécialisées ou payantes selon le devis."
+    },
+    {
+      "style": "Heading 2",
+      "texte": "02 — Domaines, hébergement, migrations et messagerie"
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-001 — Propriété domaine  Le domaine est enregistré dès l’origine au nom du client ; AtoumWeb assure sa gestion technique."
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-002 — Renouvellement domaine  Forfait de 29 €/an pour renouvellement et gestion d’un domaine standard ; domaines premium ou spéciaux sur devis ; échéance indépendante de la maintenance/hébergement."
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-003 — Reconduction domaine  Renouvellement automatique du domaine standard, avec rappels et faculté de non-reconduction selon les conditions légales et contractuelles. [HISTORIQUE NON APPLICABLE : remplacé par SQ-31/SQ-39 et la priorité V1.3 : accord exprès.]"
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-004 — Hébergement isolé avec Lune  149 €/an (99 € hébergement + 50 € Lune dédiée), sans maintenance applicative. Domaine facturé à part ; transfert interne depuis un autre hébergement AtoumWeb gratuit."
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-005 — Fin de maintenance avec hébergement poursuivi  Deux documents distincts : confirmation de fin de maintenance, puis nouveau devis/contrat Lune à 149 €/an, sur consentement exprès."
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-006 — Migration vers AtoumWeb  Migration standard WordPress depuis un hébergeur externe : 99 €. Migration complexe, dont WooCommerce : dès 199 € sur devis. Transfert interne AtoumWeb gratuit."
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-007 — Maintenances : hébergement AtoumWeb requis  Les contrats de maintenance standards 49/99 €/mois nécessitent un hébergement compatible géré par AtoumWeb."
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-008 — Messagerie lors d’une migration  Vérifier les boîtes, les paramètres DNS et la continuité d’acheminement. Transfert des boîtes et des anciens messages sur devis distinct."
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-009 — Boîtes professionnelles initiales  Jusqu’à trois adresses professionnelles créées, configurées et testées avec chaque offre vitrine ou e-commerce."
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-010 — Création de boîtes supplémentaires  Avec maintenance, création simple possible dans une intervention mensuelle ≤30 min ; sinon pack d’heures ou prestation ponctuelle. Complexe sur devis."
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-011 — Support messagerie  Support technique de base des boîtes hébergées inclus ; configuration Outlook/téléphone possible dans quota de maintenance (≤30 min) ou via pack/devis."
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-012 — Départ et messagerie  Avertir le client des conséquences, fournir informations et assistance de sortie standard ; migration complète des boîtes et messages sur devis."
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-013 — Restauration des e-mails  Vérification gratuite de l’existence d’une sauvegarde exploitable ; restauration manuelle via devis ou pack après accord."
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-014 — Utilisation des boîtes e-mail  Messagerie hébergée destinée aux échanges ordinaires ; newsletters et campagnes de masse par outil spécialisé externe."
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-015 — Accès administrateur du client  Chaque client reçoit son compte administrateur ; AtoumWeb dispose d’un compte technique séparé et révocable."
+    },
+    {
+      "style": "Normal",
+      "texte": "HOST-016 — Restitution et suppression en fin d’hébergement  Restitution ou suppression selon instructions du client, avec période de restitution convenue de 30 jours maximum ; suppression documentée des données actives, suivi des sauvegardes résiduelles jusqu’à purge."
+    },
+    {
+      "style": "Heading 2",
+      "texte": "03 — Maintenance, interventions et packs d’heures"
+    },
+    {
+      "style": "Normal",
+      "texte": "MAINT-001 — Maintenance WordPress  49 €/mois ou 539 €/an, deux interventions mineures/mois de 30 min max, non reportables."
+    },
+    {
+      "style": "Normal",
+      "texte": "MAINT-002 — Maintenance WooCommerce  99 €/mois ou 1 089 €/an, quatre interventions mineures/mois de 30 min max, non reportables."
+    },
+    {
+      "style": "Normal",
+      "texte": "MAINT-003 — Début/renouvellement/fin maintenance  Début précisé au contrat : à livraison pour site neuf ou prise en charge pour site existant ; mensualité résiliable à tout moment en fin de période payée ; annuelle renouvelée seulement sur accord exprès (proposition 30 jours avant)."
+    },
+    {
+      "style": "Normal",
+      "texte": "MAINT-004 — Diagnostic de 30 minutes  Diagnostic simple peut consommer une intervention mineure ; réparation importante hors forfait après accord sur devis ou utilisation pack d’heures."
+    },
+    {
+      "style": "Normal",
+      "texte": "MAINT-005 — Modifications par client / tiers  Correction gratuite des défauts imputables à AtoumWeb. Si panne issue du client ou d’un tiers, diagnostic annoncé et intervention payante après accord, sans annulation générale de garantie."
+    },
+    {
+      "style": "Normal",
+      "texte": "HRS-001 — Prix des packs  Packs prépayés : 3 h 189 €, 5 h 299 €, 10 h 549 €. Intervention ponctuelle : minimum 1 h à 69 €."
+    },
+    {
+      "style": "Normal",
+      "texte": "HRS-002 — Décompte et consentement  Chaque utilisation requiert accord préalable ; décompte par tranches de 15 min réellement travaillées selon conditions convenues."
+    },
+    {
+      "style": "Normal",
+      "texte": "HRS-003 — Durée des packs  24 mois à l’achat + 3 mois de prolongation automatique gratuite ; rappels à 60 et 30 jours avant l’échéance finale. Après 27 mois, reliquat expiré sans remboursement/report commercial, sous réserve des droits impératifs et manquement AtoumWeb."
+    },
+    {
+      "style": "Normal",
+      "texte": "HRS-004 — Utilisation multi-projets  Pack rattaché au client contractant, utilisable sur plusieurs sites WordPress, boutiques, applications web ou logiciels métier du même client."
+    },
+    {
+      "style": "Normal",
+      "texte": "HRS-005 — Solde insuffisant  Choix du client entre complément ponctuel et achat d’un nouveau pack ; pas de dépassement sans accord écrit préalable."
+    },
+    {
+      "style": "Normal",
+      "texte": "HRS-006 — Interventions à distance / sur site  Packs utilisables à distance ou chez le client ; seul le temps de prestation consomme le pack, jamais le temps de trajet."
+    },
+    {
+      "style": "Normal",
+      "texte": "HRS-007 — Frais de déplacement  Gratuits dans Dijon Métropole ; au-delà, frais sur devis approuvé avant intervention."
+    },
+    {
+      "style": "Normal",
+      "texte": "HRS-008 — Annulation de rendez-vous  Annulation/report gratuits avec ≥24 h de préavis ; en cas de retard, seuls frais réels déjà engagés, annoncés et contractuellement prévus sont éventuellement facturés. Aucune heure non travaillée décomptée. Annulation AtoumWeb : aucun frais client."
+    },
+    {
+      "style": "Heading 2",
+      "texte": "04 — Newsletter et campagnes e-mail"
+    },
+    {
+      "style": "Normal",
+      "texte": "NL-001 — Intégration d’un outil newsletter  Installation standard Brevo/Mailchimp ou similaire 99 €, incluse dans E-commerce Business et Visibilité."
+    },
+    {
+      "style": "Normal",
+      "texte": "NL-002 — Prix créations et abonnements  Newsletter simple à contenus fournis : 149 € ; complète avec rédaction : 249 € ; une complète/mois : 229 €/mois ; deux complètes/mois : 429 €/mois."
+    },
+    {
+      "style": "Normal",
+      "texte": "NL-003 — Disponibilités et engagement  AtoumWeb peut refuser une nouvelle commande faute de disponibilité avant acceptation ; tout abonnement accepté doit être honoré. Abonnements newsletters sans durée minimale, résiliables à fin de période mensuelle payée."
+    },
+    {
+      "style": "Normal",
+      "texte": "NL-004 — Calendrier éditorial  Planning prévisionnel trimestriel révisable, sans engagement ferme de trois mois ; il accompagne un abonnement résiliable mensuellement."
+    },
+    {
+      "style": "Normal",
+      "texte": "NL-005 — Fourniture des contenus  Éléments client normalement remis ≥10 jours ouvrés avant la diffusion. Un report exceptionnel par campagne peut reporter le crédit sur la période suivante sans double facturation ; retard AtoumWeb non pénalisant."
+    },
+    {
+      "style": "Normal",
+      "texte": "NL-006 — Bon à tirer / validation  BAT normalement transmis J-3 ouvrés ; validation écrite explicite du client au plus tard J-2 ouvrés. Pas d’envoi si silence ; report."
+    },
+    {
+      "style": "Normal",
+      "texte": "NL-007 — Demandes après BAT  Toute nouvelle modification après BAT validé est sur devis ou pack après accord ; erreurs AtoumWeb gratuites ; report possible et nouveau BAT si besoin."
+    },
+    {
+      "style": "Normal",
+      "texte": "NL-008 — Incidents d’envoi  Vérification initiale du statut incluse ; erreurs AtoumWeb corrigées gratuitement ; incidents prestataires/données clients : assistance additionnelle sur devis/pack."
+    },
+    {
+      "style": "Normal",
+      "texte": "NL-009 — Listes de contacts  Vérification de l’origine déclarée et des preuves disponibles ; refus possible des fichiers à risque. Import technique de liste existante sur devis/pack."
+    },
+    {
+      "style": "Normal",
+      "texte": "NL-010 — Bilan campagne  Bilan simplifié inclus après chaque newsletter, cible 10–15 min : destinataires/délivrés, clics, désinscriptions, selon statistiques disponibles."
+    },
+    {
+      "style": "Normal",
+      "texte": "NL-011 — Propriété et sortie  Le client garde comptes, contacts, campagnes et modèles finaux personnalisés après paiement, selon droits convenus ; AtoumWeb garde ses modèles génériques. Migration vers autre outil sur devis."
+    },
+    {
+      "style": "Normal",
+      "texte": "NL-012 — Responsabilités de prospection  Le client décide des destinataires et assume l’origine légitime de ses listes. AtoumWeb applique les réglages techniques prévus et ses obligations propres."
+    },
+    {
+      "style": "Heading 2",
+      "texte": "05 — Google Business Profile, statistiques et SEO"
+    },
+    {
+      "style": "Normal",
+      "texte": "GBP-001 — Abonnements Google Business Profile  Essentiel 49 €/mois ou 539 €/an : 2 publications/mois, 5 réponses avis, mise à jour infos, 2 photos fournies/mois, contrôle mensuel, synthèse trimestrielle. Premium 79 €/mois ou 869 €/an : 4 publications, 10 réponses, 4 photos, contrôle et rapport mensuels, conseils."
+    },
+    {
+      "style": "Normal",
+      "texte": "GBP-002 — Vérification d’une fiche Google  Accompagnement standard à la vérification inclus ; client fournit justificatifs ; décision appartient à Google, sans garantie de résultat."
+    },
+    {
+      "style": "Normal",
+      "texte": "GBP-003 — Réponses aux avis  Réponses positives/simples préautorisées selon ligne éditoriale validée ; avis négatifs/sensibles seulement après validation écrite. Pas de reconnaissance de responsabilité ni remboursement non autorisé."
+    },
+    {
+      "style": "Normal",
+      "texte": "GBP-004 — Publications et contenus  AtoumWeb rédige des posts courts (80–150 mots maximum) à partir des photos et informations fournies ; calendrier éditorial validé ; promotions/prix après accord explicite."
+    },
+    {
+      "style": "Normal",
+      "texte": "GBP-005 — Absence de nouveautés du client  AtoumWeb peut publier à partir de contenus antérieurement validés ; pas d’invention ; impossibilité faute d’éléments : pas de report automatique, sous réserve des obligations de l’agence."
+    },
+    {
+      "style": "Normal",
+      "texte": "GBP-006 — Dépassement du quota avis  Au-delà de 5 ou 10 réponses par mois, le client répond lui-même ou choisit devis/pack après accord ; pas de supplément automatique."
+    },
+    {
+      "style": "Normal",
+      "texte": "GBP-007 — Suspension d’une fiche GBP  Diagnostic et premier accompagnement au recours inclus ; cas complexes sur devis. Abonnement ajusté/suspendu si prestations durablement impossibles ; erreurs AtoumWeb corrigées gratuitement."
+    },
+    {
+      "style": "Normal",
+      "texte": "GBP-008 — Engagements SEO/GBP  AtoumWeb garantit l’exécution sérieuse et la qualité des prestations convenues et en conserve la trace, pas un rang Google, du trafic ou des ventes."
+    },
+    {
+      "style": "Normal",
+      "texte": "GBP-009 — Propriété comptes Google  Comptes Google Business Profile, GA4 et Search Console sous contrôle du client ; accès professionnels délégués distincts et révocables pour AtoumWeb."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEO-001 — Audit SEO technique : base  199 € pour audit technique, analyse et recommandations, sans correction incluse sauf obligation corrective propre à AtoumWeb."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEO-002 — Audit SEO : périmètre  Contrôles techniques globaux du site et examen manuel d’un maximum de 10 URL représentatives ; grands catalogues/analyses approfondies sur devis."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEO-003 — Audit SEO : accès  Demander exclusivement les droits nécessaires (WordPress, Search Console, hébergement si utile) ; audit limité accepté uniquement si exclusions explicitées et acceptées avant commande."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEO-004 — Suivi statistique récurrent  Essentiel 29 €/mois ou 319 €/an : synthèse trimestrielle courte, statistiques essentielles et 1–2 recommandations. Premium 49 €/mois ou 539 €/an : rapport mensuel synthétique et jusqu’à 3 recommandations au bilan trimestriel."
+    },
+    {
+      "style": "Heading 2",
+      "texte": "06 — Assistance, sécurité, incidents et RGPD"
+    },
+    {
+      "style": "Normal",
+      "texte": "SUP-001 — Disponibilité / réactivité  Première réponse humaine visée dans la journée ouvrée, selon disponibilité, sans délai contractuel garanti ; priorité incidents urgents ; pas d’astreinte 24/7."
+    },
+    {
+      "style": "Normal",
+      "texte": "SUP-002 — Priorité incidents  P1 critique (site indisponible, paiement bloqué, piratage), P2 importante (fonction partielle), P3 standard (évolution, aide), sans temps de résolution garanti."
+    },
+    {
+      "style": "Normal",
+      "texte": "SUP-003 — Canaux d’alerte  E-mail ou formulaire ; appel possible pour P1, sans garantie de réponse immédiate ; compte rendu écrit et fiche incident dans Manager."
+    },
+    {
+      "style": "Normal",
+      "texte": "SUP-004 — Mesures de sécurité urgentes  Contrat de maintenance préautorise les mesures urgentes nécessaires et proportionnées (blocage accès compromis, neutralisation extension dangereuse) ; client informé et actions tracées."
+    },
+    {
+      "style": "Normal",
+      "texte": "RGPD-001 — Violation de données  AtoumWeb alerte le client sans délai injustifié lorsqu’il apprend une violation dans son périmètre, sécurise, documente et l’aide. Le client responsable de traitement décide des notifications qui lui incombent."
+    },
+    {
+      "style": "Normal",
+      "texte": "RGPD-002 — Droits des personnes  AtoumWeb configure les outils standard d’accès/export/effacement et fournit l’assistance techniquement et légalement requise ; le client décide des suppressions/conservations. Travaux exceptionnels sur devis uniquement lorsque permis."
+    },
+    {
+      "style": "Normal",
+      "texte": "RGPD-003 — Annexe RGPD distincte  Annexe de sous-traitance distincte, signée lorsque juridiquement nécessaire, avant l’opération concernée ; contrôle ciblé par Site et type d’opération, pas blocage général des projets."
+    },
+    {
+      "style": "Normal",
+      "texte": "RGPD-004 — Sous-traitants ultérieurs  Autorisation écrite générale dans annexe, liste tenue à jour, avis préalable d’ajout/remplacement et faculté d’objection du client."
+    },
+    {
+      "style": "Normal",
+      "texte": "RGPD-005 — Préavis changement sous-traitant  Préavis habituel de 15 jours calendaires, adapté si changement sensible ; notification de l’identité, du rôle et du contexte."
+    },
+    {
+      "style": "Normal",
+      "texte": "RGPD-006 — Opposition à nouveau sous-traitant  Examiner l’objection ; rechercher une alternative raisonnable ; en cas d’impasse, organiser sortie de la prestation concernée dans le respect des droits."
+    },
+    {
+      "style": "Normal",
+      "texte": "RGPD-007 — Sauvegardes : outillage actuel  Seuls les outils de sauvegarde de l’hébergeur o2switch sont prévus à ce stade ; pas d’extension de sauvegarde AtoumWeb déclarée active."
+    },
+    {
+      "style": "Normal",
+      "texte": "RGPD-008 — Fichiers temporaires de création  Conservation des fichiers temporaires 90 jours après livraison officielle, sous réserve des obligations légales et de minimisation."
+    },
+    {
+      "style": "Heading 2",
+      "texte": "07 — Paiements, contrats et clauses"
+    },
+    {
+      "style": "Normal",
+      "texte": "PAY-001 — Moyens de paiement  Devis ponctuels et abonnements annuels : chèque, virement ou SEPA. Abonnements mensuels : SEPA ou virement permanent. Aucun supplément ou remise selon le moyen de paiement."
+    },
+    {
+      "style": "Normal",
+      "texte": "PAY-002 — Dates mensuelles  Le client choisit le 5 ou le 15 de chaque mois pour ses abonnements ; première période calculée au prorata."
+    },
+    {
+      "style": "Normal",
+      "texte": "PAY-003 — SEPA sur devis à échéances  Devis accepté et mandat SEPA adapté couvrent les échéances prévues ; information préalable ; supplément = nouvel accord écrit."
+    },
+    {
+      "style": "Normal",
+      "texte": "PAY-004 — Rejet prélèvement SEPA  Information du client puis un seul nouvel essai environ 5 jours après, si techniquement et contractuellement possible ; pas de frais AtoumWeb ni double prélèvement ; procédure de relance si impayé."
+    },
+    {
+      "style": "Normal",
+      "texte": "PAY-005 — Impayés des PRESTATIONS PONCTUELLES UNIQUEMENT : relance amiable écrite J+7 ; mise en demeure à J+15 accordant huit jours ; suspension proportionnée possible des seules prestations restant à réaliser à compter de J+23, après notification, contrôle de la gravité, examen du litige et sous réserve des droits impératifs. Pour les abonnements récurrents, appliquer exclusivement CL-20 : suspension possible J+30, résiliation éventuelle J+60. Aucune suppression immédiate de données ni blocage abusif du domaine."
+    },
+    {
+      "style": "Normal",
+      "texte": "PAY-006 — Acceptation du devis  Signature ou acceptation écrite explicite ; archiver la version exacte du devis/CGV et la preuve d’acceptation."
+    },
+    {
+      "style": "Normal",
+      "texte": "LEGAL-001 — Clause 014 : inertie client  Après 60 jours de blocage dû au client, mise en demeure de 15 jours avant conclusion éventuelle ; bilan du travail réalisé et frais justifiés, acomptes déduits, sans pénalité forfaitaire automatique."
+    },
+    {
+      "style": "Normal",
+      "texte": "LEGAL-002 — Clause 087 : litige B2B  Réclamation écrite préalable, tentative de règlement amiable, Médiateur des entreprises facultatif, recours juridictionnels préservés."
+    },
+    {
+      "style": "Normal",
+      "texte": "LEGAL-003 — Clause 106 : contenus du client  Client confirme par écrit avoir les droits de publication ; responsabilité d’AtoumWeb conservée pour ses propres obligations et alertes nécessaires."
+    },
+    {
+      "style": "Normal",
+      "texte": "LEGAL-004 — Clause 119 : référence commerciale  Autorisation commerciale facultative, distincte par usage (nom/logo/captures/lien/publications), recueillie à la livraison, jamais précochée ; preuves et retrait pour l’avenir suivis."
+    },
+    {
+      "style": "Normal",
+      "texte": "LEGAL-005 — Clause 022 : responsabilité  Ne pas insérer de plafond de responsabilité contractuel forfaitaire ; apprécier les responsabilités selon le droit applicable et les faits."
+    },
+    {
+      "style": "Normal",
+      "texte": "LEGAL-006 — ASSURANCE RC PROFESSIONNELLE [HISTORIQUE, À RÉARBITRER AVANT PREMIÈRE PRESTATION] : la décision antérieure était de reporter la souscription jusqu’au premier contrat puis de souscrire avant le début de prestation. Le statut plus récent inscrit en tête du référentiel est « aucune souscription prévue pour le moment ». Les deux ne peuvent pas être présentés comme une seule décision actuelle. Aucun contrat RC Pro actif n’est attesté ; la clause 022 demeure sans plafond. Décision de couverture à confirmer explicitement avant engagement ; aucune mention « assuré » sur devis, CGV ou site sans justificatif."
+    },
+    {
+      "style": "Normal",
+      "texte": "LEGAL-007 — Médiation consommation  CM2C envisagé/choisi ; adhésion non encore active. Souscription à réaliser avant premier contrat conclu avec un consommateur. [Voir statut opérationnel plus récent en tête de document.]"
+    },
+    {
+      "style": "Normal",
+      "texte": "LEGAL-008 — Site de mariage : reconduction  Après première période, reconduction annuelle du site de mariage à 59 €/an, dont domaine/gestion standard 29 €, selon mécanisme et informations légalement applicables."
+    },
+    {
+      "style": "Normal",
+      "texte": "LEGAL-009 — Sortie / export de site  Export standard des fichiers et base sur demande ; assistance de migration extérieure facturable ; conservation sécurisée 30 jours sous conditions, puis traitement des données selon instructions et règles applicables."
+    },
+    {
+      "style": "Heading 2",
+      "texte": "08 — Offres SEO complémentaires et modalités de livraison"
+    },
+    {
+      "style": "Normal",
+      "texte": "SEO-005 — Maintien des quatre offres SEO  Conserver l’audit technique 199 €, le SEO Essentiel 299 €, le SEO Avancé 499 € et le SEO Premium 899 € ; chacune a un périmètre et un livrable distincts."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEO-006 — Pack SEO Essentiel 299 €  Analyse SEO ciblée de cinq pages existantes au maximum ; rapport synthétique de 3 à 5 pages ; recommandations sans corrections. Objectif interne de production de 4 h, non plafond opposable au client."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEO-007 — Pack SEO Avancé 499 €  Analyse technique et éditoriale approfondie de 10 URL maximum, comparaison de 2 concurrents, rapport de 6 à 8 pages, recommandations sans corrections. Objectif interne de 6 h."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEO-008 — Pack SEO Premium 899 €  Analyse de 20 URL maximum, 3 concurrents approfondis et 2 synthétiques, stratégie éditoriale sur 3 mois, rapport de 10 à 15 pages, restitution de 30 minutes. Sans corrections. Objectif interne 11 h."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEO-009 — Clarifications des rapports SEO  Pour les quatre offres, inclure un cycle regroupé de clarifications dans les 15 jours calendaires suivant la remise du rapport. Le Premium conserve en plus sa restitution de 30 minutes. Les erreurs d’AtoumWeb sont corrigées gratuitement sans être limitées par cette fenêtre."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEO-010 — Validation du périmètre des packs SEO  AtoumWeb propose les URL et concurrents pertinents ; le client valide par écrit avant l’analyse détaillée. Ajustement avant validation possible ; travaux supplémentaires ultérieurs après accord et devis ou pack."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEO-011 — Calendrier de livraison SEO  Date prévisionnelle personnalisée par devis ; calendrier lié à la réception des accès, informations et validations. Décalages expliqués par écrit et justifiés. La remise officielle ouvre le délai de clarifications."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEO-012 — Échéances de paiement SEO  Audit technique 199 €, Essentiel 299 € et Avancé 499 € payables à 100 % à la commande ; Premium 899 € : 449,50 € à la commande et 449,50 € à la remise du rapport ; sous réserve des droits légaux."
+    },
+    {
+      "style": "Heading 2",
+      "texte": "09 — Optimisation des performances WordPress"
+    },
+    {
+      "style": "Normal",
+      "texte": "PERF-001 — Forfait d’optimisation 149 €  Optimisation standard de performances à 149 € uniquement pour les sites vitrines créés ET techniquement maîtrisés par AtoumWeb ; objectif interne 2 h, sans garantie de score PageSpeed précis."
+    },
+    {
+      "style": "Normal",
+      "texte": "PERF-002 — Maintenance et petites optimisations  Les petits réglages compatibles peuvent utiliser le quota de maintenance mensuel (2×30 min WordPress ou 4×30 min WooCommerce). L’optimisation complète à 149 € reste distincte ; aucune double facturation ni facturation d’erreurs d’AtoumWeb."
+    },
+    {
+      "style": "Normal",
+      "texte": "PERF-003 — Sites externes : pas de forfait 149 €  Le forfait 149 € est réservé aux sites créés et maîtrisés par AtoumWeb. Pour les autres : vérification commerciale limitée, diagnostic payant si nécessaire, optimisation uniquement sur devis et si la maîtrise technique est suffisante."
+    },
+    {
+      "style": "Normal",
+      "texte": "PERF-004 — Préqualification gratuite limitée  Avant vente de l’optimisation 149 €, vérification courte gratuite de compatibilité, accès, sauvegardes et restauration ; toute analyse approfondie est proposée sur devis. Ne pas effectuer un audit gratuit."
+    },
+    {
+      "style": "Normal",
+      "texte": "PERF-005 — Diagnostic technique externe sur devis  Après vérification commerciale gratuite, tout diagnostic approfondi d’un environnement externe est facturé sur devis personnalisé définissant périmètre, livrables, prix et limites avant commande."
+    },
+    {
+      "style": "Normal",
+      "texte": "PERF-006 — Pas de déduction automatique du diagnostic  Le diagnostic technique reste facturé comme prestation autonome. Il n’est pas déduit automatiquement des travaux ; AtoumWeb peut accorder librement une remise explicite au cas par cas. Les analyses déjà réalisées sont réutilisées, sans double facturation."
+    },
+    {
+      "style": "Normal",
+      "texte": "PERF-007 — Sécurisation des optimisations  Sur site éligible, vérifier sauvegardes o2switch et possibilité de restauration avant les changements ; sauvegarde complémentaire seulement si nécessaire ; réglages progressifs, tests, retour arrière ou correction gratuits si faute AtoumWeb."
+    },
+    {
+      "style": "Normal",
+      "texte": "PERF-008 — Prix fixe même au-delà de 2 h  Les 2 h sont un objectif de pilotage interne, non une limite client. Les opérations comprises dans le devis 149 € restent dues sans supplément ; les anomalies réellement hors périmètre ouvrent un devis spécifique uniquement avec accord."
+    },
+    {
+      "style": "Normal",
+      "texte": "PERF-009 — Résultats des performances et régularisation  Comparer des mesures avant/après compatibles ; corriger toute régression imputable à AtoumWeb ; expliquer les limites. Si aucune optimisation utile n’a pu être réalisée, établir un bilan et régulariser le prix selon travaux effectivement exécutés et obligations contractuelles."
+    },
+    {
+      "style": "Normal",
+      "texte": "PERF-010 — Contrôle après optimisation à J+7  Mesures et tests à la livraison, puis contrôle ciblé à environ J+7 (10 à 15 min indicatives), sans surveillance continue. Les erreurs dues à AtoumWeb restent à sa charge."
+    },
+    {
+      "style": "Normal",
+      "texte": "PERF-011 — Limites quantitatives du forfait 149 €  Réglages globaux compatibles ; analyse de 3 URL représentatives au maximum ; optimisation manuelle ciblée de 10 images maximum. Les plafonds sont des maximums utiles, pas un quota artificiel à consommer."
+    },
+    {
+      "style": "Normal",
+      "texte": "PERF-012 — Qualité initiale des sites et non-double-facturation  Tout nouveau site AtoumWeb doit être correctement configuré et optimisé à la livraison. Les défauts imputables à AtoumWeb sont corrigés gratuitement ; 149 € ne peut être facturé que pour un travail complémentaire réel non compris dans l’offre de création."
+    },
+    {
+      "style": "Heading 2",
+      "texte": "10 — Qualité, livraison et formation"
+    },
+    {
+      "style": "Normal",
+      "texte": "DELIV-001 — Checklist de recette obligatoire  Avant livraison, checklist qualité distincte selon site vitrine ou WooCommerce ; résultats, anomalies et corrections enregistrés ; récapitulatif dans dossier client."
+    },
+    {
+      "style": "Normal",
+      "texte": "DELIV-002 — Réserves mineures et blocage des livraisons  Anomalies bloquantes ou majeures : empêchent la livraison. Anomalies mineures : livraison avec accord écrit du client, liste de réserves, date prévisionnelle de correction, correction gratuite."
+    },
+    {
+      "style": "Normal",
+      "texte": "DELIV-003 — Contrôle post-mise-en-ligne  Après publication, contrôler immédiatement les fonctions essentielles puis effectuer un second contrôle sous 3 jours ouvrés ; procédures adaptées vitrine/WooCommerce, résultats tracés. Garantie corrective de 30 jours maintenue."
+    },
+    {
+      "style": "Normal",
+      "texte": "DELIV-004 — Formation : durée confirmée 1 h / 2 h  Chaque vitrine (699, 1 149, 1 449 €) comprend 1 heure de formation à distance et un guide personnalisé. Chaque boutique WooCommerce comprend 2 heures. La proposition ultérieure de 30 minutes est annulée."
+    },
+    {
+      "style": "Normal",
+      "texte": "DELIV-005 — Formation proposée dans les 30 jours  AtoumWeb propose des créneaux dans les 30 jours après livraison ; reports possibles et aucune expiration automatique de la formation incluse. Ne bloque pas à elle seule la livraison."
+    },
+    {
+      "style": "Normal",
+      "texte": "DELIV-006 — Dossier client de livraison  Dossier PDF simplifié personnalisé, généré depuis Manager : fiche officielle, URLs, guide, domaine/hébergement, échéances, licences, maintenance, garantie, contact. Accès remis séparément et sécurisés, sans secrets."
+    },
+    {
+      "style": "Normal",
+      "texte": "DELIV-007 — Versions du dossier client  Le PDF initial est conservé ; réédition lors d’un changement important (hébergement, maintenance, domaine, licences, accès). Aucun nouveau PDF pour chaque petite modification. Les versions ne sont pas écrasées."
+    },
+    {
+      "style": "Normal",
+      "texte": "DELIV-008 — Accès administrateur et propriété des comptes  Client avec compte admin WordPress individuel ; maîtrise de ses comptes tiers et domaine. AtoumWeb conserve compte technique distinct et révocable. Aucun accès au compte principal o2switch ni autres clients ; remise sécurisée séparée du PDF."
+    },
+    {
+      "style": "Heading 2",
+      "texte": "11 — Contrôle des accès et prestataires externes"
+    },
+    {
+      "style": "Normal",
+      "texte": "ACCESS-001 — 2FA WordPress admin obligatoire  Tous les comptes administrateurs WordPress doivent utiliser la double authentification ; configuration et aide incluses dans création, récupération sécurisée ; aucun secret conservé en clair dans Manager."
+    },
+    {
+      "style": "Normal",
+      "texte": "ACCESS-002 — Gestion autonome des comptes WordPress  Client autonome pour créer et gérer utilisateurs avec droits adaptés ; 2FA admin maintenue. Gestion par AtoumWeb à la demande : quota de maintenance ou devis/pack."
+    },
+    {
+      "style": "Normal",
+      "texte": "ACCESS-003 — Récupération des accès perdus  Récupération simple des accès WordPress sous maintenance possible dans quota 30 min ; sans maintenance sur devis ou pack. Vérifier identité avant rétablissement ; erreur AtoumWeb gratuite ; rétablir 2FA."
+    },
+    {
+      "style": "Normal",
+      "texte": "ACCESS-004 — Accès techniques après fin de maintenance  Désactiver ou retirer les accès WordPress d’AtoumWeb devenus inutiles en fin de maintenance. Nouvelle intervention ponctuelle après autorisation client et accès temporaire sécurisé ; révocation à la fin."
+    },
+    {
+      "style": "Normal",
+      "texte": "ACCESS-005 — Orientation vers expertise cybersécurité  Incident dépassant compétences AtoumWeb : orienter le client vers un spécialiste, notamment CSIRT-BFC ou 17Cyber, sans prétendre disposer d’un partenaire engagé."
+    },
+    {
+      "style": "Normal",
+      "texte": "ACCESS-006 — Contrat direct client-spécialiste  Le client choisit, engage et règle directement le spécialiste externe ; AtoumWeb peut faciliter la transmission des éléments autorisés sans sous-traitance automatique ni effacement de ses propres responsabilités."
+    },
+    {
+      "style": "Normal",
+      "texte": "ACCESS-007 — Accès cyber tiers temporaires  Accès nominatif, sécurisé, strictement limité au site concerné, après autorisation du client ; 2FA admin ; accès révoqués à la fin. Ne jamais transmettre les identifiants communs."
+    },
+    {
+      "style": "Normal",
+      "texte": "ACCESS-008 — Intervention externe dans la Lune isolée  Un spécialiste autorisé peut intervenir directement dans la Lune propre au client, si cloisonnement et permissions le permettent ; accès temporaires et séparés, changements sensibles autorisés et documentés. Pas d’accès global ni aux autres Lunes."
+    },
+    {
+      "style": "Normal",
+      "texte": "ACCESS-009 — Accès client à son cPanel Lune  Le client peut recevoir sur demande les accès à son propre cPanel Lune ; information sur risques et transmission sécurisée, jamais l’administration du compte principal."
+    },
+    {
+      "style": "Normal",
+      "texte": "ACCESS-010 — Information avant modification sensible cPanel  Client libre sur opérations courantes ; il informe AtoumWeb avant changement susceptible d’affecter disponibilité/sécurité/maintenance (PHP, DNS, bases, configuration sensible). Manquement n’annule pas automatiquement garanties."
+    },
+    {
+      "style": "Normal",
+      "texte": "ACCESS-011 — 2FA obligatoire pour accès cPanel Lune  2FA obligatoire pour accès cPanel remis au client ; AtoumWeb accompagne activation et récupération. Aucun secret en clair dans Manager ; vérifier la compatibilité des automatisations avant modification."
+    },
+    {
+      "style": "Heading 2",
+      "texte": "12 — Incidents, vulnérabilités et dépiratage"
+    },
+    {
+      "style": "Normal",
+      "texte": "SEC-001 — Vulnérabilité connue sans maintenance  Sans maintenance, pas de surveillance applicative promise. Si AtoumWeb connaît une vulnérabilité importante, il alerte et propose corrections sur devis/pack ; peut prendre mesures conservatoires proportionnées si menace infrastructure."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEC-002 — Relance vulnérabilité non traitée  Si alerte importante sans réponse, relance à 3 jours ouvrés si nécessaire ; mesures restrictives uniquement sur risque concret, jamais suspension automatique pour simple silence. Menace immédiate : protection immédiate proportionnée."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEC-003 — Dépiratage sans maintenance  Sans maintenance : mesures conservatoires protégeant hébergement ; diagnostic, nettoyage, restauration et corrections WordPress sur devis, sauf prestations ou manquements dont AtoumWeb répond."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEC-004 — Dépiratage sous maintenance  Sous maintenance : première prise en charge selon contrat, diagnostic simple pouvant utiliser une intervention du quota, dépiratage complexe sur devis si non imputable à AtoumWeb. Manquements AtoumWeb corrigés à sa charge."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEC-005 — Restauration après incident et données récentes  Privilégier corrections/restaurations ciblées et préserver données récentes si possible. Accord écrit client obligatoire avant toute restauration susceptible d’écraser commandes/données ; mesures de sécurité d’urgence distinctes."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEC-006 — Remise en ligne post-compromission  AtoumWeb valide sécurité et fonctionnement technique ; client vérifie commandes/stocks/données commerciales affectées et donne accord écrit si nécessaire. Pas de remise en ligne si menace critique demeure."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEC-007 — Contrôle J+7 après dépiratage  Tout devis de dépiratage AtoumWeb comprend dès l’origine un contrôle ciblé à J+7 après réouverture ; pas de surveillance permanente. Défauts imputables à AtoumWeb corrigés gratuitement."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEC-008 — Garantie corrective dépiratage 30 jours  Garantie corrective de 30 jours après remise en service documentée pour défauts imputables aux travaux de dépiratage ; attaque nouvelle et indépendante : diagnostic/devis, sous réserve des droits légaux."
+    },
+    {
+      "style": "Normal",
+      "texte": "SEC-009 — Dépassement de compétences et escalade  AtoumWeb n’accepte pas des opérations cyber dépassant ses compétences ; orientation spécialiste externe (CSIRT-BFC/17Cyber possibles), avec dossier conservé, sans transfert automatique de ses responsabilités."
+    },
+    {
+      "style": "Heading 2",
+      "texte": "13 — Hébergement Lune : assistance et ressources"
+    },
+    {
+      "style": "Normal",
+      "texte": "LUNE-001 — Assistance incluse dans les 149 €/an  AtoumWeb assure incidents relevant de l’hébergement/Lune, relation o2switch, problèmes serveur et fonctionnement HTTPS imputable à son service. Le client gère lui-même le HTTPS courant via cPanel ; WordPress et interventions spécifiques hors forfait."
+    },
+    {
+      "style": "Normal",
+      "texte": "LUNE-002 — Gestion des boîtes e-mail cPanel  Le client hébergé Lune gère ses boîtes e-mail de façon autonome ; aide supplémentaire par devis/pack, hors incidents serveur imputables à hébergement/AtoumWeb. Trois boîtes initiales restent comprises dans la création d’un site."
+    },
+    {
+      "style": "Normal",
+      "texte": "LUNE-003 — Gestion du stockage de la Lune  Le client gère fichiers, stockage et e-mails. Si saturation connue AtoumWeb l’alerte ; nettoyage sur devis/pack. Aucune suppression de données sans autorisation appropriée ; pas de promesse de capacité illimitée."
+    },
+    {
+      "style": "Normal",
+      "texte": "LUNE-004 — Évolution des ressources  Lorsque ressources de Lune insuffisantes, AtoumWeb étudie besoins et propose évolution technique et tarifaire personnalisée sur devis ou migration. Aucun supplément ni bascule automatique sans accord écrit."
+    },
+    {
+      "style": "Heading 1",
+      "texte": "58 derniers arbitrages validés"
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-01 — Textes et rédaction : La formule landing page à 499 € part de contenus fournis par le client ; reformulation légère comprise ; rédaction complète distincte sur devis."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-02 — Déploiement et hébergement : Intégration dans un WordPress existant compatible possible ; site autonome, hébergement et domaine à préciser séparément au devis."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-03 — Fin des données RSVP : Les données de RSVP sont conservées jusqu'à 90 jours après le mariage, après avertissement et possibilité d'export ; exceptions motivées et légalement justifiées."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-04 — Formulaire RSVP minimal : Choix de repas simple, sans collecte d'allergies, de données de santé ou d'autres données sensibles dans l'offre standard."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-05 — Logo 249 € : Une proposition créative, deux cycles de corrections, déclinaisons couleurs/monochrome et fichiers PNG/JPG/PDF/SVG ; fichiers natifs éditables et charte complète exclus."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-06 — Mini-charte en option : Mini-charte PDF de 5 à 8 pages pour 249 € en complément du logo, une correction ; ensemble logo + mini-charte 498 €."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-07 — Prises de vue sur devis : Prestations de prise de vue professionnelles envisageables sur devis selon matériel, disponibilité et compétences ; ne pas promettre les forfaits anciens sans revue."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-08 — Retours retouche photo : Un cycle de corrections mineures demandé sous 7 jours calendaires ; défauts imputables à AtoumWeb corrigés sans supplément."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-09 — Article SEO 149 € : Article SEO standard de 600 à 900 mots, recherche simple, requête principale, métadonnées, maillage interne adapté et un cycle de correction."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-10 — Publication article SEO : Publication standard dans WordPress compatible comprise après accord écrit du client et réception des accès nécessaires."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-11 — Page web 99 € : Rédaction d'environ 250 à 450 mots avec un cycle de corrections et intégration dans une page WordPress existante et compatible ; création de page distincte."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-12 — Netlinking éthique : Partenariats locaux pertinents sur devis, sans dispositifs artificiels de liens payants ni garantie de positionnement."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-13 — Comptes de paiement tiers : Comptes Stripe/PayPal au nom du commerçant, qui assume KYC, flux, remboursements et frais ; AtoumWeb configure et teste sans conserver les clés sensibles."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-14 — Conservation des prospects : Référence de 3 ans à compter de la collecte ou du dernier contact entrant du prospect, selon l'événement pertinent ; opposition et suppression prises en compte."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-15 — Absences et congés : Absences planifiées annoncées, coordination des engagements en cours et continuité proportionnée ; aucune promesse d'astreinte permanente."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-16 — Sauvegardes internes Manager : Objectif à développer : sauvegarde automatisée quotidienne, copie séparée chiffrée hebdomadaire, conservation glissante 30 jours, test de restauration trimestriel, alertes."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-17 — Abby source officielle : Abby seul outil de facturation réglementaire ; Manager référence uniquement les factures et encaissements vérifiés, sans API payante ni fausse synchronisation."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-18 — Démarrage anticipé et rétractation : Lorsque le droit de rétractation existe, demande expresse et tracée pour débuter avant son terme, traitement conforme des conséquences légales ; ne pas supprimer les droits par défaut."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-19 — Clôture dossier client : Checklist de clôture : projets, paiements, livraisons, révocation des accès, suppression des données non nécessaires, archivage des preuves pertinentes et historiques immuables."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-20 — Sécurité du poste : Accès local protégé, verrouillage après environ 15 minutes d'inactivité et protection des données ; interdiction de secrets en clair ; mesures à intégrer et tester."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-21 — Annulation séance de prise de vue : Premier report à 48 h ou plus de préavis sans frais sous réserve de disponibilité ; éventuelle annulation facturée seulement pour dépenses et travail réels et justifiés selon droits légaux."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-22 — Livrables des shootings : Seules les photographies sélectionnées et finalisées sont livrées en JPEG haute résolution et versions web ; pas de fichiers RAW ni rejets non retenus."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-23 — Droit à l'image : Le client organise les autorisations des personnes et lieux nécessaires, AtoumWeb accompagne et contrôle dans la limite du service ; utilisation en portfolio seulement après consentement distinct."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-24 — Règle des prestations ponctuelles : Prestations ponctuelles de 300 € ou moins intégralement payées à la commande ; au-delà, 40/60 par défaut sauf échéancier spécial déjà convenu (sites vitrine, Woo et SEO)."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-25 — Séquence des relances : Prospection initiale J0, relances indicatives vers J+7 et J+21 puis passage « sans suite » ; opposition respectée immédiatement."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-26 — Origine des contacts : Ciblage B2B fondé sur données publiquement accessibles de façon licite, avec enregistrement source/date ; exclusion de listes achetées opaques et de collecte massive déraisonnable."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-27 — Prestataires externes : Sous-traitance indépendante possible sous responsabilité AtoumWeb, avec confidentialité, sécurité, protection des données et respect des licences ; pas de frais client sans accord."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-28 — Lune par client : Hébergement Lune dédié facturé 149 €/an par client/cPanel ; plusieurs sites d'un même propriétaire autorisés sur une même Lune sous réserve technique et validation ; domaines/maintenances séparés."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-29 — Renouvellement annuel : Hébergement Lune 149 €/an reconduit automatiquement, dans les conditions d'information et de résiliation légalement applicables."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-30 — Arrêt du renouvellement : Client peut demander l'arrêt du renouvellement avant échéance ; prestation continue pendant période payée ; export et conservation 30 jours suivant la sortie selon règles existantes."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-31 — Accord exprès de renouvellement : Le renouvellement d'un domaine standard géré par AtoumWeb n'est PAS automatique ; demander chaque année une confirmation explicite. Gestion 29 €/an plus prix registrar séparé, sauf offre mariage où le domaine standard est compris."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-32 — Reconductions GBP, statistiques et newsletters : Abonnements mensuels reconduits ; abonnements annuels de 12 mois renouvelés automatiquement selon conditions applicables avec un mois offert (annuel = 11 mensualités). Offres annuelles maintenance WordPress/Woo demeurent sur accord exprès."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-33 — Évolution des tarifs [RÈGLE HISTORIQUE PARTIELLEMENT REMPLACÉE PAR CL-23] : une période annuelle engagée conserve son tarif ; toute nouvelle annualité à prix augmenté nécessite accord écrit. Pour un abonnement mensuel à durée indéterminée, la dernière décision CL-23 prévaut : annoncer l’augmentation au moins 30 jours avant, avec faculté effective de résiliation avant son application et respect des droits impératifs. Ne pas réclamer d’accord écrit systématique pour une hausse mensuelle lorsque la procédure CL-23 a été régulièrement suivie ; aucun effet rétroactif."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-34 — Titularité des comptes tiers : Google Business Profile, Analytics, Search Console, Brevo et paiement restent au nom du client ; délégations révocables, remise et révocation à la fin ; jamais de compte maître o2switch partagé."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-35 — Canaux et validation des suppléments : Demandes par téléphone, e-mail ou formulaire, tracées dans Manager ; toute prestation supplémentaire payante requiert approbation écrite, hors mesures conservatoires urgentes strictement justifiées."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-36 — Compte rendu systématique : Après intervention, compte rendu simple indiquant date, travail, résultat, temps consommé/quota applicable ; aucune consommation de quota pour correction de faute AtoumWeb."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-37 — Demandes d'exercice de droits : Traçabilité des demandes de droits dans Manager, délais et responsabilité du responsable du traitement vs sous-traitant ; éviter les suppressions automatiques non vérifiées."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-38 — Accusé de réception : Réclamation enregistrée dans Manager, objectif interne de première réponse sous cinq jours ouvrés, sans garantie contractuelle de délai ; conservation des preuves et recours légaux."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-39 — Rappels d'expiration : Rappels d'échéance domaine vers J-60, J-30 et J-7 avec tarif et risques ; aucun renouvellement sans accord explicite."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-40 — Utilisation responsable : Outils d'IA autorisés en assistance, avec contrôle humain, information pertinente du client, confidentialité, droits d'auteur et responsabilité conservée par AtoumWeb."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-41 — Changement de formule : Montée de gamme immédiate après accord écrit avec prorata juste ; descente de gamme à la prochaine échéance, sous réserve contrat/droits, sans double facturation."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-42 — Prise d'effet des prestations récurrentes : GBP/statistiques/newsletter démarrent quand accès et éléments indispensables sont disponibles ; date de prise en charge confirmée par écrit et facturation depuis cette date."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-43 — Blocage en cours de prestation : Informer le client, poursuivre les tâches possibles, documenter la cause et proposer correction/régularisation proportionnée selon responsabilité et contrat."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-44 — Horaires de référence : Lundi à vendredi, 9 h à 17 h, hors jours fériés et fermetures annoncées ; urgences priorisées pendant la plage sans garantie de réponse immédiate."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-45 — Priorités P1/P2/P3 : P1 critique, P2 important, P3 courant ; impact réel, requalification possible ; aucun délai maximal garanti, respect du contrat et des horaires."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-46 — Contrôle des listes : Client responsable origine et licéité listes, AtoumWeb vérifie éléments essentiels, garde justificatifs nécessaires et suspend l'envoi en cas de doute sérieux."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-47 — Validité 30 jours : Devis valable 30 jours calendaires ; après échéance nouvelle proposition possible, historique non écrasé ; envoi sans réservation ferme de capacité."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-48 — Réservation du créneau : Créneau confirmé lorsque devis accepté, premier règlement prévu reçu et disponibilité convenue par écrit ; lancement subordonné aux prérequis et droits légaux."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-49 — Socle qualité inclus : Bonnes pratiques essentielles d'accessibilité sur toutes les créations ; audits complets RGAA/WCAG et conformité avancée dans périmètre distinct selon besoins/obligations ; pas de garantie générale de conformité."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-50 — TVA et affichage des prix : Régime fiscal configurable, prix total clairement affiché, historique des devis préservé ; factures officielles dans Abby."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-51 — Validation maquette sous 10 jours ouvrés : Retour indicatif demandé sous 10 jours ouvrés, relance vers le 7e jour ouvré ; planning réajustable par écrit, jamais de validation tacite ; procédure de 60+15 jours préservée."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-52 — Jusqu'à 6 sections à 499 € : Jusqu'à six sections commerciales adaptables avec formulaire simple ou bouton d'action ; sections supplémentaires et fonctions complexes sur devis ; conditions de rédaction, corrections, hébergement existantes préservées."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-53 — Durée initiale des formules mariage : Essentiel 399 € et Grand Jour 649 € : un an inclus ; L'Histoire 899 € : deux ans inclus, à compter de la mise en ligne officielle ; renouvellement ensuite de 59 €/an domaine standard inclus."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-54 — Galeries photos privées : Galerie après mariage protégée par mot de passe ; mariés valident photos et autorisations ; export proposé avant fermeture ; pas d'accès individuels par invité inclus."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-55 — Tarifs et niveaux définis : Essentielle 19 €/photo, avancée 39 €/photo, détourage 9 €/photo avec minimum de commande 45 € ; packs 10 photos 119 €, 30 photos 279 €, 60 photos 499 € limités aux corrections simples et homogènes ; travaux complexes sur devis ; JPEG/PNG livrés, sans sources éditables ; un cycle mineur 7 j."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-56 — Offres complémentaires conservées à vérifier : Conserver gamme rédaction comme base ; anciennes prestations article simple 99 €, réécriture 79 €, pack 4 SEO 549 €, livre blanc dès 590 €, intégration WP seule 39 €, images 29 € sous réserve de vérification du périmètre et des prix. Jamais de double facturation de l'intégration incluse ; complexité sur devis. NE PAS marquer tous ces anciens tarifs comme revalidés."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-57 — Pilotage de rentabilité : Manager cible temps prévus/réels, coûts directs, récurrents, charges estimées paramétrables, marges et suivi d'encaissements vérifiés Abby ; ne remplace pas la comptabilité."
+    },
+    {
+      "style": "Normal",
+      "texte": "SQ-58 — Conservation et archivage contrôlés : Manager classe les documents par catégorie, signale les échéances, propose suppressions/anonymisations ; contrôle préalable des données sensibles et documents soumis à obligations légales, traçabilité minimale ; durées légales à vérifier."
+    },
+    {
+      "style": "Heading 1",
+      "texte": "39 décisions fonctionnelles Offres & Tarifs"
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-01 — Création : Assistant de création guidée ; brouillon incomplet sauvegardable et reprenable après fermeture."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-02 — Familles : Clic sur une carte de famille → tableau d'administration filtré, avec retour vers la vue organisée."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-03 — Duplication : Dupliquer une offre ou un service dans un nouvel article brouillon."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-04 — Compteurs : Total, actifs, inactifs, archivés, articles avec version publiée et avec brouillon ; totaux filtrés et total général identifiable."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-05 — Utilisations : Afficher les utilisations réelles de chaque version (devis et autres dossiers effectivement reliés)."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-06 — Formules : Formules commerciales distinctes mais regroupables et comparables (Essentiel, Business, Visibilité, etc.)."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-07 — Catégories : Administration en deux niveaux : catégories parentes et sous-catégories, rattachement/déplacement/ordre."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-08 — Tarifs mixtes : Présenter ensemble coûts initiaux, mensuels et annuels des prestations distinctes associées."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-09 — Abby : Gestion manuelle, sans API payante ni synchronisation."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-10 — Contrat & CGV : Configuration contractuelle guidée à partir des types, règles, clauses et bibliothèques existants."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-11 — Publication : Revue assistée : identité, tarifs, contenus, associations, références contractuelles, production."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-12 — Versions : Sélecteur principal de version dans la fiche et contexte local explicite lorsque nécessaire."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-13 — Import/export : CSV + JSON structuré ; importation assistée avec simulation, conflits et confirmation."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-14 — Associations : Rubriques Inclus, Optionnel, Recommandé avec recherche, choix de versions, quantités et contrôles."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-15 — Contenu & périmètre : Éditeur guidé : description, inclusions, exclusions, prérequis, ordre, prévisualisation et alertes."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-16 — Aide à la vente : Assistant commercial structuré : profils, besoins, bénéfices, questions, objections, conseils internes."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-17 — Production : Association guidée de modèles/blueprints existants, consultation, quantités et contrôle de disponibilité."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-18 — Historique : Chronologie des versions et des opérations réellement journalisées (création, modification, publication, retrait, archive, restauration)."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-19 — Actions groupées : Affectation de catégorie, activation/désactivation, archivage/restauration sur sélection multiple."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-20 — Tableau : Filtres avancés, pagination 25/50/100, vues personnelles sauvegardant filtres, tri et colonnes."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-21 — Promotions : Promotions temporaires par montant ou pourcentage, dates et conditions, sélection explicite dans les nouveaux devis."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-22 — Site WordPress : Préparer, prévisualiser, copier/exporter une fiche commerciale issue d'une version publiée pour intégration manuelle dans Divi."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-23 — Performance : Statistiques consultatives issues des vrais devis : décompte sans doublon, statuts réels, évolution, comparaisons et filtres."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-24 — Modèles commerciaux : Bibliothèque simple de modèles de fiches : descriptions, périmètre, questions, structure de création."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-25 — Santé : Diagnostic global : doublons potentiels, références invalides, catégories historiques, informations manquantes, incohérences."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-26 — Archivage : Archivage/restauration assistés avec présentation des conséquences connues."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-27 — À suivre : Centre discret d'alertes : promotions, brouillons anciens, dates de révision volontaires, anomalies majeures."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-28 — Sécurité : Protections proportionnées import/export, groupes, publication et archive ; traçabilité des résultats."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-29 — Paramètres : Espace centralisé : affichage, pagination, alertes, import/export, familles et accès Santé."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-30 — Navigation : Une entrée `Commercial → Offres & Tarifs`, trois espaces internes : Catalogue, Pilotage, Administration."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-31 — Premier brouillon : Nom (éventuellement provisoire) et type Offre/Service uniquement pour première sauvegarde d'un brouillon incomplet."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-32 — Sauvegarde : Manuelle, bouton Enregistrer le brouillon toujours accessible ; protection de sortie et choix enregistrer / poursuivre / abandonner."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-33 — Code : Code commercial attribuable ultérieurement, distinct de l'ID technique assigné dès la création."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-34 — Concurrence : Détection des conflits, comparaison et résolution manuelle avec conservation de la saisie."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-35 — Brouillons : Espace Mes brouillons dans Catalogue, liste, recherches et reprise de la même fiche/version ; suggestion de brouillons similaires."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-36 — Comparateur : Comparaison détaillée de 2 à 4 offres ou services, différences, périodes/prix, inclus/optionnels/exclus, versions et conditions."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-37 — Export PDF comparatif : PDF professionnel personnalisable, Client ou Interne, prévisualisation, date et références des versions figées."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-38 — Modèles documentaires : Bibliothèque de modèles de présentation (détaillé, synthétique, interne), personnalisables selon identité AtoumWeb."
+    },
+    {
+      "style": "Normal",
+      "texte": "OT-39 — Import existants : Import CSV/JSON intelligent et contrôlé : création, mise à jour d'un brouillon après comparaison, préparation d'un nouveau brouillon depuis publiée, ignorer, résolution manuelle."
+    },
+    {
+      "style": "Heading 1",
+      "texte": "Conditions de clôture"
+    },
+    {
+      "style": "Normal",
+      "texte": "• Revue des fichiers V3.9 par un professionnel du droit pour les risques B2C et reconductions"
+    },
+    {
+      "style": "Normal",
+      "texte": "• Contrôle des codes provisoires V39 et des anciennes offres non reconfirmées dans Manager"
+    },
+    {
+      "style": "Normal",
+      "texte": "• Statut RC Pro actuel non attesté ; décision préalable sur la couverture avant premier engagement ; ne pas confondre LEGAL-006 historique et état opérationnel récent. Vérifier aussi la médiation effectivement conventionnée et le parcours de rétractation."
+    },
+    {
+      "style": "Normal",
+      "texte": "• Tester extraction des 119 clauses et leur association effective aux offres, devis, contrats"
+    },
+    {
+      "style": "Normal",
+      "texte": "• Comparer la V3.9 aux données de la branche de développement sélectionnée avant toute publication"
+    },
+    {
+      "style": "Heading 1",
+      "texte": "Note de convergence documentaire — 7 novembre 2026"
+    },
+    {
+      "style": "List Bullet",
+      "texte": "Les 148 + 58 + 39 entrées sont conservées, avec leurs recoupements ; aucun nouveau tarif n’est inventé."
+    },
+    {
+      "style": "List Bullet",
+      "texte": "Maintenances annuelles : renouvellement exprès ; Lune, mariage, GBP, statistiques, newsletters annuels : reconduction automatique sous conditions légales ; domaines standards séparés : accord exprès."
+    },
+    {
+      "style": "List Bullet",
+      "texte": "Mariage Essentiel : sous-domaine initial possible ; 59 €/an = forfait global, domaine standard inclus seulement lorsqu’il existe ; pas de réduction automatique sans domaine ; coordonnées à préciser au devis."
+    },
+    {
+      "style": "List Bullet",
+      "texte": "RSVP Grand Jour : choix simples prédéfinis uniquement, sans informations sur allergies, régimes médicaux ou convictions."
+    },
+    {
+      "style": "List Bullet",
+      "texte": "Catalogue : lignes manquantes HOST-002 (29 €/an + registrar) et NL-002 (149/249 €) rétablies ; noms Premium ajoutés ; statut prix SEO/performance/migrations corrigé."
+    },
+    {
+      "style": "List Bullet",
+      "texte": "Bloquants de commercialisation consommateurs : convention de médiation réellement conclue, information et rétractation conformes, reconductions annuelles et éventuelle résiliation électronique à vérifier ; recette technique. La RC Pro non souscrite n’est pas présentée comme garantie active."
+    },
+    {
+      "style": "Heading 1",
+      "texte": "Annexe de suivi — 67 décisions et périmètres"
+    },
+    {
+      "style": "Normal",
+      "texte": "La classification suivante ne transforme pas automatiquement 47 anciens tarifs en validations individuelles historiques. Ils sont néanmoins retenus à montant constant par délégation commerciale."
+    },
+    {
+      "style": "Normal",
+      "texte": "9 choix Q01–Q09 — VALIDE_EXPLICITEMENT_07_11_2026"
+    },
+    {
+      "style": "Normal",
+      "texte": "9 décisions déjà retrouvées — VALIDE_PAR_ARBITRAGE_ANTERIEUR"
+    },
+    {
+      "style": "Normal",
+      "texte": "47 tarifs historiques conservés — RETENU_SUR_DELEGATION_07_11_2026"
+    },
+    {
+      "style": "Normal",
+      "texte": "2 repères internes, prix final sur devis écrit — BASE_INTERNE_DEVIS"
+    },
+    {
+      "style": "Heading 1",
+      "texte": "Plan de conformité et de mise en œuvre — contrôle avant publication"
+    },
+    {
+      "style": "Heading 1",
+      "texte": "Parcours de mise en œuvre dans Manager"
+    },
+    {
+      "style": "Normal",
+      "texte": "• Devis / contrat — Choix de la référence catalogue exacte, date et formule, périmètre, version des clauses applicables, régime TVA, calendrier, consentements et preuve d’acceptation."
+    },
+    {
+      "style": "Normal",
+      "texte": "• Abonnements — Champs type de renouvellement (mensuel, annuel sur accord exprès, annuel automatique sous conditions légales), date anniversaire, statut du mandat et date de premier encaissement."
+    },
+    {
+      "style": "Normal",
+      "texte": "• Gestion des modifications — Avenants écrits, avertissement hausse, changement de formule et de périodicité avec vérification d’absence de double facturation."
+    },
+    {
+      "style": "Normal",
+      "texte": "• Campagnes et suivi GBP — Checklists de contenus, BAT, relances, non-report motivé, données manquantes, demandes urgentes et preuves d’approbation."
+    },
+    {
+      "style": "Normal",
+      "texte": "• Impayés — Prestations ponctuelles : J+7, J+15, puis suspension éventuellement possible à J+23 selon PAY-005. Abonnements mensuels/annuels : J+7, J+15, suspension possible à J+30, résiliation éventuelle J+60 selon CL-20. Actions humaines motivées et tracées, jamais suppression automatique de données ni blocage abusif du domaine."
+    },
+    {
+      "style": "Normal",
+      "texte": "• RGPD et clôtures — Inventaire des données sous-traitées, consentements et instructions, export, sortie, désactivation des accès, échéances d’effacement et preuve de purge."
+    },
+    {
+      "style": "Normal",
+      "texte": "• Publication — Matrice de rapprochement : fiche d’offre, site AtoumWeb, devis, rendu PDF, contrat, facturation Abby, interface Manager et historique des versions."
+    },
+    {
+      "style": "Heading 1",
+      "texte": "Vigilance documentaire"
+    },
+    {
+      "style": "Normal",
+      "texte": "CM2C : choix métier confirmé, mais aucune convention en vigueur n’est attestée. RC Pro : aucune assurance active attestée ; décision sur une éventuelle couverture à confirmer avant première prestation. Ces statuts ne sont pas des garanties commerciales. Aucun changement de code GitHub, fusion de PR, modification de base SQLite ni devis historique ne résulte de cette consolidation."
+    },
+    {
+      "style": "Heading 1",
+      "texte": "Sources officielles utiles"
+    },
+    {
+      "style": "Normal",
+      "texte": "Contrats de services reconductibles — Code consommation L215-1, information écrite avant la date limite de refus de renouvellement\nhttps://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000046194176/2026-05-04"
+    },
+    {
+      "style": "Normal",
+      "texte": "Résiliation électronique si exigible — Code consommation L215-1-1 : vérifier en fonction du véritable parcours de souscription\nhttps://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000046190107/2026-04-18"
+    },
+    {
+      "style": "Normal",
+      "texte": "Droit de rétractation — Code consommation L221-18, principe des quatorze jours pour contrats à distance et hors établissement\nhttps://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000032226842/2026-05-19"
+    },
+    {
+      "style": "Normal",
+      "texte": "Exécution anticipée demandée — Code consommation L221-25 : demande expresse et facturation proportionnelle légalement possible\nhttps://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000044563179/2026-10-15"
+    },
+    {
+      "style": "Normal",
+      "texte": "Médiation de la consommation — Nécessité d’une convention avec un médiateur référencé avant de le déclarer actif\nhttps://www.economie.gouv.fr/mediation-conso/vous-etes-un-professionnel/choisir-un-mediateur-de-la-consommation"
+    },
+    {
+      "style": "Normal",
+      "texte": "Sous-traitance de données — CNIL : contrat de sous-traitance article 28 RGPD, traitement des instructions et sécurité\nhttps://www.cnil.fr/fr/rgpd-comment-bien-identifier-son-role"
+    },
+    {
+      "style": "Normal",
+      "texte": "Prospection électronique — CNIL 10/06/2026 : consentement en principe en B2C et opposition en B2B selon contexte\nhttps://www.cnil.fr/fr/la-prospection-commerciale-par-courrier-electronique-sms-mms-et-automate-dappel"
+    },
+    {
+      "tableau": 1,
+      "lignes": [
+        [
+          "ID",
+          "Statut",
+          "Vérification / action"
+        ],
+        [
+          "JUR-01",
+          "BLOQUANT avant première vente consommateur",
+          "Ne pas nommer CM2C comme conventionné sans preuve. Compléter la clause 033, devis et site après adhésion effective."
+        ],
+        [
+          "JUR-02",
+          "BLOQUANT pour contrats consommateurs à distance",
+          "Compléter information préalable, modèle de rétractation, recueil demande expresse si démarrage anticipé et modalités exactes d’acceptation."
+        ],
+        [
+          "JUR-03",
+          "À QUALIFIER avant publication",
+          "Le fait d’exclure le panier en ligne ne suffit pas : examiner si devis/signature/acceptation proposés par voie électronique déclenchent L215-1-1."
+        ],
+        [
+          "JUR-04",
+          "BLOQUANT parcours clients consommateurs",
+          "Configurer communication nominative dédiée dans fenêtre légale 3 à 1 mois avant limite de refus ; stocker preuves et traitements des manquements."
+        ],
+        [
+          "JUR-05",
+          "À FINALISER avant données clients",
+          "Matrice par service, instructions, sécurité, sous-traitants, restitution/suppression, droits des personnes."
+        ],
+        [
+          "ADMIN-01",
+          "À DÉCLARER HONNÊTEMENT",
+          "Aucune police active attestée : ne jamais annoncer une garantie souscrite."
+        ],
+        [
+          "ADMIN-02",
+          "À VÉRIFIER",
+          "Identité légale, SIRET, régime TVA et mentions sur devis/factures/CGV ; Abby reste la source des factures réglementaires selon le référentiel."
+        ],
+        [
+          "TECH-01",
+          "À TESTER AVANT PROMESSE",
+          "Limites cPanel, accès cloisonnés, 2FA, rétention des sauvegardes, restauration, ressources de WooCommerce."
+        ],
+        [
+          "TECH-02",
+          "À RÉCONCILIER",
+          "Différences historiques : domaines mariage, délai maintenance, contenus/landing, packs, produits Woo et ancien hébergement 99/199."
+        ],
+        [
+          "TECH-03",
+          "À TESTER AVANT PUBLICATION",
+          "Maintenir les 119 codes et 130 références ; exclure les anciennes fiches non commercialisables ; vérifier PDF de devis et contrat."
+        ],
+        [
+          "SEC-01",
+          "IMMUABLE",
+          "Ne pas écraser anciens devis acceptés, clauses signées, factures ni journal de preuve ; nouvelle version uniquement pour commandes futures."
+        ]
+      ]
+    }
+  ],
+  "instruction": "Conserver la hiérarchie et lire le Word original pour la position exacte des tableaux si nécessaire. Ne pas supprimer les décisions historiques."
+}

@@ -1,0 +1,10 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),{spawnSync}=require('node:child_process');
+const repo=path.resolve(__dirname,'..'),input=fs.realpathSync(process.argv[2]),output=path.resolve(process.argv[3]);
+const relative=path.relative(fs.realpathSync(os.tmpdir()),input);if(relative.startsWith('..')||path.isAbsolute(relative))throw Error('Only a TEMP integrated copy is allowed');
+if(fs.existsSync(output))throw Error('Use a new simulation output directory');fs.mkdirSync(output,{recursive:true});
+const temp=fs.mkdtempSync(path.join(os.tmpdir(),'atoumweb-v394-documents-')),entry=path.join(temp,'recipe.cjs');
+require('esbuild').buildSync({entryPoints:[path.join(__dirname,'fixtures/approved-v394-documents.ts')],bundle:true,platform:'node',format:'cjs',outfile:entry,external:['electron'],loader:{'.png':'dataurl'},logLevel:'silent'});
+const env={...process.env,ATOUMWEB_APPROVED_RECIPE_TEMP:temp,ATOUMWEB_APPROVED_RECIPE_INPUT:input,ATOUMWEB_APPROVED_RECIPE_OUTPUT:output};delete env.ELECTRON_RUN_AS_NODE;
+const r=spawnSync(require('electron'),[entry],{env,cwd:repo,windowsHide:true,encoding:'utf8',timeout:180000,maxBuffer:4*1024*1024});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');
+fs.writeFileSync(path.join(output,'TEMP-PROVENANCE.json'),JSON.stringify({root:temp,input,exitCode:r.status},null,2));if(r.status!==0||!r.stdout.includes('V394_DOCUMENTS '))throw Error('Document recipe failed');

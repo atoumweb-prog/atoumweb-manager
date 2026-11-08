@@ -16,6 +16,8 @@ export function useUnsavedDraft<T>(label: string, value: T, options: {
     pending?: boolean;
     dirty?: boolean;
     discard?: (baseline: T) => void;
+    save?: () => Promise<boolean>;
+    savePriority?:number;
 } = {}) {
     const inherited = useContext(Group), id = useId(), current = draftFingerprint(value), baseline = useRef<{
         hash: string;
@@ -35,17 +37,18 @@ export function useUnsavedDraft<T>(label: string, value: T, options: {
         latest.current.options.discard?.(structuredClone(baseline.current.value)); unsavedRegistry.remove(id); }
     const dirty = dirtyNow();
     useLayoutEffect(() => { if (!ready)
-        return; unsavedRegistry.update({ id, group: options.group ?? inherited, label, dirty, pending: !!options.pending, discard }); return () => unsavedRegistry.remove(id); }, [id, inherited, options.group, label, dirty, options.pending, ready, current]);
-    return { get dirty() { return dirtyNow(); }, saved: (next: T = value) => { baseline.current = { hash: draftFingerprint(next), value: structuredClone(next) }; notify(n => n + 1); }, initial: (next: T) => { baseline.current = { hash: draftFingerprint(next), value: structuredClone(next) }; notify(n => n + 1); }, request: (run: () => void) => requestUnsavedExit(run, [id]), discard };
+        return; unsavedRegistry.update({ id, group: options.group ?? inherited, label, dirty, pending: !!options.pending, discard,savePriority:options.savePriority,save:options.save?async()=>{const ok=await latest.current.options.save!();if(!ok)return false;await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));if(dirtyNow())return false;unsavedRegistry.markSaved(id,!!latest.current.options.pending);return true;}:undefined }); return () => unsavedRegistry.remove(id); }, [id, inherited, options.group, label, dirty, options.pending, ready, current,!!options.save]);
+    return { get dirty() { return dirtyNow(); }, saved: (next: T = value) => { baseline.current = { hash: draftFingerprint(next), value: structuredClone(next) };if(!dirtyNow())unsavedRegistry.markSaved(id,!!latest.current.options.pending); notify(n => n + 1); }, initial: (next: T) => { baseline.current = { hash: draftFingerprint(next), value: structuredClone(next) }; notify(n => n + 1); }, request: (run: () => void) => requestUnsavedExit(run, [id]), discard };
 }
 export function installUnsavedLifecycleBridge() {
     const publish = () => window.atoumweb.unsaved.publishState(unsavedRegistry.state());
     const unsubscribe = unsavedRegistry.subscribe(publish);
+    const stopClose=window.atoumweb.unsaved.onSaveExit?.(kind=>requestUnsavedExit(()=>{publish();window.atoumweb.unsaved.finishExit(kind);}))??(()=>{});
     publish();
     const beforeUnload = (event: BeforeUnloadEvent) => { publish(); if (unsavedRegistry.active().length) {
         event.preventDefault();
         event.returnValue = '';
     } };
     window.addEventListener('beforeunload', beforeUnload);
-    return () => { unsubscribe(); window.removeEventListener('beforeunload', beforeUnload); };
+    return () => { stopClose();unsubscribe(); window.removeEventListener('beforeunload', beforeUnload); };
 }

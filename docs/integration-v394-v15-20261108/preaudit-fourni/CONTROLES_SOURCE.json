@@ -1,0 +1,31 @@
+{
+  "checks": {
+    "130_references": true,
+    "130_codes_distincts": true,
+    "statuts_attendus": true,
+    "18_codes_v39": true,
+    "119_clauses": true,
+    "clauses_001_a_119": true,
+    "119_codes_contractuels_distincts": true,
+    "clause_019_rectificatif": true,
+    "hash_word_catalogue": true,
+    "hash_word_clauses": true,
+    "hash_word_metier": true
+  },
+  "statuts": {
+    "VALIDE_RECENT": 53,
+    "VALIDE_EXPLICITEMENT_07_11_2026": 9,
+    "VALIDE_PAR_ARBITRAGE_ANTERIEUR": 9,
+    "RETENU_SUR_DELEGATION_07_11_2026": 47,
+    "BASE_INTERNE_DEVIS": 2,
+    "ANCIEN_A_RECONCILIER": 2,
+    "A_VERIFIER_AVANT_COMMERCIALISATION": 6,
+    "ANCIEN_SUR_DEVIS": 2
+  },
+  "empreintes_word": {
+    "AtoumWeb_01_Grille_tarifaire_CONSOLIDEE_V3.9.4_RELECTURE_2026-11-08.docx": "96f4df6875174979c1769825dade5b1e73e91002b4fb8fafc7d15b4eb4eebc80",
+    "AtoumWeb_03_Bibliotheque_CGV_119_clauses_V3.9.4_RECTIFICATIF_019_2026-11-08.docx": "dc8b11e5bbdbc9c87db8dca0cd3235cd643015a82d84c0485220f9a0060be58e",
+    "AtoumWeb_02_Referentiel_metier_V1.5_RELECTURE_2026-11-08.docx": "de245acc5bf4e1441f08bc7ce682995a162f7fdc120897fff9f84ffdac345677"
+  },
+  "statut": "SOURCE_VALIDEE"
+}

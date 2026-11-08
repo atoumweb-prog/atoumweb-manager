@@ -3,12 +3,24 @@ import type {QuoteDetail} from './commercial';
 import type {ContractPresentation} from './contractPresentation';
 import {buildQuoteHtml,isQuoteDocumentDraft,quotePageFooter,quotePageHeader} from './quoteDocumentHtml';
 import {formatContractPresentation} from './contractPresentation';
+import {approvedSimulationPayment} from '../../scripts/fixtures/approved-v394-payment';
 import type {QuoteContractClause} from './contractTerms';
 
 const quote:QuoteDetail={id:'test',number:'DEV-TEST',status:'draft',subject:'Projet TEST',needSummary:'Projet TEST',ownerLabel:'Client TEST',createdAt:'2026-10-23',updatedAt:'2026-10-23',catalogValueCents:76500,discountValueCents:0,contractValueCents:76500,depositCents:22950,balanceCents:53550,depositPercent:30,
  lines:[{id:'line',quoteId:'test',sortOrder:0,source:'catalog',adjustmentMode:'none',createdAt:'2026-10-23',updatedAt:'2026-10-23',catalogLineValueCents:76500,label:'Produits supplémentaires',description:'Produits supplémentaires',quantityMilli:51000,proposedUnitPriceCents:1500,contractLineValueCents:76500,snapshot:{unit:'unité',inclusions:['Contenu fourni']}}]};
 const presentation:ContractPresentation={schemaVersion:1,state:'draft',compiledAt:null,types:[],text:'',modules:[{code:'TEST',title:'Livraison',version:2,source:'catalog'}],sections:[{id:'sold-details',title:'Périmètre vendu',text:'Périmètre exact du devis.'},{id:'catalog',title:'Conditions spécifiques',text:'1. Livraison\n\nTexte complet <script> conservé.\n\nSuite de la clause.'}]};
 describe('PDF Atoum — modèle commercial et annexe',()=>{
+ it.each(['AW-WEB-VITRINE','AW-ECOM-BASE','V39-HOST-LUNE'])('shows saved %s milestones on the quote and annex without a fictional deposit',code=>{
+  const {parameters}=approvedSimulationPayment(code,'professional');
+  const p=formatContractPresentation({state:'draft',number:quote.number,subject:quote.subject,totalCents:quote.contractValueCents,estimatedDelay:null,prerequisites:null,compiledAt:null,clauseText:'',clauses:[],parameters,administration:null,types:[],modules:[]});
+  const html=buildQuoteHtml(quote,p);
+  const commercial=html.slice(html.indexOf('class="commercial-summary"'),html.indexOf('class="contract-annex"'));
+  for(const row of p.paymentSummary!.rows){expect(commercial).toContain(row.label);expect(commercial).toContain(`${row.percent} %`);}
+  expect(html).not.toMatch(/NaN|undefined|Infinity/);
+  expect(commercial).not.toContain('Acompte (30 %)');
+  const frozen=buildQuoteHtml(quote,{...p,state:'frozen'});
+  expect(frozen).toContain('Acompte (30 %)');
+ });
  it('conserve toutes les lignes des coordonnées dans l’émetteur, sans perdre le SIRET ou l’email',()=>{const p={...presentation,sections:[...presentation.sections,{id:'administration',title:'Informations',text:'Identité AtoumWeb : Société TEST\nMentions administratives : Adresse TEST\nSIRET : 12345678900000\nEmail : agence@example.fr\nTVA : Franchise'}]};const html=buildQuoteHtml(quote,p);const party=html.slice(html.indexOf('class="party-grid"'),html.indexOf('class="project"'));expect(party).toContain('SIRET : 12345678900000');expect(party).toContain('agence@example.fr');expect(party).not.toContain('TVA : Franchise');});
 
  it('numérote les articles dans leur ordre réel de regroupement sans modifier leurs versions ni leurs corps',()=>{
