@@ -1,3 +1,4 @@
+import {CATALOG_DRAFT_EXPERIMENT} from './catalogDraftPersistenceMigration';
 import { CRM_ORGANIZATION_CONTACTS_MIGRATION } from './crmOrganizationContactsMigration';
 import { CRM_COMMERCIAL_FIELDS_MIGRATION } from './crmCommercialFieldsMigration';
 import { CRM_RECONCILIATION_MIGRATION } from './crmReconciliationMigration';
@@ -296,7 +297,7 @@ export function getPendingMigrations(database: DatabaseAdapter): Migration[] {
   }
   const rows = database.all<{ id: number; name: string }>('SELECT id, name FROM schema_migrations ORDER BY id');
   for (const row of rows) {
-    const expected = byId.get(Number(row.id));
+    const expected = byId.get(Number(row.id)) ?? (Number(row.id)===CATALOG_DRAFT_EXPERIMENT.id?CATALOG_DRAFT_EXPERIMENT:undefined);
     if (!expected || expected.name !== row.name) {
       throw new Error(`Historique SQLite incompatible pour migration ${row.id}: ${row.name} (attendu: ${expected?.name ?? 'migration inconnue'})`);
     }

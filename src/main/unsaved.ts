@@ -12,6 +12,7 @@ export function bindUnsavedWindow(window: BrowserWindow): void {
     window.on('closed', () => unsavedWindows.remove(window.id));
     window.webContents.on('will-prevent-unload', event => {
         const state = unsavedWindows.state(window.id);
+        if(state?.saveAvailable&&!state.pending){restoreQuitGate.cancel();window.webContents.send('unsaved:save-exit','close');return;}
         const allowed = state && (state.labels.length || state.pending) ? unsavedWindows.approveOne(window.id) : confirmUnsavedExit(['Saisie en cours'], false, window);
         // Electron: preventing this event overrides the renderer's unload veto.
         if (allowed)
@@ -23,6 +24,8 @@ export function bindUnsavedWindow(window: BrowserWindow): void {
 export function approveUnsavedQuit(): boolean { const ticket = unsavedWindows.approveAll(); if (!ticket)
     return false; unsavedWindows.remember(ticket); return true; }
 export function registerUnsavedConfirmationIpc() {
+    ipcMain.removeAllListeners('unsaved:finish-exit');
+    ipcMain.on('unsaved:finish-exit',(event,kind:unknown)=>{const window=BrowserWindow.fromWebContents(event.sender);if(!window||event.senderFrame!==event.sender.mainFrame)return;const state=unsavedWindows.state(window.id);if(!state||state.pending||state.labels.length)return;if(kind==='close')window.close();else if(kind==='quit')app.quit();});
     ipcMain.removeAllListeners('unsaved:confirm-exit');
     ipcMain.on('unsaved:confirm-exit', (event, labels: unknown, pending: unknown) => { const window = BrowserWindow.fromWebContents(event.sender); if (!window || !Array.isArray(labels) || labels.length > 40 || labels.some(l => typeof l !== 'string')) {
         event.returnValue = false;
@@ -36,6 +39,8 @@ export function registerUnsavedConfirmationIpc() {
 }
 export function registerGuardedShutdown(cleanup: () => void): void {
     app.on('before-quit', event => {
+        const focused=BrowserWindow.getFocusedWindow(),state=focused?unsavedWindows.state(focused.id):null;
+        if(focused&&state?.saveAvailable&&!state.pending){event.preventDefault();restoreQuitGate.cancel();focused.webContents.send('unsaved:save-exit','quit');return;}
         if (!approveUnsavedQuit()) {
             restoreQuitGate.cancel();
             event.preventDefault();

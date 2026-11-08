@@ -1,5 +1,67 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 08/11/2026 — Lot 2 validé sur TEMP ; préparation migration sur copie PRÉPRODUCTION
+
+- [x] Source confirmée par Carlos : PRÉPRODUCTION UX V2 du 04/11, Workspace-TEST/Profil-TEST ; autres environnements distingués, aucune base Validation-MSI ouverte. Données client fictives ; Catalogue/tarifs/CGV/référentiels/paramètres à préserver, aucune suppression automatique.
+- [x] Backup SQLite cohérent et restauration isolée vérifiés, source et WAL aux empreintes inchangées. Registre 1–80 compatible, aucun brouillon multiple. Migration 81 sur copie TEMP uniquement : 142 tables historiques et 487 objets inventoriés, lignes/IDs/FK/objets préservés selon adaptations prévues ; intégrité ok, FK vide. Création/sauvegarde/reprise/duplication avec composition et rejeu réussis.
+- [x] Précontrôle et outillage de préparation ajoutés ; 4 tests ciblés et typecheck réussis, essais backup/restauration sans WAL et avec WAL non vide sur fixtures. Protection TEMP inchangée, aucune activation automatique/IPC réel.
+- [x] [Rapport et proposition d’activation](docs/ux-v2/offres-tarifs-v2/PREPARATION-ACTIVATION81-PREPRODUCTION-2026-11-08.md). Réserve : 44 articles/44 versions mais bibliothèque contractuelle vide dans la préproduction choisie ; confirmer la référence CGV avant mise en service.
+- [ ] Autorisation distincte après retour utilisateur : contenu de référence CGV, runtime lot 2 et activation contrôlée sur chemin exact. Aucune migration source/commit/push/PR/fusion ni lot 3 autorisé.
+
+
+## 08/11/2026 — Lot 2 : revue acceptée sur TEMP, compatibilité historique ciblée
+
+- [x] Carlos valide la conception graphique et accepte les réalisations fonctionnelles dans le périmètre TEMP ; aucune nouvelle correction graphique. Clôture Git et mise en service non autorisées.
+- [x] 19/19 contrôles Electron ciblés sur initialisation/redémarrage normaux sans migration 81 : lecture/tableau, création/version/sauvegarde historiques, conflits snapshot, compositions, conservation de deux brouillons historiques, FK vide et intégrité ok. Aucun correctif applicatif, aucune capture ; résultats précédents conservés.
+- [x] [Compatibilité et procédure future](docs/ux-v2/offres-tarifs-v2/COMPATIBILITE-ACTIVATION-LOT2-2026-11-08.md) : indisponibilités sans 81, blocage des brouillons multiples, sauvegarde SQLite/WAL/restauration, retour arrière et mécanisme d’activation réel encore à concevoir/autoriser.
+- [x] Registre OT-01 à OT-39 actualisé sans clôturer les lots suivants.
+- [ ] Autorisation distincte avant clôture Git ou préparation/activation réelle. Aucun accès à une base utilisateur/Validation-MSI ni migration réelle.
+
+Prochaine action : décision utilisateur sur les suites ; aucun lot 3 engagé.
+
+
+## 08/11/2026 — Lot 2 : recette reprise et bilan consolidé pour revue finale
+
+Validation utilisateur reçue : incrément 2 accepté pour développement/recette TEMP, présentation des trois captures duplication/conflit/sortie satisfaisante. La validation globale du lot 2 n'est pas donnée ; aucune clôture définitive ni publication Git autorisée.
+
+- [x] État initial vérifié avant modification : même branche `codex/ux-v2-offres-tarifs-20261106`, HEAD/suivi à `57ad50fd41c2de038015b346edae0751c7f8b785`, 39 fichiers locaux modifiés/non suivis préservés par inventaire et empreintes. Aucun reset/clean/stash/changement de branche. Aucun fichier applicatif préexistant `src/` modifié pendant cette reprise.
+- [x] Vérification interrompue récupérée : 74/74 tests ciblés sur huit fichiers, puis 18/18 contrôles Electron de persistance terminés. Résultats 24/24 de finalisation réutilisés ; pas de relance générale ni nouvelle capture.
+- [x] Complément ciblé sans capture : 25/25 contrôles Electron TEMP. Second changement distant après comparaison de conflit : refus sous révision périmée, saisie conservée et nouveaux choix nécessaires. Huit onglets parcourus ; sauvegardes effectives séparées contrat/version et recommandations/identité, sans perte lors du remontage des composants. Devis/projets historiques de la fixture inchangés ; FK vide, intégrité ok, zéro erreur renderer.
+- [x] [Bilan consolidé du lot 2](docs/ux-v2/offres-tarifs-v2/BILAN-CONSOLIDE-LOT2-2026-11-07.md) rédigé : fonctionnalités, limites, résultats, erreurs injectées attendues, inventaire Git, références des preuves TEMP. [Analyse préalable des brouillons multiples](docs/ux-v2/offres-tarifs-v2/ANALYSE-INCOMPATIBILITE-BROUILLONS-MULTIPLES-2026-11-07.md) sans proposition de reclassement ni exécution sur données historiques.
+- [x] Duplication indépendante/version choisie, références explicites non vides, idempotence et rollback vérifiés dans la campagne récupérée. Résolution par champs, trois choix de sortie, conservation après échec et suggestions sans fusion livrés. Références opérationnelles non clonées ; reconfiguration par leurs services existants requise.
+- [x] Registre des 39 décisions conservé et actualisé : périmètres du lot 2 livrés/vérifiés sur TEMP, validation globale encore attendue ; lots ultérieurs inchangés. Migration 81 toujours expérimentale, exclue du démarrage automatique et bloquante si plusieurs brouillons historiques.
+- [x] Dossier/ZIP de revue préparés dans `outputs/Offres-Tarifs-Lot2-Revue-Consolidee-2026-11-07`, cinq captures existantes réutilisées, index HTML et preuves JSON. Aucune base, profil, secret, cache ni nouvelle galerie dans l'archive.
+- [ ] Revue finale avec Carlos/ChatGPT puis décision de clôture. Aucune migration utilisateur/Validation-MSI, aucun commit/push/PR/fusion, aucune action sur un autre worktree et aucun développement du lot 3.
+
+Prochaine action : examiner le dossier consolidé. Les entrées précédentes restent l'historique des incréments, pas l'état final de leur recette.
+
+## 07/11/2026 — Lot 2 incrément 2 : brouillons persistants réalisés sur TEMP
+
+Autorisation utilisateur : incrément 1 validé graphiquement dans son principe ; direction technique de persistance validée, développement de l'incrément 2 et migration autorisés uniquement sur bases TEMP isolées. Aucun accès à une base utilisateur ou Validation-MSI pour cette réalisation.
+
+- [x] [Compatibilité documentée avant contrainte](docs/ux-v2/offres-tarifs-v2/COMPATIBILITE-BROUILLON-UNIQUE.md) : l'ancien schéma permet plusieurs brouillons ; la migration refuse ces cas sans reclasser de versions. Index unique du brouillon opérationnel non abandonné sur les bases compatibles.
+- [x] Création nom/type seuls, sauvegarde manuelle dans la même version, mode/prix/catégorie/acompte non inventés ; date de dernière sauvegarde et révision ; reçus durables d'idempotence avec intention contrôlée et transaction article/version/activité/reçu. Aucun déclenchement de publication.
+- [x] Mes brouillons : recherche, résultat vide, reprise exacte après fermeture/réouverture de la base et du renderer, abandon/restauration réversibles. Les abandonnés restent en historique et sont exclus des compteurs opérationnels OT-04. Restauration refusée si un autre brouillon est opérationnel.
+- [x] Conflits de révision, conservation de saisie, comparaison distante/locale et nouvel essai manuel ; réponse IPC perdue rejouée sans doublon. Huit onglets et sauvegardes locales conservés ; gardes des versions abandonnées dans les sous-domaines. Publication et Devis incomplets refusés, snapshots existants inchangés.
+- [x] Migration expérimentale TEMP 81 créée et testée, hors liste automatique : reconnaissance seulement dans le registre pour réouverture. Chemins mémoire/TEMP contrôlés, reconstruction transactionnelle, triggers dépendants/index/FK conservés, rollback et réglage FK restaurés si panne.
+- [x] Typecheck, diff-check, 44 tests ciblés sur cinq fichiers dont 14 tests nouveaux ; 18 contrôles Electron TEMP, zéro erreur renderer. Deux erreurs IPC volontaires (réponse perdue et conflit), saisies conservées. Captures réelles Noir/Confort 1920×1080 zoom 100 dans outputs/Offres-Tarifs-Lot2-Increment2-2026-11-07. Confirmations interceptées, pas de recette humaine exhaustive des dialogues.
+- [x] [Rapport de livraison et migration TEMP](docs/ux-v2/offres-tarifs-v2/RAPPORT-LOT2-INCREMENT2-2026-11-07.md) : 44 versions historiques, lignes de 140 tables protégées et 567 objets existants préservés sur la fixture ; FK vides et intégrité ok. Comptages propres à cette recette TEMP, jamais oracle Validation-MSI. Profil et base temporaires nettoyés.
+- [ ] Revue utilisateur de cet incrément et éventuelle autorisation ultérieure hors TEMP. Duplication, suggestions de brouillons similaires et extensions métier des autres onglets non commencées. Le dialogue global de sortie reste le garde existant ; aucun remplacement général par un dialogue à trois boutons.
+
+Branche/worktree conservés ; HEAD et suivi distant restent au lot 1 `57ad50fd41c2de038015b346edae0751c7f8b785`. Incréments 1 et 2 locaux non committés. Aucun commit, push, PR ou fusion ; aucun autre worktree modifié. Prochaine action : examiner les deux captures et le rapport TEMP avant toute poursuite.
+
+## 07/11/2026 — Lot 1 sécurisé, lot 2 incrément 1 prêt pour première revue
+
+- [x] Lot 1 enregistré une seule fois : `57ad50fd41c2de038015b346edae0751c7f8b785`, push normal confirmé sur `origin/codex/ux-v2-offres-tarifs-20261106` avec SHA distant identique. Vingt fichiers de source/tests/suivi, aucune base/profil/capture de recette. Worktree propre immédiatement après publication. Aucun force-push, PR ou fusion.
+- [x] Autorisation du premier incrément du lot 2 dans ce même worktree : habillage Noir/Confort de la fiche, en-tête et synthèse Identité, huit onglets maintenus, sélecteur principal de consultation des versions. Prix et contenus consultés viennent de la version choisie ; les contextes locaux des Associations/Contrat/Production et leurs services restent distincts.
+- [x] Création guidée en cinq sections des champs déjà existants, sans nouvelles fonctions métier dans les autres onglets. État de saisie commun, barre manuelle et gardes conservées. Code/visibilité restent accessibles dans les repères facultatifs. Enregistrement opérationnel via la commande existante après choix explicite du mode tarifaire ; nom/type seuls non enregistrables et annoncés comme tels, aucune simulation OT-31.
+- [x] Typecheck ; 25 contrôles Electron ciblés sur TEMP : huit onglets, référence publiée initiale, changement effectif de contenu/prix entre versions, refus/acceptation de sortie, conservation code/création, contexte local composition, aucune écriture métier pendant consultation puis création explicite réelle d'un brouillon TEMP. Trois confirmations interceptées (pas une validation humaine du dialogue Windows), zéro erreur renderer. Présence des huit onglets contrôlée sous trois thèmes, absence de débordement horizontal global à 1280 px.
+- [x] Trois captures Electron Noir/Confort 1920×1080 zoom 100 dans `outputs/Offres-Tarifs-Lot2-Increment1-2026-11-07`, données TEST isolées uniquement, profil et base TEMP nettoyés. Les tests métier précédents restent réutilisés ; pas de campagne générale.
+- [x] [Spécification ciblée de persistance](docs/ux-v2/offres-tarifs-v2/SPEC-PERSISTANCE-BROUILLONS-LOT2-2026-11-07.md) rédigée, avec schéma/index/triggers/FK, dates réelles, idempotence, abandon réversible et protection publication/Devis. Aucun fichier de migration créé ni nouvelle migration exécutée.
+- [ ] Revue graphique de ce premier incrément et approbation séparée de la spécification. Nom/type seuls, reprise persistante incomplète, Mes brouillons, duplication et résolution manuelle enrichie des conflits restent à réaliser. Les extensions métier des autres onglets ne sont pas commencées.
+
+Les modifications du lot 2 sont locales et non committées ; aucune autorisation de commit/push du lot 2. Autres worktrees préservés, aucun prix ni clause utilisateur modifié. Prochaine action : examiner les trois captures et la spécification avant de poursuivre.
+
 ## 07/11/2026 — Sécurisation autorisée du lot 1
 
 Validation graphique définitive reçue, y compris les deux finitions. Autorisation de commit et push normal du seul lot 1 sur `codex/ux-v2-offres-tarifs-20261106`. Fichiers source, tests déterministes et suivi documentaire uniquement ; sorties de recette, bases et profils exclus. Premier incrément visuel du lot 2 autorisé après sécurisation, sans migration ni publication Git du lot 2. Le résultat exact du push sera communiqué après exécution.

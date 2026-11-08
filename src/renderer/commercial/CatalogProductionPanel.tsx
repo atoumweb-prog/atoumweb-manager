@@ -3,7 +3,7 @@ import type {CatalogItemDetail,CatalogProductionBlueprintLink} from '../../share
 
 /** Production is a versioned reference, never a command to create a Project. */
 export function CatalogProductionPanel({item}:{item:CatalogItemDetail}) {
-  const initial=item.versions.find(v=>v.status==='draft')?.id??item.currentVersion?.id??item.versions[0]?.id??'';
+  const initial=item.versions.find(v=>v.status==='draft'&&!v.abandonedAt)?.id??item.currentVersion?.id??item.versions[0]?.id??'';
   const [versionId,setVersionId]=useState(initial);
   const [links,setLinks]=useState<CatalogProductionBlueprintLink[]>([]);
   const [loading,setLoading]=useState(false);
@@ -28,7 +28,7 @@ export function CatalogProductionPanel({item}:{item:CatalogItemDetail}) {
     <p className="muted">Liens de blueprints réellement enregistrés pour la version sélectionnée. La consultation ne génère aucune tâche, aucun Site et aucun Projet.</p>
     <label>Version pour la production
       <select value={versionId} onChange={e=>setVersionId(e.target.value)} aria-label="Version Catalogue de production">
-        {item.versions.map(v=><option key={v.id} value={v.id}>v{v.versionNumber} — {v.status==='draft'?'Brouillon':v.status==='published'?'Publiée':'Retirée'}</option>)}
+        {item.versions.map(v=><option key={v.id} value={v.id}>v{v.versionNumber} — {v.abandonedAt?'Abandonné':v.status==='draft'?'Brouillon':v.status==='published'?'Publiée':'Retirée'}</option>)}
       </select>
     </label>
     {loading ? <p role="status">Chargement des blueprints…</p> :

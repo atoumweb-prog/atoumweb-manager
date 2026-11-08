@@ -64,7 +64,8 @@ export function reviewCatalogPrepublication(
   if (version.status!=='draft') blocking.push('Seul un brouillon peut être publié.');
   if (version.priceBasis==='actual_cost' && (version.priceMode!=='quote_only'||version.priceCents!=null))
     blocking.push('Un coût tiers réel doit rester sur devis sans prix fixe.');
-  if (!['quote_only','free'].includes(version.priceMode) &&
+  if(version.priceMode===null||version.abandonedAt)blocking.push('Brouillon incomplet ou abandonné : publication impossible.');
+  if (version.priceMode!==null && !['quote_only','free'].includes(version.priceMode) &&
     (version.priceCents==null||!Number.isSafeInteger(version.priceCents)||version.priceCents<0))
     blocking.push('Le montant de la prestation doit être un nombre entier de centimes valide.');
   if (version.priceMode==='free' && version.priceCents!==0 && version.priceCents!=null)

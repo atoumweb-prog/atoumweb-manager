@@ -129,7 +129,7 @@ function visualCall(op: string, key: string, value?: string): string | null | bo
   }
 }
 const api: AtoumWebApi = {
-  unsaved:{confirmExit:(labels,pending)=>ipcRenderer.sendSync('unsaved:confirm-exit',labels,pending),publishState:state=>ipcRenderer.sendSync('unsaved:state',state)},
+  unsaved:{onSaveExit:listener=>{const handler=(_event:unknown,kind:'close'|'quit')=>listener(kind);ipcRenderer.on('unsaved:save-exit',handler);return()=>{ipcRenderer.removeListener('unsaved:save-exit',handler);};},finishExit:kind=>ipcRenderer.send('unsaved:finish-exit',kind),confirmExit:(labels,pending)=>ipcRenderer.sendSync('unsaved:confirm-exit',labels,pending),publishState:state=>ipcRenderer.sendSync('unsaved:state',state)},
   app: {
     openExternalUrl: (url: string) => ipcRenderer.invoke('app:open-external-url',url),
     getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap'),
@@ -321,6 +321,12 @@ const api: AtoumWebApi = {
     listReceiptVersions: (id: string) => ipcRenderer.invoke('expenses:list-receipt-versions', id),
   },
   catalog: {
+    listDrafts:()=>ipcRenderer.invoke('catalog:list-drafts'),
+    duplicationPreview:(itemId:string,versionId:string)=>ipcRenderer.invoke('catalog:duplication-preview',itemId,versionId),
+    duplicate:(input:import('../shared/commercial').CatalogDuplicationInput,requestId:string)=>ipcRenderer.invoke('catalog:duplicate',input,requestId),
+    persistenceAvailable:()=>ipcRenderer.invoke('catalog:persistence-available'),
+    createPersistent:(input:CatalogItemInput,version:CatalogVersionInput,requestId:string)=>ipcRenderer.invoke('catalog:create-persistent',input,version,requestId),
+    setDraftAbandoned:(id:string,expected:CatalogVersion,abandoned:boolean)=>ipcRenderer.invoke('catalog:set-draft-abandoned',id,expected,abandoned),
     assignCanonicalCode: (id: string, code: string) => ipcRenderer.invoke('catalog:assign-canonical-code', id, code),
     list: (filters?: CatalogFilters) => ipcRenderer.invoke('catalog:list', filters),
     getItem: (id: string) => ipcRenderer.invoke('catalog:get-item', id),

@@ -155,6 +155,7 @@ function priceLabel(version?: CatalogVersion | null): string {
   if (version.priceMode === 'quote_only') return 'Sur devis';
   if (version.priceMode === 'free') return 'Gratuit';
   if (version.priceCents == null) return 'Tarif à préciser';
+  if(version.priceMode===null)return 'Tarif à compléter';
   const amount = `${(version.priceCents / 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`;
   const prefixes: Partial<Record<PriceMode, string>> = {
     starting_from: 'À partir de ', hourly: '', monthly: '', yearly: '', fixed: '',

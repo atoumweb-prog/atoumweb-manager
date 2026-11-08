@@ -338,6 +338,7 @@ export class QuoteService {
     );
     if (!source) throw new Error('Version catalogue introuvable.');
     if(source.version_status!=='published'||source.item_status!=='active')throw Error('Seule une version publiée d’une prestation active peut être ajoutée au devis.');
+    if(source.price_mode==null)throw Error('Version Catalogue incomplète : utilisation commerciale interdite.');
 
     const proposed = input.proposedUnitPriceCents ?? source.price_cents;
     if (proposed == null && source.price_mode !== 'free') throw new Error('Renseigne un prix proposé pour cette prestation sur devis.');

@@ -8,7 +8,7 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
   items: CatalogItemSummary[];
   locked: boolean;
 }) {
-  const source = item.versions.find(version=>version.status==='draft') ?? item.currentVersion ?? null;
+  const source = item.versions.find(version=>version.status==='draft'&&!version.abandonedAt) ?? item.currentVersion ?? null;
   const sourceId = source?.id ?? '';
   const [savedLinks,setSavedLinks] = useState<CatalogRecommendationLink[]>([]);
   const [targets,setTargets] = useState<string[]>([]);
@@ -22,7 +22,7 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
   const saveInFlight=useRef<string|null>(null);
   const guard=useUnsavedDraft('Recommandations Catalogue',{targets,metadata},{
     group:'catalog:'+item.id,resetKey:sourceId,ready:!!sourceId&&!loading,
-    pending:saving,discard:baseline=>{setTargets(baseline.targets);setMetadata(baseline.metadata);},
+    pending:saving,save:()=>save(),discard:baseline=>{setTargets(baseline.targets);setMetadata(baseline.metadata);},
   });
   useEffect(()=>{
     ++requestEpoch.current;
@@ -46,7 +46,7 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
   // One load per source version. Other local edits must not trigger a reload.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[sourceId]);
-  const editable=source?.status==='draft'&&!locked;
+  const editable=source?.status==='draft'&&!source.abandonedAt&&!locked;
   const available=items.filter(candidate=>candidate.type==='service'&&candidate.id!==item.id&&candidate.status==='active'
     &&candidate.currentVersion?.status==='published'
     &&!targets.includes(candidate.currentVersion.id));
@@ -63,19 +63,19 @@ export function CatalogRecommendationsPanel({item,items,locked}:{
     setMetadata(current=>({...current,[id]:{...current[id],...fields,targetVersionId:id,reason:fields.reason??current[id]?.reason??'',status:fields.status??current[id]?.status??'active',conditions:fields.conditions??current[id]?.conditions??'',provenance:fields.provenance??current[id]?.provenance??'manual'}}));
   }
   async function save(){
-    if(!sourceId||!editable||saving||saveInFlight.current===sourceId)return;
+    if(!sourceId||!editable||saving||saveInFlight.current===sourceId)return false;
     const savingSourceId=sourceId;
     const saveEpoch=requestEpoch.current;
     saveInFlight.current=sourceId;
     setSaving(true);setError('');
     try{
       const links=await window.atoumweb.catalog.replaceRecommendations(sourceId,targets,savedLinks.map(link=>link.targetVersionId),targets.map(id=>({...metadata[id],targetVersionId:id,reason:metadata[id]?.reason??'',status:metadata[id]?.status??'active',conditions:metadata[id]?.conditions??'',provenance:metadata[id]?.provenance??'manual'})),savedLinks.map(link=>({targetVersionId:link.targetVersionId,reason:link.reason??'',status:link.status??'active',conditions:link.conditions??'',provenance:link.provenance??'manual'})));
-      if(sourceRef.current!==savingSourceId||requestEpoch.current!==saveEpoch)return;
+      if(sourceRef.current!==savingSourceId||requestEpoch.current!==saveEpoch)return false;
       setSavedLinks(links);const saved=links.map(link=>link.targetVersionId);
       const info=Object.fromEntries(links.map(link=>[link.targetVersionId,{targetVersionId:link.targetVersionId,
         reason:link.reason??'',status:link.status??'active',conditions:link.conditions??'',provenance:link.provenance??'manual'}]));
-      setTargets(saved);setMetadata(info);guard.saved({targets:saved,metadata:info});
-    }catch(err){if(sourceRef.current===savingSourceId&&requestEpoch.current===saveEpoch)setError(err instanceof Error?err.message:'Enregistrement impossible : saisie conservée.');}
+      setTargets(saved);setMetadata(info);guard.saved({targets:saved,metadata:info});return true;
+    }catch(err){if(sourceRef.current===savingSourceId&&requestEpoch.current===saveEpoch)setError(err instanceof Error?err.message:'Enregistrement impossible : saisie conservée.');return false;}
     finally{if(sourceRef.current===savingSourceId&&requestEpoch.current===saveEpoch){saveInFlight.current=null;setSaving(false);}}
   }
   return <section className="catalog-detail-section" aria-label="Recommandations commerciales">

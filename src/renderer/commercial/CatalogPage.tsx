@@ -1,3 +1,9 @@
+import {catalogUiError} from '../../shared/catalogUiError';
+import {UnsavedSaveDialog} from '../unsaved/UnsavedSaveDialog';
+import {CatalogConflictResolver} from './CatalogConflictResolver';
+import {CatalogDuplicateDialog} from './CatalogDuplicateDialog';
+import {similarCatalogDrafts} from '../../shared/catalogDraftSuggestions';
+import {CatalogDrafts} from './CatalogDrafts';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import {CATALOG_ADMIN_VIEW} from '../../shared/realTableSchemas';
 import {OperationIcon,type OperationIconName} from '../operations/OperationIcon';
@@ -23,6 +29,7 @@ import {
   type CatalogItemSummary,
   type CatalogItemType,
   type CatalogVersionInput,
+  type CatalogDraftEntry,
   type CatalogVersion,
   type OfferComponent,
   type PriceMode,
@@ -34,6 +41,7 @@ import {defaultCatalogContext,type CatalogTableContext} from '../../shared/catal
 import {readTableView,tableViewKey} from '../../shared/tableViewPreference';
 import {REAL_TABLE_SCHEMAS} from '../../shared/realTableSchemas';
 import './catalog-workspace-v2.css';
+import './catalog-editor-v2.css';
 import { CatalogCategoryInventory } from './CatalogCategoryInventory';
 import type { CatalogCategoryRecord } from '../../shared/catalogCategoryAdministration';
 import { catalogAdminCategories, catalogAdminFiltered } from './catalogAdminFilters';
@@ -82,7 +90,7 @@ interface CatalogDraft {
   inclusionsText: string;
   exclusionsText: string;
   prerequisitesText: string;
-  priceMode: PriceMode;
+  priceMode: PriceMode|null;
   priceEuros: string;
   recommendedEuros: string;
   depositPercent: string;
@@ -105,10 +113,10 @@ const EMPTY_DRAFT: CatalogDraft = {
   inclusionsText: '',
   exclusionsText: '',
   prerequisitesText: '',
-  priceMode: 'fixed',
+  priceMode: null,
   priceEuros: '',
   recommendedEuros: '',
-  depositPercent: '30',
+  depositPercent: '',
   estimatedMinutes: '',
   recommendedDelayDays: '',
   specialTerms: '',
@@ -117,6 +125,39 @@ const EMPTY_DRAFT: CatalogDraft = {
   commercialParameters: {},
   visiblePublic: false,
 };
+
+
+function draftFromVersion(current:CatalogVersion,detail:CatalogItemDetail):CatalogDraft {return {
+      canonicalCode: detail.canonicalCode ?? '',
+      commercialKind: current.commercialKind ?? '',
+      familyCode: current.familyCode ?? '',
+      abbyLabel: current.abbyLabel ?? '',
+      unit: current.unit ?? '',
+      periodicity: current.periodicity ?? '',
+      priceBasis: current.priceBasis ?? 'listed',
+      sourceReference: current.provenance?.reference ?? '',
+      sourceSha256: current.provenance?.sha256 ?? '',
+      sourceRecordKey: current.provenance?.recordKey ?? '',
+      type: detail.type,
+      name: detail.name,
+      category: detail.category ?? '',
+      nature: current.nature ?? '',
+      description: current.description ?? '',
+      inclusionsText: (current.inclusions ?? []).join('\n'),
+      exclusionsText: (current.exclusions ?? []).join('\n'),
+      prerequisitesText: (current.prerequisites ?? []).join('\n'),
+      priceMode: current.priceMode,
+      priceEuros: current.priceCents == null ? '' : String(current.priceCents / 100),
+      recommendedEuros: current.recommendedPriceCents == null ? '' : String(current.recommendedPriceCents / 100),
+      depositPercent: current.defaultDepositPercent == null ? '' : String(current.defaultDepositPercent),
+      estimatedMinutes: current.estimatedMinutes == null ? '' : String(current.estimatedMinutes),
+      recommendedDelayDays: current.recommendedDelayDays == null ? '' : String(current.recommendedDelayDays),
+      specialTerms: current.specialTerms ?? '',
+      contractType: current.contractType ?? '',
+      internalAdvice: current.internalAdvice ?? '',
+      commercialParameters: { ...current.commercialParameters },
+      visiblePublic: detail.visiblePublic,
+    };}
 
 function eurosToCents(value: string): number | null {
   const cleaned = value.trim().replace(',', '.');
@@ -140,6 +181,7 @@ function splitLines(value: string): string[] {
 function formatPrice(item: CatalogItemSummary): string {
   const version = item.currentVersion;
   if (!version) return 'Non tarifé';
+  if(version.priceMode===null)return 'Tarif à compléter';
   if (version.priceBasis === 'actual_cost') return 'Coût tiers réel';
   if (version.priceMode === 'free') return 'Gratuit';
   if (version.priceMode === 'quote_only') return 'Sur devis';
@@ -177,6 +219,25 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<CatalogItemDetail | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [creationStep,setCreationStep]=useState<CatalogEditorTab>('identity');
+  const [creationPriceChosen,setCreationPriceChosen]=useState(false);
+  const [persistent,setPersistent]=useState(false);
+  const [showDrafts,setShowDrafts]=useState(false);
+  const [draftRows,setDraftRows]=useState<CatalogDraftEntry[]>([]);
+  const [draftListError,setDraftListError]=useState('');
+  const [resumeVersionId,setResumeVersionId]=useState<string|null>(null);
+  const [duplication,setDuplication]=useState<import('../../shared/commercial').CatalogDuplicationPreview|null>(null);
+  const [conflictVersion,setConflictVersion]=useState<CatalogVersion|null>(null);
+  const pendingCreation=useRef<{requestId:string;fingerprint:string;input:import('../../shared/commercial').CatalogItemInput;payload:CatalogVersionInput}|null>(null);
+  useEffect(()=>{window.atoumweb.catalog.persistenceAvailable().then(setPersistent).catch(()=>setPersistent(false));},[]);
+  async function refreshDrafts(){try{setDraftRows(await window.atoumweb.catalog.listDrafts());setDraftListError('');}catch(e){setDraftListError(e instanceof Error?e.message:'Brouillons indisponibles.');}}
+  useEffect(()=>{if(persistent&&(showDrafts||showForm))void refreshDrafts();},[persistent,showDrafts,showForm]);
+  useEffect(()=>{if(resumeVersionId&&detail){const v=detail.versions.find(v=>v.id===resumeVersionId);if(v){prepareNewVersion(v,true);setResumeVersionId(null);}}},[resumeVersionId,detail]);
+  async function resumeDraft(row:CatalogDraftEntry){await openItem(row.item.id,row.version.id);}
+  async function changeDraftState(row:CatalogDraftEntry,abandoned:boolean){if(!window.confirm(abandoned?'Abandonner ce brouillon ? Il restera restaurable dans l’historique.':'Restaurer ce brouillon ? Un seul brouillon peut être opérationnel.'))return;setSaving(true);try{await window.atoumweb.catalog.setDraftAbandoned(row.version.id,row.version,abandoned);await refresh();await refreshDrafts();}catch(e){setDraftListError(e instanceof Error?e.message:'Changement impossible.');}finally{setSaving(false);}}
+
+  const [consultedVersionId,setConsultedVersionId]=useState<string|null>(null);
+  const displayedVersion=detail?.versions.find(v=>v.id===consultedVersionId)??detail?.currentVersion??null;
   const [draft, setDraft] = useState<CatalogDraft>(EMPTY_DRAFT);
   const [createCategoryId, setCreateCategoryId] = useState('');
   const [createCategoryChoices, setCreateCategoryChoices] = useState<CatalogCategoryRecord[]>([]);
@@ -206,9 +267,9 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [detailLoading,setDetailLoading]=useState(false);
   useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;detailEpoch.current++;listEpoch.current++;};},[]);
   useSearchTargetConfirmation('catalog',showForm?null:detail?.id,loading||detailLoading,onEntityReady);
-  const createGuard=useUnsavedDraft('Nouvelle prestation',draft,{group:'catalog:create',ready:showForm,pending:saving,discard:baseline=>{setDraft(baseline);setCreateCategoryId('');setShowForm(false);}});
-  const versionGuard=useUnsavedDraft('Version Catalogue',versionDraft,{group:'catalog:'+detail?.id,ready:versionMode,pending:saving,resetKey:detail?.id+':'+versionMode,discard:baseline=>{setVersionDraft(baseline);setVersionMode(false);}});
-  const identityGuard=useUnsavedDraft('Code Catalogue',canonicalCodeDraft,{group:'catalog:'+detail?.id,ready:!!detail,pending:saving,resetKey:detail?.id,discard:setCanonicalCodeDraft});
+  const createGuard=useUnsavedDraft('Nouvelle prestation',draft,{group:'catalog:create',ready:showForm,pending:saving,savePriority:100,save:()=>createItem(),discard:baseline=>{setDraft(baseline);setCreateCategoryId('');setShowForm(false);}});
+  const versionGuard=useUnsavedDraft('Version Catalogue',versionDraft,{group:'catalog:'+detail?.id,ready:versionMode,pending:saving,resetKey:detail?.id+':'+versionMode,savePriority:100,save:()=>createVersion(),discard:baseline=>{setVersionDraft(baseline);setVersionMode(false);}});
+  const identityGuard=useUnsavedDraft('Code Catalogue',canonicalCodeDraft,{group:'catalog:'+detail?.id,ready:!!detail,pending:saving,resetKey:detail?.id,savePriority:100,save:()=>assignCode(),discard:setCanonicalCodeDraft});
 
 
   const publishedServices = useMemo(
@@ -221,12 +282,13 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     try {
       const next=await window.atoumweb.catalog.getItem(id);
       if(next.id!==id)throw Error('La fiche reçue ne correspond pas à la demande.');
-      const version=next.type==='offer'?(next.versions.find(item=>item.status==='draft')??next.currentVersion??null):null;
+      const version=next.type==='offer'?(next.versions.find(item=>item.status==='draft'&&!item.abandonedAt)??next.currentVersion??null):null;
       const components=version?await window.atoumweb.catalog.listOfferComponents(version.id):[];
       if(!mounted.current||epoch!==detailEpoch.current)return next;
       if(detailRef.current?.id!==id||!identityGuard.dirty)setCanonicalCodeDraft(next.canonicalCode??'');
+      setConsultedVersionId(current=>detailRef.current?.id===id&&next.versions.some(v=>v.id===current)?current:next.currentVersion?.id??null);
       setDetail(next);setOfferVersionId(version?.id??null);setOfferComponents(components);return next;
-    }catch(error){if(!mounted.current||epoch!==detailEpoch.current)return null;setSelectedId(detailRef.current?.id??null);onEntityReady?.('catalog',id,error instanceof Error?error.message:'Prestation introuvable.');throw error;}
+    }catch(error){if(!mounted.current||epoch!==detailEpoch.current)return null;setSelectedId(detailRef.current?.id??null);onEntityReady?.('catalog',id,error instanceof Error?catalogUiError(error):'Prestation introuvable.');throw error;}
     finally{if(mounted.current&&epoch===detailEpoch.current)setDetailLoading(false);}
   }
 
@@ -243,7 +305,8 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
         else if(!identityGuard.dirty&&!versionGuard.dirty&&!saving){setSelectedId(null);setDetail(null);}
         else onMessage('La prestation n’est plus disponible ; la saisie locale est conservée.');
       }
-    }catch(error){if(mounted.current&&epoch===listEpoch.current){const message=error instanceof Error?error.message:'Catalogue indisponible.';setListError(message);onMessage(message);}
+      if(persistent&&showDrafts)await refreshDrafts();
+    }catch(error){if(mounted.current&&epoch===listEpoch.current){const message=error instanceof Error?catalogUiError(error):'Catalogue indisponible.';setListError(message);onMessage(message);}
     } finally {
       if(mounted.current&&epoch===listEpoch.current)setLoading(false);
     }
@@ -256,7 +319,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     window.atoumweb.catalogCategories.list().then(list => {
       if (alive) { setCreateCategoryChoices(list); setCreateCategoryLoadError(''); }
     }).catch(error => {
-      if (alive) { setCreateCategoryChoices([]); setCreateCategoryLoadError(error instanceof Error ? error.message : 'Catégories administrées indisponibles.'); }
+      if (alive) { setCreateCategoryChoices([]); setCreateCategoryLoadError(error instanceof Error ? catalogUiError(error) : 'Catégories administrées indisponibles.'); }
     });
     return () => { alive = false; };
   }, [showForm]);
@@ -276,18 +339,11 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const showAdvancedFilters=advancedFilters||filters.versionState!=='all'||filters.visibility!=='all'||filters.family!=='all';
   const resetFilters=()=>{setFilters(current=>({...defaultCatalogContext(),pageSize:current.pageSize}));setTablePage(1);};
   function changeSpace(next:typeof space){if(next===space)return;requestUnsavedExit(()=>setSpace(next));}
-  function openFamily(id:string){requestUnsavedExit(()=>{setFilters(current=>({...current,family:id}));setTablePage(1);setCatalogView('table');closeDetailDirect();});}
+  function openFamily(id:string){requestUnsavedExit(()=>{setFilters(current=>({...current,family:id}));setTablePage(1);setShowDrafts(false);setCatalogView('table');closeDetailDirect();});}
 
-  async function openItem(id: string): Promise<void> {
-    if(detailRef.current?.id===id){detailEpoch.current++;setSelectedId(id);setDetailLoading(false);return;}
-    if(!requestUnsavedExit(()=>{}))return;
-    setSelectedId(id);
-    setPendingItemStatus(null);
-    setVersionMode(false);
-    setActiveTab('identity');
-    setPublicationCandidate(null);
-    setDetailExpanded(false);
-    await loadDetail(id);
+  async function openItem(id:string,resumeId?:string):Promise<void>{
+    if(detailRef.current?.id===id&&!resumeId){detailEpoch.current++;setSelectedId(id);setDetailLoading(false);return;}
+    requestUnsavedExit(()=>{void (async()=>{setShowDrafts(false);setSelectedId(id);setPendingItemStatus(null);setVersionMode(false);setActiveTab('identity');setPublicationCandidate(null);setDetailExpanded(true);await loadDetail(id);if(resumeId){setConsultedVersionId(resumeId);setResumeVersionId(resumeId);}})().catch(e=>onMessage(String(e)));});
   }
 
   function closeDetail(): void {
@@ -354,94 +410,66 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     };
   }
 
-  async function createItem(event: React.FormEvent): Promise<void> {
-    event.preventDefault();
+  async function createItem(event?: React.FormEvent): Promise<boolean> {
+    event?.preventDefault();
     setFormError(null);
-    if (!draft.name.trim()) { setFormError('Le nom est requis.'); return; }
+    if(!persistent&&!creationPriceChosen){setCreationStep('pricing');setFormError('Choisis explicitement le mode tarifaire avant de créer ce brouillon. La sauvegarde nom et type seuls attend la migration.');return false;}
+    if (!draft.name.trim()) { setFormError('Le nom est requis.'); return false; }
     setSaving(true);
     try {
-      const created = await window.atoumweb.catalog.create(
-        {
-          type: draft.type,
-          canonicalCode: draft.canonicalCode.trim() || null,
-          name: draft.name.trim(),
-          category: draft.category.trim() || null,
-          categoryId: createCategoryId || null,
-          visiblePublic: draft.visiblePublic,
-        },
-        buildVersion(draft),
-      );
-      setDraft(EMPTY_DRAFT);
+      const input={type:draft.type,canonicalCode:draft.canonicalCode.trim()||null,name:draft.name.trim(),category:draft.category.trim()||null,categoryId:createCategoryId||null,visiblePublic:draft.visiblePublic};
+      const payload=buildVersion(draft),fingerprint=JSON.stringify({input,payload});
+      if(persistent&&pendingCreation.current&&pendingCreation.current.fingerprint!==fingerprint)throw Error("Une réponse précédente est incertaine : retrouve l'enregistrement envoyé avant de créer avec une autre saisie.");
+      if(persistent&&!pendingCreation.current)pendingCreation.current={requestId:crypto.randomUUID(),fingerprint,input,payload};
+      const created=persistent?await window.atoumweb.catalog.createPersistent(input,payload,pendingCreation.current!.requestId):await window.atoumweb.catalog.create(input,payload);
+      pendingCreation.current=null;
+      setDraft(EMPTY_DRAFT);setCreationStep('identity');setCreationPriceChosen(false);
       setCreateCategoryId('');
       createGuard.saved(EMPTY_DRAFT);
       setShowForm(false);
       await refresh();
-      setSelectedId(created.id);setPendingItemStatus(null);setVersionMode(false);setActiveTab('identity');await loadDetail(created.id);
-      onMessage(`${created.type === 'offer' ? 'Offre' : 'Service'} créé en brouillon.`);
+      setSelectedId(created.id);setDetailExpanded(true);setPendingItemStatus(null);setVersionMode(false);setActiveTab('identity');await loadDetail(created.id);
+      if(persistent)setResumeVersionId(created.versions[0].id);
+      onMessage(`${created.type === 'offer' ? 'Offre' : 'Service'} créé en brouillon.`);return true;
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'Création impossible.');
+      setFormError(error instanceof Error ? catalogUiError(error) : 'Création impossible.');
+      return false;
     } finally {
       setSaving(false);
     }
   }
 
-  function prepareNewVersion(restoreFrom?: CatalogVersion): boolean {
-    if (!detail?.currentVersion || versionMode) return false;
-    if(restoreFrom && (!detail.versions.some(version=>version.id===restoreFrom.id) ||
+  async function recoverCreation(){const command=pendingCreation.current;if(!command)return;setSaving(true);try{const found=await window.atoumweb.catalog.createPersistent(command.input,command.payload,command.requestId);if(!window.confirm('Enregistrement retrouvé. Ouvrir ce brouillon et abandonner la saisie locale actuelle ?')){setFormError('Brouillon retrouvé ; la saisie actuelle est conservée.');return;}pendingCreation.current=null;createGuard.saved(EMPTY_DRAFT);setDraft(EMPTY_DRAFT);setShowForm(false);setVersionMode(false);setSelectedId(found.id);setDetailExpanded(true);await refresh();await loadDetail(found.id);setResumeVersionId(found.versions[0].id);}catch(e){setFormError(e instanceof Error?e.message:'Rejeu impossible ; saisie conservée.');}finally{setSaving(false);}}
+
+  function prepareNewVersion(restoreFrom?: CatalogVersion,resume=false): boolean {
+    if (!detail || (!detail.currentVersion&&!restoreFrom) || versionMode) return false;
+    if(restoreFrom && !resume && (!detail.versions.some(version=>version.id===restoreFrom.id) ||
       !window.confirm(`Préparer le contenu de la version v${restoreFrom.versionNumber} dans un brouillon ? Aucune version historique ne sera modifiée. L’enregistrement restera une action distincte.`)))return false;
     // 04C/E99: reopen the existing draft instead of generating vN+1 on
     // every edit. A published version is only copied when no draft exists.
-    const existingDraft = detail.versions.find(version => version.status === 'draft') ?? null;
-    const current = restoreFrom ?? existingDraft ?? detail.currentVersion;
-    setEditingDraftVersion(existingDraft);
+    const existingDraft = detail.versions.find(version => version.status === 'draft'&&!version.abandonedAt) ?? null;
+    if(resume&&(!restoreFrom||restoreFrom.abandonedAt||restoreFrom.status!=='draft'))return false;
+    const current = restoreFrom ?? existingDraft ?? detail.currentVersion!;
+    setConflictVersion(null);
+    setEditingDraftVersion(resume?restoreFrom!:existingDraft);
     setPublicationCandidate(null);
     setVersionFormError(null);
-    setVersionDraft({
-      canonicalCode: detail.canonicalCode ?? '',
-      commercialKind: current.commercialKind ?? '',
-      familyCode: current.familyCode ?? '',
-      abbyLabel: current.abbyLabel ?? '',
-      unit: current.unit ?? '',
-      periodicity: current.periodicity ?? '',
-      priceBasis: current.priceBasis ?? 'listed',
-      sourceReference: current.provenance?.reference ?? '',
-      sourceSha256: current.provenance?.sha256 ?? '',
-      sourceRecordKey: current.provenance?.recordKey ?? '',
-      type: detail.type,
-      name: detail.name,
-      category: detail.category ?? '',
-      nature: current.nature ?? '',
-      description: current.description ?? '',
-      inclusionsText: (current.inclusions ?? []).join('\n'),
-      exclusionsText: (current.exclusions ?? []).join('\n'),
-      prerequisitesText: (current.prerequisites ?? []).join('\n'),
-      priceMode: current.priceMode,
-      priceEuros: current.priceCents == null ? '' : String(current.priceCents / 100),
-      recommendedEuros: current.recommendedPriceCents == null ? '' : String(current.recommendedPriceCents / 100),
-      depositPercent: current.defaultDepositPercent == null ? '' : String(current.defaultDepositPercent),
-      estimatedMinutes: current.estimatedMinutes == null ? '' : String(current.estimatedMinutes),
-      recommendedDelayDays: current.recommendedDelayDays == null ? '' : String(current.recommendedDelayDays),
-      specialTerms: current.specialTerms ?? '',
-      contractType: current.contractType ?? '',
-      internalAdvice: current.internalAdvice ?? '',
-      commercialParameters: { ...current.commercialParameters },
-      visiblePublic: detail.visiblePublic,
-    });
+    setVersionDraft(draftFromVersion(current,detail));
     setVersionMode(true);
     return true;
   }
 
-  async function createVersion(event: React.FormEvent): Promise<void> {
-    event.preventDefault();
-    if (!detail || saving) return;
+  async function createVersion(event?: React.FormEvent): Promise<boolean> {
+    event?.preventDefault();
+    if (!detail || saving) return false;
     let payload: CatalogVersionInput;
     try {
       payload = buildVersion(versionDraft);
     } catch(error) {
-      const message=error instanceof Error?error.message:'Données du brouillon invalides.';
+      const message=error instanceof Error?catalogUiError(error):'Données du brouillon invalides.';
       setVersionFormError(message);
       onMessage(message);
-      return;
+      return false;
     }
     const payloadFingerprint = JSON.stringify(payload);
     const previousRequest = pendingVersionCreations.current.get(detail.id);
@@ -450,7 +478,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       const message = 'Une création précédente a une réponse incertaine. Reprends la version envoyée sans modifier les champs, puis enregistre les changements dans le brouillon créé.';
       setVersionFormError(message);
       onMessage(message);
-      return;
+      return false;
     }
     if (!editingDraftVersion && !previousRequest) {
       pendingVersionCreations.current.set(detail.id, {
@@ -472,11 +500,13 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       await openItem(detail.id);
       onMessage(editingDraftVersion
         ? `Brouillon v${version.versionNumber} enregistré dans la même version, sans publication.`
-        : `Version v${version.versionNumber} créée en brouillon.${detail.type === 'offer' ? ' Sa composition a été recopiée.' : ''}`);
+        : `Version v${version.versionNumber} créée en brouillon.${detail.type === 'offer' ? ' Sa composition a été recopiée.' : ''}`);return true;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Impossible d’enregistrer cette version.';
+      const message = error instanceof Error ? catalogUiError(error) : 'Impossible d’enregistrer cette version.';
       setVersionFormError(message);
+      if(editingDraftVersion&&message.includes('Conflit')){try{const remote=await window.atoumweb.catalog.getItem(detail.id);setConflictVersion(remote.versions.find(v=>v.id===editingDraftVersion.id)??null);}catch{}}
       onMessage(message);
+      return false;
     } finally {
       setSaving(false);
     }
@@ -499,21 +529,22 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       await openItem(detail.id);
       onMessage(`Version v${version.versionNumber} publiée. L’ancienne version reste dans l’historique.`);
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Publication impossible ; aucune validation juridique implicite.');
+      onMessage(error instanceof Error ? catalogUiError(error) : 'Publication impossible ; aucune validation juridique implicite.');
     } finally {
       setSaving(false);
     }
   }
 
-  async function assignCode(): Promise<void> {
-    if (!detail) return;
+  async function assignCode(): Promise<boolean> {
+    if (!detail) return false;
     setSaving(true);
     try {
       await window.atoumweb.catalog.assignCanonicalCode(detail.id, canonicalCodeDraft);
-      await refresh();
-      onMessage('Code canonique attribué explicitement. Les versions et devis historiques sont conservés.');
+      identityGuard.saved(canonicalCodeDraft);await refresh();
+      onMessage('Code canonique attribué explicitement. Les versions et devis historiques sont conservés.');return true;
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Attribution du code impossible.');
+      onMessage(error instanceof Error ? catalogUiError(error) : 'Attribution du code impossible.');
+      return false;
     } finally { setSaving(false); }
   }
 
@@ -527,7 +558,8 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       await openItem(detail.id);
       onMessage(`Statut : ${STATUS_LABELS[status]}.`);
     } catch(error) {
-      onMessage(error instanceof Error?error.message:'Changement de statut impossible.');
+      onMessage(error instanceof Error?catalogUiError(error):'Changement de statut impossible.');
+      return;
     } finally {setSaving(false);}
   }
 
@@ -566,7 +598,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       setComponentOptional(false);
       onMessage('Service ajouté à la composition de l’Offre.');
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de modifier la composition.');
+      onMessage(error instanceof Error ? catalogUiError(error) : 'Impossible de modifier la composition.');
     }
   }
 
@@ -584,7 +616,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
       );
       setOfferComponents(next);
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de modifier la composition.');
+      onMessage(error instanceof Error ? catalogUiError(error) : 'Impossible de modifier la composition.');
     }
   }
 
@@ -609,8 +641,10 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const offerCompositionEditable = offerCompositionVersion?.status === 'draft' && !versionMode && !saving;
 
   return (
-    <div className={`catalog-stack ${space==='catalog'&&catalogView==='table'&&!detail&&!showForm?'ot-table-fit':''}`}>
-      <header className="ot-workspace-heading"><div className="ot-title"><span className="ot-title-icon"><OperationIcon name="package"/></span><div><span className="eyebrow">Commercial</span><h1>Offres & Tarifs</h1><p>Catalogue des offres et services AtoumWeb</p></div></div><div className="ot-heading-actions"><button type="button" className="secondary-button" onClick={()=>void refresh()}><OperationIcon name="refresh"/>Actualiser</button><button className="primary-button" type="button" onClick={()=>requestUnsavedExit(()=>{setSpace('catalog');if(showForm)createGuard.request(()=>setShowForm(false));else setShowForm(true);})}>{showForm?'Fermer la création':'+ Service / Offre'}</button></div></header>
+    <div className={`catalog-stack ${showDrafts?'ot-drafts-active':''} ${detail||showForm?'ot-editor-active':''} ${space==='catalog'&&catalogView==='table'&&!detail&&!showForm?'ot-table-fit':''}`}>
+      <UnsavedSaveDialog/>
+      {duplication&&<CatalogDuplicateDialog preview={duplication} onClose={()=>setDuplication(null)} onCreated={created=>{setDuplication(null);void refresh();requestAnimationFrame(()=>requestAnimationFrame(()=>void openItem(created.id,created.versions[0].id)));}}/>}
+      <header className="ot-workspace-heading"><div className="ot-title"><span className="ot-title-icon"><OperationIcon name="package"/></span><div><span className="eyebrow">Commercial</span><h1>Offres & Tarifs</h1><p>Catalogue des offres et services AtoumWeb</p></div></div><div className="ot-heading-actions"><button type="button" className="secondary-button" onClick={()=>void refresh()}><OperationIcon name="refresh"/>Actualiser</button><button className="primary-button" type="button" onClick={()=>requestUnsavedExit(()=>{setSpace('catalog');if(showForm)createGuard.request(()=>setShowForm(false));else {setCreationStep('identity');setCreationPriceChosen(false);setShowDrafts(false);setShowForm(true);}})}>{showForm?'Fermer la création':'+ Service / Offre'}</button></div></header>
       <nav className="ot-spaces" aria-label="Espaces Offres et Tarifs">{([['catalog','Catalogue'],['steering','Pilotage'],['administration','Administration']] as const).map(([id,label])=><button type="button" key={id} aria-current={space===id?'page':undefined} onClick={()=>changeSpace(id)}>{label}{id==='steering'&&<small>À venir</small>}</button>)}</nav>
       {space==='steering'&&<section className="ot-planned panel"><OperationIcon name="chart"/><h2>Pilotage</h2><p>Les statistiques commerciales, le suivi des offres et le centre À suivre seront développés dans les prochains lots.</p><p className="muted">Aucune statistique ni alerte commerciale n’est calculée dans cet espace pour le moment.</p></section>}
       {space==='administration'&&<section className="ot-administration"><header><h2>Administration du Catalogue</h2><p>Catégories existantes et organisation des prochains lots.</p></header><div className="ot-admin-cards"><button className="panel" type="button" onClick={()=>setShowCategoryInventory(value=>!value)}><OperationIcon name="layers"/><strong>Catégories existantes</strong><span>Consulter, administrer et réconcilier les catégories.</span></button>{['Modèles commerciaux et documentaires','Import / export CSV et JSON','Santé du Catalogue','Paramètres'].map(label=><article className="panel" key={label}><strong>{label}</strong><span>Prévu dans un prochain lot · non disponible</span></article>)}</div></section>}
@@ -628,7 +662,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
         </>}
         <div className="ot-filter-actions"><button type="button" className="secondary-button" aria-expanded={showAdvancedFilters} onClick={()=>setAdvancedFilters(value=>!value)}>Filtres avancés</button><button className="secondary-button" type="button" disabled={!hasFilters} onClick={resetFilters}>Réinitialiser les filtres</button></div>
       </div>
-      <div className="ot-view-row"><div className="catalog-view-switch" role="group" aria-label="Présentation du catalogue"><button type="button" className="secondary-button" aria-pressed={catalogView==='organized'} onClick={()=>requestUnsavedExit(()=>{closeDetailDirect();setCatalogView('organized');})}><OperationIcon name="layers"/>Vue organisée</button><button type="button" className="secondary-button" aria-pressed={catalogView==='table'} onClick={()=>requestUnsavedExit(()=>{closeDetailDirect();setCatalogView('table');})}><OperationIcon name="columns"/>Tableau d’administration</button></div><p role="status">{loading?'Chargement…':`${filtered.length} résultats / ${items.length} articles`}{filters.family!=='all'&&` · ${filters.family}`}</p></div>
+      <div className="ot-view-row"><div className="catalog-view-switch" role="group" aria-label="Présentation du catalogue"><button type="button" className="secondary-button" aria-pressed={catalogView==='organized'&&!showDrafts} onClick={()=>requestUnsavedExit(()=>{closeDetailDirect();setShowDrafts(false);setCatalogView('organized');})}><OperationIcon name="layers"/>Vue organisée</button><button type="button" className="secondary-button" aria-pressed={catalogView==='table'&&!showDrafts} onClick={()=>requestUnsavedExit(()=>{closeDetailDirect();setShowDrafts(false);setCatalogView('table');})}><OperationIcon name="columns"/>Tableau d’administration</button>{persistent&&<button type="button" className="secondary-button" aria-pressed={showDrafts} onClick={()=>requestUnsavedExit(()=>{closeDetailDirect();setShowDrafts(true);})}><OperationIcon name="edit"/>Mes brouillons</button>}</div><p role="status">{loading?'Chargement…':`${filtered.length} résultats / ${items.length} articles`}{filters.family!=='all'&&` · ${filters.family}`}</p></div>
       {!loading&&<p className="ot-count-help">Publié et brouillon peuvent concerner le même article. Les compteurs portent sur tous les articles, indépendamment de la page affichée.</p>}
       </>}
 
@@ -638,15 +672,18 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
           onClose={() => requestUnsavedExit(() => setShowCategoryInventory(false))}
           onFilter={category => requestUnsavedExit(() => {
             setQuery(''); setTypeFilter('all'); setStatusFilter('all'); setCategoryFilter(category);
-            setShowCategoryInventory(false);setSpace('catalog');setCatalogView('table');closeDetailDirect();
+            setShowCategoryInventory(false);setSpace('catalog');setShowDrafts(false);setCatalogView('table');closeDetailDirect();
           })} />
       )}
 
+      {space==='catalog'&&showDrafts&&!showForm&&<CatalogDrafts rows={draftRows} error={draftListError} busy={saving} onResume={row=>void resumeDraft(row)} onChangeState={(row,state)=>void changeDraftState(row,state)}/>}
       {space==='catalog' && showForm && (
-        <form className="panel catalog-form" onSubmit={(event) => void createItem(event)}>
+        <form className="panel catalog-form ot-guided-create" onSubmit={(event) => void createItem(event)}>
           <div className="panel-title"><div><span className="eyebrow">Catalogue</span><h2>Créer un Service ou une Offre</h2><p className="muted">La première version est créée en brouillon. Tu la publies après vérification.</p></div></div>
+          <nav className="ot-create-steps" aria-label="Etapes de creation">{CATALOG_EDITOR_TABS.filter(t=>catalogTabHasVersionFields(t.id)).map((tab,index)=><button type="button" key={tab.id} aria-current={creationStep===tab.id?'step':undefined} onClick={()=>setCreationStep(tab.id)}><span>{index+1}</span>{tab.label}</button>)}</nav>
+          <p className="ot-editor-notice">{persistent?'Nom et type suffisent pour enregistrer. Les autres informations peuvent être complétées plus tard, sans publication automatique.':'Persistance minimale non activée sur cette base. Aucun changement de schéma automatique.'}</p>
           <fieldset disabled={saving}>
-            <label className="catalog-category-create-choice">Catégorie métier administrée
+            {creationStep==='identity'&&<label className="catalog-category-create-choice">Catégorie du référentiel (facultatif)
               <select aria-label="Catégorie métier administrée" value={createCategoryId} onChange={event => {
                 const id = event.target.value;
                 const selected = createCategoryChoices.find(category => category.id === id);
@@ -659,20 +696,23 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                   <option key={category.id} value={category.id}>{category.name}</option>
                 ))}
               </select>
-            </label>
+            </label>}
+            {creationStep==='identity'&&<p className="muted">Le référentiel établit un rattachement stable. Le libellé libre ci-dessous reste possible sans rattachement ; les deux sont facultatifs.</p>}
             {createCategoryLoadError && <p className="muted" role="status">Registre indisponible : {createCategoryLoadError}. La catégorie libre reste utilisable.</p>}
-            <CatalogFields draft={draft} onChange={next => {
+            <CatalogFields draft={draft} activeTab={creationStep} identityOnly={creationStep==='identity'} onChange={next => {
               if (createCategoryId && next.category !== draft.category) setCreateCategoryId('');
               setDraft(next);
-            }} showIdentity />
+            }} showIdentity={creationStep==='identity'} />
+            {!persistent&&creationStep==='pricing'&&<label className="ot-price-confirm"><input type="checkbox" checked={creationPriceChosen} onChange={e=>setCreationPriceChosen(e.target.checked)}/>Je confirme avoir choisi le mode tarifaire affiché ; il sera enregistré dans le brouillon.</label>}
             {createCategoryId && <p className="muted">Catégorie stable sélectionnée : le service et son brouillon seront créés dans une seule transaction.</p>}
           </fieldset>
-          {formError && <p className="form-error">{formError}</p>}
-          <div className="form-actions"><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Créer le brouillon'}</button></div>
+          {persistent&&similarCatalogDrafts(draftRows,draft.name,draft.type).length>0&&<section className="ot-editor-notice" aria-label="Brouillons similaires"><strong>Brouillons similaires — vérifier avant de créer une autre prestation</strong><p>Suggestions consultatives par proximité de nom, sans fusion ni interdiction de créer.</p>{similarCatalogDrafts(draftRows,draft.name,draft.type).map(row=><button type="button" className="secondary-button" key={row.version.id} onClick={()=>void resumeDraft(row)}>Reprendre {row.item.name} · v{row.version.versionNumber}</button>)}</section>}
+          {formError && <p role="alert" className="form-error">{formError}</p>}{formError&&pendingCreation.current&&<button className="secondary-button" type="button" disabled={saving} onClick={()=>void recoverCreation()}>Retrouver l’enregistrement envoyé</button>}
+          <div className="form-actions ot-editor-actionbar"><span>{persistent?'Sauvegarde manuelle · sans publication':creationPriceChosen?'Enregistrement manuel, sans publication':'Mode tarifaire à choisir avant enregistrement'}</span><button type="button" className="secondary-button" onClick={()=>createGuard.request(()=>setShowForm(false))}>Annuler</button><button className="secondary-button" type="submit" disabled={saving||!draft.name.trim()||(!persistent&&!creationPriceChosen)}>{saving?'Enregistrement…':'Enregistrer le brouillon'}</button><button type="button" className="primary-button" onClick={()=>{const tabs=CATALOG_EDITOR_TABS.filter(t=>catalogTabHasVersionFields(t.id));setCreationStep(tabs[Math.min(tabs.findIndex(t=>t.id===creationStep)+1,tabs.length-1)].id);}}>Continuer →</button></div>
         </form>
       )}
 
-      {space==='catalog' && (loading ? <div className="panel"><p className="muted">Chargement du catalogue…</p></div> : (
+      {space==='catalog' && !showForm && !showDrafts && (loading ? <div className="panel"><p className="muted">Chargement du catalogue…</p></div> : (
         <div
           className={detail ? `catalog-layout with-detail ${detailExpanded ? 'detail-expanded' : ''}` : 'catalog-layout'}
           style={detail && !detailExpanded ? { gridTemplateColumns: `${detailSplitPercent}% 8px minmax(0, 1fr)` } : undefined}
@@ -714,7 +754,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 {id:'type',label:'Type',sortValue:item=>item.type,render:item=><span className="status-pill">{item.currentVersion?.commercialKind?KIND_LABELS[item.currentVersion.commercialKind]:item.type==='offer'?'Offre':'Service'}</span>},
                 {id:'price',label:'Prix AtoumWeb',sortValue:item=>item.currentVersion?.priceCents??null,render:item=>formatPrice(item)},
                 {id:'recommendedPrice',label:'Prix conseillé',sortValue:item=>item.currentVersion?.recommendedPriceCents??null,render:item=>item.currentVersion?.recommendedPriceCents!=null?`${(item.currentVersion.recommendedPriceCents/100).toLocaleString('fr-FR')} €`:'—'},
-                {id:'priceMode',label:'Mode',sortValue:item=>item.currentVersion?PRICE_LABELS[item.currentVersion.priceMode]:null,render:item=>item.currentVersion?PRICE_LABELS[item.currentVersion.priceMode]:'—'},
+                {id:'priceMode',label:'Mode',sortValue:item=>item.currentVersion?.priceMode?PRICE_LABELS[item.currentVersion.priceMode]:null,render:item=>item.currentVersion?.priceMode?PRICE_LABELS[item.currentVersion.priceMode]:'À compléter'},
                 {id:'status',label:'Statut',sortValue:item=>STATUS_LABELS[item.status],render:item=><span className={`catalog-status catalog-${item.status}`}>{STATUS_LABELS[item.status]}</span>},
                 {id:'public',label:'Site',sortValue:item=>item.visiblePublic?1:0,render:item=>item.visiblePublic?'Oui':'Non'},
                 {id:'version',label:'Version de référence',sortValue:item=>item.currentVersion?.versionNumber??null,render:item=><>{item.currentVersion?`v${item.currentVersion.versionNumber} · ${VERSION_STATUS_LABELS[item.currentVersion.status]}`:'—'}{versionStatesOf(item).includes('draft')&&item.currentVersion?.status!=='draft'&&<small>Brouillon disponible</small>}</>},
@@ -742,12 +782,13 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
             <aside tabIndex={-1} data-search-entity-type="catalog" data-search-entity-id={detail.id} className={`panel catalog-detail-panel ${detailExpanded ? 'expanded' : ''}`}>
               <div className="detail-panel-heading">
                 <div><span className="eyebrow">{detail.type === 'offer' ? 'Offre' : 'Service'}</span><h2>{detail.name}</h2><p className="muted">{detail.category || 'Sans catégorie'}</p></div>
-                <div className="catalog-detail-heading-actions">
+                <div className="catalog-detail-heading-actions">{persistent&&displayedVersion&&<button type="button" className="secondary-button" disabled={saving} onClick={()=>requestUnsavedExit(()=>{void window.atoumweb.catalog.duplicationPreview(detail.id,displayedVersion.id).then(setDuplication).catch(e=>onMessage(String(e)));})}><OperationIcon name="layers"/>Dupliquer cette version</button>}
                   <button className="catalog-detail-expand" type="button" aria-label={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} title={detailExpanded ? 'Réduire la fiche' : 'Agrandir la fiche'} onClick={() => setDetailExpanded((value) => !value)}><OperationIcon name={detailExpanded?'record-reduce':'record-expand'}/></button>
                   <button className="close-detail" type="button" aria-label="Fermer la fiche catalogue" onClick={closeDetail}><OperationIcon name="close"/></button>
                 </div>
               </div>
-              <div className="detail-badges"><span className={`catalog-status catalog-${detail.status}`}>{STATUS_LABELS[detail.status]}</span><span className="status-pill">{detail.visiblePublic ? 'Visible site' : 'Interne'}</span>{detail.currentVersion && <span className="status-pill">v{detail.currentVersion.versionNumber} · {VERSION_STATUS_LABELS[detail.currentVersion.status]}</span>}</div>
+              <div className="ot-version-context"><div className="detail-badges"><span className={`catalog-status catalog-${detail.status}`}>{STATUS_LABELS[detail.status]}</span><span className="status-pill">{detail.visiblePublic?'Visible site':'Interne'}</span><span className="status-pill">{detail.type==='offer'?'Offre':'Service'}</span></div><label>Version consultée<select aria-label="Version principale de la fiche" value={displayedVersion?.id??''} disabled={saving} onChange={e=>{const id=e.target.value;requestUnsavedExit(()=>{setConsultedVersionId(id);setVersionMode(false);setEditingDraftVersion(null);setPublicationCandidate(null);});}}>{detail.versions.map(v=><option key={v.id} value={v.id}>v{v.versionNumber} · {v.abandonedAt?'Abandonné':VERSION_STATUS_LABELS[v.status]}{v.id===detail.currentVersion?.id?' · Référence':''}</option>)}</select></label></div>
+              <p className="ot-version-help">Consultation des champs de la version sélectionnée. Les Associations, Contrat & CGV et Production gardent leurs contextes et sauvegardes propres. La modification reprend le brouillon existant, s'il y en a un.</p>
               <div className="catalog-editor-tabs" role="tablist" aria-label="Éditeur des offres et services">
                 {CATALOG_EDITOR_TABS.map(tab=><button type="button" key={tab.id} role="tab"
                   id={`catalog-tab-${tab.id}`} aria-selected={activeTab===tab.id}
@@ -763,70 +804,71 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                     selectEditorTab(CATALOG_EDITOR_TABS[next].id,true);
                   }}><OperationIcon name={({identity:'package',pricing:'euro',scope:'file-text',associations:'layers',sales:'users',contracts:'file-check',production:'wrench',history:'clock'} satisfies Record<CatalogEditorTab,OperationIconName>)[tab.id]}/>{tab.label}</button>)}
               </div>
-              <div role="tabpanel" id={`catalog-panel-${activeTab}`} aria-labelledby={`catalog-tab-${activeTab}`} className="catalog-editor-tab-panel">
+              <div role="tabpanel" id={`catalog-panel-${activeTab}`} aria-labelledby={`catalog-tab-${activeTab}`} className={`catalog-editor-tab-panel ${activeTab==='identity'?'ot-identity-layout':''}`}>
               {activeTab==='identity' && <section className="catalog-detail-section catalog-identity-section">
-                <strong>Identité catalogue V1</strong>
+                <strong>Identité de la prestation</strong>
+                <div className="ot-identity-overview"><span className="ot-title-icon"><OperationIcon name="package"/></span><div><h3>{detail.name}</h3><p>{detail.category||'Sans catégorie'} · {detail.type==='offer'?'Offre':'Service'}</p></div></div>
                 <Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} />
                 {detail.identityProvenance && <Summary label="Source de l’attribution" value={detail.identityProvenance.reference} />}
                 {!detail.canonicalCode && <div className="catalog-code-assignment"><label>Code AW à attribuer<input value={canonicalCodeDraft} placeholder="AW-WEB-VITRINE" onChange={(e) => setCanonicalCodeDraft(e.target.value)} /></label><button className="secondary-button" type="button" disabled={saving || !canonicalCodeDraft.trim()} onClick={() => void assignCode()}>Attribuer ce code</button></div>}
                 <p className="muted">Le code attribué est durable. Les anciens éléments peuvent rester sans code jusqu’à leur rapprochement explicite.</p>
               </section>}
 
-              {activeTab==='scope' && detail.currentVersion && (!detail.currentVersion.nature || !detail.currentVersion.description || (detail.currentVersion.inclusions?.length ?? 0) === 0) && (
+              {activeTab==='scope' && displayedVersion && (!displayedVersion.nature || !displayedVersion.description || (displayedVersion.inclusions?.length ?? 0) === 0) && (
                 <div className="catalog-completeness">
                   <div><strong>Fiche à compléter</strong><span>Nature, description et contenu inclus permettent de comprendre immédiatement ce qui est réellement vendu.</span></div>
                   <button className="secondary-button" type="button" disabled={versionMode || saving} onClick={()=>prepareNewVersion()}>Compléter la fiche</button>
                 </div>
               )}
 
-              {detail.currentVersion && ['identity','pricing','scope','sales','contracts'].includes(activeTab) ? (
+              {displayedVersion && ['identity','pricing','scope','sales','contracts'].includes(activeTab) ? (
                 <div className="catalog-current-version">
-                  {(activeTab==='scope') && <section className="catalog-detail-section catalog-detail-overview">
+                  {(activeTab==='identity'||activeTab==='scope') && <section className="catalog-detail-section catalog-detail-overview">
                     <div className="catalog-detail-section-heading"><span className="eyebrow">Prestation</span><strong>Ce qui est réellement vendu</strong></div>
-                    <h3>{detail.currentVersion.nature || 'Nature de la prestation à renseigner'}</h3>
-                    <p>{detail.currentVersion.description || 'Description à compléter pour expliquer clairement le résultat attendu au client.'}</p>
+                    <h3>{displayedVersion.nature || 'Nature de la prestation à renseigner'}</h3>
+                    <p>{displayedVersion.description || 'Description à compléter pour expliquer clairement le résultat attendu au client.'}</p>
                   </section>}
 
                   {(activeTab==='pricing'||activeTab==='identity') && <section className="catalog-detail-section">
                     <div className="catalog-detail-section-heading"><span className="eyebrow">Repères</span><strong>Tarification, délai et cadre</strong></div>
                     <div className="catalog-summary-grid">
-                      <Summary label="Tarif actuel" value={formatPrice(detail)} />
-                      <Summary label="Nature commerciale" value={detail.currentVersion.commercialKind ? KIND_LABELS[detail.currentVersion.commercialKind] : 'Non renseignée'} />
-                      <Summary label="Famille canonique" value={detail.currentVersion.familyCode || 'Non renseignée'} />
-                      <Summary label="Libellé Abby" value={detail.currentVersion.abbyLabel || 'Non renseigné'} />
-                      <Summary label="Unité" value={detail.currentVersion.unit || 'Non renseignée'} />
-                      <Summary label="Périodicité" value={detail.currentVersion.periodicity || 'Non renseignée'} />
-                      {detail.currentVersion.provenance && <Summary label="Source" value={[detail.currentVersion.provenance.reference, detail.currentVersion.provenance.recordKey, detail.currentVersion.provenance.sha256].filter(Boolean).join(' · ')} />}
-                      <Summary label="Prix conseillé" value={detail.currentVersion.recommendedPriceCents != null ? `${(detail.currentVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'} />
-                      <Summary label="Acompte par défaut" value={detail.currentVersion.defaultDepositPercent != null ? `${detail.currentVersion.defaultDepositPercent} %` : '—'} />
-                      <Summary label="Durée estimée" value={detail.currentVersion.estimatedMinutes != null ? `${detail.currentVersion.estimatedMinutes} min` : '—'} />
-                      <Summary label="Délai recommandé" value={detail.currentVersion.recommendedDelayDays != null ? `${detail.currentVersion.recommendedDelayDays} jours` : '—'} />
-                      <Summary label="Ancien libellé contractuel (legacy)" value={detail.currentVersion.contractType || '—'} />
-                      <Summary label={detail.currentVersion.publishedAt ? 'Publiée le' : 'Créée le'} value={formatCatalogDate(detail.currentVersion.publishedAt ?? detail.currentVersion.createdAt)} />
+                      <Summary label="Tarif de cette version" value={formatPrice({...detail,currentVersion:displayedVersion})} />
+                      <Summary label="Nature commerciale" value={displayedVersion.commercialKind ? KIND_LABELS[displayedVersion.commercialKind] : 'Non renseignée'} />
+                      <Summary label="Famille canonique" value={displayedVersion.familyCode || 'Non renseignée'} />
+                      <Summary label="Libellé Abby" value={displayedVersion.abbyLabel || 'Non renseigné'} />
+                      <Summary label="Unité" value={displayedVersion.unit || 'Non renseignée'} />
+                      <Summary label="Périodicité" value={displayedVersion.periodicity || 'Non renseignée'} />
+                      {displayedVersion.provenance && <Summary label="Source" value={[displayedVersion.provenance.reference, displayedVersion.provenance.recordKey, displayedVersion.provenance.sha256].filter(Boolean).join(' · ')} />}
+                      <Summary label="Prix conseillé" value={displayedVersion.recommendedPriceCents != null ? `${(displayedVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'} />
+                      <Summary label="Acompte par défaut" value={displayedVersion.defaultDepositPercent != null ? `${displayedVersion.defaultDepositPercent} %` : '—'} />
+                      <Summary label="Durée estimée" value={displayedVersion.estimatedMinutes != null ? `${displayedVersion.estimatedMinutes} min` : '—'} />
+                      <Summary label="Délai recommandé" value={displayedVersion.recommendedDelayDays != null ? `${displayedVersion.recommendedDelayDays} jours` : '—'} />
+                      <Summary label="Ancien libellé contractuel (legacy)" value={displayedVersion.contractType || '—'} />
+                      <Summary label={displayedVersion.publishedAt ? 'Publiée le' : 'Créée le'} value={formatCatalogDate(displayedVersion.publishedAt ?? displayedVersion.createdAt)} />
                     </div>
                   </section>}
 
-                  {(activeTab==='scope') && <section className="catalog-detail-section">
+                  {(activeTab==='identity'||activeTab==='scope') && <section className="catalog-detail-section">
                     <div className="catalog-detail-section-heading"><span className="eyebrow">Périmètre</span><strong>Inclus, exclusions et prérequis</strong></div>
-                    <ListSummary label="Inclus" values={detail.currentVersion.inclusions ?? []} />
-                    <ListSummary label="Exclusions" values={detail.currentVersion.exclusions ?? []} />
-                    <ListSummary label="Prérequis" values={detail.currentVersion.prerequisites ?? []} />
+                    <ListSummary label="Inclus" values={displayedVersion.inclusions ?? []} />
+                    <ListSummary label="Exclusions" values={displayedVersion.exclusions ?? []} />
+                    <ListSummary label="Prérequis" values={displayedVersion.prerequisites ?? []} />
                   </section>}
 
                   {(activeTab==='contracts') && <section className="catalog-detail-section">
                     <div className="catalog-detail-section-heading"><span className="eyebrow">Conditions</span><strong>Cadre commercial</strong></div>
-                    <Summary label="Conditions commerciales" value={detail.currentVersion.specialTerms || 'Non renseignées'} />
+                    <Summary label="Conditions commerciales" value={displayedVersion.specialTerms || 'Non renseignées'} />
                   </section>}
 
-                  {activeTab==='sales' && <CommercialParametersSummary parameters={detail.currentVersion.commercialParameters} />}
-                  {activeTab==='sales' && !Object.values(detail.currentVersion.commercialParameters ?? {}).some(Boolean) && !detail.currentVersion.internalAdvice &&
+                  {activeTab==='sales' && <CommercialParametersSummary parameters={displayedVersion.commercialParameters} />}
+                  {activeTab==='sales' && !Object.values(displayedVersion.commercialParameters ?? {}).some(Boolean) && !displayedVersion.internalAdvice &&
                     <p className="muted">Aucune aide à la vente configurée pour cette version. Les bénéfices, besoins et conseils restent à renseigner dans un brouillon.</p>}
 
-                  {activeTab==='sales' && detail.currentVersion.internalAdvice && <div className="catalog-internal-note"><strong>Conseil interne AtoumWeb</strong><p>{detail.currentVersion.internalAdvice}</p></div>}
+                  {activeTab==='sales' && displayedVersion.internalAdvice && <div className="catalog-internal-note"><strong>Conseil interne AtoumWeb</strong><p>{displayedVersion.internalAdvice}</p></div>}
                 </div>
-              ) : !detail.currentVersion ? <p className="muted">Aucune version.</p> : null}
+              ) : !displayedVersion ? <p className="muted">Aucune version.</p> : null}
 
-              {activeTab==='identity' && <div className="catalog-detail-actions"><button className="secondary-button" type="button" disabled={versionMode || saving} onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select aria-label="Statut de la prestation" value={pendingItemStatus ?? detail.status} disabled={versionMode || saving} onChange={(e) => setPendingItemStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion || versionMode || saving} onClick={()=>prepareNewVersion()}>{detail.versions.some(v => v.status === 'draft') ? 'Reprendre le brouillon' : 'Modifier via une nouvelle version'}</button></div>}
+              {activeTab==='identity' && <div className="catalog-detail-actions"><button className="secondary-button" type="button" disabled={versionMode || saving} onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select aria-label="Statut de la prestation" value={pendingItemStatus ?? detail.status} disabled={versionMode || saving} onChange={(e) => setPendingItemStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion || versionMode || saving} onClick={()=>prepareNewVersion()}>{detail.versions.some(v => v.status === 'draft'&&!v.abandonedAt) ? 'Reprendre le brouillon' : 'Modifier via une nouvelle version'}</button></div>}
 
               {activeTab==='identity' && pendingItemStatus && pendingItemStatus!==detail.status && <div className="catalog-status-confirmation" role="group" aria-label="Confirmer le statut">
                 <p>Passer la prestation à « {STATUS_LABELS[pendingItemStatus]} » ? Cette modification ne supprime ni les versions ni les Devis historiques.</p>
@@ -849,9 +891,10 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                   ? 'Enregistrer modifie seulement ce brouillon. Les versions publiées et les anciens Devis restent inchangés.'
                   : 'Créer une nouvelle version ne publie rien. Les associations existantes sont copiées et restent à vérifier.'}</p>
                 <fieldset disabled={saving}><CatalogFields draft={versionDraft} onChange={setVersionDraft} activeTab={activeTab} /></fieldset>
+                {conflictVersion&&(()=>{try{return <CatalogConflictResolver key={conflictVersion.id+':'+conflictVersion.saveRevision} remote={conflictVersion} local={buildVersion(versionDraft)} onResolve={payload=>{const next=draftFromVersion({...conflictVersion,...payload},detail);versionGuard.initial(draftFromVersion(conflictVersion,detail));setVersionDraft(next);setEditingDraftVersion(conflictVersion);setConflictVersion(null);setVersionFormError(null);}}/>;}catch{return <p role="alert">Saisie conservée. Corrigez les valeurs invalides avant de comparer le conflit.</p>;}})()}
                 {versionFormError && <p className="form-error" role="alert">{versionFormError} — la saisie locale est conservée.</p>}
-                <div className="inline-editor-actions">
-                  <button className="secondary-button" type="button" onClick={() => versionGuard.request(()=>{setVersionMode(false);setEditingDraftVersion(null);setVersionFormError(null);})}>Annuler</button>
+                <div className="inline-editor-actions ot-editor-actionbar">
+                  <span>Sauvegarde manuelle du brouillon uniquement</span><button className="secondary-button" type="button" onClick={() => versionGuard.request(()=>{setVersionMode(false);setEditingDraftVersion(null);setVersionFormError(null);})}>Annuler</button>
                   <button className="primary-button" disabled={saving} type="submit">{saving?'Enregistrement…':editingDraftVersion?'Enregistrer le brouillon':`Créer v${(detail.versions[0]?.versionNumber ?? 0) + 1}`}</button>
                 </div>
               </form>}
@@ -894,12 +937,12 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                       <tbody>{advice.map(row=><tr key={row.field}><th scope="row">{row.label}</th><td>{row.previous}</td><td>{row.proposed}</td></tr>)}</tbody></table>}
                 </section>;
               })()}
-              {activeTab==='history' && <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{PRICE_LABELS[version.priceMode]} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'} · {version.publishedAt ? `publiée le ${formatCatalogDate(version.publishedAt)}` : `créée le ${formatCatalogDate(version.createdAt)}`}</small>{version.status === 'draft' && version.provenance && <details className="catalog-import-draft"><summary>Consulter le brouillon importé</summary><p>Cette version n’est pas publiée. Sa consultation ne change pas la version commerciale en cours.</p><p>{version.nature}</p><p>{version.description}</p><Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} /><Summary label="Unité / périodicité" value={[version.unit, version.periodicity].filter(Boolean).join(' / ')} /><ListSummary label="Inclus" values={version.inclusions ?? []} /><ListSummary label="Exclusions" values={version.exclusions ?? []} /><ListSummary label="Prérequis" values={version.prerequisites ?? []} /><CommercialParametersSummary parameters={version.commercialParameters} /><Summary label="Source" value={[version.provenance.reference, version.provenance.recordKey, version.provenance.sha256].filter(Boolean).join(' · ')} /></details>}</div><div className="inline-editor-actions">
+              {activeTab==='history' && <div className="catalog-versions"><strong>Historique des versions</strong>{detail.versions.map((version) => <div className="catalog-version-row" key={version.id}><div><strong>v{version.versionNumber}{version.abandonedAt?' · Abandonné':''}</strong><span>{VERSION_STATUS_LABELS[version.status]}</span><small>{version.priceMode?PRICE_LABELS[version.priceMode]:'À compléter'} · {version.priceCents != null ? `${(version.priceCents / 100).toLocaleString('fr-FR')} €` : '—'} · {version.publishedAt ? `publiée le ${formatCatalogDate(version.publishedAt)}` : `créée le ${formatCatalogDate(version.createdAt)}`}</small>{version.status === 'draft' && version.provenance && <details className="catalog-import-draft"><summary>Consulter le brouillon importé</summary><p>Cette version n’est pas publiée. Sa consultation ne change pas la version commerciale en cours.</p><p>{version.nature}</p><p>{version.description}</p><Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} /><Summary label="Unité / périodicité" value={[version.unit, version.periodicity].filter(Boolean).join(' / ')} /><ListSummary label="Inclus" values={version.inclusions ?? []} /><ListSummary label="Exclusions" values={version.exclusions ?? []} /><ListSummary label="Prérequis" values={version.prerequisites ?? []} /><CommercialParametersSummary parameters={version.commercialParameters} /><Summary label="Source" value={[version.provenance.reference, version.provenance.recordKey, version.provenance.sha256].filter(Boolean).join(' · ')} /></details>}</div><div className="inline-editor-actions">
                 <button type="button" className="secondary-button compact-button" disabled={saving}
                   onClick={()=>setComparisonVersionId(version.id)}>Comparer</button>
                 <button type="button" className="secondary-button compact-button" disabled={saving||versionMode}
                   onClick={()=>{if(prepareNewVersion(version))setActiveTab('sales');}}>Reprendre dans un brouillon</button>
-                </div>{version.status === 'draft' && <button className="primary-button compact-button" type="button" disabled={versionMode || saving} title={versionMode ? 'Enregistrer ou annuler le brouillon avant publication.' : 'Préparer une confirmation distincte, sans publier le site WordPress.'} onClick={() => setPublicationCandidate(structuredClone(version))}>Préparer la publication</button>}</div>)}</div>}
+                </div>{version.status === 'draft' && !version.abandonedAt && <button className="primary-button compact-button" type="button" disabled={versionMode || saving} title={versionMode ? 'Enregistrer ou annuler le brouillon avant publication.' : 'Préparer une confirmation distincte, sans publier le site WordPress.'} onClick={() => setPublicationCandidate(structuredClone(version))}>Préparer la publication</button>}</div>)}</div>}
               </div>
             </aside>
           )}
@@ -920,8 +963,8 @@ function CommercialParametersSummary({ parameters }: { parameters?: CatalogComme
   return <section className="catalog-detail-section catalog-commercial-parameters"><strong>Paramètres commerciaux du catalogue</strong>{Object.entries(labels).map(([key, label]) => parameters[key as keyof CatalogCommercialParameters] ? <Summary key={key} label={label} value={parameters[key as keyof CatalogCommercialParameters]!} /> : null)}</section>;
 }
 
-function CatalogFields({ draft, onChange, showIdentity = false, activeTab }: { draft: CatalogDraft; onChange: (draft: CatalogDraft) => void; showIdentity?: boolean; activeTab?: CatalogEditorTab }) {
-  const visible = (...tabs:CatalogEditorTab[]) => !activeTab || tabs.includes(activeTab);
+function CatalogFields({ draft, onChange, showIdentity = false, activeTab, identityOnly=false }: { draft: CatalogDraft; onChange: (draft: CatalogDraft) => void; showIdentity?: boolean; activeTab?: CatalogEditorTab; identityOnly?:boolean }) {
+  const visible = (...tabs:CatalogEditorTab[]) => !identityOnly&&(!activeTab || tabs.includes(activeTab));
   const priceDisabled = draft.priceMode === 'quote_only' || draft.priceMode === 'free';
 
   return (
@@ -938,16 +981,17 @@ function CatalogFields({ draft, onChange, showIdentity = false, activeTab }: { d
             <input value={draft.name} onChange={(e) => onChange({ ...draft, name: e.target.value })} placeholder="Ex. Article essentiel" />
           </label>
           <label>
-            <span className="field-label-with-help">Catégorie <FieldHelp text="Famille utilisée pour organiser le catalogue : Contenu, Web, SEO, Maintenance…" /></span>
+            <span className="field-label-with-help">Libellé de catégorie <FieldHelp text="Libellé historique libre. Choisir une catégorie du référentiel ci-dessus le remplit et établit un lien stable. Modifier ce libellé retire ce lien sans renommer une catégorie du référentiel." /></span>
             <input value={draft.category} onChange={(e) => onChange({ ...draft, category: e.target.value })} placeholder="Ex. Contenu" />
           </label>
         </div>
+        <details className="ot-optional-identity"><summary>Repères facultatifs : code et visibilité</summary><label>Code canonique AW (facultatif)<input value={draft.canonicalCode} onChange={e=>onChange({...draft,canonicalCode:e.target.value})} placeholder="AW-WEB-VITRINE"/></label><label className="catalog-public-check"><input type="checkbox" checked={draft.visiblePublic} onChange={e=>onChange({...draft,visiblePublic:e.target.checked})}/>Visible sur le site public</label></details>
       </section>}
 
       {visible('identity','pricing','scope') && <section className="catalog-field-group">
         <div className="catalog-field-group-heading"><strong>Fiche versionnée</strong><span>Champs modifiables de cette version uniquement.</span></div>
         {visible('identity','pricing') && <div className="catalog-fields-grid">
-          {showIdentity && <label>Code canonique AW (facultatif)<input value={draft.canonicalCode} onChange={(e) => onChange({ ...draft, canonicalCode: e.target.value })} placeholder="AW-WEB-VITRINE" /></label>}
+
           <label>Nature commerciale<select value={draft.commercialKind} onChange={(e) => onChange({ ...draft, commercialKind: e.target.value as CatalogDraft['commercialKind'] })}><option value="">Non renseignée</option>{CATALOG_COMMERCIAL_KINDS.map((kind) => <option key={kind} value={kind}>{KIND_LABELS[kind]}</option>)}</select></label>
           <label>Famille canonique<input value={draft.familyCode} onChange={(e) => onChange({ ...draft, familyCode: e.target.value })} placeholder="WEB" /></label>
           <label>Libellé Abby<input value={draft.abbyLabel} onChange={(e) => onChange({ ...draft, abbyLabel: e.target.value })} /></label>
@@ -984,7 +1028,7 @@ function CatalogFields({ draft, onChange, showIdentity = false, activeTab }: { d
         <div className="catalog-fields-grid">
           <label>
             <span className="field-label-with-help">Mode tarifaire <FieldHelp text="Détermine la façon dont le prix est présenté et calculé dans le catalogue." /></span>
-            <select disabled={draft.priceBasis === 'actual_cost'} value={draft.priceMode} onChange={(e) => onChange({ ...draft, priceMode: e.target.value as PriceMode })}>{PRICE_MODES.map((mode) => <option key={mode} value={mode}>{PRICE_LABELS[mode]}</option>)}</select>
+            <select disabled={draft.priceBasis === 'actual_cost'} value={draft.priceMode??''} onChange={(e) => onChange({ ...draft, priceMode: e.target.value?(e.target.value as PriceMode):null })}><option value="">À compléter — aucun mode choisi</option>{PRICE_MODES.map((mode) => <option key={mode} value={mode}>{PRICE_LABELS[mode]}</option>)}</select>
           </label>
           <label>
             <span className="field-label-with-help">Prix AtoumWeb (€) <FieldHelp text="Prix de vente courant utilisé comme référence pour les devis." /></span>
@@ -1077,7 +1121,7 @@ function CatalogFields({ draft, onChange, showIdentity = false, activeTab }: { d
             <textarea value={draft.internalAdvice} onChange={(e) => onChange({ ...draft, internalAdvice: e.target.value })} placeholder="Ex. demander le sujet, le mot-clé principal et les visuels avant démarrage." />
           </label>
         </div>}
-        {showIdentity && <label className="catalog-public-check"><input type="checkbox" checked={draft.visiblePublic} onChange={(e) => onChange({ ...draft, visiblePublic: e.target.checked })} /> Visible sur le site public</label>}
+
       </section>}
     </div>
   );

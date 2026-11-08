@@ -508,6 +508,12 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
     if (error) throw new Error(error);
   });
 
+  ipcMain.handle('catalog:list-drafts',()=>database.catalog.listDrafts());
+  ipcMain.handle('catalog:duplication-preview',(_event,itemId:string,versionId:string)=>database.catalog.duplicationPreview(itemId,versionId));
+  ipcMain.handle('catalog:duplicate',(_event,input:import('../shared/commercial').CatalogDuplicationInput,requestId:string)=>guardedMutation(()=>database.catalog.duplicate(input,requestId)));
+  ipcMain.handle('catalog:persistence-available',()=>database.catalog.persistenceAvailable());
+  ipcMain.handle('catalog:create-persistent',(_event,input:CatalogItemInput,version:CatalogVersionInput,requestId:string)=>guardedMutation(()=>database.catalog.createPersistent(input,version,requestId)));
+  ipcMain.handle('catalog:set-draft-abandoned',(_event,id:string,expected:CatalogVersion,abandoned:boolean)=>guardedMutation(()=>database.catalog.setDraftAbandoned(id,expected,abandoned)));
   ipcMain.handle('catalog:list', (_event, filters?: CatalogFilters) => database.catalog.list(filters));
   ipcMain.handle('catalog:get-item', (_event, id: string) => database.catalog.getItem(id));
   ipcMain.handle('catalog:assign-canonical-code', (_event, id: string, code: string) => guardedMutation(() => database.catalog.assignCanonicalCode(id, code)));
