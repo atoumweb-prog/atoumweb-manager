@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/11/2026 — Outil de copie propre pour l’activation V3.9.4 (branche claude/atelier-manager)
+
+- [x] `ApprovedPackActivationCopy.ts` + `scripts/prepare-v394-activation-copy.cjs` : depuis la sauvegarde de l’étape A, copie TEMP neuve → migration 81 → import du pack → noms/familles → contrôles → fichier final dans un dossier nouveau. Refus si la sauvegarde est altérée ou si la base en service a changé depuis ; aucun fichier partiel. Aucune donnée de test écrite.
+- [x] Contrôle de conservation générique : toutes les lignes de toutes les tables comparées avant/après ; seules les fiches du pack peuvent changer (nom, famille, code) ; ajouts limités aux tables prévues par l’import (liste justifiée par le rapport d’intégration du 08/11). Démarrage réel de DatabaseService sur une copie séparée.
+- [x] 4 tests ciblés (copie conforme, base modifiée, sauvegarde altérée/sortie existante/sortie à côté de la base, détection des écarts).
+- [x] Répétition sur la préproduction (lecture seule, empreinte inchangée `38f496cb…`) : copie PRÊTE, 130 tarifs et 119 clauses en brouillon, 21 fiches existantes modifiées (pack uniquement), 0 fiche TEST, moteur démarré. Fichiers hors dépôt : `C:/DEV/Livrables/Activation-V394-repetition-2026-11-09`.
+- [ ] Mise en service (remplacement de la base) et publication : non faites, accord explicite requis.
+
 ## 09/11/2026 — Reprise par Claude : revue PR #166 et décisions utilisateur sur le pack V3.9.4
 
 Revue en lecture seule de la PR #166 (HEAD `fb1ffa6`) : typecheck et 1 888 tests réussis ; 130 tarifs, 119 clauses, 47 délégués, 18 V39-, 6 à vérifier, clause 019 sans PAY-005 et règles Woo/maintenance/Lune conformes. Grille et bibliothèque « Approuvé métier – non publié » produites hors dépôt depuis l'import réel du Manager ; comparaison automatique aux trois Word du pack sans écart de données.
