@@ -1,4 +1,5 @@
 import {resolveContractFields,hasUnresolvedContractFields} from '../../shared/contractFields';
+import { adminChecklistLabel } from '../../shared/companyAdministration';
 import {quotePaymentSchedule} from '../../shared/quotePaymentSchedule';
 import { activePreparation, contractHash } from './quoteTransmission';
 import {draftFingerprint} from '../../shared/draftSection';
@@ -171,7 +172,7 @@ export class QuoteContractPreparationService {
     check(Boolean(this.db.get("SELECT t.id FROM contract_clause_templates t JOIN contract_clause_versions v ON v.id=t.current_version_id WHERE t.scope='base' AND t.status='active' AND v.status='published' AND t.audience IN ('all',?) LIMIT 1",[p.audience])),'PUBLISHED_BASE_MISSING','Aucun socle contractuel publié disponible ; les brouillons ne sont pas consommés');
     const hasRole=(role:ContractDocumentLink['role'])=>links.some(l=>l.role===role);
     if(this.documents&&!this.documents.isDevelopmentWorkspace())for(const key of ADMIN_CONTRACT_KEYS)check(!/^TEST\s*[—-]|\bTEST\b.*fictif/i.test(admin[key].value),`ADMIN_${key.toUpperCase()}_TEST`,`Valeur administrative TEST interdite hors environnement de développement : ${key}`);
-    for (const key of ['identity','administrative','vat','complaints'] as const) check(admin[key].state==='filled'&&present(admin[key].value),`ADMIN_${key.toUpperCase()}`,`Informations AtoumWeb à renseigner/vérifier : ${key}`);
+    for (const key of ['identity','administrative','vat','complaints'] as const) check(admin[key].state==='filled'&&present(admin[key].value),`ADMIN_${key.toUpperCase()}`,adminChecklistLabel(key));
     check(Boolean(p.conclusion.channel)&&present(p.conclusion.context)&&present(p.conclusion.purchasePurpose),'CONCLUSION','Canal, contexte et finalité à confirmer');
     check(p.conclusion.channel!=='other'||present(p.conclusion.otherChannelReason),'OTHER_CHANNEL','Précise le canal particulier');
     check(p.digital.kinds.length>0&&(p.digital.mixed||p.digital.supply!==null)&&present(p.digital.delivery)&&present(p.digital.qualificationReason),'DIGITAL_QUALIFICATION','Qualification de la prestation et livraison à préciser');

@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/11/2026 — Lot 1 : « Mon entreprise » simplifié (branche claude/lot1-mon-entreprise)
+
+- [x] Écran Réglages › Mon entreprise et devis : les 4 informations exigées pour finaliser un devis (nom/statut, adresse/SIRET/coordonnées, TVA, réclamations) regroupées, avec exemples ; choix « Micro-entreprise : franchise en base de TVA » qui pose la mention « TVA non applicable, article 293 B du CGI » ; état « à vérifier / non applicable » replié en cas particulier.
+- [x] Liste de vérification du devis : libellés français (« Mon entreprise : … à renseigner ») au lieu de identity/vat/complaints, avec l’endroit où corriger.
+- [x] `scripts/preproduction/set-company-info.cjs` : renseigne une préproduction depuis un JSON tenu hors du dépôt (refus si le fichier est dans le dépôt), sauvegarde avant écriture.
+- [x] Informations de Carlos (micro-entreprise, franchise TVA) renseignées dans la préproduction uniquement ; **aucune donnée personnelle dans le dépôt**. Adresse administrative imprimée sur les devis : à confirmer par Carlos (domiciliation possible).
+
 ## 09/11/2026 — Lot 2 : CGV disponibles pour les offres de départ (branche claude/lot2-cgv-disponibles)
 
 Décisions de Carlos du 09/11 : couleurs Accueil bleu nuit/jaune ; qualification avant devis **conseillée** (non bloquante, lot à venir) ; premières offres : vitrine, WooCommerce, maintenance WordPress ; Abby option 1 (devis+CGV envoyés depuis le Manager, factures dans Abby). Audits « visuel » et « premier jour » livrés hors dépôt (C:/DEV/Livrables).
