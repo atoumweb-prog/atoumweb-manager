@@ -8,7 +8,8 @@ describe('Intégrité du pack documentaire approuvé',()=>{
   for(const record of approvedCatalogSource().records){const source=APPROVED_PACK.catalogue.references.find(r=>r.code_source===record.canonicalCode)!;
    expect(record.version.commercialParameters?.sourcePriceLabel).toBe(source.prix_affiche);
    const words=source.prix_affiche.split('€')[0],matches=words.match(/\d[\d\s\u00a0\u202f]*(?:,\d{1,2})?$/);
-   if(source.prix_affiche.includes('€'))expect(record.version.priceCents,source.code_source).toBe(Math.round(Number(matches![0].replace(/\s/g,'').replace(',','.'))*100));
+   // Décision 09/11/2026 : un libellé qui ne commence pas par un montant reste sur devis (AW-BRAND-IDENTITE).
+   if(source.prix_affiche.includes('€')&&/^(Dès\s+)?\d/.test(source.prix_affiche.trim()))expect(record.version.priceCents,source.code_source).toBe(Math.round(Number(matches![0].replace(/\s/g,'').replace(',','.'))*100));
    else expect(record.version.priceCents).toBeNull();
   }
   expect(approvedCatalogSource().records.find(r=>r.canonicalCode==='V39-HOST-DOMAINE')!.version.commercialParameters?.sourcePriceLabel).toContain('registrar');
