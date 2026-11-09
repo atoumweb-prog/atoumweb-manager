@@ -7,6 +7,8 @@
 /* Lot 1 — Mon entreprise : choix TVA et cas particuliers repliés. */
 .company-vat-choice { border: 1px solid var(--border, rgba(255,255,255,.12)); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; }
 .company-vat-choice legend { font-weight: 600; padding: 0 6px; }
-.company-vat-choice label { display: flex; align-items: center; gap: 8px; }
+.company-settings-form .company-vat-choice label { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; text-align: left; width: auto; }
+.company-settings-form .company-vat-choice input[type=radio] { width: auto; min-height: 0; margin: 0; flex: 0 0 auto; }
+.company-settings-form .company-vat-choice p { text-align: left; margin: 4px 0 0; }
 .company-admin-advanced { margin-top: 6px; }
 .company-admin-advanced summary { cursor: pointer; color: var(--muted-text, inherit); font-size: 14px; }
