@@ -16,7 +16,9 @@ Réalisation sur la branche `claude/v394-decisions-20261109` (PR brouillon vers 
 - [x] Tests ciblés : 13 renommages, 18 catégories, versions/devis/clauses/codes inchangés, rejeu sans effet, plan périmé et modification manuelle refusés sans écriture partielle, refus hors TEMP.
 - [ ] Le mécanisme d'activation réel reste à concevoir et à autoriser ; ce plan en sera une étape. Les copies TEMP déjà importées avec l'ancienne lecture du prix d'AW-BRAND-IDENTITE devront être réimportées.
 
-Prochaine action : revue utilisateur de la PR de décisions, puis étape 3 (mode opératoire). Aucune fusion, activation, migration réelle ni publication.
+- [x] Mode opératoire utilisateur rédigé : [docs/MODE-OPERATOIRE-MANAGER.md](docs/MODE-OPERATOIRE-MANAGER.md) (parcours Prospect → Devis → Abby → acceptation → Projet/maintenance, activation manuelle V3.9.4 avec retour arrière, fonctions non développées). Constat : le script de répétition 81 écrit des fiches TEST dans sa copie ; une commande de copie propre (81 + import + renommage/familles, sans essai) reste à développer avant toute activation.
+
+Prochaine action : revue utilisateur des PR #168 et du mode opératoire, puis étape 4 (audit ergonomique). Aucune fusion, activation, migration réelle ni publication.
 
 ## 08/11/2026 — PR #166 : corrections ciblées après revue indépendante
 
