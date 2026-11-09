@@ -1,5 +1,23 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/11/2026 — Reprise par Claude : revue PR #166 et décisions utilisateur sur le pack V3.9.4
+
+Revue en lecture seule de la PR #166 (HEAD `fb1ffa6`) : typecheck et 1 888 tests réussis ; 130 tarifs, 119 clauses, 47 délégués, 18 V39-, 6 à vérifier, clause 019 sans PAY-005 et règles Woo/maintenance/Lune conformes. Grille et bibliothèque « Approuvé métier – non publié » produites hors dépôt depuis l'import réel du Manager ; comparaison automatique aux trois Word du pack sans écart de données.
+
+Décisions de Carlos du 09/11/2026 :
+- [x] Pack (dont les trois Word) laissé tel quel sur la branche publique de la PR #166, malgré la consigne générale de ne pas committer le pack : décision explicite de ne pas réécrire l'historique.
+- [x] Nom des 13 fiches historiques réutilisées : remplacé par le nom V3.9.4 **au moment de l'activation** seulement ; devis et snapshots inchangés.
+- [x] Familles : un libellé unique par code de famille (`src/shared/approvedFamilies.ts`), via le registre `catalog_categories` existant ; nouvelles fiches à l'import, fiches historiques à l'activation.
+- [x] Lecture des prix : un libellé qui ne commence pas par un montant reste « sur devis » (seul cas : AW-BRAND-IDENTITE, « À vérifier — ancienne offre 499 € »). AW-PHOTO-DETOUR était déjà correct (9 € l'unité « photo », minimum de ligne 45 €).
+- [x] Annexes A, B, C et annexe interne de la bibliothèque : non intégrées au Manager.
+
+Réalisation sur la branche `claude/v394-decisions-20261109` (PR brouillon vers la PR #166) :
+- [x] `ApprovedPackActivationPlan.ts` : prévisualisation en lecture seule et application sur base TEMP isolée uniquement (garde partagée avec la migration 81), une transaction, valeurs attendues contrôlées, traces dans `catalog_category_audit` et `activity_log`. Aucun branchement au démarrage ni à l'IPC.
+- [x] Tests ciblés : 13 renommages, 18 catégories, versions/devis/clauses/codes inchangés, rejeu sans effet, plan périmé et modification manuelle refusés sans écriture partielle, refus hors TEMP.
+- [ ] Le mécanisme d'activation réel reste à concevoir et à autoriser ; ce plan en sera une étape. Les copies TEMP déjà importées avec l'ancienne lecture du prix d'AW-BRAND-IDENTITE devront être réimportées.
+
+Prochaine action : revue utilisateur de la PR de décisions, puis étape 3 (mode opératoire). Aucune fusion, activation, migration réelle ni publication.
+
 ## 08/11/2026 — PR #166 : corrections ciblées après revue indépendante
 
 - [x] Cause NaN corrigée dans la fixture (`contractValueCents`), désormais incluse au typecheck ; présentation normale Manager contrôlée sur les 14 recettes TEMP.

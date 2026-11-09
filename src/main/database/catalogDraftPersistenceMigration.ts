@@ -5,11 +5,15 @@ import type {DatabaseAdapter} from './DatabaseAdapter';
 
 /** Explicit TEMP-only experiment; NEVER part of automatic pending migrations. */
 export const CATALOG_DRAFT_EXPERIMENT = {id:81,name:'catalog_persistent_drafts_temp_v1'} as const;
-export function applyCatalogDraftPersistenceTemp(db:DatabaseAdapter):void {
+/** Refuse any attached file outside the OS temp directory or under Validation-MSI (in-memory allowed). */
+export function assertIsolatedTempDatabase(db:DatabaseAdapter,message='Migration Catalogue autorisée uniquement sur une base TEMP isolée.'):void {
   const files=db.all<{file:string}>('PRAGMA database_list');
   const root=realpathSync(tmpdir());
   for(const {file} of files){if(!file)continue;const actual=realpathSync(file),relative=path.relative(root,actual);
-    if(relative.startsWith('..')||path.isAbsolute(relative)||/validation-msi/i.test(actual))throw Error('Migration Catalogue autorisée uniquement sur une base TEMP isolée.');}
+    if(relative.startsWith('..')||path.isAbsolute(relative)||/validation-msi/i.test(actual))throw Error(message);}
+}
+export function applyCatalogDraftPersistenceTemp(db:DatabaseAdapter):void {
+  assertIsolatedTempDatabase(db);
   const applied=db.get<{name:string}>('SELECT name FROM schema_migrations WHERE id=?',[81]);
   if(applied){if(applied.name!==CATALOG_DRAFT_EXPERIMENT.name||!db.get("SELECT name FROM pragma_table_info('catalog_versions') WHERE name='save_revision'"))throw Error('Historique expérimental incompatible.');return;}
   const duplicates=db.all<{item_id:string}>('SELECT item_id FROM catalog_versions WHERE status=\'draft\' GROUP BY item_id HAVING count(*)>1');
