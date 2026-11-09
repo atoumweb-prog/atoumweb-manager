@@ -178,12 +178,17 @@ export function ProjectPageCompositionPanel({
   onMessage,
   inspectorHostId,
   onInspectorOpenChange,
+  visualV2 = false,
+  readOnly = false,
 }: {
+  visualV2?: boolean;
+  readOnly?: boolean;
   page: ProjectNode;
   onMessage: (message: string, action?: () => void) => void;
   inspectorHostId?: string;
   onInspectorOpenChange?: (open: boolean, dual: boolean, expandedCount: number) => void;
 }) {
+  useEffect(() => { if (readOnly) setMode(current => current === 'library' || current === 'create' || current === 'attach' ? null : current); }, [readOnly]);
   const [composition, setComposition] = useState<AtoumWebCompositionDetail | null>(null);
   const [preparedPackage, setPreparedPackage] = useState<(AtoumWebCompositionPackageExportResult & { sourceUpdatedAt: string }) | null>(null);
   const [exportHistory, setExportHistory] = useState<ProjectPagePackageHistoryEntry[]>([]);
@@ -290,7 +295,8 @@ export function ProjectPageCompositionPanel({
     ].join(' ').toLocaleLowerCase('fr-FR').includes(needle));
   }, [visualLibrary, search]);
 
-  async function withBusy(action: () => Promise<void>): Promise<void> {
+  async function withBusy(action: () => Promise<void>, mutating = true): Promise<void> {
+    if (readOnly && mutating) return;
     if (operation.current) return;
     operation.current = true;
     setBusy(true);
@@ -403,7 +409,7 @@ export function ProjectPageCompositionPanel({
       setInspectDevice('desktop');
       setInspectExpanded(false);
       setMode(null);
-    });
+    }, false);
   }
 
   function toggleSettings(item: AtoumWebCompositionItem): void {
@@ -514,7 +520,7 @@ export function ProjectPageCompositionPanel({
         css: parts.css,
       })), inspect));
       setMode('preview');
-    });
+    }, false);
   }
 
   async function exportPagePackage(): Promise<void> {
@@ -566,12 +572,25 @@ export function ProjectPageCompositionPanel({
         <p>Ajoute uniquement ce que tu veux préparer depuis Manager. Le reste de la Page pourra être construit librement dans Divi.</p>
       </div>
       <div className="project-page-composition-actions">
-        {composition&&<button className="secondary-button" type="button" disabled={busy||!orderUndo.length} onClick={()=>restoreLastOrder('undo')}>Annuler déplacement</button>}
-        {composition&&<button className="secondary-button" type="button" disabled={busy||!orderRedo.length} onClick={()=>restoreLastOrder('redo')}>Rétablir déplacement</button>}
-        {composition?.items.length ? <button className="primary-button" type="button" disabled={busy} onClick={() => void exportPagePackage()}>Préparer pour Bridge</button> : null}
+        {visualV2 ? <>
+        <button className="primary-button" type="button" disabled={readOnly} onClick={() => changeMode(mode === 'library' ? null : 'library')}>+ Ajouter un composant</button>
         {composition?.items.length ? <button className="secondary-button" type="button" onClick={() => void buildPagePreview()}>Aperçu de la Page</button> : null}
-        <button className="secondary-button" type="button" onClick={() => changeMode(mode === 'library' ? null : 'library')}>+ Bibliothèque</button>
-        <button className="primary-button" type="button" onClick={() => changeMode(mode === 'create' ? null : 'create')}>+ Créer un composant</button>
+        <details className="sites-v2-more"><summary>Autres actions</summary><div>
+          <button className="secondary-button" type="button" disabled={readOnly} onClick={() => changeMode(mode === 'create' ? null : 'create')}>Créer un composant</button>
+          {composition?.items.length ? <button className="secondary-button" type="button" disabled={readOnly || busy} onClick={() => void exportPagePackage()}>Préparer pour Bridge</button> : null}
+          {composition && <>
+            <button className="secondary-button" type="button" disabled={readOnly || busy || !orderUndo.length} onClick={() => restoreLastOrder('undo')}>Annuler déplacement</button>
+            <button className="secondary-button" type="button" disabled={readOnly || busy || !orderRedo.length} onClick={() => restoreLastOrder('redo')}>Rétablir déplacement</button>
+          </>}
+        </div></details></> : <>
+          {composition && <button className="secondary-button" type="button" disabled={readOnly || busy || !orderUndo.length} onClick={() => restoreLastOrder('undo')}>Annuler déplacement</button>}
+          {composition && <button className="secondary-button" type="button" disabled={readOnly || busy || !orderRedo.length} onClick={() => restoreLastOrder('redo')}>Rétablir déplacement</button>}
+          {composition?.items.length ? <button className="primary-button" type="button" disabled={readOnly || busy} onClick={() => void exportPagePackage()}>Préparer pour Bridge</button> : null}
+          {composition?.items.length ? <button className="secondary-button" type="button" onClick={() => void buildPagePreview()}>Aperçu de la Page</button> : null}
+          <button className="secondary-button" type="button" disabled={readOnly} onClick={() => changeMode(mode === 'library' ? null : 'library')}>+ Bibliothèque</button>
+          <button className="primary-button" type="button" disabled={readOnly} onClick={() => changeMode(mode === 'create' ? null : 'create')}>+ Créer un composant</button>
+        </>}
+
       </div>
     </header>
 
@@ -600,7 +619,7 @@ export function ProjectPageCompositionPanel({
       {!composition && <div className="project-page-composition-empty">
         <strong>Aucun composant Manager pour cette Page.</strong>
         <span>C’est valide : tu peux construire entièrement cette Page dans Divi.</span>
-        {availableHistorical.length > 0 && <button className="link-button" type="button" onClick={() => changeMode('attach')}>Rattacher une composition existante</button>}
+        {!readOnly && availableHistorical.length > 0 && <button className="link-button" type="button" onClick={() => changeMode('attach')}>Rattacher une composition existante</button>}
       </div>}
   
       {composition && <div className="project-page-composition-list">
@@ -620,8 +639,8 @@ export function ProjectPageCompositionPanel({
                 </small>
               </div>
               <div className="project-page-composition-row-actions">
-                <button type="button" disabled={busy || index === 0} onClick={() => void move(item, -1)} title="Monter">↑</button>
-                <button type="button" disabled={busy || index === composition.items.length - 1} onClick={() => void move(item, 1)} title="Descendre">↓</button>
+                <button type="button" disabled={readOnly || busy || index === 0} onClick={() => void move(item, -1)} title="Monter">↑</button>
+                <button type="button" disabled={readOnly || busy || index === composition.items.length - 1} onClick={() => void move(item, 1)} title="Descendre">↓</button>
                 <button
                   type="button"
                   className={settingsItemId === item.id ? 'active' : ''}
@@ -631,7 +650,7 @@ export function ProjectPageCompositionPanel({
                 <button type="button" className={inspected?.item.id === item.id ? 'active' : ''} disabled={busy} onClick={() => void inspect(item)}>
                   {inspected?.item.id === item.id ? 'Fermer aperçu' : 'Code / aperçu'}
                 </button>
-                <button type="button" disabled={busy} onClick={() => void remove(item)}>Retirer</button>
+                <button type="button" disabled={readOnly || busy} onClick={() => void remove(item)}>Retirer</button>
               </div>
             </article>
           </div>;
@@ -660,6 +679,7 @@ export function ProjectPageCompositionPanel({
             ? <button className="project-page-inspector-pane-restore settings" type="button" title="Afficher Réglages" aria-label="Afficher Réglages" onClick={() => setSettingsPaneCollapsed(false)}>→</button>
             : null}
             <div hidden={settingsPaneCollapsed}><ProjectCompositionItemSettings
+                readOnly={readOnly}
                 key={settingsItem.id}
                 operationPending={busy}
                 compositionId={composition.id}

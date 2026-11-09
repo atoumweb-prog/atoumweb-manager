@@ -1,0 +1,132 @@
+/* Lot 2: the approved Home palette, restricted to Sites & Pages in Noir/Confort.
+   Layout decisions use the observed workspace width, including Windows scaling. */
+:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell:has(.sites-v2) {
+  --canvas:#031321;--surface:#071b2d;--surface-soft:#10283d;--sidebar:#041321;
+  --sidebar-text:#e9f2ff;--muted:#a9c2df;--text-muted:#a9c2df;--border:#25445d;
+  --border-color:#25445d;--accent:#ffd326;--accent-strong:#ffda39;
+  --accent-soft:#ffd32614;--text:#f0f5fc;
+}
+.sites-v2 {gap:12px;container:sites / inline-size;}
+.sites-v2 .panel {background:linear-gradient(120deg,#0b2131,#04172a);border-color:var(--border);border-radius:12px;box-shadow:inset 0 1px 0 #ffffff0b;}
+.sites-v2 :is(button,input,select,summary) {font-family:inherit;font-size:14px;}
+.sites-v2 :is(button,summary) {min-height:36px;}
+.sites-v2 :is(button,summary,input,select):focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
+.sites-v2 :is(button,summary) {white-space:normal;overflow-wrap:anywhere;}
+.sites-v2 .primary-button {background:var(--accent);border-color:var(--accent);color:#071b2d;font-weight:750;}
+.sites-v2 .secondary-button {background:var(--surface-soft);color:var(--text);border:1px solid var(--border);}
+.sites-v2 button:disabled {opacity:.5;}
+.sites-v2 .eyebrow {color:var(--muted);font-size:12px;letter-spacing:.07em;}
+.sites-v2 .project-sites-intro {padding:12px 16px;gap:12px;flex-wrap:wrap;}
+.sites-v2 .project-sites-intro-copy {display:flex;align-items:baseline;gap:12px;flex:1 1 260px;}
+.sites-v2 .project-sites-intro-copy .eyebrow {display:none;}
+.sites-v2 .project-sites-intro h2 {font-size:24px;letter-spacing:-.02em;margin:0;white-space:nowrap;}
+.sites-v2 .project-sites-intro p {font-size:14px;color:var(--muted);margin:0;max-width:440px;}
+.sites-v2 .project-sites-intro.collapsed .project-sites-intro-copy {display:flex;}
+.sites-v2 .project-sites-intro.collapsed h2 {font-size:24px;}
+.sites-v2 .project-sites-toolbar {flex-wrap:wrap;gap:7px;max-width:100%;}
+.sites-v2 .project-sites-toolbar button {padding:7px 12px;}
+.sites-v2 .project-sites-tree-head {padding:14px 14px 10px;}
+.sites-v2 .project-sites-tree-head strong {font-size:14px;color:var(--muted);}
+.sites-v2 .project-sites-tree-head .eyebrow {font-size:16px;color:var(--text);letter-spacing:0;text-transform:none;font-weight:700;}
+.sites-v2-search {display:grid;gap:6px;padding:10px 14px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border);}
+.sites-v2-search input {width:100%;min-width:0;min-height:38px;background:var(--canvas);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;}
+.sites-v2 .project-sites-tree-scroll {flex:1;padding:10px 8px;}
+.sites-v2-site-row {display:flex;align-items:center;min-width:0;}
+.sites-v2-site-fold {flex:0 0 26px;padding:0;border:0;background:transparent;color:var(--muted);cursor:pointer;}
+.sites-v2 .project-site-tree-site {padding:9px 5px;flex:1;}
+.sites-v2 .project-site-tree-site strong,.sites-v2 .project-site-tree-pages strong {font-size:14px;white-space:normal;overflow-wrap:anywhere;}
+.sites-v2 .project-site-tree-site small,.sites-v2 .project-site-tree-pages small {font-size:12px;opacity:1;color:var(--muted);}
+.sites-v2 .project-site-tree-pages {padding-left:22px;}
+.sites-v2 .project-site-tree-pages button {padding:9px 10px;}
+.sites-v2 .project-site-tree-pages button.active {background:var(--accent-soft);border-color:#ffd32677;box-shadow:inset 3px 0 var(--accent);}
+.sites-v2 .project-site-tree-pages button.active strong {color:var(--accent);}
+.sites-v2 .project-site-tree-add-page {color:var(--muted);opacity:1;}
+.sites-v2 .project-sites-detail-panel {padding:16px 16px 24px;}
+.sites-v2 .project-sites-detail-head {padding-bottom:10px;gap:8px;flex-wrap:wrap;}
+.sites-v2 .project-sites-detail-head>div:first-child {flex:1 1 160px;min-width:0;}
+.sites-v2 .project-sites-detail-head h3 {font-size:22px;letter-spacing:-.02em;overflow-wrap:anywhere;}
+.sites-v2 .project-sites-detail-head p {color:var(--muted);opacity:1;font-size:14px;}
+.sites-v2 .project-sites-composition-badge {display:none;}
+.sites-v2 .project-sites-page-work {margin:10px 0 0;padding:7px 10px;flex-wrap:wrap;background:var(--surface-soft);border-color:var(--border);}
+.sites-v2 .project-sites-time-summary {flex-wrap:wrap;white-space:normal;gap:5px 8px;}
+.sites-v2 .project-sites-page-actions {flex-wrap:wrap;}
+.sites-v2 .project-sites-page-actions button {height:auto;min-height:34px;font-size:13px;}
+.sites-v2 .project-sites-page-info {margin-top:10px;padding:8px 10px;background:var(--surface);border-color:var(--border);}
+.sites-v2 .project-sites-page-info-summary .eyebrow,.sites-v2 .project-sites-page-info-summary strong {display:none;}
+.sites-v2 .project-sites-page-info-summary small {font-size:14px;}
+.sites-v2 .project-page-composition {margin-top:14px;padding-top:14px;gap:12px;}
+.sites-v2 .project-page-composition-head {display:block;}
+.sites-v2 .project-page-composition-head .eyebrow {display:none;}
+.sites-v2 .project-page-composition-head h3 {font-size:20px;margin:0;}
+.sites-v2 .project-page-composition-head p {font-size:14px;margin:6px 0 12px;}
+.sites-v2 .project-page-composition-actions {justify-content:flex-start;align-items:start;gap:8px;}
+.sites-v2-more {max-width:100%;flex:1 1 130px;}
+.sites-v2-more summary {display:flex;align-items:center;cursor:pointer;padding:7px 10px;border:1px solid var(--border);border-radius:8px;color:var(--muted);width:fit-content;}
+.sites-v2-more summary::after {content:' ▾';margin-left:8px;}
+.sites-v2-more>div {display:flex;flex-wrap:wrap;gap:7px;padding:10px 0;}
+.sites-v2 .project-page-composition-list article {grid-template-columns:28px minmax(0,1fr);gap:8px;padding:12px;border-radius:10px;background:var(--surface-soft);}
+.sites-v2 .project-page-composition-main strong {font-size:15px;white-space:normal;overflow-wrap:anywhere;}
+.sites-v2 .project-page-composition-row-actions {grid-column:2;justify-content:flex-start;}
+.sites-v2 .project-page-composition-row-actions button {font-size:13px;min-height:34px;}
+.sites-v2 .project-sites-note {font-size:13px;color:var(--muted);}
+.sites-v2 .project-sites-inspector-shell {grid-template-columns:26px minmax(0,1fr);max-height:none;}
+.sites-v2 .project-sites-inspector-shell.collapsed {grid-template-columns:1fr;}
+.sites-v2 .project-page-inspector-workbench {padding:8px;background:var(--canvas);}
+.sites-v2 .project-page-inspector-workbench.both-open:not(.expanded):not(.settings-collapsed):not(.code-collapsed) {grid-template-columns:1fr;overflow:auto;}
+.sites-v2 .project-page-inspector-workbench.both-open:not(.expanded) .project-page-inspector-pane:not(.collapsed) {min-height:540px;}
+.sites-v2 .project-page-inspector-workbench .project-page-inspector-pane {border-color:var(--border);}
+.sites-v2 .project-page-inspector-pane>div:not(.project-page-inspector-dock) {height:100%;min-height:0;}
+.sites-v2 .project-component-settings-panel.docked {display:flex;flex-direction:column;}
+.sites-v2 .project-component-settings-panel.docked>fieldset {flex:1;min-height:0;overflow:auto;}
+.sites-v2 .project-component-settings-panel.docked .project-component-settings-grid {height:auto;min-height:100%;overflow:visible;}
+.sites-v2 .project-component-settings-toolbar {gap:8px;padding:10px;}
+.sites-v2 .project-component-settings-toolbar>div:first-child {flex:1 1 180px;}
+.sites-v2 .project-component-settings-toolbar small {font-size:12px;color:var(--muted);}
+.sites-v2 .project-component-settings-toolbar button {font-size:13px;padding:7px 10px;}
+.sites-v2 .project-component-settings-preview {grid-template-rows:auto minmax(0,1fr);}
+.sites-v2 .project-component-settings-panel.docked .project-component-settings-preview iframe {height:300px;min-height:220px;}
+.sites-v2 .project-page-inspector-dock {overflow:auto;}
+.sites-v2 .project-sites-workspace.atelier-focus {grid-template-columns:minmax(0,1fr)!important;}
+.sites-v2 .atelier-focus>:not(.project-sites-inspector-shell) {display:none;}
+.sites-v2 .atelier-focus>.project-sites-inspector-shell {display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);min-height:0;}
+.sites-v2 .atelier-focus .project-sites-inspector-collapse {display:none;}
+.sites-v2-workshop-nav {display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--border);}
+.sites-v2-workshop-nav strong {font-size:15px;overflow-wrap:anywhere;}
+.sites-v2 .atelier-focus .project-component-settings-grid {grid-template-columns:minmax(0,1.2fr) minmax(260px,1fr);align-items:start;}
+.sites-v2 .atelier-focus .project-component-settings-preview {position:sticky;top:0;}
+.sites-v2 .atelier-focus .project-component-settings-preview iframe {height:380px;}
+/* Focus mode gives the workshop the complete content height, without a modal
+   or unmounting the Page. Returning restores the same project context. */
+:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.atelier-focus) {grid-template-rows:minmax(0,1fr);}
+:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.atelier-focus)>:is(.project-production-header,.project-production-header-compact,.project-production-nav) {display:none;}
+.sites-v2:has(.atelier-focus)>.project-sites-intro {display:none;}
+.sites-v2:has(.atelier-focus) {gap:0;}
+.sites-v2 .project-sites-inspector-shell {padding:0;}
+.sites-v2 .atelier-focus .project-sites-inspector-host {grid-column:1;grid-row:2;}
+/* Compact only the containing Project header while this tab is mounted. */
+:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) {gap:10px;}
+:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-header {padding:10px 16px;gap:12px;grid-template-columns:minmax(0,1fr) auto;border-color:var(--border);background:var(--surface);}
+:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-title {min-width:0;flex:1 1 400px;}
+:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-title>div {min-width:0;}
+:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-title h2 {font-size:20px;margin:2px 0;overflow-wrap:anywhere;}
+:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-title p {font-size:12px;margin:2px 0;color:var(--muted);}
+:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-actions {flex:0 1 auto;min-width:0;flex-wrap:wrap;gap:8px;}
+:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-status {grid-template-columns:minmax(140px,1fr) 70px;gap:8px;}
+:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-collapse-top {width:auto;min-width:90px;white-space:normal;}
+:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-nav {gap:6px;}
+@container sites (max-width:1400px) {
+ .sites-v2 .project-sites-intro p {display:none;}
+ .sites-v2 .project-sites-intro {padding:10px 14px;}
+}
+@container sites (max-width:900px) {
+ .sites-v2 .project-sites-workspace.sites-v2-narrow:not(.atelier-focus) {grid-template-columns:minmax(0,1fr)!important;overflow:auto;display:flex;flex-direction:column;gap:10px;}
+ .sites-v2 .sites-v2-narrow:not(.atelier-focus)>.project-sites-tree-panel {max-height:280px;min-height:210px;flex:none;}
+ .sites-v2 .sites-v2-narrow:not(.atelier-focus)>.project-sites-splitter {display:none;}
+ .sites-v2 .sites-v2-narrow:not(.atelier-focus)>.project-sites-detail-panel {min-height:420px;flex:none;}
+ .sites-v2 .atelier-focus .project-component-settings-grid {grid-template-columns:minmax(0,1fr);}
+ .sites-v2 .atelier-focus .project-component-settings-preview {position:static;}
+}
+@media(max-width:900px) {
+ :root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-header {grid-template-columns:minmax(0,1fr);}
+ :root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-actions {justify-content:flex-start;}
+}

@@ -161,6 +161,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   });
 
   ipcMain.handle('workspace:choose', async (): Promise<WorkspaceChangeResult> => {
+    if(convergenceTempRequested(process.argv))return {cancelled:true};
     const ticket=unsavedWindows.approveAll();if(!ticket)return {cancelled:true};
     const result = await dialog.showOpenDialog({ title: 'Choisir le dossier AtoumWeb Manager', defaultPath: workspace.root, properties: ['openDirectory'] });
     if (result.canceled || result.filePaths.length === 0) return { cancelled: true };
@@ -994,3 +995,4 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('time:list', (_event, filters?: TimeSessionFilters) => database.time.list(filters));
   ipcMain.handle('time:summary', (_event, filters?: TimeSessionFilters) => database.time.summary(filters));
 }
+import {convergenceTempRequested} from './convergenceTempGuard';

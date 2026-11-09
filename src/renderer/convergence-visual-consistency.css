@@ -1,0 +1,43 @@
+/* Shared approved Noir/Confort frame; module layouts and semantic status colours stay local. */
+:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell.aw-manager-shell{
+ --canvas:#031321;--surface:#071b2d;--surface-soft:#10283d;--sidebar:#041321;--sidebar-text:#e9f2ff;
+ --muted:#a9c2df;--border:#25445d;--accent:#ffda00;--accent-strong:#ffda00;--text:#f0f5fc;
+}
+:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell .catalog-stack{
+ --ot-panel:var(--surface);--ot-card:var(--surface-soft);--ot-edge:var(--border);
+}
+.aw-rail-route-brand{display:contents}.aw-rail-consistent-brand{display:none}
+:root[data-theme='noir'][data-density='comfort'] .aw-rail-route-brand{display:none}
+:root[data-theme='noir'][data-density='comfort'] .aw-rail-consistent-brand{display:block;width:100%}
+:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell .content-area>.page-heading h1,
+:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell .ot-title h1{font-size:30px;line-height:1.25}
+
+/* Do not squeeze ten configurable columns into the viewport or split brand names into letters. */
+.app-shell .catalog-stack .aw-data-table th,
+.app-shell .catalog-stack .aw-data-table th .aw-ui-button-label{word-break:normal;overflow-wrap:normal;white-space:normal}
+.app-shell .catalog-stack .aw-data-table th{height:auto;vertical-align:middle;line-height:1.4}
+.app-shell .catalog-stack .aw-data-table tbody td{vertical-align:top;line-height:1.5}
+.content-area:has(>.catalog-stack.ot-table-fit){display:block;overflow:auto}
+.app-shell .catalog-stack.ot-table-fit{display:flex;flex-direction:column;overflow:visible;flex:none}
+.app-shell .catalog-stack.ot-table-fit>.catalog-layout,
+.app-shell .catalog-stack.ot-table-fit .catalog-table-panel,
+.app-shell .catalog-stack.ot-table-fit .aw-configured-table{display:block;flex:none;min-height:0}
+.app-shell .catalog-stack.ot-table-fit .aw-data-table-scroll{flex:none;max-height:none;min-height:0;overflow:auto}
+.app-shell .catalog-stack.ot-table-fit .ot-pagination{background:var(--ot-panel)}
+.ot-historical-version-note{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 16px;margin:12px 0;border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;background:var(--surface-soft)}
+.ot-historical-version-note p{margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+.ot-historical-version-note button{flex-shrink:0}
+@media(max-width:800px){.ot-historical-version-note{align-items:flex-start;flex-direction:column}}
+
+.app-shell .ot-editor-active .catalog-identity-section .catalog-summary-source{grid-template-columns:minmax(0,1fr);gap:6px}
+
+/* Frozen action cells must hide horizontally scrolled cells underneath. */
+.app-shell .catalog-stack .aw-data-table td[data-column-id=open]{background:var(--ot-panel);z-index:4;box-shadow:-1px 0 var(--ot-edge)}
+.app-shell .catalog-stack .aw-data-table th[data-column-id=open]{background:var(--ot-card);z-index:5;box-shadow:-1px 0 var(--ot-edge)}
+
+/* With horizontal overflow, keep headers and cells in the same natural column track. */
+.app-shell .catalog-stack .aw-data-table [data-column-id=open]{position:static;box-shadow:none}
+
+:root[data-theme=noir][data-density=comfort] .aw-manager-shell .content-area h1{font-size:30px;line-height:1.25;letter-spacing:-.4px}
+
+.app-shell .catalog-stack .catalog-table .status-pill{white-space:nowrap;overflow-wrap:normal;word-break:normal}

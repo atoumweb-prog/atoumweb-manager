@@ -1,5 +1,7 @@
 # Offres & Tarifs V2 — suivi des 39 décisions
 
+> Complément du 08/11 : simulation complète 81 + pack V3.9.4/V1.5 sur copie de la préproduction, 47 contrôles de services et 12 Electron réussis. Le [rapport d’activation](../../integration-v394-v15-20261108/activation-preproduction/RAPPORT-SIMULATION-ACTIVATION-2026-11-08.md) distingue compatibilité TEMP, runtime restant à préparer et associations non activées. Aucun nouvel OT ni fonction des lots suivants déclaré terminé ; aucune activation réelle.
+
 Décisions utilisateur du 06/11/2026 ; lancement du lot 1 autorisé explicitement dans la mission de la session. État technique complété au 08/11/2026. [Texte intégral des arbitrages](ARBITRAGES-VALIDES-OT01-OT39.md), conservé sans modification depuis le dossier utilisateur. Les illustrations ne remplacent pas ces décisions.
 
 Le registre distingue décision fonctionnelle validée, livraison et validation visuelle de l’application. « Partiel » signifie uniquement le périmètre indiqué ; aucun OT n’est clos par un bouton ou un test. Les états se cumulent (un existant peut être conservé et son extension rester à développer). Validation graphique et ergonomique du seul lot 1 reçue de Carlos le 07/11/2026 ; deux finitions de clôture contrôlées techniquement ensuite. Les autres lots ne sont pas validés par cette décision. Le 08/11/2026, Carlos valide la conception graphique du lot 2 et accepte ses réalisations fonctionnelles dans leur périmètre TEMP. Aucune activation réelle ni clôture Git autorisée.

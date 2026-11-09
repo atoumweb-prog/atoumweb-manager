@@ -7,6 +7,7 @@ const brandIcon = resolve(__dirname, 'assets/brand/candidate/atoum-manager.ico')
 
 const config: ForgeConfig = {
   packagerConfig: {
+    ...(process.env.ATOUMWEB_ELECTRON_ZIP_DIR ? {electronZipDir: resolve(process.env.ATOUMWEB_ELECTRON_ZIP_DIR)} : {}),
     asar: true,
     name: 'AtoumWeb Manager',
     executableName: 'atoumweb-manager',

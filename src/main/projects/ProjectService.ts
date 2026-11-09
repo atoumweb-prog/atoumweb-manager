@@ -1,3 +1,4 @@
+import { assertSiteNodeWritable } from './archivedSiteGuard';
 import {ProjectContributionTargetService} from './ProjectContributionTargetService';
 import { ProjectOperationalService } from './ProjectOperationalService';
 import { TimeService } from '../time/TimeService';
@@ -498,6 +499,7 @@ export class ProjectService {
   }
 
   addProjectNode(projectId: string, input: ProjectNodeInput): ProjectDetail {
+    if (input.parentId) assertSiteNodeWritable(this.database, input.parentId);
     this.getProject(projectId); this.validateNodeInput(input);
     if (input.businessCategory && !BUSINESS_TIME_CATEGORIES.includes(input.businessCategory)) throw Error('Catégorie métier invalide.');
     if (input.parentId) this.assertProjectParent(projectId, input.parentId);
@@ -519,6 +521,8 @@ export class ProjectService {
   }
 
   updateProjectNode(nodeId: string, input: Partial<ProjectNodeInput>): ProjectDetail {
+    assertSiteNodeWritable(this.database, nodeId, input.parentId !== undefined || input.sortOrder !== undefined);
+    if (input.parentId) assertSiteNodeWritable(this.database, input.parentId);
     const row = this.database.get<ProjectNodeRow>('SELECT * FROM project_nodes WHERE id=?', [nodeId]);
     if (!row) throw new Error('Tâche introuvable.');
     if(input.status && !['todo','cancelled'].includes(input.status)) {
@@ -566,6 +570,7 @@ export class ProjectService {
   }
 
   setProjectNodePause(nodeId: string, paused: boolean, reason?: string | null): ProjectDetail {
+    assertSiteNodeWritable(this.database, nodeId);
     const row = this.database.get<ProjectNodeRow>('SELECT * FROM project_nodes WHERE id=?', [nodeId]);
     if (!row) throw new Error('Tâche introuvable.');
     const now = nowIso();
@@ -583,6 +588,7 @@ export class ProjectService {
   }
 
   completeProjectPhase(nodeId: string): ProjectDetail {
+    assertSiteNodeWritable(this.database, nodeId, true);
     const phase = this.database.get<ProjectNodeRow>('SELECT * FROM project_nodes WHERE id=?', [nodeId]);
     if (!phase) throw new Error('Phase introuvable.');
     if (phase.parent_id) throw new Error('Seule une phase racine peut être terminée en bloc.');
