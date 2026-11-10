@@ -45,6 +45,12 @@ function openPage(page: HomePageName): void {
   window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: page }));
 }
 
+/** Lot 5 : ouvre la page avec son formulaire de création déjà ouvert. */
+function quickCreate(page: HomePageName, action: 'prospect' | 'quote' | 'request'): void {
+  try { sessionStorage.setItem('home-quick-action', action); } catch { /* la page s'ouvre quand même */ }
+  openPage(page);
+}
+
 function openProspectPipeline(filter: 'all' | 'relaunch' | 'overdue' = 'all'): void {
   window.dispatchEvent(new CustomEvent('atoumweb:open-prospects-view', { detail: { view: 'pipeline', pipelineFilter: filter } }));
 }
@@ -233,7 +239,7 @@ actions:<article className="home-card home-actions-card">
     </div>;
   }
   return <section className="home-dashboard" aria-busy={loading}>
-   <header className="home-heading"><div><h1>Accueil</h1></div><div className="home-heading-actions"><button ref={personalizationTrigger} type="button" className="home-personalize" aria-controls="home-personalization" aria-expanded={personalizationOpen} onClick={()=>{const next=!personalizationOpen;setPersonalizationOpen(next);if(next)requestAnimationFrame(()=>personalizationPanel.current?.querySelector<HTMLElement>('summary')?.focus());}}><OperationIcon name="settings"/>Personnaliser</button><AppButton aria-label="Actualiser l’Accueil" title="Actualiser" icon={<OperationIcon name="refresh"/>} onAction={load}/></div></header>
+   <header className="home-heading"><div><h1>Accueil</h1></div><div className="home-heading-actions"><div className="home-quick-create" role="group" aria-label="Créer rapidement"><button type="button" className="primary-button" onClick={()=>quickCreate('Prospects','prospect')}><OperationIcon name="plus" size={18}/>Prospect</button><button type="button" className="primary-button" onClick={()=>quickCreate('Devis','quote')}><OperationIcon name="plus" size={18}/>Devis</button><button type="button" className="primary-button" onClick={()=>quickCreate('Interventions & Maintenance','request')}><OperationIcon name="plus" size={18}/>Demande</button></div><button ref={personalizationTrigger} type="button" className="home-personalize" aria-controls="home-personalization" aria-expanded={personalizationOpen} onClick={()=>{const next=!personalizationOpen;setPersonalizationOpen(next);if(next)requestAnimationFrame(()=>personalizationPanel.current?.querySelector<HTMLElement>('summary')?.focus());}}><OperationIcon name="settings"/>Personnaliser</button><AppButton aria-label="Actualiser l’Accueil" title="Actualiser" icon={<OperationIcon name="refresh"/>} onAction={load}/></div></header>
    {failed.length>0&&<AppNotice level="error" action={{label:'Réessayer',onClick:()=>void load()}}>Sources indisponibles : {failed.map(key=>sourceLabels[key]).join(', ')}. Les dernières données confirmées, si disponibles, peuvent être anciennes.</AppNotice>}
 
    {resources.alerts?.status!=='ready'&&<AppNotice level="warning">La source des alertes n’est pas confirmée pour cette actualisation. {has("alerts")?"Les alertes précédemment connues restent affichées.":"La situation des alertes reste inconnue."}</AppNotice>}

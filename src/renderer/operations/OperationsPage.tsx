@@ -93,7 +93,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
   const [interventionSplitPercent, setInterventionSplitPercent] = useState(34);
   const [interventionExpanded, setInterventionExpanded] = useState(false);
   const [conclusionInterventionId, setConclusionInterventionId] = useState<string | null>(null);
-  const [createRequestOpen, setCreateRequestOpen] = useState(false);
+  const [createRequestOpen, setCreateRequestOpen] = useState(()=>{try{if(sessionStorage.getItem('home-quick-action')==='request'){sessionStorage.removeItem('home-quick-action');return true;}}catch{}return false;}); // lot 5 : ouverture directe depuis l'Accueil
   const [createInterventionOpen, setCreateInterventionOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [interventionDemoMode, setInterventionDemoMode] = useState(false);

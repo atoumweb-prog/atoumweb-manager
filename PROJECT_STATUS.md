@@ -1,5 +1,19 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 10/11/2026 — Lot 5 : « Prospect simplifié » (branche claude/lot5-prospect-simplifie)
+
+Demande de Carlos du 10/11 : terminer jusqu’au lot 5. Changements d’écran et de parcours uniquement ; aucune règle de devis ni de qualification modifiée.
+
+- [x] Bouton « + Prospect » (au lieu de « + Entreprise ») ; création en **une seule étape** : société et contact visibles, adresse, analyse de l’entreprise et préparation du premier échange repliées et facultatives ; « Créer le prospect » remplace « Ajouter à l’annuaire ». Le nom seul suffit (inchangé côté moteur).
+- [x] Prospection s’ouvre sans filtre actif (le filtre « À suivre » masquait un prospect sur quatre).
+- [x] Fiche prospect à deux niveaux de navigation : les six étapes du parcours deviennent un repère d’avancement non cliquable ; restent les onglets et leurs sous-onglets. « Démarrer la prospection » est inchangé.
+- [x] Besoins : « Enregistrer et continuer » (enregistre puis passe à la section suivante, seulement si l’enregistrement a réussi) ; « Enregistrer et faire le devis » remplace « Préparer le devis », qui n’enregistrait pas la saisie.
+- [x] Accueil : « + Prospect », « + Devis », « + Demande » en haut, chacun ouvrant directement son formulaire.
+- [x] Suite complète 1 941 tests et typecheck réussis (aucun nouveau test unitaire : changements d’interface). Essai réel sur copie jetable : 8 vérifications, 0 erreur console ; captures hors dépôt (`C:/DEV/Livrables/Lot5-prospect-simplifie-2026-11-10`).
+- [ ] Recette `scripts/fixtures/creation-company.cjs` à adapter : elle vérifie encore les quatre onglets de l’ancienne création (libellé du bouton déjà mis à jour) ; non rejouée.
+- [ ] « Démarrer la prospection » reste un geste séparé de la création (règle existante conservée) ; à revoir avec Carlos s’il veut le fusionner.
+- [x] Lot 4 poussé le 10/11 avec l’accord de Carlos : PR brouillon #174 sur `claude/lot3-devis-rapide`.
+
 ## 10/11/2026 — Lot 4 : « Envoyer et faire accepter » (branche claude/lot4-envoyer-accepter)
 
 Décisions de Carlos du 10/11 (feu vert sur le plan) : le Manager prépare le PDF et un brouillon d’e-mail mais n’envoie rien lui-même ; restent obligatoires avant l’envoi « Mon entreprise », des CGV présentes, un échéancier complet et les règles propres aux particuliers ; les six points restants restent obligatoires mais sont pré-remplis ; la fiche Abby s’affiche dès l’envoi.
@@ -12,7 +26,6 @@ Décisions de Carlos du 10/11 (feu vert sur le plan) : le Manager prépare le PD
 - [ ] Non vérifié en conditions réelles : le bouton « Ouvrir le projet » (aucun devis accepté rejoué) et un devis pour un particulier (contrôles de rétractation et de médiation, qui restent dans le réglage détaillé).
 - [ ] Recettes Electron `ec03-transmission-scenarios.cjs` et `check-native-commercial-ui.cjs` adaptées aux nouveaux libellés (et messagerie neutralisée dans leurs bancs) mais **non validées** : EC03 s’arrête avant toute étape d’envoi, à l’attente de `.cgv-clause`, élément d’un écran de clauses antérieur à la refonte du parcours devis (non causé par le lot 4, non réparé ici) ; la recette native commerciale n’a pas été relancée.
 - [x] Préproduction de Carlos mise à jour avec le lot 4 le 10/11 (Manager du commit f5ac2131, données conservées).
-- [ ] Branche `claude/lot4-envoyer-accepter` locale, non poussée (accord de Carlos requis).
 
 Prochaine action : essai de Carlos (six questions, envoi, fiche Abby) ; reprise par un autre modèle selon `docs/REPRISE-CLAUDE.md` — lot 5 puis lots visuels A–F.
 
