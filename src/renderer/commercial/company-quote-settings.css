@@ -3,3 +3,12 @@
 .quote-editor-tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.quote-editor-split{display:grid;grid-template-columns:minmax(360px,1fr) minmax(360px,1fr);gap:18px}.quote-editor-preview{min-width:0;position:sticky;top:0;align-self:start}.quote-editor-split .quote-journey-tabs{flex-wrap:wrap}.quote-editor-split .quote-journey-tabs button{min-width:0}.quote-editor-split .quote-line-editor-grid{grid-template-columns:1fr}@media(max-width:1100px){.quote-editor-split{grid-template-columns:1fr}.quote-editor-preview{position:static}}
 
 .settings-grid>.company-quote-settings{grid-column:1/-1}.company-quote-settings nav button{padding:10px 15px;border:1px solid #7d8792;border-radius:8px;font:inherit;font-weight:700;background:transparent;color:inherit}.company-quote-settings nav button[aria-selected=true]{color:#111;background:#ffda00}.pdf-pages-controls{color:#171b20;background:#eef0f2}.pdf-pages-controls select{color:#171b20;background:white}.company-quote-settings .company-logo button{padding:8px 12px;border:1px solid #7d8792;border-radius:7px;background:transparent;color:inherit;font:inherit}
+
+/* Lot 1 — Mon entreprise : choix TVA et cas particuliers repliés. */
+.company-vat-choice { border: 1px solid var(--border, rgba(255,255,255,.12)); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; }
+.company-vat-choice legend { font-weight: 600; padding: 0 6px; }
+.company-settings-form .company-vat-choice label { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; text-align: left; width: auto; }
+.company-settings-form .company-vat-choice input[type=radio] { width: auto; min-height: 0; margin: 0; flex: 0 0 auto; }
+.company-settings-form .company-vat-choice p { text-align: left; margin: 4px 0 0; }
+.company-admin-advanced { margin-top: 6px; }
+.company-admin-advanced summary { cursor: pointer; color: var(--muted-text, inherit); font-size: 14px; }
