@@ -12,7 +12,7 @@ Demande de Carlos du 10/11 : terminer jusqu’au lot 5. Changements d’écran e
 - [x] Suite complète 1 941 tests et typecheck réussis (aucun nouveau test unitaire : changements d’interface). Essai réel sur copie jetable : 8 vérifications, 0 erreur console ; captures hors dépôt (`C:/DEV/Livrables/Lot5-prospect-simplifie-2026-11-10`).
 - [ ] Recette `scripts/fixtures/creation-company.cjs` à adapter : elle vérifie encore les quatre onglets de l’ancienne création (libellé du bouton déjà mis à jour) ; non rejouée.
 - [ ] « Démarrer la prospection » reste un geste séparé de la création (règle existante conservée) ; à revoir avec Carlos s’il veut le fusionner.
-- [x] Préproduction de Carlos mise à jour avec le lot 5 le 10/11 (Manager du commit 0f705d64, données conservées). Branche du lot 5 locale, non poussée.
+- [x] Préproduction de Carlos mise à jour avec le lot 5 le 10/11 (Manager du commit 0f705d64, données conservées). Lot 5 poussé le 10/11 avec l’accord de Carlos : PR brouillon #175.
 - [x] Lot 4 poussé le 10/11 avec l’accord de Carlos : PR brouillon #174 sur `claude/lot3-devis-rapide`.
 
 ## 10/11/2026 — Lot 4 : « Envoyer et faire accepter » (branche claude/lot4-envoyer-accepter)
