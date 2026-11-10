@@ -11,6 +11,7 @@ import { OperationalSalesService } from '../operations/OperationalSalesService';
 import { CommercialRulesService } from './CommercialRulesService';
 import type { CommercialVersionRules } from '../../shared/commercialRules';
 import { emptyContractParameters, withContractAudience } from '../../shared/quoteContractPreparation';
+import { approvedPaymentPlan } from '../../shared/approvedPaymentPlans';
 import { QuoteContractPreparationService } from './QuoteContractPreparationService';
 import type { ProjectCommercialService } from '../projects/ProjectCommercialService';
 import { randomUUID } from 'node:crypto';
@@ -24,6 +25,7 @@ import {
   type QuoteDetail,
   type QuoteFilters,
   type QuoteInput,
+  type QuoteQuickStartOptions,
   type QuoteLine,
   type QuoteLineInput,
   type QuoteStatus,
@@ -237,7 +239,10 @@ export class QuoteService {
     const defaults=new QuoteDocumentSettingsService(this.database).get();
     const validityDays = input.validityDays ?? defaults.validityDays;
     if (!Number.isInteger(validityDays) || validityDays <= 0) throw new Error('Durée de validité invalide.');
-    const depositPercent = input.depositPercent ?? defaults.depositPercent;
+    const paymentPlan = input.paymentPlan ? approvedPaymentPlan(input.paymentPlan) : null;
+    if (input.paymentPlan && !paymentPlan) throw new Error('Échéancier inconnu.');
+    // L'échéancier de l'offre fixe l'acompte : le premier jalon et l'acompte ne peuvent pas diverger.
+    const depositPercent = paymentPlan ? paymentPlan.milestones[0].percent : input.depositPercent ?? defaults.depositPercent;
     if (!Number.isInteger(depositPercent) || depositPercent < 0 || depositPercent > 100) throw new Error('Acompte invalide.');
     const contractAudience = input.contractAudience ?? this.inferContractAudience(input.prospectId, input.clientAccountId);
     if (!['professional', 'consumer'].includes(contractAudience)) throw new Error('Type de client contractuel invalide.');
@@ -278,7 +283,9 @@ export class QuoteService {
           nowString,
         ],
       );
-      this.database.run('UPDATE quotes SET contract_parameters_json=? WHERE id=?',[JSON.stringify(emptyContractParameters(contractAudience,depositPercent)),id]);
+      const contractParameters = emptyContractParameters(contractAudience,depositPercent);
+      if (paymentPlan) { contractParameters.payment.preset = paymentPlan.preset; contractParameters.payment.milestones = paymentPlan.milestones; }
+      this.database.run('UPDATE quotes SET contract_parameters_json=? WHERE id=?',[JSON.stringify(contractParameters),id]);
       new QuoteDocumentSettingsService(this.database).adopt(id);
       this.writeActivity(id, 'quote_created', `Devis ${number} créé`);
       if (input.prospectId) this.database.run("UPDATE prospects SET stage='quote_to_prepare',updated_at=? WHERE id=? AND stage NOT IN ('new','won','lost')", [nowString, input.prospectId]);
@@ -307,7 +314,12 @@ export class QuoteService {
     }catch(error){this.database.exec('ROLLBACK;');throw error;}
   }
 
-  createWithLines(input: QuoteInput, lines: Array<{ catalogVersionId?: string; input: QuoteLineInput }>): QuoteDetail {
+  /**
+   * `options` = devis rapide (assistant) : CGV publiées posées d'office sur ce devis neuf et
+   * prospect « nouveau » passé à « Devis à préparer ». Sans options, le comportement historique
+   * est inchangé (E72 : un devis seul ne démarre pas la prospection).
+   */
+  createWithLines(input: QuoteInput, lines: Array<{ catalogVersionId?: string; input: QuoteLineInput }>, options: QuoteQuickStartOptions = {}): QuoteDetail {
     this.database.exec('BEGIN IMMEDIATE;');
     try {
       const quote = this.create(input, true);
@@ -315,6 +327,10 @@ export class QuoteService {
         if (line.catalogVersionId) this.addCatalogLine(quote.id, line.catalogVersionId, line.input);
         else this.addCustomLine(quote.id, line.input);
       }
+      if (options.advanceNewProspect && input.prospectId) this.database.run("UPDATE prospects SET stage='quote_to_prepare',updated_at=? WHERE id=? AND stage='new' AND archived_at IS NULL", [nowIso(), input.prospectId]);
+      // Mêmes clauses que « comparer puis appliquer », posées une seule fois à la création.
+      // Toute mise à jour ultérieure reste une commande explicite ; un devis figé ne bouge jamais.
+      if (options.applyContractTerms) this.contractTerms.syncQuote(quote.id, 'CGV ajoutées automatiquement à la création du devis');
       this.database.exec('COMMIT;');
       return this.get(quote.id);
     } catch (error) {

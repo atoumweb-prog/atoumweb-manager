@@ -1,7 +1,7 @@
 import {ProspectCreationAnalysis} from './ProspectCreationAnalysis';
 import {creationResearch,EMPTY_CREATION_ANALYSIS,type CreationAnalysisFields} from '../../shared/prospectCreationAnalysis';
 import {ProspectQuoteWorkspace} from './ProspectQuoteWorkspace';
-import {qualificationMissing,beforeQuoteMissing,type ProspectMissing} from '../../shared/prospectProgress';
+import {qualificationMissing,type ProspectMissing} from '../../shared/prospectProgress';
 import {ProspectTimeline} from './ProspectTimeline';
 import {activePipelineColumn} from '../../shared/prospectPipelineProjection';
 import './prospect-workspace-tabs.css';
@@ -664,7 +664,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
   const qualificationGaps=[...qualificationMissing(prospect),...(!hasContactMethod?[{key:'contact',label:'Moyen de contact valide',tab:'contacts' as const}]:[])];
   const warningKey=(target:string,missing:ProspectMissing[])=>target+':'+prospect.stage+':'+missing.map(m=>m.key).join(',');
   function completeMissing(item:ProspectMissing){requestUnsavedExit(()=>{setPhaseWarning(null);setHighlightMissing(true);if(item.tab==='contacts')applyWorkspaceTab('contacts');else{applyWorkspaceTab('needs');setNeedsSection(item.tab==='qualification'?'qualification':item.tab);requestAnimationFrame(()=>{document.querySelector<HTMLElement>('.prospect-desk-content [aria-invalid=true]')?.focus();});}});}
-  function goTab(tab:string){requestUnsavedExit(()=>{const missing=tab==='needs'&&['new','qualifying'].includes(prospect.stage??'new')?qualificationGaps:tab==='quotes'?[...(['new','qualifying'].includes(prospect.stage??'new')?qualificationGaps:[]),...beforeQuoteMissing(prospect,hasNeeds)]:[];if(missing.length&&!acknowledged.current.has(warningKey(tab,missing))){setPhaseWarning({target:tab,missing});return;}setViewStage(null);applyWorkspaceTab(tab);});}
+  function goTab(tab:string){requestUnsavedExit(()=>{const missing=tab==='needs'&&['new','qualifying'].includes(prospect.stage??'new')?qualificationGaps:[];if(missing.length&&!acknowledged.current.has(warningKey(tab,missing))){setPhaseWarning({target:tab,missing});return;}setViewStage(null);applyWorkspaceTab(tab);});}
 
   function validateOrShowQualification(){if(qualificationGaps.length){if(workspaceTab==='needs'&&needsSection==='qualification'){setHighlightMissing(true);document.querySelector<HTMLElement>('.qualification-panel-v2 [aria-invalid=true]')?.focus();}else requestUnsavedExit(()=>{setHighlightMissing(true);applyWorkspaceTab('needs');setNeedsSection('qualification');});}else requestUnsavedExit(()=>onStage('need_identified'));}
   const [needsSection,setNeedsSection]=useState('brief');

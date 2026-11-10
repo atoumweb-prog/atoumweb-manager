@@ -1,17 +1,20 @@
 import {emptyContractParameters} from '../../src/shared/quoteContractPreparation';
 import type {QuoteContractAudience} from '../../src/shared/contractTerms';
+import {approvedPaymentPlanForCode} from '../../src/shared/approvedPaymentPlans';
 
 /** Recipe rules only: no change to existing quotes or application defaults. */
 export function approvedSimulationPayment(code:string,audience:QuoteContractAudience){
  const p=emptyContractParameters(audience,100);
  const milestone=(label:string,percent:number,event:string)=>({label,percent,dueDate:null,event});
  let reference='',unresolved=false;
- if(code==='AW-WEB-VITRINE'||code==='AW-MARIAGE-HISTOIRE'){
-  reference=code==='AW-WEB-VITRINE'?'OFF-007':'SQ-24';
-  p.payment.preset='custom';p.payment.milestones=[milestone('Commande',40,'À la commande'),milestone('Solde',60,code==='AW-WEB-VITRINE'?'Avant mise en ligne':'À convenir explicitement — simulation bloquée')];
-  unresolved=code==='AW-MARIAGE-HISTOIRE';
- }else if(code==='AW-ECOM-BASE'||code.startsWith('V39-ECOM-')){
-  reference='OFF-007';p.payment.preset='30_40_30';p.payment.milestones=[milestone('Commande',30,'À la commande'),milestone('Validation du design',40,'À validation du design'),milestone('Mise en ligne',30,'Avant mise en ligne')];
+ const approved=approvedPaymentPlanForCode(code);
+ if(approved){
+  // OFF-007 : même source que l'assistant de devis (src/shared/approvedPaymentPlans.ts).
+  reference=approved.reference;p.payment.preset=approved.preset;p.payment.milestones=approved.milestones;
+ }else if(code==='AW-MARIAGE-HISTOIRE'){
+  reference='SQ-24';
+  p.payment.preset='custom';p.payment.milestones=[milestone('Commande',40,'À la commande'),milestone('Solde',60,'À convenir explicitement — simulation bloquée')];
+  unresolved=true;
  }else if(code==='V39-NL-PONCT-SIMPLE'){
   reference='SQ-24';p.payment.milestones=[milestone('Commande',100,'À la commande')];
  }else{

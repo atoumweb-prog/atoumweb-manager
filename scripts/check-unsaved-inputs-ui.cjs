@@ -13,7 +13,9 @@ if(!process.versions.electron){
  const answers=[],dialogs=[];dialog.showMessageBoxSync=(...args)=>{const options=args.at(-1);dialogs.push(options);return answers.shift()??0;};
  const base=repo.replaceAll('\\','/'),esbuild=require('esbuild'),checks=[];let database,win;
  esbuild.buildSync({stdin:{contents:['database/DatabaseService','workspace','ipc','unsaved','restoreQuitGate','operations/operationsIpc','referentials/referentialsIpc','backups/businessBackupsIpc','time/timeIpc'].map(p=>`export * from '${base}/src/main/${p}';`).join('\n')+`\nexport { MIGRATIONS as EXPECTED_MIGRATIONS } from '${base}/src/main/database/migrations';`,resolveDir:repo,loader:'ts'},bundle:true,loader:{'.png':'dataurl'},platform:'node',format:'cjs',outfile:path.join(temp,'services.cjs'),external:['electron'],logLevel:'silent'});
- for(const [entry,file,platform]of[['src/preload/preload.ts','preload.js','node'],['src/renderer/main.tsx','ui.js','browser']])esbuild.buildSync({entryPoints:[path.join(repo,entry)],bundle:true,loader:{'.png':'dataurl'},platform,format:platform==='node'?'cjs':undefined,outfile:path.join(temp,file),external:platform==='node'?['electron']:[],logLevel:'silent'});
+ // Import Vite « ?url » du moteur PDF : même contournement que check-ux-v2-lot01a-real-ui.cjs (l'aperçu PDF n'est pas testé ici).
+ fs.writeFileSync(path.join(temp,'pdf-worker-url.js'),'export default "./pdf.worker.min.mjs"');
+ for(const [entry,file,platform]of[['src/preload/preload.ts','preload.js','node'],['src/renderer/main.tsx','ui.js','browser']])esbuild.buildSync({entryPoints:[path.join(repo,entry)],bundle:true,loader:{'.png':'dataurl'},platform,alias:{'pdfjs-dist/build/pdf.worker.min.mjs?url':path.join(temp,'pdf-worker-url.js')},format:platform==='node'?'cjs':undefined,outfile:path.join(temp,file),external:platform==='node'?['electron']:[],logLevel:'silent'});
  fs.writeFileSync(path.join(temp,'index.html'),'<html><head><meta charset="utf-8"><link rel="stylesheet" href="ui.css"></head><body><div id="root"></div><script src="ui.js"></script></body></html>');const S=require(path.join(temp,'services.cjs'));
  const check=(name,ok)=>{checks.push({name,passed:!!ok});if(!ok)throw Error(name);};const sleep=ms=>new Promise(r=>setTimeout(r,ms));
  app.whenReady().then(async()=>{
@@ -154,10 +156,11 @@ if(!process.versions.electron){
    await wait('[...document.querySelectorAll(".quote-step-content select option")].some(o=>o.value==='+JSON.stringify(client.id)+')');
    await js('const e=document.querySelector(".quote-step-content select");e.value='+JSON.stringify(client.id)+';e.dispatchEvent(new Event("change",{bubbles:true}))');
    await sleep(100);
+   // Lot 3 : Pour qui → Offre → Options → Conditions (titre du devis) → Aperçu.
+   for(let step=1;step<=3;step++)await click('Suivant →');
+   await wait('!!document.querySelector(".quote-step-content input[placeholder^=\\"Ex. Création\\"]")');
+   await input('.quote-step-content input[placeholder^="Ex. Création"]',subject);
    await click('Suivant →');
-   await wait('!!document.querySelector(".quote-step-content input[placeholder]")');
-   await input('.quote-step-content input[placeholder]',subject);
-   for(let step=2;step<=5;step++)await click('Suivant →');
    await wait('[...document.querySelectorAll(".quote-wizard-actions button")].some(b=>b.textContent.trim()==="Créer le devis")');
    await js('const button=[...document.querySelectorAll(".quote-wizard-actions button")].find(b=>b.textContent.trim()==="Créer le devis");button.click();button.click()');
    for(let i=0;i<100&&!releaseCreate;i++)await sleep(20);

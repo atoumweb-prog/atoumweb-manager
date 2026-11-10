@@ -1,10 +1,11 @@
 import type {CatalogItemSummary} from '../../shared/commercial';
-import {OperationIcon, type OperationIconName} from '../operations/OperationIcon';
+import {OperationIcon} from '../operations/OperationIcon';
+import {catalogueFamilyIcon} from './catalogDisplay';
 import {catalogFamilies,familyPriceHints} from './catalogWorkspaceModel';
 
 export function CatalogFamiliesOverview({items,onFamily,onOpen,formatPrice}:{items:readonly CatalogItemSummary[];onFamily:(id:string)=>void;onOpen:(id:string)=>void;formatPrice:(item:CatalogItemSummary)=>string}) {
   const families=catalogFamilies(items),offers=items.filter(x=>x.type==='offer');
-  const familyIcon=(name:string):OperationIconName=>/maintenance/i.test(name)?'shield-check':/commerce/i.test(name)?'wallet':/mariage/i.test(name)?'gift':/site|landing/i.test(name)?'server':/photo|visuelle/i.test(name)?'image':/contenu/i.test(name)?'file-text':/audience|visibilit/i.test(name)?'chart':/application|WordPress/i.test(name)?'code':'wrench';
+  const familyIcon=catalogueFamilyIcon;
   const renderFamily=(family:ReturnType<typeof catalogFamilies>[number])=>{const hints=familyPriceHints(family.items);return <article key={family.id} className="ot-family-card" data-catalog-family={family.id}>
         <div className="ot-family-heading"><span className="ot-family-icon"><OperationIcon name={familyIcon(family.name)}/></span><h3>{family.name}</h3></div>
         <p>{family.offers} offre{family.offers>1?'s':''} · {family.services} service{family.services>1?'s':''}</p>

@@ -523,7 +523,7 @@ export class ContractTermsService {
     return {...formatContractPresentation({state:build.snapshotState,number:String(row.quote_number),subject:String(row.subject),totalCents:Number(row.contract_value_cents),estimatedDelay:row.estimated_delay as string|null,prerequisites:row.prerequisites_text as string|null,compiledAt:build.compiledAt??null,clauseText:build.snapshotState==='draft'?build.compiledText:build.snapshotText??'',clauses,parameters,administration,types,modules,lineDetails,warrantyLabels,clauseGroupLabels,lineCommitments,paymentLines:sold.map((l:Record<string,unknown>)=>({id:String(l.lineId),label:String(l.label),contractLineValueCents:Number(l.lineValueCents??0),snapshot:l.catalogue as Record<string,unknown>|null}))}),...(build.snapshotState==='draft'?{documentSettings:new QuoteDocumentSettingsService(this.database).forQuote(quoteId)}:{})};
   }
 
-  syncQuote(quoteId: string): QuoteContractBuild {
+  syncQuote(quoteId: string, activitySummary = 'CGV actualisées après commande explicite'): QuoteContractBuild {
     this.assertQuoteEditable(quoteId);
     this.database.exec('SAVEPOINT adopt_contract_terms;');
     try{
@@ -532,7 +532,7 @@ export class ContractTermsService {
         const types=new ContractTypeService(this.database).quoteReferences(quoteId);
         this.database.run('UPDATE quotes SET contract_type_references_json=? WHERE id=?',[JSON.stringify(types),quoteId]);
         this.syncQuoteInternal(quoteId);
-        this.writeActivity('quote', quoteId, 'quote_contract_synced', 'CGV actualisées après commande explicite');
+        this.writeActivity('quote', quoteId, 'quote_contract_synced', activitySummary);
       }
       this.database.exec('RELEASE adopt_contract_terms;');
     }catch(error){this.database.exec('ROLLBACK TO adopt_contract_terms; RELEASE adopt_contract_terms;');throw error;}
