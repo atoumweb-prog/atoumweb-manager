@@ -23,7 +23,7 @@ Point d'entrée pour reprendre le travail de Claude dans une **nouvelle conversa
 - **Un seul modèle visuel** : bleu nuit / jaune (thème Noir, Confort), logo de l'Accueil sur toutes les pages, cartes de l'Accueil aussi en bleu nuit / jaune. Pas de refonte des thèmes AtoumWeb/Blanc pour l'instant.
 - **Abby option 1** : devis + CGV produits et envoyés depuis le Manager ; facture faite dans Abby. Pas d'API Abby.
 - Qualification avant devis : **conseillée**, plus bloquante (fait au lot 3 ; un prospect tout neuf peut recevoir un devis).
-- 10/11 : options suggérées = seulement celles liées à l’offre dans le Catalogue (aucune liée pour l’instant : liste à proposer à Carlos) ; échéancier vitrine : le référentiel dit « 60 % avant mise en ligne », à confirmer face à « à la livraison ».
+- 10/11 : options suggérées = seulement celles liées à l’offre dans le Catalogue (aucune liée pour l’instant : liste à proposer à Carlos) ; échéancier vitrine : « 40 % à la commande, 60 % avant mise en ligne » (texte du référentiel, confirmé).
 - Pack V3.9.4 laissé sur la branche publique ; données personnelles déjà publiées par Codex (docs) : **laisser en l'état**.
 - 13 fiches renommées et familles uniques à l'activation ; « À vérifier — ancienne offre 499 € » lu « sur devis » ; annexes de la bibliothèque non intégrées.
 - Clauses 119 (références commerciales) et 033 (médiation, texte « À COMPLÉTER ») **non publiées**.
@@ -35,7 +35,7 @@ Point d'entrée pour reprendre le travail de Claude dans une **nouvelle conversa
 |---|---|
 | 1 Mon entreprise | fait (préproduction) |
 | 2 CGV disponibles (8 offres, 48 clauses) | fait (préproduction) |
-| 3 Devis rapide : un seul parcours depuis le prospect, qualification conseillée, besoin repris, offre choisie une fois par familles/icônes sans « Sans code · v1 », options suggérées, acompte selon l'offre (40/60 vitrine, 30/40/30 Woo), CGV ajoutées automatiquement à un devis neuf | fait (code et essai réel ; préproduction à mettre à jour après accord) |
+| 3 Devis rapide : un seul parcours depuis le prospect, qualification conseillée, besoin repris, offre choisie une fois par familles/icônes sans « Sans code · v1 », options suggérées, acompte selon l'offre (40/60 vitrine, 30/40/30 Woo), CGV ajoutées automatiquement à un devis neuf | fait (préproduction à jour, commit f92fd99d) ; liste d’options par offre proposée, à valider |
 | 4 Envoyer et faire accepter : bouton « Envoyer le devis » (PDF devis + CGV), liste de vérification en français (6 points restants : canal, livraison, jalons, garantie, licences, renouvellement), fiche « à recopier dans Abby » | **prochain** |
 | 5 Prospect simplifié : « + Prospect », une étape de création, 2 niveaux de navigation max, « Enregistrer et continuer », boutons rapides sur l'Accueil | à faire |
 | A–F visuel : en-tête unique (retirer « SQLite · 81 migrations »), barre d'outils, tableaux, cartes, texte ≥ 14 px, finitions (messages vides, 18 familles, bandeau Bibliothèque, retour en haut) | à faire |
