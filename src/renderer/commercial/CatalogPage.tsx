@@ -750,7 +750,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
             ) : catalogView === 'organized' ? (
               <CatalogFamiliesOverview items={filtered} formatPrice={formatPrice} onFamily={openFamily} onOpen={(id) => void openItem(id)} />
             ) : (
-              <ConfiguredDataTable<CatalogItemSummary> scope={CATALOG_ADMIN_VIEW} catalogContext={{value:filters,onApply:context=>{setFilters(context);setTablePage(1);}}} pagination={{page:tablePage,pageSize:filters.pageSize,onPage:setTablePage,onSize:size=>changeFilter('pageSize',size)}} store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>void openItem(item.id)} className="catalog-table" caption="Administration du catalogue · source complète · tri sur tous les résultats filtrés" columns={[
+              <ConfiguredDataTable<CatalogItemSummary> scope={CATALOG_ADMIN_VIEW} fitAvailable={false} defaultWidths={{category:130,identity:340,type:135,price:155,recommendedPrice:140,priceMode:135,status:100,public:80,version:180,open:80}} catalogContext={{value:filters,onApply:context=>{setFilters(context);setTablePage(1);}}} pagination={{page:tablePage,pageSize:filters.pageSize,onPage:setTablePage,onSize:size=>changeFilter('pageSize',size)}} store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>void openItem(item.id)} className="catalog-table" caption="Administration du catalogue · source complète · tri sur tous les résultats filtrés" columns={[
                 {id:'category',label:'Catégorie',sortValue:item=>item.category||null,render:item=>item.category||'—'},
                 {id:'identity',label:'Nom',required:true,sortValue:item=>item.name,render:item=><><strong>{item.name}</strong>{item.canonicalCode&&<small className="catalog-canonical-code">{item.canonicalCode}</small>}</>},
                 {id:'type',label:'Type',sortValue:item=>item.type,render:item=><span className="status-pill">{item.currentVersion?.commercialKind?KIND_LABELS[item.currentVersion.commercialKind]:item.type==='offer'?'Offre':'Service'}</span>},
@@ -790,6 +790,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 </div>
               </div>
               <div className="ot-version-context"><div className="detail-badges"><span className={`catalog-status catalog-${detail.status}`}>{STATUS_LABELS[detail.status]}</span><span className="status-pill">{detail.visiblePublic?'Visible site':'Interne'}</span><span className="status-pill">{detail.type==='offer'?'Offre':'Service'}</span></div><label>Version consultée<select aria-label="Version principale de la fiche" value={displayedVersion?.id??''} disabled={saving} onChange={e=>{const id=e.target.value;requestUnsavedExit(()=>{setConsultedVersionId(id);setVersionMode(false);setEditingDraftVersion(null);setPublicationCandidate(null);});}}>{detail.versions.map(v=><option key={v.id} value={v.id}>v{v.versionNumber} · {v.abandonedAt?'Abandonné':VERSION_STATUS_LABELS[v.status]}{v.id===detail.currentVersion?.id?' · Référence':''}</option>)}</select></label></div>
+              {displayedVersion?.status==='published' && detail.versions.some(v=>v.status==='draft'&&!v.abandonedAt) && <div className="ot-historical-version-note" role="note"><div><strong>Version publiée historique affichée</strong><p>Ses champs peuvent être incomplets. Les informations du brouillon restent distinctes et ne remplacent pas cette version publiée.</p></div><button type="button" className="secondary-button" onClick={()=>{const draft=detail.versions.find(v=>v.status==='draft'&&!v.abandonedAt);if(draft)requestUnsavedExit(()=>{setConsultedVersionId(draft.id);setVersionMode(false);setEditingDraftVersion(null);setPublicationCandidate(null);});}}>Consulter le brouillon</button></div>}
               <p className="ot-version-help">Consultation des champs de la version sélectionnée. Les Associations, Contrat & CGV et Production gardent leurs contextes et sauvegardes propres. La modification reprend le brouillon existant, s'il y en a un.</p>
               <div className="catalog-editor-tabs" role="tablist" aria-label="Éditeur des offres et services">
                 {CATALOG_EDITOR_TABS.map(tab=><button type="button" key={tab.id} role="tab"
@@ -811,7 +812,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 <strong>Identité de la prestation</strong>
                 <div className="ot-identity-overview"><span className="ot-title-icon"><OperationIcon name="package"/></span><div><h3>{detail.name}</h3><p>{detail.category||'Sans catégorie'} · {detail.type==='offer'?'Offre':'Service'}</p></div></div>
                 <Summary label="Code canonique" value={detail.canonicalCode || 'Non attribué'} />
-                {detail.identityProvenance && <Summary label="Source de l’attribution" value={detail.identityProvenance.reference} />}
+                {detail.identityProvenance && <Summary label="Source de l’attribution" wide value={detail.identityProvenance.reference} />}
                 {!detail.canonicalCode && <div className="catalog-code-assignment"><label>Code AW à attribuer<input value={canonicalCodeDraft} placeholder="AW-WEB-VITRINE" onChange={(e) => setCanonicalCodeDraft(e.target.value)} /></label><button className="secondary-button" type="button" disabled={saving || !canonicalCodeDraft.trim()} onClick={() => void assignCode()}>Attribuer ce code</button></div>}
                 <p className="muted">Le code attribué est durable. Les anciens éléments peuvent rester sans code jusqu’à leur rapprochement explicite.</p>
               </section>}
@@ -840,7 +841,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                       <Summary label="Libellé Abby" value={displayedVersion.abbyLabel || 'Non renseigné'} />
                       <Summary label="Unité" value={displayedVersion.unit || 'Non renseignée'} />
                       <Summary label="Périodicité" value={displayedVersion.periodicity || 'Non renseignée'} />
-                      {displayedVersion.provenance && <Summary label="Source" value={[displayedVersion.provenance.reference, displayedVersion.provenance.recordKey, displayedVersion.provenance.sha256].filter(Boolean).join(' · ')} />}
+                      {displayedVersion.provenance && <Summary label="Source" wide value={[displayedVersion.provenance.reference, displayedVersion.provenance.recordKey, displayedVersion.provenance.sha256].filter(Boolean).join(' · ')} />}
                       <Summary label="Prix conseillé" value={displayedVersion.recommendedPriceCents != null ? `${(displayedVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'} />
                       <Summary label="Acompte par défaut" value={displayedVersion.defaultDepositPercent != null ? `${displayedVersion.defaultDepositPercent} %` : '—'} />
                       <Summary label="Durée estimée" value={displayedVersion.estimatedMinutes != null ? `${displayedVersion.estimatedMinutes} min` : '—'} />
@@ -1130,8 +1131,8 @@ function CatalogFields({ draft, onChange, showIdentity = false, activeTab, ident
   );
 }
 
-function Summary({ label, value }: { label: string; value: string }) {
-  return <div className="summary-line"><strong>{label}</strong><span>{value}</span></div>;
+function Summary({ label, value, wide = false }: { label: string; value: string; wide?: boolean }) {
+  return <div className={`summary-line${wide ? ' catalog-summary-source' : ''}`}><strong>{label}</strong><span>{value}</span></div>;
 }
 
 function ListSummary({ label, values }: { label: string; values: string[] }) {

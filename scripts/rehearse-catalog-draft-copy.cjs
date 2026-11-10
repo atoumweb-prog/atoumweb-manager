@@ -40,6 +40,7 @@ try{
    if(!(o.type==='table'&&o.name==='catalog_versions')&&!o.name.includes('catalog_actual_cost_'))assert(objects.find(n=>n.name===o.name&&n.type===o.type).sql===o.sql,'Unexpected definition change '+o.name);
   }
   result.checks.push('Existing schema objects preserved except documented catalog_versions and actual-cost trigger changes');
+  if(!process.argv.includes('--migration-only')){
   const c=new S.CatalogService(db),created=c.createPersistent({type:'service',name:'TEST — Activation isolée 81'},{priceMode:null},crypto.randomUUID()),version=created.versions[0];
   c.saveDraftVersion(version.id,version,{...version,description:'TEST — Sauvegarde sur copie restaurée'});
   db.close();db=new S.NodeSqliteAdapter(copy);db.exec('PRAGMA foreign_keys=ON');const next=new S.CatalogService(db);
@@ -49,6 +50,7 @@ try{
   const duplicated=next.duplicate(input,request);assert(duplicated.id!==source.id&&duplicated.canonicalCode===null&&duplicated.versions.length===1,'Independent duplicate failed');assert(next.duplicate(input,request).id===duplicated.id,'Replay failed');
   result.checks.push('Chosen source version duplicated independently with explicit references and durable replay');
   result.functionalReferences=preview.references;
+  }else result.checks.push('Migration-only mode: no functional fixture inserted into the clean integration candidate');
  }
  result.finalIntegrity=db.all('PRAGMA integrity_check');result.finalForeignKeys=db.all('PRAGMA foreign_key_check');assert(result.finalIntegrity.length===1&&result.finalIntegrity[0].integrity_check==='ok'&&result.finalForeignKeys.length===0,'Final integrity failed');
  fs.writeFileSync(path.join(dir,'ESSAI-MIGRATION-COPIE.json'),JSON.stringify(result,null,2));console.log(JSON.stringify({migrationExecuted:result.migrationExecuted,blockers:before.blockers,duplicates:before.duplicates,checks:result.checks}));

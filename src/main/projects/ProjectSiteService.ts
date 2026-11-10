@@ -1,3 +1,4 @@
+import { assertSiteNodeWritable, ARCHIVED_SITE_READ_ONLY } from './archivedSiteGuard';
 import { ProjectBlueprintCompositionService } from './ProjectBlueprintCompositionService';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
@@ -80,6 +81,7 @@ export class ProjectSiteService {
   update(id: string, input: Partial<ProjectSiteInput>): ProjectSite {
     const row = this.getSiteRow(id);
     if (!row) throw new Error('Site projet introuvable.');
+    if (row.archived_at) throw new Error(ARCHIVED_SITE_READ_ONLY);
     const name = input.name === undefined ? row.name : clean(input.name);
     if (!name) throw new Error('Nom du site requis.');
     if (!row.archived_at) this.assertActiveSiteNameAvailable(row.project_id, name, id);
@@ -116,6 +118,7 @@ export class ProjectSiteService {
   }
 
   linkPage(projectSiteId: string, projectNodeId: string, input: ProjectSitePageInput = {}): ProjectSitePage {
+    assertSiteNodeWritable(this.database, projectNodeId);
     const site = this.getSiteRow(projectSiteId);
     if (!site) throw new Error('Site projet introuvable.');
     if (site.archived_at) throw new Error('Impossible de rattacher une page à un site archivé.');
@@ -152,6 +155,7 @@ export class ProjectSiteService {
   }
 
   unlinkPage(projectNodeId: string): void {
+    assertSiteNodeWritable(this.database, projectNodeId);
     const node = this.database.get<ProjectNodeIdentityRow>(
       'SELECT id,project_id,node_type,display_subtype,name FROM project_nodes WHERE id=?',
       [projectNodeId],

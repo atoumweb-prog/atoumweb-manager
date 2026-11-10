@@ -1,5 +1,9 @@
 # Manager — consignes et reprise courte
 
+**09/11 — dernière recette visuelle isolée :** Manager-CONVERGENCE-UX-V2-COHERENCE-20261109, nouveau profil/copie TEMP, [bilan de cohérence](COHERENCE-VISUELLE-CONVERGENCE-2026-11-09.md). Cadre commun Noir/Confort, tableau et version publiée/brouillon clarifiés. Le runtime du 08/11 déjà ouvert et la préproduction habituelle restent conservés ; aucun commit/push/installation autorisé.
+
+**09/11 — candidat de convergence distinct :** [Sites & Pages + Clients + Offres & Tarifs](CONVERGENCE-SITES-OFFRES-2026-11-08.md), runtime Manager-CONVERGENCE-UX-V2-20261108 sur copie TEMP. La préproduction habituelle du 04/11 reste inchangée. Code non commité, aucune installation/publication autorisée.
+
 ## État courant et prochaine action — UX lot 1, 3 novembre 2026
 
 **Lot 1 validé officiellement par Carlos le 03/11/2026 ; commit et push de la seule branche UX autorisés.** Worktree `C:/DEV/01_PROJETS/AtoumWeb/atoumweb-manager-ux-home-shell-lot1-20261103`, branche indépendante `codex/ux-v2-home-shell-lot1-20261103`, HEAD de départ `8a24ae37d10573b7db54cc0268c6e9c0959e8532` avant le commit de validation du lot 1. Toutes les évolutions UX de #165 sont conservées dans cette ascendance ; la pile contractuelle héritée n’est pas un nouveau delta à intégrer. Autorisation limitée à l’enregistrement du lot 1 et de ses tests sur cette branche UX ; aucune fusion, intégration dans main ou modification des PR contractuelles.

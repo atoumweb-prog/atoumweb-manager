@@ -141,6 +141,7 @@ export function ProjectCompositionItemSettings({
   onMessage,
   docked = false,
   operationPending = false,
+  readOnly = false,
   onClose,
   onCollapse,
   onExpand,
@@ -155,6 +156,7 @@ export function ProjectCompositionItemSettings({
   onMessage: (message: string) => void;
   docked?: boolean;
   operationPending?: boolean;
+  readOnly?: boolean;
   onClose?: () => void;
   onCollapse?: () => void;
   onExpand?: () => void;
@@ -291,6 +293,7 @@ export function ProjectCompositionItemSettings({
   }
 
   async function save(): Promise<void> {
+    if (readOnly) return;
     if (operation.current || operationPending || loadFailed) return;
     operation.current = true;
     setBusy(true);
@@ -317,6 +320,7 @@ export function ProjectCompositionItemSettings({
   }
 
   async function reset(): Promise<void> {
+    if (readOnly) return;
     remember();
     if (operation.current || operationPending || loadFailed) return;
     operation.current = true;
@@ -372,10 +376,10 @@ export function ProjectCompositionItemSettings({
         <small>Modifications locales uniquement · source Bibliothèque intacte</small>
       </div>
       <div>
-        <button className="secondary-button" type="button" disabled={!undoStack.length || busy} onClick={undo} title="Annuler la dernière modification">↶ Annuler</button>
-        <button className="secondary-button" type="button" disabled={!redoStack.length || busy} onClick={redo} title="Rétablir la modification">↷ Rétablir</button>
-        <button className="secondary-button" type="button" disabled={busy} onClick={() => unsaved.request(() => { void reset(); })}>⟲ Version Bibliothèque</button>
-        <button className="primary-button project-component-validate-button" type="button" disabled={busy || operationPending || loadFailed || !dirty || !draft.html.trim()} onClick={() => void save()}>
+        <button className="secondary-button" type="button" disabled={readOnly || !undoStack.length || busy} onClick={undo} title="Annuler la dernière modification">↶ Annuler</button>
+        <button className="secondary-button" type="button" disabled={readOnly || !redoStack.length || busy} onClick={redo} title="Rétablir la modification">↷ Rétablir</button>
+        <button className="secondary-button" type="button" disabled={readOnly || busy} onClick={() => unsaved.request(() => { void reset(); })}>⟲ Version Bibliothèque</button>
+        <button className="primary-button project-component-validate-button" type="button" disabled={readOnly || busy || operationPending || loadFailed || !dirty || !draft.html.trim()} onClick={() => void save()}>
           {dirty ? '✓ Valider les changements' : '✓ Changements validés'}
         </button>
         {onExpand && <button className="secondary-button project-inspector-expand-action" type="button" aria-label="Agrandir l’atelier" title="Agrandir l’atelier" onClick={onExpand}>Agrandir</button>}
@@ -385,7 +389,7 @@ export function ProjectCompositionItemSettings({
     </div>
 
     <fieldset disabled={busy || operationPending || loadFailed} style={{border:0,padding:0,margin:0,minWidth:0}}><div className="project-component-settings-grid">
-      <div className="project-component-settings-controls">
+      <div className="project-component-settings-controls"><fieldset disabled={readOnly} style={{border:0,padding:0,margin:0,minWidth:0,display:'grid',gap:12}}>
         <div className="project-component-settings-section">
           <div>
             <span className="eyebrow">Textes</span>
@@ -533,17 +537,18 @@ export function ProjectCompositionItemSettings({
         </details>
 
         <div className="project-component-settings-actions">
-          <button className="primary-button" type="button" disabled={busy || operationPending || loadFailed || !dirty || !draft.html.trim()} onClick={() => void save()}>
+          <button className="primary-button" type="button" disabled={readOnly || busy || operationPending || loadFailed || !dirty || !draft.html.trim()} onClick={() => void save()}>
             {dirty ? '✓ Valider les changements' : '✓ Changements validés'}
           </button>
           <button className="secondary-button" type="button" onClick={() => setModulePreviewOpen(true)}>Voir le module seul</button>
         </div>
 
+        </fieldset>
         <div className="project-component-promotion">
           <div>
             <span className="eyebrow">Capitaliser</span>
             <strong>Envoyer cette adaptation comme variante</strong>
-            <p>La nouvelle variante sera créée en « À adapter / valider », jamais directement prête.</p>
+            <p>La nouvelle variante sera créée en « À adapter / valider », jamais directement prête.{readOnly && ' Le site archivé et son module restent inchangés.'}</p>
           </div>
           <input value={variantName} onChange={(event) => setVariantName(event.target.value)} />
           <button className="secondary-button" type="button" disabled={busy || dirty || !item.hasLocalChanges || !variantName.trim()} onClick={() => void promote()}>
@@ -551,7 +556,6 @@ export function ProjectCompositionItemSettings({
           </button>
         </div>
       </div>
-
       <div className="project-component-settings-preview">
         <div>
           <span className="eyebrow">Aperçu du module</span>

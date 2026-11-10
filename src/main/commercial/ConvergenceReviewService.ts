@@ -32,9 +32,12 @@ export class ConvergenceReviewService {
     catch (error) { catalogAnomalies.push(error instanceof Error ? error.message : String(error)); }
     const contractRows = contractPlan.rows.map((row) => {
       const proposal = proposals.clauses.find((entry) => entry.code === row.code)!;
-      const template = this.terms.getTemplate(proposal.origin.templateId);
-      const imported=this.database.get<{draft_version_id:string}>('SELECT draft_version_id FROM contract_editorial_import_entries WHERE clause_id=? ORDER BY rowid DESC LIMIT 1',[template.id]);
-      const draft = imported ? template.versions.find((version) => version.id === imported.draft_version_id && version.status === 'draft') ?? null : null;
+      // Historical source IDs may be absent from a new approved-pack workspace.
+      // Keep the editorial plan's conflict visible; never substitute a same-code clause.
+      const template = this.database.get('SELECT id FROM contract_clause_templates WHERE id=?',[proposal.origin.templateId])
+        ? this.terms.getTemplate(proposal.origin.templateId) : null;
+      const imported=template?this.database.get<{draft_version_id:string}>('SELECT draft_version_id FROM contract_editorial_import_entries WHERE clause_id=? ORDER BY rowid DESC LIMIT 1',[template.id]):undefined;
+      const draft = imported && template ? template.versions.find((version) => version.id === imported.draft_version_id && version.status === 'draft') ?? null : null;
       const decision = draft ? this.database.get<{decision:'approved_for_publication'|'needs_revision';reviewer:string;note:string|null;created_at:string}>(
         'SELECT decision,reviewer,note,created_at FROM contract_convergence_decisions WHERE draft_version_id=?', [draft.id]) : undefined;
       const decisionHistory = draft ? this.database.all<{decision:'approved_for_publication'|'needs_revision';reviewer:string;note:string;created_at:string}>(
@@ -46,7 +49,7 @@ export class ConvergenceReviewService {
         title: proposal.origin.title, publishedVersion: proposal.origin.version,
         publishedBody: proposal.origin.body, proposedTitle: row.title, proposedBody: proposal.proposal,
         action: row.action, anomaly: row.anomaly,
-        dependencies: template.catalogItemIds.map((id) => this.database.get<{ canonical_code: string | null }>('SELECT canonical_code FROM catalog_items WHERE id=?', [id])?.canonical_code ?? id),
+        dependencies: (template?.catalogItemIds??[]).map((id) => this.database.get<{ canonical_code: string | null }>('SELECT canonical_code FROM catalog_items WHERE id=?', [id])?.canonical_code ?? id),
         family: String((proposal as ContractEditorialProposalDocument['clauses'][number] & { family?: string }).family ?? 'Non classée'),
         risk: String((proposal as ContractEditorialProposalDocument['clauses'][number] & { risk?: string }).risk ?? 'Non évalué'),
         defect: String((proposal as ContractEditorialProposalDocument['clauses'][number] & { defect?: string }).defect ?? ''),

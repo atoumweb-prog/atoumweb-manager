@@ -11,11 +11,11 @@ import {SavedViewPicker} from './SavedViewPicker';
 import {OperationIcon} from '../operations/OperationIcon';
 
 /** Ports the tested 01D controls to real lists. No entities or selection in storage. */
-export function ConfiguredDataTable<T>({scope,columns,rows,selectedId,getId,onSelect,store,caption,className,rowAttributes,fitAvailable=true,defaultVisibleColumnIds,controlsHost,compactHiddenColumnIds=[],catalogContext,pagination}:{
+export function ConfiguredDataTable<T>({scope,columns,rows,selectedId,getId,onSelect,store,caption,className,rowAttributes,fitAvailable=true,defaultWidths={},defaultVisibleColumnIds,controlsHost,compactHiddenColumnIds=[],catalogContext,pagination}:{
  catalogContext?:{value:CatalogTableContext;onApply:(context:CatalogTableContext)=>void};
  pagination?:{page:number;pageSize:25|50|100;onPage:(page:number)=>void;onSize:(size:25|50|100)=>void};
  controlsHost?:HTMLElement|null;compactHiddenColumnIds?:readonly string[];
- defaultVisibleColumnIds?:readonly string[];fitAvailable?:boolean;scope:string;columns:readonly TableColumn<T>[];rows:readonly T[];selectedId:string|null;
+ defaultWidths?:Readonly<Record<string,number>>;defaultVisibleColumnIds?:readonly string[];fitAvailable?:boolean;scope:string;columns:readonly TableColumn<T>[];rows:readonly T[];selectedId:string|null;
  getId:(row:T)=>string;onSelect?:(row:T)=>void;store:VisualPreferenceStore;caption:string;className?:string;
  rowAttributes?:(row:T)=>{className?:string;[key:`data-${string}`]:string|undefined};
 }){
@@ -61,7 +61,7 @@ export function ConfiguredDataTable<T>({scope,columns,rows,selectedId,getId,onSe
  return <section className="aw-configured-table" data-table-scope={scope}>
   {controlsHost?createPortal(controls,controlsHost):controls}
   {error&&<p role="alert">{error}</p>}
-  <DataTable fitAvailable={fitAvailable} className={className} rowAttributes={rowAttributes} rows={pagination?page.rows:sortedRows} columns={ordered.filter(c=>visible.includes(c.id)&&!(viewId==='standard'&&store.getItem(key)===null&&compactHiddenColumnIds.includes(c.id)))} selectedId={selectedId} getId={getId} onRowActivate={onSelect} sort={options.sort} onSort={id=>{update({...latest.current,sort:nextTableSort(latest.current.sort,id)});pagination?.onPage(1);}} widths={options.widths} onWidth={(id,width)=>update({...latest.current,widths:{...latest.current.widths,[id]:width}})} caption={caption} preferenceScope={scope+':'+viewId}/>
+  <DataTable fitAvailable={fitAvailable} className={className} rowAttributes={rowAttributes} rows={pagination?page.rows:sortedRows} columns={ordered.filter(c=>visible.includes(c.id)&&!(viewId==='standard'&&store.getItem(key)===null&&compactHiddenColumnIds.includes(c.id)))} selectedId={selectedId} getId={getId} onRowActivate={onSelect} sort={options.sort} onSort={id=>{update({...latest.current,sort:nextTableSort(latest.current.sort,id)});pagination?.onPage(1);}} widths={{...defaultWidths,...options.widths}} onWidth={(id,width)=>update({...latest.current,widths:{...latest.current.widths,[id]:width}})} caption={caption} preferenceScope={scope+':'+viewId}/>
   {pagination&&<nav className="ot-pagination" aria-label="Pagination du catalogue"><span role="status">{page.start}–{page.end} sur {page.total} résultats</span><label>Lignes par page <select aria-label="Lignes par page" value={pagination.pageSize} onChange={event=>{pagination.onSize(Number(event.target.value) as 25|50|100);pagination.onPage(1);}}>{[25,50,100].map(size=><option key={size} value={size}>{size}</option>)}</select></label><button type="button" aria-label="Première page" disabled={page.page===1} onClick={()=>pagination.onPage(1)}>«</button><button type="button" aria-label="Page précédente" disabled={page.page===1} onClick={()=>pagination.onPage(page.page-1)}>‹</button><span>Page {page.page} / {page.pages}</span><button type="button" aria-label="Page suivante" disabled={page.page===page.pages} onClick={()=>pagination.onPage(page.page+1)}>›</button><button type="button" aria-label="Dernière page" disabled={page.page===page.pages} onClick={()=>pagination.onPage(page.pages)}>»</button></nav>}
  </section>;
 }

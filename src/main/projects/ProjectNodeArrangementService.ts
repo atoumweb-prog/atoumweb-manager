@@ -1,3 +1,4 @@
+import { assertSiteNodeWritable } from './archivedSiteGuard';
 import type { DatabaseAdapter } from '../database/DatabaseAdapter';
 import type { MoveProjectNodeInput, ProjectDetail } from '../../shared/projects';
 import type { ProjectService } from './ProjectService';
@@ -18,6 +19,8 @@ export class ProjectNodeArrangementService {
   ) {}
 
   move(nodeId: string, input: MoveProjectNodeInput): ProjectDetail {
+    assertSiteNodeWritable(this.database, nodeId, true);
+    if (input.parentId) assertSiteNodeWritable(this.database, input.parentId);
     if (!Number.isInteger(input.targetIndex) || input.targetIndex < 0) throw new Error('Position de destination invalide.');
     const node = this.requireNode(nodeId);
     const targetParentId = input.parentId ?? null;
@@ -34,6 +37,13 @@ export class ProjectNodeArrangementService {
     const targetIndex = Math.min(input.targetIndex, targetSiblings.length);
     targetSiblings.splice(targetIndex, 0, node);
 
+    // Resequencing must not change an archived Page as an indirect side effect.
+    const oldSiblings = oldParentId !== targetParentId ? this.siblings(node.project_id, oldParentId).filter(item => item.id !== nodeId) : [];
+    for (const siblings of [targetSiblings, oldSiblings]) {
+      siblings.forEach((item, index) => {
+        if (item.sort_order !== index * 10) assertSiteNodeWritable(this.database, item.id, true);
+      });
+    }
     this.database.exec('BEGIN IMMEDIATE;');
     try {
       const now = new Date().toISOString();
@@ -59,7 +69,7 @@ export class ProjectNodeArrangementService {
 
   private resequence(nodes: NodeRow[], now: string): void {
     nodes.forEach((item, index) => {
-      this.database.run('UPDATE project_nodes SET sort_order=?, updated_at=? WHERE id=?', [index * 10, now, item.id]);
+      if (item.sort_order !== index * 10) this.database.run('UPDATE project_nodes SET sort_order=?, updated_at=? WHERE id=?', [index * 10, now, item.id]);
     });
   }
 

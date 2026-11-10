@@ -121,37 +121,38 @@ On ne modifie jamais directement la base en service. On **sauvegarde**, on **pr�
 3. Copiez aussi le dossier du profil et les documents du workspace : la sauvegarde SQLite ne contient pas les fichiers joints.
 4. Notez l'empreinte (SHA-256) de la sauvegarde.
 
-### Étape B — Répétition, puis copie de mise en service
+### Étape B — Préparer la copie de mise en service
 
-On travaille sur **deux copies** de la sauvegarde, jamais sur la base en service.
+Une seule commande, qui ne touche jamais la base en service :
 
-**B1. Répétition (copie jetable).** Elle prouve que tout passe sur vos données réelles.
+```bash
+node scripts/prepare-v394-activation-copy.cjs --snapshot-report "<dossier de sauvegarde>\SAUVEGARDE-RESTAURATION.json" --output "<dossier NOUVEAU>"
+```
 
-1. Migration 81 (brouillons persistants du catalogue) avec contrôles complets :
-   ```bash
-   node scripts/rehearse-catalog-draft-copy.cjs --snapshot-report "<rapport JSON de l'étape A>"
-   ```
-   Arrêt si plusieurs brouillons existent pour une même prestation : décision manuelle requise, rien n'est choisi automatiquement.
-   ⚠️ Ce script **crée volontairement deux fiches « TEST »** (création et duplication) pour vérifier le fonctionnement. Cette copie sert de preuve, **elle ne doit jamais être mise en service**.
-2. Import du pack : simulation, puis application avec l'empreinte du plan :
-   ```bash
-   node scripts/integrate-approved-v394-temp.cjs --database "<copie TEMP>" --report "<rapport-simulation.json>"
-   node scripts/integrate-approved-v394-temp.cjs --database "<copie TEMP>" --report "<rapport-application.json>" --apply-preview <planSha256 du rapport de simulation>
-   ```
-   Attendu : 130 tarifs et 119 clauses en brouillon, aucun blocage, intégrité `ok`.
-3. Renommage des 13 fiches et familles : fonction `applyApprovedPackIdentityTemp` (PR #168).
+Ce qu'elle fait, sur une copie neuve de la sauvegarde :
+1. vérifie que la sauvegarde est intacte **et que la base en service n'a pas changé depuis** (sinon : refus, refaites l'étape A) ;
+2. migration 81 (brouillons du catalogue) — refus si plusieurs brouillons existent pour une même prestation ;
+3. import du pack V3.9.4 : 130 tarifs et 119 clauses **en brouillon** ;
+4. noms des 13 fiches et familles (décisions du 09/11) ;
+5. contrôles : aucune ligne existante perdue ni modifiée en dehors des fiches du pack (nom, famille, code) ; ajouts seulement là où l'import les prévoit ; rien de publié ; aucune fiche « TEST » ; intégrité ; le moteur du Manager démarre sur la copie.
 
-**B2. Copie de mise en service (copie propre).** Mêmes opérations que B1 (migration 81, import, renommage et familles), sur une **nouvelle** restauration de la sauvegarde, **sans aucune donnée de test**.
+Résultat dans le dossier de sortie : `atoumweb-manager.sqlite` (la copie prête), `RAPPORT-ACTIVATION.md` (à lire) et `RAPPORT-ACTIVATION.json`. **Au moindre écart, la commande s'arrête avec « REFUSÉ » et ne laisse aucun fichier.**
 
-⚠️ **La commande qui enchaîne B2 n'existe pas encore.** Les scripts actuels mêlent la migration 81 et des essais qui écrivent des fiches TEST, et le renommage n'a pas de commande. À développer et faire valider avant l'activation : une seule commande, limitée aux copies TEMP, qui applique les trois opérations sans essai et produit un rapport (empreintes, comptages, intégrité).
+*Répétition faite le 09/11/2026 sur la préproduction : copie prête, 21 fiches existantes modifiées (celles du pack, nom/famille/code uniquement), base de préproduction inchangée. Dossier : `C:\DEV\Livrables\Activation-V394-repetition-2026-11-09`.*
 
-**B3. Contrôle de la copie propre** : intégrité, clés étrangères, devis historiques inchangés, 130 tarifs et 119 clauses présents, aucune fiche « TEST ».
+> Les anciens scripts `rehearse-catalog-draft-copy.cjs` et `integrate-approved-v394-temp.cjs` restent des outils de **test** : le premier écrit volontairement des fiches « TEST » dans sa copie. Ne jamais mettre en service une copie produite par eux.
 
 ### Étape C — Mise en service 🔒
 
-1. Manager toujours fermé. Si des fichiers `atoumweb-manager.sqlite-wal` ou `-shm` sont encore présents à côté de la base, **arrêtez** : le Manager n'a pas été fermé proprement, ou la base a changé depuis la sauvegarde. Revenez à l'étape A. Sinon, renommez la base en service (par exemple `atoumweb-manager.sqlite.avant-v394`), puis placez la copie propre (B2) à sa place, sous le même nom.
-2. Ouvrez le **nouveau** Manager sur ce workspace. *L'ancien Manager refusera d'ouvrir cette base (migration 81 inconnue) : c'est normal et protecteur.*
-3. Vérification rapide : un ancien devis s'ouvre à l'identique ; **Offres & Tarifs** montre les brouillons V3.9.4 ; **Documents & Contrats** montre les 119 clauses en brouillon.
+1. Manager toujours fermé.
+2. Vérifiez que la base en service n'a pas changé depuis la sauvegarde : son empreinte doit être celle notée dans `SAUVEGARDE-RESTAURATION.json` (`sourceFingerprintsBefore`).
+   ```powershell
+   Get-FileHash "<chemin>\atoumweb-manager.sqlite" -Algorithm SHA256
+   ```
+   Si elle diffère, ou si le fichier `atoumweb-manager.sqlite-wal` n'est pas vide (taille différente de 0), **arrêtez** et recommencez à l'étape A. Un fichier `-shm` seul, avec un `-wal` vide, est sans conséquence.
+3. Renommez la base en service (par exemple `atoumweb-manager.sqlite.avant-v394`) et mettez de côté ses fichiers `-wal`/`-shm` avec elle. Copiez la copie prête à sa place, sous le nom `atoumweb-manager.sqlite`, et vérifiez son empreinte (celle du rapport).
+4. Ouvrez le **nouveau** Manager sur ce workspace. *L'ancien Manager refusera d'ouvrir cette base (migration 81 inconnue) : c'est normal et protecteur.*
+5. Vérification rapide : un ancien devis s'ouvre à l'identique ; **Offres & Tarifs** montre les brouillons V3.9.4 ; **Documents & Contrats** montre les 119 clauses en brouillon.
 
 ### Étape D — Publication commerciale 🔒
 
@@ -180,7 +181,7 @@ Ne jamais : ouvrir la base activée avec l'ancien Manager en forçant ; supprime
 
 | Sujet | État |
 |---|---|
-| **Mécanisme d'activation intégré** | Inexistant. La partie 2 est une procédure manuelle ; la commande de l'étape B2 (copie propre : migration 81 + import + renommage/familles, sans essai) reste à écrire. |
+| **Mécanisme d'activation intégré** | La copie propre est préparée par une commande (étape B) ; le remplacement de la base (étape C) et la publication (étape D) restent manuels, par choix. Pas de bouton dans l'application. |
 | **Renouvellements** | Pas de tableau des échéances, pas d'alerte avant la date limite de refus, pas d'envoi d'information au client, pas de reconduction ni de facturation automatique. |
 | **Mécanismes B2C (particuliers)** | Rétractation : clauses et contrôle d'exécution anticipée présents, mais le parcours de vente réel reste à vérifier. Information de reconduction nominative et **résiliation en ligne** : non développées. |
 | **RC Pro** | Aucune couverture attestée ; décision non arbitrée. Le Manager l'affiche en avertissement, sans rien présumer. |

@@ -1,3 +1,4 @@
+import { assertSiteNodeWritable, assertSiteCompositionWritable } from '../projects/archivedSiteGuard';
 import { randomUUID } from 'node:crypto';
 import type {
   AtoumWebCompositionAddItemInput,
@@ -68,6 +69,7 @@ export class AtoumWebCompositionService {
     const page = this.assertProjectPage(projectNodeId);
     const existing = this.getForProjectPage(projectNodeId);
     if (existing) return existing;
+    assertSiteNodeWritable(this.database, projectNodeId);
 
     this.database.exec('SAVEPOINT page_composition_create;');
     try {
@@ -90,7 +92,9 @@ export class AtoumWebCompositionService {
   }
 
   attachToProjectPage(projectNodeId: string, compositionId: string): AtoumWebCompositionDetail {
+    assertSiteNodeWritable(this.database, projectNodeId);
     const page = this.assertProjectPage(projectNodeId);
+    assertSiteCompositionWritable(this.database, compositionId);
     const composition = this.get(compositionId);
     if (composition.status === 'archived') throw new Error('Réactive la composition avant de la rattacher à une Page.');
 
@@ -115,6 +119,7 @@ export class AtoumWebCompositionService {
   }
 
   detachFromProjectPage(projectNodeId: string): void {
+    assertSiteNodeWritable(this.database, projectNodeId);
     const page = this.assertProjectPage(projectNodeId);
     const link = this.database.get<{ composition_id: string }>(
       'SELECT composition_id FROM project_page_compositions WHERE project_node_id=?',
@@ -170,6 +175,7 @@ export class AtoumWebCompositionService {
   }
 
   update(id: string, input: Partial<AtoumWebCompositionInput>): AtoumWebCompositionDetail {
+    assertSiteCompositionWritable(this.database, id);
     const current = this.get(id);
     if (current.status === 'archived') throw new Error('Réactive la composition avant de la modifier.');
     const name = input.name === undefined ? current.name : this.requiredName(input.name);
@@ -184,6 +190,7 @@ export class AtoumWebCompositionService {
   }
 
   addItem(id: string, input: AtoumWebCompositionAddItemInput): AtoumWebCompositionDetail {
+    assertSiteCompositionWritable(this.database, id);
     const composition = this.get(id);
     if (composition.status !== 'draft') throw new Error('Seule une composition en brouillon peut être modifiée.');
 
@@ -238,6 +245,7 @@ export class AtoumWebCompositionService {
   }
 
   updateItemLocalCode(id: string, itemId: string, input: AtoumWebCompositionItemLocalCodeInput): AtoumWebCompositionDetail {
+    assertSiteCompositionWritable(this.database, id);
     const composition = this.get(id);
     if (composition.status !== 'draft') throw new Error('Seule une composition en brouillon peut être modifiée.');
     const item = composition.items.find((candidate) => candidate.id === itemId);
@@ -270,6 +278,7 @@ export class AtoumWebCompositionService {
   }
 
   resetItemLocalCode(id: string, itemId: string): AtoumWebCompositionDetail {
+    assertSiteCompositionWritable(this.database, id);
     const composition = this.get(id);
     if (composition.status !== 'draft') throw new Error('Seule une composition en brouillon peut être modifiée.');
     const item = composition.items.find((candidate) => candidate.id === itemId);
@@ -290,6 +299,7 @@ export class AtoumWebCompositionService {
     return this.get(id);
   }
 
+  // Promotion creates a separate library variant; it never edits the source occurrence.
   promoteItemVariant(id: string, itemId: string, input: AtoumWebCompositionPromoteVariantInput) {
     const composition = this.get(id);
     const item = composition.items.find((candidate) => candidate.id === itemId);
@@ -337,6 +347,7 @@ export class AtoumWebCompositionService {
   }
 
     removeItem(id: string, itemId: string): AtoumWebCompositionDetail {
+    assertSiteCompositionWritable(this.database, id);
     const composition = this.get(id);
     if (composition.status !== 'draft') throw new Error('Seule une composition en brouillon peut être modifiée.');
     const existing = this.database.get<{ id: string }>(
@@ -359,6 +370,7 @@ export class AtoumWebCompositionService {
   }
 
   moveItem(id: string, itemId: string, input: AtoumWebCompositionMoveItemInput): AtoumWebCompositionDetail {
+    assertSiteCompositionWritable(this.database, id);
     const composition = this.get(id);
     if (composition.status !== 'draft') throw new Error('Seule une composition en brouillon peut être modifiée.');
     const items = composition.items;
@@ -397,6 +409,7 @@ export class AtoumWebCompositionService {
    * edits, other windows or a newer Page state.
    */
   restoreOrder(id: string, expectedIds: string[], targetIds: string[]): AtoumWebCompositionDetail {
+    assertSiteCompositionWritable(this.database, id);
     const composition=this.get(id);
     if (composition.status!=='draft') throw new Error('Seule une composition en brouillon peut être réorganisée.');
     const current=composition.items.map(item=>item.id);
@@ -433,6 +446,7 @@ export class AtoumWebCompositionService {
   }
 
   archive(id: string): AtoumWebCompositionDetail {
+    assertSiteCompositionWritable(this.database, id);
     this.get(id);
     const now = new Date().toISOString();
     this.database.run("UPDATE atoumweb_compositions SET status='archived',archived_at=?,updated_at=? WHERE id=?", [now, now, id]);
@@ -440,6 +454,7 @@ export class AtoumWebCompositionService {
   }
 
   reactivate(id: string): AtoumWebCompositionDetail {
+    assertSiteCompositionWritable(this.database, id);
     this.get(id);
     const now = new Date().toISOString();
     this.database.run("UPDATE atoumweb_compositions SET status='draft',archived_at=NULL,updated_at=? WHERE id=?", [now, id]);

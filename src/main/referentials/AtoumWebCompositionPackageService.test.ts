@@ -274,8 +274,10 @@ describe('AtoumWebCompositionPackageService', () => {
     projectSites.linkPage(site.id,page.id,{role:'standard'});
     const composition = compositions.ensureForProjectPage(page.id);
     expect(() => projectPackages.exportPagePackage(page.id)).toThrow(/au moins un composant/);
-    projectSites.setArchived(site.id,true);
+    // Un Site archivé est en lecture seule (garde du 09/11) : le composant est ajouté avant l'archivage.
     compositions.addItem(composition.id,{libraryItemId:source.id});
+    projectSites.setArchived(site.id,true);
+    expect(() => compositions.addItem(composition.id,{libraryItemId:source.id})).toThrow(/archivé.*lecture seule/);
     expect(() => projectPackages.exportPagePackage(page.id)).toThrow(/Site actif.*composition/i);
     expect(database.all('SELECT id FROM project_page_exports WHERE project_node_id=?',[page.id])).toHaveLength(0);
   });

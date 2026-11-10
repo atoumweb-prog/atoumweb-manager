@@ -1,0 +1,66 @@
+'use strict';
+// Focused archive protection check: real App/preload/IPC, TEMP only, no capture.
+module.exports = async ({ db, evalUI: js, get, wait, navigate, test, sleep }) => {
+  const checks = [], check = (ok, label) => { test(ok, label); checks.push(label); };
+  const click = async selector => { await js(`const e=document.querySelector(${JSON.stringify(selector)});if(!e||e.matches(':disabled'))throw Error('Unavailable');e.click()`); await sleep(90); };
+  const text = async (selector, label) => { await js(`const e=[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>e.textContent.includes(${JSON.stringify(label)}));if(!e||e.matches(':disabled'))throw Error('Unavailable '+${JSON.stringify(label)});e.click()`); await sleep(100); };
+  const p = db.projects.createInternal({ name: 'TEST — Protection archives' });
+  const org = db.crm.createOrganization({ name: 'TEST — Client archives' }), client = db.crm.createClient({ organizationId: org.id });
+  db.database.run('UPDATE projects SET client_account_id=? WHERE id=?', [client.id, p.id]);
+  const site = db.projectSites.create(p.id, { name: 'TEST — Site archivé' });
+  const detail = db.projects.addProjectNode(p.id, { name: 'TEST — Page archivée', type: 'module', displaySubtype: 'page' });
+  const page = detail.nodes.find(node => node.displaySubtype === 'page');
+  db.projectSites.linkPage(site.id, page.id, { desiredPath: '/test' });
+  const source = db.atoumWebTechnicalLibrary.createReusableCode({ category: 'section', name: 'TEST — Bloc archive', html: '<h1>TEST archive</h1>', css: '', javascript: '' });
+  const comp = db.atoumWebCompositions.ensureForProjectPage(page.id);
+  const item = db.atoumWebCompositions.addItem(comp.id, { libraryItemId: source.id }).items[0];
+  db.atoumWebCompositions.updateItemLocalCode(comp.id, item.id, { html: '<h1>TEST adaptation enregistrée</h1>' });
+  db.projectSites.setArchived(site.id, true);
+  const snapshot = () => JSON.stringify(db.database.all("SELECT name FROM sqlite_master WHERE type='table' AND name<>'settings' ORDER BY name")
+    .map(({ name }) => [name, db.database.all('SELECT * FROM "' + name.replaceAll('"', '""') + '" ORDER BY rowid')]));
+  const before = snapshot();
+  await js("document.documentElement.dataset.theme='noir';document.documentElement.dataset.density='comfort'");
+  await navigate('Projets'); await text('tr', p.name); await text('.project-production-nav button', 'Sites');
+  await text('.project-sites-tree-panel button', page.name);
+  await wait('document.querySelector(".project-page-composition-item-wrap")', 'archived composition');
+  await click('.project-sites-page-info-summary');
+  check(await get('[...document.querySelectorAll(".project-sites-page-info input,.project-sites-page-info select")].every(e=>e.matches(":disabled"))'), 'Name, role, path and Site all locked');
+  check(await get('document.querySelector(".project-sites-detail-panel").textContent.includes("Réactive le site")'), 'Read-only explanation visible');
+  check(await get('[...document.querySelectorAll(".project-page-composition-row-actions button")].filter(e=>["↑","↓","Retirer"].includes(e.textContent)).every(e=>e.disabled)'), 'Composition removal and order commands locked');
+  check(await get('document.querySelector(".project-page-composition-actions .primary-button").disabled'), 'Component creation unavailable');
+  await click('.sites-v2-more summary');
+  check(await get('[...document.querySelectorAll(".sites-v2-more button")].every(e=>e.disabled)'), 'Secondary mutation commands locked');
+  await click('.sites-v2-more summary');
+  await text('.project-page-composition-actions button', 'Aperçu');
+  await wait('document.querySelector(".page-preview iframe")', 'read-only Page preview');
+  check(true, 'Page preview remains available'); await text('.page-preview button', 'Fermer');
+  await text('.project-page-composition-row-actions button', 'Réglages');
+  await wait('document.querySelector(".project-component-note textarea")', 'read-only settings');
+  check(await get('document.querySelector(".project-component-note textarea").matches(":disabled") && document.querySelector(".project-component-validate-button").disabled'), 'Local settings and validation locked');
+  check(await get('[...document.querySelectorAll(".project-component-settings-preview-devices button")].every(e=>!e.matches(":disabled"))'), 'Preview device controls remain available');
+  await text('.project-component-settings-preview-devices button', 'Mobile');
+  await text('.project-page-composition-row-actions button', 'Code / aperçu');
+  await wait('document.querySelector(".project-page-inspector-dock pre")', 'read-only code inspector');
+  check(true, 'Code inspector remains available');
+  let rejected = false;
+  try { await get(`window.atoumweb.projects.projects.updateNode(${JSON.stringify(page.id)},{name:'NON'})`); } catch { rejected = true; }
+  check(rejected, 'Indirect IPC mutation is rejected');
+  check(await get(`(await window.atoumweb.referentials.compositions.listPageExports(${JSON.stringify(page.id)})).length===0`), 'History remains readable');
+  check(snapshot() === before, 'Consultation and rejected IPC leave all business rows unchanged');
+  const archiveState = () => JSON.stringify({ site: db.projectSites.get(site.id), page: db.projects.getProject(p.id).nodes,
+    composition: db.atoumWebCompositions.get(comp.id), library: db.atoumWebTechnicalLibrary.get(source.id) });
+  const archiveBefore = archiveState(), libraryCount = db.atoumWebTechnicalLibrary.list().length;
+  check(await get('!document.querySelector(".project-component-promotion input").matches(":disabled") && !document.querySelector(".project-component-promotion button").matches(":disabled")'), 'Existing independent-copy command remains available');
+  await text('.project-component-promotion button', 'Envoyer vers la Bibliothèque');
+  await wait('document.querySelector(".notice")?.textContent.includes("Variante")', 'independent variant created');
+  check(db.atoumWebTechnicalLibrary.list().length === libraryCount + 1 && archiveState() === archiveBefore, 'Reuse creates a separate library item without changing the archived source');
+  await text('.project-sites-tree-panel .project-site-tree-site', site.name);
+  await text('.project-sites-detail-actions button', 'Réactiver');
+  await text('.project-sites-tree-panel button', page.name); await click('.project-sites-page-info-summary');
+  check(await get('[...document.querySelectorAll(".project-sites-page-info input,.project-sites-page-info select")].every(e=>!e.matches(":disabled"))'), 'Explicit reactivation restores Page editing');
+  await text('.project-page-composition-row-actions button', 'Réglages');
+  await wait('document.querySelector(".project-component-note textarea")', 'active settings');
+  check(await get('!document.querySelector(".project-component-note textarea").matches(":disabled")'), 'Explicit reactivation restores component editing');
+  require('node:fs').writeFileSync(require('node:path').join(process.env.ATOUMWEB_SITES_LOT2_OUTPUT, 'readonly-result.json'), JSON.stringify({ checks, captures: 0 }, null, 2));
+  console.log('SITES_READ_ONLY ' + JSON.stringify({ passed: checks.length, captures: 0 }));
+};

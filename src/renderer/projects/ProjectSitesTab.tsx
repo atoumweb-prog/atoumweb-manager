@@ -12,6 +12,7 @@ import { ProjectPageCompositionPanel } from './ProjectPageCompositionPanel';
 import { ProjectSiteDataProtectionPanel } from './ProjectSiteDataProtectionPanel';
 import { requestUnsavedExit, useUnsavedDraft } from '../unsaved/unsaved';
 import './ProjectSitesTab.css';
+import './sites-pages-v2.css';
 
 function formatElapsed(seconds: number): string {
   const safe = Math.max(0, Math.floor(seconds));
@@ -60,6 +61,20 @@ export function ProjectSitesTab({
   initialViewContext?: ProjectSitesViewContext | null;
   onViewContextChange?: (view: ProjectSitesViewContext) => void;
 }) {
+  const rootRef = useRef<HTMLElement>(null);
+  const [v2, setV2] = useState(false);
+  const [availableWidth, setAvailableWidth] = useState(0);
+  const [treeQuery, setTreeQuery] = useState('');
+  const [foldedSites, setFoldedSites] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const update = () => setV2(document.documentElement.dataset.theme === 'noir' && document.documentElement.dataset.density === 'comfort');
+    update();
+    const themeObserver = new MutationObserver(update);
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-density'] });
+    const resizeObserver = new ResizeObserver(([entry]) => setAvailableWidth(entry.contentRect.width));
+    if (rootRef.current) resizeObserver.observe(rootRef.current);
+    return () => { themeObserver.disconnect(); resizeObserver.disconnect(); };
+  }, []);
   const [sites, setSites] = useState<ProjectSite[]>([]);
   const [links, setLinks] = useState<ProjectSitePage[]>([]);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(initialViewContext?.selectedSiteId ?? null);
@@ -198,7 +213,9 @@ export function ProjectSitesTab({
       const rect = workspace.getBoundingClientRect();
       if (!rect.width) return;
       const ratio = ((event.clientX - rect.left) / rect.width) * 100;
-      setSplitPercent(Math.max(24, Math.min(68, ratio)));
+      setSplitPercent(v2
+        ? Math.max(220 / rect.width * 100, Math.min(360 / rect.width * 100, ratio))
+        : Math.max(24, Math.min(68, ratio)));
     };
     const onUp = () => {
       document.body.classList.remove('project-resizing');
@@ -336,6 +353,8 @@ export function ProjectSitesTab({
   const selectedSite = selectedPage
     ? (selectedLink ? sites.find((site) => site.id === selectedLink.projectSiteId) ?? null : null)
     : (selectedSiteId ? sites.find((site) => site.id === selectedSiteId) ?? null : null);
+
+  const siteReadOnly = Boolean(selectedSite?.archivedAt);
 
   function selectSite(id: string): void {
     void requestUnsavedExit(() => {
@@ -479,15 +498,64 @@ export function ProjectSitesTab({
       : `${effectiveLeftPercent}% 8px ${detailWidth} 8px ${rightWidth}`;
   })();
 
-  return <section className="project-sites-tab">
+  const focusedWorkshop = v2 && availableWidth > 0 && availableWidth < (inspectorExpandedCount >= 2 ? 1700 : 1420) && inspectorOpen && !inspectorCollapsed;
+  const wasFocusedWorkshop = useRef(false);
+  useEffect(() => {
+    // A resized editor keeps its focus. A command hidden by the new layout
+    // transfers focus to the visible navigation, without remounting drafts.
+    const active = document.activeElement as HTMLElement | null;
+    if (focusedWorkshop && !active?.getClientRects().length) {
+      rootRef.current?.querySelector<HTMLButtonElement>('.sites-v2-workshop-nav button')?.focus();
+    } else if (!focusedWorkshop && wasFocusedWorkshop.current) {
+      rootRef.current?.querySelector<HTMLButtonElement>('.project-page-composition-row-actions button.active, .project-sites-inspector-collapse, .project-sites-page-actions button')?.focus();
+    }
+    wasFocusedWorkshop.current = focusedWorkshop;
+  }, [focusedWorkshop]);
+  const v2Columns = (() => {
+    const tree = treeCollapsed ? 44 : Math.min(Math.max(220, availableWidth * splitPercent / 100), Math.max(220, availableWidth - (inspectorOpen && !inspectorCollapsed ? 1080 : 480)), 360);
+    const detail = detailCollapsed ? '44px' : 'minmax(0,1fr)';
+    if (focusedWorkshop) return 'minmax(0,1fr)';
+    if (!inspectorOpen) return treeCollapsed ? `44px ${detail}` : `${tree}px 8px ${detail}`;
+    const right = inspectorCollapsed ? '44px' : detailCollapsed ? 'minmax(0,1fr)' : `${Math.min(Math.max(560, availableWidth * inspectorPercent / 100), Math.max(560, availableWidth - tree - 460))}px`;
+    return `${tree}px ${treeCollapsed ? '' : '8px '}${detail} ${inspectorCollapsed ? '' : '8px '}${right}`;
+  })();
+  const query = treeQuery.trim().toLocaleLowerCase('fr');
+  const matches = (value: string) => value.toLocaleLowerCase('fr').includes(query);
+  function renderSite(site: ProjectSite) {
+    const sitePages = pages.filter(page => linkFor(page.id)?.projectSiteId === site.id);
+    const siteMatches = matches(site.name + ' ' + (site.desiredDomain ?? ''));
+    const visiblePages = query && !siteMatches ? sitePages.filter(page => matches(page.name + ' ' + (linkFor(page.id)?.desiredPath ?? ''))) : sitePages;
+    if (query && !siteMatches && !visiblePages.length) return null;
+    const folded = foldedSites.has(site.id) && !query;
+    return <div key={site.id} className={`project-site-tree-group ${site.archivedAt ? 'archived' : ''}`}>
+      <div className="sites-v2-site-row">
+        <button className="sites-v2-site-fold" type="button" aria-label={`${folded ? 'Déplier' : 'Replier'} ${site.name}`} aria-expanded={!folded} onClick={() => setFoldedSites(current => {
+          const next = new Set(current); if (next.has(site.id)) next.delete(site.id); else next.add(site.id); return next;
+        })}>{folded ? '▸' : '▾'}</button>
+        <button type="button" className={selectedSite?.id === site.id && !selectedPage ? 'project-site-tree-site active' : 'project-site-tree-site'} onClick={() => selectSite(site.id)}>
+          <div><strong>{site.name}</strong><small>{site.archivedAt ? 'Archivé · ' : ''}{site.desiredDomain || 'Domaine non renseigné'} · {sitePages.length} page(s)</small></div>
+        </button>
+      </div>
+      {!folded && <div className="project-site-tree-pages">
+        {visiblePages.map(page => <button type="button" key={page.id} className={selectedPageId === page.id ? 'active' : ''} onClick={() => selectPage(page.id)}>
+          <span>↳</span><div><strong>{page.name}</strong><small>{linkFor(page.id)?.role === 'home' ? 'Accueil' : linkFor(page.id)?.desiredPath || 'Chemin à définir'}</small></div>
+        </button>)}
+        {!sitePages.length && <span className="project-sites-empty-inline">Aucune Page rattachée</span>}
+        {!site.archivedAt && <button type="button" className="project-site-tree-add-page" onClick={() => { setPageSiteId(site.id); changeCreateMode('page'); }}>+ Ajouter une Page</button>}
+      </div>}
+    </div>;
+  }
+
+  return <section ref={rootRef} className={`project-sites-tab ${v2 ? 'sites-v2' : ''}`}>
+
     <div className={`project-sites-intro panel ${introCollapsed ? 'collapsed' : ''}`}>
       <div className="project-sites-intro-copy">
-        <span className="eyebrow">Destination opérationnelle</span>
+        <span className="eyebrow">{v2 ? 'Espace de création' : 'Destination opérationnelle'}</span>
         <h2>Sites & pages</h2>
-        {!introCollapsed && <p>Le Projet conserve la structure métier. Divi restera l’atelier de construction : ici, on organise les Sites et les Pages avant leur préparation dans Bridge.</p>}
+        {!introCollapsed && <p>{v2 ? 'Organise les pages et prépare leurs composants. La construction finale reste dans Divi.' : 'Le Projet conserve la structure métier. Divi restera l’atelier de construction : ici, on organise les Sites et les Pages avant leur préparation dans Bridge.'}</p>}
       </div>
       <div className="project-sites-toolbar">
-        <button className="secondary-button" type="button" disabled={busy} title="Créer uniquement les Sites et Pages manquants prévus par le blueprint" onClick={() => void applyBlueprint()}>Initialiser depuis le blueprint</button>
+        <button className="secondary-button" type="button" disabled={busy} title="Créer uniquement les Sites et Pages manquants prévus par le modèle du Projet" onClick={() => void applyBlueprint()}>{v2 ? 'Compléter depuis le modèle' : 'Initialiser depuis le blueprint'}</button>
         <button className="secondary-button" type="button" onClick={() => changeCreateMode(createMode === 'site' ? null : 'site')}>+ Site</button>
         <button className="primary-button" type="button" onClick={() => {
           changeCreateMode(createMode === 'page' ? null : 'page');
@@ -531,16 +599,17 @@ export function ProjectSitesTab({
     </div>}
 
     <div
-      className={`project-sites-workspace ${treeCollapsed ? 'tree-collapsed' : ''} ${detailCollapsed ? 'detail-collapsed' : ''} ${inspectorOpen ? 'inspector-open' : ''} ${inspectorCollapsed ? 'inspector-collapsed' : ''}`}
-      style={{ gridTemplateColumns: workspaceColumns }}
+      className={`project-sites-workspace ${treeCollapsed ? 'tree-collapsed' : ''} ${detailCollapsed ? 'detail-collapsed' : ''} ${inspectorOpen ? 'inspector-open' : ''} ${inspectorCollapsed ? 'inspector-collapsed' : ''} ${focusedWorkshop ? 'atelier-focus' : ''} ${v2 && availableWidth < 900 ? 'sites-v2-narrow' : ''}`}
+      style={{ gridTemplateColumns: v2 ? v2Columns : workspaceColumns }}
     >
       {treeCollapsed ? <button className="project-sites-tree-restore" type="button" title="Afficher l’arborescence" aria-label="Afficher l’arborescence" onClick={() => setTreeCollapsed(false)}>→</button> : <section className="panel project-sites-tree-panel">
         <div className="project-sites-tree-head">
           <div><span className="eyebrow">Arborescence</span><strong>{activeSites.length} Site{activeSites.length > 1 ? 's' : ''} · {pages.length} Page{pages.length > 1 ? 's' : ''}</strong></div>
           <button className="project-tree-size-button" type="button" title="Masquer l’arborescence" aria-label="Masquer l’arborescence" onClick={() => setTreeCollapsed(true)}>←</button>
         </div>
+        {v2 && <label className="sites-v2-search"><span>Rechercher un site ou une page</span><input type="search" value={treeQuery} onChange={event => setTreeQuery(event.target.value)} placeholder="Nom, domaine ou chemin…" /></label>}
         <div className="project-sites-tree-scroll">
-          {activeSites.map((site) => {
+          {v2 ? [...activeSites, ...archivedSites].map(renderSite) : activeSites.map((site) => {
             const sitePages = pages.filter((page) => linkFor(page.id)?.projectSiteId === site.id);
             return <div key={site.id} className="project-site-tree-group">
               <button type="button" className={selectedSite?.id === site.id && !selectedPage ? 'project-site-tree-site active' : 'project-site-tree-site'} onClick={() => selectSite(site.id)}>
@@ -562,22 +631,23 @@ export function ProjectSitesTab({
             </div>;
           })}
 
-          {pages.some((page) => !linkFor(page.id)) && <div className="project-site-tree-group unlinked">
+          {pages.some((page) => !linkFor(page.id) && (!v2 || matches(page.name))) && <div className="project-site-tree-group unlinked">
             <div className="project-site-tree-label"><strong>Pages non rattachées</strong></div>
             <div className="project-site-tree-pages">
-              {pages.filter((page) => !linkFor(page.id)).map((page) => <button type="button" key={page.id} className={selectedPageId === page.id ? 'active' : ''} onClick={() => selectPage(page.id)}>
+              {pages.filter((page) => !linkFor(page.id) && (!v2 || matches(page.name))).map((page) => <button type="button" key={page.id} className={selectedPageId === page.id ? 'active' : ''} onClick={() => selectPage(page.id)}>
                 <span>↳</span><div><strong>{page.name}</strong><small>Non rattachée</small></div>
               </button>)}
             </div>
           </div>}
 
-          {archivedSites.length > 0 && <div className="project-site-tree-group archived">
+          {!v2 && archivedSites.length > 0 && <div className="project-site-tree-group archived">
             <div className="project-site-tree-label"><strong>Sites archivés</strong></div>
             {archivedSites.map((site) => <button type="button" key={site.id} className={selectedSite?.id === site.id && !selectedPage ? 'project-site-tree-site active' : 'project-site-tree-site'} onClick={() => selectSite(site.id)}>
               <span>○</span><div><strong>{site.name}</strong><small>Archivé</small></div>
             </button>)}
           </div>}
 
+          {v2 && query && !sites.some(site => matches(site.name + ' ' + (site.desiredDomain ?? ''))) && !pages.some(page => matches(page.name + ' ' + (linkFor(page.id)?.desiredPath ?? ''))) && <p className="muted">Aucun résultat. Modifie ta recherche.</p>}
           {sites.length === 0 && pages.length === 0 && <p className="muted">Aucun Site ni Page pour le moment.</p>}
         </div>
       </section>}
@@ -591,8 +661,10 @@ export function ProjectSitesTab({
         onPointerDown={beginResize}
         onDoubleClick={() => setSplitPercent(40)}
         onKeyDown={(event) => {
-          if (event.key === 'ArrowLeft') setSplitPercent((value) => Math.max(24, value - 3));
-          if (event.key === 'ArrowRight') setSplitPercent((value) => Math.min(68, value + 3));
+          const min = v2 ? 220 / availableWidth * 100 : 24;
+          const max = v2 ? 360 / availableWidth * 100 : 68;
+          if (event.key === 'ArrowLeft') setSplitPercent((value) => Math.max(min, Math.min(max, value) - 3));
+          if (event.key === 'ArrowRight') setSplitPercent((value) => Math.min(max, Math.max(min, value) + 3));
         }}
       ><span /></div>}
 
@@ -606,12 +678,14 @@ export function ProjectSitesTab({
           <p>Tu pourras ensuite modifier son rattachement et ses informations.</p>
         </div>}
 
+        {siteReadOnly && <p className="muted" role="status">Site archivé · lecture seule. Réactive le site pour effectuer des modifications.</p>}
+
         {selectedSite && !selectedPage && <>
           <header className="project-sites-detail-head">
             <div><span className="eyebrow">Site du Projet</span><h3>{selectedSite.name}</h3><p>{selectedSite.desiredDomain || 'Nom de domaine non renseigné'}</p></div>
             <div className="project-sites-detail-head-actions">
               {selectedSite.archivedAt && <span className="status-pill">Archivé</span>}
-              <button className="project-sites-detail-collapse" type="button" title="Réduire la fiche Site" aria-label="Réduire la fiche Page" onClick={() => setDetailCollapsed(true)}>←</button>
+              <button className="project-sites-detail-collapse" type="button" title="Réduire la fiche Site" aria-label="Réduire la fiche Site" onClick={() => setDetailCollapsed(true)}>←</button>
             </div>
           </header>
           <div className="project-sites-detail-form">
@@ -658,7 +732,7 @@ export function ProjectSitesTab({
           <header className="project-sites-detail-head">
             <div><span className="eyebrow">Page du Projet</span><h3>{selectedPage.name}</h3><p>{selectedSite ? selectedSite.name : 'Non rattachée à un Site'}</p></div>
             <div className="project-sites-detail-head-actions">
-              <span className="status-pill project-sites-composition-badge">6B · Composition AtoumWeb</span>
+              <span className="status-pill project-sites-composition-badge">Composition AtoumWeb</span>
               <button className="project-sites-detail-collapse" type="button" title="Réduire la fiche Page" aria-label="Réduire la fiche Page" onClick={() => setDetailCollapsed(true)}>←</button>
             </div>
           </header>
@@ -685,7 +759,7 @@ export function ProjectSitesTab({
           </section>
 
           <section className={`project-sites-page-info ${pageInfoOpen ? 'open' : ''}`}>
-            <button className="project-sites-page-info-summary" type="button" onClick={() => setPageInfoOpen((value) => !value)}>
+            <button className="project-sites-page-info-summary" type="button" aria-label="Informations de la Page" aria-expanded={pageInfoOpen} onClick={() => setPageInfoOpen((value) => !value)}>
               <span>
                 <span className="eyebrow">Informations de la Page</span>
                 <strong>{selectedPage.name}</strong>
@@ -698,7 +772,7 @@ export function ProjectSitesTab({
                 <input
                   key={`${selectedPage.id}-name-${selectedPage.updatedAt}`}
                   defaultValue={selectedPage.name}
-                  disabled={busy}
+                  disabled={busy || siteReadOnly}
                   onBlur={(event) => {
                     const next = event.currentTarget.value.trim();
                     if (!next || next === selectedPage.name) return;
@@ -712,7 +786,7 @@ export function ProjectSitesTab({
               <label>Site
                 <select
                   value={selectedLink?.projectSiteId ?? ''}
-                  disabled={busy}
+                  disabled={busy || siteReadOnly}
                   onChange={(event) => {
                     const siteId = event.target.value;
                     if (!siteId) {
@@ -767,6 +841,8 @@ export function ProjectSitesTab({
           </section>
 
           <ProjectPageCompositionPanel
+            readOnly={siteReadOnly}
+            visualV2={v2}
             key={selectedPage.id}
             page={selectedPage}
             onMessage={onMessage}
@@ -784,7 +860,7 @@ export function ProjectSitesTab({
 
           <div className="project-sites-note">
             <strong>Divi reste l’atelier principal.</strong>
-            <span>Cette fiche décrit la destination métier de la Page. Le bouton de préparation Bridge sera ajouté dans un lot ultérieur.</span>
+            <span>Préparer pour Bridge crée un fichier local. Son import dans WordPress et sa publication restent des actions distinctes.</span>
           </div>
         </>}
         </div>
@@ -817,6 +893,7 @@ export function ProjectSitesTab({
           onClick={() => setInspectorCollapsed((value) => !value)}
           tabIndex={inspectorOpen ? 0 : -1}
         >{inspectorCollapsed ? '←' : '→'}</button>
+        {focusedWorkshop && <div className="sites-v2-workshop-nav"><button type="button" className="secondary-button" onClick={() => setInspectorCollapsed(true)}>← Arborescence et page</button><strong>Atelier · {selectedPage?.name}</strong></div>}
         <div id={inspectorHostId} className="project-sites-inspector-host" />
       </aside>
     </div>

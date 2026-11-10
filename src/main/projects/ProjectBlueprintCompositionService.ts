@@ -1,3 +1,4 @@
+import { assertSiteNodeWritable } from './archivedSiteGuard';
 import {readStructure} from './ContributionPolicy';
 import type {ContributionPolicy, StructureContract, PlannedContributionTarget} from '../../shared/contributionTargets';
 import type {OperationalPlan} from '../../shared/operational';
@@ -239,7 +240,11 @@ export class ProjectBlueprintCompositionService {
         fail(parent,'Module sans Page parente explicitement identifiée.');
         const id=ids.get(m.templateNodeId)!;
         const previous=this.db.get<Row>('SELECT parent_id FROM project_nodes WHERE id=?',[id]);
-        if(!previous?.parent_id) this.db.run('UPDATE project_nodes SET parent_id=? WHERE id=?',[parent!,id]);
+        if(!previous?.parent_id) {
+          assertSiteNodeWritable(this.db, id, true);
+          assertSiteNodeWritable(this.db, parent!);
+          this.db.run('UPDATE project_nodes SET parent_id=? WHERE id=?',[parent!,id]);
+        }
         else fail(previous.parent_id===parent,'Page parente modifiée : décision explicite requise.');
       }
       for (const s of c.sites) {
@@ -329,6 +334,7 @@ export class ProjectBlueprintCompositionService {
           }
         }
         if (!id) {
+          if (parentId) assertSiteNodeWritable(this.db, parentId);
           id = randomUUID();
           this.db.run(`INSERT INTO project_nodes(id,project_id,parent_id,source_template_node_id,node_type,display_subtype,name,description,sort_order,
             estimated_minutes,is_required,status,time_category,created_at,updated_at,semantic_key,work_card_json,advice_json)

@@ -1,4 +1,5 @@
 import {bindUnsavedWindow,registerGuardedShutdown} from './unsaved';
+import {assertConvergenceTempProfile} from './convergenceTempGuard';
 import {RECIPE_FLAG} from '../shared/operationalRecipe';
 import {createOperationalRecipeWindow} from './projects/operationalRecipeWindow';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
@@ -107,6 +108,7 @@ async function bootstrap(): Promise<void> {
     mainWindow.on('closed',()=>{mainWindow=null;recipeWindow=null;});
     return;
   }
+  assertConvergenceTempProfile(process.argv,app.getPath('userData'));
   const workspace = resolveWorkspace();
   const restoreResult = await applyPendingDatabaseRestore(workspace);
   if (restoreResult.restored) {
