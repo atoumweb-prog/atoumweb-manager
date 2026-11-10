@@ -16,6 +16,9 @@ Travail réalisé dans le worktree séparé `codex/restes-lots-3-5`, basé sur `
 - [x] Audit du PDF TEST vitrine : le 30/70 venait du générateur de démonstration qui n’envoyait pas `paymentPlan: 'sites_vitrines'`; la source applicative `approvedPaymentPlans.ts` et l’assistant Devis restent à 40/60. Le PDF TEST 699 € ne doit pas être considéré comme un devis conforme OFF-007.
 - [x] Audit contractuel du PDF TEST : les renvois à la clause 014 et aux définitions sont présents dans les textes publiés assemblés ; aucune réécriture de clause effectuée.
 - [ ] Validation de la substitution des informations administratives réelles dans un runtime isolé non terminée, car `set-company-info.cjs` détecte un processus Electron ouvert sur la préproduction. Le fichier source reste hors dépôt.
+- [x] Analyse du prérequis 112 : le référentiel contient 112 identités AW, mais la copie de préproduction n’a que 23 versions AW publiées (50 versions publiées au total, 120 brouillons et 14 retirées). Le pilote confond donc le nombre d’identités canoniques avec un état de publication complet ; les références restreintes restent volontairement en brouillon selon le pack.
+- [x] Audit des appels `createWithLines` : les chemins de production et les tests vitrine explicites transmettent `sites_vitrines` ; le seul PDF TEST incorrect venait du générateur temporaire de démonstration créé pour cette recette, qui omettait `paymentPlan`. Aucun appel applicatif à corriger dans `src/`.
+- [x] Contrôles ciblés échéanciers : 17 tests réussis, dont 40/60 vitrine et 30/40/30 e-commerce.
 
 Prochaine action : exécuter les deux recettes dans ce worktree, puis documenter les résultats avant de proposer les commits à transmettre à Claude.
 
