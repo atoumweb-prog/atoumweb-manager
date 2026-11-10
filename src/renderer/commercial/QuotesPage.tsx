@@ -1,11 +1,11 @@
 import {QuoteJourney} from './QuoteJourney';
+import {QuoteWizard} from './QuoteWizard';
 import {QuoteDocumentActions} from './QuoteDocumentActions';
 import './quote-journey.css';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import {QUOTE_LIST_VIEW} from '../../shared/realTableSchemas';
 import {OperationIcon} from '../operations/OperationIcon';
 import './commercial-visual-foundation.css';
-import {quoteWizardPriceCents} from './quoteWizardPrice';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit,unsavedRegistry} from '../unsaved/unsaved';
 import {QuoteContractPreparationPanel} from './QuoteContractPreparationPanel';
@@ -13,7 +13,6 @@ import { QuoteFinalizationPanel } from './QuoteFinalizationPanel';
 import { QuoteOperationalSalesPanel } from './QuoteOperationalSalesPanel';
 import { QuoteAbbyPanel } from './QuoteAbbyPanel';
 import { QuoteLineParametersPanel } from './QuoteLineParametersPanel';
-import {QuoteDraftLines,type DraftLine} from '../workflow/QuoteDraftLines';
 import { QuoteProjectPanel, QuoteConditions } from '../workflow/QuoteWorkflow';
 import { canAccessQuoteProject } from '../../shared/quoteProjectEligibility';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -28,14 +27,6 @@ import { catalogMatchesQuery, catalogIsSelectable } from '../../shared/catalogDi
 
 const STATUS_LABELS: Record<QuoteStatus, string> = {
   draft: 'Brouillon', sent: 'Envoyé', viewed: 'Vu', accepted: 'Accepté', refused: 'Refusé', expired: 'Expiré', cancelled: 'Annulé',
-};
-
-interface WizardDraft {
-  ownerKind: 'prospect' | 'client'; ownerId: string; subject: string; needSummary: string; catalogVersionId: string; customLabel: string; customPriceEuros: string; validityDays: string; depositPercent: string; estimatedDelay: string; contractAudience: 'professional' | 'consumer';
-}
-
-const EMPTY_WIZARD: WizardDraft = {
-  ownerKind: 'prospect', ownerId: '', subject: '', needSummary: '', catalogVersionId: '', customLabel: '', customPriceEuros: '', validityDays: '30', depositPercent: '30', estimatedDelay: '', contractAudience: 'professional',
 };
 
 function eurosToCents(value: string): number | null {
@@ -55,8 +46,6 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
   onMessage: (message: string) => void; initialId?: string | null; initialRequest?: number; onEntityReady?: EntityReady;
   returnProjectId?: string | null; statisticsDrilldown?: StatisticsDrilldownRoute | null; onClearStatisticsDrilldown?: () => void;
 }) {
-  const [draftLines,setDraftLines]=useState<DraftLine[]>([]);
-  const [wizardTerms,setWizardTerms]=useState('');
   const [catalogPrice,setCatalogPrice]=useState('');
   const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
   const [prospects, setProspects] = useState<ProspectSummary[]>([]);
@@ -72,11 +61,6 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
   function setDetail(value:QuoteDetail|null){detailRequest.current++;applyDetail(value);}
   useEffect(()=>()=>{detailRequest.current++;refreshRequest.current++;},[]);
   const [showWizard, setShowWizard] = useState(false);
-  const [wizardStep, setWizardStep] = useState(1);
-  const [wizard, setWizard] = useState<WizardDraft>(EMPTY_WIZARD);
-  const [wizardError, setWizardError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const quoteCreateInFlight = useRef(false); // verrou immédiat, avant le prochain rendu React.
   const versionActionInFlight = useRef(false); // Duplication et révision exclusives dans le même panneau.
   const [versionBusy, setVersionBusy] = useState(false);
   // La liste et la fiche doivent partager le même verrou d'acceptation par devis.
@@ -98,7 +82,6 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
     try { return await action(); }
     finally { setPendingQuoteMutations(count => count - 1); }
   }
-  const [demoMode, setDemoMode] = useState(false);
   const [developmentMode,setDevelopmentMode]=useState(false);
   useEffect(()=>{void window.atoumweb.app.getBootstrap().then(state=>setDevelopmentMode(/([\\/])Validation-MSI$/i.test(state.workspacePath)));},[]);
   const [catalogToAdd, setCatalogToAdd] = useState('');
@@ -111,10 +94,9 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
   const [previewOpen, setPreviewOpen] = useState(false);
   const [detailExpanded, setDetailExpanded] = useState(true);
   const quoteGroup='quote:'+detail?.id;
-  useUnsavedDraft('Nouveau devis',{wizard,draftLines,wizardTerms,catalogPrice},{group:'quote:create',ready:showWizard||wizard.ownerId!==''||wizard.subject!==''||draftLines.length>0||wizardTerms!=='',pending:saving,discard:()=>{setWizard(EMPTY_WIZARD);setDraftLines([]);setWizardTerms('');setCatalogPrice('');setShowWizard(false);setWizardStep(1);}});
-  useUnsavedDraft('Ligne libre à ajouter',{customLabel,customPrice},{group:quoteGroup,ready:!!detail,pending:saving,discard:()=>{setCustomLabel('');setCustomPrice('');}});
+  useUnsavedDraft('Ligne libre à ajouter',{customLabel,customPrice},{group:quoteGroup,ready:!!detail,discard:()=>{setCustomLabel('');setCustomPrice('');}});
   useUnsavedDraft('Enregistrement du devis', null, {group:quoteGroup,dirty:false,pending:pendingQuoteMutations>0});
-  useUnsavedDraft('Prestation à ajouter',{catalogToAdd,catalogPrice},{group:quoteGroup,ready:!!detail&&!showWizard,pending:saving,discard:()=>{setCatalogToAdd('');setCatalogPrice('');}});
+  useUnsavedDraft('Prestation à ajouter',{catalogToAdd,catalogPrice},{group:quoteGroup,ready:!!detail&&!showWizard,discard:()=>{setCatalogToAdd('');setCatalogPrice('');}});
   function setEditingLineId(id:string|null){if(editingLineId===id)return;if(editingLineId)requestUnsavedExit(()=>applyEditingLineId(id),quoteGroup+'/line:'+editingLineId+'/editor');else applyEditingLineId(id);}
   const detailPanelRef = useRef<HTMLElement | null>(null);
   useSearchTargetConfirmation('quote',detail?.id,loading,onEntityReady);
@@ -185,10 +167,6 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
     });
   }, [quotes, query, statusFilter, drilldown]);
 
-  const ownerOptions = wizard.ownerKind === 'prospect'
-    ? prospects.map((prospect) => ({ id: prospect.id, label: prospect.displayName }))
-    : clients.map((client) => ({ id: client.id, label: client.displayName }));
-
   function closeQuoteDetail(): void {requestUnsavedExit(closeQuoteDetailDirect,quoteGroup);}
   function closeQuoteDetailDirect(): void {
     if(embedded){onCloseEmbedded?.();return;}
@@ -216,59 +194,6 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
       selectedRef.current=null;setSelectedId(null);applyDetail(null);
       throw error;
     }
-  }
-
-  function validateStep(step: number): boolean {
-    setWizardError(null);
-    if (step === 1 && !wizard.ownerId) { setWizardError('Choisis un Prospect ou un Client.'); return false; }
-    if (step === 2 && !wizard.subject.trim()) { setWizardError('Renseigne l’objet du devis.'); return false; }
-    if (step === 5) {
-      const validity = Number(wizard.validityDays); const deposit = Number(wizard.depositPercent);
-      if (!Number.isInteger(validity) || validity <= 0) { setWizardError('Validité invalide.'); return false; }
-      if (!Number.isInteger(deposit) || deposit < 0 || deposit > 100) { setWizardError('Acompte invalide.'); return false; }
-    }
-    return true;
-  }
-
-  async function fillTestDossier():Promise<void> {
-    try{
-      const organization=await window.atoumweb.crm.organizations.create({name:'TEST — recette commerciale'});
-      const owner=await window.atoumweb.crm.prospects.create({organizationId:organization.id,primaryNeed:'TEST — faux dossier de recette'});
-      const offer=catalog.find(i=>i.canonicalCode==='AW-WEB-VITRINE'),article=catalog.find(i=>i.canonicalCode==='AW-CONT-ART-SEO');
-      await refresh();setDemoMode(false);setCatalogPrice('');
-      setWizard({...EMPTY_WIZARD,ownerKind:'prospect',ownerId:owner.id,subject:'TEST — Site vitrine',needSummary:'TEST — Site vitrine et Article SEO',catalogVersionId:offer?.currentVersion?.id||''});
-      setDraftLines(article?.currentVersion?[{versionId:article.currentVersion.id,label:article.name,quantity:'1',price:String((article.currentVersion.priceCents||0)/100)}]:[]);
-    }catch(e){setWizardError(e instanceof Error?e.message:String(e));}
-  }
-
-  function nextWizard(): void { if (validateStep(wizardStep)) setWizardStep((step) => Math.min(6, step + 1)); }
-
-  async function openQuoteWizard(){try{const defaults=await window.atoumweb.quoteDocumentSettings.get();if(JSON.stringify(wizard)===JSON.stringify(EMPTY_WIZARD)&&!draftLines.length)setWizard({...EMPTY_WIZARD,validityDays:String(defaults.validityDays),depositPercent:String(defaults.depositPercent)});setShowWizard(true);setWizardError(null);}catch(e){onMessage(String(e));}}
-  async function createQuote(): Promise<void> {
-    if (quoteCreateInFlight.current) return;
-    if (!validateStep(5) || !wizard.ownerId || !wizard.subject.trim()) return;
-    quoteCreateInFlight.current = true;
-    setSaving(true); setWizardError(null);
-    let demoBatch: string | null = null;
-    try {
-      if (demoMode) demoBatch = await window.atoumweb.workflow.beginDemoCapture('devis saisi manuellement');
-      const lines: Array<{catalogVersionId?:string;input:QuoteLineInput}> = draftLines.map(l=>{
-        const cents=eurosToCents(l.price);const quantity=Math.round(Number(l.quantity)*1000);
-        if(cents==null || !l.label.trim() || !Number.isFinite(quantity) || quantity<=0)throw new Error('Complète le libellé, le prix et la quantité de chaque ligne.');
-        return {catalogVersionId:l.versionId||undefined,input:{label:l.label,quantityMilli:quantity,proposedUnitPriceCents:cents}};
-      });
-      if(wizard.catalogVersionId){const item=catalog.find(i=>i.currentVersion?.id===wizard.catalogVersionId)!;const proposed=quoteWizardPriceCents(catalogPrice,item.currentVersion?.priceCents);if(proposed==null&&item.currentVersion?.priceMode!=='free')throw new Error('Renseigne le prix proposé pour cette prestation sur devis.');lines.unshift({catalogVersionId:wizard.catalogVersionId,input:{label:item.name,proposedUnitPriceCents:proposed??0}});}
-      const created = await window.atoumweb.quotes.createWithLines({
-        prospectId: wizard.ownerKind === 'prospect' ? wizard.ownerId : null,
-        clientAccountId: wizard.ownerKind === 'client' ? wizard.ownerId : null,
-        subject: wizard.subject.trim(), needSummary: wizard.needSummary.trim() || null,
-        validityDays: Number(wizard.validityDays), depositPercent: Number(wizard.depositPercent), estimatedDelay: wizard.estimatedDelay.trim() || null, contractAudience: wizard.contractAudience, specialTerms:wizardTerms||null,
-      },lines);
-      setDraftLines([]);setWizardTerms('');setDemoMode(false);
-      setWizard(EMPTY_WIZARD); setWizardStep(1); setShowWizard(false); await refresh(); await openQuote(created.id); onMessage(`Devis ${created.number} créé.`);
-    } catch (error) { setWizardError(error instanceof Error ? error.message : 'Impossible de créer le devis.'); }
-    finally { try { if (demoBatch) await window.atoumweb.workflow.endDemoCapture(demoBatch); }
-      finally { quoteCreateInFlight.current = false; setSaving(false); } }
   }
 
   async function addCatalogLine(): Promise<void> {
@@ -388,38 +313,9 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
 
   return (
     <div className={embedded?'quotes-stack quotes-embedded':'quotes-stack'}>
-      <div className="module-toolbar quote-toolbar"><div><strong>{filtered.length}</strong><span> devis</span></div><div className="toolbar-controls quote-toolbar-controls"><button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh"/>Actualiser</button><input className="inline-search" placeholder={drilldown ? "Cohorte exacte active" : "Rechercher un devis…"} disabled={!!drilldown} value={query} onChange={(e) => setQuery(e.target.value)} /><select value={statusFilter} disabled={!!drilldown} onChange={(e) => setStatusFilter(e.target.value as 'all' | QuoteStatus)}><option value="all">Tous les statuts</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><button className="primary-button" type="button" onClick={() => { if (showWizard) { requestUnsavedExit(() => { setShowWizard(false); setWizardStep(1); setWizardError(null); }, 'quote:create'); } else { void openQuoteWizard(); } }}>{showWizard ? 'Fermer' : '+ Nouveau devis'}</button></div></div>
+      <div className="module-toolbar quote-toolbar"><div><strong>{filtered.length}</strong><span> devis</span></div><div className="toolbar-controls quote-toolbar-controls"><button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh"/>Actualiser</button><input className="inline-search" placeholder={drilldown ? "Cohorte exacte active" : "Rechercher un devis…"} disabled={!!drilldown} value={query} onChange={(e) => setQuery(e.target.value)} /><select value={statusFilter} disabled={!!drilldown} onChange={(e) => setStatusFilter(e.target.value as 'all' | QuoteStatus)}><option value="all">Tous les statuts</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><button className="primary-button" type="button" onClick={() => { if (showWizard) requestUnsavedExit(() => setShowWizard(false), 'quote:create'); else setShowWizard(true); }}>{showWizard ? 'Fermer' : '+ Nouveau devis'}</button></div></div>
 
-      {showWizard && <section className="panel quote-wizard"><div className="quote-stepper">{['Client / Prospect', 'Projet / besoin', 'Offre', 'Services / lignes', 'Conditions', 'Prévisualisation'].map((label, index) => <button key={label} type="button" className={wizardStep === index + 1 ? 'active' : wizardStep > index + 1 ? 'done' : ''} onClick={() => index + 1 < wizardStep && setWizardStep(index + 1)}><span>{index + 1}</span>{label}</button>)}</div><div className="quote-wizard-body">
-        {wizardStep === 1 && <div className="quote-step-content"><h2>À qui s’adresse le devis ?</h2>{developmentMode&&<button type="button" className="secondary-button" onClick={()=>void fillTestDossier()}>Créer un faux dossier TEST</button>}<div className="quote-owner-toggle"><button type="button" className={wizard.ownerKind === 'prospect' ? 'active' : ''} onClick={() => setWizard({ ...wizard, ownerKind: 'prospect', ownerId: '' })}>Prospect</button><button type="button" className={wizard.ownerKind === 'client' ? 'active' : ''} onClick={() => setWizard({ ...wizard, ownerKind: 'client', ownerId: '' })}>Client</button></div><label>Dossier<select value={wizard.ownerId} onChange={(e) => { const ownerId=e.target.value; const source=wizard.ownerKind==='prospect'?prospects.find(item=>item.id===ownerId):clients.find(item=>item.id===ownerId); setWizard({ ...wizard, ownerId, contractAudience:source?.organizationId?'professional':'consumer' }); }}><option value="">Choisir…</option>{ownerOptions.map((owner) => <option key={owner.id} value={owner.id}>{owner.label}</option>)}</select></label></div>}
-        {wizardStep === 2 && <div className="quote-step-content"><h2>Projet / besoin</h2><label>Projet / Besoin<select onChange={e=>{const item=catalog.find(i=>i.id===e.target.value);setWizard({...wizard,subject:item?.name??'',needSummary:item?.currentVersion?.description??''});}}><option value="">Autre — texte libre</option>{catalog.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></label><label>Objet du devis<input value={wizard.subject} onChange={(e) => setWizard({ ...wizard, subject: e.target.value })} placeholder="Ex. Création du site vitrine" /></label><label>Besoin<textarea value={wizard.needSummary} onChange={(e) => setWizard({ ...wizard, needSummary: e.target.value })} /></label></div>}
-        {wizardStep === 3 && <div className="quote-step-content"><h2>Offre de départ</h2><p className="muted">Optionnel : choisis une Offre ou un Service du catalogue. Le contenu et le tarif seront copiés dans le devis.</p><label>Rechercher le catalogue<input value={catalogSearch} onChange={e=>setCatalogSearch(e.target.value)} placeholder="Nom, code AW, besoin, bénéfice, mots-clés"/></label><label>Catalogue<select value={wizard.catalogVersionId} onChange={(e) => {const v=catalog.find(i=>i.currentVersion?.id===e.target.value)?.currentVersion;setWizardTerms('');setCatalogPrice('');setWizard({ ...wizard, catalogVersionId: e.target.value, depositPercent: String(v?.defaultDepositPercent??30), estimatedDelay:v?.recommendedDelayDays?String(v.recommendedDelayDays)+' jours':'' });}}><option value="">Aucune — partir d’un devis libre</option>{visibleCatalog.map((item) => <option key={item.id} value={item.currentVersion!.id}>{catalogueLabel(item)}</option>)}</select></label><label>Prix proposé (€) — requis pour une prestation sur devis<input inputMode="decimal" value={catalogPrice} onChange={e=>setCatalogPrice(e.target.value)} placeholder="Tarif catalogue par défaut"/></label></div>}
-        {wizardStep === 4 && <div className="quote-step-content"><h2>Services / lignes complémentaires</h2><QuoteDraftLines catalog={catalog} lines={draftLines} onChange={setDraftLines}/></div>}
-        {wizardStep === 5 && <div className="quote-step-content"><h2>Conditions</h2><label>Type de client contractuel<select value={wizard.contractAudience} onChange={(e)=>setWizard({...wizard,contractAudience:e.target.value as 'professional'|'consumer'})}><option value="professional">Professionnel</option><option value="consumer">Particulier / consommateur</option></select></label><label>Condition particulière initiale (facultatif)<textarea value={wizardTerms} onChange={e=>setWizardTerms(e.target.value)}/></label><div className="quote-three-fields"><label>Validité (jours)<input inputMode="numeric" value={wizard.validityDays} onChange={(e) => setWizard({ ...wizard, validityDays: e.target.value })} /></label><label>Acompte (%)<input inputMode="numeric" value={wizard.depositPercent} onChange={(e) => setWizard({ ...wizard, depositPercent: e.target.value })} /></label><label>Délai estimé<input value={wizard.estimatedDelay} onChange={(e) => setWizard({ ...wizard, estimatedDelay: e.target.value })} placeholder="Ex. 3 à 4 semaines" /></label></div></div>}
-        {wizardStep === 6 && <div className="quote-preview"><span className="eyebrow">Prévisualisation</span><h2>{wizard.subject || 'Devis sans objet'}</h2><p>{ownerOptions.find((owner) => owner.id === wizard.ownerId)?.label || 'Destinataire'}</p>{wizard.needSummary && <p className="muted">{wizard.needSummary}</p>}
-          <div className="quote-preview-lines">
-            <div className="quote-preview-lines-heading"><strong>Lignes qui seront enregistrées</strong><span>{(wizard.catalogVersionId ? 1 : 0) + draftLines.length} ligne(s)</span></div>
-            {wizard.catalogVersionId && (() => {
-              const item = catalog.find((entry) => entry.currentVersion?.id === wizard.catalogVersionId);
-              return item ? <div className="quote-preview-line">
-                <div><strong>{item.name}</strong><small>Offre catalogue · 1 ×</small></div>
-                <span>{(() => { try { const price=quoteWizardPriceCents(catalogPrice,item.currentVersion?.priceCents); return price==null ? 'Prix à renseigner' : money(price); } catch { return 'Montant invalide'; } })()}</span>
-              </div> : null;
-            })()}
-            {draftLines.map((line, index) => {
-              const quantity = Number(line.quantity.replace(',', '.'));
-              const unitCents = (() => { try { return eurosToCents(line.price); } catch { return null; } })();
-              const totalCents = unitCents != null && Number.isFinite(quantity) && quantity > 0 ? Math.round(unitCents * quantity) : null;
-              return <div className="quote-preview-line" key={`${line.versionId}-${index}`}>
-                <div><strong>{line.label.trim() || 'Ligne à compléter'}</strong><small>{line.versionId ? 'Service catalogue' : 'Ligne libre'} · {line.quantity || '—'} × {line.price ? `${line.price} €` : 'prix à compléter'}</small></div>
-                <span>{totalCents != null ? money(totalCents) : 'À compléter'}</span>
-              </div>;
-            })}
-            {!wizard.catalogVersionId && draftLines.length === 0 && <p className="muted">Aucune ligne complémentaire n’a été ajoutée.</p>}
-          </div>
-          <div className="quote-preview-summary"><span>Client contractuel</span><strong>{wizard.contractAudience==='consumer'?'Particulier':'Professionnel'}</strong><span>Acompte</span><strong>{wizard.depositPercent || '0'} %</strong><span>Validité</span><strong>{wizard.validityDays || '—'} jours</strong><span>Délai estimé</span><strong>{wizard.estimatedDelay || 'Non renseigné'}</strong></div>
-        </div>}
-      </div>{wizardError && <p className="form-error">{wizardError}</p>}<div className="quote-wizard-actions"><button className="secondary-button" type="button" disabled={wizardStep === 1} onClick={() => setWizardStep((step) => Math.max(1, step - 1))}>← Précédent</button>{wizardStep < 6 ? <button className="primary-button" type="button" onClick={nextWizard}>Suivant →</button> : <button className="primary-button" disabled={saving} type="button" onClick={() => void createQuote()}>{saving ? 'Création…' : 'Créer le devis'}</button>}</div></section>}
+      {showWizard && <QuoteWizard catalog={catalog} prospects={prospects} clients={clients} developmentMode={developmentMode} onRefreshLists={refresh} onCreated={async created => { setShowWizard(false); await refresh(); await openQuote(created.id); onMessage(`Devis ${created.number} créé.`); }}/>}
 
       {drilldown && <section className="panel statistics-route-banner" aria-label="Filtre exact Statistiques">
         <strong>{drilldown.kind === 'decisions' ? 'Décisions des devis' : 'Devis acceptés'} · {drilldown.periodLabel}</strong>

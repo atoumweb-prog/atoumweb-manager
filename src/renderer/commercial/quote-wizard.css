@@ -1,0 +1,76 @@
+/* Lot 3 — assistant de devis : familles, offres, options, paiement. Couleurs du thème uniquement. */
+.quote-wizard-title { margin: 0; font-size: 18px; }
+.quote-wizard .quote-step-content.quote-step-wide { max-width: none; }
+.quote-wizard .quote-step-content h3 { margin: 6px 0 0; font-size: 16px; }
+.quote-wizard .quote-step-content h4 { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+.quote-wizard .quote-step-content p.muted { margin: 0; font-size: 14px; }
+
+.quote-family-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.app-shell .quote-wizard .quote-family-tile, .quote-family-tile {
+  display: grid; grid-template-columns: minmax(0, 1fr); justify-content: stretch; justify-items: start; align-items: start; gap: 6px; padding: 14px; text-align: left; cursor: pointer;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text);
+}
+.quote-family-tile strong { font-size: 15px; line-height: 1.25; }
+.quote-family-tile small { font-size: 13px; color: var(--muted); }
+.quote-family-tile:hover, .quote-family-tile:focus-visible, .quote-family-tile.selected { border-color: var(--accent); background: var(--accent-soft); }
+.quote-family-icon {
+  display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; flex: none;
+  color: var(--accent-strong); background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.quote-family-icon svg { width: 20px; height: 20px; }
+.quote-family-heading { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.quote-family-heading h3 { margin: 0; }
+
+.quote-offer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.app-shell .quote-wizard .quote-offer-card, .quote-offer-card {
+  display: grid; grid-template-columns: minmax(0, 1fr); justify-content: stretch; align-content: start; justify-items: start; align-items: start; gap: 6px; padding: 14px; text-align: left; cursor: pointer;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text);
+}
+.quote-offer-card strong { font-size: 15px; line-height: 1.25; }
+.quote-offer-card small {
+  font-size: 13px; color: var(--muted); line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.quote-offer-price { font-size: 15px; font-weight: 800; color: var(--accent-strong); white-space: nowrap; }
+.quote-offer-card:hover, .quote-offer-card:focus-visible { border-color: var(--accent); }
+.quote-offer-card.selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.quote-offer-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--success); }
+.quote-offer-check svg { width: 16px; height: 16px; }
+
+.quote-offer-chosen {
+  display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; gap: 14px; align-items: end;
+  padding: 12px 14px; border: 1px solid var(--accent); border-radius: 12px; background: var(--accent-soft);
+}
+.quote-offer-chosen > div { display: grid; gap: 2px; }
+.quote-offer-chosen > div strong { font-size: 16px; color: var(--text); }
+.quote-offer-chosen > div span { font-size: 14px; }
+
+.quote-option-list { display: grid; gap: 8px; }
+.quote-wizard .quote-step-content label.quote-option {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font-size: 15px; font-weight: 400;
+}
+.quote-option.selected { border-color: var(--accent); background: var(--accent-soft); }
+.quote-wizard .quote-step-content .quote-option input, .quote-wizard .quote-step-content .quote-radio input[type=radio] { width: 18px; height: 18px; padding: 0; }
+.quote-option > span:nth-child(2) { display: grid; gap: 2px; }
+.quote-option small { font-size: 13px; color: var(--muted); }
+
+.quote-payment-choice { display: grid; gap: 8px; margin: 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; }
+.quote-payment-choice legend { padding: 0 6px; font-size: 14px; font-weight: 700; color: var(--muted); }
+.quote-wizard .quote-step-content label.quote-radio { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 10px; font-size: 15px; font-weight: 400; color: var(--text); cursor: pointer; }
+.quote-radio > span { display: grid; gap: 3px; }
+.quote-radio small { font-size: 13px; color: var(--muted); }
+.quote-deposit-field { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+.quote-wizard .quote-step-content .quote-deposit-field input { width: 72px; }
+.quote-preview-need { white-space: pre-wrap; }
+
+/* Fiche prospect : conseils avant devis (ils ne bloquent rien). */
+.quote-advice { display: grid; gap: 8px; padding: 12px; border: 1px dashed var(--border); border-radius: 10px; }
+.quote-advice h4 { margin: 0; font-size: 15px; }
+.quote-advice p { margin: 0; font-size: 14px; color: var(--muted); }
+.quote-advice ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.quote-advice li { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; }
+
+@media (max-width: 900px) {
+  .quote-offer-chosen { grid-template-columns: 1fr; align-items: stretch; }
+}

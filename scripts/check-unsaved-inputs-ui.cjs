@@ -154,10 +154,11 @@ if(!process.versions.electron){
    await wait('[...document.querySelectorAll(".quote-step-content select option")].some(o=>o.value==='+JSON.stringify(client.id)+')');
    await js('const e=document.querySelector(".quote-step-content select");e.value='+JSON.stringify(client.id)+';e.dispatchEvent(new Event("change",{bubbles:true}))');
    await sleep(100);
+   // Lot 3 : Pour qui → Offre → Options → Conditions (titre du devis) → Aperçu.
+   for(let step=1;step<=3;step++)await click('Suivant →');
+   await wait('!!document.querySelector(".quote-step-content input[placeholder^=\\"Ex. Création\\"]")');
+   await input('.quote-step-content input[placeholder^="Ex. Création"]',subject);
    await click('Suivant →');
-   await wait('!!document.querySelector(".quote-step-content input[placeholder]")');
-   await input('.quote-step-content input[placeholder]',subject);
-   for(let step=2;step<=5;step++)await click('Suivant →');
    await wait('[...document.querySelectorAll(".quote-wizard-actions button")].some(b=>b.textContent.trim()==="Créer le devis")');
    await js('const button=[...document.querySelectorAll(".quote-wizard-actions button")].find(b=>b.textContent.trim()==="Créer le devis");button.click();button.click()');
    for(let i=0;i<100&&!releaseCreate;i++)await sleep(20);

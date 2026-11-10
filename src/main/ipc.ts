@@ -40,6 +40,7 @@ import type {
   OfferComponentInput,
   QuoteFilters,
   QuoteInput,
+  QuoteQuickStartOptions,
   QuoteLineInput,
 } from '../shared/commercial';
 import type {
@@ -733,7 +734,7 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:list', (_event, filters?: QuoteFilters) => database.quotes.list(filters));
   ipcMain.handle('quotes:get', (_event, id: string) => database.quotes.get(id));
   ipcMain.handle('quotes:prepare-prospect-draft',(_event,...args:Parameters<typeof database.quotes.prepareProspectDraft>)=>guardedMutation(()=>database.quotes.prepareProspectDraft(...args)));
-  ipcMain.handle('quotes:create-with-lines', (_event, input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>) => guardedMutation(() => database.quotes.createWithLines(input,lines)));
+  ipcMain.handle('quotes:create-with-lines', (_event, input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>, options?: QuoteQuickStartOptions) => guardedMutation(() => database.quotes.createWithLines(input,lines,{applyContractTerms:options?.applyContractTerms===true,advanceNewProspect:options?.advanceNewProspect===true})));
   ipcMain.handle('quotes:create', (_event, input: QuoteInput) => guardedMutation(() => database.quotes.create(input)));
   ipcMain.handle('quotes:add-catalog-line', (_event, quoteId: string, catalogVersionId: string, input?: Partial<QuoteLineInput>) => guardedMutation(() => database.quotes.addCatalogLine(quoteId, catalogVersionId, input)));
   ipcMain.handle('quotes:select-offer-option', (_event, offerLineId: string, componentId: string, input?: Partial<QuoteLineInput>) => guardedMutation(() => database.quotes.selectOfferOption(offerLineId, componentId, input)));

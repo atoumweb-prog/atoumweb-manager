@@ -1,5 +1,22 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 10/11/2026 — Lot 3 : « Devis rapide » (branche claude/lot3-devis-rapide)
+
+Décisions de Carlos du 10/11 : devis autorisé pour un prospect tout neuf, sans rien exiger ; options suggérées = seulement celles déjà liées à l’offre dans le Catalogue ; module Devis sur le même assistant.
+
+- [x] Un seul assistant (`QuoteWizard.tsx`) pour le module Devis (Pour qui → Offre → Options → Conditions → Aperçu) et pour la fiche prospect (4 étapes, prospect déjà choisi). L’ancien bouton « Créer le brouillon » et la fenêtre « Phase précédente incomplète » avant l’onglet Devis sont retirés ; la qualification devient une liste « Conseillé avant d’envoyer le devis », non bloquante.
+- [x] Besoin repris du prospect (besoin confirmé, sinon demande initiale, sinon besoin principal ; contraintes ; échéance), modifiable.
+- [x] Offre choisie une seule fois : tuiles par famille avec icône (libellés d’une même famille fusionnés à l’affichage), cartes nom + prix en clair, recherche ; plus de « Sans code · v1 ».
+- [x] Options : compléments recommandés actifs et composants facultatifs de l’offre, à cocher. **Constat : aucune option n’est liée aux offres dans la préproduction (0 recommandation, 0 composant facultatif)** ; l’étape l’indique et laisse ajouter une ligne. Liste d’options par offre à proposer à Carlos avant toute écriture.
+- [x] Acompte selon l’offre : `src/shared/approvedPaymentPlans.ts`, source unique de la règle OFF-007 (vitrines 40 / 60, e-commerce 30 / 40 / 30), résolue par le code source de l’offre ; appliquée aux trois formules vitrine et aux trois formules WooCommerce ; la fixture de simulation réutilise cette source. Autre acompte toujours possible. **Écart à trancher : le référentiel dit « 60 % avant mise en ligne » ; Carlos avait validé « à la livraison » sur ma proposition — le texte du référentiel est appliqué en attendant.**
+- [x] CGV ajoutées automatiquement à un devis neuf créé par l’assistant (`createWithLines(…, {applyContractTerms})`, même service que « comparer / appliquer », trace distincte au journal). Mises à jour ultérieures toujours explicites ; devis figés inchangés.
+- [x] Prospect « nouveau » passé à « Devis à préparer » par l’assistant seulement (`advanceNewProspect`). **Remplace E72 pour ce chemin** ; l’API `create` seule garde le comportement E72. `prepareProspectDraft` (ancien chemin, gardes de qualification) reste en place mais n’est plus appelé par l’écran.
+- [x] Tests : 18 nouveaux (règle OFF-007, moteur devis rapide, modèle d’affichage) ; suite complète et typecheck réussis. Essai réel sur copie jetable de la préproduction : 15 vérifications, 0 erreur console, 13 captures hors dépôt (`C:/DEV/Livrables/Lot3-devis-rapide-2026-11-10`).
+- [ ] Recettes Electron `check-unsaved-inputs-ui.cjs --lot-create` et `prospection-flow.cjs` adaptées aux nouvelles étapes mais **non rejouées**.
+- [ ] Préproduction de Carlos non mise à jour (accord attendu). Rien n’est poussé.
+
+Prochaine action : validation de Carlos sur la préproduction, liste d’options par offre, puis lot 4 (envoyer et faire accepter).
+
 ## 09/11/2026 — Lot 1 : « Mon entreprise » simplifié (branche claude/lot1-mon-entreprise)
 
 - [x] Écran Réglages › Mon entreprise et devis : les 4 informations exigées pour finaliser un devis (nom/statut, adresse/SIRET/coordonnées, TVA, réclamations) regroupées, avec exemples ; choix « Micro-entreprise : franchise en base de TVA » qui pose la mention « TVA non applicable, article 293 B du CGI » ; état « à vérifier / non applicable » replié en cas particulier.

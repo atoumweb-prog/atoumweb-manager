@@ -1,12 +1,12 @@
-# Reprise Claude — état au 10/11/2026
+# Reprise Claude — état au 10/11/2026 (après lot 3)
 
 Point d'entrée pour reprendre le travail de Claude dans une **nouvelle conversation**. Lire aussi `AGENTS.md`, puis les entrées du 09/11 en tête de `PROJECT_STATUS.md`.
 
 ## Où travailler
 
 - Dossier : `C:/DEV/01_PROJETS/AtoumWeb/claude-review-pr166` (worktree ; ne pas travailler dans `atoumweb-manager`, ni dans les worktrees Codex).
-- Branche courante : `claude/lot1-mon-entreprise`, empilée ainsi :
-  `codex/integration-v394-v15-20261108` (PR #166) → `claude/v394-decisions-20261109` (PR #168, poussée) → `claude/mode-operatoire-20261109` → `claude/atelier-manager` (reprise des corrections locales Codex du 09/11, outil d'activation, préproduction) → `claude/lot2-cgv-disponibles` → `claude/lot1-mon-entreprise`.
+- Branche courante : `claude/lot3-devis-rapide`, empilée ainsi :
+  `codex/integration-v394-v15-20261108` (PR #166) → `claude/v394-decisions-20261109` (PR #168, poussée) → `claude/mode-operatoire-20261109` → `claude/atelier-manager` (reprise des corrections locales Codex du 09/11, outil d'activation, préproduction) → `claude/lot2-cgv-disponibles` → `claude/lot1-mon-entreprise` → `claude/lot3-devis-rapide`.
 - **Rien n'est poussé après la PR #168.** Ne pas pousser sans accord explicite de Carlos (dépôt PUBLIC).
 - `node_modules` est une jonction vers celui du worktree Codex `offres-tarifs-v2-20261106`.
 
@@ -22,7 +22,8 @@ Point d'entrée pour reprendre le travail de Claude dans une **nouvelle conversa
 - Tutoiement, français simple, comptes rendus sans jargon ; Carlos est freelance (micro-entrepreneur, sans comptable), n'a jamais utilisé le Manager, veut un outil pratique : icônes, parcours simples, mots qui ont du sens.
 - **Un seul modèle visuel** : bleu nuit / jaune (thème Noir, Confort), logo de l'Accueil sur toutes les pages, cartes de l'Accueil aussi en bleu nuit / jaune. Pas de refonte des thèmes AtoumWeb/Blanc pour l'instant.
 - **Abby option 1** : devis + CGV produits et envoyés depuis le Manager ; facture faite dans Abby. Pas d'API Abby.
-- Qualification avant devis : **conseillée**, plus bloquante (à réaliser).
+- Qualification avant devis : **conseillée**, plus bloquante (fait au lot 3 ; un prospect tout neuf peut recevoir un devis).
+- 10/11 : options suggérées = seulement celles liées à l’offre dans le Catalogue (aucune liée pour l’instant : liste à proposer à Carlos) ; échéancier vitrine : le référentiel dit « 60 % avant mise en ligne », à confirmer face à « à la livraison ».
 - Pack V3.9.4 laissé sur la branche publique ; données personnelles déjà publiées par Codex (docs) : **laisser en l'état**.
 - 13 fiches renommées et familles uniques à l'activation ; « À vérifier — ancienne offre 499 € » lu « sur devis » ; annexes de la bibliothèque non intégrées.
 - Clauses 119 (références commerciales) et 033 (médiation, texte « À COMPLÉTER ») **non publiées**.
@@ -34,8 +35,8 @@ Point d'entrée pour reprendre le travail de Claude dans une **nouvelle conversa
 |---|---|
 | 1 Mon entreprise | fait (préproduction) |
 | 2 CGV disponibles (8 offres, 48 clauses) | fait (préproduction) |
-| 3 Devis rapide : un seul parcours depuis le prospect, qualification conseillée, besoin repris, offre choisie une fois par familles/icônes sans « Sans code · v1 », options suggérées, acompte selon l'offre (40/60 vitrine, 30/40/30 Woo), CGV ajoutées automatiquement à un devis neuf | **prochain** |
-| 4 Envoyer et faire accepter : bouton « Envoyer le devis » (PDF devis + CGV), liste de vérification en français (6 points restants : canal, livraison, jalons, garantie, licences, renouvellement), fiche « à recopier dans Abby » | à faire |
+| 3 Devis rapide : un seul parcours depuis le prospect, qualification conseillée, besoin repris, offre choisie une fois par familles/icônes sans « Sans code · v1 », options suggérées, acompte selon l'offre (40/60 vitrine, 30/40/30 Woo), CGV ajoutées automatiquement à un devis neuf | fait (code et essai réel ; préproduction à mettre à jour après accord) |
+| 4 Envoyer et faire accepter : bouton « Envoyer le devis » (PDF devis + CGV), liste de vérification en français (6 points restants : canal, livraison, jalons, garantie, licences, renouvellement), fiche « à recopier dans Abby » | **prochain** |
 | 5 Prospect simplifié : « + Prospect », une étape de création, 2 niveaux de navigation max, « Enregistrer et continuer », boutons rapides sur l'Accueil | à faire |
 | A–F visuel : en-tête unique (retirer « SQLite · 81 migrations »), barre d'outils, tableaux, cartes, texte ≥ 14 px, finitions (messages vides, 18 familles, bandeau Bibliothèque, retour en haut) | à faire |
 

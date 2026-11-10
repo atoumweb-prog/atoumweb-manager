@@ -1,6 +1,7 @@
 import type { QuoteSendAttestation, QuoteTransmissionState } from './quoteTransmission';
 import type { QuoteLineParameters } from './commercialRules';
 import type { QuoteContractAudience } from './contractTerms';
+import type { ApprovedPaymentPlanId } from './approvedPaymentPlans';
 export const CATALOG_ITEM_TYPES = ['service', 'offer'] as const;
 export const CATALOG_ITEM_STATUSES = ['active', 'inactive', 'archived'] as const;
 export const CATALOG_VERSION_STATUSES = ['draft', 'published', 'retired'] as const;
@@ -245,6 +246,16 @@ export interface QuoteInput {
   contractType?: string | null;
   contractAudience?: QuoteContractAudience | null;
   depositPercent?: number | null;
+  /** Échéancier du pack approuvé choisi pour un devis neuf ; fixe aussi l'acompte. */
+  paymentPlan?: ApprovedPaymentPlanId | null;
+}
+
+/** Devis rapide (assistant) : comportements réservés à la création d'un devis neuf. */
+export interface QuoteQuickStartOptions {
+  /** Pose les clauses publiées des prestations choisies, sans passer par « comparer / appliquer ». */
+  applyContractTerms?: boolean;
+  /** Décision du 10/11/2026 : un prospect encore « nouveau » passe à « Devis à préparer ». */
+  advanceNewProspect?: boolean;
 }
 
 export interface QuoteLineInput {
@@ -364,7 +375,7 @@ export interface QuoteApi {
   preparationIssues(id:string):Promise<string[]>;
   operationalSales(id:string):Promise<Record<string,unknown>[]>;
   prepareProspectDraft(prospectId:string,expectedUpdatedAt:string,expectedNeeds:Array<{id:string;catalogItemId:string|null;otherText:string|null}>):Promise<QuoteDetail>;
-  createWithLines(input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>): Promise<QuoteDetail>;
+  createWithLines(input: QuoteInput, lines: Array<{catalogVersionId?: string; input: QuoteLineInput}>, options?: QuoteQuickStartOptions): Promise<QuoteDetail>;
   list(filters?: QuoteFilters): Promise<QuoteSummary[]>;
   get(id: string): Promise<QuoteDetail>;
   create(input: QuoteInput): Promise<QuoteDetail>;
