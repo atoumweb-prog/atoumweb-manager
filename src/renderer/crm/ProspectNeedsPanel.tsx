@@ -202,7 +202,7 @@ function newInformationId(): string {
   return `info-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function ProspectNeedsPanel({ prospectId, onChanged, section='brief', highlightMissing=false, onPrepareQuote }: { prospectId: string; onChanged?: () => void; section?:'brief'|'commercial'|'services'; highlightMissing?:boolean; onPrepareQuote?:()=>void }) {
+export function ProspectNeedsPanel({ prospectId, onChanged, section='brief', highlightMissing=false, onPrepareQuote, onContinue }: { prospectId: string; onChanged?: () => void; section?:'brief'|'commercial'|'services'; highlightMissing?:boolean; onPrepareQuote?:()=>void; /** Lot 5 : après un enregistrement réussi, passer à la suite. */ onContinue?:()=>void }) {
   const [prospect, setProspect] = useState<ProspectSummary | null>(null);
   const [projectSummary, setProjectSummary] = useState('');
   const [projectContext, setProjectContext] = useState('');
@@ -231,6 +231,8 @@ export function ProspectNeedsPanel({ prospectId, onChanged, section='brief', hig
   const projectBriefConflictRef = useRef(false);
   const savedProjectBriefRef = useRef<{ prospectId: string; value: ProspectProjectBrief } | null>(null);
   const savingProjectBriefRef = useRef(false);
+  const lastSaveSucceeded = useRef(false); // lot 5 : « Enregistrer et continuer » n'avance que si l'enregistrement a réussi.
+  async function saveAndThen(next?:()=>void){lastSaveSucceeded.current=false;await saveIdentification();if(lastSaveSucceeded.current)next?.();}
   const informationConflictRef = useRef(false);
   // Revision portant exclusivement sur missing_information : une modification
   // du budget ou du calendrier dans une autre fenêtre n'est pas un conflit de checklist.
@@ -471,7 +473,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged, section='brief', hig
       setProspect(updated);
       savedFormBaselineRef.current = { ...infoValue, informationItems: informationItemsRef.current };
       infoGuard.saved(savedFormBaselineRef.current);
-      await load(); onChanged?.(); setSavedNotice('Besoin enregistré.'); window.dispatchEvent(new Event('atoumweb:changed'));
+      await load(); onChanged?.(); setSavedNotice('Besoin enregistré.'); lastSaveSucceeded.current=true; window.dispatchEvent(new Event('atoumweb:changed'));
     } catch (e) {
       if (prospect.id === currentProspectId.current) {
         const message = cleanError(e);
@@ -542,11 +544,11 @@ export function ProspectNeedsPanel({ prospectId, onChanged, section='brief', hig
         </div>
 
         <div hidden={section!=='services'} className="need-scope-assessment form-span-2"><span className="eyebrow">Lecture du périmètre</span><strong>{openBlockingInformation.length > 0 ? `${openBlockingInformation.length} point${openBlockingInformation.length > 1 ? 's' : ''} bloquant${openBlockingInformation.length > 1 ? 's' : ''} avant devis` : openLaterInformation.length > 0 ? 'Périmètre prêt pour contrôle — certains points seront obtenus plus tard' : projectContext.trim() ? 'Périmètre décrit — contrôle final à effectuer' : 'Aucun point bloquant déclaré'}</strong><small>Les points résolus restent dans le dossier : aucune information n’a besoin d’être effacée pour avancer.</small></div>
-        <button type="button" className="primary-button" disabled={busy} onClick={() => void saveIdentification()}>{busy ? 'Enregistrement…' : 'Enregistrer le besoin'}</button>{savedNotice&&<p role="status">{savedNotice}</p>}{error&&<p role="alert" className="form-error">{error}</p>}
+        {onContinue&&<button type="button" className="primary-button" disabled={busy} onClick={() => void saveAndThen(onContinue)}>{busy ? 'Enregistrement…' : 'Enregistrer et continuer'}</button>}<button type="button" className={onContinue?'secondary-button':'primary-button'} disabled={busy} onClick={() => void saveIdentification()}>{busy ? 'Enregistrement…' : 'Enregistrer le besoin'}</button>{savedNotice&&<p role="status">{savedNotice}</p>}{error&&<p role="alert" className="form-error">{error}</p>}
       </div>
     </div>
 
     <div hidden={section!=='services'}><ProspectIntentChecklist prospectId={prospectId} readOnly={Boolean(prospect?.clientAccountId||prospect?.archivedAt)} onChanged={()=>{void load();onChanged?.();}}/></div>
-    {onPrepareQuote&&<div className="crm-need-footer"><button type="button" className="primary-button" onClick={onPrepareQuote}>Préparer le devis</button></div>}
+    {onPrepareQuote&&<div className="crm-need-footer"><button type="button" className="primary-button" disabled={busy} onClick={()=>void saveAndThen(onPrepareQuote)}>Enregistrer et faire le devis</button></div>}
   </fieldset></section>;
 }

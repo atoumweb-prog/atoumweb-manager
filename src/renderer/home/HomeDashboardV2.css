@@ -194,3 +194,7 @@
 :root[data-theme='noir'][data-density='comfort'] .home-widget-settings .home-widget-drag:disabled{opacity:.45;cursor:default;}
 :root[data-theme='noir'][data-density='comfort'] .home-widget-settings :is(button,summary):focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 :root[data-theme='noir'][data-density='comfort'] .home-widget-settings-footer{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:10px;}
+
+/* Lot 5 — créer rapidement depuis l'Accueil. */
+.home-quick-create{display:flex;flex-wrap:wrap;gap:8px;margin-right:12px;}
+.home-quick-create button{display:inline-flex;align-items:center;gap:6px;}

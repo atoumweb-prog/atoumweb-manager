@@ -1,11 +1,11 @@
-# Reprise Claude — état au 10/11/2026 (après lot 4)
+# Reprise Claude — état au 10/11/2026 (après lot 5)
 
 Point d'entrée pour reprendre le travail de Claude dans une **nouvelle conversation**. Lire aussi `AGENTS.md`, puis les entrées du 09/11 en tête de `PROJECT_STATUS.md`.
 
 ## Où travailler
 
 - Dossier : `C:/DEV/01_PROJETS/AtoumWeb/claude-review-pr166` (worktree ; ne pas travailler dans `atoumweb-manager`, ni dans les worktrees Codex).
-- Branche courante : `claude/lot4-envoyer-accepter` (locale, non poussée), empilée sur `claude/lot3-devis-rapide` ; pile poussée :
+- Branche courante : `claude/lot5-prospect-simplifie` (poussée, PR brouillon #175), empilée sur `claude/lot4-envoyer-accepter` (poussée, PR brouillon #174) ; reste de la pile :
   `codex/integration-v394-v15-20261108` (PR #166) → `claude/v394-decisions-20261109` (PR #168, poussée) → `claude/mode-operatoire-20261109` → `claude/atelier-manager` (reprise des corrections locales Codex du 09/11, outil d'activation, préproduction) → `claude/lot2-cgv-disponibles` → `claude/lot1-mon-entreprise` → `claude/lot3-devis-rapide`.
 - Poussé le 10/11 avec l'accord de Carlos, en PR brouillon empilées : #169 mode opératoire, #170 atelier, #171 lot 2, #172 lot 1, #173 lot 3. **Tout nouveau push demande de nouveau l'accord explicite de Carlos (dépôt PUBLIC).** Aucune fusion sans son accord.
 - `node_modules` est une jonction vers celui du worktree Codex `offres-tarifs-v2-20261106`.
@@ -36,8 +36,8 @@ Point d'entrée pour reprendre le travail de Claude dans une **nouvelle conversa
 | 1 Mon entreprise | fait (préproduction) |
 | 2 CGV disponibles (8 offres, 48 clauses) | fait (préproduction) |
 | 3 Devis rapide : un seul parcours depuis le prospect, qualification conseillée, besoin repris, offre choisie une fois par familles/icônes sans « Sans code · v1 », options suggérées, acompte selon l'offre (40/60 vitrine, 30/40/30 Woo), CGV ajoutées automatiquement à un devis neuf | fait (préproduction à jour, commit 832dc49e ; options par offre enregistrées avec `publish-suggested-options.cjs` ; l’assistant suit seul la version publiée des options) |
-| 4 Envoyer et faire accepter : bouton « Envoyer le devis » (PDF devis + CGV), liste de vérification en français (6 points restants : canal, livraison, jalons, garantie, licences, renouvellement), fiche « à recopier dans Abby » | fait (préproduction à jour, commit f5ac2131 ; branche locale non poussée) |
-| 5 Prospect simplifié : « + Prospect », une étape de création, 2 niveaux de navigation max, « Enregistrer et continuer », boutons rapides sur l'Accueil | **prochain** |
+| 4 Envoyer et faire accepter : bouton « Envoyer le devis » (PDF devis + CGV), liste de vérification en français (6 points restants : canal, livraison, jalons, garantie, licences, renouvellement), fiche « à recopier dans Abby » | fait (PR brouillon #174) |
+| 5 Prospect simplifié : « + Prospect », une étape de création, 2 niveaux de navigation max, « Enregistrer et continuer », boutons rapides sur l'Accueil | fait (PR brouillon #175) |
 | A–F visuel : en-tête unique (retirer « SQLite · 81 migrations »), barre d'outils, tableaux, cartes, texte ≥ 14 px, finitions (messages vides, 18 familles, bandeau Bibliothèque, retour en haut) | à faire |
 
 ## Passation du 10/11/2026 — pour le modèle qui reprend
@@ -50,13 +50,12 @@ Carlos confie la suite à un autre modèle (Sonnet ou autre). Tout ce qu'il faut
 - Ne jamais pousser, publier ni toucher à sa préproduction sans son accord explicite, donné pour cette action précise.
 
 **Ce qui reste à faire, dans l'ordre**
-1. Lot 5 « Prospect simplifié » (voir le tableau du plan) : surtout de l'écran et du parcours ; ne pas toucher aux règles de devis.
-2. Lots visuels A–F (audit `C:/DEV/Livrables/Audit-visuel-2026-11-09`) : en-tête, barre d'outils, tableaux, cartes, texte ≥ 14 px, finitions.
-3. Restes des lots 3 et 4, petits et indépendants :
+1. Lots visuels A–F (audit `C:/DEV/Livrables/Audit-visuel-2026-11-09`) : en-tête, barre d'outils, tableaux, cartes, texte ≥ 14 px, finitions.
+2. Restes des lots 3 à 5, petits et indépendants :
    - réparer la recette `scripts/fixtures/ec03-transmission-scenarios.cjs` (elle attend `.cgv-clause`, élément d'un ancien écran de clauses) puis rejouer `check-native-commercial-ui.cjs` ;
    - essayer en conditions réelles un devis accepté (bouton « Ouvrir le projet ») et un devis pour un particulier ;
    - le panneau « compléments recommandés » d'un devis déjà créé lit encore la version enregistrée de l'option (l'assistant, lui, suit la version publiée) ;
-   - pousser `claude/lot4-envoyer-accepter` et ouvrir sa PR brouillon sur `claude/lot3-devis-rapide`, **si Carlos le demande**.
+   - adapter la recette `scripts/fixtures/creation-company.cjs` à la création en une étape (elle attend encore quatre onglets) ;
 
 **À ne pas casser**
 - Un devis envoyé ou accepté est figé : `QuoteService.finalize` et `markSent` ne doivent pas être contournés ni assouplis.

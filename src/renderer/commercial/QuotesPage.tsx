@@ -62,7 +62,7 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
   const detailRequest=useRef(0);const refreshRequest=useRef(0);const selectedRef=useRef(selectedId);selectedRef.current=selectedId;
   function setDetail(value:QuoteDetail|null){detailRequest.current++;applyDetail(value);}
   useEffect(()=>()=>{detailRequest.current++;refreshRequest.current++;},[]);
-  const [showWizard, setShowWizard] = useState(false);
+  const [showWizard, setShowWizard] = useState(()=>{try{if(!embedded&&sessionStorage.getItem('home-quick-action')==='quote'){sessionStorage.removeItem('home-quick-action');return true;}}catch{}return false;});
   const [preparationVersion, setPreparationVersion] = useState(0); // remonte le réglage détaillé après la vérification rapide
   const versionActionInFlight = useRef(false); // Duplication et révision exclusives dans le même panneau.
   const [versionBusy, setVersionBusy] = useState(false);

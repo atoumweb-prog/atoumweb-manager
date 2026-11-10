@@ -158,3 +158,10 @@ html[data-theme] .prospect-create-dialog .prospect-desk-tabs button[aria-selecte
 .app-shell .prospects-v2 .prospect-create-dialog .prospect-create-preparation textarea{min-height:94px;height:94px;}
 .prospect-create-dialog .prospect-create-analysis p{margin:0;}
 @media(max-width:650px){.prospect-create-dialog .creation-analysis-fields{grid-template-columns:1fr;}}
+
+/* Lot 5 — l'avancement du dossier est un repère, plus un troisième niveau de navigation. */
+.crm-journey-progress{list-style:none;margin:0;padding:0;gap:6px;}
+.crm-journey-progress li{padding:4px 10px;border:1px solid var(--border-color,#355269);border-radius:999px;font-size:14px;color:var(--muted);}
+.crm-journey-progress li.current{border-color:#ffda29;color:inherit;font-weight:700;}
+.prospect-create-single{display:flex;align-items:center;gap:8px;}
+.prospect-create-heading{margin:8px 0 0;font-size:16px;}
