@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 09/11/2026 — Lot 2 : CGV disponibles pour les offres de départ (branche claude/lot2-cgv-disponibles)
+
+Décisions de Carlos du 09/11 : couleurs Accueil bleu nuit/jaune ; qualification avant devis **conseillée** (non bloquante, lot à venir) ; premières offres : vitrine, WooCommerce, maintenance WordPress ; Abby option 1 (devis+CGV envoyés depuis le Manager, factures dans Abby). Audits « visuel » et « premier jour » livrés hors dépôt (C:/DEV/Livrables).
+
+- [x] `StarterOffersPublication.ts` : publication par les services existants de 8 offres V3.9.4 (AW-WEB-VITRINE, V39-WEB-BUSINESS/VISIBILITE, AW-ECOM-BASE, V39-ECOM-BUSINESS/VISIBILITE, AW-MAINT-WP-M/A), du socle CGV et des clauses de prestation liées ; plan en lecture seule + empreinte, rejeu neutre.
+- [x] Rattachements : cartographie proposée 409 pour les codes AW ; formules V39 = clauses de la formule de base + clauses des services que la grille dit inclus (texte « Inclus » ; includedCodes Woo). **Proposition à valider par Carlos.**
+- [x] Non publiées : clause 119 (références commerciales, consentement distinct) et clause 033 (médiation, texte « À COMPLÉTER »). Aucune autre offre publiée.
+- [x] Devis sans clause : message neutre indiquant quoi faire (comparer puis appliquer ; sinon publier/rattacher). Une première version affirmait à tort « CGV non publiées » : corrigée après vérification réelle.
+- [x] `scripts/preproduction/publish-starter-offers.cjs` : aperçu / application avec empreinte, sauvegarde SQLite avant écriture, refus si Manager ouvert. 3 tests ciblés ; suite complète 1 909 tests.
+- [ ] Lot 1 (Mon entreprise) toujours requis pour finaliser un devis ; consommateurs sans clause de médiation tant que la convention n’existe pas.
+
 ## 09/11/2026 — Préproduction V3.9.4 isolée construite par Claude
 
 - [x] Choix de Carlos : une 2e préproduction à côté de celle du 04/11 (laissée intacte), avec un Manager construit depuis `claude/atelier-manager`, à faire évoluer ensemble.
