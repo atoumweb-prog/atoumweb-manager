@@ -41,8 +41,25 @@ if(!process.versions.electron){
   await js("(()=>{window.confirm=()=>true;return true;})()"); // Explicit TEST operator acknowledgement; backend guards remain real.
   check('Native Manager API, no isolated recipe API',await js('!!window.atoumweb.quotes&&!window.atoumwebOperationalRecipe'));
   const admin=S.emptyAdministration();for(const key of Object.keys(admin))admin[key]={state:'filled',value:`TEST — ${key} fictif, non utilisable dans un dossier réel`,reason:'Recette de développement autorisée'};await call('quotePreparation.saveAdministration',admin);
-  const catalog=await call('catalog.list',{status:'active'}),references=catalog.filter(item=>item.canonicalCode?.startsWith('AW-'));
-  check('112 native selectable canonical references',references.length===112&&references.every(item=>item.currentVersion.status==='published'));
+  const approved=JSON.parse(fs.readFileSync(path.join(repo,'data/approved/2026-11-08/CATALOGUE_V394_130_EXTRAIT_WORD.json'),'utf8'));
+  const clauses=JSON.parse(fs.readFileSync(path.join(repo,'data/approved/2026-11-08/CLAUSES_V394_119_EXTRAITES_WORD.json'),'utf8'));
+  const publishableStatuses=new Set(['RETENU_SUR_DELEGATION_07_11_2026','VALIDE_EXPLICITEMENT_07_11_2026','VALIDE_PAR_ARBITRAGE_ANTERIEUR','VALIDE_RECENT']);
+  const restrictedStatuses=new Set(['ANCIEN_A_RECONCILIER','ANCIEN_SUR_DEVIS','A_VERIFIER_AVANT_COMMERCIALISATION','BASE_INTERNE_DEVIS']);
+  const expectedPublishable=approved.references.filter(r=>publishableStatuses.has(r.statut_source));
+  const expectedRestricted=approved.references.filter(r=>restrictedStatuses.has(r.statut_source));
+  check('Approved catalogue matrix is complete',approved.references.length===130&&expectedPublishable.length===118&&expectedRestricted.length===12);
+  check('Approved clauses matrix is complete',clauses.clauses.length===119);
+  const catalog=await call('catalog.list',{status:'active'}),allCanonical=catalog.filter(item=>item.canonicalCode?.startsWith('AW-'));
+  const references=allCanonical.filter(item=>item.currentVersion?.status==='published');
+  const publishedCodes=new Set(references.map(item=>item.canonicalCode));
+  const expectedCodes=new Set(expectedPublishable.map(item=>item.code_source));
+  const missingPublished=expectedPublishable.map(item=>item.code_source).filter(code=>!publishedCodes.has(code));
+  const unexpectedlyPublished=allCanonical.filter(item=>item.currentVersion?.status==='published'&&!expectedCodes.has(item.canonicalCode)).map(item=>item.canonicalCode);
+  fs.writeFileSync(path.join(output,'commercial-publication-matrix.json'),JSON.stringify({sourceVersion:approved.version,sourceDate:approved.date_decision_metier,counts:{source:approved.references.length,expectedPublishable:expectedPublishable.length,expectedRestricted:expectedRestricted.length,clauses:clauses.clauses.length,activeCanonical:allCanonical.length,publishedCanonical:references.length,missingPublished:missingPublished.length,unexpectedlyPublished:unexpectedlyPublished.length},expectedPublishable:expectedPublishable.map(r=>({code:r.code_source,status:r.statut_source})),missingPublished,unexpectedlyPublished,restricted:expectedRestricted.map(r=>({code:r.code_source,status:r.statut_source}))},null,2));
+  check('Active canonical identity count',allCanonical.length===112);
+  check('Published catalogue matches approved publication matrix',missingPublished.length===0&&unexpectedlyPublished.length===0);
+  check('Published contract clause count matches approved matrix',database.database.get("SELECT COUNT(*) AS n FROM contract_clause_versions WHERE status='published'").n===clauses.clauses.length);
+  check('Restricted source references are not published',expectedRestricted.every(r=>!publishedCodes.has(r.code_source)));
   const parameters=async quote=>{
    const p=S.emptyContractParameters(quote.contractAudience,quote.depositPercent);
    p.conclusion={...p.conclusion,channel:'on_premises',context:'TEST — faux dossier en établissement',purchasePurpose:'Recette de développement'};
