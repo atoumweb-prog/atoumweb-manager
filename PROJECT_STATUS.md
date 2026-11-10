@@ -1,5 +1,18 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 10/11/2026 — Reprise parallèle Codex des recettes post-lot 5
+
+Travail réalisé dans le worktree séparé `codex/restes-lots-3-5`, basé sur `claude/lot5-prospect-simplifie`, sans modification du worktree Claude ni de la préproduction.
+
+- [x] `scripts/fixtures/creation-company.cjs` adapté à la création du prospect en une seule étape : contrôle de l’absence d’anciens onglets, présence du message indiquant que les champs complémentaires sont facultatifs.
+- [x] `scripts/fixtures/ec03-transmission-scenarios.cjs` adapté au bureau de clauses actuel (`.contract-clause-desk`) et à son champ `Texte de la clause` ; l’ancien sélecteur `.cgv-clause` n’est plus attendu.
+- [x] Typecheck réussi.
+- [x] Suite complète réussie : 1 941 tests passés, 1 test ignoré.
+- [x] Recette Electron de création du prospect exécutée sur workspace TEMP isolé : 42 contrôles réussis, 0 erreur console, fixture nettoyée.
+- [ ] Le pilote `check-native-commercial-ui.cjs` reste bloqué sans sortie dans cette exécution et a été arrêté ; aucun commit, push, merge ou déploiement effectué.
+
+Prochaine action : exécuter les deux recettes dans ce worktree, puis documenter les résultats avant de proposer les commits à transmettre à Claude.
+
 ## 10/11/2026 — Lot 5 : « Prospect simplifié » (branche claude/lot5-prospect-simplifie)
 
 Demande de Carlos du 10/11 : terminer jusqu’au lot 5. Changements d’écran et de parcours uniquement ; aucune règle de devis ni de qualification modifiée.
