@@ -14,20 +14,25 @@ import {packClauseVersion, packOfferVersion} from './StarterOffersPublication';
  * (copie de la version publiée + ses options), publiée par les services existants.
  * Aucun devis existant n'est modifié.
  */
-const VITRINE = ['AW-WEB-PAGE-SUP', 'AW-CONT-PAGE', 'AW-CONT-ART-SEO', 'AW-MAINT-WP-M', 'AW-MAINT-WP-A'] as const;
-const ECOMMERCE = ['AW-ECOM-PROD-SIMPLE', 'AW-ECOM-PROD-VAR', 'AW-ECOM-LIVRAISON-ADV', 'AW-ECOM-PAIEMENT-ADV', 'AW-ECOM-IMPORT', 'AW-MAINT-WC-M'] as const;
+export interface SuggestedOption { code: string; /** Phrase montrée sous l'option dans l'assistant. */ reason: string; }
+const option = (code: string, reason = ''): SuggestedOption => ({code, reason});
+const VITRINE = ['AW-WEB-PAGE-SUP', 'AW-CONT-PAGE', 'AW-CONT-ART-SEO', 'AW-MAINT-WP-M', 'AW-MAINT-WP-A'].map(code => option(code));
+const ECOMMERCE = ['AW-ECOM-PROD-SIMPLE', 'AW-ECOM-PROD-VAR', 'AW-ECOM-LIVRAISON-ADV', 'AW-ECOM-PAIEMENT-ADV', 'AW-ECOM-IMPORT', 'AW-MAINT-WC-M'].map(code => option(code));
+// Décision de Carlos du 10/11/2026 : rédactions et articles restent vendables EN SUPPLÉMENT dans
+// Business et Visibilité ; la phrase rappelle ce que la formule comprend déjà, pour ne pas le refacturer.
+const EXTRA_PAGES = 'En supplément uniquement : la formule comprend déjà la rédaction de 3 pages.';
+const EXTRA_ARTICLE = 'En supplément uniquement : la formule comprend déjà 1 article SEO.';
+const withReasons = (reasons: Record<string, string>) => VITRINE.map(o => option(o.code, reasons[o.code] ?? ''));
 
-export const SUGGESTED_OPTIONS: Readonly<Record<string, readonly string[]>> = {
+export const SUGGESTED_OPTIONS: Readonly<Record<string, readonly SuggestedOption[]>> = {
   'AW-WEB-VITRINE': VITRINE,
-  // Business comprend déjà la rédaction de 3 pages : la rédaction n'est pas reproposée.
-  'V39-WEB-BUSINESS': VITRINE.filter(code => code !== 'AW-CONT-PAGE'),
-  // Visibilité comprend en plus un article SEO.
-  'V39-WEB-VISIBILITE': VITRINE.filter(code => code !== 'AW-CONT-PAGE' && code !== 'AW-CONT-ART-SEO'),
+  'V39-WEB-BUSINESS': withReasons({'AW-CONT-PAGE': EXTRA_PAGES}),
+  'V39-WEB-VISIBILITE': withReasons({'AW-CONT-PAGE': EXTRA_PAGES, 'AW-CONT-ART-SEO': EXTRA_ARTICLE}),
   'AW-ECOM-BASE': ECOMMERCE,
   'V39-ECOM-BUSINESS': ECOMMERCE,
   'V39-ECOM-VISIBILITE': ECOMMERCE,
-  'AW-MAINT-WP-M': ['AW-TECH-AUDIT-REPRISE'],
-  'AW-MAINT-WP-A': ['AW-TECH-AUDIT-REPRISE'],
+  'AW-MAINT-WP-M': [option('AW-TECH-AUDIT-REPRISE')],
+  'AW-MAINT-WP-A': [option('AW-TECH-AUDIT-REPRISE')],
 };
 
 /** Prestations V3.9.4 à publier pour pouvoir les proposer, avec leurs clauses (cartographie proposée 409). */
@@ -45,7 +50,7 @@ export type OptionsPlan = {
   publications: {code: string; itemId: string; versionId: string; action: 'publier' | 'déjà publiée'}[];
   clauses: {code: string; versionId: string; action: 'publier' | 'déjà publiée'}[];
   links: {clause: string; prestations: string[]}[];
-  offers: {code: string; itemId: string; versionId: string; options: string[]; action: 'nouvelle version' | 'à jour'}[];
+  offers: {code: string; itemId: string; versionId: string; options: string[]; reasons: string[]; action: 'nouvelle version' | 'à jour'}[];
   legacy: {itemId: string | null; action: 'désactiver' | 'déjà inactive' | 'absente'};
   blockers: string[]; planSha256: string;
 };
@@ -82,25 +87,27 @@ export function planSuggestedOptions(db: DatabaseAdapter): OptionsPlan {
     clauses.push({code, versionId: v.id, action: v.status === 'draft' ? 'publier' : 'déjà publiée'});
   }
   // Version qui sera proposée pour chaque option : celle publiée une fois ce plan appliqué.
-  const targetVersion = (code: string): string | null => {
+  const targetItem = (code: string): string | null => {
     const planned = publications.find(p => p.code === code);
-    if (planned) return planned.versionId;
+    if (planned) return planned.itemId;
     const rows = publishedByCode(db, code);
     if (rows.length !== 1) { blockers.push(`Option ${code} : ${rows.length} version publiée active trouvée, 1 attendue.`); return null; }
     if (rows[0].item_type !== 'service') { blockers.push(`Option ${code} : doit être un service.`); return null; }
-    return rows[0].id;
+    return rows[0].item_id;
   };
   const offers: OptionsPlan['offers'] = [];
   for (const [code, options] of Object.entries(SUGGESTED_OPTIONS)) {
     const rows = publishedByCode(db, code);
     if (rows.length !== 1) { blockers.push(`Offre ${code} : ${rows.length} version publiée active trouvée, 1 attendue.`); continue; }
-    const wanted = options.map(targetVersion);
-    if (wanted.some(id => id === null)) continue;
-    const current = recommendations.list(rows[0].id).map(link => link.targetVersionId);
+    const wanted = options.map(o => [targetItem(o.code), o.reason]);
+    if (wanted.some(([id]) => id === null)) continue;
+    // Comparaison par prestation (et non par version) : l'assistant suit seul la version publiée
+    // d'une option, donc une nouvelle version de l'option n'impose pas de refaire l'offre.
+    const current = recommendations.list(rows[0].id).map(link => [link.targetItemId, link.reason]);
     const upToDate = JSON.stringify(current) === JSON.stringify(wanted);
     if (!upToDate && db.get(`SELECT id FROM catalog_versions WHERE item_id=? AND status='draft'${catalog.persistenceAvailable() ? ' AND abandoned_at IS NULL' : ''}`, [rows[0].item_id]))
       blockers.push(`Offre ${code} : un brouillon est déjà en cours sur cette fiche.`);
-    offers.push({code, itemId: rows[0].item_id, versionId: rows[0].id, options: [...options], action: upToDate ? 'à jour' : 'nouvelle version'});
+    offers.push({code, itemId: rows[0].item_id, versionId: rows[0].id, options: options.map(o => o.code), reasons: options.map(o => o.reason), action: upToDate ? 'à jour' : 'nouvelle version'});
   }
   const legacyRows = db.all<{id: string; status: string}>('SELECT id,status FROM catalog_items WHERE name=? AND canonical_code IS NULL', [LEGACY_PAGE_NAME]);
   if (legacyRows.length > 1) blockers.push(`« ${LEGACY_PAGE_NAME} » : ${legacyRows.length} fiches sans code, 1 attendue.`);
@@ -140,13 +147,13 @@ export function applySuggestedOptions(db: DatabaseAdapter, expectedPlanSha256: s
   const targetOf = (code: string) => plan.publications.find(p => p.code === code)?.versionId ?? publishedByCode(db, code)[0].id;
   // Une prestation qui est elle-même proposée en option (maintenance) reçoit sa nouvelle version
   // en premier : les offres pointent ainsi vers sa version publiée finale, pas vers une version retirée.
-  const isOption = (code: string) => Object.values(SUGGESTED_OPTIONS).some(options => options.includes(code));
+  const isOption = (code: string) => Object.values(SUGGESTED_OPTIONS).some(options => options.some(o => o.code === code));
   const ordered = [...plan.offers].sort((a, b) => Number(isOption(b.code)) - Number(isOption(a.code)));
   for (const offer of ordered) if (offer.action === 'nouvelle version') {
     const published = catalog.getItem(offer.itemId).versions.find(v => v.id === offer.versionId)!;
     const draft = catalog.createVersion(offer.itemId, versionInput(published));
     const targets = offer.options.map(targetOf);
-    recommendations.replace(draft.id, targets, undefined, targets.map(targetVersionId => ({targetVersionId, reason: '', status: 'active' as const, conditions: '', provenance: PROVENANCE})));
+    recommendations.replace(draft.id, targets, undefined, targets.map((targetVersionId, index) => ({targetVersionId, reason: offer.reasons[index], status: 'active' as const, conditions: '', provenance: PROVENANCE})));
     catalog.publishVersion(draft.id);
     offerVersions++;
   }

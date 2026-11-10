@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import type {CatalogItemSummary} from '../../shared/commercial';
 import type {ProspectSummary} from '../../shared/crm';
-import {catalogSourceCode, prospectAcceptsQuote, quoteAdvice, quoteStartFromProspect, wizardFamilies, wizardPriceLabel} from './quoteWizardModel';
+import {catalogSourceCode, prospectAcceptsQuote, quoteAdvice, quoteStartFromProspect, resolveSuggestions, wizardFamilies, wizardPriceLabel} from './quoteWizardModel';
 
 const item = (name: string, type: 'offer' | 'service', category: string | null, extra: Partial<CatalogItemSummary> = {}, version: Record<string, unknown> = {}): CatalogItemSummary => ({
   id: name, name, type, category, status: 'active', visiblePublic: false, createdAt: '', updatedAt: '',
@@ -46,6 +46,22 @@ describe('Lot 3 — assistant de devis', () => {
     expect(quoteStartFromProspect(prospect({primaryNeed: 'Site vitrine', initialRequest: 'Bonjour, je voudrais un site.'}))).toEqual({subject: 'Site vitrine', needSummary: 'Bonjour, je voudrais un site.', estimatedDelay: ''});
     const long = 'Refaire le site de la boulangerie, ajouter la commande en ligne et les horaires, avant les fêtes de fin d’année.';
     expect(quoteStartFromProspect(prospect({projectSummary: long, projectContext: 'Budget serré', timelineNote: 'Avant Noël'}))).toEqual({subject: '', needSummary: long + '\n\nBudget serré', estimatedDelay: 'Avant Noël'});
+  });
+
+  it('propose la version publiée actuelle de chaque option, sans rattachement à refaire', () => {
+    // Le lien pointait vers l'ancienne version « v-ancienne » ; la fiche a depuis une nouvelle version publiée.
+    const article = item('Article SEO', 'service', 'Contenu', {}, {id: 'v-nouvelle', priceCents: 14900});
+    const maintenance = item('Maintenance', 'service', 'Maintenance', {}, {priceMode: 'monthly', priceCents: 4900});
+    const brouillon = item('Brouillon', 'service', null, {}, {status: 'draft'});
+    const suggestions = resolveSuggestions(
+      [{targetItemId: 'Article SEO', status: 'active', reason: ' En supplément. '}, {targetItemId: 'Maintenance', status: 'paused'}, {targetItemId: 'Disparue', status: 'active'}, {targetItemId: 'Brouillon', status: 'active'}],
+      [{serviceItemId: 'Maintenance', isOptional: true}, {serviceItemId: 'Article SEO', isOptional: true}, {serviceItemId: 'Brouillon', isOptional: false}],
+      [article, maintenance, brouillon],
+    );
+    expect(suggestions).toEqual([
+      {versionId: 'v-nouvelle', name: 'Article SEO', priceCents: 14900, priceLabel: '149 €', reason: 'En supplément.'},
+      {versionId: 'v-Maintenance', name: 'Maintenance', priceCents: 4900, priceLabel: '49 € / mois', reason: ''},
+    ]);
   });
 
   it('donne des conseils sans doublon et accepte un prospect neuf', () => {

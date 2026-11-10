@@ -1,4 +1,4 @@
-import type {CatalogItemSummary, CatalogVersion} from '../../shared/commercial';
+import type {CatalogItemSummary, CatalogRecommendationLink, CatalogVersion, OfferComponent} from '../../shared/commercial';
 import type {ProspectSummary} from '../../shared/crm';
 import type {OperationIconName} from '../operations/OperationIcon';
 import {APPROVED_FAMILY_LABELS} from '../../shared/approvedFamilies';
@@ -62,6 +62,30 @@ export function wizardPriceLabel(version: Pick<CatalogVersion, 'priceMode' | 'pr
 /** Code source de la fiche (jamais montré) : sert uniquement à retrouver l'échéancier prévu par le pack. */
 export function catalogSourceCode(item: CatalogItemSummary | null | undefined): string | null {
   return item?.canonicalCode?.trim() || item?.currentVersion?.provenance?.recordKey?.trim() || null;
+}
+
+export interface WizardSuggestion { versionId: string; name: string; priceCents: number | null; priceLabel: string; reason: string; }
+
+/**
+ * Options à proposer avec une offre : ses compléments recommandés actifs et ses composants facultatifs.
+ * Le lien du Catalogue désigne une version précise de la prestation ; l'assistant propose toujours la
+ * version publiée ACTUELLE de cette prestation. Publier une nouvelle version d'une option ne demande
+ * donc aucun rattachement. Une prestation désactivée ou sans version publiée n'est pas proposée.
+ */
+export function resolveSuggestions(
+  links: ReadonlyArray<Pick<CatalogRecommendationLink, 'targetItemId' | 'status' | 'reason'>>,
+  components: ReadonlyArray<Pick<OfferComponent, 'serviceItemId' | 'isOptional'>>,
+  catalog: readonly CatalogItemSummary[],
+): WizardSuggestion[] {
+  const suggestions = new Map<string, WizardSuggestion>();
+  const add = (itemId: string, reason: string) => {
+    const item = catalog.find(candidate => candidate.id === itemId), version = item?.currentVersion;
+    if (!item || !version || item.status !== 'active' || version.status !== 'published' || suggestions.has(item.id)) return;
+    suggestions.set(item.id, {versionId: version.id, name: item.name, priceCents: version.priceCents ?? null, priceLabel: wizardPriceLabel(version), reason});
+  };
+  for (const link of links) if (link.status !== 'paused') add(link.targetItemId, link.reason?.trim() ?? '');
+  for (const component of components) if (component.isOptional) add(component.serviceItemId, '');
+  return [...suggestions.values()];
 }
 
 export interface QuoteStart { subject: string; needSummary: string; estimatedDelay: string; }

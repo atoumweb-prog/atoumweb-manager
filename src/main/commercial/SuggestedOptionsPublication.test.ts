@@ -41,8 +41,13 @@ describe('Lot 3 — options suggérées par offre', {timeout: 60000}, () => {
       // Par code : les noms des fiches historiques ne sont remplacés qu'à l'activation du pack.
       const names = (code: string) => recommendations.list(published(db, code).id).map(link => db.get<{code: string}>('SELECT canonical_code AS code FROM catalog_items WHERE id=?', [link.targetItemId])!.code);
       expect(names('AW-WEB-VITRINE')).toEqual(['AW-WEB-PAGE-SUP', 'AW-CONT-PAGE', 'AW-CONT-ART-SEO', 'AW-MAINT-WP-M', 'AW-MAINT-WP-A']);
-      expect(names('V39-WEB-BUSINESS')).not.toContain('AW-CONT-PAGE');
-      expect(names('V39-WEB-VISIBILITE')).toEqual(['AW-WEB-PAGE-SUP', 'AW-MAINT-WP-M', 'AW-MAINT-WP-A']);
+      // Business et Visibilité : rédaction et article vendables en supplément, avec le rappel de ce qui est déjà compris.
+      const reasons = (code: string) => Object.fromEntries(recommendations.list(published(db, code).id).filter(link => link.reason).map(link => [db.get<{code: string}>('SELECT canonical_code AS code FROM catalog_items WHERE id=?', [link.targetItemId])!.code, link.reason]));
+      expect(names('V39-WEB-BUSINESS')).toEqual(names('AW-WEB-VITRINE'));
+      expect(names('V39-WEB-VISIBILITE')).toEqual(names('AW-WEB-VITRINE'));
+      expect(reasons('AW-WEB-VITRINE')).toEqual({});
+      expect(reasons('V39-WEB-BUSINESS')).toEqual({'AW-CONT-PAGE': expect.stringContaining('3 pages')});
+      expect(reasons('V39-WEB-VISIBILITE')).toEqual({'AW-CONT-PAGE': expect.stringContaining('3 pages'), 'AW-CONT-ART-SEO': expect.stringContaining('1 article SEO')});
       expect(names('AW-ECOM-BASE')).toHaveLength(SUGGESTED_OPTIONS['AW-ECOM-BASE'].length);
       expect(names('AW-MAINT-WP-A')).toEqual(['AW-TECH-AUDIT-REPRISE']);
       for (const code of Object.keys(SUGGESTED_OPTIONS))
@@ -70,6 +75,9 @@ describe('Lot 3 — options suggérées par offre', {timeout: 60000}, () => {
       expect(withPage.contractValueCents).toBe(69900 + 7900);
       expect(terms.getQuoteBuild(withPage.id).clauses.length).toBeGreaterThan(terms.getQuoteBuild(without.id).clauses.length);
 
+      // Une option qui change de version (ici l'article SEO V3.9.4) ne demande pas de refaire les offres.
+      const article = db.get<{id: string}>("SELECT v.id FROM catalog_versions v JOIN catalog_items i ON i.id=v.item_id WHERE i.canonical_code='AW-CONT-ART-SEO' AND v.status='draft'")!;
+      catalog.publishVersion(article.id);
       const replay = planSuggestedOptions(db);
       expect(replay.blockers).toEqual([]);
       expect(replay.offers.every(o => o.action === 'à jour')).toBe(true);

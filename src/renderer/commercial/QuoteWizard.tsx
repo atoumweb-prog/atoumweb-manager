@@ -7,7 +7,7 @@ import {OperationIcon} from '../operations/OperationIcon';
 import {QuoteDraftLines, type DraftLine} from '../workflow/QuoteDraftLines';
 import {useUnsavedDraft} from '../unsaved/unsaved';
 import {quoteWizardPriceCents} from './quoteWizardPrice';
-import {catalogSourceCode, quoteStartFromProspect, wizardFamilies, wizardMoney, wizardPriceLabel} from './quoteWizardModel';
+import {catalogSourceCode, quoteStartFromProspect, resolveSuggestions, wizardFamilies, wizardMoney, wizardPriceLabel, type WizardSuggestion} from './quoteWizardModel';
 import './quote-wizard.css';
 
 /**
@@ -19,7 +19,7 @@ import './quote-wizard.css';
 type StepId = 'owner' | 'offer' | 'options' | 'terms' | 'preview';
 const STEP_LABELS: Record<StepId, string> = {owner: 'Pour qui', offer: 'Offre', options: 'Options', terms: 'Conditions', preview: 'Aperçu'};
 
-interface Suggestion { versionId: string; name: string; priceCents: number | null; reason: string; }
+type Suggestion = WizardSuggestion;
 
 interface Draft {
   ownerKind: 'prospect' | 'client'; ownerId: string;
@@ -107,15 +107,7 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
       window.atoumweb.catalog.listOfferComponents(draft.offerVersionId),
     ]).then(([links, components]) => {
       if (!active) return;
-      const byVersion = new Map<string, Suggestion>();
-      const currentPrice = (versionId: string) => catalog.find(item => item.currentVersion?.id === versionId)?.currentVersion?.priceCents ?? null;
-      for (const link of links)
-        if (link.status !== 'paused' && link.targetVersionStatus === 'published' && link.targetItemStatus === 'active')
-          byVersion.set(link.targetVersionId, {versionId: link.targetVersionId, name: link.targetName, priceCents: currentPrice(link.targetVersionId), reason: link.reason?.trim() ?? ''});
-      for (const component of components)
-        if (component.isOptional && !byVersion.has(component.serviceVersionId))
-          byVersion.set(component.serviceVersionId, {versionId: component.serviceVersionId, name: component.serviceName, priceCents: component.priceCents ?? null, reason: ''});
-      setSuggestions([...byVersion.values()]);
+      setSuggestions(resolveSuggestions(links, components, catalog));
     }).catch(() => undefined).finally(() => { if (active) setSuggestionsLoading(false); });
     return () => { active = false; };
   }, [draft.offerVersionId, catalog]);
@@ -298,7 +290,7 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
             return <label key={suggestion.versionId} className={selected ? 'quote-option selected' : 'quote-option'}>
               <input type="checkbox" checked={selected} onChange={() => toggleSuggestion(suggestion)}/>
               <span><strong>{suggestion.name}</strong>{suggestion.reason && <small>{suggestion.reason}</small>}</span>
-              <span className="quote-offer-price">{wizardPriceLabel(catalog.find(item => item.currentVersion?.id === suggestion.versionId)?.currentVersion ?? {priceMode: suggestion.priceCents == null ? 'quote_only' : 'fixed', priceCents: suggestion.priceCents})}</span>
+              <span className="quote-offer-price">{suggestion.priceLabel}</span>
             </label>;
           })}</div>
         </>}

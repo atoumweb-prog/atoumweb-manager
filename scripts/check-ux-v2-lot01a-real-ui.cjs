@@ -36,7 +36,7 @@ if(!process.versions.electron){
  app.disableHardwareAcceleration();app.setPath('userData',path.join(temp,'profile'));app.on('window-all-closed',()=>{});
  const base=repo.split(path.sep).join('/'),esbuild=require('esbuild');
  const serviceEntries=['database/DatabaseService','workspace','ipc','operations/operationsIpc','referentials/referentialsIpc','backups/businessBackupsIpc','time/timeIpc',...(process.env.ATOUMWEB_EC03_ONLY==='1'?['testSupport/quotePreparationFixture']:[])];
- const source=serviceEntries.map(s=>"export * from '"+base+"/src/main/"+s+"';").join('\n');
+ const source=serviceEntries.map(s=>"export * from '"+base+"/src/main/"+s+"';").join('\n')+"\nexport { MIGRATIONS as EXPECTED_MIGRATIONS } from '"+base+"/src/main/database/migrations';";
  esbuild.buildSync({stdin:{contents:source,resolveDir:repo,loader:'ts'},bundle:true,loader:{'.png':'dataurl'},platform:'node',format:'cjs',outfile:path.join(temp,'services.cjs'),external:['electron'],logLevel:'silent'});
  fs.copyFileSync(require.resolve('pdfjs-dist/build/pdf.worker.min.mjs'),path.join(temp,'pdf.worker.min.mjs'));
  fs.writeFileSync(path.join(temp,'pdf-worker-url.js'),'export default "./pdf.worker.min.mjs"');
@@ -190,7 +190,7 @@ if(!process.versions.electron){
     await require('./fixtures/02c-search-scenarios.cjs')({win,db,temp,workspace,registered,evalUI,get,wait,navigate,test,sleep});
     test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','02C integrity');
     test(db.database.all('PRAGMA foreign_key_check').length===0,'02C FK');
-    test(db.database.all('SELECT id FROM schema_migrations ORDER BY id').map(row=>row.id).join(',')===Array.from({length:74},(_,index)=>index+1).join(','),'02C exact migrations1–74');
+    test(db.database.all('SELECT id FROM schema_migrations ORDER BY id').map(row=>row.id).join(',')===S.EXPECTED_MIGRATIONS.map(m=>m.id).join(','),'02C migrations match the declared ledger');
     console.log('02C_RESULT '+JSON.stringify({passed:checks,failed:0,consoleErrors,onlyTemp:true}));return;
   }
   if(lot08a){
