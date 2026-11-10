@@ -453,6 +453,8 @@ const api: AtoumWebApi = {
     openContractDocument: (id: string) => ipcRenderer.invoke('quotes:open-contract-document', id),
     updateAbbyReference: (id: string, abbyReference?: string | null) => ipcRenderer.invoke('quotes:update-abby-reference', id, abbyReference),
     generatePdf: (id: string) => ipcRenderer.invoke('quotes:generate-pdf', id),
+    revealPdf: (id: string) => ipcRenderer.invoke('quotes:reveal-pdf', id),
+    openEmailDraft: (id: string) => ipcRenderer.invoke('quotes:open-email-draft', id),
   },
   projects: {
     templates: {

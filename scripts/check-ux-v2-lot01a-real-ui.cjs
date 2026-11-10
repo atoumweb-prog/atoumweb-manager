@@ -32,6 +32,8 @@ if(!process.versions.electron){
  }
 }else{
  const {app,BrowserWindow,ipcMain}=require('electron'),temp=process.env[ENV];
+ // Lot 4 : l'envoi d'un devis montre le PDF et ouvre un brouillon d'e-mail ; en recette, rien ne sort du banc.
+ {const {shell}=require('electron');shell.openExternal=async()=>{};shell.showItemInFolder=()=>{};}
  assert(owned(temp),'No independent TEMP fixture; launch via Node wrapper');
  app.disableHardwareAcceleration();app.setPath('userData',path.join(temp,'profile'));app.on('window-all-closed',()=>{});
  const base=repo.split(path.sep).join('/'),esbuild=require('esbuild');

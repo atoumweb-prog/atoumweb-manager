@@ -403,4 +403,8 @@ export interface QuoteApi {
   openContractDocument(id: string): Promise<void>;
   updateAbbyReference(id: string, abbyReference?: string | null): Promise<QuoteDetail>;
   generatePdf(id: string): Promise<QuotePdfResult>;
+  /** Lot 4 : montre le PDF déjà créé dans son dossier ; `false` s'il n'existe pas encore. */
+  revealPdf(id: string): Promise<boolean>;
+  /** Lot 4 : ouvre un brouillon d'e-mail dans la messagerie de l'utilisateur. Rien n'est envoyé. */
+  openEmailDraft(id: string): Promise<{ to: string | null }>;
 }

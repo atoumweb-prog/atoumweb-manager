@@ -9,6 +9,8 @@ if(!process.versions.electron){
  try{process.stdout.write(run.stdout||'');process.stderr.write(run.stderr||'');if(run.error)throw run.error;process.exitCode=run.status??1;}finally{if(path.resolve(managedTemp).startsWith(path.resolve(os.tmpdir())+path.sep)&&path.basename(managedTemp).startsWith('atoumweb-native-ui-'))fs.rmSync(managedTemp,{recursive:true,force:true,maxRetries:5,retryDelay:100});}
 }else{
  const {app,BrowserWindow,clipboard,dialog}=require('electron'),args=process.argv.slice(2),option=k=>args[args.indexOf(k)+1];
+ // Lot 4 : l'envoi d'un devis montre le PDF et ouvre un brouillon d'e-mail ; en recette, rien ne sort du banc.
+ {const {shell}=require('electron');shell.openExternal=async()=>{};shell.showItemInFolder=()=>{};}
  if(!args.includes('--development-confirmed')||!args.includes('--workspace')||!args.includes('--output'))throw Error('Explicit development confirmation, workspace and output required');
  const workspace=path.resolve(option('--workspace')),output=path.resolve(option('--output'));
  if(path.basename(workspace)!=='Validation-MSI')throw Error('Only Validation-MSI development is authorized');
@@ -70,8 +72,8 @@ if(!process.versions.electron){
   const prepareUI=async quote=>{await click('Vérifier le plan sans créer de Projet');await wait('document.querySelector(".quote-project-create [role=status]")!==null');await click('Préparer le Projet');await wait(`document.querySelector('[aria-label="Périmètre commercial du Projet"]')!==null`);return call('quotes.get',quote.id);};
   const acceptUI=async quote=>{
    await parameters(await call('quotes.get',quote.id));await openQuote(await call('quotes.get',quote.id));
-   await click('Finaliser le devis','.quote-detail-panel button');await wait(`[...document.querySelectorAll('.quote-detail-panel button')].some(b=>b.textContent==='Marquer envoyé')`);
-   await click('Marquer envoyé','.quote-detail-panel button');await wait(`document.querySelector('.quote-detail-panel .quote-status')?.textContent==='Envoyé'`);
+   await click('Envoyer le devis','.quote-detail-panel button');await wait(`[...document.querySelectorAll('.quote-detail-panel button')].some(b=>b.textContent==='C’est envoyé')`);await input('.quote-detail-panel .quote-send-steps input','Recette native — envoi fictif');
+   await click('C’est envoyé','.quote-detail-panel button');await wait(`document.querySelector('.quote-detail-panel .quote-status')?.textContent==='Envoyé'`);
    await call('quotePreparation.recordAcceptance',quote.id,'TEST — acceptation explicite fictive, aucune signature réelle',new Date().toISOString(),'Recette native');
    await click('Valider','.quote-detail-panel button');await wait(`document.querySelector('.quote-detail-panel .quote-status')?.textContent==='Accepté'`);return call('quotes.get',quote.id);
   };
