@@ -298,7 +298,7 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
             return <label key={suggestion.versionId} className={selected ? 'quote-option selected' : 'quote-option'}>
               <input type="checkbox" checked={selected} onChange={() => toggleSuggestion(suggestion)}/>
               <span><strong>{suggestion.name}</strong>{suggestion.reason && <small>{suggestion.reason}</small>}</span>
-              <span className="quote-offer-price">{suggestion.priceCents == null ? 'Sur devis' : wizardMoney(suggestion.priceCents)}</span>
+              <span className="quote-offer-price">{wizardPriceLabel(catalog.find(item => item.currentVersion?.id === suggestion.versionId)?.currentVersion ?? {priceMode: suggestion.priceCents == null ? 'quote_only' : 'fixed', priceCents: suggestion.priceCents})}</span>
             </label>;
           })}</div>
         </>}

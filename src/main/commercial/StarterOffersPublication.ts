@@ -67,11 +67,11 @@ export type StarterPlan = {
   blockers: string[]; planSha256: string;
 };
 
-function packOfferVersion(db: DatabaseAdapter, code: string): {item_id: string; id: string; status: string} | undefined {
+export function packOfferVersion(db: DatabaseAdapter, code: string): {item_id: string; id: string; status: string} | undefined {
   return db.get("SELECT item_id,id,status FROM catalog_versions WHERE json_extract(provenance_json,'$.sha256')=? AND json_extract(provenance_json,'$.recordKey')=? ORDER BY version_number DESC LIMIT 1",
     [APPROVED_PACK.catalogue.sha256_word, code]);
 }
-function packClauseVersion(db: DatabaseAdapter, code: string): {clause_id: string; id: string; status: string; scope: string} | undefined {
+export function packClauseVersion(db: DatabaseAdapter, code: string): {clause_id: string; id: string; status: string; scope: string} | undefined {
   return db.get(`SELECT v.clause_id,v.id,v.status,t.scope FROM contract_clause_versions v JOIN contract_clause_templates t ON t.id=v.clause_id
     WHERE json_extract(v.review_metadata_json,'$.provenance.sha256')=? AND (v.code=? COLLATE NOCASE OR (v.code IS NULL AND t.code=? COLLATE NOCASE))
     ORDER BY v.version_number DESC LIMIT 1`, [APPROVED_PACK.library.sha256_word, code, code]);
