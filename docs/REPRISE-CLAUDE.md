@@ -7,7 +7,7 @@ Point d'entrée pour reprendre le travail de Claude dans une **nouvelle conversa
 - Dossier : `C:/DEV/01_PROJETS/AtoumWeb/claude-review-pr166` (worktree ; ne pas travailler dans `atoumweb-manager`, ni dans les worktrees Codex).
 - Branche courante : `claude/lot3-devis-rapide`, empilée ainsi :
   `codex/integration-v394-v15-20261108` (PR #166) → `claude/v394-decisions-20261109` (PR #168, poussée) → `claude/mode-operatoire-20261109` → `claude/atelier-manager` (reprise des corrections locales Codex du 09/11, outil d'activation, préproduction) → `claude/lot2-cgv-disponibles` → `claude/lot1-mon-entreprise` → `claude/lot3-devis-rapide`.
-- **Rien n'est poussé après la PR #168.** Ne pas pousser sans accord explicite de Carlos (dépôt PUBLIC).
+- Poussé le 10/11 avec l'accord de Carlos, en PR brouillon empilées : #169 mode opératoire, #170 atelier, #171 lot 2, #172 lot 1, #173 lot 3. **Tout nouveau push demande de nouveau l'accord explicite de Carlos (dépôt PUBLIC).** Aucune fusion sans son accord.
 - `node_modules` est une jonction vers celui du worktree Codex `offres-tarifs-v2-20261106`.
 
 ## Préproduction de Carlos

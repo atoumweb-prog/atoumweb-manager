@@ -16,7 +16,9 @@ Décisions de Carlos du 10/11 : devis autorisé pour un prospect tout neuf, sans
 - [x] Décisions de Carlos du 10/11 (suite) : dans Vitrine Business et Vitrine Visibilité, « Rédaction page web » et « Article SEO » restent vendables **en supplément** ; l’option affiche le rappel de ce que la formule comprend déjà (3 pages rédigées ; 1 article SEO pour Visibilité). Appliqué à la préproduction (nouvelle version de ces 2 offres seulement). Les formules WooCommerce Business/Visibilité ne proposent pas ces deux options (non demandé).
 - [x] Plus de rattachement manuel : une nouvelle version d’une offre recopie déjà ses options (comportement existant du Catalogue) ; l’assistant propose désormais la version publiée **actuelle** de chaque option (`resolveSuggestions`), le lien enregistré restant inchangé ; l’outil compare par prestation. Limite : le panneau « compléments recommandés » d’un devis déjà créé (04D) garde sa lecture par version.
 - [x] Recettes Electron rejouées : `check-unsaved-inputs-ui.cjs --lot-create` (15 vérifications, 3 thèmes) et `check-prospection-flow-native.cjs` (29 vérifications, 0 erreur console). Deux pannes antérieures au lot 3 réparées dans les bancs : import Vite « ?url » du moteur PDF non géré, et nombre de migrations figé à 74 remplacé par le registre déclaré.
-- [x] Préproduction de Carlos mise à jour le 10/11 (Manager du commit 832dc49e, données conservées, ancien Manager gardé dans `Runtime-precedents`). Rien n’est poussé.
+- [x] Préproduction de Carlos mise à jour le 10/11 (Manager du commit 832dc49e, données conservées, ancien Manager gardé dans `Runtime-precedents`).
+
+- [x] Accord de Carlos du 10/11 : les 5 branches empilées sont poussées et ouvertes en PR brouillon, chacune sur la précédente — #169 mode opératoire, #170 atelier, #171 lot 2, #172 lot 1, #173 lot 3 (base de la pile : #168). Aucune fusion.
 
 Prochaine action : essai de Carlos sur la préproduction, puis lot 4 (envoyer et faire accepter).
 
