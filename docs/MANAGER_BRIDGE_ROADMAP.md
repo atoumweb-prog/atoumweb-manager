@@ -2418,3 +2418,9 @@ Le flux Catalogue → sélection contractuelle → paramètres → PDF est valid
 # 02/11/2026 — V3.8 contrats et Catalogue (réalisation locale, non publiée)
 
 Autorisation : préparer la V3.8 depuis les deux documents de relecture, sans publier, fusionner, déployer ni toucher aux bases utilisateur. Réalisation : extraction structurée et empreintée ; comparaison V3.7/V3.8 et Catalogue V1 ; support d’une 119e clause nouvelle en brouillon atomique. Résultat : 115 clauses inchangées, 3 réécrites, 1 nouvelle ; 105 fiches Catalogue identiques, 7 à revoir et une formule Lune sans code inventé. TypeScript et 6 tests ciblés verts. Aucune action Bridge ni écriture utilisateur. Prochaine action : exposer la comparaison et les confirmations dans le Manager, sans publication automatique.
+### 2026-11-10 — diagnostic du pilote commercial
+
+- Proposition : vérifier la provenance du seuil `112` et rapprocher les comptes du pack approuvé et de la préproduction.
+- Réalisation : `112` provient du filtre `catalog.list({status:'active'})` sur les identifiants `AW-*` dans `scripts/check-native-commercial-ui.cjs`. Le pack approuvé V3.9.4 rectificatif 019 contient 130 références et 119 clauses. La préproduction contient 112 identités AW, mais seulement 23 versions AW publiées, sur 50 versions publiées au total, avec 120 brouillons et 14 retirées.
+- Décision : aucune donnée métier ni assertion n'est modifiée avant définition d'une matrice de publication de recette conforme à la source de vérité. Les lots visuels restent suspendus.
+- Prochaine action : préparer une copie TEMP explicitement isolée et documenter la matrice des références publiées autorisées avant de rejouer le pilote.
