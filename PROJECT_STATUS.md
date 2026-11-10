@@ -9,7 +9,10 @@ Travail réalisé dans le worktree séparé `codex/restes-lots-3-5`, basé sur `
 - [x] Typecheck réussi.
 - [x] Suite complète réussie : 1 941 tests passés, 1 test ignoré.
 - [x] Recette Electron de création du prospect exécutée sur workspace TEMP isolé : 42 contrôles réussis, 0 erreur console, fixture nettoyée.
-- [ ] Le pilote `check-native-commercial-ui.cjs` reste bloqué sans sortie dans cette exécution et a été arrêté ; aucun commit, push, merge ou déploiement effectué.
+- [x] Diagnostic du pilote commercial : le bundle renderer échouait silencieusement sur `pdfjs-dist/build/pdf.worker.min.mjs?url` avec esbuild seul ; alias et copie du worker ajoutés, puis démarrage Electron confirmé par trace (`app-ready`, `database-ready`, fenêtre, renderer chargé).
+- [x] Banc recommandations spécialisé : 10 contrôles réussis, 0 exception renderer.
+- [x] Parcours devis Electron spécialisé : 44 contrôles réussis, 0 erreur console.
+- [ ] Pilote commercial complet arrêté ensuite sur son prérequis de fixture : la copie de préproduction contient 50 références publiées, tandis que le pilote exige 112 références publiées. Aucun scénario « Ouvrir le projet » ou devis consommateur n’est marqué validé par ce pilote.
 
 Prochaine action : exécuter les deux recettes dans ce worktree, puis documenter les résultats avant de proposer les commits à transmettre à Claude.
 
