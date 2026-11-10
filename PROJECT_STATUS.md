@@ -13,6 +13,9 @@ Travail réalisé dans le worktree séparé `codex/restes-lots-3-5`, basé sur `
 - [x] Banc recommandations spécialisé : 10 contrôles réussis, 0 exception renderer.
 - [x] Parcours devis Electron spécialisé : 44 contrôles réussis, 0 erreur console.
 - [ ] Pilote commercial complet arrêté ensuite sur son prérequis de fixture : la copie de préproduction contient 50 références publiées, tandis que le pilote exige 112 références publiées. Aucun scénario « Ouvrir le projet » ou devis consommateur n’est marqué validé par ce pilote.
+- [x] Audit du PDF TEST vitrine : le 30/70 venait du générateur de démonstration qui n’envoyait pas `paymentPlan: 'sites_vitrines'`; la source applicative `approvedPaymentPlans.ts` et l’assistant Devis restent à 40/60. Le PDF TEST 699 € ne doit pas être considéré comme un devis conforme OFF-007.
+- [x] Audit contractuel du PDF TEST : les renvois à la clause 014 et aux définitions sont présents dans les textes publiés assemblés ; aucune réécriture de clause effectuée.
+- [ ] Validation de la substitution des informations administratives réelles dans un runtime isolé non terminée, car `set-company-info.cjs` détecte un processus Electron ouvert sur la préproduction. Le fichier source reste hors dépôt.
 
 Prochaine action : exécuter les deux recettes dans ce worktree, puis documenter les résultats avant de proposer les commits à transmettre à Claude.
 
