@@ -1,11 +1,11 @@
-# Reprise Claude — état au 10/11/2026 (après lot 3)
+# Reprise Claude — état au 10/11/2026 (après lot 4)
 
 Point d'entrée pour reprendre le travail de Claude dans une **nouvelle conversation**. Lire aussi `AGENTS.md`, puis les entrées du 09/11 en tête de `PROJECT_STATUS.md`.
 
 ## Où travailler
 
 - Dossier : `C:/DEV/01_PROJETS/AtoumWeb/claude-review-pr166` (worktree ; ne pas travailler dans `atoumweb-manager`, ni dans les worktrees Codex).
-- Branche courante : `claude/lot3-devis-rapide`, empilée ainsi :
+- Branche courante : `claude/lot4-envoyer-accepter` (locale, non poussée), empilée sur `claude/lot3-devis-rapide` ; pile poussée :
   `codex/integration-v394-v15-20261108` (PR #166) → `claude/v394-decisions-20261109` (PR #168, poussée) → `claude/mode-operatoire-20261109` → `claude/atelier-manager` (reprise des corrections locales Codex du 09/11, outil d'activation, préproduction) → `claude/lot2-cgv-disponibles` → `claude/lot1-mon-entreprise` → `claude/lot3-devis-rapide`.
 - Poussé le 10/11 avec l'accord de Carlos, en PR brouillon empilées : #169 mode opératoire, #170 atelier, #171 lot 2, #172 lot 1, #173 lot 3. **Tout nouveau push demande de nouveau l'accord explicite de Carlos (dépôt PUBLIC).** Aucune fusion sans son accord.
 - `node_modules` est une jonction vers celui du worktree Codex `offres-tarifs-v2-20261106`.
@@ -36,8 +36,8 @@ Point d'entrée pour reprendre le travail de Claude dans une **nouvelle conversa
 | 1 Mon entreprise | fait (préproduction) |
 | 2 CGV disponibles (8 offres, 48 clauses) | fait (préproduction) |
 | 3 Devis rapide : un seul parcours depuis le prospect, qualification conseillée, besoin repris, offre choisie une fois par familles/icônes sans « Sans code · v1 », options suggérées, acompte selon l'offre (40/60 vitrine, 30/40/30 Woo), CGV ajoutées automatiquement à un devis neuf | fait (préproduction à jour, commit 832dc49e ; options par offre enregistrées avec `publish-suggested-options.cjs` ; l’assistant suit seul la version publiée des options) |
-| 4 Envoyer et faire accepter : bouton « Envoyer le devis » (PDF devis + CGV), liste de vérification en français (6 points restants : canal, livraison, jalons, garantie, licences, renouvellement), fiche « à recopier dans Abby » | **prochain** |
-| 5 Prospect simplifié : « + Prospect », une étape de création, 2 niveaux de navigation max, « Enregistrer et continuer », boutons rapides sur l'Accueil | à faire |
+| 4 Envoyer et faire accepter : bouton « Envoyer le devis » (PDF devis + CGV), liste de vérification en français (6 points restants : canal, livraison, jalons, garantie, licences, renouvellement), fiche « à recopier dans Abby » | fait en local (essai réel réussi ; préproduction et push en attente de l’accord de Carlos) |
+| 5 Prospect simplifié : « + Prospect », une étape de création, 2 niveaux de navigation max, « Enregistrer et continuer », boutons rapides sur l'Accueil | **prochain** |
 | A–F visuel : en-tête unique (retirer « SQLite · 81 migrations »), barre d'outils, tableaux, cartes, texte ≥ 14 px, finitions (messages vides, 18 familles, bandeau Bibliothèque, retour en haut) | à faire |
 
 ## Méthode qui a fonctionné

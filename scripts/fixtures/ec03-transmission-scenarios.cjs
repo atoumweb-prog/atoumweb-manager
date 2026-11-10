@@ -28,17 +28,17 @@ module.exports=async({win,db,S,evalUI:js,get,wait,navigate,test,sleep})=>{
   await wait(`!document.querySelector('[aria-label="Comparaison des CGV"]')`,'applied comparison');
   test(db.contractTerms.getQuoteBuild(q.id).compiledText.includes(version.body),'explicit comparison applied exact selected version');
   test(db.contractTerms.getQuoteBuild(q.id).clauses.some(c=>c.body==='Texte négocié exact.'),'custom clause unchanged');
-  await click('Finaliser le devis');await wait('[...document.querySelectorAll("button")].some(b=>b.textContent===\"Reprendre le brouillon\")','prepared state');
+  await click('Envoyer le devis');await wait('[...document.querySelectorAll("button")].some(b=>b.textContent===\"Corriger le devis\")','prepared state');
   test(db.quotes.get(q.id).status==='draft'&&db.quotes.get(q.id).contractSnapshotJson===null,'preparation is neither sending nor final freeze');
   test(db.contractTerms.getQuoteBuild(q.id).snapshotState==='prepared','read panel distinguishes prepared state');
-  const prepared=sqlState();await js('window.confirm=()=>false');await click('Reprendre le brouillon');test(sqlState()===prepared,'cancelled resume is mutation-free');
-  await js('window.confirm=()=>true');await click('Reprendre le brouillon');await wait('!!document.querySelector(".cgv-clause-editor textarea:not([disabled])")','resumed draft');
+  const prepared=sqlState();await js('window.confirm=()=>false');await click('Corriger le devis');test(sqlState()===prepared,'cancelled resume is mutation-free');
+  await js('window.confirm=()=>true');await click('Corriger le devis');await wait('!!document.querySelector(".cgv-clause-editor textarea:not([disabled])")','resumed draft');
   test(db.quotes.get(q.id).finalizedAt===null,'explicit resume unlocks only this new preparation');
   test(db.database.all('SELECT * FROM quote_contract_preparations WHERE quote_id=?',[q.id]).length===1,'previous preparation retained');
-  await click('Finaliser le devis');await wait('[...document.querySelectorAll("button")].some(b=>b.textContent===\"Marquer envoyé\")','ready again');
+  await click('Envoyer le devis');await wait('[...document.querySelectorAll("button")].some(b=>b.textContent===\"C’est envoyé\")','ready again');await fill('.quote-send-steps input','Recette EC03 — envoi fictif');
   await click('Copier le bloc commercial pour Abby');test(db.quotes.get(q.id).status==='draft','Abby clipboard transfer is not a send');
-  const beforeSend=sqlState();await js('window.confirm=()=>false');await click('Marquer envoyé');test(sqlState()===beforeSend,'cancelled attestation changes nothing');
-  await js('window.confirm=()=>true');await click('Marquer envoyé');try{await wait('[...document.querySelectorAll("button")].some(b=>b.textContent===\"Marquer vu\")','sent status');}catch(error){console.log('EC03_SEND_DEBUG '+JSON.stringify({status:db.quotes.get(q.id).status,body:await get('document.body.innerText.slice(-6000)')}));throw error;}
+  const beforeSend=sqlState();await js('window.confirm=()=>false');await click('C’est envoyé');test(sqlState()===beforeSend,'cancelled attestation changes nothing');
+  await js('window.confirm=()=>true');await click('C’est envoyé');try{await wait('[...document.querySelectorAll("button")].some(b=>b.textContent===\"Marquer vu\")','sent status');}catch(error){console.log('EC03_SEND_DEBUG '+JSON.stringify({status:db.quotes.get(q.id).status,body:await get('document.body.innerText.slice(-6000)')}));throw error;}
   const sent=db.quotes.get(q.id),state=db.quotes.transmissionState(q.id);test(sent.status==='sent'&&!!sent.contractSnapshotJson&&!!state.transmissionId,'actual attestation freezes and identifies transmission');
   test(db.database.all('SELECT * FROM quote_contract_preparations WHERE quote_id=?',[q.id]).length===2,'two preparations retained without duplication of transmission');
   test(db.database.all('SELECT * FROM quote_contract_transmissions WHERE quote_id=?',[q.id]).length===1,'single transmission');

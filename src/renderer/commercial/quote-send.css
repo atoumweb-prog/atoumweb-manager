@@ -1,0 +1,47 @@
+/* Lot 4 — vérification rapide, envoi du devis, fiche Abby. Couleurs du thème uniquement. */
+.quote-quick-review { display: grid; gap: 12px; padding: 14px 16px; margin: 12px 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); }
+.quote-quick-review > summary { cursor: pointer; font-size: 16px; font-weight: 800; }
+.quote-quick-review[open] > summary { margin-bottom: 10px; }
+.quote-quick-review p.muted, .quote-send-panel p.muted { margin: 0; font-size: 14px; }
+.quote-quick-review fieldset { display: grid; gap: 8px; margin: 10px 0 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.quote-quick-review legend { padding: 0 6px; font-size: 15px; font-weight: 700; }
+.quote-quick-review label { display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+.quote-quick-review input:not([type=checkbox]):not([type=radio]), .quote-quick-review select {
+  width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; font-size: 15px;
+}
+.quote-quick-review label.quote-check { grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 10px; color: var(--text); font-size: 15px; cursor: pointer; }
+.quote-quick-review label.quote-check input { width: 18px; height: 18px; margin-top: 2px; }
+.quote-quick-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.quote-quick-review > button { justify-self: start; margin-top: 10px; }
+.quote-send-note { margin: 0; padding: 8px 10px; border-left: 3px solid var(--accent); background: var(--accent-soft); font-size: 14px; }
+.quote-send-problems { margin: 8px 0 0; padding-left: 18px; font-size: 14px; color: var(--accent-strong); }
+
+.quote-send-panel { width: 100%; display: grid; gap: 10px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); }
+.quote-send-panel > strong { font-size: 17px; }
+.app-shell .quote-send-panel .quote-send-button, .quote-send-button { justify-self: start; font-size: 16px; padding: 12px 20px; }
+.quote-send-steps { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; counter-reset: send; }
+.quote-send-steps > li { counter-increment: send; display: grid; gap: 6px; padding: 12px 14px 12px 48px; position: relative; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.quote-send-steps > li::before {
+  content: counter(send); position: absolute; left: 12px; top: 12px; width: 26px; height: 26px; display: grid; place-items: center;
+  border-radius: 999px; font-weight: 800; font-size: 14px; color: var(--accent-strong); background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.quote-send-steps > li > span { font-size: 15px; font-weight: 700; }
+.quote-send-steps code { font-size: 13px; overflow-wrap: anywhere; color: var(--muted); }
+.quote-send-steps em, .quote-send-steps small { font-size: 14px; color: var(--muted); }
+.quote-send-steps > li > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.quote-send-steps label { display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+.quote-send-steps input { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; font-size: 15px; }
+
+.quote-abby-sheet { display: grid; gap: 12px; padding: 16px; margin: 12px 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); }
+.quote-abby-sheet h3 { margin: 0; font-size: 17px; }
+.quote-abby-sheet p { margin: 0; font-size: 14px; color: var(--muted); }
+.quote-abby-block { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.quote-abby-block > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.quote-abby-block > header strong { font-size: 15px; }
+.quote-abby-block pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 15px; color: var(--text); }
+.quote-abby-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.quote-abby-table th, .quote-abby-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.quote-abby-table th { font-size: 13px; color: var(--muted); font-weight: 700; }
+.quote-abby-table td.amount, .quote-abby-table th.amount { text-align: right; white-space: nowrap; }
+
+@media (max-width: 900px) { .quote-quick-row { grid-template-columns: 1fr; } }

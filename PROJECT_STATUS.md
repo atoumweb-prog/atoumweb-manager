@@ -1,5 +1,18 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 10/11/2026 — Lot 4 : « Envoyer et faire accepter » (branche claude/lot4-envoyer-accepter)
+
+Décisions de Carlos du 10/11 (feu vert sur le plan) : le Manager prépare le PDF et un brouillon d’e-mail mais n’envoie rien lui-même ; restent obligatoires avant l’envoi « Mon entreprise », des CGV présentes, un échéancier complet et les règles propres aux particuliers ; les six points restants restent obligatoires mais sont pré-remplis ; la fiche Abby s’affiche dès l’envoi.
+
+- [x] Vérification rapide (`src/shared/quoteQuickReview.ts`, `QuoteQuickReview.tsx`) : canal, nature et remise, calendrier, garantie, droits, renouvellement posés en six questions pré-remplies ; rien n’est enregistré avant « Valider mes réponses » ; une valeur déjà enregistrée l’emporte ; paiement, annexes et règles consommateur non touchés. Propositions tirées du référentiel V1.5 : OFF-013 (garantie corrective 30 jours dès la livraison officielle), OFF-005 (date estimée de livraison), MAINT-003 / CL-03 (maintenance mensuelle résiliable en fin de période payée, annuelle sur accord exprès), SQ-30 (export et conservation 30 jours). **La nature proposée par défaut (« prestation de service ») est une proposition à confirmer par l’utilisateur, sans vérification juridique.**
+- [x] Bouton unique « Envoyer le devis » (`QuoteSendPanel.tsx`) : contrôle → préparation (ancienne « finalisation ») → PDF devis + CGV montré dans son dossier et brouillon d’e-mail (`quoteEmailDraft.ts`, sans pièce jointe : un lien mailto ne le permet pas) → « C’est envoyé ». L’envoi reste une attestation explicite ; la version transmise est alors figée (moteur `finalize` / `markSent` inchangé). « Corriger le devis » remplace « Reprendre le brouillon ».
+- [x] Fiche « À recopier dans Abby » (`abbySheet.ts`, `QuoteAbbySheet.tsx`) dès le statut Envoyé : client, lignes, total, échéances prévues, bouton Copier par bloc ; elle ne dit jamais qu’un paiement est reçu. L’ancien bloc détaillé reste disponible, replié.
+- [x] Bouton « Ouvrir le projet » sur un devis lié à un projet.
+- [x] Tests : 10 nouveaux (règles de la vérification rapide ; parcours moteur devis neuf → réponses → préparation → envoi figé ; fiche Abby ; brouillon d’e-mail) ; suite complète 1 941 tests et typecheck réussis. Essai réel sur copie jetable (messagerie et explorateur neutralisés) : 9 vérifications, 0 erreur console, PDF de 107 Ko créé ; captures et PDF d’exemple hors dépôt (`C:/DEV/Livrables/Lot4-envoyer-accepter-2026-11-10`).
+- [ ] Non vérifié en conditions réelles : le bouton « Ouvrir le projet » (aucun devis accepté rejoué) et un devis pour un particulier (contrôles de rétractation et de médiation, qui restent dans le réglage détaillé).
+- [ ] Recettes Electron `ec03-transmission-scenarios.cjs` et `check-native-commercial-ui.cjs` adaptées aux nouveaux libellés (et messagerie neutralisée dans leurs bancs) mais **non validées** : EC03 s’arrête avant toute étape d’envoi, à l’attente de `.cgv-clause`, élément d’un écran de clauses antérieur à la refonte du parcours devis (non causé par le lot 4, non réparé ici) ; la recette native commerciale n’a pas été relancée.
+- [ ] Préproduction de Carlos non mise à jour avec le lot 4 ; branche locale, non poussée.
+
 ## 10/11/2026 — Lot 3 : « Devis rapide » (branche claude/lot3-devis-rapide)
 
 Décisions de Carlos du 10/11 : devis autorisé pour un prospect tout neuf, sans rien exiger ; options suggérées = seulement celles déjà liées à l’offre dans le Catalogue ; module Devis sur le même assistant.

@@ -11,11 +11,12 @@ import { restoreQuitGate } from './restoreQuitGate';
 import type { ContractAdministration, QuoteContractParameters, ContractDocumentLinkInput, ContractDocumentRole } from '../shared/quoteContractPreparation';
 import { app, clipboard, dialog, ipcMain, safeStorage, shell } from 'electron';
 import type { BridgeNodeMatchDecisionInput } from '../shared/bridgeSnapshots';
-import { readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import {createWorkingContractDocx} from './commercial/workingContractDocx';
 import {extractWorkingDocxText} from './commercial/workingContractDocxImport';
 import { basename, join } from 'node:path';
 import { quoteContractText } from '../shared/contractTerms';
+import { quoteEmailDraft } from '../shared/quoteEmailDraft';
 import { compareWordDraftText, prepareWordDraftManifest, type WordDraftManifest } from './commercial/wordDraftReview';
 import { makeWordDraftDocx, parseWordDraftDocx } from './commercial/wordDocxCodec';
 import { saveWordDraftWorkingPdf } from './commercial/wordDraftPdf';
@@ -818,6 +819,19 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
       const contract = database.contractTerms.getQuoteBuild(id);
       return generateQuotePdf({ ...quote, contractTextSnapshot: contract.snapshotState === 'historical_missing' ? quote.contractTextSnapshot : quoteContractText(contract) }, workspace, database.contractTerms.presentation(id));
     }));
+
+  // Lot 4 — aides à l'envoi : aucune donnée modifiée, aucun envoi automatique.
+  ipcMain.handle('quotes:reveal-pdf', (_event, id: string) => {
+    const file = join(workspace.exportsDirectory, 'devis', `${database.quotes.get(id).number}.pdf`);
+    if (!existsSync(file)) return false;
+    shell.showItemInFolder(file);
+    return true;
+  });
+  ipcMain.handle('quotes:open-email-draft', async (_event, id: string) => {
+    const draft = quoteEmailDraft(database.quotes.get(id));
+    await shell.openExternal(draft.mailto);
+    return { to: draft.to };
+  });
 
   ipcMain.handle('projects:templates:list', () => database.projects.listTemplates());
   ipcMain.handle('projects:templates:get', (_event, id: string) => database.projects.getTemplate(id));
