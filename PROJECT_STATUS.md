@@ -11,7 +11,10 @@ Décisions de Carlos du 10/11 (feu vert sur le plan) : le Manager prépare le PD
 - [x] Tests : 10 nouveaux (règles de la vérification rapide ; parcours moteur devis neuf → réponses → préparation → envoi figé ; fiche Abby ; brouillon d’e-mail) ; suite complète 1 941 tests et typecheck réussis. Essai réel sur copie jetable (messagerie et explorateur neutralisés) : 9 vérifications, 0 erreur console, PDF de 107 Ko créé ; captures et PDF d’exemple hors dépôt (`C:/DEV/Livrables/Lot4-envoyer-accepter-2026-11-10`).
 - [ ] Non vérifié en conditions réelles : le bouton « Ouvrir le projet » (aucun devis accepté rejoué) et un devis pour un particulier (contrôles de rétractation et de médiation, qui restent dans le réglage détaillé).
 - [ ] Recettes Electron `ec03-transmission-scenarios.cjs` et `check-native-commercial-ui.cjs` adaptées aux nouveaux libellés (et messagerie neutralisée dans leurs bancs) mais **non validées** : EC03 s’arrête avant toute étape d’envoi, à l’attente de `.cgv-clause`, élément d’un écran de clauses antérieur à la refonte du parcours devis (non causé par le lot 4, non réparé ici) ; la recette native commerciale n’a pas été relancée.
-- [ ] Préproduction de Carlos non mise à jour avec le lot 4 ; branche locale, non poussée.
+- [x] Préproduction de Carlos mise à jour avec le lot 4 le 10/11 (Manager du commit f5ac2131, données conservées).
+- [ ] Branche `claude/lot4-envoyer-accepter` locale, non poussée (accord de Carlos requis).
+
+Prochaine action : essai de Carlos (six questions, envoi, fiche Abby) ; reprise par un autre modèle selon `docs/REPRISE-CLAUDE.md` — lot 5 puis lots visuels A–F.
 
 ## 10/11/2026 — Lot 3 : « Devis rapide » (branche claude/lot3-devis-rapide)
 
