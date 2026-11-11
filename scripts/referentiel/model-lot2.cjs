@@ -107,7 +107,7 @@ const sheetFor = (it, big, compact) => {
     rows.push(['Étapes à faire', `Voir les étapes types « ${st.label} » en début de famille.`, 'note']);
   }
   if (big && o.clauses.length) rows.push(['Clauses liées', o.clauses.map(c => clean(c.title)).join(' · ')]);
-  return {t: 'sheet', name: cleanName(o.name), right: `${fmtPrice(o)}${NB}·${NB}${fmtTime(o)}${NB}·${NB}${o.code}`, rows, big, keep: !big};
+  return {t: 'sheet', name: cleanName(o.name), right: [fmtPrice(o), fmtTime(o) === '—' ? null : fmtTime(o), o.code].filter(Boolean).join(NB + '·' + NB), rows, big, keep: !big};
 };
 
 for (const f of families) {
