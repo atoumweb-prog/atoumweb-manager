@@ -25,7 +25,7 @@ const regles = [
 
 // ---------- glossaire (BASE-DEFINITIONS + termes internes)
 const defs = (data.clauses.find(c => c.code === 'BASE-DEFINITIONS')?.body ?? '').split(/\n\s*\n/)
-  .map(p => p.trim()).filter(p => /^[^:]{2,40} : /.test(p)).map(p => { const i = p.indexOf(' : '); return [p.slice(0, i), p.slice(i + 3).replace(/\s+/g, ' ')]; });
+  .map(p => p.trim()).filter(p => /^[^:]{2,40} : /.test(p)).map(p => { const i = p.indexOf(' : '); const d = p.slice(i + 3).replace(/\s+/g, ' '); return [p.slice(0, i), d.charAt(0).toUpperCase() + d.slice(1)]; });
 const internes = [
   ['Offre', 'Formule vendue avec un prix et un périmètre (par exemple Vitrine Business).'],
   ['Service ou option', 'Prestation vendue seule ou ajoutée à une offre (par exemple une page supplémentaire).'],
