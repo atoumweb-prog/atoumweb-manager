@@ -148,8 +148,7 @@ blocks.push({t: 'cards', items: [{title: 'À ne jamais oublier', text: GLOBAL_RU
 
 // ---------- familles
 for (const f of families) {
-  if (f !== families[0]) blocks.push({t: 'pagebreak'});
-  blocks.push({t: 'h1', text: f.name});
+  blocks.push({t: 'h1', text: f.name, pb: f !== families[0]});
   blocks.push({t: 'lead', text: `${f.offres.length} fiche${f.offres.length > 1 ? 's' : ''}. ${NOTES[f.id]}`});
   const cards = [];
   if (f.cq.size) cards.push({title: 'Questions à poser pour toute offre de la famille', text: bullets([...f.cq])});

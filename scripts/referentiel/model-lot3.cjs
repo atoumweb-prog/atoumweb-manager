@@ -63,8 +63,7 @@ blocks.push({t: 'bullets', items: [
 
 for (const s of SECTIONS) {
   const list = data.clauses.filter(s.pick);
-  blocks.push({t: 'pagebreak'});
-  blocks.push({t: 'h1', text: s.title});
+  blocks.push({t: 'h1', text: s.title, pb: true});
   blocks.push({t: 'lead', text: `${list.length} clause${list.length > 1 ? 's' : ''}. ${s.lead}`});
   for (const c of list) {
     blocks.push({t: 'h3', text: dash(c.title)});
@@ -79,8 +78,7 @@ const dup = SECTIONS.flatMap(s => data.clauses.filter(s.pick).map(c => c.code)).
 if (dup.length) throw Error('Clauses en double : ' + dup.join(', '));
 
 // ---------- matrice offres / clauses
-blocks.push({t: 'pagebreak'});
-blocks.push({t: 'h1', text: 'Matrice offres et clauses'});
+blocks.push({t: 'h1', text: 'Matrice offres et clauses', pb: true});
 blocks.push({t: 'lead', text: 'Pour chaque offre, ses clauses de catalogue. Le socle commun et, selon le public, les clauses particuliers ou professionnels s’ajoutent toujours.'});
 for (const f of families) {
   blocks.push({t: 'h2', text: f.name});

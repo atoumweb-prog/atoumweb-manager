@@ -195,7 +195,10 @@ try {
         End-Doc; $sel.Style = (Sty 'Normal'); $sel.Font.Size = [single]22; $sel.Font.Bold = 1; $sel.Font.Color = $NAVY; $sel.TypeText($b.title); $sel.TypeParagraph(); $sel.Font.Reset()
         $sel.Style = (Sty 'Normal'); $null = $doc.TablesOfContents.Add($sel.Range, $true, 1, 2); End-Doc; $sel.InsertBreak(7)
       }
-      'h1' { Add-Par $b.text 'Heading 1' }
+      'h1' {
+        if ($b.pb -eq $true) { End-Doc; $sel.Style = (Sty 'Heading 1'); $sel.ParagraphFormat.PageBreakBefore = -1; $sel.TypeText($b.text); $sel.TypeParagraph(); $sel.ParagraphFormat.PageBreakBefore = 0 }
+        else { Add-Par $b.text 'Heading 1' }
+      }
       'h2' { Add-Par $b.text 'Heading 2' }
       'h3' { Add-Par $b.text 'Heading 3' }
       'p' { Add-Par $b.text 'Normal' }
