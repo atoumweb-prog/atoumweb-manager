@@ -30,7 +30,7 @@ require(path.join(repo, 'node_modules', 'esbuild')).buildSync({stdin: {contents:
   bundle: true, platform: 'node', format: 'cjs', outfile: bundle, external: ['electron'], logLevel: 'silent', banner: {js: `module.paths.unshift(${JSON.stringify(path.join(repo, 'node_modules'))});`}});
 const S = require(bundle);
 const times = JSON.parse(fs.readFileSync(path.join(__dirname, 'temps-de-reference-v1.json'), 'utf8'));
-const sales = {...JSON.parse(fs.readFileSync(path.join(__dirname, 'aide-a-la-vente-v1.json'), 'utf8')), ...JSON.parse(fs.readFileSync(path.join(__dirname, 'aide-a-la-vente-v1-detaillee.json'), 'utf8'))}; // la version détaillée (10 offres de départ, rédigée à la main) remplace la version générique
+const sales = {...JSON.parse(fs.readFileSync(path.join(__dirname, 'aide-a-la-vente-v1.json'), 'utf8')), ...JSON.parse(fs.readFileSync(path.join(__dirname, 'aide-a-la-vente-v1-detaillee-suite.json'), 'utf8')), ...JSON.parse(fs.readFileSync(path.join(__dirname, 'aide-a-la-vente-v1-detaillee.json'), 'utf8'))}; // la version détaillée (10 offres de départ, rédigée à la main) remplace la version générique
 delete times['_lisez-moi'];
 
 const OVERRIDES = JSON.parse(fs.readFileSync(path.join(__dirname, 'decisions-11-11-fiches.json'), 'utf8'));
