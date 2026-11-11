@@ -7,7 +7,7 @@ import { contractPresentationFromSnapshot, type ContractPresentation, type Contr
 import type { QuoteDetail, QuoteLine } from './commercial';
 
 export const escapeQuoteHtml = (v: unknown): string => String(v ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
-const h = escapeQuoteHtml;
+const h = (v: unknown): string => escapeQuoteHtml(String(v ?? '').replace(/\s(?:—|–|--)\s/g, ' · '));
 const money = (c: number): string => `${(c / 100).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €`;
 const date = (s?: string | null): string => s ? new Date(s).toLocaleDateString('fr-FR') : 'Non précisée';
 const lines = (v: unknown): string[] => Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string') : [];
@@ -20,6 +20,28 @@ const paragraphs = (s: string): string => s.split(/\n\s*\n/).filter(p => p.trim(
   return heading ? `<h4 class="contract-subheading">${h(heading[1])}</h4>` : `<p>${contractEmphasis(p).replaceAll('\n','<br />')}</p>`;
 }).join('');
 const list = (items: string[]): string => items.length ? `<ul>${items.map(i => `<li>${h(i)}</li>`).join('')}</ul>` : '';
+
+/**
+ * Dans l'annexe d'un devis non figé, l'identité, les mentions administratives et la TVA ne sont pas répétées : elles figurent déjà dans
+ * l'en-tête (Émetteur). On garde réclamations, médiation et rétractation, et on masque les lignes « À renseigner ».
+ */
+function usefulInformation(section: ContractSection): ContractSection | null {
+  const labels = ['Identité AtoumWeb', 'Identité de l’entreprise', 'Mentions administratives', 'TVA', 'Réclamations', 'Médiateur', 'Rétractation', 'Prestataires', 'Données personnelles'];
+  const keep = new Set(['Réclamations', 'Médiateur', 'Rétractation', 'Prestataires', 'Données personnelles']);
+  const out: string[] = [];
+  let current: string | null = null;
+  for (const line of section.text.split('\n')) {
+    const label = labels.find(l => line.startsWith(l + ' :'));
+    if (label) current = label;
+    if (current && keep.has(current) && !/À renseigner/.test(line)) out.push(line);
+  }
+  const text = out.filter(l => l.trim()).join('\n');
+  return text ? {...section, title: 'Informations utiles', text} : null;
+}
+const PLAIN_TITLES: Record<string, string> = {
+  'Conditions générales — CGV communes': 'Conditions générales',
+  'Conditions spécifiques — Modules des prestations vendues': 'Conditions propres à vos prestations',
+};
 
 export function isQuoteDocumentDraft(q: QuoteDetail, p?: ContractPresentation): boolean {
   return q.status === 'draft' && !q.finalizedAt || p?.state === 'draft';
@@ -80,7 +102,7 @@ export function buildQuoteHtml(quote: QuoteDetail, presentation?: ContractPresen
   const separateScope=!!soldScope&&(soldScope.text.length+dossierSections.reduce((n,s)=>n+s.text.length,0)>1100);
   const includedProducts=quote.lines.reduce((n,l)=>n+(l.parameters?.productCount?.kind==='included'?l.parameters.productCount.count:0),0),additionalProducts=quote.lines.reduce((n,l)=>n+(l.parameters?.productCount?.kind==='additional'?l.parameters.productCount.count:0),0);
   const productSummary=includedProducts?`${includedProducts+additionalProducts} produits renseignés au total, dont ${includedProducts} inclus et ${additionalProducts} supplémentaires`:'produits inclus à préciser';
-  const annex = presentation?.sections.filter(s => !separateScope||s.id !== 'sold-details').sort((a,b)=>(a.id==='commitments'?2.5:a.id==='parameters'?2:a.id==='quote'?0:a.id==='administration'?1:3)-(b.id==='commitments'?2.5:b.id==='parameters'?2:b.id==='quote'?0:b.id==='administration'?1:3)).map(s => contractSectionHtml(custom&&s.id==='administration'?{...s,title:'Informations de l’entreprise',text:s.text.replace('Identité AtoumWeb :','Identité de l’entreprise :')}:s, presentation!)).join('') ??
+  const annex = presentation?.sections.filter(s => !separateScope||s.id !== 'sold-details').sort((a,b)=>(a.id==='commitments'?2.5:a.id==='parameters'?2:a.id==='quote'?0:a.id==='administration'?1:3)-(b.id==='commitments'?2.5:b.id==='parameters'?2:b.id==='quote'?0:b.id==='administration'?1:3)).flatMap(s => {const live=presentation!.state!=='frozen';if(live&&s.id==='identity')return [];const named=live&&PLAIN_TITLES[s.title]?{...s,title:PLAIN_TITLES[s.title]}:s;const section=named.id==='administration'?(live?usefulInformation(named):(custom?{...named,title:'Informations de l’entreprise',text:named.text.replace('Identité AtoumWeb :','Identité de l’entreprise :')}:named)):named;return section?[contractSectionHtml(section, presentation!)]:[];}).join('') ??
     (quote.contractTextSnapshot ? `<section class="contract-section"><h2>Clauses contractuelles conservées</h2>${paragraphs(quote.contractTextSnapshot)}</section>` :
       quote.contractTextSnapshot == null && quote.specialTerms ? `<section class="contract-section"><h2>Conditions particulières historiques</h2>${paragraphs(quote.specialTerms)}</section>` : '<p>Aucun texte contractuel enregistré.</p>');
   const recipient=quote.recipient;
@@ -99,6 +121,13 @@ export function buildQuoteHtml(quote: QuoteDetail, presentation?: ContractPresen
   const paymentRows=presentation?.paymentSummary&&(presentation.paymentSummary.scoped||presentation.state==='draft'||presentation.state==='prepared')?presentation.paymentSummary.rows:null;
   const paymentGroups=paymentRows?Object.values(paymentRows.reduce((groups,row)=>{const key=JSON.stringify([row.label,row.percent,row.dueDate,row.event,['monthly','mensuelle'].includes(row.periodicity??'')?'monthly':['yearly','annuelle'].includes(row.periodicity??'')?'yearly':'one_off']);const old=groups[key];groups[key]=old?{...old,lineLabel:'Prestations aux mêmes conditions',amountCents:old.amountCents+row.amountCents}:{...row};return groups;},{} as Record<string,NonNullable<typeof paymentRows>[number]>)):null;
   const compactComposition=!separateScope?quote.lines.map(l=>{const components=Array.isArray(l.snapshot?.offerComponents)?l.snapshot.offerComponents.filter((c):c is Record<string,unknown>=>!!c&&typeof c==='object'&&!c.isOptional):[];return components.length?`<section class="scope-components"><h3>Composition de l’offre : ${h(l.label)}</h3>${list(components.map(c=>`${String(c.serviceName??'')} · ${(Number(c.quantityMilli??1000)/1000).toLocaleString('fr-FR')} · inclus`))}</section>`:'';}).join(''):'';
+  const consumerQuote = String((quote as unknown as {contractAudience?: string}).contractAudience ?? '') === 'consumer';
+  const acceptanceHtml = quote.status === 'accepted'
+    ? `<section class="acceptance"><h2>Acceptation enregistrée</h2><p>Devis ${h(quote.number)} · ${h(date(quote.acceptedAt))}</p><p>Se reporter à la preuve conservée dans le dossier client.</p></section>`
+    : `<section class="acceptance"><h2>Acceptation du devis</h2><p>Devis <strong>${h(quote.number)}</strong> : ${h(acceptanceText)}</p>
+    <p class="check"><span class="box"></span>J’ai lu les conditions générales jointes à ce devis (annexe contractuelle) et je les accepte.</p>
+    ${consumerQuote ? '<p class="check"><span class="box"></span>Facultatif : je demande que la prestation commence avant la fin de mon délai de rétractation de 14 jours.</p>' : ''}
+    ${draft ? '<p class="signature-draft">Emplacement prévu pour la version définitive. Ce brouillon ne doit pas être signé.</p>' : ''}<div class="acceptance-fields"><div>Nom et qualité du signataire</div><div>Lieu et date</div></div><div class="signature">Signature, précédée de la mention « Bon pour accord »</div></section>`;
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${h(quote.number)}</title><style>
   @page{size:A4;margin:18mm 14mm 19mm}
   *{box-sizing:border-box}body{margin:0;background:white;color:#171b20;font:10pt/1.5 Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -119,6 +148,13 @@ export function buildQuoteHtml(quote: QuoteDetail, presentation?: ContractPresen
   .scope-detail [data-section="sold-details"] p{font-size:8.5pt;line-height:1.45}.contract-section[data-section="parameters"] .contract-clause{columns:2;column-gap:24px}.contract-section[data-section="parameters"] p{font-size:8.5pt;break-inside:avoid}
   .closing{break-inside:auto}.version-register{margin-top:18px;columns:1;break-inside:avoid;page-break-inside:avoid}.version-register p{font-size:7pt;line-height:1.5;color:#505963;break-inside:avoid;margin-bottom:5px}.version-register h2{font-size:10pt;column-span:all}
   .acceptance{margin:25px 0 0;padding:17px;border:1px solid #aeb7c0;border-top:5px solid #ffda00;break-inside:avoid;page-break-inside:avoid}.acceptance h2{margin:0 0 10px;font-size:13pt}.acceptance p{font-size:9pt}.acceptance-fields{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:18px}.acceptance-fields div{font-size:9pt;min-height:46px;border-bottom:1px solid #bac2c9}.signature{margin-top:15px;min-height:80px;font-size:9pt}.signature-draft{font-size:8pt;color:#59636c}
+  /* Conditions : deux colonnes, texte un peu plus petit, titres sur toute la largeur */
+  .annex .contract-section[data-section="base"],.annex .contract-section[data-section="catalog"],.annex .contract-section[data-section="custom"]{column-count:2;column-gap:8mm}
+  .annex .contract-section[data-section="base"]>h2,.annex .contract-section[data-section="catalog"]>h2,.annex .contract-section[data-section="custom"]>h2{column-span:all}
+  .annex .contract-section[data-section="base"] .contract-clause,.annex .contract-section[data-section="catalog"] .contract-clause,.annex .contract-section[data-section="custom"] .contract-clause{break-inside:auto;page-break-inside:auto}
+  .annex .contract-section[data-section="base"] p,.annex .contract-section[data-section="catalog"] p,.annex .contract-section[data-section="custom"] p{font-size:8.4pt;line-height:1.36;margin-bottom:5px}
+  .annex .contract-section[data-section="base"] h3,.annex .contract-section[data-section="catalog"] h3{font-size:9pt}
+  .acceptance .check{display:flex;align-items:flex-start;gap:9px;margin:9px 0}.acceptance .box{flex:none;width:12px;height:12px;border:1.5px solid #171b20;margin-top:2px}
   @media screen{body{padding:30px;max-width:900px;margin:auto}.annex{margin-top:45px;padding-top:24px;border-top:1px dashed #bdc4ca}}
   @page{margin:18mm ${style.marginMm}mm 19mm}body{color:${h(style.textColor)};font-family:${h(style.fontFamily)},serif;font-size:${style.fontSize}pt}.brand img{width:${style.logoWidthMm}mm;height:auto;max-height:35mm;object-fit:contain}.document-header,.scope-detail>h1,.annex-heading{border-color:${h(style.accentColor)}}.totals,.acceptance{border-top-color:${h(style.accentColor)}}.contract-clause>h3,.clause-heading>h3:not(.clause-group){border-left-color:${h(style.accentColor)}}.contract-clause p{font-size:${Math.max(9,style.fontSize-1)}pt}.brand-name{max-width:110mm;overflow-wrap:anywhere}
   .contract-section[data-section="commitments"] .contract-clause{break-inside:auto;page-break-inside:auto}.contract-section[data-section="commitments"] p{font-size:9pt;line-height:1.45;margin-bottom:7px;break-inside:avoid;page-break-inside:avoid}
@@ -132,15 +168,14 @@ export function buildQuoteHtml(quote: QuoteDetail, presentation?: ContractPresen
   ${style.introduction?`<p class="document-introduction">${h(style.introduction)}</p>`:''}<section class="project"><span class="eyebrow">Votre projet</span><h2>${h(quote.subject)}</h2>${quote.needSummary && !same(quote.needSummary, quote.subject) ? `<p>${h(quote.needSummary)}</p>` : ''}</section>
   <table class="commercial-table"><colgroup><col style="width:55%"><col style="width:11%"><col style="width:17%"><col style="width:17%"></colgroup><thead><tr><th>Prestations${soldScope ? '' : ' et contenu'}</th><th>Qté</th><th>Prix unitaire</th><th>Montant</th></tr></thead><tbody>${quote.lines.map(l => lineHtml(l, !soldScope,productSummary,draft,quote.lines)).join('')}</tbody></table>
   <section class="commercial-summary"><div class="totals"><div class="grand-total"><span>${h(grandTotalLabel)}</span><strong>${h(money(quote.contractValueCents))}</strong></div>${paymentGroups?paymentGroups.map(m=>`<div><span>${m.lineLabel?`${h(m.lineLabel)} · `:''}${h(m.label)}${presentation?.state==='frozen'?'':` (${m.percent} %)`}${['mensuelle','monthly'].includes(m.periodicity??'')?' / mois':''}<br>${h(m.dueDate||m.event)}</span><strong>${h(money(m.amountCents))}</strong></div>`).join(''):`<div><span>${quote.initialPaymentQualification === 'arrhes' ? 'Arrhes' : 'Acompte'} (${quote.depositPercent ?? 0} %)</span><strong>${h(money(quote.depositCents))}</strong></div><div><span>Solde</span><strong>${h(money(quote.balanceCents))}</strong></div>`}</div><p class="tax-note">${monthly.length?`${h(monthlyNote)}<br>`:''}${h(vat ?? 'Régime fiscal et présentation des taxes à confirmer.')}</p></section>
-  <section class="practical"><h2>Organisation de la prestation</h2><p><strong>Délai estimé :</strong> ${h(quote.estimatedDelay || (dossierSections.length?'Voir les engagements propres à chaque prestation dans le périmètre détaillé.':'À définir ensemble'))}</p>${quote.prerequisitesText&&(separateScope||quote.lines.length>2||!presentation) ? `<p><strong>Prérequis :</strong><br>${h(quote.prerequisitesText).replaceAll('\n', '<br />')}</p>` : ''}${separateScope||!presentation?`<div class="annex-link">L’annexe contractuelle ci-après est rattachée au devis <strong>${h(quote.number)}</strong>. L’emplacement d’acceptation se trouve à la fin de ce dossier.</div>`:''}</section>
+  <section class="practical"><h2>Organisation de la prestation</h2><p><strong>Délai estimé :</strong> ${h(quote.estimatedDelay || (dossierSections.length?'Voir les engagements propres à chaque prestation dans le périmètre détaillé.':'À définir ensemble'))}</p>${quote.prerequisitesText&&(separateScope||quote.lines.length>2||!presentation) ? `<p><strong>Prérequis :</strong><br>${h(quote.prerequisitesText).replaceAll('\n', '<br />')}</p>` : ''}</section>
   ${soldScope&&separateScope ? `<section class="scope-detail"><h1>${h(style.scopeTitle)}</h1>${contractSectionHtml(soldScope, presentation!)}${quote.lines.map(l => {
     const components = Array.isArray(l.snapshot?.offerComponents) ? l.snapshot.offerComponents.filter((c): c is Record<string, unknown> => !!c && typeof c === 'object' && (!c.isOptional || typeof c.componentId !== 'string')) : [];
     return components.length ? `<section class="scope-components"><h3>Composition de l’offre : ${h(l.label)}</h3>${list(components.map(c => `${String(c.serviceName ?? '')} · ${(Number(c.quantityMilli ?? 1000) / 1000).toLocaleString('fr-FR')}${c.isOptional ? ' · option prévue dans l’offre' : ' · inclus'}`))}</section>` : '';
   }).join('')}</section>` : ''}
+  ${acceptanceHtml}
   <main class="annex"><header class="annex-heading"><span class="eyebrow">Devis ${h(quote.number)}</span><h1>${h(style.annexTitle)}</h1><p>Conditions générales, clauses des prestations et conditions particulières enregistrées pour ce devis.</p><p>${presentation?.compiledAt ? `Composition contractuelle du ${h(date(presentation.compiledAt))}` : 'Composition de travail · version non figée'}</p></header>${compactComposition}${annex}
-  <div class="closing">
-  ${quote.status === 'accepted' ? `<section class="acceptance"><h2>Acceptation enregistrée</h2><p>Devis ${h(quote.number)} · ${h(date(quote.acceptedAt))}</p><p>Se reporter à la preuve conservée dans le dossier client.</p></section>` : `<section class="acceptance"><h2>Acceptation du devis et de son annexe contractuelle</h2><p>Devis <strong>${h(quote.number)}</strong> — ${h(acceptanceText)}</p>${draft ? '<p class="signature-draft">Emplacement prévu pour la version définitive. Ce brouillon ne doit pas être signé.</p>' : ''}<div class="acceptance-fields"><div>Nom et qualité du signataire</div><div>Lieu et date</div></div><div class="signature">Signature</div></section>`}
-  </div></main></body></html>`;
+  </main></body></html>`;
 }
 
 export function quotePageHeader(quote: QuoteDetail,p?:ContractPresentation): string {

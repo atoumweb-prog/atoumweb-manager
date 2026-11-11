@@ -79,6 +79,22 @@ describe('Devis mixte création + maintenance (décisions du 11/11/2026)', {time
     expect(html).not.toMatch(/873,20|1[    ]?309,80/);
   });
 
+  it('PDF : acceptation juste après le périmètre avec la case « conditions générales lues », annexe allégée, aucun tiret « — »', () => {
+    const q = dev003();
+    const html = buildQuoteHtml(quotes.get(q.id), terms.presentation(q.id));
+    expect(html.indexOf('Acceptation du devis')).toBeGreaterThan(0);
+    expect(html.indexOf('Acceptation du devis')).toBeLessThan(html.indexOf('<main class="annex">'));
+    expect(html).toContain('J’ai lu les conditions générales jointes à ce devis');
+    expect(html).toContain('Bon pour accord');
+    expect(html).not.toContain('Informations du devis');
+    expect(html).not.toContain('CGV communes');
+    expect(html).not.toContain('Modules des prestations vendues');
+    expect(html).not.toContain('Informations de l’entreprise');
+    expect(html).not.toContain('rattachée au devis');
+    expect(html).not.toMatch(/s(?:—|–|--)s/);
+    expect(html).toContain('Conditions générales');
+  });
+
   it('calendrier : début de maintenance après les 30 jours de test, livraison officielle du site', () => {
     const q = dev003();
     const commitments = terms.presentation(q.id).sections.find(s => s.id === 'commitments')!.text;
