@@ -95,6 +95,22 @@ describe('Devis mixte création + maintenance (décisions du 11/11/2026)', {time
     expect(html).toContain('Conditions générales');
   });
 
+  it('PDF : périmètre en cartes, paiements regroupés lisibles, annexe sans répétition ni « à renseigner »', () => {
+    const q = dev003();
+    const html = buildQuoteHtml(quotes.get(q.id), terms.presentation(q.id));
+    expect(html).toContain('class="scope-card"');
+    expect(html).toContain('Compris');
+    expect(html).toContain('Non compris');
+    expect(html).not.toContain('Prestations aux mêmes conditions');
+    expect(html).toContain('Vitrine Business + Rédaction page web');
+    expect(html).toContain('(40&nbsp;%)');
+    const annex = html.slice(html.indexOf('<main class="annex">'));
+    expect(annex).not.toMatch(/À renseigner|À qualifier/);
+    expect(annex).not.toContain('Taux B2B');
+    expect(annex).not.toMatch(/Commande : 40/);
+    expect(annex).toContain('Début du service');
+  });
+
   it('calendrier : début de maintenance après les 30 jours de test, livraison officielle du site', () => {
     const q = dev003();
     const commitments = terms.presentation(q.id).sections.find(s => s.id === 'commitments')!.text;

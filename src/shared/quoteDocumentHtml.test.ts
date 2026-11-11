@@ -15,7 +15,7 @@ describe('PDF Atoum — modèle commercial et annexe',()=>{
   const p=formatContractPresentation({state:'draft',number:quote.number,subject:quote.subject,totalCents:quote.contractValueCents,estimatedDelay:null,prerequisites:null,compiledAt:null,clauseText:'',clauses:[],parameters,administration:null,types:[],modules:[]});
   const html=buildQuoteHtml(quote,p);
   const commercial=html.slice(html.indexOf('class="commercial-summary"'),html.indexOf('class="contract-annex"'));
-  for(const row of p.paymentSummary!.rows){expect(commercial).toContain(row.label);expect(commercial).toContain(`${row.percent} %`);}
+  for(const row of p.paymentSummary!.rows){expect(commercial).toContain(row.label);expect(commercial).toMatch(new RegExp(`${row.percent}(?:&nbsp;| )%`));}
   expect(html).not.toMatch(/NaN|undefined|Infinity/);
   expect(commercial).not.toContain('Acompte (30 %)');
   const frozen=buildQuoteHtml(quote,{...p,state:'frozen'});
