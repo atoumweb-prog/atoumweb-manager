@@ -1,0 +1,100 @@
+{
+  "_lisez_moi": "Corrections de forme des clauses avant publication (11/11/2026) : renvois par numéro remplacés par le titre de la clause (les articles d’un devis sont renumérotés), renvoi aux « définitions » remplacé par la définition tirée du catalogue approuvé, mentions de l’outil interne retirées. Aucun changement de fond.",
+  "corrections": [
+    {
+      "code": "BASE-VALIDATION",
+      "de": "procédure de relance prévue à la clause 014",
+      "vers": "procédure de relance prévue à la clause « Obligations et coopération du client »"
+    },
+    {
+      "code": "APP-RECETTE",
+      "de": "procédure de relance de la clause 014",
+      "vers": "procédure de relance de la clause « Obligations et coopération du client »"
+    },
+    {
+      "code": "DEVWP-RECETTE",
+      "de": "la clause 014 s’applique",
+      "vers": "la clause « Obligations et coopération du client » s’applique"
+    },
+    {
+      "code": "WEB-VALIDATION",
+      "de": "relances prévues à la clause 014",
+      "vers": "relances prévues à la clause « Obligations et coopération du client »"
+    },
+    {
+      "code": "DEVWP-PI-REUTILISATION",
+      "de": "prévues par la clause 020",
+      "vers": "prévues par la clause « Propriété intellectuelle et droits d’utilisation »"
+    },
+    {
+      "code": "MAINT-PERIMETRE",
+      "de": "sont celles de la clause 066",
+      "vers": "sont celles de la clause « Nombre d’interventions ou temps inclus »"
+    },
+    {
+      "code": "MAINT-PERIMETRE",
+      "de": "précisées aux clauses 069 et 108",
+      "vers": "précisées aux clauses « Durée et renouvellement » et « Hébergement et nom de domaine »"
+    },
+    {
+      "code": "MAINT-RENOUVELLEMENT",
+      "de": "décrite à la clause 102",
+      "vers": "décrite à la clause « Hébergement seul sans maintenance »"
+    },
+    {
+      "code": "MAINT-WOOCOMMERCE",
+      "de": "indiquées à la clause 066",
+      "vers": "indiquées à la clause « Nombre d’interventions ou temps inclus »"
+    },
+    {
+      "code": "TECH-HEBERGEMENT",
+      "de": "Lune dédiée (voir les définitions)",
+      "vers": "Lune dédiée (un espace d’hébergement cPanel isolé, réservé à un seul client)"
+    },
+    {
+      "code": "TECH-MIGRATION",
+      "de": "Lune dédiée (voir les définitions)",
+      "vers": "Lune dédiée (un espace d’hébergement cPanel isolé, réservé à un seul client)"
+    },
+    {
+      "code": "WEB-HEBERGEMENT",
+      "de": "Lune dédiée » (voir les définitions)",
+      "vers": "Lune dédiée » (un espace d’hébergement cPanel isolé, réservé à un seul client)"
+    },
+    {
+      "code": "WEB-OFFRE-5P-PERIMETRE",
+      "de": "Lune dédiée » (voir les définitions)",
+      "vers": "Lune dédiée » (un espace d’hébergement cPanel isolé, réservé à un seul client)"
+    },
+    {
+      "code": "BASE-PRIX",
+      "de": "et non par le suivi interne de Manager",
+      "vers": "et non par notre outil de suivi interne"
+    },
+    {
+      "code": "BASE-ACCEPTATION",
+      "de": "sont conservées dans AtoumWeb Manager",
+      "vers": "sont conservées par nos soins"
+    },
+    {
+      "code": "MAINT-PERIMETRE",
+      "de": "sauvegardes selon la formule et interventions mineures comprises.",
+      "vers": "sauvegardes selon la formule et interventions mineures comprises.\n\nLa maintenance commence à l’issue des 30 jours de test qui suivent la livraison officielle de votre site. Pendant ces 30 jours, la garantie corrective s’applique. La période de maintenance, et donc son paiement, débute à cette date."
+    },
+    {
+      "code": "MAINT-RENOUVELLEMENT",
+      "de": "vous vous engagez pour 12 mois et réglez cette période à l’avance.",
+      "vers": "vous vous engagez pour 12 mois à compter du début de la maintenance et vous réglez cette période à l’avance, au début de la période."
+    },
+    {
+      "code": "BASE-PAIEMENT",
+      "de": "Les renouvellements annuels Lune, GBP, statistiques et newsletters sont facturés et payables à leur échéance, sans encaissement anticipé définitif.",
+      "vers": "Les abonnements annuels (maintenance, Lune, GBP, statistiques, newsletters) sont payables d’avance, au début de chaque période annuelle, à la date indiquée au devis ; aucun paiement n’est encaissé avant cette date."
+    },
+    {
+      "code": "TECH-HEBERGEMENT",
+      "de": "Les renouvellements de la Lune dédiée sont facturés et payables à l’échéance annuelle.",
+      "vers": "Les renouvellements de la Lune dédiée sont payables d’avance, au début de chaque période annuelle."
+    }
+  ]
+}
