@@ -36,7 +36,8 @@ delete times['_lisez-moi'];
 const OVERRIDES = JSON.parse(fs.readFileSync(path.join(__dirname, 'decisions-11-11-fiches.json'), 'utf8'));
 const DELETE_CODES = ['AW-TECH-HEBERG-WP', 'AW-BRAND-IDENTITE', 'AW-BRAND-PRIORITE', 'AW-CONT-PRIORITE', 'AW-LP-URGENT']; // + 3 options « délai accéléré » (décision du 11/11) // doublons supprimés sans archivage : aucun site vendu (décision du 11/11)
 const DEMOTE_CLAUSE = 'BASE-REFERENCES-AGENCE'; // clause 119 : proposée sur la fiche de livraison, pas dans chaque devis
-const CGV_FIXES = JSON.parse(fs.readFileSync(path.join(__dirname, 'corrections-cgv-v1.json'), 'utf8')).corrections;
+const {applyFix} = require('./clauseFixes.cjs');
+const CGV_FIXES = [...JSON.parse(fs.readFileSync(path.join(__dirname, 'corrections-cgv-v1.json'), 'utf8')).corrections, ...JSON.parse(fs.readFileSync(path.join(__dirname, 'corrections-cgv-relecture-v1.json'), 'utf8')).corrections];
 // Rattachement des offres aux clauses : cartographie proposée du 08/11 (docs/integration-v394-v15-20261108), 17 formules V39 rattachées par analogie.
 const ALIASES = {'V39-NL-PONCT-SIMPLE': 'AW-WEB-NEWSLETTER', 'V39-NL-PONCT-COMPLETE': 'AW-WEB-NEWSLETTER', 'V39-NL-1-M': 'AW-WEB-NEWSLETTER', 'V39-NL-1-A': 'AW-WEB-NEWSLETTER', 'V39-NL-2-M': 'AW-WEB-NEWSLETTER', 'V39-NL-2-A': 'AW-WEB-NEWSLETTER',
   'V39-STAT-ESS-A': 'AW-DATA-SUIVI-M', 'V39-STAT-ESS-M': 'AW-DATA-SUIVI-M', 'V39-GBP-ESS-A': 'AW-SEO-GBP-M', 'V39-GBP-ESS-M': 'AW-SEO-GBP-M', 'V39-BRAND-DUO': 'AW-BRAND-LOGO', 'V39-BRAND-CHARTE': 'AW-BRAND-LOGO'};
@@ -123,8 +124,7 @@ const MEDIATION_SENTENCE = 'Le médiateur de la consommation retenu par AtoumWeb
         }
         let body = db.get('SELECT body FROM contract_clause_versions WHERE id=?', [c.id]).body, changed = false;
         for (const f of CGV_FIXES.filter(x => x.code.toUpperCase() === c.code.toUpperCase())) {
-          if (body.split(f.de).length !== 2) throw Error(`Correction introuvable ou ambiguë : ${f.de.slice(0, 50)}`);
-          body = body.replace(f.de, () => f.vers); changed = true; done.corrections++;
+          const r = applyFix(body, f); body = r.body; if (r.applied) { changed = true; done.corrections++; }
         }
         // Aucune vente : les clauses déjà publiées du pack sont corrigées sur place (pas d'ancienne version à conserver).
         if (changed) db.run('UPDATE contract_clause_versions SET body=? WHERE id=?', [body, c.id]);

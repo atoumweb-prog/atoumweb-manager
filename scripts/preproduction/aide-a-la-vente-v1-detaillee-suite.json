@@ -350,11 +350,11 @@
   "AW-TECH-PACK-3H": {
     "clientNeed": "Un client qui veut un volant d’heures pour ses sites.",
     "benefits": "• 3 heures utilisables sur les sites du même client\n• Décompte par quarts d’heure\n• Validité 24 mois + prolongation de 3 mois selon conditions",
-    "salesPitch": "189 € pour 3 heures, décompte par quarts d’heure, valables 24 mois.",
+    "salesPitch": "189 € pour 3 heures, décompte par quarts d’heure, valables 24 mois (plus 3 mois de prolongation automatique).",
     "qualificationQuestions": "Le site a-t-il été modifié ou mis à jour récemment ?\nQui a accès au site et à l’hébergement ? Avez-vous une sauvegarde récente ?",
     "relevantSituations": "Un client qui veut un volant d’heures pour ses sites. Peut se vendre seul ou en complément d’une autre prestation.",
     "commercialCautions": "Pas de projet complet au forfait ; les défauts imputables à AtoumWeb ne se décomptent pas.\nHors périmètre : Correction de défaut imputable à AtoumWeb\nDemander une sauvegarde ou des accès avant toute intervention.\nNe jamais promettre une réparation avant le diagnostic.",
-    "objections": "« Les heures périment ? » → Validité 24 mois, avec une prolongation de 3 mois selon conditions.\n« Mon ancien prestataire gérait ça. » → Parfait : un état des lieux montre ce qui a été fait et ce qu’il faut corriger.",
+    "objections": "« Les heures périment ? » → Validité 24 mois, prolongée automatiquement et gratuitement de 3 mois.\n« Mon ancien prestataire gérait ça. » → Parfait : un état des lieux montre ce qui a été fait et ce qu’il faut corriger.",
     "keywords": "pack d’heures, interventions, dépannage",
     "quoteRequiredWhen": "Projet complet.",
     "internalAdvice": "Toujours annoncer d’abord le diagnostic ; chiffrer la suite avec l’accord du client. Pour un client régulier, proposer la maintenance ou un pack d’heures. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
@@ -362,7 +362,7 @@
   "AW-TECH-PACK-5H": {
     "clientNeed": "Un client qui prévoit plusieurs petites interventions.",
     "benefits": "• 5 heures utilisables sur les sites du même client\n• Décompte par quarts d’heure\n• Validité 24 mois + prolongation de 3 mois selon conditions",
-    "salesPitch": "299 € pour 5 heures, décompte par quarts d’heure, utilisables sur les sites du même client, valables 24 mois.",
+    "salesPitch": "299 € pour 5 heures, décompte par quarts d’heure, utilisables sur les sites du même client, valables 24 mois (plus 3 mois de prolongation automatique).",
     "qualificationQuestions": "Le site a-t-il été modifié ou mis à jour récemment ?\nQui a accès au site et à l’hébergement ? Avez-vous une sauvegarde récente ?",
     "relevantSituations": "Un client qui prévoit plusieurs petites interventions. Peut se vendre seul ou en complément d’une autre prestation.",
     "commercialCautions": "Pas de projet complet au forfait.\nHors périmètre : Correction de défaut imputable à AtoumWeb\nDemander une sauvegarde ou des accès avant toute intervention.\nNe jamais promettre une réparation avant le diagnostic.\nLes défauts imputables à AtoumWeb sont corrigés sans décompte.",
@@ -374,7 +374,7 @@
   "AW-TECH-PACK-10H": {
     "clientNeed": "Un client qui a plusieurs sites ou des besoins réguliers.",
     "benefits": "• 10 heures utilisables sur les sites du même client\n• Décompte par quarts d’heure\n• Validité 24 mois + prolongation de 3 mois selon conditions",
-    "salesPitch": "549 € pour 10 heures, décompte par quarts d’heure, utilisables sur tous ses sites, valables 24 mois.",
+    "salesPitch": "549 € pour 10 heures, décompte par quarts d’heure, utilisables sur tous ses sites, valables 24 mois (plus 3 mois de prolongation automatique).",
     "qualificationQuestions": "Le site a-t-il été modifié ou mis à jour récemment ?\nQui a accès au site et à l’hébergement ? Avez-vous une sauvegarde récente ?",
     "relevantSituations": "Un client qui a plusieurs sites ou des besoins réguliers. Peut se vendre seul ou en complément d’une autre prestation.",
     "commercialCautions": "Pas de projet complet au forfait.\nHors périmètre : Correction de défaut imputable à AtoumWeb\nDemander une sauvegarde ou des accès avant toute intervention.\nNe jamais promettre une réparation avant le diagnostic.\nLes défauts imputables à AtoumWeb sont corrigés sans décompte.",
