@@ -1,3 +1,4 @@
+import { includedQuantityFor, includedQuantityNote, pluralUnit } from './quoteBillingRules';
 import {readableTechnicalTerms} from './contractFields';
 import {commercialDescription} from './commercialDescription';
 import {defaultQuoteDocumentSettings} from './quoteDocumentSettings';
@@ -24,7 +25,7 @@ export function isQuoteDocumentDraft(q: QuoteDetail, p?: ContractPresentation): 
   return q.status === 'draft' && !q.finalizedAt || p?.state === 'draft';
 }
 
-function lineHtml(line: QuoteLine, detailed: boolean, productSummary:string,readable=false): string {
+function lineHtml(line: QuoteLine, detailed: boolean, productSummary:string,readable=false,allLines:QuoteLine[]=[]): string {
   const description=commercialDescription(line.description,line.snapshot);
   const quantity = (line.quantityMilli ?? 1000) / 1000;
   const components = Array.isArray(line.snapshot?.offerComponents) ? line.snapshot.offerComponents.filter((c): c is Record<string, unknown> => !!c && typeof c === 'object') : [];
@@ -33,16 +34,18 @@ function lineHtml(line: QuoteLine, detailed: boolean, productSummary:string,read
   const period=String(line.snapshot?.periodicity||line.snapshot?.priceMode||'');
   const cadence=['mensuelle','monthly'].includes(period)?' / mois':['annuelle','yearly'].includes(period)?' / an':'';
   const unit = typeof line.snapshot?.unit === 'string' ? line.snapshot.unit : '';
+  const includedQuantity = includedQuantityFor(line, allLines);
   const unitPrice = line.proposedUnitPriceCents ?? line.catalogUnitPriceCents;
   const adjustment = unitPrice == null ? 0 : line.contractLineValueCents - Math.round(unitPrice * quantity);
   return `<tr class="commercial-line"><td><h3>${h(line.label)}</h3>
     ${description && !same(description, line.label) ? `<p class="description">${h(readable?readableTechnicalTerms(description):description)}</p>` : ''}
+    ${includedQuantity ? `<p class="included-quantity"><strong>${h(includedQuantityNote(includedQuantity, unit))}</strong></p>` : ''}
     ${line.parameters?.productCount?`<p>${line.parameters.productCount.count} produit${line.parameters.productCount.count>1?'s':''} ${line.parameters.productCount.kind==='additional'?'supplémentaires vendus':'inclus'}${productSummary&&line.parameters.productCount.kind==='additional'?` · ${h(productSummary)}`:''}</p>`:''}
     ${detailed ? list(lines(line.snapshot?.inclusions)) : ''}
     ${detailed && included.length ? `<div class="included"><strong>Comprend</strong>${list(included.map(c => `${String(c.serviceName ?? '')}${Number(c.quantityMilli ?? 1000) !== 1000 ? ` × ${(Number(c.quantityMilli) / 1000).toLocaleString('fr-FR')}` : ''}`))}</div>` : ''}
     ${detailed && optional.length ? `<div class="included"><strong>Options prévues dans l’offre</strong>${list(optional.map(c => String(c.serviceName ?? '')))}</div>` : ''}
     ${adjustment ? `<p class="adjustment">Ajustement de ligne : ${adjustment > 0 ? '+' : '-'} ${h(money(Math.abs(adjustment)))}</p>` : ''}
-    </td><td class="quantity">${quantity.toLocaleString('fr-FR')}${unit ? `&nbsp;<span class="unit">${h(unit)}</span>` : ''}</td><td class="amount">${unitPrice == null ? 'Non renseigné' : h(money(unitPrice))+h(cadence)}</td><td class="amount total-line">${h(money(line.contractLineValueCents))}</td></tr>`;
+    </td><td class="quantity">${quantity.toLocaleString('fr-FR')}${unit ? `&nbsp;<span class="unit">${h(pluralUnit(unit, quantity))}</span>` : ''}</td><td class="amount">${unitPrice == null ? 'Non renseigné' : h(money(unitPrice))+h(cadence)}</td><td class="amount total-line">${h(money(line.contractLineValueCents))}</td></tr>`;
 }
 
 /** Separate only known saved clause titles. No new clause selection or rewriting. */
@@ -127,7 +130,7 @@ export function buildQuoteHtml(quote: QuoteDetail, presentation?: ContractPresen
   ${draft ? '<div class="draft-banner"><strong>BROUILLON</strong> · Document de travail, non destiné à l’envoi ni à la signature.</div>' : ''}
   <div class="party-grid"><section class="party"><span class="eyebrow">Émetteur</span><strong>${h(style.brandName)}</strong>${readyIdentity.map(s => `<p>${h(s).replaceAll('\n','<br>')}</p>`).join('')}${!readyIdentity.length ? '<p>Informations administratives à compléter.</p>' : ''}</section><section class="party"><span class="eyebrow">Destinataire</span><strong>${h(recipient?.name ?? quote.contractRecipientLabel ?? quote.ownerLabel)}</strong>${recipientLines.map(l=>`<p>${h(String(l))}</p>`).join('')}</section></div>
   ${style.introduction?`<p class="document-introduction">${h(style.introduction)}</p>`:''}<section class="project"><span class="eyebrow">Votre projet</span><h2>${h(quote.subject)}</h2>${quote.needSummary && !same(quote.needSummary, quote.subject) ? `<p>${h(quote.needSummary)}</p>` : ''}</section>
-  <table class="commercial-table"><colgroup><col style="width:55%"><col style="width:11%"><col style="width:17%"><col style="width:17%"></colgroup><thead><tr><th>Prestations${soldScope ? '' : ' et contenu'}</th><th>Qté</th><th>Prix unitaire</th><th>Montant</th></tr></thead><tbody>${quote.lines.map(l => lineHtml(l, !soldScope,productSummary,draft)).join('')}</tbody></table>
+  <table class="commercial-table"><colgroup><col style="width:55%"><col style="width:11%"><col style="width:17%"><col style="width:17%"></colgroup><thead><tr><th>Prestations${soldScope ? '' : ' et contenu'}</th><th>Qté</th><th>Prix unitaire</th><th>Montant</th></tr></thead><tbody>${quote.lines.map(l => lineHtml(l, !soldScope,productSummary,draft,quote.lines)).join('')}</tbody></table>
   <section class="commercial-summary"><div class="totals"><div class="grand-total"><span>${h(grandTotalLabel)}</span><strong>${h(money(quote.contractValueCents))}</strong></div>${paymentGroups?paymentGroups.map(m=>`<div><span>${m.lineLabel?`${h(m.lineLabel)} · `:''}${h(m.label)}${presentation?.state==='frozen'?'':` (${m.percent} %)`}${['mensuelle','monthly'].includes(m.periodicity??'')?' / mois':''}<br>${h(m.dueDate||m.event)}</span><strong>${h(money(m.amountCents))}</strong></div>`).join(''):`<div><span>${quote.initialPaymentQualification === 'arrhes' ? 'Arrhes' : 'Acompte'} (${quote.depositPercent ?? 0} %)</span><strong>${h(money(quote.depositCents))}</strong></div><div><span>Solde</span><strong>${h(money(quote.balanceCents))}</strong></div>`}</div><p class="tax-note">${monthly.length?`${h(monthlyNote)}<br>`:''}${h(vat ?? 'Régime fiscal et présentation des taxes à confirmer.')}</p></section>
   <section class="practical"><h2>Organisation de la prestation</h2><p><strong>Délai estimé :</strong> ${h(quote.estimatedDelay || (dossierSections.length?'Voir les engagements propres à chaque prestation dans le périmètre détaillé.':'À définir ensemble'))}</p>${quote.prerequisitesText&&(separateScope||quote.lines.length>2||!presentation) ? `<p><strong>Prérequis :</strong><br>${h(quote.prerequisitesText).replaceAll('\n', '<br />')}</p>` : ''}${separateScope||!presentation?`<div class="annex-link">L’annexe contractuelle ci-après est rattachée au devis <strong>${h(quote.number)}</strong>. L’emplacement d’acceptation se trouve à la fin de ce dossier.</div>`:''}</section>
   ${soldScope&&separateScope ? `<section class="scope-detail"><h1>${h(style.scopeTitle)}</h1>${contractSectionHtml(soldScope, presentation!)}${quote.lines.map(l => {
