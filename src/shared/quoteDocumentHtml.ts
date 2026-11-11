@@ -7,14 +7,16 @@ import { contractPresentationFromSnapshot, type ContractPresentation, type Contr
 import type { QuoteDetail, QuoteLine } from './commercial';
 
 export const escapeQuoteHtml = (v: unknown): string => String(v ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
-const h = (v: unknown): string => escapeQuoteHtml(String(v ?? '').replace(/\s(?:—|–|--)\s/g, ' · '));
+const h = escapeQuoteHtml;
+/** Typographie du texte généré (clauses, périmètre, paramètres) : pas de tiret « — », « – » ou « -- » entre espaces. Les données saisies (noms, objet) ne sont jamais modifiées. */
+const dashless = (s: string): string => s.replace(/\s(?:—|–|--)\s/g, ' · ');
 const money = (c: number): string => `${(c / 100).toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €`;
 const date = (s?: string | null): string => s ? new Date(s).toLocaleDateString('fr-FR') : 'Non précisée';
 const lines = (v: unknown): string[] => Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string') : [];
 const same = (a?: string | null, b?: string | null): boolean => (a ?? '').trim().toLocaleLowerCase('fr-FR') === (b ?? '').trim().toLocaleLowerCase('fr-FR');
 const monetaryText=(s:string)=>h(s).replace(/-?\d(?:[\d \u00a0\u202f]*\d)?(?:[,.]\d{1,2})?[ \u00a0\u202f]*€/g,m=>`<span class="money">${m.replaceAll(' ','&nbsp;')}</span>`);
 /** Escape first, then render only limited editorial emphasis (never arbitrary HTML/Markdown). */
-const contractEmphasis = (text: string): string => monetaryText(text).replace(/\*\*([^*\r\n]+)\*\*/g, '<strong>$1</strong>');
+const contractEmphasis = (text: string): string => monetaryText(dashless(text)).replace(/\*\*([^*\r\n]+)\*\*/g, '<strong>$1</strong>');
 const paragraphs = (s: string): string => s.split(/\n\s*\n/).filter(p => p.trim()).map(p => {
   const heading = p.trim().match(/^\*\*([^*\r\n]+)\*\*$/);
   return heading ? `<h4 class="contract-subheading">${h(heading[1])}</h4>` : `<p>${contractEmphasis(p).replaceAll('\n','<br />')}</p>`;
@@ -124,7 +126,7 @@ export function buildQuoteHtml(quote: QuoteDetail, presentation?: ContractPresen
   const consumerQuote = String((quote as unknown as {contractAudience?: string}).contractAudience ?? '') === 'consumer';
   const acceptanceHtml = quote.status === 'accepted'
     ? `<section class="acceptance"><h2>Acceptation enregistrée</h2><p>Devis ${h(quote.number)} · ${h(date(quote.acceptedAt))}</p><p>Se reporter à la preuve conservée dans le dossier client.</p></section>`
-    : `<section class="acceptance"><h2>Acceptation du devis</h2><p>Devis <strong>${h(quote.number)}</strong> : ${h(acceptanceText)}</p>
+    : `<section class="acceptance"><h2>Acceptation du devis et de son annexe contractuelle</h2><p>Devis <strong>${h(quote.number)}</strong> : ${h(acceptanceText)}</p>
     <p class="check"><span class="box"></span>J’ai lu les conditions générales jointes à ce devis (annexe contractuelle) et je les accepte.</p>
     ${consumerQuote ? '<p class="check"><span class="box"></span>Facultatif : je demande que la prestation commence avant la fin de mon délai de rétractation de 14 jours.</p>' : ''}
     ${draft ? '<p class="signature-draft">Emplacement prévu pour la version définitive. Ce brouillon ne doit pas être signé.</p>' : ''}<div class="acceptance-fields"><div>Nom et qualité du signataire</div><div>Lieu et date</div></div><div class="signature">Signature, précédée de la mention « Bon pour accord »</div></section>`;
