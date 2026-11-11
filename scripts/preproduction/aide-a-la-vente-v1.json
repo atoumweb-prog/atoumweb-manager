@@ -1189,7 +1189,7 @@
   },
   "AW-DATA-SUIVI-M": {
     "clientNeed": "Comprendre vos indicateurs et disposer de mesures exploitables.",
-    "benefits": "• Lecture GA + Search Console\n• synthèse\n• évolutions\n• anomalies\n• 3-5 actions..",
+    "benefits": "• Lecture GA + Search Console\n• synthèse\n• évolutions\n• anomalies\n• jusqu’à 3 recommandations au bilan trimestriel",
     "salesPitch": "Suivi statistiques Premium — mensuel : Lecture GA + Search Console ; synthèse. Le périmètre retenu est confirmé dans le devis.",
     "qualificationQuestions": "Quelles décisions souhaitez-vous prendre avec ces données ?\nQuels outils, accès et consentements sont en place ?",
     "relevantSituations": "À proposer lorsque le besoin porte sur « Suivi statistiques Premium — mensuel » et correspond aux éléments suivants : Lecture GA + Search Console ; synthèse.",
@@ -1201,7 +1201,7 @@
   },
   "AW-DATA-SUIVI-A": {
     "clientNeed": "Comprendre vos indicateurs et disposer de mesures exploitables.",
-    "benefits": "• Lecture GA + Search Console\n• synthèse\n• évolutions\n• anomalies\n• 3-5 actions.\n• 1 mois offert..",
+    "benefits": "• Lecture GA + Search Console\n• synthèse\n• évolutions\n• anomalies\n• jusqu’à 3 recommandations au bilan trimestriel\n• 1 mois offert..",
     "salesPitch": "Suivi statistiques Premium — annuel : Lecture GA + Search Console ; synthèse. Le périmètre retenu est confirmé dans le devis.",
     "qualificationQuestions": "Quelles décisions souhaitez-vous prendre avec ces données ?\nQuels outils, accès et consentements sont en place ?",
     "relevantSituations": "À proposer lorsque le besoin porte sur « Suivi statistiques Premium — annuel » et correspond aux éléments suivants : Lecture GA + Search Console ; synthèse.",

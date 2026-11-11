@@ -140,6 +140,11 @@
       "code": "SEO-GBP-SUIVI",
       "paragrapheCommencePar": "La résiliation mensuelle prend effet",
       "vers": "L’abonnement mensuel se termine à la fin de la période déjà payée, sans pénalité. Le dernier bilan normalement prévu est inclus, nos accès sont retirés, et la fiche reste au client. Nous ne garantissons ni positionnement sur Google, ni nombre de contacts ou de ventes."
+    },
+    {
+      "code": "CONS-MEDIATION",
+      "de": "CM2C — Centre",
+      "vers": "CM2C, Centre"
     }
   ]
 }
