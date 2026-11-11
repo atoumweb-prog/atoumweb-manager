@@ -136,6 +136,40 @@ try {
     $sel.TypeParagraph()
   }
 
+  # Fiche : en-tete (nom a gauche, prix et temps a droite) puis lignes [libelle, texte]. Les retours a la ligne du texte font des paragraphes.
+  function Add-Sheet($b) {
+    $rows = @($b.rows)
+    End-Doc; $sel.Style = (Sty 'Normal')
+    $t = $doc.Tables.Add($sel.Range, $rows.Count + 1, 2)
+    $t.AllowAutoFit = $false; $t.Borders.Enable = 1
+    $t.Borders.InsideLineStyle = 1; $t.Borders.OutsideLineStyle = 1
+    $t.Borders.InsideColor = $LINE; $t.Borders.OutsideColor = $LINE
+    $t.TopPadding = 3; $t.BottomPadding = 3; $t.LeftPadding = 5; $t.RightPadding = 5
+    $avail = Text-Width
+    $t.Columns.Item(1).Width = $avail * 0.2; $t.Columns.Item(2).Width = $avail * 0.8
+    $t.Range.Style = (Sty 'AW Cell')
+    $c = $t.Cell(1, 1); $c.Range.Text = [string]$b.name
+    $c.Shading.BackgroundPatternColor = $NAVY; $c.Range.Font.Color = $WHITE; $c.Range.Font.Bold = 1; $c.Range.Font.Size = 10.5
+    $c = $t.Cell(1, 2); $c.Range.Text = [string]$b.right
+    $c.Shading.BackgroundPatternColor = $NAVY; $c.Range.Font.Color = $YELLOW; $c.Range.Font.Bold = 1; $c.Range.Font.Size = 9; $c.Range.ParagraphFormat.Alignment = 2
+    $t.Cell(1, 1).Width = $avail * 0.56; $t.Cell(1, 2).Width = $avail * 0.44
+    for ($r = 0; $r -lt $rows.Count; $r++) {
+      $row = @($rows[$r])
+      $lab = $t.Cell($r + 2, 1); $lab.Range.Text = [string]$row[0]
+      $lab.Range.Font.Bold = 1; $lab.Range.Font.Color = $NAVY; $lab.Shading.BackgroundPatternColor = $PALE
+      $cell = $t.Cell($r + 2, 2); $cell.Range.Text = [string]$row[1]
+      if ($b.big -eq $true) { $cell.Range.Font.Size = 9.5; $lab.Range.Font.Size = 9 }
+      if ($row.Count -gt 2 -and $row[2] -eq 'note') { $cell.Range.Font.Italic = 1; $cell.Range.Font.Color = $GREY }
+    }
+    $t.Rows.AllowBreakAcrossPages = 0
+    if ($b.keep -eq $true) {
+      $t.Range.ParagraphFormat.KeepWithNext = -1
+      $t.Rows.Item($rows.Count + 1).Range.ParagraphFormat.KeepWithNext = 0
+    }
+    After-Table
+    $sel.ParagraphFormat.SpaceAfter = 0; $sel.Font.Size = 5; $sel.TypeParagraph(); $sel.Font.Size = 10
+  }
+
   function Set-HeaderFooter($sec, [bool]$first) {
     $w = $sec.PageSetup.PageWidth - $sec.PageSetup.LeftMargin - $sec.PageSetup.RightMargin
     $sec.PageSetup.DifferentFirstPageHeaderFooter = [int]$first * -1
@@ -170,6 +204,7 @@ try {
       'bullets' { foreach ($x in @($b.items)) { Add-Par ([string]$x) 'AW Bullet' } }
       'cards' { Add-Cards $b.items }
       'table' { Add-Table $b }
+      'sheet' { Add-Sheet $b }
       'pagebreak' { End-Doc; $sel.InsertBreak(7) }
       'landscape' { End-Doc; $sel.InsertBreak(2); $sec = $doc.Sections.Item($doc.Sections.Count); $sec.PageSetup.Orientation = 1; foreach ($n in 'TopMargin', 'BottomMargin', 'LeftMargin', 'RightMargin') { $sec.PageSetup.$n = 18 * $MM } }
       'portrait' { End-Doc; $sel.InsertBreak(2); $sec = $doc.Sections.Item($doc.Sections.Count); $sec.PageSetup.Orientation = 0; foreach ($n in 'TopMargin', 'BottomMargin', 'LeftMargin', 'RightMargin') { $sec.PageSetup.$n = 20 * $MM } }

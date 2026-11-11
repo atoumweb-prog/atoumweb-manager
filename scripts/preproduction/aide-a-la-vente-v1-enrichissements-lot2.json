@@ -1,0 +1,170 @@
+{
+  "AW-BRAND-SOCIAL-10": {
+    "clientNeed": "Un client qui publie souvent sur les réseaux et veut varier ses visuels sans perdre la cohérence de sa marque.",
+    "salesPitch": "Dix modèles de publications réutilisables pour 199 €, aux couleurs de votre marque et au format convenu. Vous les déclinez vous-même à chaque publication : de la variété, sans repartir d’une page blanche."
+  },
+  "AW-BRAND-SOCIAL-5": {
+    "clientNeed": "Un client qui publie sur les réseaux sociaux et veut des visuels cohérents sans y passer des heures.",
+    "salesPitch": "Cinq modèles de publications aux couleurs de votre marque pour 129 €, dans le format convenu. Vous gardez une présentation cohérente sur vos réseaux et vous les réutilisez à chaque publication."
+  },
+  "AW-PHOTO-DETOUR": {
+    "clientNeed": "Un e-commerçant ou un catalogue qui veut des produits isolés sur fond transparent ou uni.",
+    "salesPitch": "Vos produits isolés proprement sur fond transparent ou uni pour 9 € la photo, avec une commande minimum de 45 €. Un cycle de corrections mineures est compris, livraison en JPEG ou PNG."
+  },
+  "AW-ECOM-PROD-VAR": {
+    "clientNeed": "Un commerçant dont certains produits existent en plusieurs tailles, couleurs ou options.",
+    "salesPitch": "À partir de 29 €, un produit à variations (tailles, couleurs, options) créé proprement, tant que le nombre de déclinaisons reste raisonnable. Au-delà, ou avec une logique de prix complexe, on chiffre sur devis."
+  },
+  "AW-ECOM-PROD-SIMPLE": {
+    "clientNeed": "Un commerçant qui a plus de produits que sa formule n’en comprend.",
+    "salesPitch": "19 € par produit simple en plus des produits de votre formule : la fiche est intégrée à partir de vos informations et de vos visuels, dans le style de votre boutique."
+  },
+  "AW-PHOTO-SUP": {
+    "clientNeed": "Un client qui veut une photo de plus après une séance.",
+    "salesPitch": "Une photo de plus, sélectionnée, retouchée avec les retouches essentielles et exportée, pour 15 €, en complément des photos de votre séance."
+  },
+  "AW-TECH-MIGRATION-CPLX": {
+    "clientNeed": "Un client dont le site est volumineux ou particulier : WooCommerce actif, plusieurs sites, messagerie complexe.",
+    "salesPitch": "À partir de 199 €. Je commence par analyser votre site, puis je vous remets un devis qui fixe précisément ce qui est déplacé et comment. Rien n’est lancé avant votre accord écrit."
+  },
+  "AW-TECH-MIGRATION-AW": {
+    "clientNeed": "Un client dont le site WordPress est chez un autre hébergeur et qui veut le passer chez AtoumWeb.",
+    "salesPitch": "99 € pour déménager votre site WordPress standard chez AtoumWeb : sauvegarde, transfert des fichiers et de la base, configuration, certificat SSL et vérification. Les boîtes e-mail et les anciens messages se chiffrent à part."
+  },
+  "V39-STAT-ESS-M": {
+    "clientNeed": "Un client dont les statistiques sont installées mais qui ne les regarde jamais et veut savoir ce qui marche.",
+    "salesPitch": "29 € par mois : je regarde vos statistiques à votre place et je vous remets chaque trimestre une synthèse courte, avec une ou deux actions concrètes. Les comptes Google restent à votre nom."
+  },
+  "V39-STAT-ESS-A": {
+    "clientNeed": "Un client qui veut le suivi Essentiel payé à l’année.",
+    "salesPitch": "319 € pour 12 mois au lieu de 348 € : onze mois payés pour douze, réglés d’avance. Même suivi que l’abonnement mensuel : une synthèse trimestrielle et une ou deux recommandations."
+  },
+  "AW-DATA-SUIVI-A": {
+    "clientNeed": "Un client qui veut le suivi Premium payé à l’année.",
+    "salesPitch": "539 € pour 12 mois au lieu de 588 € : onze mois payés pour douze, réglés d’avance. Même suivi que l’abonnement mensuel : un rapport chaque mois, avec ses recommandations d’actions."
+  },
+  "V39-GBP-ESS-M": {
+    "clientNeed": "Un commerce local qui veut une fiche Google entretenue sans se lancer dans le Premium.",
+    "salesPitch": "49 € par mois pour que votre fiche Google vive : jusqu’à deux publications, cinq réponses aux avis, vos informations à jour, un contrôle chaque mois et une synthèse tous les trois mois. Le compte reste le vôtre."
+  },
+  "V39-GBP-ESS-A": {
+    "clientNeed": "Un commerce local qui veut l’Essentiel payé à l’année.",
+    "salesPitch": "539 € pour 12 mois au lieu de 588 € : onze mois payés pour douze, réglés d’avance. Même suivi que l’abonnement mensuel : deux publications et cinq réponses aux avis par mois."
+  },
+  "AW-BRAND-DOC-PAGE": {
+    "clientNeed": "Un client dont le document dépasse les quatre pages comprises dans la mise en page de base.",
+    "salesPitch": "Chaque page supplémentaire coûte 19 €, dans la même charte que votre document de départ."
+  },
+  "AW-BRAND-DECLI-LOGO": {
+    "clientNeed": "Un client dont le logo doit s’adapter à un nouvel usage : nouveau format, support ou fond.",
+    "salesPitch": "49 € pour adapter votre logo final à un nouveau format ou à un nouvel usage, sans le redessiner."
+  },
+  "AW-APP-EVOL": {
+    "clientNeed": "Un client dont l’application livrée a besoin d’un petit changement.",
+    "salesPitch": "69 € pour une petite évolution de votre application, dans un périmètre raisonnable. Une fonctionnalité plus importante fait l’objet d’un devis."
+  },
+  "AW-PHOTO-PACK10": {
+    "clientNeed": "Un client avec une dizaine de photos à harmoniser pour son site, son catalogue ou ses réseaux.",
+    "salesPitch": "119 € pour 10 photos, soit environ 11,90 € la photo : corrections simples de lumière et de couleurs, avec un rendu cohérent sur toute la série."
+  },
+  "AW-PHOTO-PACK30": {
+    "clientNeed": "Un client avec une trentaine de photos à retoucher de façon homogène.",
+    "salesPitch": "279 € pour 30 photos, soit environ 9,30 € la photo : le même traitement homogène sur tout le lot, donc un ensemble cohérent sur votre site ou votre catalogue."
+  },
+  "AW-PHOTO-PACK60": {
+    "clientNeed": "Un client avec un grand lot de photos, par exemple un catalogue complet.",
+    "salesPitch": "499 € pour 60 photos, soit environ 8,30 € la photo : le même traitement homogène sur tout le lot, pour un catalogue au rendu régulier."
+  },
+  "AW-PHOTO-RET-ESS": {
+    "clientNeed": "Un client dont les photos ont besoin d’un coup de propre avant d’être publiées.",
+    "salesPitch": "19 € la photo : lumière, cadrage et couleurs corrigés pour qu’elle soit présentable sur votre site ou vos réseaux. Pour un lot, le pack est plus avantageux."
+  },
+  "AW-PHOTO-RET-ADV": {
+    "clientNeed": "Un client dont certaines photos demandent des retouches locales ou plus poussées.",
+    "salesPitch": "39 € la photo pour des retouches locales ou plus complexes, dans les limites fixées au devis. Un travail très lourd se chiffre à part."
+  },
+  "AW-TECH-RESPONSIVE": {
+    "clientNeed": "Un client dont une page s’affiche mal sur téléphone ou tablette.",
+    "salesPitch": "À partir de 79 € : une page s’affiche mal sur mobile ? Je corrige l’anomalie précise, sans refaire la page ni le thème."
+  },
+  "AW-TECH-DEPANNAGE": {
+    "clientNeed": "Un client qui a un problème précis sur son site WordPress et veut une aide ponctuelle.",
+    "salesPitch": "69 € pour une intervention ponctuelle, une heure minimum : je commence par un diagnostic, je vous dis ce qui ne va pas et ce que coûte la suite, et rien n’est fait sans votre accord."
+  },
+  "AW-BRAND-CARTE": {
+    "clientNeed": "Un client qui veut une carte de visite cohérente avec son logo.",
+    "salesPitch": "79 € : une carte de visite recto verso, dans l’esprit de votre logo et de vos couleurs, livrée dans un fichier prêt pour l’impression. L’impression elle-même n’est pas comprise."
+  },
+  "AW-CONT-INTEG-WP": {
+    "clientNeed": "Un client qui a son contenu déjà rédigé et veut qu’il soit mis en place sur son site.",
+    "salesPitch": "39 € : j’intègre dans votre site WordPress un contenu que vous m’avez fourni, simplement et dans le style du site."
+  },
+  "AW-CONT-IMG3": {
+    "clientNeed": "Un client qui a besoin de visuels sans passer du temps à les chercher.",
+    "salesPitch": "29 € : je cherche trois images que vous avez le droit d’utiliser et je les optimise pour le web, pour qu’elles ne ralentissent pas votre site."
+  },
+  "AW-CONT-REWRITE": {
+    "clientNeed": "Un client qui a déjà un texte correct mais peu clair ou peu convaincant.",
+    "salesPitch": "79 € la page : vous avez déjà un texte, je le rends plus clair, mieux structuré et plus convaincant, sans repartir de zéro."
+  },
+  "AW-SEO-PAGE-LOCAL": {
+    "clientNeed": "Un client qui veut une page dédiée à une ville ou à un service local.",
+    "salesPitch": "149 € pour une page pensée pour être trouvée sur votre ville ou votre service : texte rédigé, titre et description soignés, intégrée à votre site. Elle prépare le terrain, sans promesse de classement."
+  },
+  "AW-SEO-LOCAL-ETAB": {
+    "clientNeed": "Un client avec plusieurs adresses ou établissements.",
+    "salesPitch": "79 € pour traiter un établissement supplémentaire dans le même projet de référencement local, avec la même méthode."
+  },
+  "AW-SEO-ESSENTIEL": {
+    "clientNeed": "Un client qui veut savoir quoi améliorer sur ses pages principales avant de décider.",
+    "salesPitch": "299 € pour savoir quoi améliorer sur vos cinq pages principales : un rapport de 3 à 5 pages, avec les requêtes à viser, la structure et le maillage. Les corrections ne sont pas comprises : vous décidez ensuite."
+  },
+  "AW-DATA-GA-SC": {
+    "clientNeed": "Un client dont le site ne mesure pas encore ses visites.",
+    "salesPitch": "99 € pour que votre site mesure enfin ses visites : Google Analytics 4 et Search Console installés et vérifiés, accès à votre nom, et une courte explication de ce que vous pouvez regarder."
+  },
+  "AW-LP-SECTION": {
+    "clientNeed": "Un client dont la landing page a besoin de plus de six sections.",
+    "salesPitch": "Votre page a besoin de plus de six sections ? Chaque section standard supplémentaire coûte 49 €, dans le même style que la page."
+  },
+  "AW-LP-LANG-SUP": {
+    "clientNeed": "Un client dont la landing page vise aussi une autre langue.",
+    "salesPitch": "149 € pour proposer votre landing page dans une langue de plus, à partir de la traduction que vous fournissez."
+  },
+  "AW-BRAND-LOGO-ANIM": {
+    "clientNeed": "Un client qui veut animer son logo pour une vidéo ou un site.",
+    "salesPitch": "89 € pour donner vie à votre logo : une animation légère en boucle courte, exportée pour le web ou la vidéo."
+  },
+  "AW-BRAND-DOC-4P": {
+    "clientNeed": "Un client avec un document à présenter proprement.",
+    "salesPitch": "99 € : vos contenus mis en page sur quatre pages standard, pour un document présentable et cohérent avec votre image."
+  },
+  "V39-BRAND-DUO": {
+    "clientNeed": "Un client qui part de zéro et veut un logo et une charte ensemble.",
+    "salesPitch": "Votre logo et votre mini-charte ensemble pour 498 € : de quoi partir d’une marque cohérente sur tous vos supports, avec le même périmètre que chaque prestation prise séparément."
+  },
+  "V39-HOST-DOMAINE": {
+    "clientNeed": "Un client qui veut déléguer le suivi de son nom de domaine.",
+    "salesPitch": "29 € par an pour que votre nom de domaine ne soit jamais oublié : suivi de l’échéance, rappels avant le renouvellement, et renouvellement seulement quand vous l’avez demandé. Les frais du bureau d’enregistrement s’ajoutent."
+  },
+  "V39-HOST-LUNE": {
+    "clientNeed": "Un client qui n’a plus besoin de maintenance mais veut garder son site hébergé chez AtoumWeb.",
+    "salesPitch": "149 € par an : un espace d’hébergement isolé réservé à votre site, avec l’assistance sur les incidents d’hébergement. Ce n’est pas une maintenance : pas de mises à jour ni d’interventions, que vous pouvez ajouter ensuite."
+  },
+  "AW-APP-PROTOTYPE": {
+    "clientNeed": "Un client qui veut voir l’outil avant de le construire.",
+    "salesPitch": "À partir de 490 € : vous voyez l’outil avant qu’il soit construit. Écrans principaux, navigation et simulation des parcours pour valider l’idée, sans développer la version de production."
+  },
+  "V39-NL-2-M": {
+    "clientNeed": "Un client qui veut deux newsletters par mois.",
+    "salesPitch": "429 € par mois : deux newsletters par mois, chacune envoyée après votre bon à tirer écrit, avec un bilan simplifié après chaque envoi. Le compte Brevo est à votre nom."
+  },
+  "AW-MARIAGE-RENOUV": {
+    "clientNeed": "Des mariés qui veulent garder leur site une année de plus.",
+    "salesPitch": "59 € par an pour garder votre site en ligne une année de plus, domaine standard compris. Vous pouvez arrêter jusqu’à la veille de l’échéance."
+  },
+  "AW-BRAND-REVISION": {
+    "clientNeed": "Un client qui demande des retouches après avoir validé la direction graphique.",
+    "salesPitch": "39 € : une série groupée d’ajustements sur la direction déjà validée. Une nouvelle direction graphique est une nouvelle prestation."
+  }
+}

@@ -17,7 +17,7 @@ if (!fs.existsSync(metaFile) || JSON.parse(fs.readFileSync(metaFile, 'utf8')).mo
 const dbFile = path.join(target, 'Workspace', 'data', 'atoumweb-manager.sqlite');
 if (/validation-msi/i.test(dbFile) || !fs.existsSync(dbFile)) fail('Base introuvable ou interdite.');
 const running = spawnSync('powershell.exe', ['-NoProfile', '-Command',
-  `Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '*${target.replace(/'/g, "''")}*' -or $_.CommandLine -like '*${target.replace(/'/g, "''")}*' -or $_.CommandLine -like '*${target.replace(/\\/g, '/').replace(/'/g, "''")}*' } | Measure-Object | Select-Object -ExpandProperty Count`], {encoding: 'utf8'}).stdout.trim();
+  `Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '*${target.replace(/'/g, "''")}*' } | Measure-Object | Select-Object -ExpandProperty Count`], {encoding: 'utf8'}).stdout.trim();
 if (running !== '0') fail('La préproduction est ouverte : ferme-la avant.');
 const repo = path.resolve(__dirname, '..', '..');
 const bundle = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'atoumweb-aide-')), 'svc.cjs');
@@ -26,6 +26,11 @@ require(path.join(repo, 'node_modules', 'esbuild')).buildSync({stdin: {contents:
 const S = require(bundle);
 const read = f => JSON.parse(fs.readFileSync(path.join(__dirname, f), 'utf8'));
 const sales = {...read('aide-a-la-vente-v1.json'), ...read('aide-a-la-vente-v1-detaillee-suite.json'), ...read('aide-a-la-vente-v1-detaillee.json')};
+// Enrichissements du lot 2 du référentiel : ne remplacent que les champs qu'ils contiennent (besoin, argument).
+for (const [code, patch] of Object.entries(read('aide-a-la-vente-v1-enrichissements-lot2.json'))) {
+  if (!sales[code]) throw Error('Enrichissement pour un code inconnu : ' + code);
+  sales[code] = {...sales[code], ...patch};
+}
 (async () => {
   const db = new S.NodeSqliteAdapter(dbFile);
   try {
