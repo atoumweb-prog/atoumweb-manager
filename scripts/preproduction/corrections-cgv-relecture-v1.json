@@ -93,8 +93,8 @@
     },
     {
       "code": "TECH-HEBERGEMENT",
-      "de": "est tarifée 29 € par an",
-      "vers": "est facturée 29 € par an"
+      "de": "est tarifée 29 € par an en plus des frais du registrar",
+      "vers": "est facturée au tarif indiqué au devis, en plus des frais du registrar"
     },
     {
       "code": "TECH-MIGRATION",
@@ -192,11 +192,6 @@
       "vers": "La formule Lune dédiée s’applique"
     },
     {
-      "code": "TECH-HEBERGEMENT",
-      "de": "sa gestion est facturée 29 € par an en plus des frais du registrar",
-      "vers": "sa gestion est facturée au tarif indiqué au devis, en plus des frais du registrar"
-    },
-    {
       "code": "WEB-HEBERGEMENT",
       "de": "le renouvellement annuel de 59 € comprend expressément",
       "vers": "le renouvellement annuel prévu à la clause « Durée de mise en ligne » comprend expressément"
@@ -210,6 +205,26 @@
       "code": "DATA-ACCES",
       "de": "Dans la mesure du possible, les comptes et espaces de statistiques sont créés",
       "vers": "Les comptes et espaces de statistiques sont créés"
+    },
+    {
+      "code": "DATA-SUIVI",
+      "de": "Un suivi hebdomadaire ou mensuel n’est pas une surveillance permanente",
+      "vers": "Un suivi périodique, selon la fréquence prévue au devis, n’est pas une surveillance permanente"
+    },
+    {
+      "code": "MAINT-RENOUVELLEMENT",
+      "paragrapheCommencePar": "Nous vous proposons le renouvellement annuel",
+      "vers": "Nous vous proposons le renouvellement annuel 30 jours avant l’échéance. Il n’a lieu qu’avec votre accord exprès : sans réponse, le contrat prend fin à son terme et aucune reconduction tacite n’est mise en place."
+    },
+    {
+      "code": "MAINT-RENOUVELLEMENT",
+      "paragrapheCommencePar": "Toute nouvelle période annuelle de maintenance",
+      "vers": "Le passage de la formule mensuelle à la formule annuelle intervient à la prochaine échéance mensuelle, sur accord écrit. Le passage de la formule annuelle à la formule mensuelle intervient à l’issue de la période annuelle. Aucune période n’est facturée deux fois."
+    },
+    {
+      "code": "MAINT-RENOUVELLEMENT",
+      "paragrapheCommencePar": "L’arrêt de la maintenance mensuelle prend effet",
+      "vers": ""
     }
   ]
 }
