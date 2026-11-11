@@ -18,7 +18,7 @@ const target = path.resolve(dest), metaFile = path.join(target, 'PREPRODUCTION.j
 if (!fs.existsSync(metaFile) || JSON.parse(fs.readFileSync(metaFile, 'utf8')).mode !== 'PREPRODUCTION_TEST') fail('Ce dossier n’est pas une préproduction assemblée.');
 const dbFile = path.join(target, 'Workspace', 'data', 'atoumweb-manager.sqlite');
 const running = spawnSync('powershell.exe', ['-NoProfile', '-Command',
-  `Get-CimInstance Win32_Process -Filter "Name='electron.exe'" | Where-Object { $_.CommandLine -like '*${target.replace(/'/g, "''")}*' } | Measure-Object | Select-Object -ExpandProperty Count`], {encoding: 'utf8'}).stdout.trim();
+  `Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '*${target.replace(/'/g, "''")}*' -or $_.CommandLine -like '*${target.replace(/'/g, "''")}*' -or $_.CommandLine -like '*${target.replace(/\\/g, '/').replace(/'/g, "''")}*' } | Measure-Object | Select-Object -ExpandProperty Count`], {encoding: 'utf8'}).stdout.trim();
 if (running !== '0') fail('La préproduction est ouverte : ferme-la avant.');
 const input = JSON.parse(fs.readFileSync(source, 'utf8'));
 

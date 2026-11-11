@@ -8,6 +8,8 @@ export interface SoldScopeInput {
   exclusions?: unknown;
   scope?: unknown;
   scopeExclusions?: unknown;
+  /** Phrase facultative qui précise une quantité déjà comprise dans une autre offre du devis. */
+  quantityNote?: string;
 }
 const normalise = (s: string): string => s.replace(/\s+/g, ' ').trim().toLocaleLowerCase('fr-FR');
 const entries = (source: unknown): string[] =>
@@ -35,7 +37,7 @@ export function formatSoldScope(input: SoldScopeInput): string {
       : entries(input.exclusions),
   );
   return [
-    `${input.label} — Quantité : ${input.quantityMilli / 1000}`,
+    `${input.label} — Quantité : ${input.quantityMilli / 1000}${input.quantityNote ? ` — ${input.quantityNote}` : ''}`,
     ...inclusions.map(item => `• Inclus : ${item}`),
     ...scope.map(item => `• Périmètre particulier convenu : ${item}`),
     ...exclusions.map(item => `• Non inclus : ${item}`),

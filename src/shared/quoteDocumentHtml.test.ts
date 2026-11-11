@@ -15,7 +15,7 @@ describe('PDF Atoum — modèle commercial et annexe',()=>{
   const p=formatContractPresentation({state:'draft',number:quote.number,subject:quote.subject,totalCents:quote.contractValueCents,estimatedDelay:null,prerequisites:null,compiledAt:null,clauseText:'',clauses:[],parameters,administration:null,types:[],modules:[]});
   const html=buildQuoteHtml(quote,p);
   const commercial=html.slice(html.indexOf('class="commercial-summary"'),html.indexOf('class="contract-annex"'));
-  for(const row of p.paymentSummary!.rows){expect(commercial).toContain(row.label);expect(commercial).toContain(`${row.percent} %`);}
+  for(const row of p.paymentSummary!.rows){expect(commercial).toContain(row.label);expect(commercial).toMatch(new RegExp(`${row.percent}(?:&nbsp;| )%`));}
   expect(html).not.toMatch(/NaN|undefined|Infinity/);
   expect(commercial).not.toContain('Acompte (30 %)');
   const frozen=buildQuoteHtml(quote,{...p,state:'frozen'});
@@ -68,7 +68,7 @@ describe('PDF Atoum — modèle commercial et annexe',()=>{
   expect(html).toContain('Acceptation du devis et de son annexe contractuelle');
   expect(legacy.documentSettings.acceptanceText).toContain('référencées ci-dessus'); // no saved data mutation
  });
- it('utilise le symbole intégré et rattache la signature finale à ce même dossier',()=>{const html=buildQuoteHtml(quote,presentation);expect(html).toContain('data:image/svg+xml');expect(html).toContain('#ffda00');expect(html.indexOf('class="acceptance"')).toBeGreaterThan(html.indexOf('class="annex"'));expect(html).toContain('Emplacement prévu pour la version définitive');});
+ it('utilise le symbole intégré et place la signature dans ce même dossier, juste après le périmètre (avant l’annexe)',()=>{const html=buildQuoteHtml(quote,presentation);expect(html).toContain('data:image/svg+xml');expect(html).toContain('#ffda00');expect(html.indexOf('class="acceptance"')).toBeLessThan(html.indexOf('class="annex"'));expect(html.indexOf('class="acceptance"')).toBeGreaterThan(0);expect(html).toContain('Emplacement prévu pour la version définitive');});
  it('identifie le brouillon mais ne crée pas un nouveau bloc à signer pour un devis accepté',()=>{expect(isQuoteDocumentDraft(quote,presentation)).toBe(true);const q={...quote,status:'accepted',acceptedAt:'2026-10-23'} as QuoteDetail;const html=buildQuoteHtml(q,{...presentation,state:'frozen'});expect(html).toContain('Acceptation enregistrée');expect(html).not.toContain('class="signature"');expect(html).not.toContain('BROUILLON');});
  it('conserve les historiques sans les reconstruire depuis une bibliothèque courante',()=>{const q={...quote,status:'accepted',contractTextSnapshot:'Texte ancien\nconservé',contractSnapshotJson:null} as QuoteDetail;expect(buildQuoteHtml(q)).toContain('Texte ancien<br />conservé');expect(buildQuoteHtml({...q,contractTextSnapshot:'',specialTerms:'Ne pas réintroduire'})).not.toContain('Ne pas réintroduire');});
  it('protège les titres de fin de page et échappe aussi les rappels/pieds de page',()=>{const html=buildQuoteHtml(quote,presentation);expect(html).toContain('break-after:avoid');expect(html).toContain('page-break-inside:avoid');expect(html).toContain('.annex{break-before:page');expect(quotePageFooter(quote,presentation)).toContain('class="totalPages"');expect(quotePageFooter(quote,presentation)).toContain('BROUILLON');expect(quotePageHeader({...quote,number:'<img>'})).toContain('&lt;img&gt;');});

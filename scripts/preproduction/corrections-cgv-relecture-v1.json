@@ -1,0 +1,145 @@
+{
+  "_lisez_moi": "Relecture complète des 121 clauses du 11/11/2026 (lecture intégrale, clause par clause). Corrections de rédaction et de cohérence, sans changement de fond voulu : prix retirés des clauses quand ils dupliquent le catalogue, texte de la prestation shooting aligné sur les formules à prix fixe, règles de report photo et de validité des packs alignées sur le référentiel V1.5 (SQ-21, HRS-003), paragraphes denses réécrits plus clairement, doublon supprimé.",
+  "corrections": [
+    {
+      "code": "BASE-OBJET",
+      "de": "Les définitions utiles et les éventuelles conditions tarifaires sont communiquées avant votre acceptation",
+      "vers": "Les termes importants sont expliqués dans la clause « Définitions ». Les éventuelles conditions tarifaires vous sont communiquées avant votre acceptation"
+    },
+    {
+      "code": "BASE-VALIDATION",
+      "de": "L’acceptation d’une étape ne dispense pas AtoumWeb de remédier aux anomalies qui lui sont imputables et des garanties légales applicables.",
+      "vers": "L’acceptation d’une étape ne nous dispense pas de remédier aux anomalies qui nous sont imputables, ni de respecter les garanties légales applicables."
+    },
+    {
+      "code": "BASE-PAIEMENT",
+      "paragrapheCommencePar": "Sous réserve des règles impératives propres au contrat",
+      "vers": "Sous réserve des règles impératives propres au contrat : une prestation ponctuelle de 300 € ou moins est payable en totalité à la commande. Au-delà, le paiement se fait en deux fois, 40 % puis 60 %, aux échéances du devis, sauf échéancier propre à l’offre : 40 % / 60 % pour un site vitrine et 30 % / 40 % / 30 % pour une boutique WooCommerce. L’échéancier applicable figure toujours au devis."
+    },
+    {
+      "code": "BASE-PAIEMENT",
+      "paragrapheCommencePar": "Le prélèvement SEPA peut être proposé",
+      "vers": "Le prélèvement SEPA peut être proposé pour les sommes ponctuelles ou récurrentes, dans le cadre d’un mandat en vigueur. Nos tarifs sont identiques quel que soit le moyen de paiement : le SEPA n’entraîne ni supplément ni remise. Sans mandat, les moyens de paiement indiqués au devis s’appliquent."
+    },
+    {
+      "code": "BASE-PAIEMENT",
+      "paragrapheCommencePar": "Pour les abonnements récurrents, l’échéance",
+      "vers": "Pour les abonnements mensuels, l’échéance est le 5 ou le 15 du mois, selon votre choix indiqué au devis, avec un prorata pour le premier mois si nécessaire. Pour Google Business Profile, les statistiques et les newsletters, la période commence à la date de prise en charge effective, puis l’échéance suit cette date. Les abonnements annuels (maintenance, Lune, Google Business Profile, statistiques, newsletters) sont payables d’avance, au début de chaque période annuelle, à la date indiquée au devis ; nous n’encaissons rien avant cette date."
+    },
+    {
+      "code": "BASE-PAIEMENT",
+      "paragrapheCommencePar": "En cas d’impayé récurrent",
+      "vers": "Si un abonnement reste impayé, nous vous relançons par écrit 7 jours après l’échéance, puis nous vous mettons en demeure de payer 15 jours après l’échéance. Nous pouvons suspendre le service 30 jours après l’échéance, selon la gravité et après vous en avoir informé, puis y mettre fin 60 jours après l’échéance, par notification écrite, sans que cela soit automatique. Vos données, votre domaine et vos accès ne sont jamais supprimés immédiatement du seul fait d’un impayé ; vos droits légaux et les modalités de sortie propres au service restent applicables. La réactivation après paiement vérifié est gratuite ; un travail technique exceptionnel demande votre accord sur un devis."
+    },
+    {
+      "code": "BASE-PAIEMENT",
+      "paragrapheCommencePar": "Pour une PRESTATION PONCTUELLE uniquement",
+      "vers": "Pour une prestation ponctuelle, la procédure est plus courte : relance écrite 7 jours après l’échéance, puis mise en demeure 15 jours après l’échéance, qui vous laisse huit jours pour payer. À partir du 23e jour, nous pouvons suspendre les seules tâches non encore réalisées, après avoir examiné la gravité de l’impayé et l’éventuel litige, et vous en avoir informé, sous réserve des obligations impératives. Cette procédure ne s’applique pas aux mensualités ni aux annualités d’abonnement, qui suivent la procédure ci-dessus. Elle ne nous donne aucun droit de retenir abusivement votre domaine, ni de supprimer immédiatement vos données."
+    },
+    {
+      "code": "CONS-RETRACTATION",
+      "paragrapheCommencePar": "Un devis accepté par courrier électronique",
+      "vers": "Un devis accepté par courrier électronique ou à distance relève des règles de rétractation, même si la commande n’est pas passée sur un panier en ligne. Pour toute demande de démarrage anticipé des travaux, nous recueillons et archivons les confirmations prévues par la loi avant de commencer."
+    },
+    {
+      "code": "CONTENT-CORRECTIONS",
+      "paragrapheCommencePar": "Pour les offres standards actuellement retenues",
+      "vers": "Pour les offres standards, la longueur du texte et le nombre de cycles de correction sont ceux indiqués dans la fiche de l’offre et dans votre devis. La mise en ligne dans un WordPress existant compatible est comprise dans les conditions prévues au devis ; elle n’est pas facturée deux fois. Les autres formats rédactionnels sont définis par leurs fiches et commandes respectives."
+    },
+    {
+      "code": "LANDING-PERIMETRE",
+      "paragrapheCommencePar": "La landing page standard à 499 €",
+      "vers": "La landing page standard comprend une page unique de six sections adaptables au maximum, avec formulaire simple ou bouton d’action. Vous fournissez les textes de base : leur adaptation légère est comprise, mais une rédaction complète est une prestation distincte. L’ajout de sections ou de fonctionnalités complexes est chiffré séparément. Un cycle de corrections est inclus. Sur un site WordPress existant compatible, l’intégration peut être incluse ; pour une page autonome, l’hébergement et le domaine éventuel sont détaillés et acceptés séparément au devis."
+    },
+    {
+      "code": "MAINT-MAJ",
+      "de": "Les horaires de référence de l’agence sont du lundi",
+      "vers": "Nos horaires de référence sont du lundi"
+    },
+    {
+      "code": "MARIAGE-DUREE",
+      "de": "Le site de mariage Essentiel (399 €) et Grand Jour (649 €) comprend une durée initiale de douze mois ; la formule L’Histoire (899 €) comprend vingt-quatre mois.",
+      "vers": "Les formules Essentiel et Grand Jour comprennent une durée initiale de douze mois ; la formule L’Histoire comprend vingt-quatre mois."
+    },
+    {
+      "code": "PHOTO-REPORT",
+      "de": "Vous pouvez demander le report d’une séance sans frais de report si votre demande nous parvient au moins quarante-huit heures avant l’horaire convenu.",
+      "vers": "Vous pouvez demander un premier report de séance sans frais si votre demande nous parvient au moins quarante-huit heures avant l’horaire convenu, sous réserve de disponibilité."
+    },
+    {
+      "code": "PHOTO-REPORT",
+      "paragrapheCommencePar": "Pour la première demande de report présentée",
+      "vers": "En cas d’annulation, les éventuelles sommes retenues ou dues ne peuvent correspondre qu’aux dépenses et travaux réels, justifiés et légalement admissibles ; aucune pénalité forfaitaire automatique n’est appliquée."
+    },
+    {
+      "code": "PHOTO-SHOOTING-PERIMETRE",
+      "paragrapheCommencePar": "La prise de vue professionnelle n’est proposée",
+      "vers": "Les formules Shooting Essentiel et Shooting Activité sont proposées à prix fixe, dans le périmètre indiqué au devis : durée, lieu, nombre de photographies finalisées. Toute prise de vue en dehors de ce périmètre (plusieurs lieux, mise en scène complexe, déplacement hors Dijon Métropole) est confirmée par un devis adapté, après vérification de la faisabilité, du matériel et de notre disponibilité. Les obligations relatives aux personnes photographiées et aux lieux sont vérifiées selon le projet."
+    },
+    {
+      "code": "PHOTO-RETOUCHE-PERIMETRE",
+      "paragrapheCommencePar": "Les catégories de prix de référence sont",
+      "vers": "Les niveaux de retouche et leurs prix sont ceux de votre devis. Le détourage est soumis à un minimum de commande indiqué au devis. Les packs de photographies à retoucher (10, 30 ou 60 photographies) sont réservés aux ajustements simples et homogènes. Un cycle de corrections mineures demandé dans les sept jours calendaires est compris, sans limiter la correction d’une erreur qui nous est imputable. Les interventions complexes demandent un devis accepté."
+    },
+    {
+      "code": "SEO-MOYENS",
+      "paragrapheCommencePar": "Nos prestations d’optimisation et de suivi garantissent",
+      "vers": ""
+    },
+    {
+      "code": "SERVICE-PACK-HEURES",
+      "paragrapheCommencePar": "Les packs d’interventions 3 h",
+      "vers": "Les packs d’interventions de 3 h, 5 h et 10 h sont décomptés par quarts d’heure. Leur validité est de 24 mois, prolongée automatiquement et sans frais de trois mois ; nous vous rappelons l’échéance 60 puis 30 jours avant la fin. Le solde non utilisé après 27 mois expire sans remboursement, sous réserve de vos droits impératifs et de tout manquement de notre part. Aucun décompte n’est réalisé pour la correction d’une faute qui nous est imputable."
+    },
+    {
+      "code": "TECH-HEBERGEMENT",
+      "de": "est tarifée 29 € par an",
+      "vers": "est facturée 29 € par an"
+    },
+    {
+      "code": "TECH-MIGRATION",
+      "paragrapheCommencePar": "Une migration WordPress standard depuis",
+      "vers": "Le prix d’une migration standard ou d’une migration complexe est indiqué dans votre devis. Le transfert interne vers une Lune AtoumWeb reste gratuit. À la fin d’un hébergement, l’export standard et une conservation sécurisée de 30 jours suivent les conditions de sortie convenues ; l’assistance à une migration extérieure peut être facturée à part."
+    },
+    {
+      "code": "DATA-SUIVI",
+      "paragrapheCommencePar": "Les abonnements de suivi statistique peuvent",
+      "vers": "Le suivi statistique se souscrit au mois ou à l’année, selon le devis. Il commence, et sa facturation avec lui, à la date de prise en charge confirmée par écrit, lorsque les accès et les éléments indispensables sont disponibles. Si la prestation devient en partie impossible en cours de route, nous vous en informons, nous poursuivons ce qui reste possible et nous recherchons ensemble une régularisation proportionnée."
+    },
+    {
+      "code": "DATA-SUIVI",
+      "paragrapheCommencePar": "Les abonnements annuels de suivi statistique prévus",
+      "vers": "Un abonnement annuel renouvelé automatiquement relève des règles légales d’information et de résiliation. Il ne doit pas être confondu avec la maintenance annuelle, dont le renouvellement exige votre accord exprès."
+    },
+    {
+      "code": "DATA-SUIVI",
+      "paragrapheCommencePar": "La configuration initiale ou la création",
+      "vers": "La création des comptes Analytics et Search Console, si elle est nécessaire, fait l’objet d’un devis préalable distinct. À la fin de l’abonnement, nous remettons le dernier bilan normalement prévu et les éléments nécessaires, puis nous retirons nos accès ; un audit de sortie supplémentaire est sur devis."
+    },
+    {
+      "code": "DATA-SUIVI",
+      "paragrapheCommencePar": "Si les mesures deviennent indisponibles",
+      "vers": "Si les mesures deviennent indisponibles à cause d’une modification faite par vous ou par un tiers, nous vous alertons et nous réalisons les analyses encore possibles en signalant leurs limites ; le suivi reste dû et une correction technique hors de notre périmètre peut être proposée sur devis. Si l’anomalie nous est imputable, nous la corrigeons sans supplément et nous régularisons les prestations affectées. Les résultats commerciaux, le trafic et les classements ne sont pas garantis."
+    },
+    {
+      "code": "SEO-GBP-SUIVI",
+      "paragrapheCommencePar": "Les suivis GBP Essentiel et Premium",
+      "vers": "Le suivi Google Business Profile se souscrit au mois ou à l’année, en formule Essentiel ou Premium. Les abonnements annuels reconduits automatiquement respectent les conditions légales d’information et de sortie. La facturation commence à la prise en charge effective, confirmée par écrit, une fois les accès et contenus indispensables disponibles. Si un accès est bloqué en cours de service, nous le signalons, nous poursuivons les tâches encore possibles et nous régularisons de façon proportionnée."
+    },
+    {
+      "code": "SEO-GBP-SUIVI",
+      "paragrapheCommencePar": "Les fiches GBP et les comptes associés",
+      "vers": "La fiche et les comptes associés restent au nom du client. Nous recevons un accès délégué et révocable."
+    },
+    {
+      "code": "SEO-GBP-SUIVI",
+      "paragrapheCommencePar": "La création initiale et la configuration d’une fiche",
+      "vers": "La création initiale et la configuration d’une fiche, si elles sont nécessaires, ne sont pas comprises dans l’abonnement : elles sont chiffrées séparément après accord écrit. Si des publications sont rendues impossibles par des éléments ou des validations qui manquent de votre côté, malgré une relance raisonnable, elles ne sont pas reportées automatiquement ; si le retard vient de nous, nous le régularisons sans supplément."
+    },
+    {
+      "code": "SEO-GBP-SUIVI",
+      "paragrapheCommencePar": "La résiliation mensuelle prend effet",
+      "vers": "L’abonnement mensuel se termine à la fin de la période déjà payée, sans pénalité. Le dernier bilan normalement prévu est inclus, nos accès sont retirés, et la fiche reste au client. Nous ne garantissons ni positionnement sur Google, ni nombre de contacts ou de ventes."
+    }
+  ]
+}

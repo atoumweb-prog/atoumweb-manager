@@ -1,0 +1,24 @@
+[
+  {
+    "code": "BASE-DEFINITIONS",
+    "title": "Définitions",
+    "scope": "base",
+    "audience": "all",
+    "body": "Voici le sens de quelques termes qui reviennent dans plusieurs clauses de ce contrat.\n\nLivraison officielle : le moment où nous vous remettons le site ou le livrable terminé et où vous le confirmez par signature ou par accord écrit explicite, y compris par e-mail. La date est notée dans la fiche de livraison.\n\nGarantie corrective : pendant la durée prévue au devis (30 jours après la livraison officielle pour un site), nous corrigeons sans frais ce qui ne correspond pas à ce que le devis prévoyait. Elle s’ajoute à vos garanties légales, sans les réduire.\n\nCycle de corrections : un échange complet dans lequel vous regroupez vos remarques sur un livrable et où nous les appliquons.\n\nIntervention mineure : une petite tâche d’au plus 30 minutes, comprise dans une formule de maintenance dans la limite de son quota.\n\nJour ouvré : un jour de semaine, hors jours fériés en France.\n\nMise en ligne : le moment où le site devient accessible au public à son adresse définitive.\n\nLune dédiée : un espace d’hébergement cPanel isolé, réservé à un seul client.\n\nBon à tirer (BAT) : la version finale d’un envoi, par exemple une newsletter, que vous validez par écrit avant sa diffusion.\n\nCes définitions expliquent les mots employés ; elles n’ajoutent aucune obligation à celles qui figurent dans le devis et dans les autres clauses."
+  },
+  {
+    "code": "WEB-NEWSLETTER-ENVOI",
+    "title": "Newsletters : préparation et envoi",
+    "scope": "catalog",
+    "audience": "all",
+    "body": "Cette clause s’applique aux newsletters que nous préparons et envoyons pour vous, à l’unité ou par abonnement mensuel ou annuel. Elle complète la clause sur l’intégration technique du formulaire d’inscription.\n\nVotre compte et les frais : l’outil d’envoi (par exemple Brevo) reste à votre nom, sur votre compte. Ses abonnements, crédits d’envoi et autres frais sont à votre charge, sauf mention contraire expresse au devis. Nous vous prévenons avant tout frais nécessaire. Nos accès sont limités à la prestation et retirés à la fin.\n\nCalendrier : pour une newsletter récurrente, vous nous remettez vos contenus au moins 10 jours ouvrés avant la date d’envoi prévue. Nous vous transmettons le bon à tirer 3 jours avant l’envoi et vous le validez par écrit au plus tard 2 jours avant. Nous n’envoyons rien sans votre bon à tirer écrit. Si des éléments ou votre validation manquent malgré une relance raisonnable, l’envoi n’est pas reporté automatiquement. Si le retard vient de nous, nous reprogrammons l’envoi sans supplément.\n\nVos contacts : vous justifiez l’origine licite de vos contacts et les bases légales de vos envois. Nous vérifions la cohérence de ces éléments et nous pouvons bloquer un envoi en cas d’irrégularité sérieuse ou de justificatif indispensable manquant. Un audit approfondi ou une mise en conformité se font sur devis.\n\nDésinscription : nous configurons et contrôlons les liens de désinscription et d’opposition. Si une personne nous écrit directement, nous traitons sa demande dans notre périmètre et nous vous la signalons ; vous répercutez l’opposition dans vos autres fichiers.\n\nDemandes supplémentaires : une newsletter en plus de votre abonnement est possible avec votre accord préalable, au tarif en vigueur. Nous pouvons refuser une nouvelle commande faute de disponibilité avant son acceptation. Une demande urgente est acceptée selon nos disponibilités, sans majoration automatique, mais sans date garantie tant que nous ne l’avons pas confirmée par écrit.\n\nBilan : après chaque envoi, nous vous remettons un bilan simplifié (destinataires, délivrés, clics, désinscriptions), selon les statistiques que l’outil met à disposition.\n\nDurée : un abonnement mensuel n’a pas de durée minimale et se termine à la fin de la période mensuelle payée. Un abonnement annuel est payable d’avance et se renouvelle selon les conditions indiquées au devis et la loi ; vous pouvez vous opposer à la reconduction jusqu’à la veille de l’échéance.\n\nFin de la prestation : nous vous remettons les éléments qui vous appartiennent, nous retirons nos accès et nous supprimons nos copies de travail sous 30 jours, sauf obligation légale. Nous ne supprimons pas les contacts ni les campagnes de votre compte. Si nous traitons des données personnelles pour votre compte, un accord de protection des données distinct s’applique.",
+    "offres": [
+      "V39-NL-PONCT-SIMPLE",
+      "V39-NL-PONCT-COMPLETE",
+      "V39-NL-1-M",
+      "V39-NL-1-A",
+      "V39-NL-2-M",
+      "V39-NL-2-A"
+    ]
+  }
+]

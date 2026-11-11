@@ -54,3 +54,9 @@ export function approvedPaymentPlanForCode(code: string | null | undefined): App
   if (!key) return null;
   return approvedPaymentPlan(VITRINE_CODES.has(key) ? 'sites_vitrines' : ECOMMERCE_CODES.has(key) ? 'sites_ecommerce' : null);
 }
+
+/** Vrai pour une offre de création de site (vitrine ou boutique) du pack approuvé. */
+export function isApprovedSiteCode(code: string | null | undefined): boolean {
+  const key = code?.trim().toUpperCase();
+  return !!key && (VITRINE_CODES.has(key) || ECOMMERCE_CODES.has(key));
+}

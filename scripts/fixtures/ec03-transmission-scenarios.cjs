@@ -16,12 +16,12 @@ module.exports=async({win,db,S,evalUI:js,get,wait,navigate,test,sleep})=>{
   const base=db.contractTerms.listTemplates().find(t=>t.scope==='base'&&t.currentVersionId),version=db.contractTerms.createVersion(base.id,{body:`CGV proposées explicitement — ${theme} ${density}`});db.contractTerms.publishVersion(version.id);
   const sqlState=()=>JSON.stringify({quote:db.database.get('SELECT * FROM quotes WHERE id=?',[q.id]),clauses:db.database.all('SELECT * FROM quote_contract_clauses WHERE quote_id=? ORDER BY id',[q.id]),history:db.database.all('SELECT * FROM activity_log WHERE entity_id=? ORDER BY rowid',[q.id])});
   const unopened=sqlState();await navigate('Devis');await js(`document.querySelector('[data-record-id="${q.id}"]').click();document.documentElement.dataset.theme=${JSON.stringify(theme)};document.documentElement.dataset.density=${JSON.stringify(density)};window.confirm=()=>true;window.prompt=()=> 'Envoi synthétique explicitement attesté';`);
-  await wait('!!document.querySelector(".cgv-clause")','contract loaded');await sleep(200);
+  await wait('!!document.querySelector(".contract-clause-desk")','contract loaded');await sleep(200);
   test(sqlState()===unopened,theme+' '+density+' StrictMode opening is read-only');
   await click('Comparer les nouvelles versions CGV');await wait(`!!document.querySelector('[aria-label="Comparaison des CGV"]')`,'comparison');
   test(sqlState()===unopened,'comparison reads without writing');
   await click('Annuler la comparaison');test(sqlState()===unopened,'comparison cancellation preserves all rows');
-  const customSelector='.cgv-clause-editor textarea:not([disabled])';await fill(customSelector,'Brouillon local conservé');
+  const customSelector='.contract-clause-desk textarea[aria-label="Texte de la clause"]:not([disabled])';await click('Modifier cette clause');await fill(customSelector,'Brouillon local conservé');
   await click('Comparer les nouvelles versions CGV');test(sqlState()===unopened,'dirty draft refuses library comparison without overwrite');
   test(await get(`document.querySelector(${JSON.stringify(customSelector)}).value==='Brouillon local conservé'`),'local clause draft retained');
   await fill(customSelector,'Texte négocié exact.');await click('Comparer les nouvelles versions CGV');await click('Appliquer les changements comparés');
@@ -32,7 +32,7 @@ module.exports=async({win,db,S,evalUI:js,get,wait,navigate,test,sleep})=>{
   test(db.quotes.get(q.id).status==='draft'&&db.quotes.get(q.id).contractSnapshotJson===null,'preparation is neither sending nor final freeze');
   test(db.contractTerms.getQuoteBuild(q.id).snapshotState==='prepared','read panel distinguishes prepared state');
   const prepared=sqlState();await js('window.confirm=()=>false');await click('Corriger le devis');test(sqlState()===prepared,'cancelled resume is mutation-free');
-  await js('window.confirm=()=>true');await click('Corriger le devis');await wait('!!document.querySelector(".cgv-clause-editor textarea:not([disabled])")','resumed draft');
+  await js('window.confirm=()=>true');await click('Corriger le devis');await wait('!!document.querySelector(".contract-clause-desk")','resumed draft');
   test(db.quotes.get(q.id).finalizedAt===null,'explicit resume unlocks only this new preparation');
   test(db.database.all('SELECT * FROM quote_contract_preparations WHERE quote_id=?',[q.id]).length===1,'previous preparation retained');
   await click('Envoyer le devis');await wait('[...document.querySelectorAll("button")].some(b=>b.textContent===\"C’est envoyé\")','ready again');await fill('.quote-send-steps input','Recette EC03 — envoi fictif');

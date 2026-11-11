@@ -1,5 +1,39 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 11/11/2026 — Temps proposés et aide à la vente
+
+128 aides éditoriales préparées et raccordées aux brouillons dans validate-v1.cjs. Aperçu sur copie TEMP : 128 complètes, dix versions figées signalées sans modification. UI Electron sur fixture synthétique : 265 contrôles réussis, onglet vitrine vérifié. Typecheck et 1 941 tests réussis/1 ignoré. Aucun --apply sur copie de préproduction, aucune écriture préproduction ni commit/push. Rapport et limites : docs/AUDIT-TEMPS-AIDE-VENTE-20261111.md. Comparaison des temps : écart catalogue/modèles opérationnels et routine maintenance à arbitrer ; écran prévu/réel seulement proposé. Prochaine étape : relecture éditoriale et décisions sur versions figées et référence de temps.
+
+## 10/11/2026 — Décisions utilisateur sur DEV-2026-003, à transmettre à Claude
+
+- [x] Arbitrages consignés dans `docs/MANAGER_BRIDGE_ROADMAP.md` : 5 pages rédigées supplémentaires aux 3 incluses dans Business, donc 8 au total ; total conservé à 2 183 EUR.
+- [x] Début de maintenance confirmé après les 30 jours de test suivant la livraison officielle. La date effective de livraison reste à constater, sans date inventée.
+- Présentation retenue : création/rédaction 1 644 EUR en 40/60 (657,60 / 986,40 EUR) ; maintenance annuelle 539 EUR d'avance, avec sa période distincte.
+- [ ] Implémentation et validation UI/PDF de ces arbitrages : à réaliser. La mise à jour présente est documentaire et ne modifie aucun devis, règle du moteur, texte contractuel ou statut de publication.
+- Prochaine action : reprendre les corrections ciblées du devis mixte depuis les décisions consignées dans le journal commun, en conservant les versions et historiques.
+
+## 10/11/2026 — Reprise parallèle Codex des recettes post-lot 5
+
+Travail réalisé dans le worktree séparé `codex/restes-lots-3-5`, basé sur `claude/lot5-prospect-simplifie`, sans modification du worktree Claude ni de la préproduction.
+
+- [x] `scripts/fixtures/creation-company.cjs` adapté à la création du prospect en une seule étape : contrôle de l’absence d’anciens onglets, présence du message indiquant que les champs complémentaires sont facultatifs.
+- [x] `scripts/fixtures/ec03-transmission-scenarios.cjs` adapté au bureau de clauses actuel (`.contract-clause-desk`) et à son champ `Texte de la clause` ; l’ancien sélecteur `.cgv-clause` n’est plus attendu.
+- [x] Typecheck réussi.
+- [x] Suite complète réussie : 1 941 tests passés, 1 test ignoré.
+- [x] Recette Electron de création du prospect exécutée sur workspace TEMP isolé : 42 contrôles réussis, 0 erreur console, fixture nettoyée.
+- [x] Diagnostic du pilote commercial : le bundle renderer échouait silencieusement sur `pdfjs-dist/build/pdf.worker.min.mjs?url` avec esbuild seul ; alias et copie du worker ajoutés, puis démarrage Electron confirmé par trace (`app-ready`, `database-ready`, fenêtre, renderer chargé).
+- [x] Banc recommandations spécialisé : 10 contrôles réussis, 0 exception renderer.
+- [x] Parcours devis Electron spécialisé : 44 contrôles réussis, 0 erreur console.
+- [ ] Pilote commercial complet arrêté ensuite sur son prérequis de fixture : la copie de préproduction contient 50 références publiées, tandis que le pilote exige 112 références publiées. Aucun scénario « Ouvrir le projet » ou devis consommateur n’est marqué validé par ce pilote.
+- [x] Audit du PDF TEST vitrine : le 30/70 venait du générateur de démonstration qui n’envoyait pas `paymentPlan: 'sites_vitrines'`; la source applicative `approvedPaymentPlans.ts` et l’assistant Devis restent à 40/60. Le PDF TEST 699 € ne doit pas être considéré comme un devis conforme OFF-007.
+- [x] Audit contractuel du PDF TEST : les renvois à la clause 014 et aux définitions sont présents dans les textes publiés assemblés ; aucune réécriture de clause effectuée.
+- [ ] Validation de la substitution des informations administratives réelles dans un runtime isolé non terminée, car `set-company-info.cjs` détecte un processus Electron ouvert sur la préproduction. Le fichier source reste hors dépôt.
+- [x] Analyse du prérequis 112 : le référentiel contient 112 identités AW, mais la copie de préproduction n’a que 23 versions AW publiées (50 versions publiées au total, 120 brouillons et 14 retirées). Le pilote confond donc le nombre d’identités canoniques avec un état de publication complet ; les références restreintes restent volontairement en brouillon selon le pack.
+- [x] Audit des appels `createWithLines` : les chemins de production et les tests vitrine explicites transmettent `sites_vitrines` ; le seul PDF TEST incorrect venait du générateur temporaire de démonstration créé pour cette recette, qui omettait `paymentPlan`. Aucun appel applicatif à corriger dans `src/`.
+- [x] Contrôles ciblés échéanciers : 17 tests réussis, dont 40/60 vitrine et 30/40/30 e-commerce.
+
+Prochaine action : exécuter les deux recettes dans ce worktree, puis documenter les résultats avant de proposer les commits à transmettre à Claude.
+
 ## 10/11/2026 — Lot 5 : « Prospect simplifié » (branche claude/lot5-prospect-simplifie)
 
 Demande de Carlos du 10/11 : terminer jusqu’au lot 5. Changements d’écran et de parcours uniquement ; aucune règle de devis ni de qualification modifiée.
@@ -3066,3 +3100,11 @@ Quatre PDF inspectés intégralement, 49 pages : vitrine 699 €, WooCommerce 1 
 - `ContractEditorialDraftService` accepte un nombre attendu versionné et sait préparer atomiquement une nouvelle clause en brouillon. V3.7 reste à 118 et tous ses tests restent valides ; aucune publication, adoption ou modification historique.
 - Contrôles exécutés : TypeScript réussi ; 6 tests ciblés réussis, dont simulation sans écriture, 119 brouillons, idempotence, absence de publication et rollback d’une clause 119 invalide.
 - Rapport : `docs/ux-v2/AUDIT-V38-2026-11-02.md`. Étape suivante : interface de comparaison V3.8 et préparation explicite des brouillons Catalogue, puis campagne devis/PDF seulement après changements correspondants.
+### Diagnostic pilote Electron — référentiel commercial (10/11/2026)
+
+- Le chiffre `112` vient directement de `scripts/check-native-commercial-ui.cjs` : le pilote appelle `catalog.list({status:'active'})`, filtre les identifiants `AW-*`, puis exige 112 éléments dont la version courante est publiée. Il s'agit d'identités canoniques, pas d'un comptage des versions publiées.
+- Le dernier pack métier approuvé est V3.9.4 rectificatif 019, décision du 08/11/2026. `CATALOGUE_V394_130_EXTRAIT_WORD.json` contient 130 références et 130 codes distincts. Les statuts source se répartissent en 118 retenues/validées (47 délégation, 9 validation explicite, 9 arbitrage antérieur, 53 validation récente) et 12 à réconcilier, vérifier ou internes. `CLAUSES_V394_119_EXTRAITES_WORD.json` contient 119 clauses numérotées 001–119.
+- La copie de préproduction contrôlée contient 152 fiches catalogue actives, 112 fiches `AW-*`, 120 versions en brouillon, 50 publiées et 14 retirées. Parmi les `AW-*`, 23 versions sont publiées, 106 brouillon et 8 retirées. La bibliothèque contractuelle contient 49 versions de clauses publiées, 70 brouillon et aucune suppression du pack source.
+- La préproduction n'est donc pas une activation complète du pack V3.9.4 : le script `scripts/preproduction/publish-starter-offers.cjs` publie volontairement un sous-ensemble de démarrage. Le pilote actuel mélange l'attente d'un catalogue canonique de 112 identités avec l'exigence erronée que ces 112 versions soient toutes publiées. Cette exigence ne correspond ni à la préproduction starter ni aux statuts source du pack approuvé.
+- Aucun identifiant validé n'a été supprimé ou altéré et aucune assertion n'est modifiée dans ce diagnostic. Le pilote reste bloqué tant qu'il n'est pas exécuté sur une copie isolée préparée avec une matrice de publication explicitement dérivée du pack approuvé, ou tant que son contrat de recette n'est pas redéfini avec l'accord métier.
+- Le pilote a maintenant une matrice explicite : 118 statuts publiables, 12 statuts restreints, 119 clauses attendues. Il écrit `commercial-publication-matrix.json` dans le dossier de sortie TEMP, refuse les références publiées inattendues ou manquantes, et n'entre dans la boucle de devis qu'avec les versions publiées. La préproduction actuelle échoue donc proprement en précondition, avant toute création de devis, car elle ne contient que 23 versions AW publiées et 49 clauses publiées.

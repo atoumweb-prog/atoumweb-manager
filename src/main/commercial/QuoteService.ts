@@ -1,3 +1,4 @@
+import { reconcileLineSchedules } from '../../shared/quoteBillingRules';
 import {commercialDescription} from '../../shared/commercialDescription';
 import {defaultVitrineLineScope} from '../../shared/siteVitrinePages';
 import {quotePaymentSchedule} from '../../shared/quotePaymentSchedule';
@@ -1034,6 +1035,7 @@ export class QuoteService {
   private recalculate(quoteId: string): void {
     const quote = this.database.get<QuoteRow>('SELECT * FROM quotes WHERE id=?', [quoteId]);
     if (!quote) throw new Error('Devis introuvable.');
+    this.syncPaymentSchedules(quote);
     const totals = this.database.get<{ catalog_total: number; contract_total: number }>(
       `SELECT COALESCE(SUM(catalog_line_value_cents), 0) AS catalog_total,
               COALESCE(SUM(contract_line_value_cents), 0) AS contract_total
@@ -1046,13 +1048,33 @@ export class QuoteService {
     const depositPercent = quote.deposit_percent ?? 0;
     const parameters=this.preparation.parameters(quoteId);
     const paymentLines=this.database.all<{id:string;label:string;contract_line_value_cents:number;snapshot_json:string|null}>('SELECT id,label,contract_line_value_cents,snapshot_json FROM quote_lines WHERE quote_id=?',[quoteId]).map(l=>({id:l.id,label:l.label,contractLineValueCents:l.contract_line_value_cents,snapshot:l.snapshot_json?JSON.parse(l.snapshot_json):null}));
-    const deposit = parameters?.payment.lineSchedules?quotePaymentSchedule(parameters,paymentLines,contract).filter(m=>m.first).reduce((n,m)=>n+m.amountCents,0):Math.round(contract * depositPercent / 100);
+    // Acompte = premiers paiements des prestations ponctuelles ; un abonnement a sa propre échéance (décision du 11/11/2026).
+    const firstPayments=parameters?.payment.lineSchedules?quotePaymentSchedule(parameters,paymentLines,contract).filter(m=>m.first):null;
+    const oneOffFirst=firstPayments?.filter(m=>!['mensuelle','monthly','annuelle','yearly'].includes(m.periodicity??''))??[];
+    const deposit = firstPayments?(oneOffFirst.length?oneOffFirst:firstPayments).reduce((n,m)=>n+m.amountCents,0):Math.round(contract * depositPercent / 100);
     const balance = Math.max(0, contract - deposit);
     this.database.run(
       `UPDATE quotes SET catalog_value_cents=?, discount_value_cents=?, contract_value_cents=?,
        deposit_cents=?, balance_cents=?, updated_at=? WHERE id=?`,
       [catalog, discount, contract, deposit, balance, nowIso(), quoteId],
     );
+  }
+
+  /**
+   * Création + abonnement dans le même devis : l'échéancier de la création (40/60 ou 30/40/30) ne porte que sur la création,
+   * chaque abonnement a sa propre échéance (annuel : payable d'avance au début de sa période). Brouillon uniquement ;
+   * les choix déjà faits par l'utilisateur sont conservés (voir reconcileLineSchedules).
+   */
+  private syncPaymentSchedules(quote: QuoteRow): void {
+    if (quote.status !== 'draft' || quote.finalized_at || quote.snapshot_locked_at) return;
+    const parameters = this.preparation.parameters(String(quote.id));
+    if (!parameters) return;
+    const lines = this.database.all<{id:string;snapshot_json:string|null}>('SELECT id,snapshot_json FROM quote_lines WHERE quote_id=? ORDER BY rowid',[quote.id])
+      .map(l => ({id: l.id, snapshot: l.snapshot_json ? JSON.parse(l.snapshot_json) as Record<string, unknown> : null}));
+    const next = reconcileLineSchedules(lines, parameters.payment.milestones, parameters.payment.lineSchedules);
+    if (next === undefined) return;
+    if (next === null) delete parameters.payment.lineSchedules; else parameters.payment.lineSchedules = next;
+    this.database.run('UPDATE quotes SET contract_parameters_json=? WHERE id=?', [JSON.stringify(parameters), quote.id]);
   }
 
   private assertEditable(quoteId: string): void {

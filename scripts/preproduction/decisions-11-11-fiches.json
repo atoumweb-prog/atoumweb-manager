@@ -1,0 +1,138 @@
+{
+  "AW-CONT-REWRITE": {
+    "description": "Amélioration de la clarté, de la formulation et de la structure d’un texte existant fourni par le client.",
+    "inclusions": [
+      "Texte existant fourni par le client, suffisamment complet",
+      "Amélioration de la clarté, de la formulation et de la structure"
+    ],
+    "exclusions": [
+      "Rédaction complète à partir de zéro",
+      "Recherche SEO approfondie"
+    ],
+    "nature": "Réécriture de texte existant"
+  },
+  "AW-CONT-ART-ESS": {
+    "description": "Article informatif de 700 à 900 mots, sans optimisation SEO spécifique (pour un article optimisé, voir l’Article SEO).",
+    "inclusions": [
+      "Article informatif de 700 à 900 mots",
+      "Un cycle de corrections"
+    ],
+    "exclusions": [
+      "Optimisation SEO spécifique",
+      "Recherche approfondie de mots-clés"
+    ]
+  },
+  "AW-CONT-PACK4-SEO": {
+    "description": "Quatre articles SEO au prix de 549 € au lieu de 596 € achetés séparément.",
+    "inclusions": [
+      "4 articles SEO de 600 à 900 mots",
+      "Recherche simple de mots-clés, structuration SEO, métadonnées et maillage interne",
+      "Sujets convenus avec le client",
+      "Un cycle de corrections par article",
+      "Publication WordPress après validation lorsque le site est compatible, sans seconde facturation de l’intégration"
+    ],
+    "exclusions": [
+      "Recherche experte réglementée",
+      "Résultat de référencement garanti",
+      "Mise en ligne sur plateforme non compatible sans devis"
+    ]
+  },
+  "AW-CONT-LIVRE-BLANC": {
+    "description": "Livre blanc rédigé à partir d’un cadrage ; le devis est adapté si le périmètre est plus complexe.",
+    "inclusions": [
+      "Cadrage",
+      "Plan",
+      "Texte structuré jusqu’à environ 3 500 mots",
+      "Un cycle de corrections"
+    ],
+    "exclusions": [
+      "Interviews",
+      "Recherches approfondies",
+      "Infographies",
+      "Mise en page graphique complète",
+      "Documents plus longs"
+    ]
+  },
+  "AW-CONT-INTEG-WP": {
+    "description": "Intégration simple d’un contenu fourni par le client dans WordPress.",
+    "inclusions": [
+      "Intégration simple d’un contenu fourni, lorsqu’elle n’est pas déjà comprise dans une autre prestation",
+      "Peut compter comme l’une des deux petites interventions mensuelles de la maintenance WordPress (30 min maximum, sans report ni cumul), sans double facturation"
+    ],
+    "exclusions": [
+      "Rédaction de contenu",
+      "Refonte de page",
+      "Au-delà du périmètre : accord écrit pour devis ou pack d’heures"
+    ]
+  },
+  "AW-CONT-IMG3": {
+    "description": "Recherche et optimisation de trois images utilisables légalement.",
+    "inclusions": [
+      "Recherche de trois images utilisables légalement",
+      "Optimisation et compression pour le Web",
+      "Peut entrer dans les petites interventions de maintenance WordPress dans leurs limites, sans double facturation"
+    ],
+    "exclusions": [
+      "Images premium payantes",
+      "Retouches avancées"
+    ]
+  },
+  "AW-LP-SECTION": {
+    "description": "Section standard supplémentaire pour la landing page.",
+    "inclusions": [
+      "49 € par section standard supplémentaire, au-delà des six sections comprises dans la landing page de base",
+      "Cumulable avec la rédaction complète"
+    ],
+    "exclusions": [
+      "Fonctionnalités complexes"
+    ]
+  },
+  "AW-LP-REDACTION": {
+    "description": "Rédaction complète des textes d’une landing page lorsque le client ne fournit pas ses textes.",
+    "inclusions": [
+      "Rédaction complète jusqu’à environ 800 mots",
+      "Titres, bénéfices, arguments commerciaux et appels à l’action",
+      "Cumulable avec les sections supplémentaires"
+    ],
+    "exclusions": [
+      "Recherches lourdes",
+      "Interviews",
+      "Contenus hautement techniques"
+    ]
+  },
+  "AW-PHOTO-SHOOT-ESS": {
+    "description": "Séance photo essentielle à Dijon Métropole, livraison numérique.",
+    "inclusions": [
+      "Jusqu’à 1 heure de prise de vue",
+      "Un lieu dans Dijon Métropole",
+      "10 photos finalisées, sélectionnées, avec retouches essentielles",
+      "Livraison numérique",
+      "Usage pour la communication habituelle du client (site Web, réseaux sociaux) ; droits d’utilisation précisés au devis"
+    ],
+    "exclusions": [
+      "Fichiers bruts",
+      "Vidéo",
+      "Retouches avancées, mises en scène complexes et déplacements hors Dijon Métropole : sur devis"
+    ],
+    "priceMode": "fixed",
+    "priceCents": 19900
+  },
+  "AW-PHOTO-SHOOT-ACT": {
+    "description": "Séance photo d’activité à Dijon Métropole, livraison numérique.",
+    "inclusions": [
+      "Jusqu’à 2 heures de prise de vue",
+      "Un lieu principal dans Dijon Métropole",
+      "20 photos finalisées, sélectionnées, avec retouches essentielles",
+      "Prises de vue de l’équipe, des locaux et de l’activité",
+      "Livraison numérique",
+      "Usage pour la communication habituelle du client (site Web, réseaux sociaux) ; droits d’utilisation précisés au devis"
+    ],
+    "exclusions": [
+      "Fichiers bruts",
+      "Vidéo",
+      "Retouches avancées, mises en scène complexes et déplacements hors Dijon Métropole : sur devis"
+    ],
+    "priceMode": "fixed",
+    "priceCents": 32900
+  }
+}
