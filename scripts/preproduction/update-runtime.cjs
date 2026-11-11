@@ -19,7 +19,7 @@ const vite = path.join(repo, '.vite');
 check(fs.existsSync(path.join(vite, 'build', 'main.js')), 'Manager non compilé : lancer « npx electron-forge package » avant.');
 // Manager ouvert ? Le verrou d'instance unique de Chromium vit dans le profil.
 const running = spawnSync('powershell.exe', ['-NoProfile', '-Command',
-  `Get-CimInstance Win32_Process -Filter "Name='electron.exe'" | Where-Object { $_.CommandLine -like '*${target.replace(/'/g, "''")}*' } | Measure-Object | Select-Object -ExpandProperty Count`], {encoding: 'utf8'}).stdout.trim();
+  `Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '*${target.replace(/'/g, "''")}*' -or $_.CommandLine -like '*${target.replace(/'/g, "''")}*' -or $_.CommandLine -like '*${target.replace(/\\/g, '/').replace(/'/g, "''")}*' } | Measure-Object | Select-Object -ExpandProperty Count`], {encoding: 'utf8'}).stdout.trim();
 check(running === '0', 'La préproduction est ouverte : ferme-la avant la mise à jour.');
 
 const runtime = path.join(target, 'Runtime'), stamp = new Date().toISOString().replace(/[:.]/g, '-');

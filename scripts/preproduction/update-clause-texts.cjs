@@ -17,7 +17,7 @@ if (!fs.existsSync(metaFile) || JSON.parse(fs.readFileSync(metaFile, 'utf8')).mo
 const dbFile = path.join(target, 'Workspace', 'data', 'atoumweb-manager.sqlite');
 if (/validation-msi/i.test(dbFile) || !fs.existsSync(dbFile)) fail('Base introuvable ou interdite.');
 const running = spawnSync('powershell.exe', ['-NoProfile', '-Command',
-  `Get-CimInstance Win32_Process -Filter "Name='electron.exe'" | Where-Object { $_.CommandLine -like '*${target.replace(/'/g, "''")}*' } | Measure-Object | Select-Object -ExpandProperty Count`], {encoding: 'utf8'}).stdout.trim();
+  `Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '*${target.replace(/'/g, "''")}*' -or $_.CommandLine -like '*${target.replace(/'/g, "''")}*' -or $_.CommandLine -like '*${target.replace(/\\/g, '/').replace(/'/g, "''")}*' } | Measure-Object | Select-Object -ExpandProperty Count`], {encoding: 'utf8'}).stdout.trim();
 if (running !== '0') fail('La préproduction est ouverte : ferme-la avant.');
 const repo = path.resolve(__dirname, '..', '..');
 const bundle = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'atoumweb-cgv-')), 'svc.cjs');
