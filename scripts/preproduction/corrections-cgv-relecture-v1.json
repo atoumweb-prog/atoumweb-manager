@@ -185,6 +185,31 @@
       "code": "CONTENT-SEO",
       "de": "définis dans votre devis au moment de la prestation.",
       "vers": "définis dans votre devis."
+    },
+    {
+      "code": "TECH-HEBERGEMENT",
+      "de": "La formule Lune dédiée à 149 € par an s’applique",
+      "vers": "La formule Lune dédiée s’applique"
+    },
+    {
+      "code": "TECH-HEBERGEMENT",
+      "de": "sa gestion est facturée 29 € par an en plus des frais du registrar",
+      "vers": "sa gestion est facturée au tarif indiqué au devis, en plus des frais du registrar"
+    },
+    {
+      "code": "WEB-HEBERGEMENT",
+      "de": "le renouvellement annuel de 59 € comprend expressément",
+      "vers": "le renouvellement annuel prévu à la clause « Durée de mise en ligne » comprend expressément"
+    },
+    {
+      "code": "BASE-PRIX",
+      "de": "La facturation réglementaire reste émise via le logiciel de facturation désigné par AtoumWeb, et non par notre outil de suivi interne.",
+      "vers": "La facturation réglementaire est émise via le logiciel de facturation désigné par AtoumWeb."
+    },
+    {
+      "code": "DATA-ACCES",
+      "de": "Dans la mesure du possible, les comptes et espaces de statistiques sont créés",
+      "vers": "Les comptes et espaces de statistiques sont créés"
     }
   ]
 }
