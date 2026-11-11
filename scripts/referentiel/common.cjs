@@ -68,4 +68,7 @@ function cleanItem(s) {
 const cleanList = a => (Array.isArray(a) ? a : []).map(cleanItem).filter(Boolean);
 const joinList = (a, sep = ' · ') => cleanList(a).join(sep);
 
-module.exports = {FAMILIES, groupByFamily, fmtPrice, fmtTime, fmtMinutes, cleanItem, cleanList, joinList, eur, NB};
+/** Nom d'offre affiché : pas de tiret long. */
+const cleanName = n => String(n).replace(/ [—–] /g, ', ');
+
+module.exports = {cleanName, FAMILIES, groupByFamily, fmtPrice, fmtTime, fmtMinutes, cleanItem, cleanList, joinList, eur, NB};

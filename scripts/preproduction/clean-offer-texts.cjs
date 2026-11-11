@@ -28,6 +28,7 @@ require(path.join(repo, 'node_modules', 'esbuild')).buildSync({stdin: {contents:
 const S = require(bundle);
 const clean = s => {
   let t = String(s).replace(/\s+/g, ' ').replace(/ [—–] /g, ', ').replace(/'/g, '’').trim().replace(/\.+$/, '').trim();
+  t = t.replace(/\bSauvegardes (Hebdomadaires|Quotidiennes)\b/, (m, w) => 'Sauvegardes ' + w.toLowerCase()).replace('Garantie HNO/24-7', 'Garantie hors heures ouvrées et 24 h/24, 7 j/7').replace(/\bHNO\b/g, 'hors heures ouvrées');
   return t ? t.charAt(0).toUpperCase() + t.slice(1) : '';
 };
 const parse = s => { try { const v = s ? JSON.parse(s) : null; return Array.isArray(v) ? v : null; } catch { return null; } };
@@ -41,12 +42,14 @@ const parse = s => { try { const v = s ? JSON.parse(s) : null; return Array.isAr
       const b = a.map(clean).filter(Boolean);
       if (JSON.stringify(a) !== JSON.stringify(b)) changes.push({id: r.id, code: r.code, col, avant: a, apres: b});
     }
+    const descRows = db.all("SELECT id,commercial_parameters_json d FROM catalog_versions WHERE status='published' AND json_extract(provenance_json,'$.sha256')=? AND commercial_parameters_json LIKE '%HNO%'", [S.APPROVED_PACK.catalogue.sha256_word]);
+    for (const r of descRows) changes.push({id: r.id, code: 'aide', col: 'commercial_parameters_json', avant: [r.d], apres: [r.d.replace('Garantie HNO/24-7', 'Garantie hors heures ouvrées et 24 h/24, 7 j/7').replace(/HNO/g, 'hors heures ouvrées')]});
     const resume = {publiees: rows.length, champsAModifier: changes.length, offresTouchees: new Set(changes.map(c => c.code)).size};
     if (!apply) { console.log(JSON.stringify({apercu: true, ...resume, exemples: changes.slice(0, 5).map(c => ({code: c.code, col: c.col, avant: c.avant.slice(0, 3), apres: c.apres.slice(0, 3)}))}, null, 1)); return; }
     const backupDir = path.join(target, 'Sauvegardes-lots'); fs.mkdirSync(backupDir, {recursive: true});
     const backup = path.join(backupDir, `avant-nettoyage-textes-${new Date().toISOString().replace(/[:.]/g, '-')}.sqlite`);
     await db.backupTo(backup);
-    for (const c of changes) db.run(`UPDATE catalog_versions SET ${c.col}=? WHERE id=?`, [JSON.stringify(c.apres), c.id]);
+    for (const c of changes) db.run(`UPDATE catalog_versions SET ${c.col}=? WHERE id=?`, [c.col === 'commercial_parameters_json' ? c.apres[0] : JSON.stringify(c.apres), c.id]);
     const integrity = db.all('PRAGMA integrity_check'), fk = db.all('PRAGMA foreign_key_check');
     if (integrity[0].integrity_check !== 'ok' || fk.length) throw Error('Intégrité non conforme ; restaurer ' + backup);
     const meta = JSON.parse(fs.readFileSync(metaFile, 'utf8'));

@@ -2,7 +2,7 @@
 // Lot 1 du référentiel interne : couverture, sommaire, règles clés, glossaire et grille tarifaire (125 offres).
 //   node scripts/referentiel/model-lot1.cjs --data <dataset.json> --out <modele-lot1.json>
 const fs = require('node:fs');
-const {groupByFamily, fmtPrice, fmtTime, joinList, cleanList} = require('./common.cjs');
+const {cleanName, groupByFamily, fmtPrice, fmtTime, joinList, cleanList} = require('./common.cjs');
 const arg = k => { const i = process.argv.indexOf(k); return i < 0 ? null : process.argv[i + 1]; };
 const data = JSON.parse(fs.readFileSync(arg('--data'), 'utf8'));
 const families = groupByFamily(data.offres);
@@ -45,7 +45,7 @@ const grille = families.flatMap(f => [
     rows: f.offres.map(o => {
       const quote = o.priceMode === 'quote_only';
       const comp = quote && /défini au devis|selon/i.test(joinList(o.inclusions)) ? 'Défini au devis' : joinList(o.inclusions);
-      return [o.name + '\n' + o.code, fmtPrice(o), fmtTime(o), comp || 'À préciser au devis', joinList(o.exclusions) || ' '];
+      return [cleanName(o.name) + '\n' + o.code, fmtPrice(o), fmtTime(o), comp || 'À préciser au devis', joinList(o.exclusions) || ' '];
     })},
 ]);
 
