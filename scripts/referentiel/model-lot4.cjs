@@ -273,7 +273,7 @@ const openRows = [
   ['Convention CM2C', 'Non conclue. À faire avant tout devis à un particulier.'],
   ['Assurance de responsabilité civile professionnelle', 'Non souscrite. Cible : avant la première prestation. Ne jamais l’affirmer d’ici là.'],
   ['Relecture juridique', 'Aucun juriste n’a relu les clauses ni les accords. Les textes des deux clauses ajoutées le 11/11 (définitions, envoi des newsletters) sont de rédaction interne.'],
-  ['Clause 119 (références commerciales)', 'Validée mais hors socle. Sa proposition sur la fiche de livraison reste à ajouter dans le Manager.'],
+  ['Clause 119 (références commerciales)', 'Validée mais hors socle. Pour un site vitrine, la tâche « Formation & livraison » du projet propose maintenant l’autorisation (demandée, accordée ou refusée, éléments autorisés, preuve), avec un conseil de rappel. Les autres types de projet n’ont pas encore de modèle de projet dans le Manager : la demande s’y fait à la main, à la livraison.'],
   ['Accord de protection des données au devis', 'La ligne fixe qui l’annonce est codée pour les services touchant des données personnelles ; elle n’est pas encore dans le Manager utilisé, qu’il faut reconstruire. La mise en lecture du modèle avec le devis reste à faire.'],
   ['Règle intégration WordPress et trois images', 'Un avertissement dans les points d’attention du devis est codé (pas de remise automatique) ; il n’est pas encore dans le Manager utilisé. En attendant, surveiller la double facturation à la main.'],
   ['Temps de référence', 'Repères internes, à ajuster avec le chronomètre du Manager au fil des ventes. Les prix retenus sur délégation (47) n’ont pas été validés un par un.'],
