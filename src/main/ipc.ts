@@ -98,6 +98,7 @@ import type {
 import type { ManualTimeSessionInput, StartTimeSessionInput, TimePauseReason, TimeSessionFilters } from '../shared/time';
 import type { AnalyticsPeriodInput } from '../shared/analytics';
 import { generateQuotePdf } from './commercial/quotePdf';
+import { generateDataAgreementModelPdf } from './commercial/dataAgreementModelPdf';
 import type { DatabaseService } from './database/DatabaseService';
 import { scheduleDatabaseRestore, validateRestoreSource } from './restore';
 import { runWorkspaceMutationIfAvailable } from './backups/WorkspaceMutationIpcBoundary';
@@ -747,6 +748,13 @@ export function registerIpcHandlers(database: DatabaseService, workspace: Worksp
   ipcMain.handle('quotes:transmission-state',(_event,id:string)=>database.quotes.transmissionState(id));
   ipcMain.handle('quotes:resume-draft',(_event,id:string,preparationId:string)=> guardedMutation(() => database.quotes.resumeDraft(id,preparationId)));
   ipcMain.handle('quotes:mark-sent', (_event, id: string,input:QuoteSendAttestation) => guardedMutation(() => database.quotes.markSent(id,input)));
+  ipcMain.handle('quotes:data-agreement-model:set', (_event, id: string, handed: boolean) => guardedMutation(() => database.quotes.setDataAgreementModelHanded(id, handed === true)));
+  ipcMain.handle('quotes:data-agreement-model:pdf', async (_event, id: string) => guardedMutation(async () => {
+    const quote = database.quotes.get(id);
+    const result = await generateDataAgreementModelPdf({ clientName: quote.ownerLabel, quoteNumber: quote.number }, workspace);
+    shell.showItemInFolder(result.path);
+    return result;
+  }));
   ipcMain.handle('quotes:principle-agreement:confirm', (_event, id: string) => guardedMutation(() => database.quotes.confirmPrincipleAgreement(id)));
   ipcMain.handle('quotes:principle-agreement:revoke', (_event, id: string) => guardedMutation(() => database.quotes.revokePrincipleAgreement(id)));
   ipcMain.handle('quotes:finalize',(_event,id:string,canonicalReview?:boolean)=> guardedMutation(() => database.quotes.finalize(id,canonicalReview===true)));

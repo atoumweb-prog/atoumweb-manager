@@ -22,6 +22,13 @@ export const ADMIN_EXAMPLES: Readonly<Partial<Record<AdminContractKey, string>>>
 /** Mention obligatoire pour une micro-entreprise en franchise en base de TVA. */
 export const MICRO_VAT_MENTION = 'TVA non applicable, article 293 B du CGI';
 
+/** Ligne fixe affichée au devis quand le service touche des données personnelles : l'accord RGPD reste distinct du devis, propre à chaque site. */
+export const GDPR_QUOTE_LINE = 'Accord de protection des données (RGPD) distinct du devis, à signer avant toute opération sur des données personnelles ; le modèle peut être consulté avant l’acceptation du devis.';
+
+/** Offres dont la réalisation ou l'exploitation touche des données personnelles du client : sites, boutiques, landing pages, hébergement, maintenance, interventions techniques, newsletters, mariage, développement WordPress. */
+const DATA_PROCESSING_CODES = /^(AW-WEB-|V39-WEB-|AW-ECOM-|V39-ECOM-|AW-LP-|AW-MAINT-|V39-HOST-|AW-TECH-|V39-NL-|AW-MARIAGE-|AW-DEVWP-)/;
+export const involvesPersonalData = (catalogueCodes: readonly (string | null | undefined)[]): boolean => catalogueCodes.some(code => !!code && DATA_PROCESSING_CODES.test(code));
+
 export const isMicroVatMention = (value: string): boolean => value.trim() === MICRO_VAT_MENTION;
 
 /** Message de la liste de vérification du devis, en clair et avec l'endroit où corriger. */

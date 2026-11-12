@@ -281,7 +281,7 @@
     "salesPitch": "99 € par mois : mises à jour chaque semaine, sauvegardes quotidiennes et 4 interventions de 30 minutes par mois.",
     "qualificationQuestions": "Qui met la boutique à jour aujourd’hui ?\nCombien de commandes passent par la boutique chaque mois ?\nQue se passe-t-il pour votre activité si la boutique est indisponible une journée ?",
     "relevantSituations": "Un commerçant dont la boutique doit rester à jour et fiable. Peut se vendre seul ou en complément d’une autre prestation.",
-    "commercialCautions": "Hors périmètre : Refonte, développement majeur, intervention hors quota, astreinte HNO\nAucun délai d’intervention garanti : priorité en semaine de 9 h à 17 h.\nInterventions non reportables et non cumulables.\nElle commence après les 30 jours de test suivant la livraison officielle.",
+    "commercialCautions": "Hors périmètre : Refonte, développement majeur, intervention hors quota, astreinte hors heures ouvrées\nAucun délai d’intervention garanti : priorité en semaine de 9 h à 17 h.\nInterventions non reportables et non cumulables.\nElle commence après les 30 jours de test suivant la livraison officielle.",
     "objections": "« 99 €, c’est cher. » → Une boutique en panne ou piratée coûte vite plus en ventes perdues ; les sauvegardes quotidiennes protègent vos commandes.\n« Ma boutique est garantie 30 jours. » → La garantie corrige les défauts de livraison ; ensuite il faut entretenir : c’est la maintenance.\n« Et si je veux arrêter ? » → L’arrêt prend effet à la fin de la période payée ; ensuite hébergement seul ou autre hébergeur.",
     "keywords": "maintenance WooCommerce, boutique, sauvegardes, mises à jour",
     "quoteRequiredWhen": "Besoins au-delà de 4 interventions, développement sur mesure.",
@@ -293,7 +293,7 @@
     "salesPitch": "1 089 € pour 12 mois au lieu de 1 188 € : 11 mois payés pour 12, payable d’avance au début de la période.",
     "qualificationQuestions": "Qui met la boutique à jour aujourd’hui ?\nCombien de commandes passent par la boutique chaque mois ?\nQue se passe-t-il pour votre activité si la boutique est indisponible une journée ?",
     "relevantSituations": "Un commerçant qui veut la maintenance de sa boutique payée une fois par an. Peut se vendre seul ou en complément d’une autre prestation.",
-    "commercialCautions": "Engagement de 12 mois : en cas d’arrêt anticipé pour convenance, la période payée n’est pas remboursée. Renouvellement sur accord exprès.\nHors périmètre : Refonte, développement majeur, intervention hors quota, astreinte HNO\nAucun délai d’intervention garanti : priorité en semaine de 9 h à 17 h.\nInterventions non reportables et non cumulables.\nElle commence après les 30 jours de test suivant la livraison officielle.",
+    "commercialCautions": "Engagement de 12 mois : en cas d’arrêt anticipé pour convenance, la période payée n’est pas remboursée. Renouvellement sur accord exprès.\nHors périmètre : Refonte, développement majeur, intervention hors quota, astreinte hors heures ouvrées\nAucun délai d’intervention garanti : priorité en semaine de 9 h à 17 h.\nInterventions non reportables et non cumulables.\nElle commence après les 30 jours de test suivant la livraison officielle.",
     "objections": "« Je préfère payer chaque mois. » → C’est possible à 99 € par mois, sans engagement de 12 mois.\n« Ma boutique est garantie 30 jours. » → La garantie corrige les défauts de livraison ; ensuite il faut entretenir : c’est la maintenance.\n« Et si je veux arrêter ? » → L’arrêt prend effet à la fin de la période payée ; ensuite hébergement seul ou autre hébergeur.",
     "keywords": "maintenance annuelle WooCommerce, abonnement annuel",
     "quoteRequiredWhen": "Même cas que la mensuelle.",
@@ -437,7 +437,7 @@
     "salesPitch": "Prise en charge prioritaire selon disponibilité, chiffrée au devis, sans promesse 24 h/24.",
     "qualificationQuestions": "Le site est-il complètement indisponible ?\nLe site a-t-il été modifié ou mis à jour récemment ?\nQui a accès au site et à l’hébergement ? Avez-vous une sauvegarde récente ?",
     "relevantSituations": "Un client avec un problème bloquant qui ne peut pas attendre. Toujours précédé d’un échange pour cadrer.",
-    "commercialCautions": "Aucune garantie en dehors des heures ouvrées.\nHors périmètre : Garantie HNO/24-7\nDemander une sauvegarde ou des accès avant toute intervention.\nNe jamais promettre une réparation avant le diagnostic.\nLes défauts imputables à AtoumWeb sont corrigés sans décompte.",
+    "commercialCautions": "Aucune garantie en dehors des heures ouvrées.\nHors périmètre : Garantie hors heures ouvrées et 24 h/24, 7 j/7\nDemander une sauvegarde ou des accès avant toute intervention.\nNe jamais promettre une réparation avant le diagnostic.\nLes défauts imputables à AtoumWeb sont corrigés sans décompte.",
     "objections": "« Vous pouvez venir ce soir ? » → Selon disponibilité, sans engagement ; la maintenance donne la priorité en semaine de 9 h à 17 h.\n« Mon ancien prestataire gérait ça. » → Parfait : un état des lieux montre ce qui a été fait et ce qu’il faut corriger.",
     "keywords": "urgence, panne, intervention prioritaire",
     "quoteRequiredWhen": "Toujours.",
@@ -1065,7 +1065,7 @@
     "objections": "« Je ne sais pas lire ça. » → Une explication courte est comprise ; pour un suivi régulier, il existe un abonnement.\n« Les statistiques, je ne les regarde jamais. » → C’est justement l’intérêt d’un bilan simple : on vous dit ce qui compte et quoi faire.",
     "keywords": "Google Analytics, GA4, Search Console, statistiques",
     "quoteRequiredWhen": "Tracking avancé, tableau de bord.",
-    "internalAdvice": "Toujours repartir avec 3 à 5 actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
+    "internalAdvice": "Toujours repartir avec des actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
   },
   "AW-DATA-GTM": {
     "clientNeed": "Un client qui veut suivre des actions précises (clics, formulaires).",
@@ -1077,7 +1077,7 @@
     "objections": "« Pourquoi Tag Manager ? » → Il permet de suivre des actions précises sans retoucher le site à chaque fois.\n« Les statistiques, je ne les regarde jamais. » → C’est justement l’intérêt d’un bilan simple : on vous dit ce qui compte et quoi faire.",
     "keywords": "Tag Manager, événements, GA4",
     "quoteRequiredWhen": "Tracking e-commerce.",
-    "internalAdvice": "Toujours repartir avec 3 à 5 actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
+    "internalAdvice": "Toujours repartir avec des actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
   },
   "AW-DATA-DASH": {
     "clientNeed": "Un client qui veut voir l’essentiel sur une page.",
@@ -1089,7 +1089,7 @@
     "objections": "« Je peux le faire dans Analytics. » → Un tableau de bord réunit sur un écran ce qui compte pour vous.\n« Les statistiques, je ne les regarde jamais. » → C’est justement l’intérêt d’un bilan simple : on vous dit ce qui compte et quoi faire.",
     "keywords": "tableau de bord, Looker Studio, statistiques",
     "quoteRequiredWhen": "CRM, Ads.",
-    "internalAdvice": "Toujours repartir avec 3 à 5 actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
+    "internalAdvice": "Toujours repartir avec des actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
   },
   "AW-DATA-ANALYSE": {
     "clientNeed": "Un client qui veut comprendre ses chiffres une fois.",
@@ -1101,23 +1101,23 @@
     "objections": "« Un audit complet ? » → Non, c’est une lecture ciblée.\n« Les statistiques, je ne les regarde jamais. » → C’est justement l’intérêt d’un bilan simple : on vous dit ce qui compte et quoi faire.",
     "keywords": "analyse, statistiques, recommandations",
     "quoteRequiredWhen": "Audit complet.",
-    "internalAdvice": "Toujours repartir avec 3 à 5 actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
+    "internalAdvice": "Toujours repartir avec des actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
   },
   "AW-DATA-SUIVI-M": {
     "clientNeed": "Un client qui veut un regard régulier sur ses chiffres.",
-    "benefits": "• Lecture GA + Search Console\n• synthèse\n• évolutions\n• anomalies\n• 3-5 actions",
-    "salesPitch": "49 € par mois : lecture d’Analytics et de Search Console, synthèse, évolutions, anomalies, 3 à 5 actions.",
+    "benefits": "• Lecture GA + Search Console\n• synthèse\n• évolutions\n• anomalies\n• jusqu’à 3 recommandations au bilan trimestriel",
+    "salesPitch": "49 € par mois : lecture d’Analytics et de Search Console, synthèse, évolutions, anomalies, jusqu’à 3 recommandations au bilan trimestriel.",
     "qualificationQuestions": "Avez-vous déjà un compte Google Analytics ou Search Console ? À qui appartient-il ?\nQuelles questions voulez-vous poser à vos chiffres (visites, contacts, pages) ?",
     "relevantSituations": "Un client qui veut un regard régulier sur ses chiffres. Peut se vendre seul ou en complément d’une autre prestation.",
     "commercialCautions": "Hors périmètre : Mise en œuvre des actions\nHors périmètre : audit complet\nLes comptes restent au nom du client ; accès délégués.\nLa mesure dépend du consentement aux cookies : ne pas promettre des chiffres complets.\nLa mise en œuvre des actions recommandées n’est pas comprise.",
     "objections": "« Les actions, vous les faites ? » → Non : on les recommande ; la mise en œuvre est à part.\n« Les statistiques, je ne les regarde jamais. » → C’est justement l’intérêt d’un bilan simple : on vous dit ce qui compte et quoi faire.",
     "keywords": "suivi statistiques, bilan mensuel",
     "quoteRequiredWhen": "Mise en œuvre.",
-    "internalAdvice": "Toujours repartir avec 3 à 5 actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
+    "internalAdvice": "Toujours repartir avec des actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
   },
   "AW-DATA-SUIVI-A": {
     "clientNeed": "Un client qui veut le même suivi payé à l’année.",
-    "benefits": "• Lecture GA + Search Console\n• synthèse\n• évolutions\n• anomalies\n• 3-5 actions\n• 1 mois offert",
+    "benefits": "• Lecture GA + Search Console\n• synthèse\n• évolutions\n• anomalies\n• jusqu’à 3 recommandations au bilan trimestriel\n• 1 mois offert",
     "salesPitch": "539 € pour 12 mois au lieu de 588 € : 11 mois payés pour 12.",
     "qualificationQuestions": "Avez-vous déjà un compte Google Analytics ou Search Console ? À qui appartient-il ?\nQuelles questions voulez-vous poser à vos chiffres (visites, contacts, pages) ?",
     "relevantSituations": "Un client qui veut le même suivi payé à l’année. Peut se vendre seul ou en complément d’une autre prestation.",
@@ -1125,7 +1125,7 @@
     "objections": "« Je préfère payer chaque mois. » → C’est possible à 49 € par mois.\n« Les statistiques, je ne les regarde jamais. » → C’est justement l’intérêt d’un bilan simple : on vous dit ce qui compte et quoi faire.",
     "keywords": "suivi annuel, statistiques",
     "quoteRequiredWhen": "Dès que le besoin dépasse les inclusions ou relève des exclusions.",
-    "internalAdvice": "Toujours repartir avec 3 à 5 actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
+    "internalAdvice": "Toujours repartir avec des actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
   },
   "V39-STAT-ESS-M": {
     "clientNeed": "Un client qui veut un regard simple sur ses chiffres.",
@@ -1137,7 +1137,7 @@
     "objections": "« Pourquoi pas le Premium ? » → Il apporte plus d’analyse et d’actions ; l’Essentiel suffit pour garder un œil.\n« Les statistiques, je ne les regarde jamais. » → C’est justement l’intérêt d’un bilan simple : on vous dit ce qui compte et quoi faire.",
     "keywords": "suivi statistiques essentiel",
     "quoteRequiredWhen": "Audit, corrections.",
-    "internalAdvice": "Toujours repartir avec 3 à 5 actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
+    "internalAdvice": "Toujours repartir avec des actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
   },
   "V39-STAT-ESS-A": {
     "clientNeed": "Un client qui veut le suivi Essentiel payé à l’année.",
@@ -1149,7 +1149,7 @@
     "objections": "« Je préfère payer chaque mois. » → C’est possible à 29 € par mois.\n« Les statistiques, je ne les regarde jamais. » → C’est justement l’intérêt d’un bilan simple : on vous dit ce qui compte et quoi faire.",
     "keywords": "suivi annuel, statistiques",
     "quoteRequiredWhen": "Dès que le besoin dépasse les inclusions ou relève des exclusions.",
-    "internalAdvice": "Toujours repartir avec 3 à 5 actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
+    "internalAdvice": "Toujours repartir avec des actions claires ; c’est ce qui justifie un suivi. Annuel = 11 mois payés pour 12, payable d’avance. Ne jamais présenter AtoumWeb comme assuré sans souscription effective."
   },
   "AW-DEVWP-AJUST": {
     "clientNeed": "Un client qui a un petit besoin technique sur son site.",

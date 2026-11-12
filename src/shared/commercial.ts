@@ -300,6 +300,8 @@ export interface QuoteLine extends QuoteLineInput {
 export interface QuoteSummary {
   /** Accord de principe explicite sur cette révision, distinct de la signature et du devis finalisé pour envoi. */
   principleAgreementAt?: string | null;
+  /** Devis brouillon : le modèle d'accord RGPD est-il à joindre (service touchant des données) et sa remise a-t-elle été attestée ? */
+  dataAgreementModel?: { required: boolean; handedAt: string | null } | null;
   projectId?: string | null;
   id: string;
   number: string;
@@ -389,6 +391,8 @@ export interface QuoteApi {
   transmissionState(id:string):Promise<QuoteTransmissionState>;
   resumeDraft(id:string,preparationId:string):Promise<QuoteDetail>;
   markSent(id: string,input:QuoteSendAttestation): Promise<QuoteDetail>;
+  setDataAgreementModelHanded(id: string, handed: boolean): Promise<QuoteDetail>;
+  dataAgreementModelPdf(id: string): Promise<QuotePdfResult>;
   confirmPrincipleAgreement(id: string): Promise<QuoteDetail>;
   revokePrincipleAgreement(id: string): Promise<QuoteDetail>;
   finalize(id: string, canonicalReview?: boolean): Promise<QuoteDetail>;

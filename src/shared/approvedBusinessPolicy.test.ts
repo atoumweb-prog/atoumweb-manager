@@ -12,4 +12,11 @@ describe('Contrôles V1.5 sur snapshots volontairement préparés',()=>{
  it('keeps consumer legal prerequisites and no insurance/marketing consent visible without inventing certificates',()=>{const r=approvedBusinessReview(quote([line('V39-HOST-LUNE')],'consumer'));expect(r.warnings.join(' ')).toContain('aucune couverture active attestée');expect(r.warnings.join(' ')).toContain('consentement distinct');expect(r.warnings.join(' ')).toContain('médiation non attestée');expect(r.warnings.join(' ')).toContain('Aucun envoi automatique');});
  it('distinguishes express maintenance/domain renewal from contractual Lune renewal and monthly versus annual price change',()=>{const r=approvedBusinessReview(quote([line('AW-MAINT-WP-A'),line('V39-HOST-DOMAINE'),line('V39-HOST-LUNE'),line('AW-MAINT-WC-M')]));expect(r.warnings.filter(w=>w.includes('uniquement sur accord exprès'))).toHaveLength(2);expect(r.warnings.join(' ')).toContain('nouvelle annualité sur accord écrit');expect(r.warnings.join(' ')).toContain('au moins 30 jours');});
  it('preserves delegated status and blocks historical/internal/restricted source use',()=>{const l=line('AW-TECH-HEBERG-WP');l.snapshot!.commercialRules=approvedVersionRules('AW-TECH-HEBERG-WP','ANCIEN_A_RECONCILIER');expect(approvedBusinessReview(quote([l])).blocking[0]).toContain('non commercialisable');l.snapshot!.commercialRules=approvedVersionRules('AW-WEB-FORM-ADV','RETENU_SUR_DELEGATION_07_11_2026');expect(approvedBusinessReview(quote([l])).warnings.join(' ')).toContain('sans validation individuelle');});
+ it('warns, without blocking, when integration or 3 images may count in the quoted maintenance quota',()=>{
+  const r=approvedBusinessReview(quote([line('AW-MAINT-WP-M'),line('AW-CONT-INTEG-WP'),line('AW-CONT-IMG3')]));
+  expect(r.warnings.some(w=>w.includes('« AW-CONT-INTEG-WP » et « AW-CONT-IMG3 » peuvent compter comme l’une des petites interventions mensuelles'))).toBe(true);
+  expect(r.blocking.filter(b=>/INTEG|IMG3/.test(b))).toEqual([]);
+  expect(approvedBusinessReview(quote([line('AW-CONT-INTEG-WP')])).warnings.some(w=>/petites interventions mensuelles/.test(w))).toBe(false);
+  expect(approvedBusinessReview(quote([line('AW-MAINT-WP-M'),line('AW-CONT-PAGE')])).warnings.some(w=>/petites interventions mensuelles/.test(w))).toBe(false);
+ });
 });

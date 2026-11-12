@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {billingKind, includedQuantityFor, includedQuantityNote, isMixedBilling, lineCode, pluralUnit, reconcileLineSchedules} from './quoteBillingRules';
+import {billingKind, includedQuantityFor, includedQuantityNote, isMixedBilling, lineCode, maintenanceQuotaOverlap, pluralUnit, reconcileLineSchedules} from './quoteBillingRules';
 
 const line = (id: string, code: string, periodicity: string, extra: Record<string, unknown> = {}) => ({id, label: code, quantityMilli: 1000, snapshot: {provenance: {recordKey: code}, periodicity, ...extra}});
 const base = [{label: 'Commande', percent: 40, dueDate: null, event: 'À la commande'}, {label: 'Solde', percent: 60, dueDate: null, event: 'Avant mise en ligne'}];
@@ -68,5 +68,18 @@ describe('règles de facturation d’un devis mixte (11/11/2026)', () => {
     expect(pluralUnit('mois', 3)).toBe('mois');
     expect(pluralUnit('forfait', 2)).toBe('forfaits');
     expect(pluralUnit('', 2)).toBe('');
+  });
+});
+
+describe('quota de la maintenance : intégration WordPress et 3 images', () => {
+  const l = (id: string, code: string) => ({id, label: code, quantityMilli: 1000, snapshot: {provenance: {recordKey: code}}});
+  it('signale les deux prestations quand le devis vend aussi une maintenance', () => {
+    expect(maintenanceQuotaOverlap([l('1', 'AW-MAINT-WP-M'), l('2', 'AW-CONT-INTEG-WP'), l('3', 'AW-CONT-IMG3'), l('4', 'AW-CONT-PAGE')])).toEqual(['AW-CONT-INTEG-WP', 'AW-CONT-IMG3']);
+    expect(maintenanceQuotaOverlap([l('1', 'AW-MAINT-WC-A'), l('2', 'AW-CONT-IMG3')])).toEqual(['AW-CONT-IMG3']);
+  });
+  it('ne dit rien sans maintenance dans le devis, ni pour les autres prestations', () => {
+    expect(maintenanceQuotaOverlap([l('2', 'AW-CONT-INTEG-WP'), l('3', 'AW-CONT-IMG3')])).toEqual([]);
+    expect(maintenanceQuotaOverlap([l('1', 'AW-MAINT-WP-M'), l('4', 'AW-CONT-PAGE'), l('5', 'AW-PHOTO-PACK10')])).toEqual([]);
+    expect(maintenanceQuotaOverlap([])).toEqual([]);
   });
 });

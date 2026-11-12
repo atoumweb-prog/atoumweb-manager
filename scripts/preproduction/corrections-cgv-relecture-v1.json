@@ -29,12 +29,14 @@
     {
       "code": "BASE-PAIEMENT",
       "paragrapheCommencePar": "En cas d’impayé récurrent",
-      "vers": "Si un abonnement reste impayé, nous vous relançons par écrit 7 jours après l’échéance, puis nous vous mettons en demeure de payer 15 jours après l’échéance. Nous pouvons suspendre le service 30 jours après l’échéance, selon la gravité et après vous en avoir informé, puis y mettre fin 60 jours après l’échéance, par notification écrite, sans que cela soit automatique. Vos données, votre domaine et vos accès ne sont jamais supprimés immédiatement du seul fait d’un impayé ; vos droits légaux et les modalités de sortie propres au service restent applicables. La réactivation après paiement vérifié est gratuite ; un travail technique exceptionnel demande votre accord sur un devis."
+      "vers": "Si un abonnement reste impayé, nous vous relançons par écrit 7 jours après l’échéance, puis nous vous mettons en demeure de payer 15 jours après l’échéance. Nous pouvons suspendre le service 30 jours après l’échéance, selon la gravité et après vous en avoir informé, puis y mettre fin 60 jours après l’échéance, par notification écrite, sans que cela soit automatique. Vos données, votre domaine et vos accès ne sont jamais supprimés immédiatement du seul fait d’un impayé ; vos droits légaux et les modalités de sortie propres au service restent applicables. La réactivation après paiement vérifié est gratuite ; un travail technique exceptionnel demande votre accord sur un devis.",
+      "jusquAuDecoupage": true
     },
     {
       "code": "BASE-PAIEMENT",
       "paragrapheCommencePar": "Pour une PRESTATION PONCTUELLE uniquement",
-      "vers": "Pour une prestation ponctuelle, la procédure est plus courte : relance écrite 7 jours après l’échéance, puis mise en demeure 15 jours après l’échéance, qui vous laisse huit jours pour payer. À partir du 23e jour, nous pouvons suspendre les seules tâches non encore réalisées, après avoir examiné la gravité de l’impayé et l’éventuel litige, et vous en avoir informé, sous réserve des obligations impératives. Cette procédure ne s’applique pas aux mensualités ni aux annualités d’abonnement, qui suivent la procédure ci-dessus. Elle ne nous donne aucun droit de retenir abusivement votre domaine, ni de supprimer immédiatement vos données."
+      "vers": "Pour une prestation ponctuelle, la procédure est plus courte : relance écrite 7 jours après l’échéance, puis mise en demeure 15 jours après l’échéance, qui vous laisse huit jours pour payer. À partir du 23e jour, nous pouvons suspendre les seules tâches non encore réalisées, après avoir examiné la gravité de l’impayé et l’éventuel litige, et vous en avoir informé, sous réserve des obligations impératives. Cette procédure ne s’applique pas aux mensualités ni aux annualités d’abonnement, qui suivent la procédure ci-dessus. Elle ne nous donne aucun droit de retenir abusivement votre domaine, ni de supprimer immédiatement vos données.",
+      "jusquAuDecoupage": true
     },
     {
       "code": "CONS-RETRACTATION",
@@ -93,8 +95,8 @@
     },
     {
       "code": "TECH-HEBERGEMENT",
-      "de": "est tarifée 29 € par an",
-      "vers": "est facturée 29 € par an"
+      "de": "est tarifée 29 € par an en plus des frais du registrar",
+      "vers": "est facturée au tarif indiqué au devis, en plus des frais du registrar"
     },
     {
       "code": "TECH-MIGRATION",
@@ -140,6 +142,91 @@
       "code": "SEO-GBP-SUIVI",
       "paragrapheCommencePar": "La résiliation mensuelle prend effet",
       "vers": "L’abonnement mensuel se termine à la fin de la période déjà payée, sans pénalité. Le dernier bilan normalement prévu est inclus, nos accès sont retirés, et la fiche reste au client. Nous ne garantissons ni positionnement sur Google, ni nombre de contacts ou de ventes."
+    },
+    {
+      "code": "CONS-MEDIATION",
+      "de": "CM2C — Centre",
+      "vers": "CM2C, Centre"
+    },
+    {
+      "code": "WEB-NEWSLETTER-ENVOI",
+      "de": "Nous vous transmettons le bon à tirer 3 jours avant l’envoi et vous le validez par écrit au plus tard 2 jours avant.",
+      "vers": "Nous vous transmettons le bon à tirer 3 jours ouvrés avant l’envoi et vous le validez par écrit au plus tard 2 jours ouvrés avant."
+    },
+    {
+      "code": "MAINT-RENOUVELLEMENT",
+      "paragrapheCommencePar": "À la fin de la maintenance, vous pouvez ",
+      "vers": "À la fin de la maintenance, vous pouvez choisir un hébergeur extérieur ou souscrire, par un engagement distinct et exprès, l’offre « Hébergement isolé avec Lune dédiée » décrite à la clause « Hébergement seul sans maintenance ». La nouvelle période d’hébergement débute après la fin de la maintenance, sans double facturation. Les modalités propres à l’hébergement isolé, notamment son renouvellement, ne sont pas régies par la présente clause de maintenance. Le nom de domaine conserve sa propre échéance."
+    },
+    {
+      "code": "MAINT-RENOUVELLEMENT",
+      "paragrapheCommencePar": "Si vous revenez à une maintenance compre",
+      "vers": "Si vous revenez à une maintenance comprenant l’hébergement avant la fin d’une année d’hébergement isolé déjà payée, nous régularisons au prorata la période non utilisée, selon les conditions convenues et les droits applicables."
+    },
+    {
+      "code": "MARIAGE-DUREE",
+      "paragrapheCommencePar": "À la fin de la durée initiale comprise d",
+      "vers": "À la fin de la durée initiale comprise dans la formule, le renouvellement du site est fixé à 59 € par an, selon les conditions de reconduction automatique prévues au devis et les règles légales applicables. Les formules Essentiel et Grand Jour comprennent chacune un nom de domaine standard pendant leur première année ; L’Histoire le comprend pendant les deux années initiales. Le domaine est enregistré au nom des mariés après choix et vérification de sa disponibilité. Le forfait de 59 € comprend le maintien en ligne et le renouvellement de ce domaine standard pour une année supplémentaire. Aucun surcoût de gestion du domaine standard ne s’ajoute à ce forfait. Un domaine premium, un domaine supplémentaire ou une prestation hors formule nécessite un devis distinct et l’accord du client. La première reconduction intervient après un an pour Essentiel/Grand Jour et après deux ans pour L’Histoire."
+    },
+    {
+      "code": "DEVWP-INTEGRATION",
+      "de": "un outil d’envoi d’emails",
+      "vers": "un outil d’envoi d’e-mails"
+    },
+    {
+      "code": "LANDING-FORM",
+      "de": "un service d’envoi d’emails",
+      "vers": "un service d’envoi d’e-mails"
+    },
+    {
+      "code": "WEB-NEWSLETTER-PERIMETRE",
+      "de": "la rédaction des courriels",
+      "vers": "la rédaction des e-mails"
+    },
+    {
+      "code": "CONTENT-SEO",
+      "de": "définis dans votre devis au moment de la prestation.",
+      "vers": "définis dans votre devis."
+    },
+    {
+      "code": "TECH-HEBERGEMENT",
+      "de": "La formule Lune dédiée à 149 € par an s’applique",
+      "vers": "La formule Lune dédiée s’applique"
+    },
+    {
+      "code": "WEB-HEBERGEMENT",
+      "de": "le renouvellement annuel de 59 € comprend expressément",
+      "vers": "le renouvellement annuel prévu à la clause « Durée de mise en ligne » comprend expressément"
+    },
+    {
+      "code": "BASE-PRIX",
+      "de": "La facturation réglementaire reste émise via le logiciel de facturation désigné par AtoumWeb, et non par notre outil de suivi interne.",
+      "vers": "La facturation réglementaire est émise via le logiciel de facturation désigné par AtoumWeb."
+    },
+    {
+      "code": "DATA-ACCES",
+      "de": "Dans la mesure du possible, les comptes et espaces de statistiques sont créés",
+      "vers": "Les comptes et espaces de statistiques sont créés"
+    },
+    {
+      "code": "DATA-SUIVI",
+      "de": "Un suivi hebdomadaire ou mensuel n’est pas une surveillance permanente",
+      "vers": "Un suivi périodique, selon la fréquence prévue au devis, n’est pas une surveillance permanente"
+    },
+    {
+      "code": "MAINT-RENOUVELLEMENT",
+      "paragrapheCommencePar": "Nous vous proposons le renouvellement annuel",
+      "vers": "Nous vous proposons le renouvellement annuel 30 jours avant l’échéance. Il n’a lieu qu’avec votre accord exprès : sans réponse, le contrat prend fin à son terme et aucune reconduction tacite n’est mise en place."
+    },
+    {
+      "code": "MAINT-RENOUVELLEMENT",
+      "paragrapheCommencePar": "Toute nouvelle période annuelle de maintenance",
+      "vers": "Le passage de la formule mensuelle à la formule annuelle intervient à la prochaine échéance mensuelle, sur accord écrit. Le passage de la formule annuelle à la formule mensuelle intervient à l’issue de la période annuelle. Aucune période n’est facturée deux fois."
+    },
+    {
+      "code": "MAINT-RENOUVELLEMENT",
+      "paragrapheCommencePar": "L’arrêt de la maintenance mensuelle prend effet",
+      "vers": ""
     }
   ]
 }

@@ -17,7 +17,7 @@ if (!fs.existsSync(metaFile) || JSON.parse(fs.readFileSync(metaFile, 'utf8')).mo
 const dbFile = path.join(target, 'Workspace', 'data', 'atoumweb-manager.sqlite');
 if (/validation-msi/i.test(dbFile) || !fs.existsSync(dbFile)) fail('Base introuvable ou interdite.');
 const running = spawnSync('powershell.exe', ['-NoProfile', '-Command',
-  `Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '*${target.replace(/'/g, "''")}*' -or $_.CommandLine -like '*${target.replace(/'/g, "''")}*' -or $_.CommandLine -like '*${target.replace(/\\/g, '/').replace(/'/g, "''")}*' } | Measure-Object | Select-Object -ExpandProperty Count`], {encoding: 'utf8'}).stdout.trim();
+  `Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '*${target.replace(/'/g, "''")}*' } | Measure-Object | Select-Object -ExpandProperty Count`], {encoding: 'utf8'}).stdout.trim();
 if (running !== '0') fail('La préproduction est ouverte : ferme-la avant.');
 const repo = path.resolve(__dirname, '..', '..');
 const bundle = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'atoumweb-cgv-')), 'svc.cjs');
@@ -33,6 +33,7 @@ const fixes = JSON.parse(fs.readFileSync(path.join(__dirname, 'corrections-cgv-r
     const byCode = new Map(rows.map(r => [r.code.toUpperCase(), {id: r.id, body: r.body}]));
     const plan = new Map(), report = {aAppliquer: 0, dejaEnPlace: 0, erreurs: []};
     for (const f of fixes) {
+      if (f.jusquAuDecoupage && byCode.has('BASE-RETARDS-PAIEMENT')) { report.dejaEnPlace++; continue; }
       const cur = plan.get(f.code.toUpperCase()) ?? byCode.get(f.code.toUpperCase());
       if (!cur) { report.erreurs.push(f.code + ' : clause introuvable'); continue; }
       try { const r = applyFix(cur.body, f); plan.set(f.code.toUpperCase(), {id: cur.id, body: r.body}); if (r.applied) report.aAppliquer++; else report.dejaEnPlace++; }

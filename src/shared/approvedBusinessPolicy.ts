@@ -1,5 +1,6 @@
 import type {QuoteDetail} from './commercial';
 import type {CommercialVersionRules} from './commercialRules';
+import {maintenanceQuotaOverlap} from './quoteBillingRules';
 
 /** Only immutable line snapshots opt in. Historical quotes never inherit new policy. */
 export function approvedBusinessReview(quote:Pick<QuoteDetail,'lines'|'contractAudience'>) {
@@ -30,5 +31,7 @@ export function approvedBusinessReview(quote:Pick<QuoteDetail,'lines'|'contractA
     if(policy.priceChange==='monthly_30_days')warnings.push(`${line.label} : hausse mensuelle annoncée au moins 30 jours avant, avec faculté de résiliation.`);
     if(policy.priceChange==='annual_written_agreement')warnings.push(`${line.label} : prix fixe pendant l'annualité ; hausse à la nouvelle annualité sur accord écrit.`);
   }
+  const quota=maintenanceQuotaOverlap(quote.lines.map(line=>({id:line.id,label:line.label,snapshot:(line.snapshot??null) as Record<string,unknown>|null})));
+  if(quota.length)warnings.push(`${quota.map(label=>`« ${label} »`).join(' et ')} peu${quota.length>1?'vent':'t'} compter comme l’une des petites interventions mensuelles de la maintenance de ce devis (30 minutes, sans report ni cumul) : ne pas facturer en plus si le quota du mois est disponible.`);
   return {blocking:[...new Set(blocking)],warnings:[...new Set(warnings)]};
 }

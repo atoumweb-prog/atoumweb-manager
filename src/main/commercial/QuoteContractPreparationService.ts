@@ -1,5 +1,5 @@
 import {resolveContractFields,hasUnresolvedContractFields} from '../../shared/contractFields';
-import { adminChecklistLabel } from '../../shared/companyAdministration';
+import { adminChecklistLabel, GDPR_QUOTE_LINE, involvesPersonalData } from '../../shared/companyAdministration';
 import {quotePaymentSchedule} from '../../shared/quotePaymentSchedule';
 import { activePreparation, contractHash } from './quoteTransmission';
 import {draftFingerprint} from '../../shared/draftSection';
@@ -160,14 +160,22 @@ export class QuoteContractPreparationService {
     const schedule=quotePaymentSchedule(parameters,this.paymentLines(id),total);
     const lines = this.db.all<Record<string,unknown>>('SELECT * FROM quote_lines WHERE quote_id=? ORDER BY sort_order,created_at',[id])
       .map<Record<string,unknown>>(line => ({ ...line, option_purchase: this.db.get<Record<string,unknown>>('SELECT * FROM quote_option_purchases WHERE line_id=?',[String(line.id)]) ?? null }));
-    return { schemaVersion:2, parameters, schedule, lines, soldCatalogue:lines.map(l=>({lineId:l.id,itemId:l.catalog_item_id,versionId:l.catalog_version_id,quantityMilli:l.quantity_milli,catalogUnitPriceCents:l.catalog_unit_price_cents,proposedUnitPriceCents:l.proposed_unit_price_cents,lineValueCents:l.contract_line_value_cents,dossier:new CommercialRulesService(this.db).parameters(String(l.id)),catalogue:l.snapshot_json==null?null:JSON.parse(String(l.snapshot_json))})), quote:{id:row.id,number:row.quote_number,subject:row.subject,validUntil:row.valid_until,estimatedDelay:row.estimated_delay,prerequisites:row.prerequisites_text,specialTerms:row.special_terms}, administration:this.administration(), documents:this.links(id), totalCents:total, acceptance:{...parameters.acceptance,proofAtFinalization:this.links(id).filter(l=>l.role==='acceptance')} };
+    return { schemaVersion:2, parameters, schedule, lines, soldCatalogue:lines.map(l=>({lineId:l.id,itemId:l.catalog_item_id,versionId:l.catalog_version_id,quantityMilli:l.quantity_milli,catalogUnitPriceCents:l.catalog_unit_price_cents,proposedUnitPriceCents:l.proposed_unit_price_cents,lineValueCents:l.contract_line_value_cents,dossier:new CommercialRulesService(this.db).parameters(String(l.id)),catalogue:l.snapshot_json==null?null:JSON.parse(String(l.snapshot_json))})), quote:{id:row.id,number:row.quote_number,subject:row.subject,validUntil:row.valid_until,estimatedDelay:row.estimated_delay,prerequisites:row.prerequisites_text,specialTerms:row.special_terms}, administration:this.administrationForQuote(id,parameters), documents:this.links(id), totalCents:total, acceptance:{...parameters.acceptance,proofAtFinalization:this.links(id).filter(l=>l.role==='acceptance')} };
+  }
+  /** Informations de l'entreprise telles qu'elles figurent sur CE devis : la ligne RGPD fixe n'apparaît que si le service touche des données personnelles. */
+  administrationForQuote(id:string,p:QuoteContractParameters|null=this.parameters(id)):ContractAdministration{
+    const admin=this.administration();
+    const codes=this.db.all<{code:string|null}>("SELECT json_extract(v.provenance_json,'$.recordKey') code FROM quote_lines l JOIN catalog_versions v ON v.id=l.catalog_version_id WHERE l.quote_id=?",[id]).map(r=>r.code);
+    const relevant=involvesPersonalData(codes)||!!p?.digital.hosting||!!p?.rsvp.applicable||!!p?.annexes.some(a=>a.role==='data_processing');
+    const own=admin.gdpr.state==='filled'&&admin.gdpr.value.trim()!=='';
+    return {...admin,gdpr:relevant?(own?admin.gdpr:{state:'filled',value:GDPR_QUOTE_LINE,reason:''}):{state:'not_applicable',value:'',reason:''}};
   }
   private paymentLines(id:string){return this.db.all<{id:string;label:string;contract_line_value_cents:number;snapshot_json:string|null}>('SELECT id,label,contract_line_value_cents,snapshot_json FROM quote_lines WHERE quote_id=?',[id]).map(l=>({id:l.id,label:l.label,contractLineValueCents:l.contract_line_value_cents,snapshot:l.snapshot_json?JSON.parse(l.snapshot_json):null}));}
   issues(id: string, p: QuoteContractParameters | null): ContractIssue[] {
     const results:ContractIssue[]=[];
     const check=(condition:boolean,code:string,message:string)=>{if(!condition)results.push({code,severity:'blocking',message});};
     if (!p) return [{code:'PARAMETERS_MISSING',severity:'blocking',message:'Paramètres contractuels non préparés (absence conservée).'}];
-    const admin=this.administration(), links=this.links(id);
+    const admin=this.administrationForQuote(id,p), links=this.links(id);
     for(const clause of this.db.all<{title:string;body:string}>('SELECT title,body FROM quote_contract_clauses WHERE quote_id=? AND enabled=1',[id]))check(!hasUnresolvedContractFields(resolveContractFields(clause.body,admin)),'CLAUSE_FIELDS',`${clause.title} : des informations contractuelles restent à renseigner.`);
     check(Boolean(this.db.get("SELECT t.id FROM contract_clause_templates t JOIN contract_clause_versions v ON v.id=t.current_version_id WHERE t.scope='base' AND t.status='active' AND v.status='published' AND t.audience IN ('all',?) LIMIT 1",[p.audience])),'PUBLISHED_BASE_MISSING','Aucun socle contractuel publié disponible ; les brouillons ne sont pas consommés');
     const hasRole=(role:ContractDocumentLink['role'])=>links.some(l=>l.role===role);
@@ -194,7 +202,7 @@ export class QuoteContractPreparationService {
     const hostingIncluded=this.defaults(id,p).includedBenefits.some(x=>x.includes('Hébergement WordPress'));
     if (p.digital.hosting||hostingIncluded||p.rsvp.applicable||p.annexes.some(a=>a.role==='data_processing')) {
       check(admin.providers.state==='filled'&&present(admin.providers.value),'PROVIDERS','Prestataires/hébergeurs réellement utilisés à renseigner');
-      check(admin.gdpr.state==='filled'&&present(admin.gdpr.value),'GDPR','Dispositif RGPD réel à renseigner (rôles, conservation, sous-traitants, localisation, restitution)');
+      check(admin.gdpr.state==='not_applicable'||admin.gdpr.state==='filled'&&present(admin.gdpr.value),'GDPR','Dispositif RGPD réel à renseigner (rôles, conservation, sous-traitants, localisation, restitution)');
     }
     const off=p.conclusion.channel==='off_premises';
     if (off) {
