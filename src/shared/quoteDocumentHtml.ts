@@ -1,4 +1,5 @@
 import { includedQuantityFor, includedQuantityNote, pluralUnit } from './quoteBillingRules';
+import { dataAgreementModelAnnexHtml } from './dataAgreementModel';
 import {readableTechnicalTerms} from './contractFields';
 import {commercialDescription} from './commercialDescription';
 import {defaultQuoteDocumentSettings} from './quoteDocumentSettings';
@@ -218,7 +219,7 @@ export function buildQuoteHtml(quote: QuoteDetail, presentation?: ContractPresen
   }).join('')}</section>` : ''}
   ${acceptanceHtml}
   <main class="annex"><header class="annex-heading"><span class="eyebrow">Devis ${h(quote.number)}</span><h1>${h(style.annexTitle)}</h1><p>Conditions générales, clauses des prestations et conditions particulières enregistrées pour ce devis.</p><p>${presentation?.compiledAt ? `Composition contractuelle du ${h(date(presentation.compiledAt))}` : 'Composition de travail · version non figée'}</p></header>${compactComposition}${annex}
-  </main></body></html>`;
+  </main>${presentation?.includeDataAgreementModel ? dataAgreementModelAnnexHtml({clientName: quote.ownerLabel, quoteNumber: quote.number}) : ''}</body></html>`;
 }
 
 export function quotePageHeader(quote: QuoteDetail,p?:ContractPresentation): string {

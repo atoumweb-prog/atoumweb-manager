@@ -11,6 +11,7 @@ import {ADMIN_CONTRACT_KEYS, type ContractAdministration} from '../../shared/quo
 import {applyQuickAnswers, proposeQuickAnswers, QUICK_REVIEW_CODES, type QuickReviewInput} from '../../shared/quoteQuickReview';
 import {abbySheet} from '../../shared/abbySheet';
 import {quoteEmailDraft} from '../../shared/quoteEmailDraft';
+import {buildQuoteHtml} from './quotePdf';
 
 let db: NodeSqliteAdapter, crm: CrmService, terms: ContractTermsService, preparation: QuoteContractPreparationService, quotes: QuoteService;
 
@@ -54,6 +55,16 @@ describe('Lot 4 — envoyer et faire accepter', {timeout: 60000}, () => {
     expect(preparation.parameters(quote.id)!.payment.milestones.map(m => m.percent)).toEqual([40, 60]);
   });
 
+  it('un devis sans donnée personnelle n’a ni annexe RGPD ni case à cocher', () => {
+    const prospect = crm.createProspect({organizationId: crm.createOrganization({name: 'TEST sans données'}).id, primaryNeed: 'TEST'});
+    const quote = quotes.create({prospectId: prospect.id, subject: 'TEST prestation sans donnée'});
+    quotes.addCustomLine(quote.id, {label: 'Retouche photo', proposedUnitPriceCents: 4500});
+    expect(quotes.get(quote.id).dataAgreementModel).toMatchObject({required: false, handedAt: null});
+    expect(quotes.setDataAgreementModelHanded(quote.id, true).dataAgreementModel?.handedAt).toBeNull();
+    const html = buildQuoteHtml(quotes.get(quote.id), terms.presentation(quote.id));
+    expect(html).not.toContain('MODÈLE POUR INFORMATION');
+  });
+
   it('préparation puis envoi confirmé : le texte transmis est figé, la fiche Abby reprend le devis', () => {
     const quote = newQuote('AW-WEB-VITRINE', 'Site vitrine 5 pages', 'sites_vitrines');
     const parameters = preparation.parameters(quote.id)!, input = inputOf(quote.id);
@@ -63,8 +74,20 @@ describe('Lot 4 — envoyer et faire accepter', {timeout: 60000}, () => {
     expect(prepared.status).toBe('draft');
     expect(prepared.finalizedAt).toBeTruthy();
     const state = quotes.transmissionState(quote.id);
-    const sent = quotes.markSent(quote.id, {operationId: 'op-lot4', preparationId: state.preparationId, contentHash: state.contentHash!, confirmed: true, channel: 'other', provenance: 'E-mail à client@example.test', occurredAt: 'now'});
+    // Un site touche des données personnelles : le modèle d'accord RGPD est joint au PDF et sa remise doit être attestée avant l'envoi.
+    const attestation = {operationId: 'op-lot4', preparationId: state.preparationId, contentHash: state.contentHash!, confirmed: true as const, channel: 'other' as const, provenance: 'E-mail à client@example.test', occurredAt: 'now'};
+    expect(quotes.get(quote.id).dataAgreementModel).toMatchObject({required: true, handedAt: null});
+    expect(() => quotes.markSent(quote.id, attestation)).toThrow(/Modèle d’accord RGPD remis au client/);
+    expect(quotes.setDataAgreementModelHanded(quote.id, true).dataAgreementModel?.handedAt).toBeTruthy();
+    expect(quotes.setDataAgreementModelHanded(quote.id, false).dataAgreementModel?.handedAt).toBeNull();
+    expect(quotes.setDataAgreementModelHanded(quote.id, true).dataAgreementModel?.handedAt).toBeTruthy();
+    const html = buildQuoteHtml(quotes.get(quote.id), terms.presentation(quote.id));
+    expect(html).toContain('MODÈLE POUR INFORMATION');
+    expect(html).toContain('FICHE A');
+    expect(html).toContain('Annexe au devis ' + quotes.get(quote.id).number);
+    const sent = quotes.markSent(quote.id, attestation);
     expect(sent.status).toBe('sent');
+    expect(sent.dataAgreementModel).toBeNull();
     expect(sent.contractTextSnapshot).toContain('30 jours');
     expect(JSON.parse(sent.contractSnapshotJson!).parameters.payment.milestones.map((m: {event: string}) => m.event)).toEqual(['À la commande', 'Avant mise en ligne']);
     // Rejeu de la même confirmation : aucun second envoi ; une autre confirmation est refusée.

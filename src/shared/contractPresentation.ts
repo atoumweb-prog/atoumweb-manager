@@ -8,6 +8,8 @@ import type { QuoteDetail } from './commercial';
 export interface ContractSectionArticle { number:number;title:string;body:string;group:string;sourceVersionId:string|null }
 export interface ContractSection { id: string; title: string; text: string; articles?:ContractSectionArticle[] }
 export interface ContractPresentation {
+  /** Le devis touche des données personnelles : le modèle d'accord RGPD (pour information) est joint à la fin du PDF. */
+  includeDataAgreementModel?: boolean;
   documentSettings?:import('./quoteDocumentSettings').QuoteDocumentSettings;
   paymentSummary?:{scoped:boolean;rows:import('./quotePaymentSchedule').PaymentAmount[]};
   schemaVersion: 1; state: 'draft' | 'prepared' | 'frozen' | 'historical_missing'; compiledAt: string | null;

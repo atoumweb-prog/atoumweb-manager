@@ -673,6 +673,7 @@ export class QuoteService {
       }
       const quote=this.get(id),prepared=activePreparation(this.database,id),state=this.transmissionState(id);
       if(quote.status!=='draft'||!quote.finalizedAt)throw Error('Finalise le devis avant l’envoi ; seul un devis préparé non encore envoyé peut être marqué envoyé.');
+      if(this.dataAgreementModelRequired(id)&&!this.dataAgreementModelHandedAt(id))throw Error('Ce devis touche des données personnelles : coche « Modèle d’accord RGPD remis au client avec le devis » avant de le marquer envoyé.');
       if(state.contentHash!==input.contentHash||state.preparationId!==input.preparationId)throw Error('Version à envoyer périmée ou ambiguë. Rechargez le devis.');
       if(prepared){
         if(quote.contractTextSnapshot!=null||quote.contractSnapshotJson!=null||quote.contractCompiledAt!=null||quote.snapshotLockedAt)throw Error('Devis déjà figé ou état ambigu : aucun snapshot existant ne sera remplacé.');
@@ -732,6 +733,39 @@ export class QuoteService {
       throw new Error('Une révision plus récente du devis existe : utiliser le devis commercial courant.');
     }
     return row?.revision_number ?? null;
+  }
+
+  /** Date de la dernière attestation « modèle d'accord RGPD remis au client avec le devis », ou null si elle n'existe pas ou a été annulée. */
+  private dataAgreementModelHandedAt(quoteId: string): string | null {
+    const event = this.database.get<{ action: string; created_at: string }>(
+      `SELECT action,created_at FROM activity_events
+       WHERE entity_type='quote' AND entity_id=? AND action IN ('data_agreement_model_handed','data_agreement_model_unhanded')
+       ORDER BY rowid DESC LIMIT 1`, [quoteId],
+    );
+    return event?.action === 'data_agreement_model_handed' ? event.created_at : null;
+  }
+
+  /** Le devis touche des données personnelles : le modèle est joint au PDF et sa remise doit être attestée avant l'envoi. */
+  private dataAgreementModelRequired(quoteId: string): boolean {
+    return this.preparation.administrationForQuote(quoteId).gdpr.state === 'filled';
+  }
+
+  private dataAgreementModelState(quoteId: string): { required: boolean; handedAt: string | null } {
+    return { required: this.dataAgreementModelRequired(quoteId), handedAt: this.dataAgreementModelHandedAt(quoteId) };
+  }
+
+  setDataAgreementModelHanded(id: string, handed: boolean): QuoteDetail {
+    const quote = this.get(id);
+    if (quote.status !== 'draft') throw Error('La remise du modèle s’atteste avant l’envoi : ce devis n’est plus un brouillon.');
+    if (!this.dataAgreementModelRequired(id)) return quote;
+    if ((this.dataAgreementModelHandedAt(id) !== null) === handed) return quote;
+    this.database.run(
+      `INSERT INTO activity_events (id,entity_type,entity_id,action,summary,metadata_json,prospect_id,created_at) VALUES (?,?,?,?,?,?,?,?)`,
+      [randomUUID(), 'quote', id, handed ? 'data_agreement_model_handed' : 'data_agreement_model_unhanded',
+        handed ? 'Modèle d’accord RGPD remis au client avec le devis' : 'Remise du modèle d’accord RGPD annulée',
+        JSON.stringify({ quoteId: id, kind: 'pre_contract_information', signed: false }), quote.prospectId ?? null, nowIso()],
+    );
+    return this.get(id);
   }
 
   private activePrincipleAgreementAt(quoteId: string): string | null {
@@ -1130,6 +1164,7 @@ export class QuoteService {
     return {
       projectId: this.projectLifecycle?.findProject(row.id) ?? row.project_id as string | null,
       principleAgreementAt: ['sent', 'viewed'].includes(row.status) ? this.activePrincipleAgreementAt(row.id) : null,
+      dataAgreementModel: row.status === 'draft' ? this.dataAgreementModelState(row.id) : null,
       id: row.id,
       number: row.quote_number,
       prospectId: row.prospect_id,

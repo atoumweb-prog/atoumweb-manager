@@ -439,6 +439,8 @@ const api: AtoumWebApi = {
     transmissionState:(id:string)=>ipcRenderer.invoke('quotes:transmission-state',id),
     resumeDraft:(id:string,preparationId:string)=>ipcRenderer.invoke('quotes:resume-draft',id,preparationId),
     markSent: (id: string,input:QuoteSendAttestation) => ipcRenderer.invoke('quotes:mark-sent', id,input),
+    setDataAgreementModelHanded: (id: string, handed: boolean) => ipcRenderer.invoke('quotes:data-agreement-model:set', id, handed),
+    dataAgreementModelPdf: (id: string) => ipcRenderer.invoke('quotes:data-agreement-model:pdf', id),
     confirmPrincipleAgreement: (id: string) => ipcRenderer.invoke('quotes:principle-agreement:confirm', id),
     revokePrincipleAgreement: (id: string) => ipcRenderer.invoke('quotes:principle-agreement:revoke', id),
     finalize:(id:string,canonicalReview?:boolean)=>ipcRenderer.invoke('quotes:finalize',id,canonicalReview===true),

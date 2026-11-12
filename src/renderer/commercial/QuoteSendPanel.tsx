@@ -92,6 +92,8 @@ export function QuoteSendPanel({quote, onChanged, onMessage}: {quote: QuoteDetai
   if (quote.status !== 'draft') return null;
   const warnings = approvedBusinessReview(quote).warnings;
   const blocking = issues ?? [];
+  const model = quote.dataAgreementModel;
+  const modelNeeded = Boolean(model?.required), modelOk = !modelNeeded || Boolean(model?.handedAt);
   const quick = blocking.filter(issue => QUICK_REVIEW_CODES.includes(issue.code)).length;
 
   if (prepared) return <section className="quote-send-panel" aria-label="Envoyer le devis">
@@ -103,9 +105,14 @@ export function QuoteSendPanel({quote, onChanged, onMessage}: {quote: QuoteDetai
       <li><span>L’e-mail au client</span>{draft.to ? <code>{draft.to}</code> : <em>adresse e-mail du client non renseignée : tu la saisiras dans ta messagerie</em>}
         <div><button type="button" className="secondary-button" disabled={!!busy} onClick={() => void window.atoumweb.quotes.openEmailDraft(quote.id).catch(() => setNote('Aucune messagerie n’a pu être ouverte.'))}>Ouvrir un brouillon d’e-mail</button></div>
         <small>Le Manager n’envoie rien : c’est toi qui joins le PDF et cliques sur Envoyer.</small></li>
+      {modelNeeded && <li><span>Le modèle d’accord de protection des données (RGPD)</span>
+        <small>Ce devis touche des données personnelles : le modèle est joint à la fin du PDF. Le client peut le consulter avant d’accepter ; l’accord lui-même se prépare et se signe pour chaque site, avant la première opération sur ses données.</small>
+        <div><button type="button" className="secondary-button" disabled={!!busy} onClick={() => void run('Création du modèle…', async () => { const pdf = await window.atoumweb.quotes.dataAgreementModelPdf(quote.id); if (current.current === quote.id) setNote('Modèle d’accord RGPD créé : ' + pdf.path); })}>Éditer le modèle d’accord RGPD (PDF)</button></div>
+        <label className="quote-send-check"><input type="checkbox" checked={Boolean(model?.handedAt)} disabled={!!busy} onChange={event => void run('Enregistrement…', async () => { onChanged(await window.atoumweb.quotes.setDataAgreementModelHanded(quote.id, event.target.checked)); })}/> Modèle d’accord RGPD remis au client avec le devis{model?.handedAt ? ' (le ' + new Date(model.handedAt).toLocaleDateString('fr-FR') + ')' : ''}</label></li>}
       <li><span>Quand c’est parti</span>
         <label>Comment l’as-tu envoyé ?<input value={how} onChange={event => setHow(event.target.value)} placeholder={draft.to ? `E-mail à ${draft.to}` : 'Ex. e-mail à l’adresse du client'}/></label>
-        <div><button type="button" className="primary-button" disabled={!!busy} onClick={() => void confirmSent()}>C’est envoyé</button>
+        <div><button type="button" className="primary-button" disabled={!!busy || !modelOk} onClick={() => void confirmSent()}>C’est envoyé</button>
+          {!modelOk && <small role="status">Coche d’abord « Modèle d’accord RGPD remis au client avec le devis ».</small>}
           {quote.contractPreparationId && <button type="button" className="secondary-button" disabled={!!busy} onClick={() => void resume()}>Corriger le devis</button>}</div></li>
     </ol>
     {busy && <p role="status">{busy}</p>}
@@ -119,7 +126,7 @@ export function QuoteSendPanel({quote, onChanged, onMessage}: {quote: QuoteDetai
     {blocking.length > 0 && <ul>{blocking.map((issue, index) => <li key={issue.code + index}><button type="button" className="contract-issue-link" data-issue-code={issue.code} onClick={() => issue.code.startsWith('LINE_') ? window.dispatchEvent(new CustomEvent('atoumweb:quote-lines', {detail: {quoteId: quote.id}})) : focusContractField(quote.id, issue.code)}>{issue.message} →</button></li>)}</ul>}
     {warnings.length > 0 && <details open><summary>Points d’attention sur ce devis</summary><ul>{warnings.map(message => <li key={message}>{message}</li>)}</ul></details>}
     <button type="button" className="primary-button quote-send-button" disabled={!issues || !!error || blocking.length > 0 || !!busy} onClick={() => void send(false)}>{busy || 'Envoyer le devis'}</button>
-    {issues && !blocking.length && <p className="muted">Le Manager prépare le PDF (devis + CGV) et ouvre un brouillon d’e-mail. Rien ne part sans toi.</p>}
+    {issues && !blocking.length && <p className="muted">Le Manager prépare le PDF (devis + CGV) et ouvre un brouillon d’e-mail. Rien ne part sans toi.{modelNeeded ? ' Ce devis touche des données personnelles : le modèle d’accord RGPD sera joint à la fin du PDF.' : ''}</p>}
     {note && <p role="status">{note}</p>}
     <details><summary>Option avancée</summary><button type="button" className="secondary-button" disabled={!issues || !!error || blocking.length > 0 || !!busy} onClick={() => void send(true)}>Envoyer avec le classement approuvé des clauses</button><p className="muted">Pour les bibliothèques disposant d’un classement approuvé.</p></details>
   </section>;
