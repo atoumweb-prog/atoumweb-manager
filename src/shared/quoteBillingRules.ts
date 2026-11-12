@@ -98,6 +98,19 @@ export function includedQuantityFor(line: QuantityLine, all: QuantityLine[]): In
   return {offerLabel, includedQuantity: included, soldQuantity: sold, total: included + sold};
 }
 
+/** Prestations qui peuvent compter comme l'une des petites interventions mensuelles de la maintenance (30 minutes, sans report ni cumul). */
+export const MAINTENANCE_QUOTA_CODES: readonly string[] = ['AW-CONT-INTEG-WP', 'AW-CONT-IMG3'];
+
+/** Libellés des lignes du devis qui pourraient être imputées au quota de la maintenance vendue dans le même devis (vide s'il n'y a pas de maintenance). */
+export function maintenanceQuotaOverlap(lines: readonly (BillingLine & { label: string })[]): string[] {
+  const codeOf = (snapshot?: Record<string, unknown> | null): string => {
+    const approved = (snapshot?.commercialRules as { approvedPack?: { sourceCode?: unknown } } | undefined)?.approvedPack?.sourceCode;
+    return lineCode(snapshot) || String(approved ?? '').trim().toUpperCase();
+  };
+  if (!lines.some(l => isMaintenanceLine(l.snapshot) || codeOf(l.snapshot).startsWith('AW-MAINT'))) return [];
+  return lines.filter(l => MAINTENANCE_QUOTA_CODES.includes(codeOf(l.snapshot))).map(l => l.label);
+}
+
 /** Pluriel simple d'une unité commerciale (« page » → « pages »). */
 export function pluralUnit(unit: string, quantity: number): string {
   const word = unit.trim();
