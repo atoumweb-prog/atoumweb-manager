@@ -12,13 +12,13 @@ const data = JSON.parse(fs.readFileSync(path.join(dir, 'dataset.json'), 'utf8'))
 const PARTS = [
   {n: 1, title: 'Partie 1 : grille tarifaire et règles de vente', lead: 'Les 125 offres, leurs prix, leurs temps de référence, ce qui est compris et ce qui ne l’est pas, avec les règles qui reviennent dans presque tous les devis.', endPortrait: true},
   {n: 2, title: 'Partie 2 : fiches de vente et étapes à faire', lead: 'Une fiche par offre : à dire au client, questions, objections, vigilance et étapes à faire. Les dix offres les plus vendues ont une page entière.'},
-  {n: 3, title: 'Partie 3 : contrats et clauses', lead: 'Les 121 clauses en texte intégral, classées par famille, et la matrice qui relie chaque offre à ses clauses.'},
+  {n: 3, title: 'Partie 3 : contrats et clauses', lead: `Les ${data.clauses.length} clauses en texte intégral, classées par famille, et la matrice qui relie chaque offre à ses clauses.`},
   {n: 4, title: 'Partie 4 : méthode de travail et questions fréquentes', lead: 'Du premier contact à la sortie du client : paiements, livraison, maintenance, données personnelles, particuliers, médiation, assurance, situations réflexes et FAQ.'},
 ];
 const demote = b => b.t === 'h1' ? {...b, t: 'h2'} : b.t === 'h2' ? {...b, t: 'h3'} : b;
 
 const blocks = [];
-blocks.push({t: 'cover', tagline: 'Création de sites web à Dijon', title: 'Référentiel interne V1', subtitle: 'Prix, fiches de vente, contrats et méthode', date: '11 novembre 2026',
+blocks.push({t: 'cover', tagline: 'Création de sites web à Dijon', title: 'Référentiel interne V1', subtitle: 'Prix, fiches de vente, contrats et méthode', date: '12 novembre 2026',
   stats: [{n: data.offres.length, label: 'offres et services'}, {n: data.clauses.length, label: 'clauses contractuelles'}, {n: PARTS.length, label: 'parties'}],
   note: 'Le référentiel interne d’AtoumWeb réunit en un seul document les prix validés, les fiches de vente, le texte des clauses et la méthode de travail. Document interne : ne pas diffuser aux clients.'});
 blocks.push({t: 'toc', title: 'Sommaire'});

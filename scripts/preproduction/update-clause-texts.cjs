@@ -33,6 +33,7 @@ const fixes = JSON.parse(fs.readFileSync(path.join(__dirname, 'corrections-cgv-r
     const byCode = new Map(rows.map(r => [r.code.toUpperCase(), {id: r.id, body: r.body}]));
     const plan = new Map(), report = {aAppliquer: 0, dejaEnPlace: 0, erreurs: []};
     for (const f of fixes) {
+      if (f.jusquAuDecoupage && byCode.has('BASE-RETARDS-PAIEMENT')) { report.dejaEnPlace++; continue; }
       const cur = plan.get(f.code.toUpperCase()) ?? byCode.get(f.code.toUpperCase());
       if (!cur) { report.erreurs.push(f.code + ' : clause introuvable'); continue; }
       try { const r = applyFix(cur.body, f); plan.set(f.code.toUpperCase(), {id: cur.id, body: r.body}); if (r.applied) report.aAppliquer++; else report.dejaEnPlace++; }

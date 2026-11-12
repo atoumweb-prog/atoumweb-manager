@@ -132,7 +132,7 @@ const LABELS = [
 const labelOf = code => (LABELS.find(([re]) => re.test(code)) || [null, 'Prestation'])[1];
 
 // ---------- page d'introduction
-blocks.push({t: 'cover', tagline: 'Création de sites web à Dijon', title: 'Référentiel interne V1', subtitle: 'Lot 2 : fiches de vente et étapes à faire', date: '11 novembre 2026',
+blocks.push({t: 'cover', tagline: 'Création de sites web à Dijon', title: 'Référentiel interne V1', subtitle: 'Lot 2 : fiches de vente et étapes à faire', date: '12 novembre 2026',
   stats: [{n: data.offres.length, label: 'fiches de vente'}, {n: VEDETTES.length, label: 'fiches détaillées'}, {n: families.length, label: 'familles métier'}],
   note: 'Une fiche par offre : à dire au client, questions à poser, objections, points de vigilance et étapes à faire. Les dix offres les plus vendues ont une page entière.'});
 blocks.push({t: 'toc', title: 'Sommaire'});

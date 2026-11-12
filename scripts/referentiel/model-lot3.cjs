@@ -16,7 +16,7 @@ const paragraphs = body => String(body).split(/\n\s*\n/).map(x => dash(x.replace
 
 // ---------- sections : socle, publics, facultatives, puis familles
 const SECTIONS = [
-  {title: 'Socle commun à tous les devis', lead: 'Ces 13 clauses sont jointes à chaque devis, quelle que soit l’offre.', pick: c => c.scope === 'base' && c.audience === 'all'},
+  {title: 'Socle commun à tous les devis', lead: 'Ces {n} clauses sont jointes à chaque devis, quelle que soit l’offre.', pick: c => c.scope === 'base' && c.audience === 'all'},
   {title: 'Clauses propres aux clients particuliers', lead: 'Information précontractuelle, rétractation, début anticipé et médiation : elles s’ajoutent au socle quand le client est un consommateur. La convention d’adhésion au médiateur (CM2C) doit être conclue avant tout devis à un particulier.', pick: c => /^CONS-/.test(c.code)},
   {title: 'Clauses propres aux clients professionnels', lead: 'Paiement, retard et litiges : elles s’ajoutent au socle quand le client est un professionnel.', pick: c => /^PRO-/.test(c.code)},
   {title: 'Clauses facultatives ou en réserve', lead: 'Elles ne sont attachées à aucune offre : l’une est proposée au client à part, l’autre est conservée pour un service qui n’est pas au catalogue.', pick: c => ['BASE-REFERENCES-AGENCE', 'LANDING-GESTION'].includes(c.code)},
@@ -49,7 +49,7 @@ function appliesTo(c) {
 }
 
 const blocks = [];
-blocks.push({t: 'cover', tagline: 'Création de sites web à Dijon', title: 'Référentiel interne V1', subtitle: 'Lot 3 : contrats et clauses', date: '11 novembre 2026',
+blocks.push({t: 'cover', tagline: 'Création de sites web à Dijon', title: 'Référentiel interne V1', subtitle: 'Lot 3 : contrats et clauses', date: '12 novembre 2026',
   stats: [{n: data.clauses.length, label: 'clauses contractuelles'}, {n: SECTIONS.length, label: 'sections'}, {n: data.offres.length, label: 'offres reliées'}],
   note: 'Le texte intégral de chaque clause, classé par famille métier, avec les offres auxquelles elle s’applique, puis la matrice qui relie chaque offre à ses clauses.'});
 blocks.push({t: 'toc', title: 'Sommaire'});
@@ -64,7 +64,7 @@ blocks.push({t: 'bullets', items: [
 for (const s of SECTIONS) {
   const list = data.clauses.filter(s.pick);
   blocks.push({t: 'h1', text: s.title, pb: true});
-  blocks.push({t: 'lead', text: `${list.length} clause${list.length > 1 ? 's' : ''}. ${s.lead}`});
+  blocks.push({t: 'lead', text: `${list.length} clause${list.length > 1 ? 's' : ''}. ${s.lead.replace('{n}', String(list.length))}`});
   for (const c of list) {
     blocks.push({t: 'h3', text: dash(c.title)});
     blocks.push({t: 'small', text: `Code : ${c.code}${NB}·${NB}S’applique à : ${appliesTo(c)}`});

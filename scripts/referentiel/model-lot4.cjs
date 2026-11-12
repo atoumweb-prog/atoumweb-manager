@@ -10,7 +10,7 @@ const B = a => a.map(x => '• ' + x).join('\n');
 const blocks = [];
 const push = (...b) => blocks.push(...b);
 
-push({t: 'cover', tagline: 'Création de sites web à Dijon', title: 'Référentiel interne V1', subtitle: 'Lot 4 : méthode de travail et FAQ', date: '11 novembre 2026',
+push({t: 'cover', tagline: 'Création de sites web à Dijon', title: 'Référentiel interne V1', subtitle: 'Lot 4 : méthode de travail et FAQ', date: '12 novembre 2026',
   stats: [{n: 8, label: 'situations réflexes'}, {n: '__FAQ__', label: 'questions fréquentes'}, {n: '__OPEN__', label: 'points ouverts connus'}],
   note: 'Comment mener un dossier, du premier contact à la sortie du client : paiements, livraison, maintenance, données personnelles, particuliers, médiation et assurance.'});
 push({t: 'toc', title: 'Sommaire'});
@@ -260,7 +260,7 @@ faq('Clients, données et assurance', [
   ['Peut-on faire un devis à un particulier ?', 'Pas tant que la convention d’adhésion au médiateur (CM2C) n’est pas conclue. Pour un professionnel, oui.', 'Particuliers'],
   ['AtoumWeb est-elle assurée ?', 'Non, pas à ce jour. Ne jamais l’écrire ni le laisser entendre.', 'Assurance'],
   ['En combien de temps répond-on à une réclamation ?', 'Première réponse visée sous 2 jours ouvrés, sans garantie de délai. Ce n’est ni un délai de résolution ni une astreinte.', 'Réclamations'],
-  ['Le client ne répond plus depuis des semaines.', 'Après 60 jours de blocage imputable au client, dernière relance avec 15 jours de plus, puis bilan écrit. Aucune pénalité automatique.', 'BASE-COOPERATION'],
+  ['Le client ne répond plus depuis des semaines.', 'Après 60 jours de blocage imputable au client, dernière relance avec 15 jours de plus, puis bilan écrit. Aucune pénalité automatique.', 'BASE-BLOCAGE-PROJET'],
   ['Quand signer l’accord de protection des données ?', 'Avant la première opération sur des données personnelles. Le modèle peut être remis en lecture avec le devis. Sans signature, ces opérations ne commencent pas.', 'Données'],
   ['Le client demande la suppression de ses données à la fin.', 'Suivre l’instruction de la fiche A : restitution ou suppression, avec avis environ 30 jours avant. Les sauvegardes d’o2switch s’effacent selon leur cycle.', 'Données'],
   ['Qui émet les factures ?', 'Abby. Le Manager ne produit pas de facture officielle autonome.', 'Paiements'],
@@ -274,9 +274,8 @@ const openRows = [
   ['Assurance de responsabilité civile professionnelle', 'Non souscrite. Cible : avant la première prestation. Ne jamais l’affirmer d’ici là.'],
   ['Relecture juridique', 'Aucun juriste n’a relu les clauses ni les accords. Les textes des deux clauses ajoutées le 11/11 (définitions, envoi des newsletters) sont de rédaction interne.'],
   ['Clause 119 (références commerciales)', 'Validée mais hors socle. Sa proposition sur la fiche de livraison reste à ajouter dans le Manager.'],
-  ['Accord de protection des données au devis', 'Le devis ne comporte pas encore de ligne fixe qui l’annonce, ni de mise en lecture du modèle dans le Manager.'],
-  ['Règle intégration WordPress et trois images', 'Écrite dans les fiches, pas encore calculée par le Manager : risque de double facturation à surveiller à la main.'],
-  ['Densité de deux clauses', 'BASE-PAIEMENT et BASE-COOPERATION restent denses : à scinder dans une version ultérieure.'],
+  ['Accord de protection des données au devis', 'La ligne fixe qui l’annonce est codée pour les services touchant des données personnelles ; elle n’est pas encore dans le Manager utilisé, qu’il faut reconstruire. La mise en lecture du modèle avec le devis reste à faire.'],
+  ['Règle intégration WordPress et trois images', 'Un avertissement dans les points d’attention du devis est codé (pas de remise automatique) ; il n’est pas encore dans le Manager utilisé. En attendant, surveiller la double facturation à la main.'],
   ['Temps de référence', 'Repères internes, à ajuster avec le chronomètre du Manager au fil des ventes. Les prix retenus sur délégation (47) n’ont pas été validés un par un.'],
 ];
 const openCount = openRows.length;

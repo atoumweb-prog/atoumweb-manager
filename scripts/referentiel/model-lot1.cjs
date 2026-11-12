@@ -53,7 +53,7 @@ const model = {
   header: 'AtoumWeb  ·  Référentiel interne V1',
   footer: 'Document interne : ne pas diffuser',
   blocks: [
-    {t: 'cover', tagline: 'Création de sites web à Dijon', title: 'Référentiel interne V1', subtitle: 'Lot 1 : grille tarifaire et règles de vente', date: '11 novembre 2026',
+    {t: 'cover', tagline: 'Création de sites web à Dijon', title: 'Référentiel interne V1', subtitle: 'Lot 1 : grille tarifaire et règles de vente', date: '12 novembre 2026',
       stats: [{n: data.offres.length, label: 'offres et services'}, {n: families.length, label: 'familles métier'}, {n: data.clauses.length, label: 'clauses contractuelles'}],
       note: 'Ce document réunit les prix validés, les règles de vente et les temps de référence. Les fiches de vente, les contrats et la méthode suivent dans les lots 2 à 4.'},
     {t: 'toc', title: 'Sommaire'},

@@ -29,12 +29,14 @@
     {
       "code": "BASE-PAIEMENT",
       "paragrapheCommencePar": "En cas d’impayé récurrent",
-      "vers": "Si un abonnement reste impayé, nous vous relançons par écrit 7 jours après l’échéance, puis nous vous mettons en demeure de payer 15 jours après l’échéance. Nous pouvons suspendre le service 30 jours après l’échéance, selon la gravité et après vous en avoir informé, puis y mettre fin 60 jours après l’échéance, par notification écrite, sans que cela soit automatique. Vos données, votre domaine et vos accès ne sont jamais supprimés immédiatement du seul fait d’un impayé ; vos droits légaux et les modalités de sortie propres au service restent applicables. La réactivation après paiement vérifié est gratuite ; un travail technique exceptionnel demande votre accord sur un devis."
+      "vers": "Si un abonnement reste impayé, nous vous relançons par écrit 7 jours après l’échéance, puis nous vous mettons en demeure de payer 15 jours après l’échéance. Nous pouvons suspendre le service 30 jours après l’échéance, selon la gravité et après vous en avoir informé, puis y mettre fin 60 jours après l’échéance, par notification écrite, sans que cela soit automatique. Vos données, votre domaine et vos accès ne sont jamais supprimés immédiatement du seul fait d’un impayé ; vos droits légaux et les modalités de sortie propres au service restent applicables. La réactivation après paiement vérifié est gratuite ; un travail technique exceptionnel demande votre accord sur un devis.",
+      "jusquAuDecoupage": true
     },
     {
       "code": "BASE-PAIEMENT",
       "paragrapheCommencePar": "Pour une PRESTATION PONCTUELLE uniquement",
-      "vers": "Pour une prestation ponctuelle, la procédure est plus courte : relance écrite 7 jours après l’échéance, puis mise en demeure 15 jours après l’échéance, qui vous laisse huit jours pour payer. À partir du 23e jour, nous pouvons suspendre les seules tâches non encore réalisées, après avoir examiné la gravité de l’impayé et l’éventuel litige, et vous en avoir informé, sous réserve des obligations impératives. Cette procédure ne s’applique pas aux mensualités ni aux annualités d’abonnement, qui suivent la procédure ci-dessus. Elle ne nous donne aucun droit de retenir abusivement votre domaine, ni de supprimer immédiatement vos données."
+      "vers": "Pour une prestation ponctuelle, la procédure est plus courte : relance écrite 7 jours après l’échéance, puis mise en demeure 15 jours après l’échéance, qui vous laisse huit jours pour payer. À partir du 23e jour, nous pouvons suspendre les seules tâches non encore réalisées, après avoir examiné la gravité de l’impayé et l’éventuel litige, et vous en avoir informé, sous réserve des obligations impératives. Cette procédure ne s’applique pas aux mensualités ni aux annualités d’abonnement, qui suivent la procédure ci-dessus. Elle ne nous donne aucun droit de retenir abusivement votre domaine, ni de supprimer immédiatement vos données.",
+      "jusquAuDecoupage": true
     },
     {
       "code": "CONS-RETRACTATION",
