@@ -35,7 +35,7 @@ function usefulInformation(section: ContractSection): ContractSection | null {
   for (const line of section.text.split('\n')) {
     const label = labels.find(l => line.startsWith(l + ' :'));
     if (label) current = label;
-    if (current && keep.has(current) && !/À renseigner/.test(line)) out.push(line);
+    if (current && keep.has(current) && !/À renseigner/.test(line) && !(current === 'Données personnelles' && /Non applicable/.test(line))) out.push(line);
   }
   const text = out.filter(l => l.trim()).join('\n');
   return text ? {...section, title: 'Informations utiles', text} : null;

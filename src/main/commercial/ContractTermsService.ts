@@ -492,7 +492,7 @@ export class ContractTermsService {
     const sourceClauses:QuoteContractClause[]=build.snapshotState==='frozen' ? snapshot?.clauses ?? [] : build.clauses;
     const preparation=new QuoteContractPreparationService(this.database,this.documents);
     const parameters=preparation.parameters(quoteId);
-    const administration:ContractAdministration|null=build.snapshotState==='draft'?preparation.administration():snapshot?.administration??null;
+    const administration:ContractAdministration|null=build.snapshotState==='draft'?preparation.administrationForQuote(quoteId,parameters):snapshot?.administration??null;
     const clauses=build.snapshotState==='draft'?sourceClauses.map(c=>({...c,body:renderContractReferences(resolveContractFields(c.body,administration),this.database.all<{code:string;title:string}>('SELECT code,title FROM contract_clause_templates'))})):sourceClauses;
     const types:ContractTypeReference[]=build.types??[];
     const modules=clauses.filter(c=>c.enabled).map(c=>{
