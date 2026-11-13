@@ -1,0 +1,125 @@
+/* Composants partagés du fil « Prochaine étape » (refonte, lot R1).
+   Uniquement des variables : jetons sémantiques de tokens.css (--aw-*), jetons de thème et de densité.
+   Aucune couleur écrite en dur, aucun !important (garde-fou : ui/importantBudget.test.ts).
+   Les boutons réutilisent .aw-ui-button (AppButton). Référence : docs/refonte/DESIGN.md. */
+
+/* Bouton principal du bloc : fond plein sur le jeton d'accent du thème (jaune en Noir). Placé dans ce fichier,
+   chargé après ui-consistency-v2.css, à spécificité égale : la règle d'AppButton reste valable ailleurs. */
+.aw-next-step .aw-ui-button--primary {
+  background: var(--aw-accent-solid);
+  border-color: var(--aw-accent-solid);
+  color: var(--aw-accent-on-solid);
+  box-shadow: none;
+}
+
+/* ---- Pastille d'état */
+.aw-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: max(14px, var(--ui-font-small));
+  font-weight: 650;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.aw-status-pill--success { background: var(--aw-success-soft-bg); color: var(--aw-success-soft-fg); border-color: transparent; }
+.aw-status-pill--warning { background: var(--aw-warning-soft-bg); color: var(--aw-warning-soft-fg); border-color: transparent; }
+.aw-status-pill--danger { background: var(--aw-danger-soft-bg); color: var(--aw-danger-soft-fg); border-color: transparent; }
+.aw-status-pill--info { background: var(--aw-info-soft-bg); color: var(--aw-info-soft-fg); border-color: transparent; }
+.aw-status-pill--accent { background: var(--aw-accent-soft-bg); color: var(--aw-accent-soft-fg); border-color: transparent; }
+
+/* ---- Bloc d'action « Prochaine étape » */
+.aw-next-step {
+  display: grid;
+  gap: 10px;
+  padding: var(--ui-panel-pad);
+  border: 1px solid var(--aw-accent-solid);
+  border-radius: 12px;
+  background: var(--surface-soft);
+  color: var(--text);
+}
+.aw-next-step--warning { border-color: var(--aw-warning-solid); }
+.aw-next-step--danger { border-color: var(--aw-danger-solid); }
+.aw-next-step--success { border-color: var(--aw-success-solid); }
+.aw-next-step-title {
+  margin: 0;
+  font-size: max(18px, calc(var(--ui-font-base) * 1.25));
+  font-weight: 700;
+  line-height: 1.3;
+}
+.aw-next-step-prefix { color: var(--muted); font-weight: 600; }
+.aw-next-step-prefix::after { content: " :"; }
+.aw-next-step-reason {
+  margin: 0;
+  color: var(--muted);
+  font-size: max(14px, var(--ui-font-secondary));
+  line-height: 1.45;
+}
+.aw-next-step-alert {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: max(14px, var(--ui-font-secondary));
+  line-height: 1.4;
+}
+.aw-next-step-alert--warning { background: var(--aw-warning-soft-bg); color: var(--aw-warning-soft-fg); }
+.aw-next-step-alert--danger { background: var(--aw-danger-soft-bg); color: var(--aw-danger-soft-fg); }
+.aw-next-step-alert--success { background: var(--aw-success-soft-bg); color: var(--aw-success-soft-fg); }
+.aw-next-step-alert--info { background: var(--aw-info-soft-bg); color: var(--aw-info-soft-fg); }
+.aw-next-step-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-gap); }
+
+/* ---- Bouton « Plus » */
+.aw-more-menu { position: relative; display: inline-block; }
+.aw-more-menu-trigger { cursor: pointer; }
+.aw-more-menu-list {
+  position: absolute;
+  z-index: 20;
+  right: 0;
+  min-width: 240px;
+  margin: 6px 0 0;
+  padding: 6px;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.aw-more-menu--align-start .aw-more-menu-list { right: auto; left: 0; }
+.aw-more-menu-item {
+  display: block;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.aw-more-menu-item:hover:not(:disabled) { background: var(--surface-soft); }
+.aw-more-menu-item:focus-visible { outline: 2px solid var(--aw-accent-solid); outline-offset: -2px; background: var(--surface-soft); }
+.aw-more-menu-item--danger { color: var(--aw-danger-soft-fg); }
+.aw-more-menu-item:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ---- En-tête de dossier */
+.aw-record-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px 20px;
+  min-width: 0;
+}
+.aw-record-header-main { min-width: 0; flex: 1 1 260px; }
+.aw-record-header-title { margin: 0; font-size: max(22px, calc(var(--ui-font-base) * 1.5)); line-height: 1.25; overflow-wrap: anywhere; }
+.aw-record-header-subtitle { margin: 4px 0 0; color: var(--muted); font-size: max(14px, var(--ui-font-secondary)); }
+.aw-record-header-side { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-gap); }
+.aw-record-header-next { flex: 1 1 100%; min-width: 0; }

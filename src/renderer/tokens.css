@@ -10,8 +10,7 @@
 
    Attention : sur fond clair, « warning solid » et « accent solid » (AtoumWeb) ne suffisent pas seuls
    pour une icône ou une bordure ; utiliser soft-fg ou ajouter un texte.
-   Exception de contraste connue : accent du thème Blanc, texte sur fond plein à 4,42 (seuil 4,5),
-   acceptable pour du texte gras ou grand ; à corriger en R1.
+   Accent plein du thème Blanc : #90713e (R1), contraste 4,55 avec le texte blanc ; l'ancienne valeur #92733f (4,42) restait sous le seuil.
 
    Ces variables n'ont aucun effet tant qu'un écran ne les utilise pas. --accent, --success et
    --aw-status-* restent inchangés ; la bascule se fait écran par écran (R1 et R2+).
@@ -83,7 +82,7 @@
   --aw-info-on-solid: #ffffff;
   --aw-info-soft-bg: #dee9f6;
   --aw-info-soft-fg: #0d47a1;
-  --aw-accent-solid: #92733f;
+  --aw-accent-solid: #90713e;
   --aw-accent-on-solid: #ffffff;
   --aw-accent-soft-bg: #f0ebe4;
   --aw-accent-soft-fg: #5c4724;

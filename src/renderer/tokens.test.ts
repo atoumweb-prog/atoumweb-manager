@@ -67,7 +67,7 @@ const PINNED: Record<Theme, Record<(typeof ROLES)[number], [string, string, stri
     warning: ['#f2b705', '#1f2933', '#fdf5dc', '#6b4e00'],
     danger: ['#d62828', '#ffffff', '#f9e1e1', '#8c1d1d'],
     info: ['#1565c0', '#ffffff', '#dee9f6', '#0d47a1'],
-    accent: ['#92733f', '#ffffff', '#f0ebe4', '#5c4724'],
+    accent: ['#90713e', '#ffffff', '#f0ebe4', '#5c4724'],
   },
 };
 
@@ -106,8 +106,7 @@ describe('tokens semantiques', () => {
       for (const role of ROLES) {
         const onSolid = contrast(block.get(`--aw-${role}-on-solid`)!, block.get(`--aw-${role}-solid`)!);
         const soft = contrast(block.get(`--aw-${role}-soft-fg`)!, block.get(`--aw-${role}-soft-bg`)!);
-        // Exception documentee : accent du Blanc (4,42), a corriger en R1.
-        const floor = theme === 'blanc' && role === 'accent' ? 4.4 : 4.5;
+        const floor = 4.5; // plus aucune exception : l'accent du Blanc est corrige en R1 (#92733f -> #90713e, 4,55)
         expect(onSolid, `${theme} ${role} on-solid / solid`).toBeGreaterThanOrEqual(floor);
         expect(soft, `${theme} ${role} soft-fg / soft-bg`).toBeGreaterThanOrEqual(4.5);
       }

@@ -36,6 +36,7 @@ import './ui-typography-consistency.css';
 import './ui-consistency-v2.css';
 import './crm/client-list-quick-v2.css';
 import './convergence-visual-consistency.css';
+import './ui/next-step.css';
 
 const rootElement = document.getElementById('root');
 
