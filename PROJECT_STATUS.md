@@ -6,10 +6,10 @@
 - Objectif de la refonte : priorité 1 ergonomie (moins de clics, parcours clairs, information et action utiles immédiates) ; priorité 2 style moderne, soigné, non générique ; le fond (données, règles métier, parcours Prospect → Devis → Projet) ne change pas sans validation de Carlos.
 - Décisions du 13/11/2026 : thème de référence **Noir / Confort**, AtoumWeb et Blanc alignés ensuite ; **Inter embarquée** (licence SIL OFL 1.1 vérifiée, voir le document) ; **tokens sémantiques** (succès, alerte, danger, info, accent) par thème **avant** toute refonte d'écran.
 - Ce qui est validé : lot UX 1 (Accueil, en-tête, rail, Noir/Confort), validé par Carlos le 03/11/2026 après revue AVANT/APRÈS. Les lots 1 à 6 de fonctionnalités (branches `claude/lot1…lot6`) n'ont **pas encore été testés** par Carlos.
-- [ ] Reste à décider : l'ordre des lots de la refonte.
+- Ordre des lots décidé le 13/11/2026 : **R0** Fondations (tokens sémantiques par thème + Inter embarquée) → **R1** composants partagés alignés sur les tokens (AppButton, status-pill, tables, notices), avec réduction des `!important` des fichiers touchés → **pause : recette des lots fonctionnels 1 à 6 par Carlos** → **R2+** un écran par lot, ordre provisoire modifiable : Prospection, Devis, Projets, Catalogue, Bibliothèque / Sites, Paramètres.
 - [ ] Non réalisé : embarquement d'Inter, définition des tokens sémantiques, toute modification de CSS ou d'écran. Cette mise à jour est documentaire et ne modifie aucun code, donnée ou règle métier.
 - Skills de travail (branche `claude/refonte-manager`) : `atoumweb-design` (dérivé d'Impeccable, Apache-2.0, sans binaire), `atoumweb-briques-divi5`, `find-skills`.
-- Prochaine action : décision de Carlos sur l'ordre des lots, puis définition des tokens sémantiques avant tout écran.
+- Prochaine action : conception puis plan de R0 (présenté à Carlos avant tout code), puis réalisation de R0 sur accord.
 
 ## 11/11/2026 — Temps proposés et aide à la vente
 

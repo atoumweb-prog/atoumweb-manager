@@ -118,9 +118,18 @@ Règle déjà posée : aucun texte fonctionnel sous 14 px (`display-density.css`
 - **Lot UX 1 : Accueil, en-tête et rail de navigation, thème Noir / Confort.** Validé officiellement par Carlos le 03/11/2026, sur décision après revue du dossier AVANT/APRÈS (recette visuelle sur captures). Contrôles techniques associés : typecheck, 44 tests ciblés, 96 contrôles natifs (`docs/ux-v2/CONSIGNES-ET-REPRISE.md`, `PROJECT_STATUS.md`). La portée est limitée à ces trois zones ; aucune refonte volontaire de Blanc ni d'AtoumWeb à ce stade.
 - **Les lots 1 à 6 de fonctionnalités** (branches `claude/lot1-mon-entreprise` à `claude/lot6-rgpd-au-devis` : Mon entreprise, CGV disponibles, Devis rapide, Envoyer et faire accepter, Prospect simplifié, RGPD au devis) **n'ont pas encore été testés par Carlos.** Ils ne sont pas validés.
 
+**Ordre des lots de la refonte (décidé le 13/11/2026)**
+
+1. **R0 Fondations** : tokens sémantiques par thème (succès, alerte, danger, info, accent) + Inter embarquée (licence OFL 1.1 jointe à l'application).
+2. **R1 Composants partagés** alignés sur les tokens (`AppButton`, `status-pill`, tables, notices), en réduisant les `!important` des fichiers touchés.
+3. **Pause : recette des lots fonctionnels 1 à 6 par Carlos.** Aucun lot R2+ ne démarre avant.
+4. **R2 et suivants : un écran par lot.** Ordre provisoire, modifiable par Carlos : Prospection, Devis, Projets, Catalogue, Bibliothèque / Sites, Paramètres.
+
+Chaque lot reste dans son périmètre, est présenté avant d'être codé, et ne modifie ni les données, ni les règles métier, ni le parcours Prospect → Devis → Projet.
+
 **Reste à décider**
 
-- **L'ordre des lots** de la refonte.
+- Rien à ce stade. L'ordre de R2 et suivants est provisoire.
 
 ## Partie B : spécification UX/UI décidée (reprise intégrale de `docs/ux-v2/DESIGN-SYSTEM.md`)
 
