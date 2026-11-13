@@ -35,3 +35,14 @@ describe('07A composition : brouillons et commande de Page indépendants',()=>{
   expect(changes).toBe(2);expect(r.active().map(e=>e.id)).toEqual(['settings']);
  });
 });
+
+describe('R3 : enregistrer puis continuer (saveThenRun)',()=>{
+ const savable=(r:UnsavedRegistry,id:string,outcome:boolean,log:string[],priority?:number,group='q')=>r.update({...entry(id,group),savePriority:priority,save:async()=>{log.push(id);if(outcome)r.markSaved(id);return outcome;}});
+ it('sans brouillon, continue tout de suite',async()=>{const r=new UnsavedRegistry();let calls=0;expect(await r.saveThenRun(()=>calls++,()=>{throw Error('unexpected')})).toBe(true);expect(calls).toBe(1);});
+ it('enregistre le brouillon puis continue',async()=>{const r=new UnsavedRegistry(),log:string[]=[];let calls=0;savable(r,'a',true,log);expect(await r.saveThenRun(()=>calls++,()=>{throw Error('unexpected')})).toBe(true);expect(log).toEqual(['a']);expect(calls).toBe(1);expect(r.active()).toEqual([]);});
+ it('un enregistrement refusé ne continue pas et garde la saisie',async()=>{const r=new UnsavedRegistry(),log:string[]=[];let calls=0;savable(r,'a',false,log);expect(await r.saveThenRun(()=>calls++,()=>{throw Error('unexpected')})).toBe(false);expect(calls).toBe(0);expect(r.active().map(e=>e.id)).toEqual(['a']);});
+ it('une erreur levée par un enregistrement ne continue pas',async()=>{const r=new UnsavedRegistry();let calls=0;r.update({...entry('a'),save:async()=>{throw Error('boom');}});expect(await r.saveThenRun(()=>calls++,()=>{throw Error('unexpected')})).toBe(false);expect(calls).toBe(0);expect(r.active().map(e=>e.id)).toEqual(['a']);});
+ it('respecte l’ordre de priorité des enregistrements',async()=>{const r=new UnsavedRegistry(),log:string[]=[];savable(r,'b',true,log,1);savable(r,'a',true,log,0);expect(await r.saveThenRun(()=>{},()=>{throw Error('unexpected')})).toBe(true);expect(log).toEqual(['a','b']);});
+ it('un brouillon sans enregistrement retombe sur la fenêtre de confirmation existante',async()=>{const r=new UnsavedRegistry();let calls=0,asked=0;r.update(entry('a'));expect(await r.saveThenRun(()=>calls++,()=>{asked++;return false;})).toBe(false);expect(asked).toBe(1);expect(calls).toBe(0);expect(r.active().map(e=>e.id)).toEqual(['a']);});
+ it('ne touche pas aux brouillons hors du groupe demandé',async()=>{const r=new UnsavedRegistry(),log:string[]=[];let calls=0;savable(r,'mine',true,log,0,'p/desk');savable(r,'other',true,log,0,'z');expect(await r.saveThenRun(()=>calls++,()=>{throw Error('unexpected')},'p')).toBe(true);expect(log).toEqual(['mine']);expect(r.active().map(e=>e.id)).toEqual(['other']);});
+});

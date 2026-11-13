@@ -134,3 +134,23 @@ describe('RecordHeader', () => {
     expect(html(createElement(RecordHeader, { title: 'Dossier' }))).not.toContain('aw-more-menu');
   });
 });
+
+describe('R3 : jaune unique et logo de fiche', () => {
+  it('NextStepCard : primaryDemoted rend l’action principale en secondaire (un formulaire modifié prend le jaune)', () => {
+    const markup = html(createElement(NextStepCard, { title: 'Préparer le devis', primary: { label: 'Préparer le devis', onAction: () => undefined }, primaryDemoted: true }));
+    expect(markup).toContain('Préparer le devis');
+    expect(markup).not.toContain('aw-ui-button--primary');
+    expect(markup).toContain('aw-ui-button--secondary');
+  });
+
+  it('NextStepCard : sans primaryDemoted, l’action principale reste jaune', () => {
+    const markup = html(createElement(NextStepCard, { title: 'Préparer le devis', primary: { label: 'Préparer le devis', onAction: () => undefined } }));
+    expect(markup).toContain('aw-ui-button--primary');
+  });
+
+  it('RecordHeader : un emplacement « leading » reçoit le logo, avant le titre', () => {
+    const markup = html(createElement(RecordHeader, { title: 'Mairie', leading: createElement('span', { className: 'logo-test' }, 'L') }));
+    expect(markup).toContain('logo-test');
+    expect(markup.indexOf('logo-test')).toBeLessThan(markup.indexOf('Mairie'));
+  });
+});

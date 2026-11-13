@@ -8,7 +8,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
  const click=async s=>{await js(`document.querySelector(${JSON.stringify(s)}).click()`);await sleep(80);};
  await wait('document.querySelector(".prospect-directory-table tbody tr")','record');await click('.prospect-directory-table tbody tr');await click('[aria-label="Agrandir la fiche"]');await wait('document.querySelector(".prospect-workspace")','real desk');
  await js('window.__deskTimer=document.querySelector(".global-timer")');
- test(await get('document.querySelectorAll(".prospect-workspace-header h2").length===1&&!document.querySelector(".prospect-detail-desk .crm-record-left,.prospect-detail-desk .crm-record-right")'),'Compact identity replaces permanent three-column frame');
+ test(await get('document.querySelectorAll(".prospect-record-header h2").length===1&&!document.querySelector(".prospect-detail-desk .crm-record-left,.prospect-detail-desk .crm-record-right")'),'Compact identity replaces permanent three-column frame');
  test(await get('document.querySelector(".prospect-desk-content").getBoundingClientRect().width>1200'),'Central content gets priority');
  await click('.prospect-workspace-associations summary');await wait('document.querySelector(".prospect-workspace-associations .workflow-link")','existing associations');test(await get('document.querySelector(".prospect-workspace-associations").open'),'Real associations available on demand');await click('.prospect-workspace-associations summary');test(await get('!document.querySelector(".prospect-workspace-associations").open'),'Associations can fold without removing links');
  const out=path.resolve('outputs/prospection-desk-standard');fs.mkdirSync(out,{recursive:true});

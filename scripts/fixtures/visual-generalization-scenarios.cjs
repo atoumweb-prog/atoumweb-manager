@@ -26,7 +26,7 @@ module.exports=async context=>{
  const baseline=snapshot();await js('window.__generalTimer=document.querySelector(".global-timer")');
  const textClick=async(selector,text)=>{await js(`const e=[...document.querySelectorAll(${JSON.stringify(selector)})].find(e=>e.textContent.includes(${JSON.stringify(text)}));if(!e)throw Error('Missing '+${JSON.stringify(text)});e.click()`);await sleep(70);};
  const cases=[
-  ['Prospection','prospects-directory','.prospect-view-switch button','Annuaire prospects'],
+  ['Prospection','prospects-directory','.prospect-view-switch button','Liste'],
   ['Clients','clients-directory'],
   ['Offres & Tarifs','catalog-administration','.catalog-toolbar button',"Tableau d'administration"],
   ['Devis','quotes-list'],['Projets','projects-list'],

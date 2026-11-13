@@ -11,7 +11,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
  const source=db.crm.createProspect({organizationId:a.id,contactId:c.id,stage:'qualifying',source:'website'});
  db.crm.saveProspectResearchSnapshot(source.id,{checkedAt:'2025-04-10',source:'Recherche antérieure',services:['Installation et entretien'],conversation:{approach:'Préparation privée du dossier source'}});
  win.setContentSize(1920,1080);win.webContents.setZoomFactor(1);await navigate('Prospection');await js("await window.atoumweb.settings.setTheme('noir');await window.atoumweb.settings.setDisplayDensity('comfort');document.documentElement.dataset.theme='noir';document.documentElement.dataset.density='comfort';");
- await click('.prospection-pilot-heading .primary-button');await wait('document.querySelector(".prospect-create-v2")','creation');await shot('01-creation-reutilisation');
+ await click('.prospects-v2>.page-heading .primary-button');await wait('document.querySelector(".prospect-create-v2")','creation');await shot('01-creation-reutilisation');
  await set('[aria-label="Entreprise existante"]',a.id,'change');await set('[aria-label="Contact existant"]',c.id,'change');
  test(await get('!document.querySelector(".prospect-create-v2 input[type=email]")'),'Existing person has no duplicate coordinate fields');
  await click('.prospect-create-v2 .form-actions .primary-button');await wait('!document.querySelector(".prospect-create-v2")','atomic creation');

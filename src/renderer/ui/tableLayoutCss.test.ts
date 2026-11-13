@@ -30,12 +30,12 @@ describe('table-layout.css : en-têtes de colonne', () => {
     expect(spanRules.filter((m) => !m[1].includes('tbody')).map((m) => m[1].trim())).toEqual([]);
   });
 
-  it('Clients : le bouton « créer » devenu secondaire (« Fermer ») garde sa place et sa hauteur', () => {
+  it('Clients et contacts : le bouton « créer » devenu secondaire (« Fermer ») garde sa place et sa hauteur', () => {
     const read = (file: string) => readFileSync(resolve(__dirname, '..', 'crm', file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     const body = (css: string, selectorPart: string) => [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((m) => m[1].includes(selectorPart)).map((m) => m[2].replace(/\s+/g, '')).join(';');
-    const heading = body(read('client-list-quick-v2.css'), '.client-heading>.secondary-button');
-    expect(heading).toContain('margin-left:auto');
-    expect(heading).toContain('min-height:38px');
+    // R3 : le bouton de Clients vit dans les actions de PageHeader (à droite par construction), plus dans `.client-heading`.
+    expect(readFileSync(resolve(__dirname, '..', 'crm', 'ClientsPage.tsx'), 'utf8')).toMatch(/<PageHeader\b[\s\S]*?actions=\{<button className=\{showForm \? 'secondary-button' : 'primary-button'\}/);
+    expect(readFileSync(resolve(__dirname, 'page-header.css'), 'utf8')).toMatch(/\.aw-page-header-actions\s*\{[^}]*display:\s*flex/);
     const contacts = body(read('client-contacts-v2.css'), '.client-contacts-heading>.secondary-button');
     expect(contacts).toContain('min-height:42px');
   });

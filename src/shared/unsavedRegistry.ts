@@ -24,6 +24,37 @@ export class UnsavedRegistry {
     remove(id: string) { this.entries.delete(id); this.emit(); }
     state() { const entries = this.active(); return { epoch: this.epoch, revision: this.revision, labels: [...new Set(entries.map(e => e.label))].slice(0, 40), pending: entries.some(e => e.pending),saveAvailable:entries.some(e=>!!e.save) }; }
     active(group?: string | string[]) { return [...this.entries.values()].filter(e => (group === undefined || (Array.isArray(group) ? group.includes(e.id) : e.group === group || e.group.startsWith(group + '/'))) && (e.dirty || e.pending)); }
+    /** Enregistre les entrées dans l'ordre de `savePriority` ; `true` seulement si plus aucune entrée du groupe n'est active ensuite. */
+    private async saveEntries(entries: UnsavedEntry[], group?: string | string[]): Promise<boolean> {
+        try {
+            for (const e of [...entries].sort((a, b) => (a.savePriority ?? 0) - (b.savePriority ?? 0))) {
+                if (!this.active(group).some(current => current.id === e.id))
+                    continue;
+                if (!await e.save!())
+                    return false;
+            }
+            return this.active(group).length === 0;
+        }
+        catch {
+            return false;
+        }
+    }
+    /** R3 : enregistre les brouillons du groupe puis continue. Sans `save` possible, retombe sur la fenêtre de confirmation de `request` (sans continuer ici). */
+    async saveThenRun(run: () => void, confirm: (labels: string[], pending: boolean) => boolean, group?: string | string[]): Promise<boolean> {
+        const entries = this.active(group);
+        if (!entries.length) {
+            run();
+            return true;
+        }
+        if (entries.every(e => !!e.save) && !entries.some(e => e.pending)) {
+            if (!await this.saveEntries(entries, group))
+                return false;
+            run();
+            return true;
+        }
+        this.request(run, confirm, group);
+        return false;
+    }
     request(run: () => void, confirm: (labels: string[], pending: boolean) => boolean, group?: string | string[]): boolean {
         const entries = this.active(group);
         if (!entries.length) {
@@ -37,7 +68,7 @@ export class UnsavedRegistry {
             const finish=()=>{this.asking=false;run();return true;};
             this.savePresenter({labels:entries.map(e=>e.label),canSave:entries.every(e=>!!e.save),stay:()=>{this.asking=false;},
                 discard:()=>{const active=this.active(group);if(active.some(e=>e.pending))return false;active.forEach(e=>{e.discard();this.entries.delete(e.id);});this.emit();return finish();},
-                save:async()=>{if(!entries.every(e=>!!e.save))return false;try{for(const e of [...entries].sort((a,b)=>(a.savePriority??0)-(b.savePriority??0))){if(!this.active(group).some(current=>current.id===e.id))continue;if(!await e.save!())return false;}if(this.active(group).length)return false;return finish();}catch{return false;}}
+                save:async()=>{if(!entries.every(e=>!!e.save))return false;return await this.saveEntries(entries,group)?finish():false;}
             });
             return false;
         }

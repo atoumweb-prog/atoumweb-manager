@@ -20,11 +20,13 @@ export interface NextStepAlert {
  * Surcouche : il réutilise `AppButton` et ne décide d'aucune règle métier ; l'appelant fournit le contenu.
  * Le libellé « Prochaine étape » est un préfixe en ligne du titre, jamais un surtitre.
  */
-export function NextStepCard({ title, reason, tone = 'default', primary, secondary = [], alerts = [], children, className }: {
+export function NextStepCard({ title, reason, tone = 'default', primary, primaryDemoted = false, secondary = [], alerts = [], children, className }: {
   title: string;
   reason?: string;
   tone?: NextStepTone;
   primary?: NextStepAction;
+  /** R3 : une seule action principale jaune par vue. Quand un formulaire modifié prend le jaune, l'action de la carte passe en secondaire. */
+  primaryDemoted?: boolean;
   secondary?: NextStepAction[];
   alerts?: NextStepAlert[];
   children?: ReactNode;
@@ -37,7 +39,7 @@ export function NextStepCard({ title, reason, tone = 'default', primary, seconda
     {alerts.map((alert, index) => <p key={index} role={alert.tone === 'danger' ? 'alert' : 'status'} className={`aw-next-step-alert aw-next-step-alert--${alert.tone}`}>{alert.text}</p>)}
     {children}
     {hasActions && <div className="aw-next-step-actions">
-      {primary && <AppButton variant="primary" disabled={primary.disabled} onAction={primary.onAction}>{primary.label}</AppButton>}
+      {primary && <AppButton variant={primaryDemoted ? 'secondary' : 'primary'} disabled={primary.disabled} onAction={primary.onAction}>{primary.label}</AppButton>}
       {secondary.map((action, index) => <AppButton key={`${index}-${action.label}`} variant="secondary" disabled={action.disabled} onAction={action.onAction}>{action.label}</AppButton>)}
     </div>}
   </section>;

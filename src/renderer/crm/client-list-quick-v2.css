@@ -2,13 +2,9 @@
 .client-detail-content{display:contents}
 .client-quick-crm,.aw-client-brand-v2{display:none}
 :root[data-theme='noir'][data-density='comfort'] .aw-manager-shell:has(.clients-v2){--accent:#ffda00;--accent-strong:#ffda00;--surface:#071c2b;--surface-soft:#0d2739;--border:#254357}
-:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell:has(.clients-v2) .content-area>.page-heading{display:none}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2{gap:14px}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-toolbar{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:0;border:0;background:none;box-shadow:none}
-:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-heading{display:flex;align-items:center;gap:14px}
-:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-heading h1{display:flex;align-items:center;gap:10px;font-size:24px;letter-spacing:-.5px;margin:0}
-:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-heading h1 svg{color:var(--accent)}
-:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-list-count{color:var(--muted);font-size:14px}
+
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .toolbar-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .toolbar-controls .inline-search{order:0;flex:0 1 360px;min-width:200px}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .toolbar-controls select{order:1}
@@ -64,14 +60,11 @@
 :root[data-theme='noir'][data-density='comfort'] .aw-client-brand-default{display:none}
 :root[data-theme='noir'][data-density='comfort'] .aw-client-brand-v2{display:block}
 
-:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-heading>.primary-button{margin-left:auto;min-height:38px;background:var(--accent);color:#071c2b}
-:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-heading>.secondary-button{margin-left:auto;min-height:38px}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .toolbar-controls{width:100%;max-width:none;justify-content:flex-start}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-command>.aw-ui-button-wrap{flex:1;min-width:0}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-command .aw-ui-button{width:100%}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-crm footer>.aw-ui-button-wrap{display:block;width:100%}
 
-:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-heading h1{color:var(--text)}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-crm footer .aw-ui-button{min-width:100%}
 
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-overdue-label{color:#ffb4a9;font-size:12px;display:inline-block}

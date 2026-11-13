@@ -106,7 +106,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   check(await get('!!document.querySelector(".aw-rail-group-heading[data-group-active=true][aria-expanded=false]")'),'Collapsed group still identifies its active destination');
   states.push({name:'extras/active-group-collapsed',...await capture('extras/active-group-collapsed')});
   await js('[...document.querySelectorAll(".aw-rail-group-heading")].find(e=>e.textContent.trim()==="Commercial").click()');
-  await js('document.querySelector(".prospection-pilot-heading .primary-button").click()');await sleep(50);
+  await js('document.querySelector(".prospects-v2>.page-heading .primary-button").click()');await sleep(50);
   await js(`const e=document.querySelector('.prospect-create-v2 input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'TEST UX LOT1 DRAFT');e.dispatchEvent(new Event('input',{bubbles:true}));window.__lot1Draft=document.querySelector('.prospect-create-v2')`);await sleep(60);
   await js('document.querySelector("#header-settings-trigger").click()');await sleep(60);
   check(confirmations===1&&await get('document.querySelector(".prospect-create-v2 input").value==="TEST UX LOT1 DRAFT"&&window.__lot1Draft===document.querySelector(".prospect-create-v2")'),'UX01 Stay preserves exact draft and mounted editor');

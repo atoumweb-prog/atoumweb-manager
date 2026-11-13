@@ -26,7 +26,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
  await click('[aria-label="Agrandir la fiche"]');await wait('document.querySelector(".prospect-detail-desk")','existing Prospect A desk');test(await get('document.querySelector(".prospect-focus-summary")&&document.querySelectorAll(".prospect-section-group").length===3'),'Existing Prospect A and its three groups retained');
  await click('.prospect-detail-desk [aria-label="Fermer la fiche prospect"]');
  await click('[aria-label="Fermer la fiche prospect"]');
- await click('.prospection-pilot-heading .primary-button');await wait('document.querySelector(".prospect-create-v2")','existing creation form');
+ await click('.prospects-v2>.page-heading .primary-button');await wait('document.querySelector(".prospect-create-v2")','existing creation form');
  await js(`const input=document.querySelector('.prospect-create-v2 input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'BROUILLON TEMP CONSERVE');input.dispatchEvent(new Event('input',{bubbles:true}));`);await sleep(50);
  const original=dialog.showMessageBoxSync,confirmations=[];dialog.showMessageBoxSync=(...args)=>{confirmations.push(args.at(-1));return 0;};
  try{await click('[data-nav-module=Clients]');test(confirmations.length===1&&confirmations[0].defaultId===0,'UX01 asks exactly once with Stay default');test(await get('document.querySelector(".prospect-create-v2 input").value==="BROUILLON TEMP CONSERVE"'),'Stay retains exact creation draft');}finally{dialog.showMessageBoxSync=original;}

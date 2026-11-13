@@ -100,7 +100,7 @@ module.exports=async ctx=>{
   // Concurrent import while native confirmation is open must never be overwritten.
   dialog.showMessageBox=async()=>{db.crmIdentityAssets.importFilePath('organization',client.organizationId,'logo',source);return {response:0};};
   let conflict=false;try{await importAsset({sender:win.webContents},'organization',client.organizationId,'logo');}catch(e){conflict=/autre fenêtre/.test(e.message);}test(conflict,'Cross-window logo change is rejected instead of silently overwritten');
-  await navigate('Prospection');await textClick('.prospect-view-switch button','Annuaire prospects');
+  await navigate('Prospection');await textClick('.prospect-view-switch button','Liste');
   await wait(`!!document.querySelector('[data-record-id="${prospect.id}"]')`,'synthetic active Prospect row');
   await js(`document.querySelector('[data-record-id="${prospect.id}"]').click()`);await wait('!!document.querySelector(".prospect-detail-v2")','Prospect');await click('[aria-label="Agrandir la fiche"]');await wait('!!document.querySelector(".prospect-detail-desk .crm-record-layout")','three-zone prospect');
   await wait('!!document.querySelector(".prospect-detail-desk .crm-identity-avatar img")','same organization logo');

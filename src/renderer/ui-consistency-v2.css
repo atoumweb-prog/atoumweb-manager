@@ -182,11 +182,9 @@ table td {
   overflow-wrap: anywhere;
 }
 
-
 /* Recette CRM 22/09/2026 — hiérarchie typographique validée.
    Titres/libellés en gras, informations en graisse normale. */
-.prospect-directory-status,
-.prospect-detail-v2 .status-pill {
+.prospect-detail-v2 .status-pill{
   font-size: 13px !important;
   font-weight: 750 !important;
   line-height: 1.15;
@@ -263,7 +261,6 @@ table td {
   line-height: 1;
   border-radius: 9px;
 }
-
 
 /* Hiérarchie typographique CRM — règle de lecture unique.
    1. Titres / libellés = gras.
@@ -350,7 +347,6 @@ table td {
   font-weight: 650;
 }
 
-
 /* Recette transverse — boutons dimensionnés sur leur libellé.
    Les CTA ne doivent plus s'étirer sur toute une grille simplement parce que
    le conteneur utilise le comportement stretch par défaut. */
@@ -375,7 +371,6 @@ table td {
   width: 100%;
   justify-self: stretch;
 }
-
 
 /* Passe transverse — boutons compacts, aide contextuelle et hiérarchie des formulaires. */
 .content-area :is(.primary-button, .secondary-button, .danger-button) {
@@ -505,8 +500,7 @@ table td {
 .content-area :is(
   .status-pill,
   .catalog-status,
-  .quote-status,
-  .prospect-directory-status
+  .quote-status
 ) {
   font-weight: 650 !important;
 }
@@ -588,7 +582,6 @@ table td {
 :root[data-theme='noir'] .clients-table tbody tr[class*='client-relationship-'] > td {
   color: var(--text) !important;
 }
-
 
 :root[data-theme='noir'] .prospect-ready-yes,
 :root[data-theme='noir'] .research-status-ok {
@@ -675,9 +668,6 @@ table td {
   .qualification-recap,
   .prospect-missing-actions
 ) {
-  color: var(--text) !important;
-}
-:root[data-theme='noir'] .prospect-detail-v2 .prospect-temperature-control label {
   color: var(--text) !important;
 }
 
@@ -827,8 +817,6 @@ table td {
 .renderer-fatal-card .secondary-button {
   justify-self: start;
 }
-
-
 
 /* Responsive Prospection — même logique de densité que Interventions / Maintenance. */
 
@@ -1004,7 +992,6 @@ table td {
   }
 }
 
-
 /* Historique Prospection — layout indépendant du séparateur Annuaire/Pipeline. */
 .history-view-stack .prospects-layout.with-detail {
   grid-template-columns: minmax(0, 1fr) clamp(320px, 32vw, 500px) !important;
@@ -1039,7 +1026,6 @@ table td {
     overflow: visible !important;
   }
 }
-
 
 /* Responsive Clients — même atelier adaptatif que Prospection / Interventions. */
 .clients-layout {
@@ -1171,7 +1157,6 @@ table td {
     flex-direction: column;
   }
 }
-
 
 /* Prospection — densité verticale adaptative et tableau qui absorbe l'espace disponible. */
 .content-area:has(.prospects-v2) {

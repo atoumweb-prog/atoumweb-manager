@@ -43,6 +43,7 @@ import { FieldHelp } from '../ui/FieldHelp';
 import { displayWebUrl } from '../../shared/webUrl';
 import { CrmIdentityAssetEditor, CrmIdentityAvatar } from './CrmIdentityVisual';
 import { OperationIcon } from '../operations/OperationIcon';
+import { PageHeader } from '../ui/PageHeader';
 
 const STATUS_LABELS: Record<ClientStatus, string> = {
   active: 'Actif',
@@ -626,9 +627,8 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
 
   return (
     <div className="crm-stack clients-v2">
-      <header className="module-toolbar client-toolbar"><div className="client-heading"><h1><OperationIcon name="users"/>Clients</h1>
-        <div className="client-list-count"><strong>{filtered.length}</strong><span> client{filtered.length > 1 ? 's' : ''}</span></div>          <button className={showForm ? 'secondary-button' : 'primary-button'} type="button" onClick={() => showForm?clientCreateGuard.request(()=>setShowForm(false)):setShowForm(true)}>{showForm ? 'Fermer' : '+ Nouveau client'}</button>
-        </div><div className="toolbar-controls">
+      <PageHeader icon={<OperationIcon name="users"/>} title="Clients" meta={<><strong>{filtered.length}</strong> client{filtered.length > 1 ? 's' : ''}</>} actions={<button className={showForm ? 'secondary-button' : 'primary-button'} type="button" onClick={() => showForm?clientCreateGuard.request(()=>setShowForm(false)):setShowForm(true)}>{showForm ? 'Fermer' : '+ Nouveau client'}</button>}/>
+      <header className="module-toolbar client-toolbar"><div className="toolbar-controls">
           <button className="secondary-button" type="button" disabled={loading} onClick={() => void refreshAll()}><OperationIcon name="refresh"/>{loading ? 'Actualisation…' : 'Actualiser'}</button>
           <input aria-label="Rechercher les clients" className="inline-search" placeholder="Rechercher un client…" value={query} onChange={(e) => setQuery(e.target.value)} />
           <select aria-label="Filtrer les clients par statut" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | ClientStatus)}>

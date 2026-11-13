@@ -427,7 +427,7 @@ function App() {
 
 
         <section className={`content-area ${activePage === 'Accueil' ? 'home-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' || activePage === 'Sites' ? 'workspace-content' : ''} ${activePage === 'Projets' ? 'projects-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' ? 'library-workspace-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' && libraryHeaderCollapsed ? 'library-header-collapsed' : ''}`}>
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && <PageHeader icon={<OperationIcon name={NAVIGATION_MODULES.find(item=>item.key===activePage)!.icon}/>} title={activePage} help={PAGE_HINTS[activePage]} />}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && <PageHeader icon={<OperationIcon name={NAVIGATION_MODULES.find(item=>item.key===activePage)!.icon}/>} title={activePage} help={PAGE_HINTS[activePage]} />}
           {message && <div className={`notice ${messageAction?.message === message ? 'is-actionable' : ''}`} role="status">
             {messageAction?.message === message
               ? <button className="notice-action" type="button" onClick={messageAction.run}><span>{message}</span><small>Ouvrir dans l’Explorateur</small></button>

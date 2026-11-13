@@ -21,7 +21,7 @@
 .app-shell .prospects-v2 .client-name-cell small{display:block;color:var(--muted);margin-top:3px}
 .app-shell .prospects-v2 .prospect-temperature-dot{display:inline-block;width:8px;height:8px;border:1px solid currentColor;border-radius:50%;background:var(--prospect-temperature-color);vertical-align:middle}
 .app-shell .prospects-v2 .hot{--prospect-temperature-color:#D62828}.app-shell .prospects-v2 .warm{--prospect-temperature-color:#F2B705}.app-shell .prospects-v2 .cold{--prospect-temperature-color:#1565C0}.app-shell .prospects-v2 .neutral{--prospect-temperature-color:#198754}
-.app-shell .prospects-v2 .prospect-directory-status{background:var(--surface-soft);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 7px;font-weight:500}
+
 .app-shell .prospects-v2 .aw-table-preferences{margin-bottom:8px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px}
 .app-shell .prospects-v2 .aw-table-preferences>summary{display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600}
 .app-shell .prospects-v2 .aw-table-preferences>summary span{margin-left:auto;color:var(--muted);font-size:var(--ui-font-secondary);font-weight:400}
@@ -47,11 +47,7 @@
 .app-shell .prospects-v2 .prospect-detail-v2 .detail-panel-heading{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important}
 .app-shell .prospects-v2 .detail-panel-heading :is(h2,.eyebrow){color:var(--text)!important}
 .app-shell .prospects-v2 .client-name-cell strong,.app-shell .prospects-v2 .prospect-view-switch button,.app-shell .prospects-v2 .aw-data-table .aw-ui-button-label{font-size:var(--ui-font-primary)}
-.app-shell .prospects-v2 .client-name-cell small,.app-shell .prospects-v2 .prospect-directory-status{font-size:var(--ui-font-secondary)}
-.app-shell .content-area:has(.prospects-v2)>.page-heading{margin-bottom:14px;align-items:center}
-.app-shell .content-area:has(.prospects-v2)>.page-heading .eyebrow{display:none}
-.app-shell .content-area:has(.prospects-v2)>.page-heading h1{font-size:24px!important;display:inline-block;margin:0 8px 0 0}
-.app-shell .content-area:has(.prospects-v2){padding-top:20px}
+.app-shell .prospects-v2 .client-name-cell small{font-size:var(--ui-font-secondary)}
 .app-shell .prospects-v2 .prospect-card.prospect-temperature-hot{--prospect-temperature-color:#D62828}
 .app-shell .prospects-v2 .prospect-card.prospect-temperature-warm{--prospect-temperature-color:#F2B705}
 .app-shell .prospects-v2 .prospect-card.prospect-temperature-cold{--prospect-temperature-color:#1565C0}
@@ -59,9 +55,6 @@
 
 .app-shell .prospects-v2 :is(small,.eyebrow,.prospect-card-step,.prospect-work-accordion-summary){font-size:var(--ui-font-secondary)!important}
 .app-shell .prospects-v2 .prospect-desk-content{align-content:start;gap:12px}
-.app-shell .prospects-v2 .prospect-temperature-control{margin:0;justify-content:flex-start}
-.app-shell .prospects-v2 .prospect-temperature-control label{display:flex;align-items:center;gap:10px;color:var(--muted)}
-.app-shell .prospects-v2 .prospect-temperature-control select{min-width:140px}
 
 /* Complete-source indication stays visible in the preferences summary;
    the full table caption remains available to assistive technology. */
