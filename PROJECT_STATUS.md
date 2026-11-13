@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 13/11/2026 — Document de référence de la refonte : docs/refonte/DESIGN.md
+
+- [x] **`docs/refonte/DESIGN.md` est le document de référence unique de la refonte visuelle et ergonomique du Manager** (objectif, état des lieux du code, décisions, spécification UX/UI décidée). Il reprend intégralement l'ancien `docs/ux-v2/DESIGN-SYSTEM.md`, désormais réduit à un renvoi (liens existants préservés). Rédigé selon les décisions de Carlos du 13/11/2026 ; le contenu complet de la partie A est à relire par lui.
+- Objectif de la refonte : priorité 1 ergonomie (moins de clics, parcours clairs, information et action utiles immédiates) ; priorité 2 style moderne, soigné, non générique ; le fond (données, règles métier, parcours Prospect → Devis → Projet) ne change pas sans validation de Carlos.
+- Décisions du 13/11/2026 : thème de référence **Noir / Confort**, AtoumWeb et Blanc alignés ensuite ; **Inter embarquée** (licence SIL OFL 1.1 vérifiée, voir le document) ; **tokens sémantiques** (succès, alerte, danger, info, accent) par thème **avant** toute refonte d'écran.
+- Ce qui est validé : lot UX 1 (Accueil, en-tête, rail, Noir/Confort), validé par Carlos le 03/11/2026 après revue AVANT/APRÈS. Les lots 1 à 6 de fonctionnalités (branches `claude/lot1…lot6`) n'ont **pas encore été testés** par Carlos.
+- [ ] Reste à décider : l'ordre des lots de la refonte.
+- [ ] Non réalisé : embarquement d'Inter, définition des tokens sémantiques, toute modification de CSS ou d'écran. Cette mise à jour est documentaire et ne modifie aucun code, donnée ou règle métier.
+- Skills de travail (branche `claude/refonte-manager`) : `atoumweb-design` (dérivé d'Impeccable, Apache-2.0, sans binaire), `atoumweb-briques-divi5`, `find-skills`.
+- Prochaine action : décision de Carlos sur l'ordre des lots, puis définition des tokens sémantiques avant tout écran.
+
 ## 11/11/2026 — Temps proposés et aide à la vente
 
 128 aides éditoriales préparées et raccordées aux brouillons dans validate-v1.cjs. Aperçu sur copie TEMP : 128 complètes, dix versions figées signalées sans modification. UI Electron sur fixture synthétique : 265 contrôles réussis, onglet vitrine vérifié. Typecheck et 1 941 tests réussis/1 ignoré. Aucun --apply sur copie de préproduction, aucune écriture préproduction ni commit/push. Rapport et limites : docs/AUDIT-TEMPS-AIDE-VENTE-20261111.md. Comparaison des temps : écart catalogue/modèles opérationnels et routine maintenance à arbitrer ; écran prévu/réel seulement proposé. Prochaine étape : relecture éditoriale et décisions sur versions figées et référence de temps.
