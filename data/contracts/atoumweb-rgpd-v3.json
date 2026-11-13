@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reference": "Accord de protection des données AtoumWeb — V3 — 1er novembre 2026",
+  "reference": "Accord de protection des données AtoumWeb, V3, 1er novembre 2026",
   "source": {
     "filename": "AtoumWeb_Accord_RGPD_V3.docx",
     "sha256": "7c646476c7f35e73d1681f2dad602994873c018048a98ecce086cddd7b07b51f",
@@ -32,15 +32,15 @@
       "rows": [
         [
           "Le client",
-          "[Nom / raison sociale] — [adresse] — [contact pour les données personnelles]"
+          "[Nom / raison sociale], [adresse], [contact pour les données personnelles]"
         ],
         [
           "AtoumWeb",
-          "Carlos Filipe Rafael Brochado Da Silva, entrepreneur individuel (AtoumWeb) — SIREN 938 790 607 — 9 rue du Breuil, 21440 Vaux-Saules — agence@atoumweb.fr"
+          "Carlos Filipe Rafael Brochado Da Silva, entrepreneur individuel (AtoumWeb), SIREN 938 790 607, 9 rue du Breuil, 21440 Vaux-Saules, agence@atoumweb.fr"
         ],
         [
           "Contrat concerné",
-          "Devis / contrat n° [référence] du [date] — Site : [nom de domaine]"
+          "Devis / contrat n° [référence] du [date]. Site : [nom de domaine]"
         ],
         [
           "Entrée en vigueur",
@@ -196,7 +196,7 @@
     {
       "type": "paragraph",
       "style": "Heading1",
-      "text": "FICHE A — VOTRE SITE ET LES DONNÉES CONCERNÉES"
+      "text": "FICHE A : VOTRE SITE ET LES DONNÉES CONCERNÉES"
     },
     {
       "type": "paragraph",
@@ -208,7 +208,7 @@
       "rows": [
         [
           "Site / référence",
-          "[domaine]  —  [numéro de devis / contrat]"
+          "[domaine], [numéro de devis / contrat]"
         ],
         [
           "Prestation",
@@ -244,7 +244,7 @@
         ],
         [
           "Durée et instructions",
-          "Début : [date] — Jusqu’à : [date / événement prévu au contrat]. Instructions particulières : [référence / descriptif]"
+          "Début : [date]. Jusqu’à : [date / événement prévu au contrat]. Instructions particulières : [référence / descriptif]"
         ],
         [
           "Contact du client pour un incident",
@@ -255,7 +255,7 @@
     {
       "type": "paragraph",
       "style": "Heading1",
-      "text": "FICHE B — SÉCURITÉ, SAUVEGARDES ET PRESTATAIRES"
+      "text": "FICHE B : SÉCURITÉ, SAUVEGARDES ET PRESTATAIRES"
     },
     {
       "type": "paragraph",
@@ -291,7 +291,7 @@
         ],
         [
           "Pays et transferts",
-          "Hébergement principal : France, selon les informations d’o2switch. Autres services et éventuels transferts hors Espace économique européen : ☐ Aucun pour ce site (à cocher uniquement après vérification de tous les services utilisés, notamment formulaires, messagerie, statistiques et paiement)    ☐ Oui — prestataires, pays et garanties : __________________________"
+          "Hébergement principal : France, selon les informations d’o2switch. Autres services et éventuels transferts hors Espace économique européen : ☐ Aucun pour ce site (à cocher uniquement après vérification de tous les services utilisés, notamment formulaires, messagerie, statistiques et paiement)    ☐ Oui : prestataires, pays et garanties : __________________________"
         ],
         [
           "Contact et incidents",
