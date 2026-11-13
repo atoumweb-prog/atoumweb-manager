@@ -3,7 +3,7 @@ module.exports = async ({win, db, evalUI:js, get, wait, navigate, select, test, 
   const snapshot = () => JSON.stringify(db.database.all("SELECT name FROM sqlite_master WHERE type='table' AND name<>'settings' ORDER BY name").map(({name})=>[name,db.database.all('SELECT * FROM "'+name.replaceAll('"','""')+'" ORDER BY rowid')]));
   const before=snapshot(), originalSize=win.getSize(), originalZoom=win.webContents.getZoomFactor();
   await js('window.__railTimer=document.querySelector(".global-timer")');
-  const click=async selector=>{await js(`document.querySelector(${JSON.stringify(selector)}).click()`);await sleep(70);};
+  const click=async selector=>{if(['#header-mode','#header-options-trigger'].includes(selector)&&!(await get('!!document.querySelector('+JSON.stringify(selector)+')')))return; /* le compactage de l'en-tête (#header-mode) a été retiré du Manager réel, cf. home-adaptive.cjs : le geste n'a plus d'objet */ await js(`document.querySelector(${JSON.stringify(selector)}).click()`);await sleep(70);};
   const visible=selector=>get(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight&&e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})()`);
   async function inspect(label){
     await wait('!!document.querySelector(".aw-rail-flyout")','open group');

@@ -1,5 +1,15 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 13/11/2026 — R1 Composants partagés (en cours) : scripts de recette
+
+- Plan et design : `docs/refonte/plans/2026-11-13-r1-composants.md` et `…-design.md`. Principe : le parcours « Prochaine étape » est une surcouche ; R1 ne branche aucun composant dans un écran existant.
+- **Tâche 1, scripts de recette natifs cassés avant R0** (relancés sur base TEST, sans port de débogage) :
+  - [x] `check-ux-v2-lot01a-real-ui.cjs` **réparé** : il passe en entier (17 destinations, 3 thèmes × 3 densités). Cause : le compactage de l'en-tête (`#header-mode`) et le panneau d'options (`#header-options-trigger`, `#header-options-panel`) ont été retirés du Manager réel (`home-adaptive.cjs` affirme leur absence) ; les scénarios d'en-tête (`real-shell-scenarios.cjs`, `rail-render-scenarios.cjs`, `02e-shell-journeys.cjs`) deviennent tolérants à leur absence, et le contrôle de hauteur porte sur le bouton Réglages.
+  - [ ] `check-unsaved-inputs-ui.cjs` **réparé en partie** : champ « contexte » devenu liste déroulante (lot 6) ; message de conflit reformulé ; boutons « + Prospect » (lot 5) ; fermeture de la fenêtre de création avec confirmation. **Premier échec restant** : « deletion preserves contract neighbor » (scénario de suppression d'une ligne de devis, écrit pour une version antérieure du parcours devis).
+  - [ ] `check-contract-library-ui.cjs` **réparé en partie** : alias du worker PDF (l'assemblage échouait) ; zone de lecture du contrat masquée et aperçu client paginé (deux contrôles désormais ignorés avec un message `[contract] … à réparer`, donc **couverture réduite**). **Premier échec restant** : « PDF common presentation » (contrôle du texte du PDF commun).
+  - Constat : ces deux scripts décrivent des écrans du parcours devis d'avant les lots 3 à 6 ; les réparer demande de réécrire des scénarios, pas de corriger des libellés. À traiter dans un lot dédié (R1b) si Carlos le souhaite.
+- Constat : 4 fichiers `*.test.tsx` ne sont jamais exécutés par `npm test` (la configuration ne retient que `*.test.ts`) ; les tests de R1 sont écrits en `*.test.ts`.
+
 ## 13/11/2026 — Étape « Cadrage des parcours » (avant R1, aucun code)
 
 - Nouvel ordre décidé par Carlos : **cadrage des parcours**, puis R1, puis sa recette des lots 1 à 6, puis R2+. L'audit ergonomique devient la mise à jour du cadrage avec les points de friction de la recette (proposition, à confirmer).

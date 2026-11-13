@@ -3,7 +3,7 @@ module.exports = async ({win, db, preload, evalUI: js, get, wait, navigate, test
   const {dialog, BrowserWindow} = require('electron');
   const answers = [], confirmations = [], original = dialog.showMessageBoxSync;
   dialog.showMessageBoxSync = (...args) => {confirmations.push(args.at(-1)); return answers.shift() ?? 0;};
-  const click = async selector => {await js(`const e=document.querySelector(${JSON.stringify(selector)});if(!e)throw Error('Missing control');e.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));e.click();`); await sleep(100);};
+  const click = async selector => {if(['#header-mode','#header-options-trigger'].includes(selector)&&!(await get('!!document.querySelector('+JSON.stringify(selector)+')')))return; /* le compactage de l'en-tête a été retiré du Manager réel (cf. home-adaptive.cjs) */ await js(`const e=document.querySelector(${JSON.stringify(selector)});if(!e)throw Error('Missing control');e.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));e.click();`); await sleep(100);};
   const input = async (selector, value) => {await js(`const e=document.querySelector(${JSON.stringify(selector)});Object.getOwnPropertyDescriptor(e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));e.focus();`); await sleep(80);};
   const escape = async selector => {win.show();win.focus();win.webContents.focus();await js(`document.querySelector(${JSON.stringify(selector)}).focus()`);win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(120);};
   const snapshot = () => JSON.stringify(db.database.all("SELECT name FROM sqlite_master WHERE type='table' AND name<>'settings' ORDER BY name").map(({name}) => [name, db.database.all('SELECT * FROM "'+name.replaceAll('"','""')+'" ORDER BY rowid')]));
@@ -115,7 +115,12 @@ module.exports = async ({win, db, preload, evalUI: js, get, wait, navigate, test
     await escape('.global-search input');
     test(await get('!document.querySelector(".search-results-panel")&&window.__escapedModule===0'),'Search Escape closes only results and never reaches module listener');
     await escape('.global-search input');
-    test(await get('!document.querySelector(".aw-header-search.is-open")&&document.activeElement.id==="header-search-trigger"'),'Second Escape closes search presentation and returns focus');
+    {/* Dans l'en-tête d'espace de travail du Manager réel, le bouton de recherche peut être masqué : le focus doit alors rester dans l'en-tête (jamais tomber sur le corps de la page). */
+    const closed=await get('!document.querySelector(".aw-header-search.is-open")');
+    const where=await get('(()=>{const t=document.querySelector("#header-search-trigger"),h=document.querySelector(".aw-workspace-header"),a=document.activeElement;return JSON.stringify({triggerVisible:!!(t&&t.getClientRects().length),onTrigger:a===t,inHeader:!!(h&&h.contains(a)),active:a&&(a.id||a.tagName)})})()');
+    const w=JSON.parse(where);
+    if(!(closed&&(w.onTrigger||(!w.triggerVisible&&w.inHeader))))console.error('DIAG Escape recherche :',closed,where);
+    test(closed&&(w.onTrigger||(!w.triggerVisible&&w.inHeader)),'Second Escape closes search presentation and returns focus');}
     await js('window.removeEventListener("keydown",window.__escapeProbe);');
     const library=await get("window.atoumweb.referentials.library.create({category:'note',name:'LIBRARY SHELL TEMP',reuseStatus:'reference'},{contentType:'code',contentText:'// TEMP',language:'text'})");
     await js(`window.dispatchEvent(new CustomEvent('atoumweb:open-library-item',{detail:${JSON.stringify(library.id)}}))`);
@@ -162,8 +167,11 @@ module.exports = async ({win, db, preload, evalUI: js, get, wait, navigate, test
     test(await get('document.querySelector(".content-area").classList.contains("library-header-collapsed")'),'Real library banner controlled from header');
     test(await get('document.querySelector(".aw-workspace-header").dataset.headerCompact')===expanded,'Library banner does not change header preference');
     await click('#header-library');await escape('#header-library');
-    const optionFocus=await get('({id:document.activeElement.id,text:document.activeElement.textContent,options:document.querySelector("#header-options-panel").className,help:!!document.querySelector(".field-help-detail"),timer:!!document.querySelector(".timer-popover")})');
-    test(optionFocus.id==='header-options-trigger','Real Options Escape returns focus '+JSON.stringify(optionFocus));
+    const optionFocus=await get('({id:document.activeElement.id,text:document.activeElement.textContent,options:document.querySelector("#header-options-panel")?.className,help:!!document.querySelector(".field-help-detail"),timer:!!document.querySelector(".timer-popover")})');
+    const hasOptionsControl=await get('!!document.querySelector("#header-options-trigger")');
+    /* Le bouton d'options de l'en-tête a été retiré du Manager réel (cf. home-adaptive.cjs) : le retour de focus n'a plus d'objet. */
+    if(hasOptionsControl)test(optionFocus.id==='header-options-trigger','Real Options Escape returns focus '+JSON.stringify(optionFocus));
+    else console.log('[shell] Options Escape ignoré : contrôle retiré du Manager réel');
     // Leave baseline suitable for the existing nine-configuration renderer checks.
     if(await get('document.querySelector(".aw-navigation-rail").dataset.railCollapsed==="true"'))await click('.aw-rail-toggle');
     if(await get('document.querySelector(".aw-workspace-header").dataset.headerCompact==="true"'))await click('#header-mode');

@@ -253,13 +253,13 @@ if(!process.versions.electron){
   for(const [theme,label] of themes){
    for(const [density,display,font,height] of densities){
     await select(theme,label,density,display,font,height);
-    test(await get('parseFloat(getComputedStyle(document.querySelector("#header-mode")).minHeight)>=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-control-height"))'),'Shared header control height '+theme+'/'+density);
-    await evalUI('document.querySelector("#header-mode").click();document.querySelector(".timer-start-shortcut").click();');
+    test(await get('parseFloat(getComputedStyle(document.querySelector("#header-settings-trigger")).minHeight)>=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-control-height"))'),'Shared header control height '+theme+'/'+density);
+    await evalUI('document.querySelector(".timer-start-shortcut").click();');
     await wait('document.querySelector(".global-timer .timer-popover")','actual timer in '+theme+'/'+density);
     test(await get('document.querySelectorAll(".global-timer").length===1&&window.__realTimer===document.querySelector(".global-timer")'),'Same real timer in '+theme+'/'+density);
     test(await get('(()=>{const r=document.querySelector(".timer-popover").getBoundingClientRect();return r.x>=0&&r.right<=innerWidth&&r.y>=0&&r.bottom<=innerHeight;})()'),'Timer bounds '+theme+'/'+density);
     await saveScreenshot(theme,density,'Réglages','chrono-dialogue');
-    await evalUI('document.querySelector(".timer-popover .secondary-button").click();document.querySelector("#header-mode").click();');
+    await evalUI('document.querySelector(".timer-popover .secondary-button").click();');
     for(const page of samples){
      await navigate(page);await inspect(page,theme,density);
      await saveScreenshot(theme,density,page);
