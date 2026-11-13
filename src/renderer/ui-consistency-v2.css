@@ -1404,13 +1404,6 @@ table td {
 .quote-totals span {font-size:15px;}
 .quote-total-main strong {font-size:22px;}
 
-/* Supplanter les tailles historiques de 8/9 px dans les cartes commerciales. */
-.prospect-detail-v2 .need-solution-card .need-name {font-size:18px;line-height:1.4;}
-.prospect-detail-v2 .need-solution-card .need-price {font-size:16px;}
-.quote-line strong {font-size:17px;}
-.quote-totals strong {font-size:17px;}
-.quote-total-main strong {font-size:22px;}
-
 /* UX/UI V2 — 01A / R01A-07 : contrastes mesurés en Chromium sur les états.
    Corrige uniquement les 4 couples texte/fond sous 4,5:1 observés le 10/10/2026.
    Les tokens --success et les couleurs métier/prospect restent inchangés. */

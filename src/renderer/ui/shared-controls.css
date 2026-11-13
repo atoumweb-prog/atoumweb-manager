@@ -1,8 +1,8 @@
 /* Contrôles partagés aw-ui-* (boutons, champs, notices) : extraits de ui-consistency-v2.css au lot R1.
-   Couleurs d'erreur, d'alerte et de succès sur les jetons de tokens.css (--aw-*), plus aucune valeur écrite en dur
-   et aucun !important (garde-fou : ui/importantBudget.test.ts). Importé juste après ui-consistency-v2.css : même ordre
-   dans la cascade qu'avant l'extraction. Seul changement visible voulu : la teinte des états d'erreur, d'alerte
-   et de succès suit désormais les jetons du thème. */
+   Couleurs d'erreur et de danger sur les jetons de tokens.css (--aw-danger-*) ; succès et alerte gardent leurs teintes d'origine ;
+   plus aucune valeur de couleur écrite en dur et aucun !important (garde-fou : ui/importantBudget.test.ts). Importé juste après ui-consistency-v2.css : même ordre
+   dans la cascade qu'avant l'extraction. Seul changement visible voulu : la teinte des états d'erreur et du bouton danger suit désormais
+   les jetons du thème. */
 
 /* UX/UI V2 — 01B.2 pilot presentation primitives.
    New aw-ui-* classes only; historical module button and field classes unchanged.
@@ -58,9 +58,9 @@
 }
 
 :is(.content-area, .aw-workspace-header) .aw-ui-button--danger {
-  background: var(--aw-danger-soft-bg);
-  border-color: var(--aw-danger-solid);
-  color: var(--aw-danger-soft-fg);
+  background: color-mix(in srgb, var(--aw-danger-solid) 8%, var(--surface));
+  border-color: color-mix(in srgb, var(--aw-danger-solid) 68%, var(--border));
+  color: var(--text);
 }
 
 :is(.content-area, .aw-workspace-header) .aw-ui-button:not(:disabled):hover {
@@ -178,11 +178,11 @@
 }
 
 .content-area .aw-ui-notice--success {
-  border-left-color: var(--aw-success-solid);
+  border-left-color: var(--success);
 }
 
 .content-area .aw-ui-notice--warning {
-  border-left-color: var(--aw-warning-solid);
+  border-left-color: var(--aw-status-yellow-fg, var(--accent-strong));
 }
 
 .content-area .aw-ui-notice--error {

@@ -12,6 +12,13 @@
   box-shadow: none;
 }
 
+/* Texte atténué lisible sur les surfaces teintées (--muted tombe sous 4,5 sur --surface-soft en AtoumWeb). */
+.aw-status-pill,
+.aw-next-step,
+.aw-record-header {
+  --aw-quiet-text: color-mix(in srgb, var(--text) 80%, var(--surface));
+}
+
 /* ---- Pastille d'état */
 .aw-status-pill {
   display: inline-flex;
@@ -21,7 +28,7 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--surface-soft);
-  color: var(--muted);
+  color: var(--aw-quiet-text);
   font-size: max(14px, var(--ui-font-small));
   font-weight: 650;
   line-height: 1.3;
@@ -52,11 +59,11 @@
   font-weight: 700;
   line-height: 1.3;
 }
-.aw-next-step-prefix { color: var(--muted); font-weight: 600; }
-.aw-next-step-prefix::after { content: " :"; }
+.aw-next-step-prefix { color: var(--aw-quiet-text); font-weight: 600; }
+.aw-next-step-prefix::after { content: "\00a0:"; }
 .aw-next-step-reason {
   margin: 0;
-  color: var(--muted);
+  color: var(--aw-quiet-text);
   font-size: max(14px, var(--ui-font-secondary));
   line-height: 1.45;
 }
@@ -105,7 +112,7 @@
   cursor: pointer;
 }
 .aw-more-menu-item:hover:not(:disabled) { background: var(--surface-soft); }
-.aw-more-menu-item:focus-visible { outline: 2px solid var(--aw-accent-solid); outline-offset: -2px; background: var(--surface-soft); }
+.aw-more-menu-item:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: -2px; background: var(--surface-soft); }
 .aw-more-menu-item--danger { color: var(--aw-danger-soft-fg); }
 .aw-more-menu-item:disabled { opacity: .5; cursor: not-allowed; }
 
@@ -120,6 +127,6 @@
 }
 .aw-record-header-main { min-width: 0; flex: 1 1 260px; }
 .aw-record-header-title { margin: 0; font-size: max(22px, calc(var(--ui-font-base) * 1.5)); line-height: 1.25; overflow-wrap: anywhere; }
-.aw-record-header-subtitle { margin: 4px 0 0; color: var(--muted); font-size: max(14px, var(--ui-font-secondary)); }
+.aw-record-header-subtitle { margin: 4px 0 0; color: var(--aw-quiet-text); font-size: max(14px, var(--ui-font-secondary)); }
 .aw-record-header-side { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-gap); }
 .aw-record-header-next { flex: 1 1 100%; min-width: 0; }

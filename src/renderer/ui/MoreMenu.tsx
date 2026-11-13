@@ -5,7 +5,7 @@ import { firstEnabledIndex, initialMenuState, nextMenuState, type MenuEvent, typ
  * Bouton « Plus » : range les actions secondaires à un clic, sans rien supprimer.
  * Sémantique de menu (`aria-haspopup`, `aria-expanded`, rôles `menu` et `menuitem`), clavier complet,
  * Échap referme et rend le focus au bouton. Aucune règle métier : l'appelant reçoit l'identifiant choisi.
- * `initialOpen` sert aux tests de rendu et aux démonstrations.
+ * `initialOpen` sert uniquement aux tests de rendu et aux démonstrations : il donne le focus au premier élément dès le montage.
  */
 export function MoreMenu({ items, onSelect, label = 'Plus', initialOpen = false, align = 'end', className }: {
   items: MenuItem[];
@@ -47,6 +47,7 @@ export function MoreMenu({ items, onSelect, label = 'Plus', initialOpen = false,
       className="aw-ui-button aw-ui-button--secondary aw-more-menu-trigger"
       aria-haspopup="menu"
       aria-expanded={state.open}
+      disabled={firstEnabledIndex(items) < 0}
       onClick={() => apply({ type: 'toggle' })}
       onKeyDown={(event) => {
         if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -62,6 +63,8 @@ export function MoreMenu({ items, onSelect, label = 'Plus', initialOpen = false,
       onKeyDown={(event) => {
         if (['ArrowDown', 'ArrowUp', 'Home', 'End', 'Escape', 'Tab', 'Enter', ' '].includes(event.key)) {
           if (event.key !== 'Tab') event.preventDefault();
+          // Échap ne doit pas remonter aux écouteurs globaux des fiches (fermeture de la fiche, confirmation de saisie).
+          if (event.key === 'Escape') event.stopPropagation();
           apply({ type: 'key', key: event.key });
         }
       }}

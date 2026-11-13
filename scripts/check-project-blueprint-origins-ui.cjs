@@ -35,7 +35,7 @@ if(!process.versions.electron){
   const pause=()=>new Promise(resolve=>setTimeout(resolve,100));
   for(const theme of ['blanc','noir','atoumweb']){
    await win.webContents.executeJavaScript('window.show('+JSON.stringify(theme)+')');await pause();
-   const actual=await win.webContents.executeJavaScript('({text:document.body.innerText,styled:getComputedStyle(document.body).fontFamily.includes("Inter")&&getComputedStyle(document.body).backgroundColor!=="rgba(0, 0, 0, 0)",aside:!!document.querySelector(\'aside[aria-label="Origine dans le devis"]\')})');
+   const actual=await win.webContents.executeJavaScript('({text:document.body.innerText,styled:getComputedStyle(document.body).fontFamily.includes("Segoe UI")&&getComputedStyle(document.body).backgroundColor!=="rgba(0, 0, 0, 0)",aside:!!document.querySelector(\'aside[aria-label="Origine dans le devis"]\')})');
    for(const [name,passed] of [['Thème et styles chargés',actual.styled],['Libellé lisible',actual.text.includes('Page supplémentaire')],['Achat explicite',actual.text.includes('option achetée')],['Quantité vendue conservée',actual.text.includes('quantité vendue : 2')],['Unité exacte',actual.text.includes('unité 2')],['Identifiants techniques non affichés',!actual.text.includes('not-visible')],['Origine accessible',actual.aside]])
     checks.push({name:theme+' — '+name,passed});
    fs.writeFileSync(path.join(output,'ui-origins-'+theme+'.png'),(await win.webContents.capturePage()).toPNG());

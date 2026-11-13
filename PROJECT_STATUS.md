@@ -1,7 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
-## 13/11/2026 — R1 Composants partagés (en cours) : scripts de recette
+## 13/11/2026 : R1 Composants partagés
 
+- **Tâche 2, composants « Prochaine étape »** (commit `2f7c6b0a`) : `StatusPill`, `NextStepCard`, `MoreMenu` (modèle de clavier pur), `RecordHeader` dans `src/renderer/ui/`, alignés sur les tokens, **non branchés dans un écran**. Tests : 39 (modèle du menu, rendu statique, discipline CSS). Le câblage du menu (focus, Échap, clic extérieur) est relu dans le code mais **non exécuté** : vitest tourne sans DOM, à couvrir au branchement par le banc natif. Accent plein du thème Blanc corrigé (`#92733f` vers `#90713e`, contraste 4,55) : plus d'exception de contraste.
+- **Tâche 3, contrôles partagés et `!important`** (commit `5ab6638d`) : le bloc `aw-ui-*` (boutons, champs, notices) passe de `ui-consistency-v2.css` à `ui/shared-controls.css`, même ordre de cascade ; couleurs d'erreur et du bouton danger sur `--aw-danger-*` (seul changement visible voulu), succès et alerte inchangés. `!important` de `ui-consistency-v2.css` : 104 vers 99 (les cinq lignes concernées étaient des doublons et sont supprimées). Tailles calculées des lignes de devis et des boutons mesurées dans l'application avant et après : identiques.
+- **Relecture indépendante de R1** : aucun constat critique. Corrigés : Échap du menu qui remontait aux écouteurs globaux des fiches, couleurs hors périmètre déplacées par erreur, contraste du texte atténué (jeton local lisible), bouton « Plus » désactivé sans élément actif, `role="alert"` pour une alerte de blocage, clés et espace insécable. Deux scripts de recette (`check-project-blueprint-origins-ui.cjs`, `check-project-provisional-ui.cjs`) exigeaient la police Inter, cassés par R0 : ils acceptent « Segoe UI ».
+- **Couverture réduite à connaître** : dans `check-unsaved-inputs-ui.cjs` « conflict message present » lit `textContent` (le texte peut être masqué) et « closing with a draft asks and stays » ne vérifie plus le masquage du formulaire ; dans `check-contract-library-ui.cjs`, le défilement est vérifié sur une zone raccourcie par le script et deux contrôles sont ignorés avec un message.
+- **Dette notée, hors R1** : `check-ux-v2-lot01b-*` exigent 31 imports CSS (36 aujourd'hui) ; `check-ux-v2-lot01a-typography.cjs` refuse tout chemin CSS contenant « / » ; `.quote-line small` fait 12 px alors que la règle du produit interdit moins de 14 px (versé à l'audit ergonomique).
+- **Seuils d'échéancier** : voir l'entrée « Seuils » de la section « Cadrage » ci-dessous (réponse de Carlos du 13/11, lecture à confirmer).
 - Plan et design : `docs/refonte/plans/2026-11-13-r1-composants.md` et `…-design.md`. Principe : le parcours « Prochaine étape » est une surcouche ; R1 ne branche aucun composant dans un écran existant.
 - **Tâche 1, scripts de recette natifs cassés avant R0** (relancés sur base TEST, sans port de débogage) :
   - [x] `check-ux-v2-lot01a-real-ui.cjs` **réparé** : il passe en entier (17 destinations, 3 thèmes × 3 densités). Cause : le compactage de l'en-tête (`#header-mode`) et le panneau d'options (`#header-options-trigger`, `#header-options-panel`) ont été retirés du Manager réel (`home-adaptive.cjs` affirme leur absence) ; les scénarios d'en-tête (`real-shell-scenarios.cjs`, `rail-render-scenarios.cjs`, `02e-shell-journeys.cjs`) deviennent tolérants à leur absence, et le contrôle de hauteur porte sur le bouton Réglages.
@@ -10,7 +16,7 @@
   - Constat : ces deux scripts décrivent des écrans du parcours devis d'avant les lots 3 à 6 ; les réparer demande de réécrire des scénarios, pas de corriger des libellés. À traiter dans un lot dédié (R1b) si Carlos le souhaite.
 - Constat : 4 fichiers `*.test.tsx` ne sont jamais exécutés par `npm test` (la configuration ne retient que `*.test.ts`) ; les tests de R1 sont écrits en `*.test.ts`.
 
-## 13/11/2026 — Étape « Cadrage des parcours » (avant R1, aucun code)
+## 13/11/2026 : Étape « Cadrage des parcours » (avant R1, aucun code)
 
 - Nouvel ordre décidé par Carlos : **cadrage des parcours**, puis R1, puis sa recette des lots 1 à 6, puis R2+. L'audit ergonomique devient la mise à jour du cadrage avec les points de friction de la recette (proposition, à confirmer).
 - Principe : aucune fonctionnalité supprimée ; chemin courant court et évident, le reste à un clic. Le Manager applique le Référentiel interne V1 (`C:\DEV\Livrables\Referentiel-AtoumWeb-V1`, sources `scripts/referentiel`) et dit quoi faire ensuite sur un contact, un devis ou un projet (étapes à faire du lot 2 et méthode du lot 4, absentes du Manager aujourd'hui).
@@ -25,7 +31,7 @@
 - Ordre confirmé par Carlos : R1 enchaîne sans nouvelle maquette ; R1 = composants partagés au service de « Prochaine étape » (bloc d'action, bouton « Plus », en-tête de dossier) alignés sur les tokens, réduction des `!important` des fichiers touchés, réparation des 3 scripts de recette natifs.
 - Prochaine action : plan puis exécution de R1, tâche par tâche, un commit par tâche testée ; réponse de Carlos sur les seuils d'échéancier avant tout lot qui les applique.
 
-## 13/11/2026 — R0 Fondations : tokens, --danger et police explicite
+## 13/11/2026 : R0 Fondations, tokens, --danger et police explicite
 
 - [x] **Tokens sémantiques** : `src/renderer/tokens.css` (5 rôles × 4 variantes × 3 thèmes, `--danger` défini), importé en premier dans `main.tsx`. Accent Noir `#ffda00`, AtoumWeb `#b9965c`, Blanc `#92733f` ; `--accent`, `--success` et `--aw-status-*` inchangés. Test `tokens.test.ts` (7 tests).
 - [x] **Police explicite** : `"Segoe UI"` en tête de la pile de `styles.css`, sans fichier embarqué. Test `fontStack.test.ts` (3 tests). Inter embarquée est **abandonnée** (décision de Carlos, 13/11/2026) : voir ci-dessous.
@@ -39,7 +45,7 @@
 - Captures de référence désormais en **Noir/Confort** (AtoumWeb seulement sur demande de Carlos).
 - Prochaine action : R1 (composants partagés alignés sur les tokens, réparation des 3 scripts de recette), puis pause pour la recette des lots fonctionnels 1 à 6 par Carlos, puis audit ergonomique.
 
-## 13/11/2026 — Document de référence de la refonte : docs/refonte/DESIGN.md
+## 13/11/2026 : Document de référence de la refonte, docs/refonte/DESIGN.md
 
 - [x] **`docs/refonte/DESIGN.md` est le document de référence unique de la refonte visuelle et ergonomique du Manager** (objectif, état des lieux du code, décisions, spécification UX/UI décidée). Il reprend intégralement l'ancien `docs/ux-v2/DESIGN-SYSTEM.md`, désormais réduit à un renvoi (liens existants préservés). Rédigé selon les décisions de Carlos du 13/11/2026 ; le contenu complet de la partie A est à relire par lui.
 - Objectif de la refonte : priorité 1 ergonomie (moins de clics, parcours clairs, information et action utiles immédiates) ; priorité 2 style moderne, soigné, non générique ; le fond (données, règles métier, parcours Prospect → Devis → Projet) ne change pas sans validation de Carlos.

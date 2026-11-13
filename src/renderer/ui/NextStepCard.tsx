@@ -34,11 +34,11 @@ export function NextStepCard({ title, reason, tone = 'default', primary, seconda
   return <section className={['aw-next-step', `aw-next-step--${tone}`, className].filter(Boolean).join(' ')} aria-label="Prochaine étape">
     <h3 className="aw-next-step-title"><span className="aw-next-step-prefix">Prochaine étape</span> <span className="aw-next-step-text">{title}</span></h3>
     {reason && <p className="aw-next-step-reason">{reason}</p>}
-    {alerts.map((alert, index) => <p key={index} role="status" className={`aw-next-step-alert aw-next-step-alert--${alert.tone}`}>{alert.text}</p>)}
+    {alerts.map((alert, index) => <p key={index} role={alert.tone === 'danger' ? 'alert' : 'status'} className={`aw-next-step-alert aw-next-step-alert--${alert.tone}`}>{alert.text}</p>)}
     {children}
     {hasActions && <div className="aw-next-step-actions">
       {primary && <AppButton variant="primary" disabled={primary.disabled} onAction={primary.onAction}>{primary.label}</AppButton>}
-      {secondary.map((action) => <AppButton key={action.label} variant="secondary" disabled={action.disabled} onAction={action.onAction}>{action.label}</AppButton>)}
+      {secondary.map((action, index) => <AppButton key={`${index}-${action.label}`} variant="secondary" disabled={action.disabled} onAction={action.onAction}>{action.label}</AppButton>)}
     </div>}
   </section>;
 }

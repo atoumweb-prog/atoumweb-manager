@@ -21,6 +21,13 @@ describe('refonte : discipline CSS des fichiers nouveaux', () => {
     });
   }
 
+  it('next-step.css keeps text readable : no --muted on a tinted surface, non-breaking colon, focus ring on --accent-strong', () => {
+    const source = css('next-step.css');
+    expect(source).not.toMatch(/var\(--muted\)/);
+    expect(source).toContain(String.raw`\00a0:`);
+    expect(source).toMatch(/\.aw-more-menu-item:focus-visible\s*\{[^}]*var\(--accent-strong\)/);
+  });
+
   it('budget : ui-consistency-v2.css has at most 99 !important (104 before R1)', () => {
     expect(count(readFileSync(resolve(__dirname, '..', 'ui-consistency-v2.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, ''), /!important/g)).toBeLessThanOrEqual(99);
   });

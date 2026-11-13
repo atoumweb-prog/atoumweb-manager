@@ -55,9 +55,20 @@ describe('NextStepCard', () => {
 
   it('renders alerts with a role and a tone, text included', () => {
     const markup = html(createElement(NextStepCard, { ...base, alerts: [{ tone: 'danger', text: 'Convention de médiation non conclue : envoi bloqué.' }] }));
-    expect(markup).toContain('role="status"');
+    expect(markup).toContain('role="alert"');
     expect(markup).toContain('aw-next-step-alert--danger');
     expect(markup).toContain('Convention de médiation non conclue : envoi bloqué.');
+  });
+
+  it('uses role="alert" for a danger alert (blocking) and role="status" for the others', () => {
+    const markup = html(createElement(NextStepCard, { title: 'T', alerts: [{ tone: 'danger', text: 'Envoi bloqué.' }, { tone: 'info', text: 'Information.' }] }));
+    expect(markup).toMatch(/role="alert"[^>]*>Envoi bloqué\./);
+    expect(markup).toMatch(/role="status"[^>]*>Information\./);
+  });
+
+  it('accepts two secondary actions with the same label', () => {
+    const noop = () => undefined;
+    expect(() => html(createElement(NextStepCard, { title: 'T', secondary: [{ label: 'Voir', onAction: noop }, { label: 'Voir', onAction: noop }] }))).not.toThrow();
   });
 
   it('works without any action or reason', () => {
@@ -85,6 +96,11 @@ describe('MoreMenu', () => {
     expect(markup.match(/role="menuitem"/g)).toHaveLength(3);
     expect(markup).toContain('aw-more-menu-item--danger');
     expect(markup).toMatch(/role="menuitem"[^>]*disabled/);
+  });
+
+  it('disables the trigger when no item can be chosen', () => {
+    const none = [{ id: 'a', label: 'A', disabled: true }];
+    expect(html(createElement(MoreMenu, { items: none, onSelect: () => undefined }))).toMatch(/aria-haspopup="menu"[^>]*disabled|disabled[^>]*aria-haspopup="menu"/);
   });
 
   it('accepts another label than « Plus »', () => {
