@@ -59,7 +59,7 @@ Avant de considérer une fonctionnalité terminée :
 - tester les états vides ;
 - tester les modifications et archivages ;
 - vérifier qu'aucune donnée métier n'est dupliquée inutilement ;
-- vérifier la cohérence avec les trois thèmes ;
+- vérifier le rendu sur le thème travaillé (Noir / Confort pendant la refonte, décision du 13/11/2026) ; les thèmes AtoumWeb et Blanc sont mis à jour une fois la refonte terminée ;
 - vérifier le comportement avec la recherche globale et le journal d'activité quand pertinent ;
 - vérifier que les fichiers liés restent référencés depuis un emplacement maître unique.
 
@@ -74,3 +74,20 @@ Avant de considérer une fonctionnalité terminée :
 ## Recette visuelle — économie de contexte (22/10/2026)
 
 Pour la refonte visuelle du Manager, lire une fois [les consignes et la reprise courte](docs/ux-v2/CONSIGNES-ET-REPRISE.md). Ce mémo synthétise les décisions utilisateur, le périmètre et la dernière livraison ; il ne remplace pas PROJECT_STATUS ni les règles métier ci-dessus. Ne pas recopier le chat complet dans les instructions.
+
+## Règles de travail de la refonte : validées par Carlos le 13/11/2026
+
+Ces dix règles précisent la façon de travailler pendant la refonte visuelle et ergonomique. Elles ne touchent ni aux règles métier ni aux invariants ci-dessus. Détail et justification : `docs/refonte/DESIGN.md`, section 11.
+
+- **A. Trois niveaux de décision.** *Autonome* : ce qui applique la charte (jetons, plancher de 14 px, états vides, casse, libellés, composants partagés), vu par Carlos en fin de lot. *À valider par lot* : la disposition d'un écran, sur la fiche de refonte. *Décision de Carlos* : données, règles métier, légal, ordre du parcours.
+- **B. Parcours Prospect → Devis → Projet.** L'ordre des étapes et les règles restent figés. Points d'entrée, libellés, regroupements et mise en page sont libres dans un lot validé.
+- **C. Commit.** Commit local par lot autorisé d'avance, seulement après tests verts et captures vues par Carlos. Push, PR et fusion : sur accord explicite.
+- **D. Lancement de l'application.** Autorisé à volonté pour captures et vérifications, sur copie jetable d'une base fictive, sans port de débogage, avec contrôle d'empreinte de la source.
+- **E. Densité.** Confort seule pendant la refonte, comme le thème Noir ; Compact et Confort + sont vérifiés à la fin avec les thèmes AtoumWeb et Blanc.
+- **F. Nettoyage.** Le code et les feuilles CSS prouvés inutilisés (recherche, build et tests verts) peuvent être retirés, listés dans le lot, réversibles par l'historique. Une fonction réelle n'est jamais retirée.
+- **G. Journal et document de référence.** Les décisions validées par Carlos dans le chat et le journal de travail sont consignés sans redemander le texte. Tout changement de fond de `docs/refonte/DESIGN.md` lui est montré.
+- **H. Scripts de recette.** Les exigences figées sur le nombre de feuilles CSS sont remplacées par des règles durables (ordre relatif des couches). Les scénarios de devis sont réécrits dans le lot concerné.
+- **I. Plans.** Un écart mineur (même périmètre, même résultat) est consigné dans le plan par une ligne « révision » ; un changement de périmètre demande l'accord de Carlos.
+- **J. Deux validations par lot.** La fiche avant le code, puis la recette sur captures avant / après.
+
+Ce qui ne change pas : aucune donnée métier dupliquée, devis acceptés jamais modifiés, Abby seule à émettre les factures, « Contacts » = regroupement d'affichage sans migration, pas de commit sur `main`, plancher de 14 px.

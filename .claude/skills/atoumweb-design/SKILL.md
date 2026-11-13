@@ -19,6 +19,8 @@ Savoir de conception d'interface (hiérarchie, mise en page, typographie, couleu
 5. **Aucune donnée métier dupliquée** pour faciliter un écran. Les trois thèmes doivent rester cohérents ; vérifie aussi la recherche globale et le journal d'activité quand c'est pertinent (voir la section Qualité d'`AGENTS.md`).
 6. **Pas de commit, de push ni de fusion** sans accord explicite de l'utilisateur.
 
+**Précisions validées par Carlos le 13/11/2026** (règles A à J de `AGENTS.md`, qui l'emportent sur les points 2, 5 et 6 ci-dessus et sur « une fois par session ») : ce qui applique la charte (jetons, plancher de 14 px, états vides, casse, libellés, composants partagés) se fait sans demander, la disposition d'un écran est validée par lot sur sa fiche, les données, règles métier, légal et ordre du parcours restent sa décision ; un seul thème (Noir) et une seule densité (Confort) pendant la refonte ; commit local par lot après tests verts et captures vues, push, PR et fusion sur accord ; lancement de l'application autorisé pour captures et vérifications sur copie jetable, sans port de débogage.
+
 ## Document de référence de la refonte
 
 Un seul fichier : `docs/refonte/DESIGN.md` (charte, principes, décisions d'interface). Il remplace `PRODUCT.md`, `DESIGN.md` à la racine et le dossier `.impeccable/` : **ne crée aucun de ces trois.**
