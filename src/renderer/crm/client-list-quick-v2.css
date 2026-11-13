@@ -24,13 +24,13 @@
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .table-panel{padding:0;border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table-scroll{border:0;overflow:auto}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table :is(th,td){padding:10px 14px!important;border-inline:0!important;font-size:14px;line-height:1.4}
-:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table th{background:var(--surface-soft)!important;color:var(--muted);font-size:13px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table th{background:var(--surface-soft)!important;color:var(--muted);font-size:var(--ui-font-primary)}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table th button{padding:3px 0;min-height:28px}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table td{background:var(--surface)!important;border-bottom:1px solid var(--border)}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table tr[data-selected=true] td{background:color-mix(in srgb,var(--accent) 12%,var(--surface))!important;border-block:1px solid var(--accent)}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table tr[data-selected=true] td:first-child{box-shadow:inset 3px 0 var(--accent)}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-name-cell{display:flex;align-items:center;gap:10px}
-:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table :is(strong,small,span){font-size:13px}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table tbody :is(strong,small,span){font-size:var(--aw-font-functional)}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table .client-name-cell strong{font-size:14px}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .aw-data-table .crm-identity-avatar{border-radius:50%;width:36px;height:36px}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 :is(.aw-data-table,.client-quick-crm) .client-status{border-radius:6px;padding:3px 8px;font-size:12px;font-weight:650}
@@ -65,6 +65,7 @@
 :root[data-theme='noir'][data-density='comfort'] .aw-client-brand-v2{display:block}
 
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-heading>.primary-button{margin-left:auto;min-height:38px;background:var(--accent);color:#071c2b}
+:root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-heading>.secondary-button{margin-left:auto;min-height:38px}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .toolbar-controls{width:100%;max-width:none;justify-content:flex-start}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-command>.aw-ui-button-wrap{flex:1;min-width:0}
 :root[data-theme='noir'][data-density='comfort'] .clients-v2 .client-quick-command .aw-ui-button{width:100%}

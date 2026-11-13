@@ -1,6 +1,7 @@
 import {CrmReconciliationPanel} from '../crm/CrmReconciliationPanel';
 import {OrganizationContactLinks} from '../crm/OrganizationContactLinks';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {hasActiveFilters} from '../ui/tableEmpty';
 import {DIRECTORY_ORGANIZATIONS_VIEW,DIRECTORY_CONTACTS_VIEW} from '../../shared/realTableSchemas';
 import '../crm/crm-visual-foundation.css';
 import { layoutKey, readLayout, writeLayout } from '../../shared/panelLayout';
@@ -362,7 +363,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
             <span className={`directory-relation-pill ${relationClass(item.relation)}`}>{RELATION_LABELS[item.relation]}</span>
           </button>)}
           {((view === 'organizations' && !filteredOrganizations.length) || (view === 'contacts' && !filteredContacts.length)) && <p className="muted directory-empty">Aucun résultat dans cette vue.</p>}
-        </div> : view === 'organizations' ? <ConfiguredDataTable<DirectoryOrganization> scope={DIRECTORY_ORGANIZATIONS_VIEW} store={window.atoumweb.visualPreferences} className="directory-table" rows={filteredOrganizations} selectedId={selectedType==='organization'?selectedId:null} getId={item=>item.id} onSelect={item=>selectOrganization(item.id)} rowAttributes={item=>({'data-directory-id':item.id})} caption="Organisations · source complète des résultats filtrés" columns={[
+        </div> : view === 'organizations' ? <ConfiguredDataTable<DirectoryOrganization> filtersActive={hasActiveFilters([query,relationFilter,secondaryFilter])} onClearFilters={()=>{setQuery('');setRelationFilter('all');setSecondaryFilter('all');}} scope={DIRECTORY_ORGANIZATIONS_VIEW} store={window.atoumweb.visualPreferences} className="directory-table" rows={filteredOrganizations} selectedId={selectedType==='organization'?selectedId:null} getId={item=>item.id} onSelect={item=>selectOrganization(item.id)} rowAttributes={item=>({'data-directory-id':item.id})} caption="Organisations · source complète des résultats filtrés" columns={[
           {id:'identity',label:'Organisation',required:true,sortValue:i=>i.name,render:i=><div className="directory-name-cell"><CrmIdentityAvatar organizationId={i.id} name={i.name}/><div><strong>{i.name}</strong><small>{i.legalName||i.website||'Organisation professionnelle'}</small></div></div>},
           {id:'industry',label:'Activité',sortValue:i=>i.industry??null,render:i=>i.industry||'—'},
           {id:'city',label:'Ville',sortValue:i=>i.city??null,render:i=>i.city||'—'},
@@ -370,7 +371,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
           {id:'contacts',label:'Contacts',sortValue:i=>i.contactCount,render:i=>i.contactCount},
           {id:'relation',label:'Relation',sortValue:i=>RELATION_LABELS[i.relation],render:i=><span className={'directory-relation-pill '+relationClass(i.relation)}>{RELATION_LABELS[i.relation]}</span>},
           {id:'open',label:'Ouvrir',required:true,render:i=><button type="button" className="link-button" title={'Ouvrir '+i.name} aria-label={'Ouvrir '+i.name} onClick={e=>{e.stopPropagation();selectOrganization(i.id);}}><OperationIcon name="record-open"/></button>},
-        ]}/> : <ConfiguredDataTable<DirectoryContact> scope={DIRECTORY_CONTACTS_VIEW} store={window.atoumweb.visualPreferences} className="directory-table" rows={filteredContacts} selectedId={selectedType==='contact'?selectedId:null} getId={i=>i.id} onSelect={i=>selectContact(i.id)} rowAttributes={i=>({'data-directory-id':i.id})} caption="Contacts · source complète des résultats filtrés" columns={[
+        ]}/> : <ConfiguredDataTable<DirectoryContact> filtersActive={hasActiveFilters([query,relationFilter,secondaryFilter])} onClearFilters={()=>{setQuery('');setRelationFilter('all');setSecondaryFilter('all');}} scope={DIRECTORY_CONTACTS_VIEW} store={window.atoumweb.visualPreferences} className="directory-table" rows={filteredContacts} selectedId={selectedType==='contact'?selectedId:null} getId={i=>i.id} onSelect={i=>selectContact(i.id)} rowAttributes={i=>({'data-directory-id':i.id})} caption="Contacts · source complète des résultats filtrés" columns={[
           {id:'identity',label:'Contact',required:true,sortValue:i=>i.lastName+' '+i.firstName,render:i=><div className="directory-name-cell"><CrmIdentityAvatar organizationId={i.organizationId} contactId={i.id} name={i.firstName+' '+i.lastName}/><div><strong>{i.firstName} {i.lastName}</strong><small>{i.preferredChannel||'Contact professionnel'}</small></div></div>},
           {id:'organization',label:'Entreprise',sortValue:i=>i.organizationName??null,render:i=>i.organizationName||'—'},
           {id:'jobTitle',label:'Fonction',sortValue:i=>i.jobTitle??null,render:i=>i.jobTitle||'—'},

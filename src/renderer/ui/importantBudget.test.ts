@@ -28,8 +28,8 @@ describe('refonte : discipline CSS des fichiers nouveaux', () => {
     expect(source).toMatch(/\.aw-more-menu-item:focus-visible\s*\{[^}]*var\(--accent-strong\)/);
   });
 
-  it('budget : ui-consistency-v2.css has at most 99 !important (104 before R1)', () => {
-    expect(count(readFileSync(resolve(__dirname, '..', 'ui-consistency-v2.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, ''), /!important/g)).toBeLessThanOrEqual(99);
+  it('budget : ui-consistency-v2.css has at most 86 !important (104 before R1, 98 before R2)', () => {
+    expect(count(readFileSync(resolve(__dirname, '..', 'ui-consistency-v2.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, ''), /!important/g)).toBeLessThanOrEqual(86);
   });
 
   it('the shared aw-ui-* controls live in shared-controls.css, not in ui-consistency-v2.css', () => {

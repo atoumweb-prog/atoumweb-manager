@@ -223,3 +223,8 @@
   outline-offset: 2px;
 }
 
+
+/* R2 : en Noir, les écrans redéfinissent --accent-strong en jaune (#ffda00, #ffda39…) mais la règle de base gardait un texte blanc :
+   1,37 pour 1 mesuré sur 14 écrans. Le jeton prévu pour ça donne un texte sombre (AA tenu sur chaque jaune et or utilisés).
+   Spécificité volontairement supérieure aux règles d'écran (:root + attribut + :is), sans !important. */
+:root[data-theme='noir'] :is(.primary-button,.primary-button:disabled){color:var(--aw-accent-on-solid);-webkit-text-fill-color:currentColor}

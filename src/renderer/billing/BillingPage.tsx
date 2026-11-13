@@ -1,4 +1,5 @@
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {hasActiveFilters} from '../ui/tableEmpty';
 import { useEffect, useMemo, useState } from 'react';
 import {
   BILLING_ITEM_SOURCE_TYPES,
@@ -315,7 +316,7 @@ export function BillingPage({ onMessage, statisticsDrilldown, onClearStatisticsD
             <span className="billing-compact-project">{item.projectLabel || 'Sans projet dédié'}</span>
           </button>)}
           {filtered.length === 0 && <div className="empty-table">Aucun élément de facturation.</div>}
-        </div> : <div className="billing-table-wrap"><ConfiguredDataTable<(typeof filtered)[number]> scope="billing-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>invoiceDraft.request(() => { setSelectedId(item.id); setExpanded(false); })} className="billing-table" caption="Client · Origine · Description · Projet · Montant · Statut · Facture · source complète des résultats filtrés" columns={[
+        </div> : <div className="billing-table-wrap"><ConfiguredDataTable<(typeof filtered)[number]> filtersActive={hasActiveFilters([query,statusFilter,sourceFilter,clientFilter,projectFilter,pdfFilter,exactReference,dueBefore,drilldown?'drilldown':''])} onClearFilters={()=>{setQuery('');setStatusFilter('all');setSourceFilter('all');setClientFilter('all');setProjectFilter('all');setPdfFilter('all');setExactReference('');setDueBefore('');onClearStatisticsDrilldown?.();}} scope="billing-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>invoiceDraft.request(() => { setSelectedId(item.id); setExpanded(false); })} className="billing-table" caption="Client · Origine · Description · Projet · Montant · Statut · Facture · source complète des résultats filtrés" columns={[
 {id:"identity",label:"Client",required:true,sortValue:item=>item.clientLabel??null,render:item=><><button className="billing-row-open" type="button" aria-label={`Ouvrir la facture de ${item.clientLabel} : ${item.description}`} onClick={(event) => { event.stopPropagation(); invoiceDraft.request(() => { setSelectedId(item.id); setExpanded(false); }); }}>{item.clientLabel}</button></>},
 {id:"source",label:"Origine",sortValue:item=>item.sourceType??null,render:item=><><span className="billing-source-pill"><OperationIcon name={SOURCE_ICONS[item.sourceType]} size={15} />{SOURCE_LABELS[item.sourceType]}</span></>},
 {id:"description",label:"Description",sortValue:item=>item.description??null,render:item=><>{item.description}</>},

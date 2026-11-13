@@ -151,7 +151,7 @@ export function ContractLibraryPage({onClose,initialTypeId,onMessage}:{onClose:(
               <button type="button" disabled={busy} onClick={()=>void run(()=>window.atoumweb.contractTypes.setStatus(type!.id,type!.status==='archived'?'active':'archived'))}>{type!.status==='archived'?'Réactiver le type':'Archiver le type'}</button></div>
           </>}
           {type&&<section className="contract-type-preview">
-            <button type="button" className="primary-button" onClick={()=>setPreviewOpen(v=>!v)}>{previewOpen?'Fermer l’aperçu du contrat type':'Voir le contrat type assemblé'}</button>
+            <button type="button" className={previewOpen ? 'secondary-button' : 'primary-button'} onClick={()=>setPreviewOpen(v=>!v)}>{previewOpen?'Fermer l’aperçu du contrat type':'Voir le contrat type assemblé'}</button>
             {previewOpen&&<><p>Choisis la prestation de base à consulter. Les options disponibles ne sont pas ajoutées automatiquement. Les données propres au client seront complétées dans son devis.</p>
               <label>Prestation de référence<select aria-label="Prestation du contrat type" value={referenceId} onChange={e=>setReferenceId(e.target.value)}>{type.catalogLinks.map(l=><option key={l.catalogVersionId} value={l.catalogVersionId}>{l.name} · {l.canonicalCode} · v{l.versionNumber}</option>)}</select></label>
               <label>Client contractuel<select aria-label="Client du contrat type" value={previewAudience} onChange={e=>setPreviewAudience(e.target.value as typeof previewAudience)}><option value="professional">Professionnel</option><option value="consumer">Particulier / consommateur</option></select></label>

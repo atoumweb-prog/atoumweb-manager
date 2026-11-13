@@ -317,7 +317,7 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
           <option value="all">Tous les statuts</option>
           {HOUR_PACK_STATUSES.filter((status) => status !== 'archived').map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
         </select>
-        <button className="primary-button" type="button" onClick={() => requestUnsavedExit(() => setCreateOpen((value) => !value))}>{createOpen ? 'Fermer' : '+ Pack'}</button>
+        <button className={createOpen ? 'secondary-button' : 'primary-button'} type="button" onClick={() => requestUnsavedExit(() => setCreateOpen((value) => !value))}>{createOpen ? 'Fermer' : '+ Pack'}</button>
       </div>
     </div>
 

@@ -11,6 +11,7 @@ import {ClientActionsHistory} from './ClientActionsHistory';
 import {CrmReconciliationPanel} from './CrmReconciliationPanel';
 import {CrmRecordLayout} from './CrmRecordLayout';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {hasActiveFilters} from '../ui/tableEmpty';
 import {CLIENT_DIRECTORY_VIEW} from '../../shared/realTableSchemas';
 import './crm-visual-foundation.css';
 import { layoutKey, readLayout, writeLayout } from '../../shared/panelLayout';
@@ -626,7 +627,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
   return (
     <div className="crm-stack clients-v2">
       <header className="module-toolbar client-toolbar"><div className="client-heading"><h1><OperationIcon name="users"/>Clients</h1>
-        <div className="client-list-count"><strong>{filtered.length}</strong><span> client{filtered.length > 1 ? 's' : ''}</span></div>          <button className="primary-button" type="button" onClick={() => showForm?clientCreateGuard.request(()=>setShowForm(false)):setShowForm(true)}>{showForm ? 'Fermer' : '+ Nouveau client'}</button>
+        <div className="client-list-count"><strong>{filtered.length}</strong><span> client{filtered.length > 1 ? 's' : ''}</span></div>          <button className={showForm ? 'secondary-button' : 'primary-button'} type="button" onClick={() => showForm?clientCreateGuard.request(()=>setShowForm(false)):setShowForm(true)}>{showForm ? 'Fermer' : '+ Nouveau client'}</button>
         </div><div className="toolbar-controls">
           <button className="secondary-button" type="button" disabled={loading} onClick={() => void refreshAll()}><OperationIcon name="refresh"/>{loading ? 'Actualisation…' : 'Actualiser'}</button>
           <input aria-label="Rechercher les clients" className="inline-search" placeholder="Rechercher un client…" value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -665,7 +666,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
       {loading && clients.length===0 ? <div className="panel"><p className="muted">Chargement des clients…</p></div> : (
         <div className={selected && !largeView ? 'clients-layout with-detail' : 'clients-layout'} style={clientSplitStyle}>
           <div className="panel table-panel">
-            <ConfiguredDataTable<ClientSummary> controlsHost={tableToolsHost} compactHiddenColumnIds={selected&&!largeView?['coordinates']:[]} scope={CLIENT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} className="clients-table" rows={filtered} selectedId={selectedId} getId={c=>c.id} onSelect={c=>openClient(c.id)} rowAttributes={c=>({'data-client-id':c.id,className:'client-relationship-'+(c.relationshipStatus??'neutral')})} caption="Clients · source complète des résultats filtrés" columns={[
+            <ConfiguredDataTable<ClientSummary> controlsHost={tableToolsHost} compactHiddenColumnIds={selected&&!largeView?['coordinates']:[]} filtersActive={hasActiveFilters([query,statusFilter])} onClearFilters={()=>{setQuery('');setStatusFilter('all');}} scope={CLIENT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} className="clients-table" rows={filtered} selectedId={selectedId} getId={c=>c.id} onSelect={c=>openClient(c.id)} rowAttributes={c=>({'data-client-id':c.id,className:'client-relationship-'+(c.relationshipStatus??'neutral')})} caption="Clients · source complète des résultats filtrés" columns={[
               {id:'identity',label:'Client',required:true,sortValue:c=>c.displayName,render:c=><div className="client-name-cell"><CrmIdentityAvatar organizationId={c.organizationId} contactId={c.primaryContactId} name={c.displayName}/><div><strong>{c.displayName}</strong><small>Client depuis {new Date(c.becameClientAt).toLocaleDateString('fr-FR')}</small></div></div>},
               {id:'status',label:'Statut',sortValue:c=>STATUS_LABELS[c.status??'active'],render:c=><span className={'client-status status-'+c.status}>{STATUS_LABELS[c.status??'active']}</span>},
               {id:'contact',label:'Contact principal',sortValue:c=>c.contactName??null,render:c=>c.contactName||'—'},
@@ -764,7 +765,7 @@ function ClientsPageContent({ onEntityReady, onMessage, initialId, initialReques
               </details></section>
 
               <section hidden={activeTab!=='contacts'} id="client-panel-contacts" role="tabpanel" aria-labelledby="client-tab-contacts"><div className="tab-content-stack">
-                  <div className="contact-tab-heading client-contacts-heading"><div><h3><OperationIcon name="users"/>Contacts du client <span>{contacts.length}</span></h3><p>Personnes liées à {selected.displayName}</p></div><button className="primary-button compact-button" type="button" onClick={() => {if(showContactForm){contactGuard.request(()=>setShowContactForm(false));return;}setEditingContactId(null);setContactDraft(EMPTY_CONTACT_DRAFT);setShowContactForm(true);}}>{showContactForm ? 'Fermer le formulaire' : '+ Ajouter un contact'}</button></div>
+                  <div className="contact-tab-heading client-contacts-heading"><div><h3><OperationIcon name="users"/>Contacts du client <span>{contacts.length}</span></h3><p>Personnes liées à {selected.displayName}</p></div><button className={showContactForm ? 'secondary-button compact-button' : 'primary-button compact-button'} type="button" onClick={() => {if(showContactForm){contactGuard.request(()=>setShowContactForm(false));return;}setEditingContactId(null);setContactDraft(EMPTY_CONTACT_DRAFT);setShowContactForm(true);}}>{showContactForm ? 'Fermer le formulaire' : '+ Ajouter un contact'}</button></div>
 
                   {showContactForm && (
                     <form className="contact-inline-form" onSubmit={(event) => void submitContact(event)}><fieldset disabled={contactSaving}>

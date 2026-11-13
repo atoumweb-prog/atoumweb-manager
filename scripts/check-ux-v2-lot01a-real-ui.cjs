@@ -80,6 +80,11 @@ if(!process.versions.electron){
  const inspect=async(page,theme,density)=>{
   const x=await get('({active:document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label"),heading:document.querySelector(".page-heading h1")?.textContent.trim(),clock:document.querySelector(".global-clock b")?.textContent.trim(),search:!!document.querySelector(".global-search input"),timer:!!document.querySelector(".global-timer,.timer-widget"),toggle:document.querySelector(".aw-rail-toggle")?.getAttribute("aria-label"),fatal:!!document.querySelector(".renderer-fatal-shell,.fatal-screen"),theme:document.documentElement.dataset.theme,density:document.documentElement.dataset.density,scroll:document.querySelector(".content-area")?.scrollWidth,client:document.querySelector(".content-area")?.clientWidth})');
   const label=theme+'/'+density+'/'+page;
+  if(theme==='noir'){
+   // R2 : un bouton principal en Noir doit rester lisible (mesuré avant correction : blanc sur jaune, 1,37 pour 1, sur 14 écrans).
+   const unreadable=await get(String.raw`(()=>{const lum=([r,g,b])=>{const f=v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4)};return 0.2126*f(r)+0.7152*f(g)+0.0722*f(b)};const num=s=>(s.match(/[\d.]+/g)||[0,0,0]).slice(0,3).map(Number);return [...document.querySelectorAll('.primary-button,.aw-ui-button--primary')].filter(b=>{const q=b.getBoundingClientRect();return q.width>0&&q.height>0&&getComputedStyle(b).backgroundColor!=='rgba(0, 0, 0, 0)'}).map(b=>{const s=getComputedStyle(b),fill=/currentcolor/i.test(s.webkitTextFillColor||'')?s.color:(s.webkitTextFillColor||s.color),a=lum(num(fill)),c=lum(num(s.backgroundColor));return {text:(b.textContent||'').trim().slice(0,24),ratio:Math.round((Math.max(a,c)+0.05)/(Math.min(a,c)+0.05)*100)/100}}).filter(x=>x.ratio<4.5)})()`);
+   test(unreadable.length===0,'Primary buttons readable (contrast >= 4.5) '+theme+'/'+density+'/'+page+' '+JSON.stringify(unreadable.slice(0,3)));
+  }
   test(x.active===page&&!x.fatal&&(page==='Accueil'||x.heading===page),'Rendered '+label);
   test(x.clock&&x.search&&x.timer&&x.toggle,'Shell visible '+label);
   test(x.theme===theme&&x.density===density,'Theme remains '+label);

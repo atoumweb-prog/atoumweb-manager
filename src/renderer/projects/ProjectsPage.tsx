@@ -1,4 +1,5 @@
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {hasActiveFilters} from '../ui/tableEmpty';
 import {OperationIcon} from '../operations/OperationIcon';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { requestUnsavedExit } from '../unsaved/unsaved';
@@ -960,7 +961,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
       {loading ? <div className="panel"><p className="muted">Chargement des projets…</p></div> : (
         <div className="projects-layout">
           <section className="panel project-list-panel">
-            <ConfiguredDataTable<(typeof filtered)[number]> scope="projects-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={project=>project.id} onSelect={project=>void openProject(project.id)} className="project-table" caption="Numéro · Client / prospect · Projet · État commercial · Statut · Progression · Temps estimé · Cible · source complète des résultats filtrés" columns={[
+            <ConfiguredDataTable<(typeof filtered)[number]> filtersActive={hasActiveFilters([query,statusFilter,commercialFilter])} onClearFilters={()=>{setQuery('');setStatusFilter('all');setCommercialFilter('all');}} scope="projects-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={project=>project.id} onSelect={project=>void openProject(project.id)} className="project-table" caption="Numéro · Client / prospect · Projet · État commercial · Statut · Progression · Temps estimé · Cible · source complète des résultats filtrés" columns={[
 {id:"identity",label:"Numéro",required:true,sortValue:project=>project.number??null,render:project=><><strong>{project.number}</strong></>},
 {id:"client",label:"Client / prospect",sortValue:project=>project.clientLabel??null,render:project=><>{project.clientLabel}</>},
 {id:"name",label:"Projet",sortValue:project=>project.name??null,render:project=><><strong>{project.name}</strong><small>{project.projectType}</small></>},

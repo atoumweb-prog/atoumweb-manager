@@ -12,9 +12,7 @@
 :root[data-theme='noir'][data-density='comfort'] .aw-manager-shell .content-area>.page-heading h1,
 :root[data-theme='noir'][data-density='comfort'] .aw-manager-shell .ot-title h1{font-size:30px;line-height:1.25}
 
-/* Do not squeeze ten configurable columns into the viewport or split brand names into letters. */
-.app-shell .catalog-stack .aw-data-table th,
-.app-shell .catalog-stack .aw-data-table th .aw-ui-button-label{word-break:normal;overflow-wrap:normal;white-space:normal}
+/* Les en-têtes entiers sont désormais assurés pour tous les tableaux par ui/table-layout.css (R2). */
 .app-shell .catalog-stack .aw-data-table th{height:auto;vertical-align:middle;line-height:1.4}
 .app-shell .catalog-stack .aw-data-table tbody td{vertical-align:top;line-height:1.5}
 .content-area:has(>.catalog-stack.ot-table-fit){display:block;overflow:auto}

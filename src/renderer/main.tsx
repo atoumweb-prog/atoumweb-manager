@@ -38,6 +38,7 @@ import './ui/shared-controls.css';
 import './crm/client-list-quick-v2.css';
 import './convergence-visual-consistency.css';
 import './ui/next-step.css';
+import './ui/page-header.css';
 
 const rootElement = document.getElementById('root');
 

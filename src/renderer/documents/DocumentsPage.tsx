@@ -1,4 +1,5 @@
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {hasActiveFilters} from '../ui/tableEmpty';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { ContractLibraryPage } from '../commercial/ContractLibraryPage';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -375,7 +376,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
           </button>)}
           {!filtered.length && <p className="muted documents-empty">Aucun document dans cette vue.</p>}
         </div> : <div className="documents-table-wrap">
-          <ConfiguredDataTable<(typeof filtered)[number]> scope="documents-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>draft.request(() => setSelectedId(item.id))} className="documents-table" caption="Document · Client · Type · Fichier · Mise à jour · État · source complète des résultats filtrés" columns={[
+          <ConfiguredDataTable<(typeof filtered)[number]> filtersActive={hasActiveFilters([query,clientFilter,categoryFilter,archiveFilter==='active'?'':archiveFilter])} onClearFilters={()=>{setQuery('');setClientFilter('all');setCategoryFilter('all');setArchiveFilter('active');}} scope="documents-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>draft.request(() => setSelectedId(item.id))} className="documents-table" caption="Document · Client · Type · Fichier · Mise à jour · État · source complète des résultats filtrés" columns={[
 {id:"identity",label:"Document",required:true,sortValue:item=>item.title??null,render:item=><><div className="documents-table-title"><span className="documents-type-icon"><OperationIcon name={CATEGORY_ICONS[item.category]} size={16} /></span><strong>{item.title}</strong></div></>},
 {id:"client",label:"Client",sortValue:item=>item.clientLabel??null,render:item=><>{item.clientLabel}</>},
 {id:"category",label:"Type",sortValue:item=>item.category??null,render:item=><>{CATEGORY_LABELS[item.category]}</>},

@@ -10,6 +10,7 @@ import {ProspectDialog} from './ProspectDialog';
 import {ProspectValue} from './ProspectValue';
 import {ProspectRelatedRecords} from './ProspectRelatedRecords';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {hasActiveFilters} from '../ui/tableEmpty';
 import {PROSPECT_DIRECTORY_VIEW} from '../../shared/prospectTablePresentation';
 import {OperationIcon, type OperationIconName} from '../operations/OperationIcon';
 import {AppButton} from '../ui/AppButton';
@@ -204,6 +205,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   const [directoryIndustry, setDirectoryIndustry] = useState('');
   const [directoryCity, setDirectoryCity] = useState('');
   const [directoryStatusFilter, setDirectoryStatusFilter] = useState<DirectoryStatusFilter>('all'); // lot 5 : aucun filtre actif à l'ouverture, tous les prospects sont visibles
+  const clearDirectoryFilters = () => { setDirectorySearch(''); setDirectoryIndustry(''); setDirectoryCity(''); setDirectoryStatusFilter('all'); };
   const sidePanelRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(()=>{try{if(sessionStorage.getItem('home-quick-action')==='prospect'){sessionStorage.removeItem('home-quick-action');return true;}}catch{}return false;});
@@ -510,7 +512,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   };
 
   return <div className="crm-stack prospects-v2" data-prospect-view={view}>
-    <header className="page-heading prospection-pilot-heading"><div><h1>Prospection</h1><FieldHelp text="Annuaire, parcours commercial et historique. Une ligne ouvre la fiche rapide ; Agrandir ouvre le même dossier."/></div>{view==='directory'&&<button type="button" className="primary-button" onClick={()=>showForm?closeCreation():setShowForm(true)}><OperationIcon name={showForm?'close':'plus'}/>{showForm?'Fermer la création':'Prospect'}</button>}</header>
+    <header className="page-heading prospection-pilot-heading"><div><h1>Prospection</h1><FieldHelp text="Annuaire, parcours commercial et historique. Une ligne ouvre la fiche rapide ; Agrandir ouvre le même dossier."/></div>{view==='directory'&&<button type="button" className={showForm ? 'secondary-button' : 'primary-button'} onClick={()=>showForm?closeCreation():setShowForm(true)}><OperationIcon name={showForm?'close':'plus'}/>{showForm?'Fermer la création':'Prospect'}</button>}</header>
     <div className="prospect-view-switch" role="tablist">
       <button className={view === 'directory' ? 'active' : ''} onClick={() => setView('directory')}><OperationIcon name="contact"/>Annuaire prospects <span>{directory.length}</span></button>
       <button className={view === 'pipeline' ? 'active' : ''} onClick={() => { setView('pipeline'); setPipelineFilter('all'); }}><OperationIcon name="layers"/>Parcours commercial <span>{pipelineActive.length}</span></button>
@@ -545,7 +547,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
           <option value="won">Gagné</option>
           <option value="lost">Perdu</option>
         </select>
-        <button type="button" className="secondary-button" aria-label="Effacer les filtres" onClick={()=>{setDirectorySearch('');setDirectoryIndustry('');setDirectoryCity('');setDirectoryStatusFilter('all');}}>Effacer les filtres</button><AppButton variant="quiet" aria-label="Actualiser les prospects" title="Actualiser les prospects" icon={<OperationIcon name="refresh"/>} onAction={refresh}/>
+        <button type="button" className="secondary-button" aria-label="Effacer les filtres" onClick={clearDirectoryFilters}>Effacer les filtres</button><AppButton variant="quiet" aria-label="Actualiser les prospects" title="Actualiser les prospects" icon={<OperationIcon name="refresh"/>} onAction={refresh}/>
       </div>
       <p className="prospection-pilot-results" role="status"><span>{[directorySearch.trim(),directoryIndustry,directoryCity,directoryStatusFilter!=='all'?directoryStatusFilter:''].filter(Boolean).length} filtre(s) actif(s) · </span>{directoryFiltered.length} résultat{directoryFiltered.length>1?'s':''}{directoryStatusFilter!=='all'?' · filtre : '+({follow:'À suivre',prepare:'À préparer',ready:'Prêt pour démarchage',relaunch:'À relancer',overdue:'Relance en retard',...STAGE_LABELS}[directoryStatusFilter]):''}</p>
       {showForm && <ProspectDialog label="Nouveau prospect" onClose={closeCreation} className="prospect-create-dialog"><form className="panel crm-form prospect-create-v2" onSubmit={(e) => void submitProspect(e)}><div className="panel-title"><div><span className="eyebrow">Prospection</span><h2>Nouveau prospect</h2><p className="muted">Le nom suffit pour commencer. Tout le reste est facultatif et se complète plus tard, depuis la fiche.</p></div></div><div className="prospect-create-tabs prospect-create-single"><button type="button" className="prospect-create-logo-tab" aria-label="Charger le logo de l’entreprise" onClick={()=>void window.atoumweb.crm.identityAssets.chooseDraft().then(logo=>{if(logo)setDraftLogo(logo);}).catch(e=>setFormError(String(e)))}>{draftLogo?<><img src={draftLogo.preview} alt="Logo sélectionné"/> Logo</>:'+ Logo'}</button>{draftLogo&&<button type="button" className="prospect-create-logo-clear" onClick={()=>setDraftLogo(null)}>Retirer</button>}</div><div className="form-grid">
@@ -567,7 +569,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
       </div></details></div>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="form-actions"><button className="secondary-button" type="button" onClick={closeCreation}>Annuler</button><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Créer le prospect'}</button></div></form></ProspectDialog>}
       {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}>
         <div className="panel table-panel prospect-directory-table-panel">
-          <ConfiguredDataTable<ProspectSummary> fitAvailable defaultVisibleColumnIds={['identity','next_action','due','status']} scope={PROSPECT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} rows={directoryFiltered} selectedId={selectedId} getId={p=>p.id} onSelect={p=>setSelectedId(p.id)} className="prospect-directory-table" caption="Annuaire prospects · source complète · tri sur tous les résultats filtrés" columns={[
+          <ConfiguredDataTable<ProspectSummary> fitAvailable defaultVisibleColumnIds={['identity','next_action','due','status']} filtersActive={hasActiveFilters([directorySearch,directoryIndustry,directoryCity,directoryStatusFilter])} onClearFilters={clearDirectoryFilters} scope={PROSPECT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} rows={directoryFiltered} selectedId={selectedId} getId={p=>p.id} onSelect={p=>setSelectedId(p.id)} className="prospect-directory-table" caption="Annuaire prospects · source complète · tri sur tous les résultats filtrés" columns={[
             {id:'identity',label:'Entreprise',required:true,sortValue:p=>p.displayName,render:p=><div className="client-name-cell"><CrmIdentityAvatar organizationId={p.organizationId} contactId={p.contactId} name={p.displayName}/><div><strong title={p.displayName}>{p.displayName}</strong><small><span className={'prospect-temperature-dot '+(p.temperature??'neutral')} title={TEMPERATURE_LABELS[p.temperature??'neutral']} aria-label={'Température commerciale : '+TEMPERATURE_LABELS[p.temperature??'neutral']}/> {SOURCE_LABELS[p.source??'other']}</small></div></div>},
             {id:'next_action',label:'Prochaine action',sortValue:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.title??null,render:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.title||<span className="muted">Aucune action programmée</span>},
             {id:'due',label:'Échéance',sortValue:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.dueAt??null,render:p=>{const a=nextOpenAction(actions.filter(a=>a.ownerId===p.id)),date=a?.dueAt;return <span className={date&&new Date(date).getTime()<Date.now()?'prospection-due-overdue':''}>{date?formatDate(date):'—'}</span>;}},

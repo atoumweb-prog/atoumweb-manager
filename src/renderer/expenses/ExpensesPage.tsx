@@ -1,4 +1,5 @@
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {hasActiveFilters} from '../ui/tableEmpty';
 
 import { useEffect, useMemo, useState } from 'react';
 import type { ClientSummary } from '../../shared/crm';
@@ -433,7 +434,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
             <span className="expenses-compact-supplier">{item.supplier || 'Fournisseur non renseigné'}</span>
           </button>)}
           {filtered.length === 0 && <div className="empty-table">Aucune dépense dans cette vue.</div>}
-        </div> : <div className="expenses-table-wrap"><ConfiguredDataTable<(typeof filtered)[number]> scope="expenses-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>draft.request(() => { setSelectedId(item.id); setCreateOpen(false); setExpanded(false); })} className="expenses-table" caption="Date · Dépense · Catégorie · Client / Projet · Montant · Statut · Justificatif · source complète des résultats filtrés" columns={[
+        </div> : <div className="expenses-table-wrap"><ConfiguredDataTable<(typeof filtered)[number]> filtersActive={hasActiveFilters([query,categoryFilter,statusFilter,scopeFilter])} onClearFilters={()=>{setQuery('');setCategoryFilter('all');setStatusFilter('all');setScopeFilter('all');}} scope="expenses-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>draft.request(() => { setSelectedId(item.id); setCreateOpen(false); setExpanded(false); })} className="expenses-table" caption="Date · Dépense · Catégorie · Client / Projet · Montant · Statut · Justificatif · source complète des résultats filtrés" columns={[
 {id:"date",label:"Date",sortValue:item=>item.expenseDate??null,render:item=><>{dateLabel(item.expenseDate)}</>},
 {id:"identity",label:"Dépense",required:true,sortValue:item=>item.label??null,render:item=><><strong>{item.label}</strong><small>{item.supplier || '—'}</small></>},
 {id:"category",label:"Catégorie",sortValue:item=>item.category??null,render:item=><><span className="expense-category-pill"><OperationIcon name={CATEGORY_ICONS[item.category]} size={15} /> {CATEGORY_LABELS[item.category]}</span></>},

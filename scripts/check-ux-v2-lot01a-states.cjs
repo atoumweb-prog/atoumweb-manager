@@ -24,7 +24,8 @@ if(!process.versions.electron){
  try{
   const entry=fs.readFileSync(path.join(root,'src/renderer/main.tsx'),'utf8');
   const cssFiles=[...entry.matchAll(/^import '\.\/([^']+\.css)';$/gm)].map(m=>m[1]);
-  ensure(cssFiles.length===31,'Renderer CSS chain changed: revalidate the fixture');
+  // Règle durable (R2) : ordre relatif des couches, pas un nombre de feuilles figé.
+  ensure(cssFiles.length>=25&&cssFiles[0]==='tokens.css'&&cssFiles.indexOf('display-density.css')>=0&&cssFiles.indexOf('display-density.css')<cssFiles.indexOf('ui-typography-consistency.css')&&cssFiles.indexOf('ui-typography-consistency.css')<cssFiles.indexOf('ui-consistency-v2.css'),'Renderer CSS chain changed: tokens.css first, then display-density < ui-typography-consistency < ui-consistency-v2');
   const css=cssFiles.map(name=>fs.readFileSync(path.join(root,'src/renderer',name),'utf8')).join('\n');
   ensure(!css.includes('</style'),'Unsafe embedded style tag');
   const elements=tests.map(([id,selector])=>{
@@ -92,7 +93,7 @@ if(!process.versions.electron){
    }
    const issues=results.filter(x=>x.ratio<4.5);
    console.log('[UXV2 STATES] REPORT '+JSON.stringify({
-    measured:results.length,passed:results.length-issues.length,issues,cssChain:31,onlyTemp:true
+    measured:results.length,passed:results.length-issues.length,issues,cssChain:'order-checked',onlyTemp:true
    }));
    if(issues.length)process.exitCode=1;
   }catch(e){console.error('[UXV2 STATES] ERROR',e.stack||e);process.exitCode=1;}

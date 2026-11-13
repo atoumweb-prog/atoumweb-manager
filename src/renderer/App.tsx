@@ -1,5 +1,6 @@
 import {CompanyQuoteSettings} from './commercial/CompanyQuoteSettings';
-import {FieldHelp} from './ui/FieldHelp';
+import {PageHeader} from './ui/PageHeader';
+import {DISPLAY_NOTICE_MS, noticeTimeout} from './ui/noticeLifetime';
 import {useCallback} from 'react';
 import {SEARCH_DESTINATIONS,searchDestination,readSearchTarget,type SearchNavigationResult} from '../shared/searchNavigation';
 import {useMemo} from 'react';
@@ -154,6 +155,8 @@ function App() {
   const [libraryHeaderCollapsed, setLibraryHeaderCollapsed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageAction, setMessageAction] = useState<MessageAction | null>(null);
+  // Échéance liée au texte du message : un message d'erreur posé par un écran n'hérite jamais du délai d'un message précédent.
+  const [messageAutoDismiss, setMessageAutoDismiss] = useState<{ message: string; ms: number } | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [crmTarget,setCrmTarget] = useState<string|null>(null);
   const [prospectViewTarget, setProspectViewTarget] = useState<'directory' | 'pipeline' | 'history' | 'conversions'>('directory');
@@ -223,15 +226,25 @@ function App() {
   const [librarySearchTarget, setLibrarySearchTarget] = useState<string | null>(null);
   const [backupSearchTarget, setBackupSearchTarget] = useState<string | null>(null);
 
-  function showMessage(nextMessage: string, action?: () => void): void {
+  function showMessage(nextMessage: string, action?: () => void, options?: { autoDismissMs?: number }): void {
     setMessage(nextMessage);
     setMessageAction(action ? { message: nextMessage, run: action } : null);
+    setMessageAutoDismiss(options?.autoDismissMs ? { message: nextMessage, ms: options.autoDismissMs } : null);
   }
 
   function closeMessage(): void {
     setMessage(null);
     setMessageAction(null);
+    setMessageAutoDismiss(null);
   }
+
+  useEffect(() => {
+    if (!message) return undefined;
+    const delay = noticeTimeout({ autoDismissMs: messageAutoDismiss?.message === message ? messageAutoDismiss.ms : undefined, hasAction: messageAction?.message === message });
+    if (delay === null) return undefined;
+    const timer = window.setTimeout(closeMessage, delay);
+    return () => window.clearTimeout(timer);
+  }, [message, messageAction, messageAutoDismiss]);
 
   useEffect(() => {
     const openLibraryItem = (event: Event) => {void openSearchResult({entityType:'atoumweb_library',entityId:(event as CustomEvent<string>).detail,title:'Bibliothèque'},'event');};
@@ -258,14 +271,14 @@ function App() {
     const savedTheme = await window.atoumweb.settings.setTheme(nextTheme);
     setTheme(savedTheme);
     applyTheme(savedTheme);
-    setMessage(`Thème « ${THEMES.find((item) => item.id === savedTheme)?.label ?? savedTheme} » appliqué.`);
+    showMessage(`Thème « ${THEMES.find((item) => item.id === savedTheme)?.label ?? savedTheme} » appliqué.`, undefined, { autoDismissMs: DISPLAY_NOTICE_MS });
   }
 
   async function updateDisplayDensity(nextDensity: DisplayDensity): Promise<void> {
     const savedDensity = await window.atoumweb.settings.setDisplayDensity(nextDensity);
     setDisplayDensity(savedDensity);
     applyDensity(savedDensity);
-    setMessage(`Affichage « ${DENSITIES.find((item) => item.id === savedDensity)?.label ?? savedDensity} » appliqué.`);
+    showMessage(`Affichage « ${DENSITIES.find((item) => item.id === savedDensity)?.label ?? savedDensity} » appliqué.`, undefined, { autoDismissMs: DISPLAY_NOTICE_MS });
   }
 
   async function updateShowHoverHelp(enabled: boolean): Promise<void> {
@@ -414,7 +427,7 @@ function App() {
 
 
         <section className={`content-area ${activePage === 'Accueil' ? 'home-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' || activePage === 'Sites' ? 'workspace-content' : ''} ${activePage === 'Projets' ? 'projects-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' ? 'library-workspace-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' && libraryHeaderCollapsed ? 'library-header-collapsed' : ''}`}>
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1><OperationIcon name={NAVIGATION_MODULES.find(item=>item.key===activePage)!.icon}/>{activePage}</h1><FieldHelp text={PAGE_HINTS[activePage]}/></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && <PageHeader icon={<OperationIcon name={NAVIGATION_MODULES.find(item=>item.key===activePage)!.icon}/>} title={activePage} help={PAGE_HINTS[activePage]} />}
           {message && <div className={`notice ${messageAction?.message === message ? 'is-actionable' : ''}`} role="status">
             {messageAction?.message === message
               ? <button className="notice-action" type="button" onClick={messageAction.run}><span>{message}</span><small>Ouvrir dans l’Explorateur</small></button>

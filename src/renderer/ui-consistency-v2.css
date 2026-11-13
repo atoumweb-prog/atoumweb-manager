@@ -589,36 +589,6 @@ table td {
   color: var(--text) !important;
 }
 
-:root[data-theme='noir'] .prospect-directory-status-prepare,
-:root[data-theme='noir'] .prospect-directory-status-quote_sent,
-:root[data-theme='noir'] .prospect-directory-status-follow_up,
-:root[data-theme='noir'] .prospect-directory-status-waiting {
-  background: var(--aw-status-yellow-bg) !important;
-  color: var(--aw-status-yellow-fg) !important;
-}
-:root[data-theme='noir'] .prospect-directory-status-ready,
-:root[data-theme='noir'] .prospect-directory-status-won {
-  background: var(--aw-status-green-bg) !important;
-  color: var(--aw-status-green-fg) !important;
-}
-:root[data-theme='noir'] .prospect-directory-status-qualifying {
-  background: var(--aw-status-blue-bg) !important;
-  color: var(--aw-status-blue-fg) !important;
-}
-:root[data-theme='noir'] .prospect-directory-status-need_identified {
-  background: var(--aw-status-purple-bg) !important;
-  color: var(--aw-status-purple-fg) !important;
-}
-:root[data-theme='noir'] .prospect-directory-status-quote_to_prepare,
-:root[data-theme='noir'] .prospect-directory-status-quote_to_send,
-:root[data-theme='noir'] .prospect-directory-status-negotiation {
-  background: var(--aw-status-orange-bg) !important;
-  color: var(--aw-status-orange-fg) !important;
-}
-:root[data-theme='noir'] .prospect-directory-status-lost {
-  background: var(--aw-status-red-bg) !important;
-  color: var(--aw-status-red-fg) !important;
-}
 
 :root[data-theme='noir'] .prospect-ready-yes,
 :root[data-theme='noir'] .research-status-ok {
@@ -1399,7 +1369,7 @@ table td {
 
 .quote-lines > strong,.quote-add-line > strong {font-size:16px;}
 .quote-line strong {font-size:17px;line-height:1.4;}
-.quote-line small {font-size:12px;color:var(--muted);display:block;margin-top:4px;}
+.quote-line small {color:var(--muted);display:block;margin-top:4px;}
 .quote-line > span,.quote-totals strong {font-size:17px;font-weight:750;}
 .quote-totals span {font-size:15px;}
 .quote-total-main strong {font-size:22px;}

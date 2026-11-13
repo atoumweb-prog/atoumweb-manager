@@ -156,7 +156,7 @@ export function ProspectPreQuoteReview({ prospect, needs, catalog, onChanged }: 
   return <div className="prequote-review">
     <div className="prequote-entry">
       <div><span className="eyebrow">Étape suivante</span><strong>Contrôle avant devis</strong><p>Vérifie les informations nécessaires au chiffrage avant de quitter « Besoin à identifier ».</p></div>
-      <button type="button" className="primary-button" onClick={() => setOpen((value) => !value)}>{open ? 'Fermer le contrôle' : 'Contrôler avant devis'}</button>
+      <button type="button" className={open ? 'secondary-button' : 'primary-button'} onClick={() => setOpen((value) => !value)}>{open ? 'Fermer le contrôle' : 'Contrôler avant devis'}</button>
     </div>
     {open && <div className="prequote-review-body">
       <div className="prequote-result"><span className={`prequote-state ${ready ? 'ready' : 'blocked'}`}>{ready ? '✓ Prêt pour devis' : '○ Devis non prêt'}</span><strong>{ready ? 'Les informations nécessaires au chiffrage sont validées.' : `${blockers.length} point${blockers.length > 1 ? 's' : ''} à régler avant le devis.`}</strong></div>

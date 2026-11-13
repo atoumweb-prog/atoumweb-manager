@@ -1,4 +1,5 @@
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {hasActiveFilters} from '../ui/tableEmpty';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import {requestUnsavedExit,useUnsavedDraft} from '../unsaved/unsaved';
 import {useDraftSection} from '../unsaved/useDraftSection';
@@ -544,7 +545,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
               <span className="request-compact-date">{dateLabel(request.receivedAt)}</span>
             </button>)}
             {filteredRequests.length === 0 && <div className="empty-table">Aucune demande dans cette vue.</div>}
-          </div> : <ConfiguredDataTable<(typeof filteredRequests)[number]> scope="requests-list" store={window.atoumweb.visualPreferences} rows={filteredRequests} selectedId={null} getId={request=>request.id} onSelect={request=>requestUnsavedExit(()=>{ setSelectedRequest(request); setSelectedIntervention(null); setRequestExpanded(false); })} className="operations-table" caption="Reçue · Client · Sujet · Priorité · Statut · source complète des résultats filtrés" columns={[
+          </div> : <ConfiguredDataTable<(typeof filteredRequests)[number]> filtersActive={hasActiveFilters([query,requestStatus])} onClearFilters={()=>{setQuery('');setRequestStatus('all');}} scope="requests-list" store={window.atoumweb.visualPreferences} rows={filteredRequests} selectedId={null} getId={request=>request.id} onSelect={request=>requestUnsavedExit(()=>{ setSelectedRequest(request); setSelectedIntervention(null); setRequestExpanded(false); })} className="operations-table" caption="Reçue · Client · Sujet · Priorité · Statut · source complète des résultats filtrés" columns={[
 {id:"received",label:"Reçue",sortValue:request=>request.receivedAt??null,render:request=><>{dateLabel(request.receivedAt)}</>},
 {id:"client",label:"Client",sortValue:request=>request.clientLabel??null,render:request=><><strong>{request.clientLabel}</strong><small>{request.projectLabel || 'Sans projet'}</small></>},
 {id:"identity",label:"Sujet",required:true,sortValue:request=>request.subject??null,render:request=><><strong>{request.subject}</strong><small>{SOURCE_LABELS[request.source]}</small></>},
@@ -610,7 +611,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
               <span className="intervention-compact-coverage">{COVERAGE_LABELS[intervention.coverageMode]}</span>
             </button>)}
             {filteredInterventions.length === 0 && <div className="empty-table">Aucune intervention dans cette vue.</div>}
-          </div> : <ConfiguredDataTable<(typeof filteredInterventions)[number]> scope="interventions-list" store={window.atoumweb.visualPreferences} rows={filteredInterventions} selectedId={null} getId={intervention=>intervention.id} onSelect={intervention=>requestUnsavedExit(()=>{ setSelectedIntervention(intervention); setSelectedRequest(null); setInterventionExpanded(false); })} className="operations-table" caption="Numéro · Client · Intervention · Prise en charge · Temps · Statut · source complète des résultats filtrés" columns={[
+          </div> : <ConfiguredDataTable<(typeof filteredInterventions)[number]> filtersActive={hasActiveFilters([query,interventionStatus])} onClearFilters={()=>{setQuery('');setInterventionStatus('all');}} scope="interventions-list" store={window.atoumweb.visualPreferences} rows={filteredInterventions} selectedId={null} getId={intervention=>intervention.id} onSelect={intervention=>requestUnsavedExit(()=>{ setSelectedIntervention(intervention); setSelectedRequest(null); setInterventionExpanded(false); })} className="operations-table" caption="Numéro · Client · Intervention · Prise en charge · Temps · Statut · source complète des résultats filtrés" columns={[
 {id:"identity",label:"Numéro",required:true,sortValue:intervention=>intervention.number??null,render:intervention=><><strong>{intervention.number}</strong></>},
 {id:"client",label:"Client",sortValue:intervention=>intervention.clientLabel??null,render:intervention=><><strong>{intervention.clientLabel}</strong><small>{intervention.projectLabel || 'Sans projet'}{intervention.projectNodeLabel ? ` · ${intervention.projectNodeLabel}` : ''}</small></>},
 {id:"subject",label:"Intervention",sortValue:intervention=>intervention.subject??null,render:intervention=><><strong>{intervention.subject}</strong><small>{INTERVENTION_TYPE_LABELS[intervention.type]}</small></>},

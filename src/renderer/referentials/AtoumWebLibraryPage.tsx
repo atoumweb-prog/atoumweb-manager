@@ -1233,7 +1233,7 @@ export function AtoumWebLibraryPage({ onEntityReady, onMessage, initialItemId, i
           <div className="aw-library-action-group" aria-label="Gestion de la Bibliothèque">
             <button className="secondary-button" type="button" onClick={() => { setCompositionOpen(true); void loadCompositions(); }} title="Assembler plusieurs composants réutilisables dans l’ordre du futur site"><OperationIcon name="package" size={16} /> Composer un site</button>
             <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void inspectPackage()} title="Importer un package de composant dans la Bibliothèque"><OperationIcon name="package" size={16} /> Importer un composant</button>
-            <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>{creating ? 'Fermer' : 'Nouveau composant'}</button>
+            <button className={creating ? 'secondary-button' : 'primary-button'} type="button" onClick={() => setCreating((value) => !value)}>{creating ? 'Fermer' : 'Nouveau composant'}</button>
           </div>
         </div>
       </article>

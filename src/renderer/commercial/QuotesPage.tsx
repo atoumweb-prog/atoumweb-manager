@@ -3,6 +3,7 @@ import {QuoteWizard} from './QuoteWizard';
 import {QuoteDocumentActions} from './QuoteDocumentActions';
 import './quote-journey.css';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {hasActiveFilters} from '../ui/tableEmpty';
 import {QUOTE_LIST_VIEW} from '../../shared/realTableSchemas';
 import {OperationIcon} from '../operations/OperationIcon';
 import './commercial-visual-foundation.css';
@@ -316,7 +317,7 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
 
   return (
     <div className={embedded?'quotes-stack quotes-embedded':'quotes-stack'}>
-      <div className="module-toolbar quote-toolbar"><div><strong>{filtered.length}</strong><span> devis</span></div><div className="toolbar-controls quote-toolbar-controls"><button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh"/>Actualiser</button><input className="inline-search" placeholder={drilldown ? "Cohorte exacte active" : "Rechercher un devis…"} disabled={!!drilldown} value={query} onChange={(e) => setQuery(e.target.value)} /><select value={statusFilter} disabled={!!drilldown} onChange={(e) => setStatusFilter(e.target.value as 'all' | QuoteStatus)}><option value="all">Tous les statuts</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><button className="primary-button" type="button" onClick={() => { if (showWizard) requestUnsavedExit(() => setShowWizard(false), 'quote:create'); else setShowWizard(true); }}>{showWizard ? 'Fermer' : '+ Nouveau devis'}</button></div></div>
+      <div className="module-toolbar quote-toolbar"><div><strong>{filtered.length}</strong><span> devis</span></div><div className="toolbar-controls quote-toolbar-controls"><button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh"/>Actualiser</button><input className="inline-search" placeholder={drilldown ? "Cohorte exacte active" : "Rechercher un devis…"} disabled={!!drilldown} value={query} onChange={(e) => setQuery(e.target.value)} /><select value={statusFilter} disabled={!!drilldown} onChange={(e) => setStatusFilter(e.target.value as 'all' | QuoteStatus)}><option value="all">Tous les statuts</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><button className={showWizard ? 'secondary-button' : 'primary-button'} type="button" onClick={() => { if (showWizard) requestUnsavedExit(() => setShowWizard(false), 'quote:create'); else setShowWizard(true); }}>{showWizard ? 'Fermer' : '+ Nouveau devis'}</button></div></div>
 
       {showWizard && <QuoteWizard catalog={catalog} prospects={prospects} clients={clients} developmentMode={developmentMode} onRefreshLists={refresh} onCreated={async created => { setShowWizard(false); await refresh(); await openQuote(created.id); onMessage(`Devis ${created.number} créé.`); }}/>}
 
@@ -326,7 +327,7 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
         {drilldownMatch && drilldownMatch.unavailable > 0 && <p role="alert">{drilldownMatch.unavailable} devis de la cohorte sont devenus indisponibles ou n’ont plus le statut attendu. Aucun autre devis n’est ajouté.</p>}
         <button className="secondary-button" type="button" onClick={onClearStatisticsDrilldown}>Quitter ce filtre et voir tous les devis</button>
       </section>}
-      {loading ? <div className="panel"><p className="muted">Chargement des devis…</p></div> : <div className={detail ? 'quotes-layout with-detail' : 'quotes-layout'}><div className="panel quote-list-panel"><ConfiguredDataTable<QuoteSummary> scope={QUOTE_LIST_VIEW} store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={quote=>quote.id} onSelect={quote=>void openQuote(quote.id)} className="quote-table" caption="Devis · source complète · tri sur tous les résultats filtrés" columns={[
+      {loading ? <div className="panel"><p className="muted">Chargement des devis…</p></div> : <div className={detail ? 'quotes-layout with-detail' : 'quotes-layout'}><div className="panel quote-list-panel"><ConfiguredDataTable<QuoteSummary> filtersActive={hasActiveFilters([query,statusFilter,drilldown?'drilldown':''])} onClearFilters={()=>{setQuery('');setStatusFilter('all');onClearStatisticsDrilldown?.();}} scope={QUOTE_LIST_VIEW} store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={quote=>quote.id} onSelect={quote=>void openQuote(quote.id)} className="quote-table" caption="Devis · source complète · tri sur tous les résultats filtrés" columns={[
         {id:'identity',label:'Numéro',required:true,sortValue:quote=>quote.number,render:quote=><strong>{quote.number}</strong>},
         {id:'owner',label:'Destinataire',sortValue:quote=>quote.ownerLabel,render:quote=>quote.ownerLabel},
         {id:'subject',label:'Objet',sortValue:quote=>quote.subject,render:quote=>quote.subject},

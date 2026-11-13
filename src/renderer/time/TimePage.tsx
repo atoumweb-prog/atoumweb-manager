@@ -1,4 +1,5 @@
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {hasActiveFilters} from '../ui/tableEmpty';
 import { BUSINESS_TIME_CATEGORIES, type BusinessTimeCategory } from '../../shared/operational';
 import { useEffect, useMemo, useState } from 'react';
 import type { ProjectSummary } from '../../shared/projects';
@@ -323,7 +324,7 @@ export function TimePage({ onMessage, statisticsDrilldown, onClearStatisticsDril
       )}
 
       <section className="panel time-list-panel">
-        <ConfiguredDataTable<(typeof sessions)[number]> scope="time-sessions" store={window.atoumweb.visualPreferences} rows={sessions} selectedId={null} getId={session=>session.id} className="time-table" caption="Sessions de la période et des filtres courants · source complète" columns={[
+        <ConfiguredDataTable<(typeof sessions)[number]> filtersActive={hasActiveFilters([clientId,projectId,category,billable])} onClearFilters={()=>{setClientId('');setProjectId('');setCategory('all');setBillable('all');}} scope="time-sessions" store={window.atoumweb.visualPreferences} rows={sessions} selectedId={null} getId={session=>session.id} className="time-table" caption="Sessions de la période et des filtres courants · source complète" columns={[
 {id:'identity',label:"Date",required:true,sortValue:session=>session.startedAt??null,render:session=><><span className="time-cell-value">{dateTimeLabel(session.startedAt)}</span>{!session.endedAt && <small className="time-live">En cours{session.paused ? ' · pause' : ''}</small>}</>},
 {id:'context',label:"Contexte",sortValue:session=>session.projectLabel??null,render:session=><><span className="time-cell-value">{session.projectNumber ? `${session.projectNumber} · ${session.projectLabel ?? ''}` : session.projectLabel || 'AtoumWeb'}</span><small>{session.projectNodeLabel || session.activityLabel || '—'}</small></>},
 {id:'category',label:"Catégorie",sortValue:session=>session.category??null,render:session=><><span className="time-category-pill">{CATEGORY_LABELS[session.category]}</span><small>{session.businessCategory ?? 'Métier non qualifié'}</small></>},

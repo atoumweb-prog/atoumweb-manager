@@ -447,7 +447,7 @@ export function ContractTermsBuilder({ quote,human=false }: { quote: QuoteDetail
   const libraryView = showLibrary && <div className="cgv-library">
         <div className="cgv-library-heading">{human&&<button type="button" className="secondary-button" onClick={()=>requestUnsavedExit(()=>setShowLibrary(false),'quote:'+quote.id)}>Revenir aux clauses du devis</button>}
           <div><strong>Bibliothèque CGV AtoumWeb</strong><span>Les versions publiées alimentent les devis brouillons. Les devis déjà finalisés ne changent jamais.</span></div>
-          <button className="primary-button" type="button" onClick={() => setShowCreateTemplate((value) => !value)}>{showCreateTemplate ? 'Fermer' : '+ Nouvelle clause'}</button>
+          <button className={showCreateTemplate ? 'secondary-button' : 'primary-button'} type="button" onClick={() => setShowCreateTemplate((value) => !value)}>{showCreateTemplate ? 'Fermer' : '+ Nouvelle clause'}</button>
         </div>
 
         {showCreateTemplate && <div className="cgv-template-form">

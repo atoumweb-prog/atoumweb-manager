@@ -43,7 +43,8 @@ function buildHtml(root) {
     && cssImports.indexOf('ui-typography-consistency.css') < cssImports.indexOf('ui-consistency-v2.css'),
   'CSS precedence changed: update Lot 01A recipe');
   const css = cssImports.map(file => {
-    assert(!file.includes('/') && !file.includes('\\'), 'Unexpected CSS import path');
+    // Règle durable (R2) : chemin relatif sous src/renderer, sous-dossiers acceptés, jamais de « .. » ni d'antislash.
+    assert(/^[\w-]+(?:\/[\w.-]+)*\.css$/.test(file) && !file.includes('..') && !file.includes('\\'), 'Unexpected CSS import path');
     return '/* UX-01A SOURCE: ' + file + ' */\n' +
       fs.readFileSync(path.join(repo, 'src/renderer', file), 'utf8');
   }).join('\n');
