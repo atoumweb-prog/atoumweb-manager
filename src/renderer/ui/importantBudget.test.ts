@@ -6,7 +6,7 @@ const css = (name: string) => readFileSync(resolve(__dirname, name), 'utf8').rep
 const count = (source: string, pattern: RegExp) => (source.match(pattern) ?? []).length;
 
 /** Fichiers CSS ecrits pour la refonte : aucune surcharge forcee, aucune couleur ecrite en dur. */
-const REFONTE_FILES = ['next-step.css'];
+const REFONTE_FILES = ['next-step.css', 'shared-controls.css'];
 
 describe('refonte : discipline CSS des fichiers nouveaux', () => {
   for (const file of REFONTE_FILES) {
@@ -20,6 +20,26 @@ describe('refonte : discipline CSS des fichiers nouveaux', () => {
       expect(source.match(/\b(?:rgb|rgba|hsl|hsla)\(/g) ?? []).toEqual([]);
     });
   }
+
+  it('budget : ui-consistency-v2.css has at most 99 !important (104 before R1)', () => {
+    expect(count(readFileSync(resolve(__dirname, '..', 'ui-consistency-v2.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, ''), /!important/g)).toBeLessThanOrEqual(99);
+  });
+
+  it('the shared aw-ui-* controls live in shared-controls.css, not in ui-consistency-v2.css', () => {
+    const legacy = readFileSync(resolve(__dirname, '..', 'ui-consistency-v2.css'), 'utf8');
+    expect(legacy).not.toMatch(/\.aw-ui-(button|field|notice|control-error)/);
+    expect(css('shared-controls.css')).toMatch(/\.aw-ui-button--danger/);
+  });
+
+  it('main.tsx imports shared-controls.css right after ui-consistency-v2.css', () => {
+    const main = readFileSync(resolve(__dirname, '..', 'main.tsx'), 'utf8');
+    const legacy = main.indexOf("import './ui-consistency-v2.css'");
+    const shared = main.indexOf("import './ui/shared-controls.css'");
+    expect(legacy).toBeGreaterThanOrEqual(0);
+    expect(shared).toBeGreaterThan(legacy);
+    const between = main.slice(legacy, shared).split(String.fromCharCode(10)).filter((line) => line.startsWith('import ') && !line.includes('ui-consistency-v2.css') && !line.includes('shared-controls.css'));
+    expect(between).toEqual([]);
+  });
 
   it('main.tsx imports next-step.css after styles.css', () => {
     const main = readFileSync(resolve(__dirname, '..', 'main.tsx'), 'utf8');
