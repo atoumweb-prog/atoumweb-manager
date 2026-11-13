@@ -56,10 +56,10 @@ Règle déjà posée : aucun texte fonctionnel sous 14 px (`display-density.css`
 
 ### 4. Typographie
 
-[EXISTE] Une seule famille : `Inter, ui-sans-serif, system-ui, …, "Segoe UI", sans-serif` (`styles.css`). Aucune police n'est embarquée ni chargée à distance (aucune `@font-face`, aucun `@import`, aucun paquet de police dans `package.json`) : Inter n'est utilisée que si elle est installée sur le poste, sinon c'est la police système.
+[EXISTE depuis R0] Une seule famille, **Segoe UI explicite en premier** : `"Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif` (`styles.css`). Avant R0, la pile commençait par Inter, non installée sur le poste ni embarquée : le rendu réel était déjà Segoe UI, par le secours. Le changement est donc invisible, mais le rendu ne dépend plus de la présence d'Inter sur un poste. Aucun fichier de police n'est embarqué.
 [EXISTE] Police à chasse fixe `ui-monospace, SFMono-Regular, Consolas` pour chemins et code.
 [EXISTE] Variables de taille : `--aw-font-functional`, `--aw-font-secondary`, `--aw-font-body` (couche finale `ui-typography-consistency.css`, utilisée 194 fois).
-[DÉCIDÉ 13/11/2026] **Inter est embarquée dans l'application** (voir licence en section 11). Non réalisé à ce jour.
+[DÉCIDÉ 13/11/2026] **Inter embarquée abandonnée** (troncatures causées par sa largeur, environ 10 % de plus que Segoe UI, et aucun gain sur un poste unique). Une police de marque pourra être étudiée plus tard, avec un audit des largeurs sur tous les écrans.
 [SUGGÉRÉ] Limiter la hiérarchie à des rôles nommés (titre de page, titre de panneau, corps, secondaire, étiquette, donnée tabulaire) plutôt qu'à des tailles libres.
 
 ### 5. Couleurs et tokens sémantiques
@@ -69,7 +69,10 @@ Règle déjà posée : aucun texte fonctionnel sous 14 px (`display-density.css`
 [EXISTE] Couleurs d'état factorisées en variables seulement en partie (`--aw-status-green/blue/yellow/red-bg/-fg`, `ui-consistency-v2.css`).
 [EXISTE] Règle déjà décidée : une couleur décorative ne reçoit pas systématiquement un rôle d'état ; contraste et focus ne reposent jamais sur la couleur seule.
 [DÉCIDÉ 13/11/2026] **Tokens sémantiques par thème : succès, alerte, danger, info, accent, définis AVANT toute refonte d'écran.** Les valeurs écrites en dur sont ensuite remplacées progressivement par ces tokens.
-[SUGGÉRÉ] Point de départ : succès = vert #198754, alerte = jaune #F2B705, danger = rouge #D62828, info = bleu #1565C0, accent = jaune/or du thème ; chacun avec fond, texte et bordure par thème et vérification du contraste. Les noms exacts des variables restent à fixer au moment de la réalisation, en partant des `--aw-status-*` existants.
+[Historique, réalisé en R0] Point de départ proposé : succès = vert #198754, alerte = jaune #F2B705, danger = rouge #D62828, info = bleu #1565C0, accent = jaune/or du thème ; chacun avec fond, texte et bordure par thème et vérification du contraste. Les noms ont été fixés en R0 (voir ci-dessous) ; les `--aw-status-*` existants restent en place jusqu'à R1.
+[EXISTE depuis R0] Les tokens sont définis dans `src/renderer/tokens.css` (importé en premier dans `main.tsx`) : pour chacun des cinq rôles (`success`, `warning` = alerte, `danger`, `info`, `accent`), quatre variables `--aw-{rôle}-solid`, `--aw-{rôle}-on-solid`, `--aw-{rôle}-soft-bg`, `--aw-{rôle}-soft-fg`, avec des valeurs fixes par thème (tableau dans `docs/refonte/plans/2026-11-13-r0-fondations-design.md`, valeurs vérifiées par `tokens.test.ts`, qui contrôle aussi le seuil de contraste AA 4,5). `--danger` est désormais défini dans les trois thèmes.
+[EXISTE depuis R0] Accent : AtoumWeb `#b9965c`, Blanc `#92733f`, **Noir `#ffda00`**. Le `--accent` historique (or dans Noir, 567 usages) n'est pas modifié ; les deux coexistent jusqu'à la migration écran par écran (R1 et R2+).
+[À CORRIGER EN R1] Texte sur fond plein de l'accent Blanc : contraste 4,42, sous le seuil de 4,5 ; accepté pour R0 (texte gras ou grand). Sur fond clair, `warning solid` et `accent solid` (AtoumWeb) ne suffisent pas seuls pour une icône ou une bordure.
 
 ### 6. Forme, espacement, relief
 
@@ -103,13 +106,14 @@ Règle déjà posée : aucun texte fonctionnel sous 14 px (`display-density.css`
 2. [EXISTE] Aucune donnée métier dupliquée pour faciliter un écran (`AGENTS.md`).
 3. [EXISTE] Les trois thèmes restent cohérents ; vérification à chaque lot (`AGENTS.md`).
 4. [SUGGÉRÉ] Toute décision durable est ajoutée à ce document après accord de Carlos.
+5. [DÉCIDÉ 13/11/2026] Pour tout travail d'interface, la skill `atoumweb-design` est obligatoire. À chaque étape, les skills utilisées sont indiquées à Carlos.
 
 ### 11. Décisions et points ouverts
 
 **Décisions prises le 13/11/2026**
 
 - **Thème de référence : Noir / Confort**, les deux autres thèmes alignés ensuite.
-- **Inter embarquée dans l'application.** Licence vérifiée le 13/11/2026 : Inter (dépôt `rsms/inter`) est sous **SIL Open Font License 1.1**. Cette licence autorise l'intégration (« bundled/embedded ») et l'usage dans une application, y compris commerciale ; elle impose de conserver l'avis de copyright et le texte de licence avec la police, et interdit de vendre la police seule. Le texte lu ne déclare pas de « nom réservé » (Reserved Font Name) : à revérifier sur le fichier de licence de la version embarquée. L'intégration n'est pas réalisée.
+- **Police : Segoe UI explicite, Inter abandonnée le 13/11** (troncatures, poste unique). Une police de marque pourra être étudiée plus tard avec audit des largeurs. Pas de fichier embarqué ; la pile commence par `"Segoe UI"` (`styles.css`).
 - **Tokens sémantiques** (succès, alerte, danger, info, accent) définis par thème **avant** toute refonte d'écran.
 - **Document unique** : ce fichier remplace `docs/ux-v2/DESIGN-SYSTEM.md`, qui ne contient plus qu'un renvoi.
 
@@ -120,10 +124,19 @@ Règle déjà posée : aucun texte fonctionnel sous 14 px (`display-density.css`
 
 **Ordre des lots de la refonte (décidé le 13/11/2026)**
 
-1. **R0 Fondations** : tokens sémantiques par thème (succès, alerte, danger, info, accent) + Inter embarquée (licence OFL 1.1 jointe à l'application).
-2. **R1 Composants partagés** alignés sur les tokens (`AppButton`, `status-pill`, tables, notices), en réduisant les `!important` des fichiers touchés.
+1. **R0 Fondations** : tokens sémantiques par thème (succès, alerte, danger, info, accent), correction de `--danger` et police explicite (Segoe UI en tête de pile).
+2. **R1 Composants partagés** alignés sur les tokens (`AppButton`, `status-pill`, tables, notices), en réduisant les `!important` des fichiers touchés. **R1 répare aussi les 3 scripts de recette natifs cassés avant R0** (`check-unsaved-inputs-ui`, `check-contract-library-ui`, `check-ux-v2-lot01a-real-ui`, voir `PROJECT_STATUS.md`).
 3. **Pause : recette des lots fonctionnels 1 à 6 par Carlos.** Aucun lot R2+ ne démarre avant.
-4. **R2 et suivants : un écran par lot.** Ordre provisoire, modifiable par Carlos : Prospection, Devis, Projets, Catalogue, Bibliothèque / Sites, Paramètres.
+4. **Audit ergonomique** (ajouté le 13/11/2026, entre la pause et R2). Carlos remet les points de friction notés pendant sa recette. Une critique avec la skill `atoumweb-design` porte sur les parcours principaux, sur captures réelles. Elle livre une **liste priorisée (impact / effort)** qui **fixe le contenu et l'ordre de R2 et suivants**. Aucune modification de code pendant l'audit.
+5. **R2 et suivants : un écran par lot.** Ordre provisoire (modifiable par Carlos, et révisé à l'issue de l'audit) : Prospection, Devis, Projets, Catalogue, Bibliothèque / Sites, Paramètres.
+
+**Défauts déjà constatés sur les captures du 13/11/2026, à instruire dans l'audit ergonomique** (R0 n'y touche pas) :
+
+- Logo différent selon les écrans (thème AtoumWeb).
+- Devis : le message de liste vide parle de filtres alors qu'aucun filtre n'est actif.
+- Devis : casse incohérente des en-têtes de colonnes.
+- Accueil : « Devis à préparer : 1 » alors que la liste Devis est vide.
+- Textes tronqués relevés par Carlos : listes déroulantes de Prospection (« Tous les métier », villes, statuts) et d'Offres (« Toutes les catégorie »), en-tête « Destinatai/re » dans Devis, bouton « Rédui » sur Projet, chevauchement « Heures facturables— 0 h » sur l'Accueil (causés par la largeur d'Inter, donc disparus avec son abandon ; « Destinatai/re » existait déjà avant R0).
 
 Chaque lot reste dans son périmètre, est présenté avant d'être codé, et ne modifie ni les données, ni les règles métier, ni le parcours Prospect → Devis → Projet.
 

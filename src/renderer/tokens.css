@@ -1,0 +1,91 @@
+/* Tokens sémantiques de la refonte (lot R0).
+   Référence : docs/refonte/DESIGN.md (sections 5 et 11) et docs/refonte/plans/2026-11-13-r0-fondations-design.md.
+
+   Cinq rôles : success, warning (alerte), danger, info, accent.
+   Quatre variantes par rôle :
+   - solid     : fond plein, icône, bordure ;
+   - on-solid  : texte posé sur un fond plein ;
+   - soft-bg   : fond teinté ;
+   - soft-fg   : texte posé sur un fond teinté.
+
+   Attention : sur fond clair, « warning solid » et « accent solid » (AtoumWeb) ne suffisent pas seuls
+   pour une icône ou une bordure ; utiliser soft-fg ou ajouter un texte.
+   Exception de contraste connue : accent du thème Blanc, texte sur fond plein à 4,42 (seuil 4,5),
+   acceptable pour du texte gras ou grand ; à corriger en R1.
+
+   Ces variables n'ont aucun effet tant qu'un écran ne les utilise pas. --accent, --success et
+   --aw-status-* restent inchangés ; la bascule se fait écran par écran (R1 et R2+).
+   Valeurs en hexadécimal fixe, indépendantes de la densité. */
+
+:root,
+:root[data-theme='atoumweb'] {
+  --aw-success-solid: #198754;
+  --aw-success-on-solid: #ffffff;
+  --aw-success-soft-bg: #dfeee7;
+  --aw-success-soft-fg: #0f5132;
+  --aw-warning-solid: #f2b705;
+  --aw-warning-on-solid: #1f2933;
+  --aw-warning-soft-bg: #fdf5dc;
+  --aw-warning-soft-fg: #6b4e00;
+  --aw-danger-solid: #d62828;
+  --aw-danger-on-solid: #ffffff;
+  --aw-danger-soft-bg: #f9e1e1;
+  --aw-danger-soft-fg: #8c1d1d;
+  --aw-info-solid: #1565c0;
+  --aw-info-on-solid: #ffffff;
+  --aw-info-soft-bg: #dee9f6;
+  --aw-info-soft-fg: #0d47a1;
+  --aw-accent-solid: #b9965c;
+  --aw-accent-on-solid: #18212b;
+  --aw-accent-soft-bg: #f5f0e8;
+  --aw-accent-soft-fg: #6b5128;
+  --danger: var(--aw-danger-solid);
+}
+
+:root[data-theme='noir'] {
+  --aw-success-solid: #55b98b;
+  --aw-success-on-solid: #0e1115;
+  --aw-success-soft-bg: #28473e;
+  --aw-success-soft-fg: #9ce3c0;
+  --aw-warning-solid: #e7b75e;
+  --aw-warning-on-solid: #0e1115;
+  --aw-warning-soft-bg: #514631;
+  --aw-warning-soft-fg: #f3d99e;
+  --aw-danger-solid: #e77a6f;
+  --aw-danger-on-solid: #0e1115;
+  --aw-danger-soft-bg: #513536;
+  --aw-danger-soft-fg: #f5b2ab;
+  --aw-info-solid: #79a9d7;
+  --aw-info-on-solid: #0e1115;
+  --aw-info-soft-bg: #324253;
+  --aw-info-soft-fg: #bad8f2;
+  --aw-accent-solid: #ffda00;
+  --aw-accent-on-solid: #111111;
+  --aw-accent-soft-bg: #575017;
+  --aw-accent-soft-fg: #ffe66a;
+  --danger: var(--aw-danger-solid);
+}
+
+:root[data-theme='blanc'] {
+  --aw-success-solid: #198754;
+  --aw-success-on-solid: #ffffff;
+  --aw-success-soft-bg: #dfeee7;
+  --aw-success-soft-fg: #0f5132;
+  --aw-warning-solid: #f2b705;
+  --aw-warning-on-solid: #1f2933;
+  --aw-warning-soft-bg: #fdf5dc;
+  --aw-warning-soft-fg: #6b4e00;
+  --aw-danger-solid: #d62828;
+  --aw-danger-on-solid: #ffffff;
+  --aw-danger-soft-bg: #f9e1e1;
+  --aw-danger-soft-fg: #8c1d1d;
+  --aw-info-solid: #1565c0;
+  --aw-info-on-solid: #ffffff;
+  --aw-info-soft-bg: #dee9f6;
+  --aw-info-soft-fg: #0d47a1;
+  --aw-accent-solid: #92733f;
+  --aw-accent-on-solid: #ffffff;
+  --aw-accent-soft-bg: #f0ebe4;
+  --aw-accent-soft-fg: #5c4724;
+  --danger: var(--aw-danger-solid);
+}
