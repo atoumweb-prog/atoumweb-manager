@@ -1,0 +1,13 @@
+/* R9 : Réglages en six sections. Jetons uniquement, aucun !important, aucun texte sous 14 px. */
+.settings-toolbar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-width: 0; }
+.settings-grid > .panel { grid-column: 1 / -1; grid-row: auto; }
+.settings-search { width: 380px; max-width: 100%; }
+.settings-row { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 24px; padding: 14px 0; border-top: 1px solid var(--border); min-width: 0; }
+.settings-row > div:first-child { flex: 1 1 360px; min-width: 0; }
+.settings-row h3 { margin: 0 0 6px; font-size: var(--aw-font-body); }
+.settings-row .path-value { margin: 4px 0 8px; font-size: var(--aw-font-functional); overflow-wrap: anywhere; }
+.settings-data > h2 + .settings-row { border-top: 0; }
+.settings-advanced > details > summary, .workflow-demo > details > summary { cursor: pointer; font-size: var(--aw-font-body); font-weight: 700; }
+.settings-advanced > details > :not(summary), .workflow-demo > details > :not(summary) { margin-top: 12px; }
+.settings-navigation > h2 + p, .settings-navigation > h2 + .settings-help-row { margin-top: 8px; }
+.settings-help-row { padding-top: 14px; }

@@ -1,6 +1,6 @@
 {
   "comment": "Budget des font-size en px inférieurs à 14 (R2). Ne peut que baisser : régénérer seulement à la baisse.",
-  "total": 630,
+  "total": 625,
   "files": {
     "analytics.css": 1,
     "backups/BusinessBackupsPage.css": 7,
@@ -8,7 +8,7 @@
     "client-detail.css": 9,
     "commercial.css": 32,
     "commercial/catalog-editor-v2.css": 12,
-    "commercial/catalog-workspace-v2.css": 18,
+    "commercial/catalog-workspace-v2.css": 17,
     "commercial/quote-journey.css": 3,
     "commercial/quote-send.css": 2,
     "commercial/quote-wizard.css": 5,
@@ -51,7 +51,7 @@
     "referentials/AtoumWebLibraryPage.css": 53,
     "referentials/TechnicalContentViewer.css": 6,
     "statistics/StatisticsPage.css": 18,
-    "styles.css": 28,
+    "styles.css": 24,
     "time-recovery.css": 6,
     "time.css": 13,
     "ui-consistency-v2.css": 7,

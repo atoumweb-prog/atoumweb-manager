@@ -39,7 +39,7 @@ describe('App : en-tête générique', () => {
   it('n’affiche plus la puce de migrations dans l’en-tête de page (le détail reste dans Réglages)', () => {
     expect(app).not.toContain('database-chip');
     expect(app).not.toMatch(/SQLite · \{bootstrap/);
-    expect(app).toContain('Migrations appliquées au démarrage');
+    expect(readFileSync(resolve(__dirname, '..', 'settings/SettingsPage.tsx'), 'utf8')).toContain('Migrations appliquées au démarrage');
   });
 
   it('rend l’en-tête générique par PageHeader', () => {
