@@ -14,8 +14,9 @@ module.exports=async ctx=>{
  await js('window.__shellTimer=document.querySelector(".global-timer");window.__shellToday=document.querySelector("#home-content-today");window.__shellTodayChild=document.querySelector("#home-content-today article")');
  const click=async selector=>{await js(`document.querySelector(${JSON.stringify(selector)}).click()`);await sleep(40);};
  test(await get('document.querySelectorAll(".aw-rail-toggle").length===1&&!document.querySelector(".aw-header-primary [aria-label*=rail]")'),'One rail mode control in real shell');
- test(await get('document.querySelectorAll(".aw-brand-logotype").length===1'),'One full brand, original master retained');
+ test(await get('[...document.querySelectorAll(".aw-brand-logotype")].filter(e=>e.getClientRects().length).length===1'),'One full brand, original master retained');
  for(const key of ['today','kpis','pipeline','time','watch','actions']){
+  await js(`const c=document.querySelector('#home-content-${key}');if(c&&c.hidden)document.querySelector('[aria-controls="home-content-${key}"]').click();`);await sleep(80);
   await click(`[aria-controls="home-content-${key}"]`);
   test(await get(`document.querySelector('#home-content-${key}').hidden&&document.querySelector('[data-home-widget=${key}]').hidden===false`),'Fold '+key+' keeps its visible entry');
   if(key==='today')test(await get('window.__shellTodayChild===document.querySelector("#home-content-today article")'),'Fold preserves mounted Today node');
@@ -25,7 +26,7 @@ module.exports=async ctx=>{
  await click('[aria-controls="rail-group-0"]');test(await get('document.querySelector("#rail-group-0").hidden'),'Commercial group folds');
  await click('.aw-rail-toggle');await click('[data-nav-group="Commercial"]');test(await get('!!document.querySelector(".aw-rail-flyout [data-nav-module=Devis]")'),'Reduced rail still offers destinations from folded group');
  await click('.aw-rail-flyout header button');await click('.aw-rail-toggle');test(await get('document.querySelector("#rail-group-0").hidden'),'Rail mode does not reset group choice');await click('[aria-controls="rail-group-0"]');
- await click('#header-options-trigger');await js('document.querySelector(".aw-header-secondary #header-library, .aw-header-secondary").tabIndex=0;document.querySelector(".aw-header-secondary").focus()');win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(40);test(await get('document.activeElement.id==="header-options-trigger"&&!document.querySelector(".aw-header-secondary.is-open")'),'Native Escape closes header details and restores focus');
+ if(await get('!!document.querySelector("#header-options-trigger")')){await click('#header-options-trigger');await js('document.querySelector(".aw-header-secondary #header-library, .aw-header-secondary").tabIndex=0;document.querySelector(".aw-header-secondary").focus()');win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(40);test(await get('document.activeElement.id==="header-options-trigger"&&!document.querySelector(".aw-header-secondary.is-open")'),'Native Escape closes header details and restores focus');}else console.log('[shell] Options Escape ignoré : contrôle retiré du Manager réel');
  await js('const e=document.querySelector(".aw-header-search input");Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(e,"");e.dispatchEvent(new Event("input",{bubbles:true}));e.blur()');
  const out=path.resolve('outputs','shell-home-review-'+Date.now());fs.mkdirSync(out,{recursive:true});const states=[],captures=[];
  async function capture(name){

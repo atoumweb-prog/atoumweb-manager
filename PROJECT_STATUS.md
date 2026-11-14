@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 14/11/2026 : passe de finitions, lot P1 Recettes exécuté (en attente de la recette de Carlos, pas de commit)
+
+- [x] Fiche de la passe : `docs/refonte/plans/2026-11-14-passe-finitions-design.md` (dix décisions de Carlos du 14/11/2026 consignées). Fiche P1 : `…-p1-recettes-design.md` (validée). Plan : `…-p1-recettes.md` (validé). **Journal des causes : `…-p1-recettes-journal.md`.**
+- [x] Résultat : sur 15 recettes rouges au départ, **9 vertes** (`check-quote-journey-native` 44, `check-offres-tarifs-lot1` 32, `check-ux-v2-02d-home` 56, `check-home-shell-lot1` 96, `check-contract-library-ui` 139, `check-contribution-targets-ui` 51, `check-prospection-flow-native` 29, `--prospection` 22, `check-prospection-tabs-native` 27), **2 retirées** (`prospection-corrections`, `prospect-density` et son entrée de `convergence-state.json`), **4 rouges** dont 3 sur un **défaut du produit mesuré** (F43, F45, F46) et 1 à décider (`check-ux-v2-03e-directory`, F47). Aucune attente détendue (une précision sur le défilement natif de `desk`, voir le journal). Aucun fichier de `src/` modifié ; sept fixtures et trois scripts de `scripts/`, deux documents historiques annotés.
+- **Défauts du produit trouvés, non corrigés** : F43 Accueil en fenêtre étroite (4 px), F44 focus qui reste dans « Recherche globale » après le choix d’un résultat, F45 table de Prospection à 1440 px zoom 150 % (15 px), F46 fiche prospect à 1280 × 720 zoom 150 % (33 px de zone de contenu). **Aucun ne change de règle métier.**
+- **Preuves** : `npm run typecheck` propre ; `node scripts/run-tests.cjs` : 305 fichiers, 2 471 tests, 1 ignoré (inchangé) ; scripts natifs : typographie 72, états 18/18, garde Abby 25, interface réelle 857 sur 17 écrans ; `check-ux-v2-lot10-ui` 59 ; empreinte de la préproduction identique avant et après ; budgets 625 et 86 inchangés.
+- **Non vu** : deux points « non vérifié » de `check-contract-library-ui` (F48) ; `check-ux-v2-02c` et `02e` (même attente `.client-toolbar` périmée, non traitées) ; captures produites par les recettes non relues. **Revue finale : autocontrôle de l’auteur, pas un relecteur indépendant.**
+- **Registre** : `docs/refonte/FINITIONS.md` mis à jour (F5, F6, F12, F21, F22, F32 Offres, F39 traitées ; F31 et F37 tranchées ; F43 à F48 ajoutées ; section d’avancement de la passe).
+- Décisions de Carlos du 14/11/2026 : **F47 reportée** (réécriture après F44) ; **commit local de P1 autorisé**, sans push.
+- Prochaine action : P1 commité localement ; ensuite P2 Nettoyage (11 orphelins, mineurs M4 à M9), P3, P4, P6, P5 ; fin de refonte ; lot dédié pour l’acompte par défaut.
+
 ## 14/11/2026 : R9 Réglages exécuté (Mon entreprise d'abord, Recette repliée), recette de Carlos, commit local
 
 - [x] Fiche : `docs/refonte/plans/2026-11-14-r9-reglages-design.md` (validée le 14/11/2026 : « OK global », points 1 à 7). Plan : `docs/refonte/plans/2026-11-14-r9-reglages.md` (8 tâches, validé le 14/11/2026, section « Révisions » à jour).

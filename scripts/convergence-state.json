@@ -294,12 +294,6 @@
       ]
     ],
     [
-      "prospect-a",
-      [
-        "scripts/check-ux-v2-prospect-density.cjs"
-      ]
-    ],
-    [
       "operational-preview",
       [
         "scripts/check-operational-recipe-ui.cjs",

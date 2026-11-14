@@ -23,7 +23,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
  const out=path.resolve('outputs','prospection-pilot-standard');fs.mkdirSync(out,{recursive:true});const captures=[];
  async function capture(name){await js('document.querySelector(".content-area").scrollTop=0;document.activeElement?.blur();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');await sleep(120);fs.writeFileSync(path.join(out,name+'.png'),(await win.webContents.capturePage()).toPNG());captures.push(name+'.png');}
  await capture('annuaire-fiche-rapide');
- await click('[aria-label="Agrandir la fiche"]');await wait('document.querySelector(".prospect-detail-desk")','existing Prospect A desk');test(await get('document.querySelector(".prospect-focus-summary")&&document.querySelectorAll(".prospect-section-group").length===3'),'Existing Prospect A and its three groups retained');
+ await click('[aria-label="Agrandir la fiche"]');await wait('document.querySelector(".prospect-detail-desk")','existing Prospect A desk');test(await get('!!document.querySelector(".aw-next-step-title")&&document.querySelectorAll(".crm-workspace-tabs [role=tab]").length===7'),'Existing Prospect A, its next step and its seven tabs retained');
  await click('.prospect-detail-desk [aria-label="Fermer la fiche prospect"]');
  await click('[aria-label="Fermer la fiche prospect"]');
  await click('.prospects-v2>.page-heading .primary-button');await wait('document.querySelector(".prospect-create-v2")','existing creation form');

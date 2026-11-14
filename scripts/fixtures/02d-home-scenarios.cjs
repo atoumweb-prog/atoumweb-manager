@@ -40,7 +40,7 @@ module.exports=async({win,db,temp,registered,evalUI:js,get,wait,navigate,test,sl
   test(await second.webContents.executeJavaScript('document.querySelector("[data-home-widget=watch]").hidden'),'Second native window restores workspace Home layout');
   db.setSetting=(name,value)=>{if(name==='ux_v2_visual_preferences_v1')throw Error('Injected preference disk refusal');return originalSetting(name,value);};
   const layoutBefore=await get('Array.from(document.querySelectorAll("[data-home-widget]")).map(e=>e.dataset.homeWidget).join(",")');
-  await click('[aria-label="Descendre Pipeline commercial"]');
+  await click('[aria-label="Descendre Indicateurs"]');
   test(await get('!!document.querySelector(".home-dashboard .aw-ui-notice--error")')&&await get('Array.from(document.querySelectorAll("[data-home-widget]")).map(e=>e.dataset.homeWidget).join(",")')===layoutBefore,'Failed persistence never announces or applies saved layout');
   db.setSetting=originalSetting;
   // Cache remains explicitly stale on service error; no forced zero/false all-clear.
@@ -55,7 +55,7 @@ module.exports=async({win,db,temp,registered,evalUI:js,get,wait,navigate,test,sl
   await refresh();for(let i=0;i<60&&!finishAway;i++)await sleep(20);test(!!finishAway,'Pending Home source before context change');
   await click('.quick-prospect');await wait('!!document.querySelector(".prospection-v2,.prospects-v2,.prospects-page,.prospect-toolbar")||document.querySelector(".page-heading h1")?.textContent==="Prospection"','honest quick navigation');
   await navigate('Clients');
-  await js("[...document.querySelectorAll('.client-toolbar button')].find(b=>b.textContent.includes('+ Nouveau client')).click()");await sleep(60);
+  await js("[...document.querySelectorAll('.content-area .page-heading button')].find(b=>b.textContent.includes('+ Nouveau client')).click()");await sleep(60);
   await js("const e=document.querySelector('.crm-form input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'HOME IPC DRAFT');e.dispatchEvent(new Event('input',{bubbles:true}));window.__homeClientForm=document.querySelector('.crm-form')");await sleep(60);
   finishAway();await sleep(90);
   test(await get('window.__homeClientForm===document.querySelector(".crm-form")&&document.querySelector(".crm-form input").value==="HOME IPC DRAFT"&&!document.querySelector(".home-dashboard")'),'Late Home response keeps current Client draft and exact mounted instance');
@@ -78,7 +78,7 @@ module.exports=async({win,db,temp,registered,evalUI:js,get,wait,navigate,test,sl
   test(snapshot()===before,'Home alert/today navigation never writes business rows');
   await navigate('Accueil');await ready();await click('.home-widget-settings summary');
   await js("[...document.querySelectorAll('.home-widget-settings button')].find(b=>b.textContent==='Réinitialiser l’Accueil').click()");await sleep(80);
-  test(await get('!document.querySelector("[data-home-widget=watch]").hidden&&document.querySelectorAll("[data-home-widget]")[1].dataset.homeWidget==="kpis"'),'Home reset restores only standard presentation');
+  test(await get('!document.querySelector("[data-home-widget=watch]").hidden&&Array.from(document.querySelectorAll("[data-home-widget]")).map(e=>e.dataset.homeWidget).join(",")==="today,watch,kpis,pipeline,time,actions"'),'Home reset restores only standard presentation');
   test(snapshot()===before,'Reset keeps all business tables and historic rows');
   // Fresh mount with a failed critical source must never claim all alerts are current.
   await navigate('Clients');replaceAlerts(()=>{throw Error('Injected fresh mount error');});await navigate('Accueil');

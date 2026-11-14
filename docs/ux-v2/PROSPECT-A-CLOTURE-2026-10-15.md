@@ -23,3 +23,5 @@ Après commit : typecheck, suite Vitest complète à deux workers (restaurations
 ## Limites
 
 Validation graphique de A déjà donnée ; dernières captures des deux ajustements soumises à l'utilisateur. Pas de généralisation aux Clients, de publication GitHub/CI, de fusion, d'installation ni de remplacement de l'application. Aucun service, IPC, schéma, migration ou moteur de sauvegarde modifié. La sauvegarde complète des médias hors SQLite reste une réserve distincte, non résolue par cette correction visuelle.
+
+Note du 14/11/2026 (passe de finitions, lot P1) : le banc `check-ux-v2-prospect-density.cjs` et sa fixture ont été retirés (composition A de l’ancienne fiche, remplacée en R3). La tenue de la fiche en largeur est reprise dans `prospection-desk.cjs`. Voir `docs/refonte/plans/2026-11-14-p1-recettes-journal.md`.
