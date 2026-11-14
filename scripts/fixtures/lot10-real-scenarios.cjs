@@ -224,7 +224,7 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
   await js("document.querySelector('.statistics-open-drilldown').click()");
   await wait('document.querySelector(".statistics-route-banner")?.textContent.includes("Sessions de temps")', 'route sessions exacte');
   test(await get('document.querySelectorAll(".time-table tbody tr").length===2'), 'R10B-17 : seulement les deux sessions réellement comptées');
-  test(await get('document.querySelector(".time-kpi-grid")?.textContent.includes("4 h")'), 'R10B-17 : totaux métier du Temps réconciliés avec la cohorte');
+  test(await get('document.querySelector(".aw-keyfigures")?.textContent.includes("4 h")'), 'R10B-17 : totaux métier du Temps réconciliés avec la cohorte');
   await js("document.querySelector('.statistics-route-banner button').click()");
   await wait('!document.querySelector(".statistics-route-banner")', 'sortie filtrage Temps');
 

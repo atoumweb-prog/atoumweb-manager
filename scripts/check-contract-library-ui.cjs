@@ -50,7 +50,7 @@ if(!process.versions.electron){
     await wait('!!window.atoumweb&&(!!document.querySelector(".aw-manager-shell")||!!document.querySelector(".renderer-fatal-shell"))');check('05B actual V2 shell mounted',await js('!!document.querySelector(".aw-manager-shell")'));
     for(const theme of ['atoumweb','noir','blanc']){
       await go('Réglages');await wait('!!document.querySelector(".theme-card")');await js(`[...document.querySelectorAll('.theme-card')].find(b=>b.querySelector('strong').textContent===${JSON.stringify({atoumweb:'AtoumWeb',noir:'Noir',blanc:'Blanc'}[theme])}).click()`);await wait(`document.documentElement.dataset.theme===${JSON.stringify(theme)}`);
-      await go('Documents & Contrats');if(await js('!!document.querySelector(".contract-library")'))await click('Retour aux documents');await click('Bibliothèque contractuelle');check(theme+' library entry',await js('!!document.querySelector(".contract-library")'));
+      await go('Documents & Contrats');if(await js('!!document.querySelector(".contract-library")'))await click('Retour aux documents');await click('Bibliothèque et éditeur contractuels');check(theme+' library entry',await js('!!document.querySelector(".contract-library")'));
       if(theme==='atoumweb')await click('Initialiser depuis le Catalogue');await wait('document.querySelectorAll(".contract-type-list button").length>=5');
       if(args.includes('--ux05b')){
         // Capture the real library at every supported display density in all three themes.
@@ -61,7 +61,7 @@ if(!process.versions.electron){
           await js(`[...document.querySelectorAll(".density-card")].find(b=>b.textContent===${JSON.stringify(label)}).click()`);
           await wait(`document.documentElement.dataset.density===${JSON.stringify(density)}`);
           await go('Documents & Contrats');if(await js('!!document.querySelector(".contract-library")'))await click('Retour aux documents');
-          await click('Bibliothèque contractuelle');await wait('!!document.querySelector(".contract-library")');
+          await click('Bibliothèque et éditeur contractuels');await wait('!!document.querySelector(".contract-library")');
           check(theme+' '+density+' contract library rendered',await js('!!document.querySelector(".contract-type-list")'));
           const layout=await js('(()=>{const root=document.querySelector(".contract-library");const list=document.querySelector(".contract-type-list");if(!root||!list)return null;const viewport=window.innerWidth;const rect=root.getBoundingClientRect();const lr=list.getBoundingClientRect();return {viewport,rootLeft:rect.left,rootRight:rect.right,listLeft:lr.left,listRight:lr.right,documentWidth:document.documentElement.scrollWidth}})()');
           check(theme+' '+density+' library stays within viewport',!!layout&&layout.rootLeft>=-2&&layout.rootRight<=layout.viewport+2);
@@ -187,7 +187,7 @@ if(!process.versions.electron){
       await click('Publier la version du type');await wait('document.querySelector(`[aria-label="Version du type"]`).selectedOptions[0].textContent.includes("Publiée")');type=database.contractTypes.get(type.id);
       // Attach to a fresh draft catalogue version, never edit the published commercial reference.
       const original=refs['AW-WEB-VITRINE'],v=database.catalog.createVersion(original.id,{priceMode:'fixed',priceCents:89900,familyCode:'WEB'});database.contractTypes.setCatalog(v.id,[type.id]);database.contractTerms.setCatalogLinks(module.id,[original.id]);database.catalog.publishVersion(v.id);
-      await js(`window.dispatchEvent(new CustomEvent('atoumweb:open-contract-library',{detail:${JSON.stringify(type.id)}}))`);await click('Retour aux documents');await click('Bibliothèque contractuelle');await wait('!!document.querySelector(".contract-associated-services button")');
+      await js(`window.dispatchEvent(new CustomEvent('atoumweb:open-contract-library',{detail:${JSON.stringify(type.id)}}))`);await click('Retour aux documents');await click('Bibliothèque et éditeur contractuels');await wait('!!document.querySelector(".contract-associated-services button")');
       const services=await js('[...document.querySelectorAll(".contract-associated-services button")].map(e=>e.textContent)');check(theme+' linked service visible',services.some(s=>s.includes('Site vitrine fixture')));
       await js('document.querySelector(".contract-associated-services button").click()');await wait('!!document.querySelector(".catalog-detail-panel")');await click('Contrat & CGV');await wait('!!document.querySelector(`[aria-label="Version Catalogue contractuelle"]`)');check(theme+' type to service navigation',await js('document.body.innerText.includes("Références contractuelles")'));
       await click('Ouvrir le type et ses modules');await wait(`document.querySelector('[aria-label="Nom du type"]')?.value===${JSON.stringify(type.currentVersion.name)}`);check(theme+' service to type navigation',await js(`document.querySelector('[aria-label="Nom du type"]').value===${JSON.stringify(type.currentVersion.name)}`));

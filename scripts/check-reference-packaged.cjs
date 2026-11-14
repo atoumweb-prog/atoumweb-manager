@@ -42,7 +42,7 @@ async function navigate(page){await evaluate('window.dispatchEvent(new CustomEve
   await until(()=>evaluate('document.querySelectorAll(".time-table tbody tr").length===226'),'226 actual rendered rows');
   check(await evaluate('document.querySelectorAll(".global-timer").length===1&&document.querySelector(".global-timer")===window.__packagedTimer'),'Single mounted timer');
   check(await evaluate('document.querySelector(".statistics-route-banner").textContent.includes("226")'),'Explicit exact historical cohort');
-  check(await evaluate('document.querySelector(".time-kpi-card small").textContent==="226 sessions"'),'Actual visible session count');
+  check(await evaluate('document.querySelector(".aw-keyfigure small").textContent==="226 sessions"'),'Actual visible session count');
   const shot=await send('Page.captureScreenshot',{format:'png',fromSurface:true});const file=path.join(captures,theme+'-'+density+'.png');fs.writeFileSync(file,Buffer.from(shot.data,'base64'));report.captures.push({file,sha256:require('node:crypto').createHash('sha256').update(fs.readFileSync(file)).digest('hex')});report.visits++;
  }
  const after=await evaluate('window.atoumweb.time.list()');check(JSON.stringify(after)===JSON.stringify(original),'Read-only UI visits preserve every time value/identity');check(await evaluate('(async()=>await window.atoumweb.time.active()===null)()'),'No timer started');

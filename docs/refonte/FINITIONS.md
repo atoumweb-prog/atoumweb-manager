@@ -23,7 +23,7 @@ Règles en attendant :
 | F6 | `check-contract-library-ui.cjs --output <dossier>` échoue sur « PDF common presentation » (HTML du PDF) ; échec présent avant R3, `src/main` non touché, cause non établie | R3 et R4 | `scripts/check-contract-library-ui.cjs` | à diagnostiquer |
 | F7 | Non vu : devis envoyé ou accepté, états d'erreur, textes très longs, fenêtre étroite, clavier, étapes 2 à 5 de l'assistant, étapes « négociation » et « en attente » de la fiche prospect | R3 et R4 | Prospection, Devis | à voir |
 | F8 | Captures « avant » de R4 antérieures à R0 à R3 : comparaison approximative | R4 | `captures-r4\avant\` | information |
-| F9 | Budget des petits textes (677) et `!important` d'`ui-consistency-v2.css` : chaque lot doit les faire baisser | R2 à R4 | `ui/fontFloorBaseline.json` | chaque lot |
+| F9 | Budget des petits textes (648 après R7) et `!important` d'`ui-consistency-v2.css` : chaque lot doit les faire baisser | R2 à R4 | `ui/fontFloorBaseline.json` | chaque lot |
 | F10 | 11 fichiers orphelins à confirmer avant retrait (`WorkflowDashboard.tsx` base possible de R6, `CatalogOverview.tsx`, `QuoteFinalizationPanel.tsx`, `DashboardOperationsWatch.tsx`, 3 ateliers, `project-tree-arrangement.css`) | audit | `src/renderer/` | à confirmer |
 | F11 | Mineurs M4 à M9 de la passation : notice sans garde sur le message courant ; détecteur de boutons trop large ; `page-header.css` hors liste de `importantBudget.test.ts` ; CSS mort `.database-chip` et `.health-dot` ; en-têtes de Prospection en 14 px gras ; `emptyText` jamais passé par un écran | R2 | divers | à faire |
 | F12 | `check-contribution-targets-ui.cjs --output <dossier>` échoue sur « Affecter la cible » en mode prévisionnel ; **échec déjà présent avant R5a** (vérifié avec l'ancien panneau), cause non établie | R5a | `scripts/check-contribution-targets-ui.cjs` | à diagnostiquer |
@@ -37,7 +37,13 @@ Règles en attendant :
 | F22 | `check-home-shell-lot1.cjs` exige `ATOUMWEB_UX_LOT1_OUTPUT` (dossier neuf) et échoue sur « Home logo variant is absent from Prospection » : le logo de référence de l'Accueil figure dans le rail de Prospection (audit : logo différent selon les écrans) ; non touché par R6 | R6 | `scripts/fixtures/home-shell-lot1.cjs`, `ui/navigation-rail.css` | à diagnostiquer |
 | F23 | Accueil large : « À faire maintenant » n'occupe que la demi-largeur gauche quand « À surveiller » (droite) est court : grand vide à droite sous les alertes ; envisager la liste sur toute la largeur | R6 | `home/HomeDashboard.css`, `HomeDashboardV2.css` | à voir |
 | F24 | Accueil : sept blocs historiques gardent encore 30 déclarations sous 14 px dans `HomeDashboard.css` (indicateurs, pipeline, temps, alertes) ; hors périmètre de la liste | R6 | `home/HomeDashboard.css` | à faire |
-| F20 | Onglet Interventions d'un projet : au-delà de 6 demandes ou 8 interventions, le texte dit « + N autres non affichées » sans lien vers la liste complète (aucune navigation de ce genre n'existe) : à brancher quand R7 refera la liste Gestion | R5b | `ProjectOperationsTab.tsx` | à faire en R7 |
+| F25 | Temps et Documents à 1 510 px : l'action principale (« + Temps manuel », « + Document ») passe seule sur une deuxième ligne parce que les listes déroulantes prennent beaucoup de place (Temps : quatre filtres) ; envisager de replier une partie des filtres | R7 | `ui/list-page.css`, `time/TimePage.tsx`, `documents/DocumentsPage.tsx` | à voir |
+| F26 | Interventions et Temps : fiches détaillées, vues Maintenance et Packs, sauvegarde d'intervention, popover du chrono et historique projet gardent des déclarations sous 14 px (`operations.css` 36, `time.css` 13) ; hors périmètre de la liste | R7 | `operations.css`, `time.css` | à faire |
+| F27 | Deux composants de chiffres clés presque identiques : `KeyFigures` (R7, `.aw-keyfigure`) et les cartes des onglets de projet (R5b, `.project-keyfigure` dans `project-r5b.css`) ; les tuiles de l'Accueil en sont une troisième variante : les unifier | R7 | `ui/KeyFigures.tsx`, `projects/project-r5b.css`, `home/HomeDashboard.tsx` | à faire |
+| F28 | Dans les trois listes à fiche ouverte (Documents, Dépenses, Facturation), le message vide de la liste compacte reste un texte local (« Aucune dépense dans cette vue. ») non aligné sur `shared/gestionEmpty.ts` | R7 | `DocumentsPage.tsx` (déjà aligné), `ExpensesPage.tsx`, `BillingPage.tsx` | à faire |
+| F29 | Base de test : un `-wal` et un `-shm` vides sont restés dans `Workspace\data` (lecture en lecture seule avec le client `sqlite3` de Claude) ; leur suppression a été refusée, ils sont sans danger ; à supprimer à la main si gênants. Le script `seed-gestion-cas-de-figure.cjs` tolère un `-wal` vide | R7 | `Workspace\data\atoumweb-manager.sqlite-wal` | information |
+| F30 | Jeu de cas de figure Gestion : aucune session de chrono en cours (elle resterait active dans la base et dans l'en-tête) ; l'état « En cours » du tableau de Temps n'est couvert que par un test ; le cas « tous les documents archivés » se voit en filtrant sur le client Atelier des Saveurs | R7 | `scripts/seed-gestion-cas-de-figure.cjs` | information |
+| F20 | Onglet Interventions d'un projet : au-delà de 6 demandes ou 8 interventions, le texte dit « + N autres non affichées » sans lien vers la liste complète. **Décision de Carlos du 14/11/2026 : laissé en finition en R7**, parce que la page Interventions n'a aucun filtre par projet ; le brancher demande d'ajouter ce filtre (état de page et événement de navigation) | R5b, R7 | `ProjectOperationsTab.tsx`, `OperationsPage.tsx`, `App.tsx` | à faire (demande un filtre par projet) |
 | F19 | Jeu de cas de figure (`scripts/fixtures/projets-cas-de-figure.json`) à étendre : projet terminé, projet avec incident, maintenance expirée, pack épuisé | R5b | `scripts/seed-projets-cas-de-figure.cjs` | information |
 
 ## Lots qui portent déjà leurs propres points
@@ -45,7 +51,8 @@ Règles en attendant :
 | Point | Lot |
 |---|---|
 | Titre de projet coupé dans la cellule | R5 |
-| Message vide du Temps (M1), « Documents tout archivé » (M2) | R7 |
+| Message vide du Temps (M1), « Documents tout archivé » (M2) | **fait dans R7** (14/11/2026) |
 | Deux définitions de « filtres actifs » dans Offres (M3) | R8 |
+| Page **Annuaire** (groupe Ressources du rail) : aucun lot ne la nomme (R8 liste Offres, Bibliothèque, Sites, Sauvegardes, Statistiques) ; à trancher avec Carlos dans la fiche de R8 | R8 (à confirmer) |
 | Thèmes AtoumWeb et Blanc, densités Compact et Confort + | Fin de refonte |
 | Acompte par défaut venant des Réglages | Lot dédié, décision de Carlos |

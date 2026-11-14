@@ -1,3 +1,7 @@
+import { KeyFigures } from '../ui/KeyFigures';
+import { ListToolbar } from '../ui/ListToolbar';
+import { plural } from '../../shared/projectTabs';
+import { expensesEmptyText } from '../../shared/gestionEmpty';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import {hasActiveFilters} from '../ui/tableEmpty';
 
@@ -391,35 +395,35 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
   const detailOpen = Boolean(selected || createOpen);
 
   return <div className="expenses-page-stack">
-    <section className="expenses-kpi-grid" aria-label="Synthèse des dépenses">
-      <article><span className="expenses-kpi-icon" aria-hidden="true"><OperationIcon name="euro" size={28} /></span><div><strong>Engagé ce mois</strong><span>{money(committedThisMonth)}</span><small>{monthItems.length} dépense(s)</small></div></article>
-      <article><span className="expenses-kpi-icon" aria-hidden="true"><OperationIcon name="clock" size={27} /></span><div><strong>À payer</strong><span>{money(toPay)}</span><small>Dépenses engagées non réglées</small></div></article>
-      <article><span className="expenses-kpi-icon" aria-hidden="true"><OperationIcon name="check-circle" size={27} /></span><div><strong>Payé déclaré ce mois</strong><span>{money(paidThisMonth)}</span><small>Statuts déclarés, sans vérification bancaire</small></div></article>
-      <article><span className="expenses-kpi-icon" aria-hidden="true"><OperationIcon name="repeat" size={27} /></span><div><strong>Récurrent mensuel</strong><span>{money(recurringMonthlyEquivalent)}</span><small>{recurring.length} échéance(s) récurrente(s), sans génération automatique</small></div></article>
-    </section>
+    <KeyFigures ariaLabel="Synthèse des dépenses" items={[
+      { key: 'month', label: 'Engagé ce mois', value: money(committedThisMonth), helper: plural(monthItems.length, 'dépense', 'dépenses') },
+      { key: 'to-pay', label: 'À payer', value: money(toPay), helper: 'Dépenses engagées non réglées' },
+      { key: 'paid', label: 'Payé déclaré ce mois', value: money(paidThisMonth), helper: 'Statuts déclarés, sans vérification bancaire' },
+      { key: 'recurring', label: 'Récurrent mensuel', value: money(recurringMonthlyEquivalent), helper: `${plural(recurring.length, 'échéance récurrente', 'échéances récurrentes')}, sans génération automatique` },
+    ]} />
 
-    <div className="module-toolbar expenses-toolbar">
-      <div><strong>{filtered.length}</strong><span> dépense(s)</span></div>
-      <div className="toolbar-controls">
-        <button className="secondary-button" type="button" onClick={() => draft.request(() => { void refresh(); })}><OperationIcon name="refresh" size={16} /> Actualiser</button>
-        <input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher fournisseur, client, projet…" />
-        <select value={scopeFilter} onChange={(event) => setScopeFilter(event.target.value as typeof scopeFilter)}>
-          <option value="all">Tous les rattachements</option>
-          <option value="project">Liées à un projet</option>
-          <option value="client">Liées à un client</option>
-          <option value="internal">AtoumWeb interne</option>
-        </select>
-        <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value as typeof categoryFilter)}>
-          <option value="all">Toutes les catégories</option>
-          {EXPENSE_CATEGORIES.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}
-        </select>
-        <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
-          <option value="all">Tous les statuts</option>
-          {EXPENSE_STATUSES.map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
-        </select>
-        <button className="primary-button" type="button" onClick={() => draft.request(openCreate)}>+ Dépense</button>
-      </div>
-    </div>
+    <ListToolbar
+      countLabel={plural(filtered.length, 'dépense', 'dépenses')}
+      onRefresh={() => draft.request(() => { void refresh(); })}
+      search={{ value: query, onChange: setQuery, placeholder: 'Rechercher fournisseur, client, projet…', ariaLabel: 'Rechercher une dépense' }}
+      filters={<>
+    <select value={scopeFilter} onChange={(event) => setScopeFilter(event.target.value as typeof scopeFilter)}>
+      <option value="all">Tous les rattachements</option>
+      <option value="project">Liées à un projet</option>
+      <option value="client">Liées à un client</option>
+      <option value="internal">AtoumWeb interne</option>
+    </select>
+    <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value as typeof categoryFilter)}>
+      <option value="all">Toutes les catégories</option>
+      {EXPENSE_CATEGORIES.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}
+    </select>
+    <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
+      <option value="all">Tous les statuts</option>
+      {EXPENSE_STATUSES.map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
+    </select>
+      </>}
+      primary={<button className="primary-button" type="button" onClick={() => draft.request(openCreate)}>+ Dépense</button>}
+    />
 
     {loading ? <section className="panel"><p className="muted">Chargement des dépenses…</p></section> : <div
       className={detailOpen ? 'expenses-workspace with-detail' + (expanded ? ' detail-expanded' : '') : 'expenses-workspace'}
@@ -434,7 +438,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
             <span className="expenses-compact-supplier">{item.supplier || 'Fournisseur non renseigné'}</span>
           </button>)}
           {filtered.length === 0 && <div className="empty-table">Aucune dépense dans cette vue.</div>}
-        </div> : <div className="expenses-table-wrap"><ConfiguredDataTable<(typeof filtered)[number]> filtersActive={hasActiveFilters([query,categoryFilter,statusFilter,scopeFilter])} onClearFilters={()=>{setQuery('');setCategoryFilter('all');setStatusFilter('all');setScopeFilter('all');}} scope="expenses-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>draft.request(() => { setSelectedId(item.id); setCreateOpen(false); setExpanded(false); })} className="expenses-table" caption="Date · Dépense · Catégorie · Client / Projet · Montant · Statut · Justificatif · source complète des résultats filtrés" columns={[
+        </div> : <div className="expenses-table-wrap"><ConfiguredDataTable<(typeof filtered)[number]> emptyText={expensesEmptyText()} filtersActive={hasActiveFilters([query,categoryFilter,statusFilter,scopeFilter])} onClearFilters={()=>{setQuery('');setCategoryFilter('all');setStatusFilter('all');setScopeFilter('all');}} scope="expenses-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>draft.request(() => { setSelectedId(item.id); setCreateOpen(false); setExpanded(false); })} className="expenses-table" caption="Date · Dépense · Catégorie · Client / Projet · Montant · Statut · Justificatif · source complète des résultats filtrés" columns={[
 {id:"date",label:"Date",sortValue:item=>item.expenseDate??null,render:item=><>{dateLabel(item.expenseDate)}</>},
 {id:"identity",label:"Dépense",required:true,sortValue:item=>item.label??null,render:item=><><strong>{item.label}</strong><small>{item.supplier || '—'}</small></>},
 {id:"category",label:"Catégorie",sortValue:item=>item.category??null,render:item=><><span className="expense-category-pill"><OperationIcon name={CATEGORY_ICONS[item.category]} size={15} /> {CATEGORY_LABELS[item.category]}</span></>},

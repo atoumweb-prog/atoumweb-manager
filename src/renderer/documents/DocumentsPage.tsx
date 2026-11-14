@@ -1,3 +1,7 @@
+import { KeyFigures } from '../ui/KeyFigures';
+import { ListToolbar } from '../ui/ListToolbar';
+import { plural } from '../../shared/projectTabs';
+import { documentsEmptyText } from '../../shared/gestionEmpty';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import {hasActiveFilters} from '../ui/tableEmpty';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
@@ -197,6 +201,7 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
   const contractCount = activeItems.filter((item) => item.category === 'contract').length;
   const invoiceCount = activeItems.filter((item) => item.category === 'invoice').length;
   const attentionCount = activeItems.filter(retentionNeedsAttention).length;
+  const documentsEmpty = documentsEmptyText({ total: items.length, archived: items.length - activeItems.length, archiveFilter, filtersActive: hasActiveFilters([query, clientFilter, categoryFilter]) });
 
   function beginResize(): void {
     const workspace = document.querySelector<HTMLElement>('.documents-workspace.with-detail');
@@ -312,56 +317,37 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
 
   if(libraryOpen)return <ContractLibraryPage onClose={()=>draft.request(() => setLibraryOpen(false))} initialTypeId={initialContractTypeId==='all'?null:initialContractTypeId} onMessage={onMessage}/>;
   return <div className="documents-page-stack">
-    <div className="documents-entry-grid" aria-label="Accès aux espaces documentaires">
-      <button type="button" className="documents-entry" onClick={() => draft.request(() => setLibraryOpen(true))}>
-        <OperationIcon name="file-text" size={22} />
-        <strong>Bibliothèque contractuelle</strong>
-        <small>Types, clauses et versions canoniques existants</small>
-      </button>
-      <button type="button" className="documents-entry" onClick={() => draft.request(() => setLibraryOpen(true))}>
-        <OperationIcon name="code" size={22} />
-        <strong>Éditeur contractuel</strong>
-        <small>Brouillons et modules dans la bibliothèque existante</small>
-      </button>
-      <button type="button" className="documents-entry" onClick={() => draft.request(() => document.querySelector('.documents-toolbar')?.scrollIntoView({ block: 'start', behavior: 'smooth' }))}>
-        <OperationIcon name="folder" size={22} />
-        <strong>Documents clients</strong>
-        <small>Fichiers réels et archives, classés par client</small>
-      </button>
-      <div className="documents-entry documents-entry-unavailable" role="note">
-        <OperationIcon name="archive" size={22} />
-        <strong>Autres documents</strong>
-        <small>Dépôt général hors Client non encore disponible : aucun stockage implicite</small>
-      </div>
+    <div className="documents-library-link">
+      <button className="secondary-button" type="button" onClick={() => draft.request(() => setLibraryOpen(true))}><OperationIcon name="file-text" size={16} /> Bibliothèque et éditeur contractuels</button>
     </div>
-    <div className="documents-kpi-grid">
-      <DocumentKpi icon="folder" label="Documents actifs" value={activeItems.length} helper="Tous les fichiers clients" />
-      <DocumentKpi icon="file-text" label="Contrats" value={contractCount} helper="Documents contractuels" />
-      <DocumentKpi icon="receipt" label="Factures actives" value={invoiceCount} helper="Documents de facture non archivés, sans statut de paiement" />
-      <DocumentKpi icon={attentionCount ? 'alert' : 'check-circle'} label="À surveiller" value={attentionCount} helper={attentionCount ? 'Conservation ou fichier manquant' : 'Aucun point documentaire'} />
-    </div>
+    <KeyFigures ariaLabel="Synthèse des documents" items={[
+      { key: 'active', label: 'Documents actifs', value: activeItems.length, helper: 'Tous les fichiers clients' },
+      { key: 'contracts', label: 'Contrats', value: contractCount, helper: 'Documents contractuels' },
+      { key: 'invoices', label: 'Factures actives', value: invoiceCount, helper: 'Documents de facture non archivés, sans statut de paiement' },
+      { key: 'attention', label: 'À surveiller', value: attentionCount, helper: attentionCount ? 'Conservation ou fichier manquant' : 'Aucun point documentaire' },
+    ]} />
 
-    <div className="documents-toolbar">
-      <div><strong>{filtered.length}</strong><span> document{filtered.length > 1 ? 's' : ''}</span></div>
-      <div className="toolbar-controls">
-        <button className="secondary-button" type="button" onClick={() => draft.request(() => { void refresh(); })}><OperationIcon name="refresh" size={16} /> Actualiser</button>
-        <input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher document, client, fichier…" />
-        <select value={clientFilter} onChange={(event) => setClientFilter(event.target.value)}>
-          <option value="all">Tous les clients</option>
-          {importableClients.map((client) => <option key={client.id} value={client.id}>{client.displayName}</option>)}
-        </select>
-        <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value as 'all' | ClientDocumentCategory)}>
-          <option value="all">Tous les types</option>
-          {CLIENT_DOCUMENT_CATEGORIES.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}
-        </select>
-        <select value={archiveFilter} onChange={(event) => setArchiveFilter(event.target.value as 'active' | 'archived' | 'all')}>
-          <option value="active">Actifs</option>
-          <option value="archived">Archivés</option>
-          <option value="all">Tous les statuts</option>
-        </select>
-        <button className="primary-button" type="button" onClick={() => draft.request(() => { setCreateOpen(true); setSelectedId(''); setExpanded(false); setEditing(false); })}><OperationIcon name="upload" size={16} /> + Document</button>
-      </div>
-    </div>
+    <ListToolbar
+      countLabel={plural(filtered.length, 'document', 'documents')}
+      onRefresh={() => draft.request(() => { void refresh(); })}
+      search={{ value: query, onChange: setQuery, placeholder: 'Rechercher document, client, fichier…', ariaLabel: 'Rechercher un document' }}
+      filters={<>
+    <select value={clientFilter} onChange={(event) => setClientFilter(event.target.value)}>
+      <option value="all">Tous les clients</option>
+      {importableClients.map((client) => <option key={client.id} value={client.id}>{client.displayName}</option>)}
+    </select>
+    <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value as 'all' | ClientDocumentCategory)}>
+      <option value="all">Tous les types</option>
+      {CLIENT_DOCUMENT_CATEGORIES.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}
+    </select>
+    <select value={archiveFilter} onChange={(event) => setArchiveFilter(event.target.value as 'active' | 'archived' | 'all')}>
+      <option value="active">Actifs</option>
+      <option value="archived">Archivés</option>
+      <option value="all">Tous les statuts</option>
+    </select>
+      </>}
+      primary={<button className="primary-button" type="button" onClick={() => draft.request(() => { setCreateOpen(true); setSelectedId(''); setExpanded(false); setEditing(false); })}><OperationIcon name="upload" size={16} /> + Document</button>}
+    />
 
     <div
       className={`documents-workspace ${showDetail ? 'with-detail' : ''} ${expanded ? 'detail-expanded' : ''}`}
@@ -374,9 +360,9 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
             <span>{item.clientLabel}</span>
             <small>{CATEGORY_LABELS[item.category]} · {sizeLabel(item.sizeBytes)}{item.missing ? ' · Fichier introuvable' : ''}</small>
           </button>)}
-          {!filtered.length && <p className="muted documents-empty">Aucun document dans cette vue.</p>}
+          {!filtered.length && <p className="muted documents-empty">{documentsEmpty}</p>}
         </div> : <div className="documents-table-wrap">
-          <ConfiguredDataTable<(typeof filtered)[number]> filtersActive={hasActiveFilters([query,clientFilter,categoryFilter,archiveFilter==='active'?'':archiveFilter])} onClearFilters={()=>{setQuery('');setClientFilter('all');setCategoryFilter('all');setArchiveFilter('active');}} scope="documents-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>draft.request(() => setSelectedId(item.id))} className="documents-table" caption="Document · Client · Type · Fichier · Mise à jour · État · source complète des résultats filtrés" columns={[
+          <ConfiguredDataTable<(typeof filtered)[number]> emptyText={documentsEmpty} emptyFilteredText={documentsEmpty} filtersActive={hasActiveFilters([query,clientFilter,categoryFilter,archiveFilter==='active'?'':archiveFilter])} onClearFilters={()=>{setQuery('');setClientFilter('all');setCategoryFilter('all');setArchiveFilter('active');}} scope="documents-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>draft.request(() => setSelectedId(item.id))} className="documents-table" caption="Document · Client · Type · Fichier · Mise à jour · État · source complète des résultats filtrés" columns={[
 {id:"identity",label:"Document",required:true,sortValue:item=>item.title??null,render:item=><><div className="documents-table-title"><span className="documents-type-icon"><OperationIcon name={CATEGORY_ICONS[item.category]} size={16} /></span><strong>{item.title}</strong></div></>},
 {id:"client",label:"Client",sortValue:item=>item.clientLabel??null,render:item=><>{item.clientLabel}</>},
 {id:"category",label:"Type",sortValue:item=>item.category??null,render:item=><>{CATEGORY_LABELS[item.category]}</>},
@@ -385,7 +371,6 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
 {id:"status",label:"État",render:item=><>{item.archivedAt ? <span className="status-pill">Archivé</span> : item.missing ? <span className="status-pill danger">Fichier manquant</span> : <span className="status-pill success">Disponible</span>}</>},
 {id:'open',label:'Ouvrir',required:true,render:item=><button type="button" className="link-button" aria-label={'Ouvrir '+String(item.title??item.id)} onClick={event=>{event.stopPropagation();((item:(typeof filtered)[number])=>draft.request(() => setSelectedId(item.id)))(item);}}><OperationIcon name="record-open"/></button>}
 ]}/>
-          {!filtered.length && <p className="muted documents-empty">Aucun document dans cette vue.</p>}
         </div>}
       </article>}
 
@@ -457,9 +442,6 @@ export function DocumentsPage({ onEntityReady, onMessage, initialDocumentId, ini
         </div>
       </article>}
     </div>
+    <p className="muted documents-unavailable-note">Dépôt général hors client : pas encore disponible.</p>
   </div>;
-}
-
-function DocumentKpi({ icon, label, value, helper }: { icon: OperationIconName; label: string; value: number; helper: string }) {
-  return <article><span className="documents-kpi-icon"><OperationIcon name={icon} size={27} /></span><div><strong>{label}</strong><span>{value}</span><small>{helper}</small></div></article>;
 }

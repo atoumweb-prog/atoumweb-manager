@@ -1,6 +1,6 @@
 {
   "comment": "Budget des font-size en px inférieurs à 14 (R2). Ne peut que baisser : régénérer seulement à la baisse.",
-  "total": 658,
+  "total": 648,
   "files": {
     "analytics.css": 1,
     "backups/BusinessBackupsPage.css": 11,
@@ -31,7 +31,7 @@
     "directory/DirectoryPage.css": 7,
     "documents/DocumentsPage.css": 3,
     "home/HomeDashboard.css": 30,
-    "operations.css": 45,
+    "operations.css": 36,
     "operations/DashboardOperationsWatch.css": 5,
     "operations/hour-pack-shortfall.css": 4,
     "operations/incident-quick-editor.css": 3,
@@ -53,7 +53,7 @@
     "statistics/StatisticsPage.css": 24,
     "styles.css": 28,
     "time-recovery.css": 6,
-    "time.css": 14,
+    "time.css": 13,
     "ui-consistency-v2.css": 7,
     "ui/navigation-rail.css": 2,
     "ui/workspace-header.css": 1,

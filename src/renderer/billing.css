@@ -46,73 +46,6 @@
   line-height: 1.45;
 }
 
-.billing-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
-  gap: 9px;
-}
-
-.billing-kpi-grid article {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-  min-width: 0;
-  padding: 12px 13px;
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface);
-}
-
-.billing-kpi-grid article > div {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-
-.billing-kpi-icon {
-  display: inline-grid;
-  width: 48px;
-  height: 48px;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--accent-soft) 52%, var(--surface));
-  color: var(--accent);
-  font-size: 17px;
-  font-weight: 650;
-}
-
-.billing-kpi-grid strong {
-  color: var(--text-muted);
-  font-size: var(--aw-font-functional, 14px);
-  font-weight: 700;
-}
-
-.billing-kpi-grid article span:not(.billing-kpi-icon) {
-  color: var(--text);
-  font-size: 20px;
-  font-weight: 400;
-  line-height: 1.2;
-}
-
-.billing-kpi-grid small {
-  color: var(--text-muted);
-  font-size: var(--aw-font-functional, 14px);
-  font-weight: 400;
-}
-
-.billing-toolbar .toolbar-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-.billing-toolbar .inline-search {
-  min-width: min(320px, 30vw);
-}
-
 .billing-advanced-filters {
   min-width: 0;
   border: 1px solid var(--border);
@@ -637,7 +570,6 @@ body.billing-resizing {
 }
 
 @media (max-width: 1250px) {
-  .billing-kpi-grid,
   .billing-summary-grid {
     grid-template-columns: repeat(2, minmax(140px, 1fr));
   }
@@ -665,8 +597,7 @@ body.billing-resizing {
 
 @media (max-width: 620px) {
   .billing-guidance-strip,
-  .billing-kpi-grid,
-  .billing-summary-grid {
+.billing-summary-grid {
     grid-template-columns: 1fr;
   }
 
@@ -675,24 +606,8 @@ body.billing-resizing {
   }
 }
 
-.billing-toolbar .secondary-button,
 .billing-invoice-actions button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-
-@media (max-width: 1050px) {
-  .billing-toolbar {
-    align-items: stretch;
-  }
-
-  .billing-toolbar .toolbar-controls {
-    width: 100%;
-  }
-
-  .billing-toolbar .inline-search {
-    flex: 1 1 260px;
-    min-width: 220px;
-  }
 }

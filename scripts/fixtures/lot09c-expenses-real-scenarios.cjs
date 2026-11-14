@@ -21,9 +21,9 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
   try {
     await navigate('Dépenses');
     await wait('document.querySelectorAll(".expenses-table tbody tr").length===2','expense list');
-    test(await get('document.querySelector(".expenses-kpi-grid")?.textContent.includes("Payé déclaré ce mois")'),
+    test(await get('document.querySelector(".aw-keyfigures")?.textContent.includes("Payé déclaré ce mois")'),
       '09C-UI-01: declared paid is not presented as bank-verified');
-    test(await get('document.querySelector(".expenses-kpi-grid")?.textContent.includes("sans génération automatique")'),
+    test(await get('document.querySelector(".aw-keyfigures")?.textContent.includes("sans génération automatique")'),
       '09C-UI-02: recurring expenses do not claim auto-created occurrences');
     await js('const row=[...document.querySelectorAll(".expenses-table tbody tr")].find(e=>e.textContent.includes("Frais TEST 09C 1"));if(!row)throw Error("expense row absent");row.click()');
     await wait('document.querySelector(".expenses-form-grid input[placeholder]")?.value==="Frais TEST 09C 1"','selected expense form loaded');
@@ -93,7 +93,7 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
     }
     // Correcting a paid expense requires an explicit human confirmation, not bank verification.
     db.expenses.changeStatus(first.id,'paid');
-    await js('document.querySelector(".expenses-toolbar button.secondary-button").click()');
+    await js('document.querySelector(".aw-list-toolbar button.secondary-button").click()');
     await wait('document.querySelectorAll(".expenses-table tbody tr").length===2','paid item refresh');
     await js('const row=[...document.querySelectorAll(".expenses-table tbody tr")].find(e=>e.textContent.includes("Frais TEST 09C 1"));row.click()');
     await wait('document.querySelector(".expenses-form-grid input[type=number]")?.value==="149"','paid expense form ready');

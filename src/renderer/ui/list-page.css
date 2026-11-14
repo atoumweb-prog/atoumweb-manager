@@ -1,0 +1,21 @@
+/* R7 : chiffres clés et barre d'outils communs aux écrans de liste de Gestion.
+   Jetons uniquement : aucune couleur écrite en dur, aucun !important (garde-fou : ui/importantBudget.test.ts), aucun texte sous 14 px. */
+.aw-keyfigures { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--ui-gap); }
+.aw-keyfigure { display: grid; gap: 2px; align-content: start; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); color: var(--text); }
+.aw-keyfigure > strong { font-size: var(--aw-font-functional); font-weight: 600; color: var(--muted); }
+.aw-keyfigure > span { font-size: 22px; font-weight: 800; line-height: 1.2; }
+.aw-keyfigure > small { color: var(--muted); font-size: var(--aw-font-functional); }
+
+.aw-list-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px var(--ui-gap); min-width: 0; }
+.aw-list-toolbar-leading, .aw-list-toolbar-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.aw-list-toolbar-count { font-size: var(--aw-font-body); font-weight: 700; color: var(--text); white-space: nowrap; }
+.aw-list-toolbar .inline-search { flex: 1 1 200px; min-width: 160px; max-width: 360px; }
+.aw-list-toolbar select { min-width: 0; max-width: 190px; }
+.aw-list-toolbar-primary { margin-left: auto; }
+
+/* Un seul ascenseur : dans les listes Gestion, le tableau n'a plus de boîte à défilement vertical propre, la page défile. */
+.operations-stack .aw-data-table-scroll,
+.billing-page-stack .aw-data-table-scroll,
+.expenses-page-stack .aw-data-table-scroll,
+.documents-page-stack .aw-data-table-scroll,
+.time-page-stack .aw-data-table-scroll { max-height: none; }

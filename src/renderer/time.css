@@ -225,40 +225,6 @@
   gap: 12px;
 }
 
-.time-toolbar {
-  gap: 10px;
-}
-
-.time-period-tabs {
-  display: flex;
-  gap: 5px;
-}
-
-.time-period-tabs button {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 7px 10px;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 9px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.time-period-tabs button.active {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-  background: var(--accent-soft);
-  color: var(--text);
-}
-
-.time-filters {
-  flex-wrap: wrap;
-}
-
-.time-filters select {
-  min-width: 135px;
-}
-
 .time-visual-strip {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -405,57 +371,6 @@
 @keyframes time-live-pulse {
   0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 25%, transparent); }
   50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 0%, transparent); }
-}
-
-.time-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.time-kpi-card {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 11px;
-}
-
-.time-kpi-card > div {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-
-.time-kpi-icon {
-  display: inline-grid;
-  width: 52px;
-  height: 52px;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
-  border-radius: 13px;
-  background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
-  color: var(--accent);
-  font-size: 22px;
-  font-weight: 650;
-}
-
-.time-kpi-label {
-  color: var(--text-muted);
-  font-size: var(--aw-font-functional, 14px);
-  font-weight: 700;
-}
-
-.time-kpi-value {
-  color: var(--text);
-  font-size: 22px;
-  font-weight: 400;
-  line-height: 1.2;
-}
-
-.time-kpi-card small {
-  color: var(--text-muted);
-  font-size: var(--aw-font-functional, 14px);
-  font-weight: 400;
 }
 
 .manual-time-panel {
@@ -709,7 +624,6 @@
     max-width: 210px;
   }
 
-  .time-kpi-grid,
   .project-time-summary {
     grid-template-columns: 1fr;
   }
@@ -821,10 +735,6 @@
   accent-color: var(--accent);
 }
 
-/* Gestion des temps : hiérarchie typographique alignée sur Projet / Prospection. */
-.time-period-tabs button,
-.time-toolbar .primary-button,
-.time-toolbar .secondary-button,
 .manual-time-panel .primary-button,
 .manual-time-panel .secondary-button,
 .time-table .text-button {
@@ -847,10 +757,39 @@
   font-weight: 400;
 }
 
-
-
-.time-kpi-icon-nonbillable svg { transform: scale(1.04); }
-
 .timer-pause-reason textarea { min-height: 82px; resize: vertical; }
 .timer-stop-decision .button-row,
 .timer-pause-reason .button-row { align-items: stretch; }
+
+/* R7 : onglets de période dans la barre d'outils commune (ils passent à la ligne, plus de défilement). */
+.time-period-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.time-period-tabs button {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--aw-font-functional);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.time-period-tabs button.active {
+  border-color: var(--aw-accent-solid);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.time-now-label {
+  color: var(--accent-strong);
+  font-size: var(--aw-font-functional);
+  font-weight: 700;
+}
+
+/* R7 : bouton « Corriger » des sessions au plancher de 14 px. */
+.time-page-stack .text-button { font-size: var(--aw-font-functional); }

@@ -24,7 +24,7 @@ function ColumnSizer({ id, width, onPreview, onCommit }: { id: string; width: nu
       window.addEventListener('pointermove', move); window.addEventListener('pointerup', finish); window.addEventListener('pointercancel', cancel); window.addEventListener('blur', cancel);
     }}/ >;
 }
-export function DataTable<T>({ rows, columns, selectedId, getId, sort, onSort, caption, widths = {}, onWidth, preferenceScope = '', loading = false, unavailable = false, onRowActivate, className='', rowAttributes, fitAvailable=false, filtersActive = false, onClearFilters, emptyText }: {
+export function DataTable<T>({ rows, columns, selectedId, getId, sort, onSort, caption, widths = {}, onWidth, preferenceScope = '', loading = false, unavailable = false, onRowActivate, className='', rowAttributes, fitAvailable=false, filtersActive = false, onClearFilters, emptyText, emptyFilteredText }: {
   rows: readonly T[]; columns: readonly TableColumn<T>[]; selectedId: string | null;
   getId: (row: T) => string; sort: TableSort | null; onSort: (id: string) => void; caption: string;
   widths?: Readonly<Record<string, number>>; onWidth?: (id: string, width: number) => void;
@@ -36,6 +36,8 @@ export function DataTable<T>({ rows, columns, selectedId, getId, sort, onSort, c
   filtersActive?: boolean; onClearFilters?: () => void;
   /** Texte propre à l'écran quand la liste est vide sans filtre (ex. « Aucun devis pour l'instant. »). */
   emptyText?: string;
+  /** Texte propre à l'écran quand la liste est vide ET que des filtres sont actifs (ex. dire la période). Sans lui : « Aucun résultat pour ces filtres. » */
+  emptyFilteredText?: string;
   rowAttributes?:(row:T)=>{className?:string;[key:`data-${string}`]:string|undefined};
 }) {
   const scrollRef=useRef<HTMLDivElement>(null),[available,setAvailable]=useState(0);
@@ -57,6 +59,6 @@ export function DataTable<T>({ rows, columns, selectedId, getId, sort, onSort, c
       {column.sortValue ? <AppButton variant="quiet" aria-label={`Trier par ${column.label}`} onAction={() => onSort(column.id)}>{column.label}{sort?.columnId === column.id ? sort.direction === 'asc' ? ' ↑' : ' ↓' : ''}</AppButton> : column.label}
       {onWidth && !column.fixedWidth && <ColumnSizer key={`${preferenceScope}:${column.id}`} id={column.id} width={widthOf(column.id)} onPreview={width => setPreview(width === null ? null : { id: column.id, width })} onCommit={width => onWidth(column.id, width)}/>}
     </th>)}</tr></thead><tbody>{rows.map(row => {const attributes=rowAttributes?.(row);return <tr key={getId(row)} {...attributes} className={[attributes?.className,selectedId===getId(row)?'selected-row':''].filter(Boolean).join(' ')} data-record-id={getId(row)} data-selected={selectedId === getId(row)} tabIndex={onRowActivate?0:undefined} onClick={onRowActivate?()=>onRowActivate(row):undefined} onKeyDown={onRowActivate?event=>{if(event.target===event.currentTarget&&['Enter',' '].includes(event.key)){event.preventDefault();onRowActivate(row);}}:undefined}>{columns.map(column => <td key={column.id} data-column-id={column.id}>{column.render(row)}</td>)}</tr>;})}</tbody></table>
-    {!rows.length && !loading && !unavailable && <div className="aw-table-empty" role="status"><p>{filtersActive ? empty.text : emptyText ?? empty.text}</p>{filtersActive && onClearFilters && empty.clearLabel && <AppButton onAction={onClearFilters}>{empty.clearLabel}</AppButton>}</div>}
+    {!rows.length && !loading && !unavailable && <div className="aw-table-empty" role="status"><p>{filtersActive ? emptyFilteredText ?? empty.text : emptyText ?? empty.text}</p>{filtersActive && onClearFilters && empty.clearLabel && <AppButton onAction={onClearFilters}>{empty.clearLabel}</AppButton>}</div>}
   </div>;
 }

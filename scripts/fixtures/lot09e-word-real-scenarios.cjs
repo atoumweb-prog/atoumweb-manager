@@ -28,8 +28,8 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
  };
  try {
   await navigate('Documents & Contrats');
-  await wait('!!document.querySelector(".documents-toolbar")','Documents page');
-  await js('const entry=[...document.querySelectorAll(".documents-page-stack button")].find(e=>e.textContent.includes("Bibliothèque contractuelle"));if(!entry)throw Error("Canonical library entry missing");entry.click()');
+  await wait('!!document.querySelector(".aw-list-toolbar")','Documents page');
+  await js('const entry=[...document.querySelectorAll(".documents-page-stack button")].find(e=>e.textContent.includes("Bibliothèque et éditeur contractuels"));if(!entry)throw Error("Canonical library entry missing");entry.click()');
   await wait('!!document.querySelector("select[aria-label=\\"Consulter un module\\"]")','canonical contract library');
   await js('const el=document.querySelector("select[aria-label=\\"Consulter un module\\"]");el.value='+JSON.stringify(clause.id)+';el.dispatchEvent(new Event("change",{bubbles:true}));');
   await wait('!!document.querySelector(".aw-word-draft-panel")','clause Word panel');
@@ -84,7 +84,7 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
   test(confirmations.length===beforeConfirm+2,'09E-convergence: explicit discard prompts once');
   test(db.contractTerms.getTemplate(clause.id).versions.length===1,'09E-convergence: discarding Word review preserves persisted version');
   confirmAnswer=0;
-  await js('const entry=[...document.querySelectorAll(".documents-page-stack button")].find(e=>e.textContent.includes("Bibliothèque contractuelle"));entry.click()');
+  await js('const entry=[...document.querySelectorAll(".documents-page-stack button")].find(e=>e.textContent.includes("Bibliothèque et éditeur contractuels"));entry.click()');
   await wait('!!document.querySelector("select[aria-label=\\"Consulter un module\\"]")','library reopened after discard');
   await js('const el=document.querySelector("select[aria-label=\\"Consulter un module\\"]");el.value='+JSON.stringify(clause.id)+';el.dispatchEvent(new Event("change",{bubbles:true}));');
   await button('Réimporter un Word');
@@ -112,8 +112,8 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
    for(const [density,label,font,height] of [['compact','Compact',14,36],['comfort','Confort',16,42],['comfort_plus','Confort +',18,48]]){
     await select(theme,title,density,label,font,height);
     await navigate('Documents & Contrats');
-    await wait('!!document.querySelector(".documents-toolbar")','Docs '+theme+'/'+density);
-    test(await get('[...document.querySelectorAll(".documents-page-stack button")].some(e=>e.textContent.includes("Bibliothèque contractuelle"))'),
+    await wait('!!document.querySelector(".aw-list-toolbar")','Docs '+theme+'/'+density);
+    test(await get('[...document.querySelectorAll(".documents-page-stack button")].some(e=>e.textContent.includes("Bibliothèque et éditeur contractuels"))'),
      '09E-3x3: canonical library entry remains accessible '+theme+'/'+density);
     const viewport=await get('({scroll:document.querySelector(".content-area")?.scrollWidth,width:document.querySelector(".content-area")?.clientWidth})');
     test(viewport.scroll<=viewport.width+20,'09E-3x3: no page overflow '+theme+'/'+density);

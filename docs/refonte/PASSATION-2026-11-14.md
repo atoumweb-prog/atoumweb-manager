@@ -1,5 +1,7 @@
 # Passation de la refonte du Manager (14/11/2026, après R5a)
 
+> **Mise à jour du 14/11/2026 (après R7)** : le point d'entrée de la nouvelle conversation est désormais `docs/refonte/PASSATION-2026-11-14-apres-R7.md`. Ce fichier-ci décrit l'état après R5a et reste valable pour l'historique.
+
 À lire en premier dans la nouvelle conversation. Ce fichier **complète** `PASSATION-2026-11-13.md` (méthode, règles, pièges, outils) : il dit où on en est après R3, R4 et R5a, ce qui reste, et où sont les données de test. Il ne remplace ni `PROJECT_STATUS.md` ni `docs/refonte/DESIGN.md`.
 
 ## 1. Où on en est
