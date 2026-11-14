@@ -1,6 +1,6 @@
 {
   "comment": "Budget des font-size en px inférieurs à 14 (R2). Ne peut que baisser : régénérer seulement à la baisse.",
-  "total": 676,
+  "total": 660,
   "files": {
     "analytics.css": 1,
     "backups/BusinessBackupsPage.css": 11,
@@ -40,8 +40,7 @@
     "project-resources.css": 8,
     "project-technical-library.css": 13,
     "project-tree-arrangement.css": 2,
-    "projects.css": 52,
-    "projects/ProjectOperationsTab.css": 6,
+    "projects.css": 42,
     "projects/recipe/operational-recipe.css": 6,
     "projects/sites-pages-v2.css": 9,
     "prospect-detail.css": 6,

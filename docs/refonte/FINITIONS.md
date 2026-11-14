@@ -32,6 +32,9 @@ Règles en attendant :
 | F15 | Traits qui dépassent à droite de certaines lignes de phase dans le plan (vu sur la capture de la landing page) : à vérifier | R5a | `project-phase-*` dans `projects.css` | à voir |
 | F16 | La ligne « En ce moment » n'a été vue que sur des projets sans avancement (« Rien ne bloque ce projet. ») : à regarder avec des tâches bloquées, en attente client et des prérequis manquants | R5a | `ProjectNowLine.tsx` | à voir |
 | F17 | Noms de tâche encore coupés dans l'arbre du plan (« Recevoir le logo et les te… ») : les laisser passer sur deux lignes | R5a | `projects.css` (`.project-step`) | à faire |
+| F18 | Onglet Sites et pages d'un projet issu d'un modèle : « 0 Site · 0 Page », volet de droite « Sélectionne un Site ou une Page » sans rien à sélectionner, bouton `←` sans libellé. Décision de Carlos du 14/11/2026 : finition, hors R5b | R5b | `ProjectSitesTab.tsx`, `sites-pages-v2.css` | à faire |
+| F20 | Onglet Interventions d'un projet : au-delà de 6 demandes ou 8 interventions, le texte dit « + N autres non affichées » sans lien vers la liste complète (aucune navigation de ce genre n'existe) : à brancher quand R7 refera la liste Gestion | R5b | `ProjectOperationsTab.tsx` | à faire en R7 |
+| F19 | Jeu de cas de figure (`scripts/fixtures/projets-cas-de-figure.json`) à étendre : projet terminé, projet avec incident, maintenance expirée, pack épuisé | R5b | `scripts/seed-projets-cas-de-figure.cjs` | information |
 
 ## Lots qui portent déjà leurs propres points
 

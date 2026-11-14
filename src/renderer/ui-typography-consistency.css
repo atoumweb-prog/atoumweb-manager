@@ -115,9 +115,7 @@ table td small {
 .project-detail-panel label,
 .project-detail-panel small,
 .project-tree small,
-.project-tree span,
-.project-prerequisite span,
-.project-prerequisite small {
+.project-tree span {
   font-size: var(--aw-font-functional);
 }
 

@@ -11,7 +11,6 @@ import type { QuoteSummary } from '../../shared/commercial';
 import {
   PROJECT_COMMERCIAL_MODES,
   PROJECT_NODE_STATUSES,
-  PROJECT_PREREQUISITE_STATUSES,
   PROJECT_STATUSES,
   type ProjectCommercialMode,
   type ProjectCompletionReview,
@@ -40,6 +39,11 @@ import { defaultTaskToOpen, filterActionNodes, phaseDisplayName, projectNowSumma
 import { ProjectNowLine } from './ProjectNowLine';
 import { projectTypeLabel } from '../../shared/projectTypeLabel';
 import './project-r5a.css';
+import './project-r5b.css';
+import { dateLabel, duration, money } from './projectFormat';
+import { ProjectCommercialTab } from './ProjectCommercialTab';
+import { ProjectPrerequisitesTab } from './ProjectPrerequisitesTab';
+import { ProjectSummaryTab } from './ProjectSummaryTab';
 import type { TimeSession } from '../../shared/time';
 
 const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
@@ -59,15 +63,6 @@ const NODE_STATUS_LABELS: Record<ProjectNodeStatus, string> = {
   blocked: 'Bloqué',
   to_validate: 'À valider',
   done: 'Terminé',
-};
-
-const PREREQUISITE_STATUS_LABELS: Record<ProjectPrerequisiteStatus, string> = {
-  to_request: 'À demander',
-  requested: 'Demandé',
-  received: 'Reçu',
-  incomplete: 'Incomplet',
-  validated: 'Validé',
-  not_applicable: 'Non applicable',
 };
 
 const COMMERCIAL_MODE_LABELS: Record<ProjectCommercialMode, string> = {
@@ -128,24 +123,6 @@ const PROJECT_TYPES = [
   ['software', 'Logiciel'],
   ['internal', 'Projet interne AtoumWeb'],
 ] as const;
-
-function money(cents: number): string {
-  return `${(cents / 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`;
-}
-
-function duration(minutes: number): string {
-  if (!minutes) return '0 h';
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  if (!hours) return `${rest} min`;
-  return rest ? `${hours} h ${rest.toString().padStart(2, '0')}` : `${hours} h`;
-}
-
-function dateLabel(value?: string | null): string {
-  if (!value) return '—';
-  const date = new Date(value.length === 10 ? `${value}T12:00:00` : value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('fr-FR');
-}
 
 function formatTimer(seconds: number): string {
   const safe = Math.max(0, Math.floor(seconds));
@@ -901,15 +878,9 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
           </section>
         </div>}
 
-        {detailTab !== 'plan' && detailTab !== 'sites' && <main className="project-production-secondary">
-          {detailTab === 'summary' && <ProjectSummaryTab project={detail} />}
-          {detailTab === 'prerequisites' && (
-            <div className="project-tab-content">
-              <div className="project-prerequisite-add"><input value={newPrerequisite} onChange={(event) => setNewPrerequisite(event.target.value)} placeholder="Ajouter un prérequis…" /><button className="secondary-button" type="button" onClick={() => void addPrerequisite()}>Ajouter</button></div>
-              <div className="project-prerequisites">{detail.prerequisites.map((item) => <div key={item.id} className="project-prerequisite"><div><strong>{item.label}</strong>{item.description && <small>{item.description}</small>}</div><select value={item.status} onChange={(event) => void updatePrerequisiteStatus(item.id, event.target.value as ProjectPrerequisiteStatus)}>{PROJECT_PREREQUISITE_STATUSES.map((status) => <option key={status} value={status}>{PREREQUISITE_STATUS_LABELS[status]}</option>)}</select></div>)}</div>
-              {detail.prerequisites.length === 0 && <p className="muted">Aucun prérequis enregistré.</p>}
-            </div>
-          )}
+        {detailTab !== 'plan' && detailTab !== 'sites' && <main className={['summary', 'commercial', 'prerequisites', 'operations'].includes(detailTab) ? 'project-production-secondary project-production-secondary--fit' : 'project-production-secondary'}>
+          {detailTab === 'summary' && <ProjectSummaryTab project={detail} onShowPrerequisites={() => selectProjectTab('prerequisites')} />}
+          {detailTab === 'prerequisites' && <ProjectPrerequisitesTab prerequisites={detail.prerequisites} newLabel={newPrerequisite} onNewLabelChange={setNewPrerequisite} onAdd={() => void addPrerequisite()} onStatus={(id, status) => void updatePrerequisiteStatus(id, status)} />}
           {detailTab === 'resources' && <ProjectResourcesTab projectId={detail.id} nodes={detail.nodes} resourceRootPath={detail.resourceRootPath} onMessage={onMessage} />}
           {detailTab === 'technical' && <ProjectTechnicalLibraryTab projectId={detail.id} onMessage={onMessage} />}
           {detailTab === 'operations' && <ProjectOperationsTab projectId={detail.id} onMessage={onMessage} />}
@@ -1134,29 +1105,6 @@ function PhaseCompletionReviewPanel({ review, busy, onConfirm, onCancel }: {
       </div>
     </section>
   </div>;
-}
-
-function ProjectSummaryTab({ project }: { project: ProjectDetail }) {
-  const missingPrerequisites = project.prerequisites.filter((item) => item.required && !['validated', 'not_applicable'].includes(item.status)).length;
-  const openTasks = project.nodes.filter((node) => ['task', 'checklist'].includes(node.type) && node.required && node.status !== 'done').length;
-  return (
-    <div className="project-tab-content">
-      <div className="project-kpis"><div><span>Progression</span><strong>{project.progressPercent} %</strong></div><div><span>Temps estimé{project.estimationIncomplete?' — incomplet':''}</span><strong>{duration(project.estimatedMinutes)}</strong></div><div><span>Tâches restantes</span><strong>{openTasks}</strong></div><div><span>Prérequis à traiter</span><strong>{missingPrerequisites}</strong></div></div>
-      <div className="project-summary-list"><div><span>Type</span><strong>{project.projectType}</strong></div><div><span>Mode commercial</span><strong>{COMMERCIAL_MODE_LABELS[project.commercialMode]}</strong></div><div><span>Date cible</span><strong>{dateLabel(project.targetDate)}</strong></div><div><span>Créé le</span><strong>{dateLabel(project.createdAt)}</strong></div>{project.sourceQuoteId && <div><span>Origine</span><strong>{project.commercialState === 'provisional' ? 'Devis non accepté' : project.commercialState === 'frozen' ? 'Devis accepté' : 'Devis source (historique)'}</strong></div>}</div>
-      {project.notes && <div className="project-note"><span className="eyebrow">Notes</span><p>{project.notes}</p></div>}
-    </div>
-  );
-}
-
-function ProjectCommercialTab({ project }: { project: ProjectDetail }) {
-  return (
-    <div className="project-tab-content">
-      <div className="project-commercial-values"><div><span>Valeur commerciale</span><strong>{money(project.commercialValueCents)}</strong></div><div><span>Montant contractuel</span><strong>{money(project.contractValueCents)}</strong></div><div><span>Écart / valeur offerte</span><strong>{money(Math.max(0, project.commercialValueCents - project.contractValueCents))}</strong></div></div>
-      <strong className="project-section-title">Prestations figées depuis le devis</strong>
-      <div className="project-services">{project.services.map((service) => <div key={service.id}><div><strong>{service.label}</strong><small>{service.catalogVersionId ? 'Version catalogue figée' : 'Ligne libre'}</small></div><span>{money(service.contractValueCents)}</span></div>)}</div>
-      {project.services.length === 0 && <p className="muted">Aucune prestation commerciale rattachée.</p>}
-    </div>
-  );
 }
 
 function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, onOpenResources, onOpenTechnical, onOpenTime, onOpenSecrets, showHoverHelp, onMessage }: {

@@ -1,4 +1,4 @@
-import type { ProjectNode, ProjectNodeStatus, ProjectPrerequisite, ProjectStatus } from './projects';
+import type { ProjectNode, ProjectNodeStatus, ProjectPrerequisite, ProjectPrerequisiteStatus, ProjectStatus } from './projects';
 
 /**
  * Règles de présentation de la fiche Projet (R5a). Fonctions pures : elles ne lisent que des données existantes
@@ -27,11 +27,35 @@ function orderedNodes(nodes: readonly ProjectNode[]): ProjectNode[] {
   return out;
 }
 
+/** Un prérequis manque quand il est obligatoire et n'est ni validé ni « sans objet » : une seule définition pour la fiche, le Résumé et l'onglet Prérequis. */
+function isMissingPrerequisite(item: ProjectPrerequisite): boolean {
+  return item.required !== false && item.status !== 'validated' && item.status !== 'not_applicable';
+}
+
+export function countMissingPrerequisites(prerequisites: readonly ProjectPrerequisite[]): number {
+  return prerequisites.filter(isMissingPrerequisite).length;
+}
+
+export function filterMissingPrerequisites(prerequisites: readonly ProjectPrerequisite[]): ProjectPrerequisite[] {
+  return prerequisites.filter(isMissingPrerequisite);
+}
+
+/** « 1 validé sur 4 » : le total exclut les prérequis « sans objet ». */
+export function prerequisiteProgress(prerequisites: readonly ProjectPrerequisite[]): { validated: number; total: number; missing: number } {
+  const applicable = prerequisites.filter((item) => item.status !== 'not_applicable');
+  return { validated: applicable.filter((item) => item.status === 'validated').length, total: applicable.length, missing: countMissingPrerequisites(prerequisites) };
+}
+
+/** Le bouton « Marquer reçu » n'a de sens que pour un prérequis encore à demander ou demandé. */
+export function canMarkReceived(status: ProjectPrerequisiteStatus): boolean {
+  return status === 'to_request' || status === 'requested';
+}
+
 export function projectNowSummary(nodes: readonly ProjectNode[], prerequisites: readonly ProjectPrerequisite[], targetDate?: string | null, now: Date = new Date()): { blocked: number; waitingClient: number; toValidate: number; prerequisitesMissing: number; overdue: boolean; clear: boolean } {
   const work = nodes.filter((node) => node.type !== 'lot');
   const count = (status: ProjectNodeStatus) => work.filter((node) => node.status === status).length;
   const blocked = count('blocked'), waitingClient = count('waiting_client'), toValidate = count('to_validate');
-  const prerequisitesMissing = prerequisites.filter((item) => item.required !== false && item.status !== 'validated' && item.status !== 'not_applicable').length;
+  const prerequisitesMissing = countMissingPrerequisites(prerequisites);
   const overdue = Boolean(targetDate) && new Date(`${String(targetDate).slice(0, 10)}T23:59:59`).getTime() < now.getTime();
   return { blocked, waitingClient, toValidate, prerequisitesMissing, overdue, clear: blocked + waitingClient + toValidate + prerequisitesMissing === 0 && !overdue };
 }

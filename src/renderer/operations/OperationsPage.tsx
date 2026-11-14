@@ -31,29 +31,13 @@ import { MaintenancePanel } from './MaintenancePanel';
 import { OperationsAlertsPanel } from './OperationsAlertsPanel';
 import { InterventionBackupPanel } from './InterventionBackupPanel';
 import { OperationIcon } from './OperationIcon';
+import { COVERAGE_LABELS, INTERVENTION_STATUS_LABELS, INTERVENTION_TYPE_LABELS, PRIORITY_LABELS, REQUEST_STATUS_LABELS, SOURCE_LABELS } from '../../shared/operationLabels';
 
 type OperationsView = 'requests' | 'interventions' | 'maintenance' | 'packs';
 export type OperationsSearchTarget = {
   entityType: Extract<SearchResult['entityType'], 'service_request' | 'intervention' | 'maintenance' | 'hour_pack'>;
   entityId: string;
   focus?: 'conclusion';
-};
-
-const REQUEST_STATUS_LABELS: Record<ServiceRequestStatus, string> = {
-  new: 'Nouveau', to_qualify: 'À qualifier', waiting_client: 'En attente client', planned: 'Planifié', converted: 'Transformé', closed: 'Clos sans intervention', archived: 'Archivé',
-};
-const SOURCE_LABELS: Record<ServiceRequestSource, string> = {
-  email: 'Email', phone: 'Téléphone', website_form: 'Formulaire site', message: 'Message', meeting: 'Réunion', atoumweb_detection: 'Détection AtoumWeb', other: 'Autre',
-};
-const PRIORITY_LABELS: Record<ServiceRequestPriority, string> = { low: 'Basse', normal: 'Normale', high: 'Haute', urgent: 'Urgente' };
-const INTERVENTION_TYPE_LABELS: Record<InterventionType, string> = {
-  correction: 'Correction', modification: 'Modification', addition: 'Ajout', maintenance: 'Maintenance', incident: 'Incident', support: 'Support', training: 'Formation', other: 'Autre',
-};
-const INTERVENTION_STATUS_LABELS: Record<InterventionStatus, string> = {
-  to_plan: 'À planifier', planned: 'Planifiée', in_progress: 'En cours', waiting_client: 'En attente client', blocked: 'Bloquée', to_validate: 'À valider', completed: 'Terminée', cancelled: 'Annulée', archived: 'Archivée',
-};
-const COVERAGE_LABELS: Record<InterventionCoverageMode, string> = {
-  maintenance: 'Inclus maintenance', hour_pack: 'Déduit pack d’heures', out_of_scope: 'Hors forfait facturable', commercial_gesture: 'Geste commercial', included_project: 'Inclus projet', internal: 'Interne AtoumWeb',
 };
 
 function money(cents?: number): string { return `${((cents ?? 0) / 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`; }
