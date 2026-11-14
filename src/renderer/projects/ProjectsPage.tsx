@@ -34,6 +34,12 @@ import { ProjectResourcesTab } from './ProjectResourcesTab';
 import { ProjectSitesTab, type ProjectSitesViewContext } from './ProjectSitesTab';
 import { ProjectTechnicalLibraryTab } from './ProjectTechnicalLibraryTab';
 import { ProjectTimeTab } from './ProjectTimeTab';
+import { StatusPill } from '../ui/StatusPill';
+import { projectStatusTone } from '../ui/projectStatusTone';
+import { defaultTaskToOpen, filterActionNodes, phaseDisplayName, projectNowSummary, projectOpeningTab, rootAncestorId } from '../../shared/projectOverview';
+import { ProjectNowLine } from './ProjectNowLine';
+import { projectTypeLabel } from '../../shared/projectTypeLabel';
+import './project-r5a.css';
 import type { TimeSession } from '../../shared/time';
 
 const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
@@ -178,6 +184,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
   const openEpoch=useRef(0),detailRef=useRef(detail);detailRef.current=detail;
   useEffect(()=>()=>{openEpoch.current++;},[]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(returnContext?.selectedNodeId ?? null);
+  const [actionOnly, setActionOnly] = useState(false);
   const [expandedPhaseIds, setExpandedPhaseIds] = useState<Set<string>>(() => new Set(returnContext?.expandedPhaseIds ?? []));
   const [undoStack, setUndoStack] = useState<ProjectHistoryAction[]>([]);
   const [redoStack, setRedoStack] = useState<ProjectHistoryAction[]>([]);
@@ -299,6 +306,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
     try {
       setSelectedId(id);
       setSelectedNodeId(null);
+      setActionOnly(false);
       setExpandedPhaseIds(new Set());
       setUndoStack([]);
       setRedoStack([]);
@@ -314,9 +322,15 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
         const availableNodes = new Set(next.nodes.map(node => node.id));
         setSelectedNodeId(returnContext.selectedNodeId && availableNodes.has(returnContext.selectedNodeId) ? returnContext.selectedNodeId : null);
         setExpandedPhaseIds(new Set(returnContext.expandedPhaseIds.filter(nodeId => availableNodes.has(nodeId))));
+      } else {
+        // R5a : le travail à faire est ouvert d'emblée (première tâche en cours, bloquée ou à valider), dans sa phase dépliée.
+        const firstTask = defaultTaskToOpen(next.nodes);
+        setSelectedNodeId(firstTask);
+        const phaseId = firstTask ? rootAncestorId(next.nodes, firstTask) : null;
+        setExpandedPhaseIds(new Set(phaseId ? [phaseId] : []));
       }
       setDetail(next);
-      setDetailTab(returnContext?.projectId === id ? returnContext.detailTab : 'plan');
+      setDetailTab(returnContext?.projectId === id ? returnContext.detailTab : projectOpeningTab({ status: next.status, prerequisitesMissing: projectNowSummary(next.nodes, next.prerequisites, null).prerequisitesMissing }));
     } catch (error) {
       if(epoch!==openEpoch.current)return;
       onEntityReady?.('project',id,error instanceof Error?error.message:'Projet introuvable.');
@@ -711,13 +725,14 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
               <h2>{detail.name}</h2>
               <p>{detail.commercialState === 'provisional' && !detail.clientAccountId ? 'Prospect : ' : 'Client / contact : '}{detail.clientLabel}</p>
               {detail.sourceQuoteId && <p className="muted">Devis source associé <button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'quote', entityId: detail.sourceQuoteId, title: 'Devis source du Projet', parentEntityId: detail.id, projectContext: { projectId: detail.id, detailTab, selectedNodeId, expandedPhaseIds: [...expandedPhaseIds], query, statusFilter, commercialFilter, projectTopCollapsed, productionTreeCollapsed, productionSplitPercent, sitesViewContext } } }))}>Ouvrir le devis</button></p>}
+              <ProjectNowLine summary={projectNowSummary(detail.nodes, detail.prerequisites, detail.status === 'completed' || detail.status === 'archived' ? null : detail.targetDate)} onShowAction={() => { selectProjectTab('plan'); setActionOnly(true); }} onShowPrerequisites={() => selectProjectTab('prerequisites')} />
               {detail.commercialState === 'provisional' && <p className="muted">Préparation interne : ce dossier n’est pas une commande acceptée.</p>}
             </div>
           </div>
           <div className="project-production-actions">
             <div className="project-history-buttons" aria-label="Historique des modifications">
-              <button type="button" className="secondary-button" disabled={undoStack.length === 0} title={undoStack.length ? `Annuler : ${undoStack.at(-1)?.label}` : 'Rien à annuler'} onClick={() => void undoProjectChange()}>↶</button>
-              <button type="button" className="secondary-button" disabled={redoStack.length === 0} title={redoStack.length ? `Rétablir : ${redoStack.at(-1)?.label}` : 'Rien à rétablir'} onClick={() => void redoProjectChange()}>↷</button>
+              <button type="button" className="secondary-button" disabled={undoStack.length === 0} aria-label="Annuler la dernière modification" title={undoStack.length ? `Annuler : ${undoStack.at(-1)?.label}` : 'Rien à annuler'} onClick={() => void undoProjectChange()}>↶</button>
+              <button type="button" className="secondary-button" disabled={redoStack.length === 0} aria-label="Rétablir la modification" title={redoStack.length ? `Rétablir : ${redoStack.at(-1)?.label}` : 'Rien à rétablir'} onClick={() => void redoProjectChange()}>↷</button>
             </div>
             <div className="project-production-status">
               <label>
@@ -791,6 +806,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
                   <strong>{detail.nodes.filter((node) => !node.parentId).length} phase{detail.nodes.filter((node) => !node.parentId).length > 1 ? 's' : ''}</strong>
                 </div>
                 <div className="project-production-tree-actions">
+                  <button className="project-tree-filter-button" type="button" aria-pressed={actionOnly} onClick={() => setActionOnly((value) => !value)}>Ce qui demande une action</button>
                   <button className="project-tree-size-button" type="button" title="Masquer le plan de production" aria-label="Masquer le plan de production" onClick={() => setProductionTreeCollapsed(true)}>←</button>
                   <button className="project-tree-size-button" type="button" title="Rétablir le partage 40 / 60" aria-label="Rétablir le partage 40 / 60" onClick={() => setProductionSplitPercent(40)}>↔</button>
                 <details className="project-production-add">
@@ -813,11 +829,11 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
                 </div>
               </div>
               {!detailUsesBlueprint && <div className="project-legacy-plan-note">
-                <div><strong>Ce projet utilise un ancien plan</strong><span>Il conserve le modèle utilisé lors de sa création.</span></div>
+                <div><strong>Plan issu du modèle d’origine</strong><span>Ce plan garde la structure du modèle utilisé à la création du projet.</span></div>
               </div>}
               <div className="project-production-tree-scroll">
                 <div className="project-tree">{renderProjectProductionTree(
-                  detail.nodes,
+                  actionOnly ? filterActionNodes(detail.nodes) : detail.nodes,
                   updateNodeStatus,
                   moveProjectNode,
                   setSelectedNodeId,
@@ -829,6 +845,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
                   requestPhaseCompletion,
                 )}</div>
                 {detail.nodes.length === 0 && <p className="muted">Le plan est vide. Ajoute un lot, un module ou une tâche.</p>}
+                {actionOnly && filterActionNodes(detail.nodes).length === 0 && <p className="muted">Rien ne demande d’action sur ce plan pour l’instant.</p>}
               </div>
             </section>}
 
@@ -961,12 +978,12 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
       {loading ? <div className="panel"><p className="muted">Chargement des projets…</p></div> : (
         <div className="projects-layout">
           <section className="panel project-list-panel">
-            <ConfiguredDataTable<(typeof filtered)[number]> filtersActive={hasActiveFilters([query,statusFilter,commercialFilter])} onClearFilters={()=>{setQuery('');setStatusFilter('all');setCommercialFilter('all');}} scope="projects-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={project=>project.id} onSelect={project=>void openProject(project.id)} className="project-table" caption="Numéro · Client / prospect · Projet · État commercial · Statut · Progression · Temps estimé · Cible · source complète des résultats filtrés" columns={[
+            <ConfiguredDataTable<(typeof filtered)[number]> defaultVisibleColumnIds={['identity','client','name','status','progress','target','open']} emptyText="Aucun projet pour l’instant. Crée-en un depuis un devis accepté." filtersActive={hasActiveFilters([query,statusFilter,commercialFilter])} onClearFilters={()=>{setQuery('');setStatusFilter('all');setCommercialFilter('all');}} scope="projects-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={project=>project.id} onSelect={project=>void openProject(project.id)} className="project-table" caption="Numéro · Client / prospect · Projet · État commercial · Statut · Progression · Temps estimé · Cible · source complète des résultats filtrés" columns={[
 {id:"identity",label:"Numéro",required:true,sortValue:project=>project.number??null,render:project=><><strong>{project.number}</strong></>},
 {id:"client",label:"Client / prospect",sortValue:project=>project.clientLabel??null,render:project=><>{project.clientLabel}</>},
-{id:"name",label:"Projet",sortValue:project=>project.name??null,render:project=><><strong>{project.name}</strong><small>{project.projectType}</small></>},
+{id:"name",label:"Projet",sortValue:project=>project.name??null,render:project=><><strong>{project.name}</strong><small>{projectTypeLabel(project.projectType)}</small></>},
 {id:"commercial",label:"État commercial",sortValue:project=>project.commercialState??null,render:project=><><span>{project.commercialState === 'provisional' ? 'Prévisionnel · devis non signé' : project.commercialState === 'frozen' ? 'Confirmé · devis accepté' : 'Historique'}</span></>},
-{id:"status",label:"Statut",sortValue:project=>project.status??null,render:project=><><span className={`project-status status-${project.status}`}>{PROJECT_STATUS_LABELS[project.status]}</span></>},
+{id:"status",label:"Statut",sortValue:project=>project.status??null,render:project=><><StatusPill tone={projectStatusTone(project.status)}>{PROJECT_STATUS_LABELS[project.status]}</StatusPill></>},
 {id:"progress",label:"Progression",sortValue:project=>project.progressPercent??null,render:project=><><div className="project-progress-cell"><span>{project.progressPercent} %</span><i><b style={{ width: `${project.progressPercent}%` }} /></i></div></>},
 {id:"estimated",label:"Temps estimé",sortValue:project=>project.estimatedMinutes??null,render:project=><>{duration(project.estimatedMinutes)}</>},
 {id:"target",label:"Cible",sortValue:project=>project.targetDate??null,render:project=><>{dateLabel(project.targetDate)}</>},
@@ -1342,7 +1359,7 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
         <span className="project-workbench-kicker">Fiche · {positionLabel}</span>
         <input className="project-workbench-title-input" value={nodeName} onChange={(event) => setNodeName(event.target.value)} aria-label="Nom de l’étape" />
         <div className="project-workbench-badges">
-          <span className={`status-${node.status}`}>{NODE_STATUS_LABELS[node.status]}</span>
+          <StatusPill tone={projectStatusTone(node.status)}>{NODE_STATUS_LABELS[node.status]}</StatusPill>
           <span>{node.required ? 'Obligatoire' : 'Optionnel'}</span>
           {node.paused && <span className="paused">⏸ En pause</span>}
         </div>
@@ -1589,8 +1606,8 @@ function renderProjectProductionTree(
         >
           <span className="project-phase-chevron">{expanded ? '⌄' : '›'}</span>
           <span className="project-phase-number">Phase {phaseIndex + 1}</span>
-          <span className="project-phase-name">{phase.name}</span>
-          <span className="project-phase-meta">{completedSteps}/{trackableSteps.length} · {duration(phase.estimatedMinutes ?? 0)}</span>
+          <span className="project-phase-name">{phaseDisplayName(phase.name)}</span>
+          <span className="project-phase-meta">{completedSteps} sur {trackableSteps.length} {trackableSteps.length > 1 ? 'tâches' : 'tâche'} · Temps estimé {duration(phase.estimatedMinutes ?? 0)}</span>
           <span className="project-phase-progress"><i><b style={{ width: `${progressPercent}%` }} /></i><strong>{progressPercent}%</strong></span>
         </button>
         <details className="project-node-menu" onClick={(event) => event.stopPropagation()}>

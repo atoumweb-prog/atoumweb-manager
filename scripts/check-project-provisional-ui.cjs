@@ -81,7 +81,7 @@ if(!process.versions.electron){
    await click('Conserver');
    await check(theme+' — Résolution explicite, conflit retiré','!document.querySelector(".project-scope-conflict") && window.calls.some(c=>c.action==="resolve"&&c.d==="keep")');
    await show(theme,'frozen');
-   await check(theme+' — Acceptation figée visible','document.body.innerText.includes("Périmètre accepté et figé")');
+   await check(theme+' — Acceptation figée visible','document.body.innerText.includes("Périmètre figé")');
    await check(theme+' — Synchronisation absente après gel','![...document.querySelectorAll("button")].some(b=>b.innerText.includes("Synchroniser"))');
    await show(theme,'legacy');
    await check(theme+' — Historique sans requalification','!document.querySelector(".project-commercial-scope")');

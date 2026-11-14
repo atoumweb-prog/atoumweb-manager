@@ -1,0 +1,18 @@
+/* R5a : fiche Projet (périmètre figé replié, ligne « En ce moment », filtre du plan).
+   Jetons uniquement : aucune couleur écrite en dur, aucun !important (garde-fou : ui/importantBudget.test.ts). */
+.project-commercial-scope--folded { padding: 8px 14px; }
+.project-commercial-scope-summary { cursor: pointer; font-size: var(--aw-font-functional); font-weight: 700; color: var(--text); }
+.project-commercial-scope--folded[open] > .project-commercial-scope-summary { margin-bottom: var(--ui-gap); }
+
+.project-now-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px var(--ui-gap); margin: 6px 0 0; font-size: var(--aw-font-functional); color: var(--text); }
+.project-now-line--clear { color: var(--aw-success-soft-fg); }
+.project-now-line-item { padding: 2px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-soft); color: var(--text); font: inherit; font-weight: 700; cursor: pointer; }
+.project-now-line-item:hover { border-color: var(--aw-accent-solid); }
+.project-now-line-overdue { padding: 2px 10px; border-radius: 999px; background: var(--aw-danger-soft-bg); color: var(--aw-danger-soft-fg); font-weight: 700; }
+
+.project-tree-filter-button { padding: 4px 10px; border: 1px solid var(--border); border-radius: 9px; background: transparent; color: var(--text); font-size: var(--aw-font-functional); font-weight: 700; cursor: pointer; white-space: nowrap; }
+.project-tree-filter-button[aria-pressed="true"] { border-color: var(--aw-accent-solid); box-shadow: inset 0 0 0 1px var(--aw-accent-solid); }
+
+/* En-tête du plan : les boutons gardent leur texte sur une ligne, l'en-tête passe à la ligne si la place manque. */
+.project-production-add > summary { white-space: nowrap; }
+.project-production-tree-head { flex-wrap: wrap; row-gap: 6px; }

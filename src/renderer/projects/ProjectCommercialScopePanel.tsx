@@ -1,6 +1,7 @@
 import {ContributionTargetChoices} from './ContributionTargetChoices';
 import {requestUnsavedExit} from '../unsaved/unsaved';
 import {useEffect,useState} from 'react';
+import {scopeFoldedSummary} from '../../shared/projectOverview';
 import type {ProjectCommercialScope,ProjectCommercialRestartPreview,ProjectConflictDecision,ProjectDetail} from '../../shared/projects';
 
 export function ProjectCommercialScopePanel({projectId,onChanged}:{projectId:string;onChanged?:(p:ProjectDetail)=>void}) {
@@ -43,10 +44,11 @@ export function ProjectCommercialScopePanel({projectId,onChanged}:{projectId:str
   // owns the dossier. Never expose actions belonging to the replacement.
   const isCurrentProvisional = scope.state==='provisional' && Boolean(scope.dossierId && scope.currentQuoteId);
   const canAssignTargets = isCurrentProvisional || scope.state==='frozen';
-  return <section className="project-commercial-scope" aria-label="Périmètre commercial du Projet">
-    <strong>{scope.state==='provisional'
-      ? isCurrentProvisional?'Projet prévisionnel — devis non accepté':'Ancien Projet prévisionnel — archive conservée, lecture seule'
-      :'Périmètre accepté et figé'}</strong>
+  // R5a : l'état figé se replie sur une ligne ; le prévisionnel garde tous ses boutons visibles.
+  const folded = scope.state==='frozen';
+  const pendingTargets = scope.targets?.filter(t=>t.state==='pending').length||0;
+  const content = <>
+    {!folded && <strong>{isCurrentProvisional?'Projet prévisionnel — devis non accepté':'Ancien Projet prévisionnel — archive conservée, lecture seule'}</strong>}
     {isCurrentProvisional && <><p>Les étapes, Sites et Pages préparent le périmètre du devis. Aucune maintenance, intervention ou facturation n’est activée.</p>
       <button className="secondary-button" disabled={busy} onClick={()=>void run()}>Synchroniser le périmètre commercial</button>
       <div className="project-restart-review">
@@ -65,7 +67,7 @@ export function ProjectCommercialScopePanel({projectId,onChanged}:{projectId:str
           <button type="button" className="secondary-button" disabled={busy} onClick={()=>{setRestartPreview(null);setRestartConfirmed(false);}}>Annuler</button>
         </div>}
       </div></>}
-    <details><summary>Historique du périmètre ({scope.revisions.length})</summary>
+    <details><summary>Versions du périmètre ({scope.revisions.length})</summary>
       {scope.revisions.map(r=><p key={r.id}>Synchronisation {r.sequence} · révision commerciale {r.commercialRevision} · {new Date(r.createdAt).toLocaleString('fr-FR')}</p>)}
     </details>
     {scope.conflicts.map(c=><div key={c.id} className="project-scope-conflict" role="group" aria-label={c.reason}>
@@ -73,11 +75,16 @@ export function ProjectCommercialScopePanel({projectId,onChanged}:{projectId:str
       {([['keep','Conserver'],['archive','Archiver'],['detach','Détacher de la provenance'],['delete','Supprimer si vierge']] as [ProjectConflictDecision,string][])
         .map(([d,label])=><button key={d} className="secondary-button" disabled={busy||!isCurrentProvisional} onClick={()=>void run(c.id,d)}>{label}</button>)}
     </div>)}
-    {canAssignTargets&&<details open={scope.targets?.some(t=>t.state==='pending')}><summary>Affectation des prestations — {scope.targets?.filter(t=>t.state==='pending').length||0} destination(s) à choisir</summary>
+    {canAssignTargets&&<details open={scope.targets?.some(t=>t.state==='pending')}><summary>Prestations à placer dans le plan — {pendingTargets} à choisir</summary>
     {scope.targets?.map(t=><ContributionTargetChoices key={JSON.stringify([t.lineOrigin,t.slot,t.unitIndex])} target={t} choices={scope.targetChoices??{sites:[],pages:[],contexts:[]}} busy={busy} onAssign={async input=>{
       setBusy(true);setError('');try{setScope(await api.assignTarget(projectId,input));onChanged?.(await api.get(projectId));}catch(e){setError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}
     }} />)}
     </details>}
     {error&&<p className="form-error" role="alert">{error}</p>}
-  </section>;
+  </>;
+  if(folded) return <details className="project-commercial-scope project-commercial-scope--folded" aria-label="Périmètre commercial du Projet" open={scope.conflicts.length>0||pendingTargets>0||Boolean(error)}>
+    <summary className="project-commercial-scope-summary">{scopeFoldedSummary(scope.revisions.length,pendingTargets)}</summary>
+    {content}
+  </details>;
+  return <section className="project-commercial-scope" aria-label="Périmètre commercial du Projet">{content}</section>;
 }

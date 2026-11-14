@@ -22,7 +22,7 @@
 .project-table tbody tr:hover,
 .project-table tbody tr.selected-row { background: var(--surface-soft); }
 .project-table td > small { display: block; margin-top: 3px; color: var(--text-muted); font-size: 9px; }
-.project-status { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 8px; border-radius: 999px; background: var(--surface-soft); border: 1px solid var(--border); font-size: 10px; font-weight: 800; white-space: nowrap; }
+
 .status-in_progress { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
 .status-blocked { border-color: #b75b5b; }
 .status-completed { border-color: #66a77a; }
@@ -158,7 +158,6 @@
   .template-node-add { grid-template-columns: 1fr; }
 }
 
-
 /* Harmonisation des formulaires Projets avec Clients / Prospection / Devis. */
 .projects-stack input,
 .projects-stack select,
@@ -272,7 +271,6 @@
     flex-direction: column;
   }
 }
-
 
 /* Projet V2 — atelier de production */
 .projects-layout.with-detail.project-workshop-layout {
@@ -683,7 +681,6 @@
   }
 }
 
-
 /* Projet V2 — fiche projet en side-sheet */
 .projects-layout.with-detail,
 .projects-layout.with-detail.project-workshop-layout {
@@ -795,11 +792,10 @@
   }
 }
 
-
 /* Projet V2 — véritable page de production */
 .project-production-page {
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   width: 100%;
   max-width: 100%;
@@ -807,6 +803,14 @@
   min-height: 620px;
   min-width: 0;
   overflow-x: hidden;
+}
+/* R5a : les enfants de la page (en-tête, périmètre, onglets, contenu) sont en nombre variable ; seul le dernier remplit la hauteur. */
+.project-production-page > :not(:last-child) {
+  flex: 0 0 auto;
+}
+.project-production-page > :last-child {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .project-production-header {
@@ -884,6 +888,8 @@
 
 .project-production-nav {
   display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
   gap: 6px;
   overflow-x: auto;
   padding: 2px 0 4px;
@@ -1119,7 +1125,6 @@
   }
 }
 
-
 /* Quand un projet est ouvert, le contenu principal devient directement l'atelier de production. */
 .content-area:has(> .project-production-page) {
   display: flex;
@@ -1139,7 +1144,6 @@
   height: auto;
   min-height: 0;
 }
-
 
 /* Projet V2 — simplification atelier : phases, étapes, barre de travail */
 .project-production-actions {
@@ -1230,11 +1234,10 @@
   letter-spacing: .04em;
 }
 .project-phase-name {
-  overflow: hidden;
+  min-width: 0;
   font-size: 15px;
   font-weight: 850;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
 }
 .project-phase-meta {
   color: var(--text-muted);
@@ -1686,7 +1689,6 @@
   }
 }
 
-
 .project-workbench-title-input {
   width: min(100%, 560px);
   min-height: 34px;
@@ -1710,7 +1712,6 @@
   background: var(--surface) !important;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 8%, transparent);
 }
-
 
 /* Projet V2 — séparation redimensionnable */
 .project-production-workspace {
@@ -1954,7 +1955,6 @@ body.project-resizing * {
     height: calc(100vh - 24px);
   }
 }
-
 
 /* Projet V2 — plan plus compact et fiche orientée travail */
 .project-production-tree-actions {
@@ -2234,7 +2234,6 @@ body.project-resizing * {
     padding-left: 0;
   }
 }
-
 
 .project-production-header-compact{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
 .project-production-header-compact strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

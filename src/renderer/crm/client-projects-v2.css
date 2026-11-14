@@ -22,11 +22,7 @@
 #client-panel-projects .client-project-title{flex:1;min-width:200px}
 #client-panel-projects .client-project-title h4{font-size:18px;line-height:1.4;margin:0 0 7px;overflow-wrap:anywhere}
 #client-panel-projects .client-project-title>div{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
-#client-panel-projects .client-project-status{border-radius:7px;padding:4px 8px;background:var(--surface-soft);color:var(--text);border:1px solid var(--border);white-space:nowrap}
-#client-panel-projects .client-project-status[data-status=in_progress],#client-panel-projects .client-project-status[data-status=completed]{background:#0d503e;color:#bdffe3}
-#client-panel-projects .client-project-status[data-status=blocked]{background:#4b3037;color:#ffd2d4}
-#client-panel-projects .client-project-status[data-status=waiting_client],#client-panel-projects .client-project-status[data-status=to_validate]{background:#49402a;color:#ffe8b6}
-#client-panel-projects .client-project-status[data-status=archived]{color:var(--muted)}
+
 #client-panel-projects .client-project-progress{width:175px;font-size:13px;flex-shrink:0}
 #client-panel-projects .client-project-progress>label{display:block;margin-bottom:7px}
 #client-panel-projects .client-project-progress>div{display:flex;gap:12px;align-items:center}

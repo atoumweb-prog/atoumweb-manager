@@ -97,7 +97,6 @@
 .sites-v2 .atelier-focus .project-component-settings-preview iframe {height:380px;}
 /* Focus mode gives the workshop the complete content height, without a modal
    or unmounting the Page. Returning restores the same project context. */
-:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.atelier-focus) {grid-template-rows:minmax(0,1fr);}
 :root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.atelier-focus)>:is(.project-production-header,.project-production-header-compact,.project-production-nav) {display:none;}
 .sites-v2:has(.atelier-focus)>.project-sites-intro {display:none;}
 .sites-v2:has(.atelier-focus) {gap:0;}
