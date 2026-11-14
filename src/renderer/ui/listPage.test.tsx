@@ -4,7 +4,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { countSmallFontDeclarations } from './fontFloor';
-import { KeyFigures } from './KeyFigures';
+import { KeyFigureCard, KeyFigures } from './KeyFigures';
 import { ListToolbar } from './ListToolbar';
 
 const css = readFileSync(resolve(__dirname, 'list-page.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
@@ -85,5 +85,49 @@ describe('R7 : feuille list-page.css', () => {
   it('les deux composants importent la feuille', () => {
     expect(readFileSync(resolve(__dirname, 'KeyFigures.tsx'), 'utf8')).toContain("import './list-page.css';");
     expect(readFileSync(resolve(__dirname, 'ListToolbar.tsx'), 'utf8')).toContain("import './list-page.css';");
+  });
+});
+
+describe('R8 : carte de chiffre avec action', () => {
+  it('une carte avec action est un bouton nommé, qui appelle l’action au clic', () => {
+    let calls = 0;
+    const markup = renderToStaticMarkup(createElement(KeyFigures, {
+      ariaLabel: 'Synthèse',
+      items: [{ key: 'a', label: 'Contractuel signé', value: '2 688 €', actionLabel: 'voir les éléments exacts', onAction: () => { calls += 1; }, expanded: false, controls: 'statistics-evidence-panel' }],
+    }));
+    expect(markup).toContain('<button');
+    expect(markup).toContain('aw-keyfigure--action');
+    expect(markup).toContain('aria-label="Contractuel signé : voir les éléments exacts"');
+    expect(markup).toContain('aria-expanded="false"');
+    expect(markup).toContain('aria-controls="statistics-evidence-panel"');
+    expect(calls).toBe(0);
+  });
+
+  it('le bouton porte l’action : l’appeler déclenche onAction (arbre React lu sans navigateur)', () => {
+    let calls = 0;
+    const item = { key: 'a', label: 'A', value: 1, actionLabel: 'ouvrir', onAction: () => { calls += 1; } };
+    const tree = KeyFigureCard({ item }) as unknown as { props: { children: unknown } };
+    const findButton = (node: unknown): { props: { onClick?: () => void } } | null => {
+      if (!node || typeof node !== 'object') return null;
+      if (Array.isArray(node)) { for (const child of node) { const hit = findButton(child); if (hit) return hit; } return null; }
+      const element = node as { type?: unknown; props?: { children?: unknown; onClick?: () => void } };
+      if (element.type === 'button') return element as { props: { onClick?: () => void } };
+      return findButton(element.props?.children);
+    };
+    const button = findButton(tree);
+    expect(button).not.toBeNull();
+    button!.props.onClick!();
+    expect(calls).toBe(1);
+  });
+
+  it('une carte sans action reste un article sans bouton (aucun changement pour R7)', () => {
+    const markup = renderToStaticMarkup(createElement(KeyFigures, { ariaLabel: 'x', items: [{ key: 'a', label: 'A', value: 1, helper: 'aide' }] }));
+    expect(markup).toContain('<article');
+    expect(markup).not.toContain('<button');
+  });
+
+  it('la feuille définit la carte-bouton sans !important ni texte sous 14 px', () => {
+    expect(css).toContain('.aw-keyfigure--action');
+    expect(css).not.toContain('!important');
   });
 });

@@ -1,0 +1,63 @@
+{
+  "_note": "Cas de figure fictifs (libellés TEST) pour les écrans de Ressources (R8) : Sauvegardes, Offres, Bibliothèque, Annuaire. Sites n'est pas couvert : un site naît d'un import de snapshot Bridge.",
+  "backups": [
+    {
+      "projectLike": "Site vitrine",
+      "backupType": "complete",
+      "label": "TEST — Sauvegarde complète avant mise en ligne",
+      "daysAgo": 12,
+      "stable": true,
+      "notes": "Référence stable fictive.",
+      "locations": [
+        { "locationType": "local", "label": "Copie locale présente", "reference": "__local_present__" },
+        { "locationType": "external", "label": "Disque externe TEST", "reference": "DISQUE-EXTERNE-TEST/vitrine-complete" }
+      ]
+    },
+    {
+      "projectLike": "Site vitrine",
+      "backupType": "pre_intervention",
+      "label": "TEST — Avant mise à jour des extensions",
+      "daysAgo": 3,
+      "locations": [
+        { "locationType": "local", "label": "Copie locale manquante", "reference": "__local_missing__" }
+      ]
+    },
+    {
+      "projectLike": "Boutique en ligne",
+      "backupType": "database",
+      "label": "TEST — Base de données de la boutique",
+      "daysAgo": 6,
+      "locations": [
+        { "locationType": "server", "label": "Serveur hébergeur TEST", "reference": "HEBERGEUR-TEST/boutique-bdd" }
+      ]
+    },
+    {
+      "projectLike": "Boutique en ligne",
+      "backupType": "post_validation",
+      "label": "TEST — Après validation client de la boutique",
+      "daysAgo": 1,
+      "locations": [
+        { "locationType": "other", "label": "Archive papier TEST", "reference": "CLASSEUR-TEST-2026" }
+      ]
+    }
+  ],
+  "catalog": [
+    { "name": "TEST — Service en brouillon seul", "type": "service", "state": "draft" },
+    { "name": "TEST — Service inactif", "type": "service", "state": "inactive" },
+    { "name": "TEST — Offre archivée", "type": "offer", "state": "archived" }
+  ],
+  "library": [
+    { "name": "TEST — Bandeau d'accueil à adapter", "category": "hero", "reuseStatus": "adapt" },
+    { "name": "TEST — Pied de page archivé", "category": "footer", "reuseStatus": "ready", "archived": true },
+    { "name": "TEST — Note de référence", "category": "note", "reuseStatus": "reference" }
+  ],
+  "directory": {
+    "organizations": [
+      { "name": "TEST — Association des commerçants indépendants du centre-ville historique et des quartiers voisins de la vallée", "industry": null, "city": null },
+      { "name": "TEST — Atelier sans coordonnées", "industry": null, "city": null }
+    ],
+    "contacts": [
+      { "firstName": "TEST", "lastName": "Contact sans organisation" }
+    ]
+  }
+}

@@ -19,3 +19,15 @@
 .expenses-page-stack .aw-data-table-scroll,
 .documents-page-stack .aw-data-table-scroll,
 .time-page-stack .aw-data-table-scroll { max-height: none; }
+
+/* R8 : carte de chiffre cliquable (Statistiques). Même aspect que la carte, plus le survol et le focus. */
+.aw-keyfigure--action { text-align: left; font: inherit; cursor: pointer; width: 100%; }
+.aw-keyfigure--action:hover { border-color: var(--accent); }
+.aw-keyfigure--action:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.aw-keyfigure--action[aria-expanded="true"] { border-color: var(--accent); }
+
+/* R8 : l action principale peut regrouper plusieurs boutons (retours Bridge, Plus, Nouveau composant). */
+.aw-list-toolbar-primary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* R8 : la feuille globale ui-consistency-v2.css impose max-width: 100 % aux champs avec une spécificité que ces règles ne battent pas ;
+   la recherche a donc une largeur posée par width et flex-basis (celle que les écrans de Gestion avaient déjà), sans croissance. */
+.aw-list-toolbar > .inline-search { width: 270px; flex: 0 1 270px; min-width: 160px; }

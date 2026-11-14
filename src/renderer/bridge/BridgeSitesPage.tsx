@@ -33,6 +33,7 @@ const PREVIEW_DEVICE_OPTIONS: Array<{ id: PreviewDevice; label: string; width: n
 
 export function BridgeSitesPage({ onMessage }: Props) {
   const [sites, setSites] = useState<BridgeSiteSummary[]>([]);
+  const [sitesLoaded, setSitesLoaded] = useState(false);
   const [site, setSite] = useState<BridgeSiteDetail | null>(null);
   const [snapshot, setSnapshot] = useState<BridgeSnapshotSummary | null>(null);
   const [snapshotDiff, setSnapshotDiff] = useState<BridgeSnapshotDiff | null>(null);
@@ -99,6 +100,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
   async function refreshSites(preferredId?: string | null): Promise<void> {
     const nextSites = await window.atoumweb.bridgeSnapshots.listSites();
     setSites(nextSites);
+    setSitesLoaded(true);
     const target = preferredId ?? site?.id ?? nextSites[0]?.id ?? null;
     if (target && nextSites.some((item) => item.id === target)) await openSite(target);
     else {
@@ -489,7 +491,6 @@ export function BridgeSitesPage({ onMessage }: Props) {
     <div className="bridge-page">
       <section className="bridge-toolbar panel">
         <div>
-          <span className="eyebrow">Sites AtoumWeb</span>
           <h2>Copies des sites</h2>
           <p className="muted">Une photographie lisible de chaque site. Les informations techniques restent disponibles sans encombrer le travail courant.</p>
         </div>
@@ -604,12 +605,12 @@ export function BridgeSitesPage({ onMessage }: Props) {
         </div>
       </section>}
 
-      <section className={`bridge-workspace ${page ? 'with-detail' : ''} ${detailExpanded ? 'detail-expanded' : ''}`} style={workspaceStyle}>
+      {sitesLoaded && sites.length === 0 ? <section className="bridge-empty large panel" role="status"><OperationIcon name="server" size={38} /><strong>Aucun site importé</strong><span>Importe la première copie envoyée par AtoumWeb Bridge (un « snapshot » : une photographie lisible du site) avec « Importer un snapshot Bridge », en haut à droite.</span></section> : <section className={`bridge-workspace ${page ? 'with-detail' : ''} ${detailExpanded ? 'detail-expanded' : ''}`} style={workspaceStyle}>
         {!detailExpanded && <div className="bridge-master">
           <aside className="bridge-sites panel">
             <div className="bridge-panel-title"><div><span className="eyebrow">Mes sites</span><h3>{sites.length} site{sites.length > 1 ? 's' : ''}</h3></div></div>
             {sites.length === 0
-              ? <div className="bridge-empty"><OperationIcon name="server" size={30} /><strong>Aucun site importé</strong><span>Importe le premier snapshot produit par AtoumWeb Bridge.</span></div>
+              ? <div className="bridge-empty"><OperationIcon name="server" size={30} /><strong>{sitesLoaded ? 'Aucun site importé' : 'Chargement des sites…'}</strong></div>
               : <div className="bridge-site-list">{sites.map((item) => <button key={item.id} type="button" className={`bridge-site-card ${site?.id === item.id ? 'selected' : ''}`} onClick={() => void openSite(item.id)}>
                   <span className="bridge-site-icon"><OperationIcon name="server" size={18} /></span>
                   <span><strong>{item.name}</strong><small>{item.snapshotCount} copie{item.snapshotCount > 1 ? 's' : ''} enregistrée{item.snapshotCount > 1 ? 's' : ''}</small></span>
@@ -774,7 +775,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
             </details>
           </div>
         </article>}
-      </section>
+      </section>}
 
       {pagePreview && <div className="bridge-preview-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPagePreview(null); }}>
         <section className="bridge-preview bridge-page-preview-modal panel" role="dialog" aria-modal="true" aria-label="Visualisation reconstruite de la page">
