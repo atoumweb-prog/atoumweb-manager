@@ -5,7 +5,7 @@
 ## 1. Où on en est
 
 - **Dépôt** : `C:\DEV\01_PROJETS\AtoumWeb\claude-review-pr166` (worktree), branche `claude/refonte-manager`. **Rien n'est poussé**, aucune PR.
-- **Commits locaux de la refonte** (récent en premier ; `git log --oneline -9`) : **R7** (message `feat(r7): Gestion sur un seul modèle de liste…`), R6 `cae093e4`, R5b `e3f8c8bf`, R5a `1d2ebf84`, R4 `5ea17298`, R3 `d47d69db`, puis les documents `30cafc73`, `fac69dde`, R2 `b2ad606e`, `72834411`.
+- **Commits locaux de la refonte** (récent en premier ; `git log --oneline -9`) : **R7 `ce0ef4d6`** (`feat(r7): Gestion sur un seul modèle de liste…`, suivi d'un commit de documents qui ajoute ce numéro), R6 `cae093e4`, R5b `e3f8c8bf`, R5a `1d2ebf84`, R4 `5ea17298`, R3 `d47d69db`, puis les documents `30cafc73`, `fac69dde`, R2 `b2ad606e`, `72834411`.
 - **Fait et validé par Carlos sur captures** : R0 fondations, R1 composants partagés, cadrage des parcours, audit ergonomique, R2 socle commun, R3 Prospection, R4 Devis, R5a et R5b Projets, **R6 Accueil** (« À faire maintenant »), **R7 Gestion** (Facturation, Dépenses, Documents, Temps, Interventions).
 - **Preuves de R7** : `npm run typecheck` propre ; `node scripts/run-tests.cjs` : 299 fichiers, 2 396 tests, 1 ignoré ; scripts natifs : typographie 72 contrôles, états 18/18, garde Abby 25, interface réelle 857 contrôles sur 17 écrans ; recettes de Gestion : `--lot09b` 85, `--lot09c` 67, `--lot09d` 73, `--lot09e` 70, `check-ux-v2-lot10-ui.cjs` 59 ; 0 erreur console sur les captures ; budget des petits textes 648.
 - **Prochaine action concrète** : **fiche de R8** (voir section 3), à faire valider par Carlos **avant tout code** (règle J).
