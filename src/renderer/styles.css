@@ -185,8 +185,6 @@ button { color: inherit; }
 .page-heading h1 { margin: 4px 0 6px; font-size: clamp(25px, 3vw, 34px); letter-spacing: -.035em; }
 .page-heading p { margin: 0; color: var(--muted); font-size: 13px; }
 .eyebrow { color: var(--accent-strong); text-transform: uppercase; letter-spacing: .12em; font-size: 9px; font-weight: 800; }
-.database-chip { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 7px 10px; }
-.health-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 14%, transparent); }
 .notice { display: flex; justify-content: space-between; gap: 20px; align-items: center; margin-bottom: 20px; padding: 11px 14px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border)); border-radius: 11px; color: var(--text); font-size: 12px; }
 .notice button { border: 0; background: transparent; cursor: pointer; font-size: 18px; color: var(--muted); }
 .notice .notice-action { flex: 1; display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 0; text-align: left; color: inherit; font: inherit; }
@@ -251,7 +249,6 @@ button { color: inherit; }
   .theme-grid { grid-template-columns: 1fr; }
 }
 
-
 /* Barre latérale escamotable */
 .app-shell {
   transition: grid-template-columns .18s ease;
@@ -295,7 +292,6 @@ button { color: inherit; }
   background: color-mix(in srgb, var(--accent) 6%, var(--surface));
 }
 
-
 /* Réglages — aide contextuelle */
 .settings-help-row {
   display: grid;
@@ -338,7 +334,6 @@ button { color: inherit; }
   }
 }
 
-
 /* Bibliothèque : haut fixe compact pour libérer l'espace de travail */
 .content-area.library-workspace-content {
   padding-top: 16px;
@@ -378,7 +373,6 @@ button { color: inherit; }
     align-items: flex-start;
   }
 }
-
 
 /* Bibliothèque : le bandeau métier peut être replié pour maximiser la hauteur utile. */
 .content-area.library-workspace-content.library-header-collapsed {

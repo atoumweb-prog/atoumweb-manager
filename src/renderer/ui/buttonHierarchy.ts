@@ -28,7 +28,9 @@ export function findPrimaryMisuse(source: string): string[] {
     const tag = source.slice(opening.index!, tagEnd);
     if (!/primary-button|variant="primary"/.test(tag)) continue;
     // Un bouton qui devient secondaire dans son état « ouvert » (classe conditionnelle) respecte la règle.
-    if (/secondary-button/.test(tag)) continue;
+    // Seule la valeur de `className` compte : « secondary-button » dans un autre attribut (title, data-*) ne rend pas le bouton secondaire.
+    const classValue = /className=(?:"([^"]*)"|'([^']*)'|\{([^}]*)\})/.exec(tag);
+    if (classValue && /\bsecondary-button\b/.test(classValue[1] ?? classValue[2] ?? classValue[3] ?? '')) continue;
     const close = source.indexOf(`</${opening[1]}>`, tagEnd);
     if (close < 0) continue;
     const label = SECONDARY_ACTIONS.exec(source.slice(tagEnd + 1, close).replace(/<[^>]*>/g, ''));

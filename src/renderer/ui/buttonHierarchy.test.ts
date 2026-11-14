@@ -19,6 +19,11 @@ describe('hiérarchie des boutons : une action principale par vue', () => {
     expect(findPrimaryMisuse(`<button className={open ? 'secondary-button compact-button' : 'primary-button compact-button'}>{open ? 'Fermer le formulaire' : '+ Ajouter'}</button>`)).toEqual([]);
   });
 
+  it('ne se laisse pas tromper par « secondary-button » dans un autre attribut que la classe', () => {
+    expect(findPrimaryMisuse('<button className="primary-button" data-hint="secondary-button">Fermer</button>')).toEqual(['Fermer']);
+    expect(findPrimaryMisuse('<button className="primary-button" title="secondary-button">Annuler</button>')).toEqual(['Annuler']);
+  });
+
   it('laisse passer les boutons secondaires et les vraies actions principales', () => {
     expect(findPrimaryMisuse('<button className="secondary-button">Fermer</button>')).toEqual([]);
     expect(findPrimaryMisuse('<AppButton variant="quiet">Annuler</AppButton>')).toEqual([]);

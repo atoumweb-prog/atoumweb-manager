@@ -6,7 +6,7 @@ const css = (name: string) => readFileSync(resolve(__dirname, name), 'utf8').rep
 const count = (source: string, pattern: RegExp) => (source.match(pattern) ?? []).length;
 
 /** Fichiers CSS ecrits pour la refonte : aucune surcharge forcee, aucune couleur ecrite en dur. */
-const REFONTE_FILES = ['next-step.css', 'shared-controls.css'];
+const REFONTE_FILES = ['next-step.css', 'shared-controls.css', 'page-header.css'];
 
 describe('refonte : discipline CSS des fichiers nouveaux', () => {
   for (const file of REFONTE_FILES) {

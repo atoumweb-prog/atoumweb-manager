@@ -28,8 +28,7 @@ small,
 .muted,
 .eyebrow,
 .status-pill,
-.success-badge,
-.database-chip {
+.success-badge {
   font-size: var(--aw-font-functional);
 }
 
