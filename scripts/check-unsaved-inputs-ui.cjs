@@ -38,7 +38,7 @@ if(!process.versions.electron){
    const originalAccept=database.quotes.accept.bind(database.quotes);
    let calls=0,rejectPending;
    database.quotes.accept=()=>{calls++;return new Promise((_resolve,reject)=>{rejectPending=()=>reject(new Error('TEMP ACCEPTANCE REJECTION'));});};
-   const rowSelector='.quote-decision-actions button.primary-button',detailSelector='.quote-status-actions button.primary-button';
+   const rowSelector='.quote-decision-actions button.secondary-button.compact-button',detailSelector='.quote-status-actions button.primary-button';
    await wait('!!document.querySelector('+JSON.stringify(rowSelector)+')&&!![...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby")');
    await js('window.confirm=()=>true');
    // L'acceptation depuis la liste doit refuser de contourner la saisie contractuelle sale.

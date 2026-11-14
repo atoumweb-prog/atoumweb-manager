@@ -91,9 +91,9 @@ if(!process.versions.electron){
   const acceptUI=async quote=>{
    await parameters(await call('quotes.get',quote.id));await openQuote(await call('quotes.get',quote.id));
    await click('Envoyer le devis','.quote-detail-panel button');await wait(`[...document.querySelectorAll('.quote-detail-panel button')].some(b=>b.textContent==='C’est envoyé')`);await input('.quote-detail-panel .quote-send-steps input','Recette native — envoi fictif');
-   await click('C’est envoyé','.quote-detail-panel button');await wait(`document.querySelector('.quote-detail-panel .quote-status')?.textContent==='Envoyé'`);
+   await click('C’est envoyé','.quote-detail-panel button');await wait(`document.querySelector('.quote-detail-panel .detail-badges .aw-status-pill')?.textContent==='Envoyé'`);
    await call('quotePreparation.recordAcceptance',quote.id,'TEST — acceptation explicite fictive, aucune signature réelle',new Date().toISOString(),'Recette native');
-   await click('Valider','.quote-detail-panel button');await wait(`document.querySelector('.quote-detail-panel .quote-status')?.textContent==='Accepté'`);return call('quotes.get',quote.id);
+   await click('Valider','.quote-detail-panel button');await wait(`document.querySelector('.quote-detail-panel .detail-badges .aw-status-pill')?.textContent==='Accepté'`);return call('quotes.get',quote.id);
   };
   // A real fake Prospect -> Quote -> provisional Project -> same frozen Project, used as operational context.
   let seed=await newQuote('CONTEXTE-WOO');await openQuote(seed);seed=await addUI(seed,'AW-ECOM-BASE');seed=await prepareUI(seed);const seedProjectId=seed.projectId;seed=await acceptUI(seed);

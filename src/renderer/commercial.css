@@ -92,11 +92,7 @@
 .quote-table th { padding: 10px 12px; text-align: left; color: var(--muted); background: var(--surface-soft); border-bottom: 1px solid var(--border); font-size: 8px; text-transform: uppercase; letter-spacing: .06em; }
 .quote-table td { padding: 11px 12px; border-bottom: 1px solid var(--border); font-size: 9px; cursor: pointer; }
 .quote-table tbody tr:hover, .quote-table .selected-row { background: color-mix(in srgb, var(--accent) 6%, transparent); }
-.quote-status { display: inline-flex; width: fit-content; border-radius: 999px; padding: 4px 7px; font-size: 8px; font-weight: 800; background: var(--surface-soft); color: var(--muted); }
-.quote-draft { color: var(--muted); }
-.quote-sent, .quote-viewed { color: #4a6f9b; background: color-mix(in srgb, #4a7fb3 12%, var(--surface)); }
-.quote-accepted { color: var(--success); background: color-mix(in srgb, var(--success) 12%, transparent); }
-.quote-refused, .quote-expired, .quote-cancelled { color: #a63d43; background: color-mix(in srgb, #c44950 10%, var(--surface)); }
+
 .quote-detail-panel { position: sticky; top: 0; min-width: 0; max-height: calc(100dvh - 124px); overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable; }
 .quote-lines { display: grid; gap: 7px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
 .quote-lines > strong, .quote-add-line > strong { font-size: 10px; }
@@ -135,7 +131,6 @@
   .quote-two-fields, .quote-three-fields { grid-template-columns: 1fr; }
   .quote-stepper { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-
 
 .quote-preview-lines {
   display: grid;
@@ -185,7 +180,6 @@
   font-weight: 800;
   font-size: var(--aw-font-secondary, 15px);
 }
-
 
 /* Projet V2 — devis en side-sheet extensible */
 .quotes-layout.with-detail {
@@ -273,7 +267,6 @@
     width: auto;
   }
 }
-
 
 /* Offre & Tarifs V2 — même logique de travail que Projet : liste + fiche réglables. */
 .catalog-layout.with-detail {
@@ -719,7 +712,6 @@ body.catalog-resizing * {
   }
 }
 
-
 /* CGV Builder V1 */
 .cgv-builder {
   display: grid;
@@ -1021,7 +1013,6 @@ body.catalog-resizing * {
   }
 }
 
-
 .quote-contract-document {
   margin-top: 14px;
   padding: 13px;
@@ -1071,7 +1062,6 @@ body.catalog-resizing * {
     flex-direction: column;
   }
 }
-
 
 /* UX V2 Lot 04B — Catalogue presentation pilot. Admin table and editors are unchanged. */
 .catalog-view-switch {
@@ -1208,7 +1198,6 @@ body.catalog-resizing * {
 }
 .catalog-overview-card-inclusions > span { overflow-wrap: anywhere; }
 
-
 /* Lot 04B — inventaire non destructif des catégories stockées. */
 .catalog-category-inventory { display: grid; gap: 12px; min-width: 0; }
 .catalog-category-inventory-header { display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
@@ -1245,7 +1234,6 @@ body.catalog-resizing * {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-
 
 /* Lot 04B / E95 — governed category administration, visual-only styles. */
 .catalog-category-management {
@@ -1328,7 +1316,6 @@ body.catalog-resizing * {
 .catalog-category-operation h4 { margin: 0; font-size: 16px; }
 .catalog-category-operation p { margin: 0; font-size: 14px; }
 
-
 /* UX V2 / Lot 04C — navigation fonctionnelle de la fiche Catalogue. */
 .catalog-editor-tabs {
   display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; margin-top: 12px;
@@ -1354,7 +1341,6 @@ body.catalog-resizing * {
 @media (max-width: 720px) {
   .catalog-editor-tabs [role="tab"] { flex: 1 1 auto; min-height: 38px; }
 }
-
 
 .catalog-status-confirmation {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px;

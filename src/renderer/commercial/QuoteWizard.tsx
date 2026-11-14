@@ -175,6 +175,8 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
     return null;
   }
 
+  const blockedReason = step === 'owner' ? validate('owner') : null;
+
   function next(): void {
     const problem = validate(step);
     setError(problem);
@@ -246,7 +248,7 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
     <div className="quote-wizard-body">
       {step === 'owner' && <div className="quote-step-content">
         <h2>Pour qui est ce devis ?</h2>
-        {developmentMode && <button type="button" className="secondary-button" onClick={() => void fillTestDossier()}>Créer un faux dossier TEST</button>}
+        {developmentMode && <details className="quote-wizard-recipe"><summary>Recette</summary><button type="button" className="secondary-button" onClick={() => void fillTestDossier()}>Créer un faux dossier TEST</button></details>}
         <div className="quote-owner-toggle">
           <button type="button" className={draft.ownerKind === 'prospect' ? 'active' : ''} onClick={() => patch({ownerKind: 'prospect', ownerId: ''})}>Prospect</button>
           <button type="button" className={draft.ownerKind === 'client' ? 'active' : ''} onClick={() => patch({ownerKind: 'client', ownerId: ''})}>Client</button>
@@ -345,7 +347,7 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
     <div className="quote-wizard-actions">
       <button className="secondary-button" type="button" disabled={stepIndex === 0} onClick={() => { setError(null); setStepIndex(index => Math.max(0, index - 1)); }}>← Précédent</button>
       {step !== 'preview'
-        ? <button className="primary-button" type="button" onClick={next}>Suivant →</button>
+        ? <><button className="primary-button" type="button" disabled={Boolean(blockedReason)} onClick={next}>Suivant →</button>{blockedReason && <span className="quote-wizard-hint" role="status">Choisis un prospect ou un client pour continuer.</span>}</>
         : <button className="primary-button" disabled={saving} type="button" onClick={() => void create()}>{saving ? 'Création…' : 'Créer le devis'}</button>}
     </div>
   </section>;

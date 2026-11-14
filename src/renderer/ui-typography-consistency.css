@@ -128,21 +128,7 @@ table td small {
 .quote-detail-panel {
   font-size: var(--aw-font-body);
 }
-.catalog-table th,
-.catalog-table td,
-.catalog-fields label,
-.catalog-status,
-.catalog-version-row span,
-.catalog-version-row small,
-.offer-component-row span,
-.quote-table th,
-.quote-table td,
-.quote-status,
-.quote-step-content label,
-.quote-line small,
-.quote-totals span,
-.quote-preview-summary span,
-.quote-preview-summary strong {
+.catalog-table th,.catalog-table td,.catalog-fields label,.catalog-status,.catalog-version-row span,.catalog-version-row small,.offer-component-row span,.quote-table th,.quote-table td,.quote-step-content label,.quote-line small,.quote-totals span,.quote-preview-summary span,.quote-preview-summary strong{
   font-size: var(--aw-font-functional);
 }
 
@@ -198,7 +184,6 @@ table td small {
 .technical-json-tree {
   font-size: var(--aw-font-functional);
 }
-
 
 /* Projet V2 — production : aucune information fonctionnelle sous 14 px. */
 .project-production-page,
