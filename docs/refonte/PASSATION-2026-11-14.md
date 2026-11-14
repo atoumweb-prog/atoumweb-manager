@@ -6,7 +6,7 @@
 
 - **Dépôt** : `C:\DEV\01_PROJETS\AtoumWeb\claude-review-pr166` (worktree), branche `claude/refonte-manager`. **Rien n'est poussé**, aucune PR.
 - **Commits locaux de la refonte** (du plus récent au plus ancien) : R5a (dernier commit, voir `git log --oneline -5`), `5ea17298` R4 Devis, `d47d69db` R3 Prospection, puis R2, R1, R0 et les documents.
-- **Fait et validé par Carlos sur captures** : R0 fondations, R1 composants partagés, R2 socle commun, R3 Prospection, R4 Devis, R5a Projets (cadre, Production, ligne « En ce moment », liste, onglet d'ouverture), **R5b Projets (Résumé, Commercial, Interventions, Prérequis, commité localement le 14/11/2026)**. Prochain lot : **R6 Accueil**. Cas de figure de test des projets : `scripts/seed-projets-cas-de-figure.cjs` (appliqué à la préproduction).
+- **Fait et validé par Carlos sur captures** : R0 fondations, R1 composants partagés, R2 socle commun, R3 Prospection, R4 Devis, R5a Projets (cadre, Production, ligne « En ce moment », liste, onglet d'ouverture), **R5b Projets (Résumé, Commercial, Interventions, Prérequis, commité localement le 14/11/2026)**, **R6 Accueil (« À faire maintenant », commité localement le 14/11/2026)**. Prochain lot : **R7 Gestion**. Cas de figure de l'Accueil : `scripts/seed-accueil-cas-de-figure.cjs` (appliqué à la préproduction). Cas de figure de test des projets : `scripts/seed-projets-cas-de-figure.cjs` (appliqué à la préproduction).
 - **Preuves de R5a** : typecheck propre ; `node scripts/run-tests.cjs` : 280 fichiers, 2 239 tests, 1 ignoré ; scripts natifs : typographie 72 contrôles, états 18/18, garde Abby 25, interface réelle 857 contrôles sur 17 écrans.
 
 ## 2. À lire, dans l'ordre

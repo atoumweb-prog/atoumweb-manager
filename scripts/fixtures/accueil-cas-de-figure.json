@@ -1,0 +1,20 @@
+{
+  "note": "Cas de figure fictifs pour juger la liste « À faire maintenant » de l'Accueil (R6). Appliqué par scripts/seed-accueil-cas-de-figure.cjs. Données uniquement fictives, libellé TEST.",
+  "prospects": [
+    {
+      "organisation": "TEST Café du Port",
+      "contact": ["Marie", "Lemoine"],
+      "stage": "quote_to_prepare",
+      "cas": "Prospect avec un devis brouillon : une seule ligne dans la liste (le devis), le devis est compté en brouillon, une relance en retard avec le nom du dossier",
+      "quote": { "subject": "TEST Site vitrine pour le café" },
+      "actions": [{ "title": "Relancer par téléphone", "daysLate": 3 }]
+    },
+    {
+      "organisation": "TEST Garage Martin",
+      "contact": ["Paul", "Martin"],
+      "stage": "quote_to_prepare",
+      "cas": "Prospect au stade Devis à préparer sans devis : la ligne du prospect, une action prévue aujourd'hui",
+      "actions": [{ "title": "Envoyer la plaquette", "daysLate": 0 }]
+    }
+  ]
+}

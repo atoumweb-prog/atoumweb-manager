@@ -1,0 +1,18 @@
+/* R6 : bloc « À faire maintenant » et en-tête de l'Accueil.
+   Jetons uniquement : aucune couleur écrite en dur, aucun !important (garde-fou : ui/importantBudget.test.ts), aucun texte sous 14 px. */
+.home-todo-card { padding: 0; overflow: hidden; }
+.home-todo-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.home-todo-row { display: grid; grid-template-columns: minmax(150px, auto) minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+.home-todo-row:last-child { border-bottom: 0; }
+.home-todo-copy { display: grid; gap: 2px; min-width: 0; }
+.home-todo-copy strong { font-size: var(--aw-font-body); font-weight: 700; color: var(--text); overflow-wrap: anywhere; }
+.home-todo-copy small { color: var(--muted); font-size: var(--aw-font-functional); overflow-wrap: anywhere; }
+.home-todo-more { display: block; width: 100%; padding: 10px 16px; border: 0; border-top: 1px solid var(--border); background: transparent; color: var(--text); font: inherit; font-size: var(--aw-font-functional); font-weight: 700; text-align: left; cursor: pointer; }
+.home-todo-more:hover { background: var(--surface-soft); }
+.home-todo-empty { display: grid; gap: 4px; padding: 18px 16px; color: var(--text); font-size: var(--aw-font-functional); }
+.home-todo-empty strong { font-size: var(--aw-font-body); }
+.home-todo-empty span { color: var(--muted); }
+@media (max-width: 760px) {
+  .home-todo-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .home-todo-row > :first-child { grid-column: 1 / -1; justify-self: start; }
+}

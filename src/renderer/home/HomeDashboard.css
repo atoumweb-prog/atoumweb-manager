@@ -105,7 +105,6 @@
 
 .home-kpi-card:hover,
 .home-card-title > button:hover,
-.home-today-item:hover,
 .home-pipeline-item:hover,
 .home-billing-row:hover,
 .home-watch-action:hover {
@@ -236,79 +235,6 @@
   color: var(--muted);
   font-size: 22px;
   cursor: pointer;
-}
-
-.home-today-card {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-}
-
-.home-today-scroll {
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-}
-
-.home-today-item {
-  display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  padding: 10px 12px;
-  border: 0;
-  border-bottom: 1px solid var(--border);
-  background: transparent;
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-}
-
-.home-today-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
-}
-
-.home-today-icon {
-  display: inline-grid;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  color: var(--accent-strong);
-  background: var(--surface-soft);
-}
-
-.home-today-copy {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.home-today-copy strong,
-.home-today-copy small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.home-today-copy strong {
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.home-today-copy small {
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.home-today-open {
-  color: var(--muted);
-  font-size: 18px;
 }
 
 .home-empty-state {
@@ -865,10 +791,6 @@
     padding: 7px 10px;
   }
 
-  .home-today-item {
-    padding: 8px 10px;
-  }
-
   .home-time-body {
     padding: 8px 10px 6px;
   }
@@ -1022,10 +944,6 @@
 
   .home-time-card .home-card-title {
     grid-column: auto;
-  }
-
-  .home-today-scroll {
-    max-height: 260px;
   }
 
   .home-quick-actions {
