@@ -793,3 +793,10 @@
 
 /* R7 : bouton « Corriger » des sessions au plancher de 14 px. */
 .time-page-stack .text-button { font-size: var(--aw-font-functional); }
+
+/* P4b (Temps, option C) : les quatre listes de la barre d'outils tiennent sur une ligne (la liste des projets prenait 443 px et faisait descendre la quatrième).
+   La règle globale max-width: 100 % annule la borne de list-page.css : la largeur est donc posée par width et flex. */
+.time-page-stack .aw-list-toolbar-filters select { width: 200px; flex: 0 1 200px; min-width: 0; }
+/* Catégorie et facturable : leur texte (« Toutes les catégories », « Facturable + non facturable ») ne doit pas être coupé. */
+.time-page-stack .aw-list-toolbar-filters select:nth-child(3) { width: 215px; flex-basis: 215px; }
+.time-page-stack .aw-list-toolbar-filters select:nth-child(4) { width: 250px; flex-basis: 250px; }

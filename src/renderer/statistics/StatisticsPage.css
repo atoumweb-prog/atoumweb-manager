@@ -692,3 +692,6 @@
 .statistics-evidence-table td:last-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
 /* R8 : sur-titre des cartes en texte normal (plus de capitales jaunes espacees). */
 .statistics-card-eyebrow { display: block; color: var(--muted); font-size: var(--aw-font-functional); font-weight: 600; }
+
+/* P4b (F35) : une ligne commune quand aucune période précédente n'est comparable (au lieu de la même mention sur chaque carte). */
+.statistics-comparison-note { margin: 0 0 8px; color: var(--muted); font-size: var(--aw-font-functional); }

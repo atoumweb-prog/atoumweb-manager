@@ -28,6 +28,10 @@
 .aw-keyfigure--action:hover { border-color: var(--accent); }
 .aw-keyfigure--action:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .aw-keyfigure--action[aria-expanded="true"] { border-color: var(--accent); }
+/* P4b (F35) : indice visible du clic, dans la carte. */
+/* La règle « .aw-keyfigure > span » (la valeur en 22 px) vise aussi ce span : « > » devant la classe pour la battre. */
+.aw-keyfigure > .aw-keyfigure-cue { margin-top: 4px; color: var(--accent-strong); font-size: var(--aw-font-functional); font-weight: 600; line-height: 1.4; }
+.aw-keyfigure--action:hover > .aw-keyfigure-cue, .aw-keyfigure--action:focus-visible > .aw-keyfigure-cue { text-decoration: underline; }
 
 /* R8 : l action principale peut regrouper plusieurs boutons (retours Bridge, Plus, Nouveau composant). */
 .aw-list-toolbar-primary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }

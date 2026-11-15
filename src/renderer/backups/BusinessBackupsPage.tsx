@@ -352,7 +352,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
 
       <section className="panel business-backups-interventions" aria-label="Sauvegardes avant et après intervention">
         <div className="panel-title">
-          <div><span className="eyebrow">Prévention opérationnelle</span><h2>Avant / après intervention</h2></div>
+          <div><h2>Avant / après intervention</h2></div>
         </div>
         <p className="muted">Contrôle des déclarations liées à une intervention, sans effectuer de sauvegarde ni certifier un test de restauration.</p>
         <label>Intervention à contrôler
@@ -401,7 +401,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
 
       <section className="panel business-backups-alerts" aria-label="Alertes de sauvegarde des projets">
         <div className="panel-title">
-          <div><span className="eyebrow">Vigilance métier</span><h2>Alertes des projets actifs</h2></div>
+          <div><h2>Alertes des projets actifs</h2></div>
           <span className="status-pill">{alertsError ? 'Indisponible' : contextAlerts.length}</span>
         </div>
         {alertsError
@@ -437,7 +437,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         />
 
       {creating && <article className="panel business-backups-create">
-        <div className="panel-title"><div><span className="eyebrow">Nouvel enregistrement</span><h2>Sauvegarde métier</h2></div></div>
+        <div className="panel-title"><div><h2>Sauvegarde métier</h2></div></div>
         <div className="business-backups-form-grid">
           <label>Projet<select value={form.projectId} onChange={(event) => setForm((value) => ({ ...value, projectId: event.target.value }))}><option value="">Aucun projet</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select></label>
           <label>Client<select value={form.clientAccountId} onChange={(event) => setForm((value) => ({ ...value, clientAccountId: event.target.value }))}><option value="">Déduit du projet / aucun</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.displayName}{client.status === 'archived' ? ' · Archivé' : client.status === 'inactive' ? ' · Ancien client' : ''}</option>)}</select></label>
@@ -455,7 +455,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         style={selected && !detailExpanded ? { gridTemplateColumns: `${splitPercent}% 8px minmax(0, 1fr)` } : undefined}
       >
         {!detailExpanded && <article className="panel business-backups-list">
-          <div className="panel-title"><div><span className="eyebrow">Historique</span><h2>Sauvegardes</h2></div><span className="status-pill">{records.length}</span></div>
+          <div className="panel-title"><div><h2>Sauvegardes</h2></div><span className="status-pill">{records.length}</span></div>
           {records.length === 0 && <p className="muted">{backupsEmptyText({ total: records.length, filtersActive: Boolean(search.trim() || clientFilter || projectFilter || typeFilter || locationFilter) })}</p>}
           {records.map((record) => <button type="button" key={record.id} className={`business-backup-row ${selected?.id === record.id ? 'selected' : ''}`} disabled={mutationBusy} onClick={() => changeSelected(record)}>
             <div><strong>{record.label}</strong><span>{backupTypeLabel(record.backupType)} · {dateLabel(record.backupAt)}</span></div>

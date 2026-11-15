@@ -22,6 +22,7 @@ export function KeyFigureCard({ item }: { item: KeyFigureItem }) {
       <strong>{item.label}</strong>
       <span>{item.value}</span>
       {item.helper && <small>{item.helper}</small>}
+      {item.onAction && <span className="aw-keyfigure-cue" aria-hidden="true">{item.expanded ? 'Masquer le détail' : 'Voir le détail'} ›</span>}
     </>
   );
   if (!item.onAction) return <article className="aw-keyfigure">{body}</article>;

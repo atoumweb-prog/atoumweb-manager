@@ -22,3 +22,14 @@ export function comparisonHelper(value: StatisticsComparison | undefined): strin
   if (value.direction === 'same' && value.text === 'Aucune donnée sur les deux périodes') return undefined;
   return value.text;
 }
+
+export const NO_PREVIOUS_PERIOD_NOTE = 'Pas de période précédente à comparer.';
+
+/**
+ * Vrai quand au moins deux cartes portent une comparaison et que toutes disent « Nouveau sur la période » :
+ * une seule ligne commune remplace alors les répétitions. Une seule vraie comparaison suffit à garder la ligne de chaque carte.
+ */
+export function allNewComparisons(items: ReadonlyArray<StatisticsComparison | undefined>): boolean {
+  const present = items.filter((item): item is StatisticsComparison => item !== undefined);
+  return present.length >= 2 && present.every((item) => item.direction === 'new');
+}

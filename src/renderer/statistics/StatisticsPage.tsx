@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Children, cloneElement, isValidElement, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 import type { BillingItem } from '../../shared/billing';
 import type { QuoteSummary } from '../../shared/commercial';
 import type { ClientSummary, ProspectSummary } from '../../shared/crm';
@@ -24,7 +24,7 @@ import { createStatisticsDrilldown, type StatisticsDrilldownKind } from '../../s
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 import { StatisticsPage as Phase7StatisticsPage } from '../analytics/StatisticsPage';
 import { KeyFigureCard } from '../ui/KeyFigures';
-import { compare, comparisonHelper } from './statisticsComparison';
+import { allNewComparisons, NO_PREVIOUS_PERIOD_NOTE, compare, comparisonHelper } from './statisticsComparison';
 import './StatisticsPage.css';
 
 type StatisticsTab = 'overview' | 'commercial' | 'production' | 'clients' | 'analytics';
@@ -326,7 +326,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     {!invalidCustomPeriod && tab === 'analytics' && period.preset !== 'all' && <Phase7StatisticsPage onMessage={onMessage} externalPeriod={period} hidePeriodControls />}
 
     {!invalidCustomPeriod && tab === 'overview' && <>
-      <section className="aw-keyfigures" aria-label="Chiffres clés de la période">
+      <KpiGroup>
         <Kpi label="Contractuel signé" value={money(signed)} comparison={comparison(signed, previousSigned)}
           expanded={expandedKpi === 'signed'} onInspect={() => setExpandedKpi((value) => value === 'signed' ? null : 'signed')} />
         <Kpi label="Facturé suivi" value={money(invoiced)} comparison={comparison(invoiced, previousInvoiced)}
@@ -335,7 +335,7 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
           expanded={expandedKpi === 'time'} onInspect={() => setExpandedKpi((value) => value === 'time' ? null : 'time')} />
         <Kpi label="Nouveaux clients" value={String(newClients.length)} comparison={comparison(newClients.length, previousClients.length)}
           expanded={expandedKpi === 'clients'} onInspect={() => setExpandedKpi((value) => value === 'clients' ? null : 'clients')} />
-      </section>
+      </KpiGroup>
       {expandedKpi && selectedEvidence && <StatisticsEvidencePanel kind={expandedKpi} rows={selectedEvidence} periodLabel={range.label} />}
       <div className="statistics-main-grid">
         <article className="panel statistics-card">
@@ -365,12 +365,12 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     </>}
 
     {!invalidCustomPeriod && tab === 'commercial' && <>
-      <section className="aw-keyfigures" aria-label="Chiffres clés de la période">
+      <KpiGroup>
         <Kpi label="Contacts créés" value={String(newProspects.length)} comparison={comparison(newProspects.length, previousProspects.length)} />
         <Kpi label="Devis créés" value={String(quotes.length)} comparison={comparison(quotes.length, previousQuotes.length)} />
         <Kpi label="Taux d’acceptation" value={pct(acceptanceRate)} helper={countLabel(accepted.length, 'devis accepté', 'devis acceptés') + ' · ' + countLabel(refused.length, 'devis refusé', 'devis refusés') + ' · ' + countLabel(expired.length, 'devis expiré', 'devis expirés')} />
         <Kpi label="Conversion prospects" value={pct(conversionRate)} helper={countLabel(won.length, 'prospect gagné', 'prospects gagnés') + ' · ' + countLabel(lost.length, 'prospect perdu', 'prospects perdus')} />
-      </section>
+      </KpiGroup>
       <div className="statistics-decision-drilldown">
         <span>Taux d’acceptation = {accepted.length} accepté(s) / {accepted.length + refused.length + expired.length} décision(s) (acceptés, refusés, expirés), sur les dates de décision de cette période.</span>
         <button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:open-statistics-drilldown', {
@@ -391,12 +391,12 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     </>}
 
     {!invalidCustomPeriod && tab === 'production' && <>
-      <section className="aw-keyfigures" aria-label="Chiffres clés de la période">
+      <KpiGroup>
         <Kpi label="Projets créés" value={String(projectsCreated.length)} comparison={comparison(projectsCreated.length, previousProjects.length)} />
         <Kpi label="Projets terminés" value={String(projectsCompleted.length)} helper={countLabel(activeProjects.length, 'projet actif', 'projets actifs')} />
         <Kpi label="Temps travaillé" value={hours(seconds)} comparison={comparison(seconds, previousSeconds)} />
         <Kpi label="Interventions terminées" value={String(interventionsCompleted.length)} helper={countLabel(activeInterventions.length, 'intervention active', 'interventions actives')} />
-      </section>
+      </KpiGroup>
       <div className="statistics-main-grid">
         <article className="panel statistics-card">
           <CardTitle eyebrow="Temps" title="Répartition par activité" />
@@ -411,12 +411,12 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
     </>}
 
     {!invalidCustomPeriod && tab === 'clients' && <>
-      <section className="aw-keyfigures" aria-label="Chiffres clés de la période">
+      <KpiGroup>
         <Kpi label="Clients actifs" value={String(data.clients.filter((item) => item.status === 'active').length)} helper={countLabel(newClients.length, 'nouveau client', 'nouveaux clients') + ' sur la période'} />
         <Kpi label="Facturé période" value={money(invoiced)} comparison={comparison(invoiced, previousInvoiced)} />
         <Kpi label="Temps client" value={hours(sum(sessions.filter((item) => item.clientAccountId), (item) => item.durationSeconds))} helper="Sessions rattachées aux clients, regroupées par date de début" />
         <Kpi label="À facturer" value={money(readyAmount)} helper={countLabel(readyBilling.length, 'élément', 'éléments') + ' actuellement'} />
-      </section>
+      </KpiGroup>
       <article className="panel statistics-card statistics-client-card">
         <CardTitle eyebrow="Clients" title="Activité client · classement par unité" />
         {rankedClientRows.length ? <div className="statistics-table-wrap"><table className="statistics-table"><thead><tr><th>Client</th><th aria-sort={clientSort === 'seconds' ? 'descending' : 'none'}><button type="button" className="link-button" onClick={() => setClientSort('seconds')}>Temps {clientSort === 'seconds' ? '↓' : '↕'}</button></th><th aria-sort={clientSort === 'invoiced' ? 'descending' : 'none'}><button type="button" className="link-button" onClick={() => setClientSort('invoiced')}>Facturé suivi {clientSort === 'invoiced' ? '↓' : '↕'}</button></th><th>À facturer</th><th>Projets actifs</th><th>Interventions</th></tr></thead><tbody>{rankedClientRows.map((row) => <tr key={row.id}><td><button className="link-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'client', entityId: row.id, title: row.label } }))}>{row.label}</button></td><td>{hours(row.seconds)}</td><td>{money(row.invoiced)}</td><td>{money(row.ready)}</td><td>{row.projects}</td><td>{row.interventions}</td></tr>)}</tbody></table></div> : <Empty label="Aucune activité client sur cette période." />}
@@ -429,10 +429,24 @@ function Tab({ active, icon, label, onClick }: { active: boolean; icon: Operatio
   return <button className={active ? 'active' : ''} type="button" onClick={onClick}><OperationIcon name={icon} size={17} />{label}</button>;
 }
 
-function Kpi({ label, value, comparison, helper, onInspect, expanded }: {
+type KpiProps = {
   label: string; value: string;
   comparison?: ReturnType<typeof compare>; helper?: string; onInspect?: () => void; expanded?: boolean;
-}) {
+};
+
+/** Un bloc de chiffres clés. Quand toutes les comparaisons disent « Nouveau sur la période », une seule ligne les remplace. */
+function KpiGroup({ children }: { children: ReactNode }) {
+  const items = Children.toArray(children).filter(isValidElement) as ReactElement<KpiProps>[];
+  const noPrevious = allNewComparisons(items.map((item) => item.props.comparison));
+  return <>
+    {noPrevious && <p className="statistics-comparison-note" role="note">{NO_PREVIOUS_PERIOD_NOTE}</p>}
+    <section className="aw-keyfigures" aria-label="Chiffres clés de la période">
+      {items.map((item) => noPrevious ? cloneElement(item, { comparison: undefined }) : item)}
+    </section>
+  </>;
+}
+
+function Kpi({ label, value, comparison, helper, onInspect, expanded }: KpiProps) {
   return <KeyFigureCard item={{
     key: label, label, value,
     helper: comparisonHelper(comparison) ?? helper,

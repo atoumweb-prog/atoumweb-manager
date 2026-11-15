@@ -106,7 +106,7 @@ export function SettingsPage({ visualStore, bootstrap, theme, displayDensity, sh
   const sections: Record<SettingsSectionKey, ReactNode> = {
     company: company ? <CompanyQuoteSettings /> : null,
     appearance: appearance ? (
-      <article className="panel panel-large">
+      <article className="panel panel-large settings-appearance">
         <div className="panel-title"><h2>Thème de l’interface</h2>{theme !== 'atoumweb' && <button className="secondary-button" type="button" disabled={saving} onClick={() => void runSetting(() => onThemeChange('atoumweb'))}>Rétablir le thème par défaut</button>}</div>
         <div className="theme-grid">{THEMES.map((item) => <button className={`theme-card ${theme === item.id ? 'selected' : ''}`} key={item.id} id={item.id === 'atoumweb' ? 'settings-theme-atoumweb' : undefined} disabled={saving} onClick={() => void runSetting(() => onThemeChange(item.id))} type="button" aria-pressed={theme === item.id}><span className={`theme-preview preview-${item.id}`}><i /><b /></span><strong>{item.label}</strong><span>{item.description}</span></button>)}</div>
         <div className="density-settings">

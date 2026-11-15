@@ -156,6 +156,32 @@ describe('R8 : carte de chiffre avec action', () => {
     expect(markup).not.toContain('<button');
   });
 
+  it('P4b : une carte cliquable porte un indice visible, qui suit son état (Voir / Masquer le détail)', () => {
+    const closed = renderToStaticMarkup(createElement(KeyFigures, { ariaLabel: 'x', items: [{ key: 'a', label: 'A', value: 1, actionLabel: 'voir les éléments exacts', onAction: () => undefined, expanded: false }] }));
+    expect(closed).toContain('aw-keyfigure-cue');
+    expect(closed).toContain('Voir le détail');
+    const open = renderToStaticMarkup(createElement(KeyFigures, { ariaLabel: 'x', items: [{ key: 'a', label: 'A', value: 1, actionLabel: 'masquer les éléments exacts', onAction: () => undefined, expanded: true }] }));
+    expect(open).toContain('Masquer le détail');
+    expect(open).not.toContain('Voir le détail');
+  });
+
+  it('P4b : l’indice est décoratif pour le lecteur d’écran (le bouton garde son nom accessible)', () => {
+    const markup = renderToStaticMarkup(createElement(KeyFigures, { ariaLabel: 'x', items: [{ key: 'a', label: 'A', value: 1, actionLabel: 'ouvrir', onAction: () => undefined }] }));
+    expect(markup).toMatch(/<span class="aw-keyfigure-cue" aria-hidden="true">/);
+    expect(markup).toContain('aria-label="A : ouvrir"');
+  });
+
+  it('P4b : la règle de l’indice bat « .aw-keyfigure > span » (la valeur en 22 px ne doit pas s’appliquer à l’indice)', () => {
+    expect(css).toMatch(/\.aw-keyfigure\s*>\s*\.aw-keyfigure-cue\s*\{[^}]*font-size:\s*var\(--aw-font-functional\)/);
+    expect(css).toMatch(/\.aw-keyfigure\s*>\s*\.aw-keyfigure-cue\s*\{[^}]*font-weight:\s*600/);
+    expect(css).toMatch(/\.aw-keyfigure\s*>\s*\.aw-keyfigure-cue\s*\{[^}]*line-height:\s*1\.4/);
+  });
+
+  it('P4b : une carte sans action n’a aucun indice', () => {
+    const markup = renderToStaticMarkup(createElement(KeyFigures, { ariaLabel: 'x', items: [{ key: 'a', label: 'A', value: 1 }] }));
+    expect(markup).not.toContain('aw-keyfigure-cue');
+  });
+
   it('la feuille définit la carte-bouton sans !important ni texte sous 14 px', () => {
     expect(css).toContain('.aw-keyfigure--action');
     expect(css).not.toContain('!important');
