@@ -91,7 +91,9 @@ describe('R5a : Production lisible', () => {
 
   it('la note « ancien plan » n’a plus l’air d’une alerte', () => {
     expect(page).not.toContain('Ce projet utilise un ancien plan');
-    expect(page).toContain('Plan issu du modèle d’origine');
+    // P3b (F13) : la note devient une simple mention dans la ligne du plan, sans boîte ni ton d'alerte.
+    expect(page).toContain('plan issu du modèle d’origine');
+    expect(page).not.toContain('project-legacy-plan-note');
   });
 
   it('le statut d’une tâche passe par la pastille commune', () => {

@@ -1,6 +1,7 @@
 import { KeyFigures } from '../ui/KeyFigures';
 import { ListToolbar } from '../ui/ListToolbar';
 import { plural } from '../../shared/projectTabs';
+import { filterByProject, type OperationsProjectFilter } from '../../shared/operationsProjectFilter';
 import { operationsEmptyText } from '../../shared/gestionEmpty';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import {hasActiveFilters} from '../ui/tableEmpty';
@@ -62,7 +63,7 @@ function projectNodeLabel(node: ProjectNode): string {
   return `${kind} · ${node.name}`;
 }
 
-export function OperationsPage({ onEntityReady, onMessage, initialTarget, initialRequest }: { onMessage: (message: string) => void; initialTarget?: OperationsSearchTarget | null;initialRequest?:number;onEntityReady?:EntityReady }) {
+export function OperationsPage({ onEntityReady, onMessage, initialTarget, initialRequest, projectFilter, onClearProjectFilter }: { onMessage: (message: string) => void; initialTarget?: OperationsSearchTarget | null;initialRequest?:number;onEntityReady?:EntityReady;projectFilter?: OperationsProjectFilter | null;onClearProjectFilter?: () => void }) {
   const [view, setView] = useState<OperationsView>('requests');
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [interventions, setInterventions] = useState<Intervention[]>([]);
@@ -271,21 +272,24 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
 
   const filteredRequests = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('fr-FR');
-    return requests.filter((request) => {
+    return filterByProject(requests, projectFilter?.projectId).filter((request) => {
       if (requestStatus !== 'all' && request.status !== requestStatus) return false;
       if (!needle) return true;
       return [request.subject, request.description ?? '', request.clientLabel, request.projectLabel ?? ''].some((value) => value.toLocaleLowerCase('fr-FR').includes(needle));
     });
-  }, [requests, query, requestStatus]);
+  }, [requests, query, requestStatus, projectFilter?.projectId]);
 
   const filteredInterventions = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('fr-FR');
-    return interventions.filter((intervention) => {
+    return filterByProject(interventions, projectFilter?.projectId).filter((intervention) => {
       if (interventionStatus !== 'all' && intervention.status !== interventionStatus) return false;
       if (!needle) return true;
       return [intervention.number, intervention.subject, intervention.description ?? '', intervention.clientLabel, intervention.projectLabel ?? '', intervention.projectNodeLabel ?? ''].some((value) => value.toLocaleLowerCase('fr-FR').includes(needle));
     });
-  }, [interventions, query, interventionStatus]);
+  }, [interventions, query, interventionStatus, projectFilter?.projectId]);
+
+  // P3b (F20) : le lien « Voir toutes (N) » d'un projet ouvre la vue demandée (demandes ou interventions).
+  useEffect(() => { if (projectFilter?.view) setView(projectFilter.view); }, [projectFilter?.projectId, projectFilter?.view, initialRequest]);
 
   const requestProjects = projects.filter((project) => project.clientAccountId === requestClientId && project.status !== 'archived');
   const interventionProjects = projects.filter((project) => project.clientAccountId === interventionClientId && project.status !== 'archived');
@@ -514,7 +518,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
       countLabel={view === 'requests' ? plural(filteredRequests.length, 'demande', 'demandes') : plural(filteredInterventions.length, 'intervention', 'interventions')}
       onRefresh={() => void refresh({ showLoading: false })}
       search={{ value: query, onChange: setQuery, placeholder: 'Rechercher client, sujet, numéro…', ariaLabel: view === 'requests' ? 'Rechercher une demande' : 'Rechercher une intervention' }}
-      filters={view === 'requests' ? <select value={requestStatus} onChange={(event) => setRequestStatus(event.target.value as typeof requestStatus)}><option value="all">Tous les statuts</option>{SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{REQUEST_STATUS_LABELS[status]}</option>)}</select> : <select value={interventionStatus} onChange={(event) => setInterventionStatus(event.target.value as typeof interventionStatus)}><option value="all">Tous les statuts</option>{INTERVENTION_STATUSES.map((status) => <option key={status} value={status}>{INTERVENTION_STATUS_LABELS[status]}</option>)}</select>}
+      filters={<>{projectFilter && <span className="aw-filter-chip" role="status">Projet : {projectFilter.projectLabel}<button type="button" className="aw-filter-chip-clear" aria-label="Retirer le filtre Projet" title="Retirer le filtre Projet" onClick={onClearProjectFilter}>✕</button></span>}{view === 'requests' ? <select value={requestStatus} onChange={(event) => setRequestStatus(event.target.value as typeof requestStatus)}><option value="all">Tous les statuts</option>{SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{REQUEST_STATUS_LABELS[status]}</option>)}</select> : <select value={interventionStatus} onChange={(event) => setInterventionStatus(event.target.value as typeof interventionStatus)}><option value="all">Tous les statuts</option>{INTERVENTION_STATUSES.map((status) => <option key={status} value={status}>{INTERVENTION_STATUS_LABELS[status]}</option>)}</select>}</>}
       primary={view === 'requests' ? <button className="primary-button" type="button" onClick={() => setCreateRequestOpen((value) => !value)}>+ Nouvelle demande</button> : <button className="primary-button" type="button" onClick={() => setCreateInterventionOpen((value) => !value)}>+ Intervention</button>}
     />}
 

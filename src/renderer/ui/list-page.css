@@ -31,3 +31,35 @@
 /* R8 : la feuille globale ui-consistency-v2.css impose max-width: 100 % aux champs avec une spécificité que ces règles ne battent pas ;
    la recherche a donc une largeur posée par width et flex-basis (celle que les écrans de Gestion avaient déjà), sans croissance. */
 .aw-list-toolbar > .inline-search { width: 270px; flex: 0 1 270px; min-width: 160px; }
+/* P3b (F20) : pastille de filtre retirable (« Projet : … ✕ »), jetons uniquement, texte à 14 px au moins. */
+.aw-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font-size: var(--aw-font-functional);
+  font-weight: 600;
+}
+.aw-filter-chip-clear {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  min-height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-size: var(--aw-font-functional);
+  cursor: pointer;
+}
+.aw-filter-chip-clear:hover {
+  background: var(--surface);
+}
+.aw-filter-chip-clear:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}

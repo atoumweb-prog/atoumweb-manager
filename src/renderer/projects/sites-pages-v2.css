@@ -129,3 +129,19 @@
  :root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-header {grid-template-columns:minmax(0,1fr);}
  :root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-actions {justify-content:flex-start;}
 }
+/* P3b (F18) : un projet sans Site ni Page dit quoi faire au lieu d’afficher deux volets vides. Jetons uniquement. */
+.project-sites-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 48px 24px;
+  text-align: center;
+}
+.project-sites-empty-state h3 {
+  margin: 0;
+}
+.project-sites-empty-state p {
+  max-width: 64ch;
+  margin: 0;
+  color: var(--text-muted);
+}

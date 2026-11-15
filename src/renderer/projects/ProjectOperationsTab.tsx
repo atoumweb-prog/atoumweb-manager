@@ -18,6 +18,7 @@ import {
   SOURCE_LABELS,
   readableLabel,
 } from '../../shared/operationLabels';
+import { OPEN_OPERATIONS_PROJECT_EVENT, type OperationsProjectFilter } from '../../shared/operationsProjectFilter';
 import { limitItems, plural } from '../../shared/projectTabs';
 import { StatusPill } from '../ui/StatusPill';
 import { operationStatusTone } from '../ui/operationStatusTone';
@@ -45,15 +46,24 @@ export interface ProjectOperationsViewProps {
   maintenance: MaintenanceSubscription[];
   packs: HourPack[];
   onRefresh: () => void;
+  /** P3b (F20) : quand le projet est connu, « Voir toutes (N) » ouvre la page Interventions filtrée par ce projet. */
+  projectId?: string;
+  projectLabel?: string;
 }
 
 /** Interventions d'un projet : un seul message quand tout est vide, sinon seulement les sections qui ont du contenu. */
-export function ProjectOperationsView({ requests, interventions, maintenance, packs, onRefresh }: ProjectOperationsViewProps) {
+export function ProjectOperationsView({ requests, interventions, maintenance, packs, onRefresh, projectId, projectLabel }: ProjectOperationsViewProps) {
   const empty = requests.length + interventions.length + maintenance.length + packs.length === 0;
   const openRequests = requests.filter((item) => !['closed', 'converted', 'archived'].includes(item.status)).length;
   const openInterventions = interventions.filter((item) => !['completed', 'cancelled', 'archived'].includes(item.status)).length;
   const shownRequests = limitItems(requests, REQUEST_LIMIT);
   const shownInterventions = limitItems(interventions, INTERVENTION_LIMIT);
+
+  const openAll = (view: 'requests' | 'interventions') => {
+    if (!projectId) return;
+    const detail: OperationsProjectFilter = { projectId, projectLabel: projectLabel ?? '', view };
+    window.dispatchEvent(new CustomEvent(OPEN_OPERATIONS_PROJECT_EVENT, { detail }));
+  };
 
   return <div className="project-tab-content project-operations-view">
     {empty && <p className="project-empty">Aucune demande ni intervention sur ce projet pour l’instant.</p>}
@@ -63,7 +73,7 @@ export function ProjectOperationsView({ requests, interventions, maintenance, pa
         <div><strong>{request.subject}</strong><small>{readableLabel(SOURCE_LABELS, request.source)}{request.priority !== 'normal' ? ` · Priorité : ${readableLabel(PRIORITY_LABELS, request.priority)}` : ''}</small></div>
         <StatusPill tone={operationStatusTone(request.status)}>{readableLabel(REQUEST_STATUS_LABELS, request.status)}</StatusPill>
       </div>)}
-      {shownRequests.hidden > 0 && <p className="project-operation-more">{hiddenLabel(shownRequests.hidden, 'demande')}</p>}
+      {shownRequests.hidden > 0 && <p className="project-operation-more">{hiddenLabel(shownRequests.hidden, 'demande')}{projectId && <> · <button className="link-button" type="button" onClick={() => openAll('requests')}>Voir toutes ({requests.length})</button></>}</p>}
     </OperationSection>}
 
     {interventions.length > 0 && <OperationSection title={openInterventions > 0 ? `Interventions · ${openInterventions} en cours` : 'Interventions'}>
@@ -71,7 +81,7 @@ export function ProjectOperationsView({ requests, interventions, maintenance, pa
         <div><strong>{intervention.number} · {intervention.subject}</strong><small>{[readableLabel(INTERVENTION_TYPE_LABELS, intervention.type), intervention.totalTimeSeconds > 0 ? duration(intervention.totalTimeSeconds) : null, readableLabel(COVERAGE_LABELS, intervention.coverageMode)].filter(Boolean).join(' · ')}</small></div>
         <StatusPill tone={operationStatusTone(intervention.status)}>{readableLabel(INTERVENTION_STATUS_LABELS, intervention.status)}</StatusPill>
       </div>)}
-      {shownInterventions.hidden > 0 && <p className="project-operation-more">{hiddenLabel(shownInterventions.hidden, 'intervention')}</p>}
+      {shownInterventions.hidden > 0 && <p className="project-operation-more">{hiddenLabel(shownInterventions.hidden, 'intervention')}{projectId && <> · <button className="link-button" type="button" onClick={() => openAll('interventions')}>Voir toutes ({interventions.length})</button></>}</p>}
     </OperationSection>}
 
     {maintenance.length > 0 && <OperationSection title="Maintenance">
@@ -92,7 +102,7 @@ export function ProjectOperationsView({ requests, interventions, maintenance, pa
   </div>;
 }
 
-export function ProjectOperationsTab({ projectId, onMessage }: { projectId: string; onMessage: (message: string) => void }) {
+export function ProjectOperationsTab({ projectId, projectLabel, onMessage }: { projectId: string; projectLabel: string; onMessage: (message: string) => void }) {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [maintenance, setMaintenance] = useState<MaintenanceSubscription[]>([]);
@@ -122,7 +132,7 @@ export function ProjectOperationsTab({ projectId, onMessage }: { projectId: stri
   useEffect(() => { void load(); }, [projectId]);
 
   if (loading) return <div className="project-tab-content"><p className="project-empty">Chargement des opérations du projet…</p></div>;
-  return <ProjectOperationsView requests={requests} interventions={interventions} maintenance={maintenance} packs={packs} onRefresh={() => void load()} />;
+  return <ProjectOperationsView requests={requests} interventions={interventions} maintenance={maintenance} packs={packs} onRefresh={() => void load()} projectId={projectId} projectLabel={projectLabel} />;
 }
 
 function OperationSection({ title, children }: { title: string; children: ReactNode }) {

@@ -14,6 +14,7 @@ import { SettingsPage, THEMES, DENSITIES } from './settings/SettingsPage';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { BootstrapState, DisplayDensity, ThemeName } from '../shared/contracts';
 import type { SearchResult } from '../shared/crm';
+import { OPEN_OPERATIONS_PROJECT_EVENT, type OperationsProjectFilter } from '../shared/operationsProjectFilter';
 import { BusinessBackupsPage } from './backups/BusinessBackupsPage';
 import { BillingPage } from './billing/BillingPage';
 import { ExpensesPage } from './expenses/ExpensesPage';
@@ -162,6 +163,10 @@ function App() {
   const [directoryTarget, setDirectoryTarget] = useState<DirectorySearchTarget | null>(null);
   useEffect(()=>{const open=(event:Event)=>void openSearchResult((event as CustomEvent<SearchResult>).detail,'event');window.addEventListener('atoumweb:navigate',open);return()=>window.removeEventListener('atoumweb:navigate',open);},[]);
   useEffect(() => { const open = (event: Event) => {requestPage((event as CustomEvent<PageName>).detail,()=>{setStatisticsDrilldown(null);setActivePage((event as CustomEvent<PageName>).detail);});}; window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
+  // P3b (F20) : « Voir toutes (N) » d'un projet ouvre la page Interventions filtrée par ce projet, par la garde habituelle des brouillons.
+  useEffect(() => { const open = (event: Event) => { const detail = (event as CustomEvent<OperationsProjectFilter>).detail; if (!detail?.projectId) return; requestPage('Interventions & Maintenance',()=>{setOperationsProjectFilter(detail);setOperationsSearchTarget(null);setStatisticsDrilldown(null);setNavigationRequest(value=>value+1);setActivePage('Interventions & Maintenance');}); }; window.addEventListener(OPEN_OPERATIONS_PROJECT_EVENT, open); return () => window.removeEventListener(OPEN_OPERATIONS_PROJECT_EVENT, open); }, []);
+  // Le filtre n'existe que sur la page Interventions : toute autre page l'oublie.
+  useEffect(() => { if (activePage !== 'Interventions & Maintenance') setOperationsProjectFilter(null); }, [activePage]);
   useEffect(() => {
     const open = (event: Event) => {const target=(event as CustomEvent<'directory'|'pipeline'|'history'|'conversions'|{view:'directory'|'pipeline'|'history'|'conversions';pipelineFilter?:ProspectPipelineFilter}>).detail;const targetView=typeof target==='string'?target:target.view;const targetFilter=targetView==='pipeline'&&typeof target!=='string'?target.pipelineFilter??'all':'all';requestPage('Prospects',()=>{
       const detail = (event as CustomEvent<
@@ -207,6 +212,7 @@ function App() {
   }, []);
   const [projectSearchTarget, setProjectSearchTarget] = useState<string | null>(null);
   const [operationsSearchTarget, setOperationsSearchTarget] = useState<OperationsSearchTarget | null>(null);
+  const [operationsProjectFilter, setOperationsProjectFilter] = useState<OperationsProjectFilter | null>(null);
   const [librarySearchTarget, setLibrarySearchTarget] = useState<string | null>(null);
   const [backupSearchTarget, setBackupSearchTarget] = useState<string | null>(null);
 
@@ -301,7 +307,7 @@ function App() {
     setQuoteReturnProjectId(null);
     setProjectReturnContext(null);
     setStatisticsDrilldown(null);
-    if (page === 'Interventions & Maintenance') setOperationsSearchTarget(null);
+    if (page === 'Interventions & Maintenance') { setOperationsSearchTarget(null); setOperationsProjectFilter(null); }
     if (page === 'Projets') setProjectSearchTarget(null);
     if (page === 'Bibliothèque AtoumWeb') setLibrarySearchTarget(null);
     if (page === 'Sauvegardes') setBackupSearchTarget(null);
@@ -314,6 +320,7 @@ function App() {
   function openOperationsTargetDirect(target: OperationsSearchTarget): void {
     setStatisticsDrilldown(null);
     setOperationsSearchTarget(target);
+    setOperationsProjectFilter(null);
     setActivePage('Interventions & Maintenance');
   }
 
@@ -423,7 +430,7 @@ function App() {
           {activePage === 'Offres & Tarifs' && <CatalogPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialId={catalogTarget}/>}
           {activePage === 'Devis' && <QuotesPage statisticsDrilldown={statisticsDrilldown?.kind === 'signed' || statisticsDrilldown?.kind === 'decisions' ? statisticsDrilldown : null} onClearStatisticsDrilldown={() => setStatisticsDrilldown(null)} onEntityReady={markEntityReady} key={quoteTarget} initialId={quoteTarget} initialRequest={navigationRequest} returnProjectId={quoteReturnProjectId} onMessage={setMessage} />}
           {activePage === 'Projets' && <ProjectsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={showMessage} initialProjectId={projectSearchTarget} returnContext={projectSearchTarget && projectReturnContext?.projectId === projectSearchTarget ? projectReturnContext : null} showHoverHelp={showHoverHelp} />}
-          {activePage === 'Interventions & Maintenance' && <OperationsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialTarget={operationsSearchTarget} />}
+          {activePage === 'Interventions & Maintenance' && <OperationsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialTarget={operationsSearchTarget} projectFilter={operationsProjectFilter} onClearProjectFilter={() => setOperationsProjectFilter(null)} />}
           {activePage === 'Gestion des temps' && <TimePage statisticsDrilldown={statisticsDrilldown?.kind === 'time' ? statisticsDrilldown : null} onClearStatisticsDrilldown={() => setStatisticsDrilldown(null)} onMessage={setMessage} />}
           {activePage === 'Facturation' && <BillingPage statisticsDrilldown={statisticsDrilldown?.kind === 'invoiced' ? statisticsDrilldown : null} onClearStatisticsDrilldown={() => setStatisticsDrilldown(null)} onMessage={setMessage} />}
           {activePage === 'Dépenses' && <ExpensesPage onMessage={setMessage} />}

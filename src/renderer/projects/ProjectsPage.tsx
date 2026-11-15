@@ -700,8 +700,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
             <div>
               <span className="eyebrow">{detail.number} · {detail.commercialState === 'provisional' ? 'Projet prévisionnel · devis non signé' : detail.commercialState === 'frozen' ? 'Projet confirmé · devis accepté' : 'Projet historique'}</span>
               <h2>{detail.name}</h2>
-              <p>{detail.commercialState === 'provisional' && !detail.clientAccountId ? 'Prospect : ' : 'Client / contact : '}{detail.clientLabel}</p>
-              {detail.sourceQuoteId && <p className="muted">Devis source associé <button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'quote', entityId: detail.sourceQuoteId, title: 'Devis source du Projet', parentEntityId: detail.id, projectContext: { projectId: detail.id, detailTab, selectedNodeId, expandedPhaseIds: [...expandedPhaseIds], query, statusFilter, commercialFilter, projectTopCollapsed, productionTreeCollapsed, productionSplitPercent, sitesViewContext } } }))}>Ouvrir le devis</button></p>}
+              <p>{detail.commercialState === 'provisional' && !detail.clientAccountId ? 'Prospect : ' : 'Client / contact : '}{detail.clientLabel}{detail.sourceQuoteId && <> · Devis source associé <button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'quote', entityId: detail.sourceQuoteId, title: 'Devis source du Projet', parentEntityId: detail.id, projectContext: { projectId: detail.id, detailTab, selectedNodeId, expandedPhaseIds: [...expandedPhaseIds], query, statusFilter, commercialFilter, projectTopCollapsed, productionTreeCollapsed, productionSplitPercent, sitesViewContext } } }))}>Ouvrir le devis</button></>}</p>
               <ProjectNowLine summary={projectNowSummary(detail.nodes, detail.prerequisites, detail.status === 'completed' || detail.status === 'archived' ? null : detail.targetDate)} onShowAction={() => { selectProjectTab('plan'); setActionOnly(true); }} onShowPrerequisites={() => selectProjectTab('prerequisites')} />
               {detail.commercialState === 'provisional' && <p className="muted">Préparation interne : ce dossier n’est pas une commande acceptée.</p>}
             </div>
@@ -780,7 +779,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
               <div className="project-production-tree-head">
                 <div>
                   <span className="eyebrow">Plan de production</span>
-                  <strong>{detail.nodes.filter((node) => !node.parentId).length} phase{detail.nodes.filter((node) => !node.parentId).length > 1 ? 's' : ''}</strong>
+                  <strong>{detail.nodes.filter((node) => !node.parentId).length} phase{detail.nodes.filter((node) => !node.parentId).length > 1 ? 's' : ''}{!detailUsesBlueprint && <span className="project-plan-origin"> · plan issu du modèle d’origine</span>}</strong>
                 </div>
                 <div className="project-production-tree-actions">
                   <button className="project-tree-filter-button" type="button" aria-pressed={actionOnly} onClick={() => setActionOnly((value) => !value)}>Ce qui demande une action</button>
@@ -805,9 +804,6 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
                 </details>
                 </div>
               </div>
-              {!detailUsesBlueprint && <div className="project-legacy-plan-note">
-                <div><strong>Plan issu du modèle d’origine</strong><span>Ce plan garde la structure du modèle utilisé à la création du projet.</span></div>
-              </div>}
               <div className="project-production-tree-scroll">
                 <div className="project-tree">{renderProjectProductionTree(
                   actionOnly ? filterActionNodes(detail.nodes) : detail.nodes,
@@ -883,7 +879,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
           {detailTab === 'prerequisites' && <ProjectPrerequisitesTab prerequisites={detail.prerequisites} newLabel={newPrerequisite} onNewLabelChange={setNewPrerequisite} onAdd={() => void addPrerequisite()} onStatus={(id, status) => void updatePrerequisiteStatus(id, status)} />}
           {detailTab === 'resources' && <ProjectResourcesTab projectId={detail.id} nodes={detail.nodes} resourceRootPath={detail.resourceRootPath} onMessage={onMessage} />}
           {detailTab === 'technical' && <ProjectTechnicalLibraryTab projectId={detail.id} onMessage={onMessage} />}
-          {detailTab === 'operations' && <ProjectOperationsTab projectId={detail.id} onMessage={onMessage} />}
+          {detailTab === 'operations' && <ProjectOperationsTab projectId={detail.id} projectLabel={detail.name} onMessage={onMessage} />}
           {detailTab === 'time' && <ProjectTimeTab projectId={detail.id} nodes={detail.nodes} onMessage={onMessage} />}
           {detailTab === 'commercial' && <ProjectCommercialTab project={detail} />}
         </main>}
