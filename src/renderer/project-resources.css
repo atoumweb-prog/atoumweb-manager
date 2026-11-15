@@ -12,7 +12,7 @@
 }
 
 .project-resource-heading strong {
-  font-size: 13px;
+  font-size: var(--aw-font-functional);
 }
 
 .project-resource-import {
@@ -40,7 +40,7 @@
   padding: 6px 8px;
   background: transparent;
   color: var(--text-muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
   cursor: pointer;
 }
@@ -93,13 +93,13 @@
 .project-resource-file strong {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .project-resource-file small {
   overflow-wrap: anywhere;
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   line-height: 1.35;
 }
 
@@ -113,7 +113,7 @@
   background: var(--surface-soft);
   border: 1px solid var(--border);
   color: var(--accent);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 900;
 }
 
@@ -123,7 +123,7 @@
   border: 1px solid #b75b5b;
   border-radius: 999px;
   color: #b75b5b;
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 900;
 }
 
@@ -136,7 +136,7 @@
 .project-resource-controls select {
   width: 100%;
   min-width: 0;
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
 }
 
 .project-resource-links {
@@ -151,7 +151,7 @@
   background: var(--surface-soft);
   border: 1px solid var(--border);
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
 }
 
 @media (max-width: 1100px) {

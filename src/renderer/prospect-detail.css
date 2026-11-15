@@ -32,7 +32,7 @@
 .prospect-card-actions { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); gap: 7px; }
 
 .quick-followups { display: flex; flex-wrap: wrap; gap: 5px; }
-.quick-followups button { border: 1px solid var(--border); border-radius: 7px; padding: 5px 6px; background: var(--surface-soft); color: var(--muted); cursor: pointer; font-size: 8px; font-weight: 700; }
+.quick-followups button { border: 1px solid var(--border); border-radius: 7px; padding: 5px 6px; background: var(--surface-soft); color: var(--muted); cursor: pointer; font-size: var(--aw-font-functional); font-weight: 700; }
 .quick-followups button:hover { border-color: var(--accent); color: var(--accent-strong); }
 
 /* La fiche latérale reste intégralement exploitable, même dans une fenêtre basse. */
@@ -58,8 +58,8 @@
 .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 
 .inline-editor { display: grid; gap: 10px; margin-top: 14px; padding: 12px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-soft); }
-.inline-editor > strong { font-size: 11px; }
-.inline-editor label { display: grid; gap: 5px; color: var(--muted); font-size: 9px; font-weight: 700; }
+.inline-editor > strong { font-size: var(--aw-font-functional); }
+.inline-editor label { display: grid; gap: 5px; color: var(--muted); font-size: var(--aw-font-functional); font-weight: 700; }
 .inline-editor input, .inline-editor textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); padding: 8px 9px; outline: none; font: inherit; }
 .inline-editor textarea { min-height: 76px; resize: vertical; }
 .inline-editor input:focus, .inline-editor textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 13%, transparent); }
@@ -74,9 +74,9 @@
 .closed-prospect-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .closed-prospect-card { display: grid; gap: 5px; padding: 12px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-soft); color: var(--text); text-align: left; cursor: pointer; }
 .closed-prospect-card:hover { border-color: var(--accent); }
-.closed-prospect-card strong { font-size: 11px; }
-.closed-prospect-card span { color: var(--accent-strong); font-size: 9px; font-weight: 800; }
-.closed-prospect-card small { color: var(--muted); font-size: 9px; }
+.closed-prospect-card strong { font-size: var(--aw-font-functional); }
+.closed-prospect-card span { color: var(--accent-strong); font-size: var(--aw-font-functional); font-weight: 800; }
+.closed-prospect-card small { color: var(--muted); font-size: var(--aw-font-functional); }
 
 @media (max-width: 1500px) {
   .kanban-board { grid-template-columns: repeat(3, minmax(0, 1fr)); }

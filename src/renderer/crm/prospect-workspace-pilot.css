@@ -121,7 +121,7 @@
 .app-shell .prospects-v2 .pipeline-layout .pipeline-step-column{display:flex;flex-direction:column;min-height:0;min-width:0;}
 .app-shell .prospects-v2 .pipeline-layout .pipeline-step-column>header{flex:0 0 auto;}
 .app-shell .prospects-v2 .pipeline-layout .kanban-cards{flex:1;min-height:0;overflow:auto;align-content:start;padding:4px;}
-.app-shell .prospects-v2 .pipeline-card-summary{display:block;width:calc(100% - 24px);margin:4px 12px 8px;padding:4px 0;text-align:left;background:none;border:0;color:var(--muted);font-size:13px;cursor:pointer;}
+.app-shell .prospects-v2 .pipeline-card-summary{display:block;width:calc(100% - 24px);margin:4px 12px 8px;padding:4px 0;text-align:left;background:none;border:0;color:var(--muted);font-size: var(--aw-font-functional);cursor:pointer;}
 .app-shell .prospects-v2 .pipeline-layout .prospect-card-identity strong{font-size:15px;line-height:1.35;word-break:normal;}
 .app-shell .prospects-v2 .pipeline-layout .prospection-card-preview{font-size:14px;line-height:1.45;}
 /* P3a (F46) : les libellés des onglets ne se coupent plus au milieu d’un mot ; la rangée défile horizontalement quand elle ne tient pas. */

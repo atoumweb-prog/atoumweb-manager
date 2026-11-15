@@ -27,14 +27,14 @@
 .aw-library-item:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
 .aw-library-item.selected { border-color: var(--accent); background: var(--accent-soft); }
 .aw-library-item > div:first-child { display: grid; gap: 4px; min-width: 0; }
-.aw-library-item strong { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.aw-library-item span { color: var(--muted); font-size: 10px; }
+.aw-library-item strong { font-size: var(--aw-font-functional); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aw-library-item span { color: var(--muted); font-size: var(--aw-font-functional); }
 .aw-library-item-meta { display: grid; gap: 3px; justify-items: end; white-space: nowrap; }
 .aw-library-detail { min-height: 320px; }
 .aw-library-empty { padding: 34px 10px; text-align: center; }
 .aw-library-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 16px; }
 .aw-library-tags span,
-.aw-library-version-flags > span { display: inline-flex; border-radius: 999px; padding: 4px 8px; background: var(--accent-soft); color: var(--accent-strong); font-size: 9px; font-weight: 700; }
+.aw-library-version-flags > span { display: inline-flex; border-radius: 999px; padding: 4px 8px; background: var(--accent-soft); color: var(--accent-strong); font-size: var(--aw-font-functional); font-weight: 700; }
 .aw-library-create,
 .aw-library-version-form,
 .aw-library-metadata-editor,
@@ -44,7 +44,7 @@
 .aw-library-version-form label,
 .aw-library-metadata-editor label,
 .aw-library-asset-toolbar label,
-.aw-library-package-review label { display: grid; gap: 5px; color: var(--muted); font-size: 10px; font-weight: 700; }
+.aw-library-package-review label { display: grid; gap: 5px; color: var(--muted); font-size: var(--aw-font-functional); font-weight: 700; }
 .aw-library-metadata-editor { margin: 12px 0 18px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); }
 .aw-library-assets { display: grid; gap: 12px; margin: 18px 0; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); }
 .aw-library-section-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
@@ -54,9 +54,9 @@
 .aw-library-asset { display: grid; gap: 4px; min-width: 0; padding: 10px 11px; text-align: left; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer; overflow: hidden; }
 .aw-library-asset:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
 .aw-library-asset > img { width: calc(100% + 22px); height: 120px; margin: -10px -11px 5px; object-fit: cover; border-bottom: 1px solid var(--border); background: var(--surface-soft); }
-.aw-library-asset > span { color: var(--accent-strong); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
-.aw-library-asset > strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
-.aw-library-asset > small { color: var(--muted); font-size: 9px; }
+.aw-library-asset > span { color: var(--accent-strong); font-size: var(--aw-font-functional); font-weight: 800; }
+.aw-library-asset > strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--aw-font-functional); }
+.aw-library-asset > small { color: var(--muted); font-size: var(--aw-font-functional); }
 .aw-library-asset.missing { border-style: dashed; opacity: .68; }
 .aw-library-version-form { margin: 18px 0; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); }
 .aw-library-version-form h3,
@@ -64,23 +64,23 @@
 .aw-library-versions { display: grid; gap: 10px; }
 .aw-library-version { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; padding: 13px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-soft); }
 .aw-library-version > div:first-child { display: grid; gap: 3px; }
-.aw-library-version > div:first-child span { color: var(--muted); font-size: 10px; }
+.aw-library-version > div:first-child span { color: var(--muted); font-size: var(--aw-font-functional); }
 .aw-library-version-flags { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
 .aw-library-version p,
 .aw-library-version pre,
 .aw-library-version .technical-content-viewer { grid-column: 1 / -1; }
-.aw-library-version p { margin: 0; color: var(--muted); font-size: 11px; }
-.aw-library-version pre { margin: 0; max-height: 300px; overflow: auto; padding: 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); font-size: 11px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.aw-library-version p { margin: 0; color: var(--muted); font-size: var(--aw-font-functional); }
+.aw-library-version pre { margin: 0; max-height: 300px; overflow: auto; padding: 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); font-size: var(--aw-font-functional); line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
 .aw-library-package-review { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
 .aw-library-package-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .aw-library-package-grid > div { display: grid; gap: 4px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); }
-.aw-library-package-grid span { color: var(--muted); font-size: 9px; }
-.aw-library-package-grid strong { font-size: 11px; }
+.aw-library-package-grid span { color: var(--muted); font-size: var(--aw-font-functional); }
+.aw-library-package-grid strong { font-size: var(--aw-font-functional); }
 .aw-library-package-duplicates { display: grid; gap: 7px; }
-.aw-library-package-duplicates > strong { font-size: 11px; }
+.aw-library-package-duplicates > strong { font-size: var(--aw-font-functional); }
 .aw-library-package-duplicates button { display: grid; grid-template-columns: 125px minmax(0, 1fr); gap: 10px; align-items: center; text-align: left; padding: 9px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); color: var(--text); cursor: pointer; }
 .aw-library-package-duplicates button:hover { border-color: var(--accent); }
-.aw-library-package-duplicates button span { color: var(--accent-strong); font-size: 9px; font-weight: 800; }
+.aw-library-package-duplicates button span { color: var(--accent-strong); font-size: var(--aw-font-functional); font-weight: 800; }
 .aw-library-package-duplicates button strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .aw-library-error { margin-bottom: 0; }
 .aw-library button:disabled { opacity: .5; cursor: not-allowed; }
@@ -547,13 +547,13 @@ body.aw-library-resizing {
 .aw-bridge-candidate-origin span,
 .aw-bridge-candidate-grid span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .aw-bridge-candidate-origin strong,
 .aw-bridge-candidate-grid strong {
   overflow-wrap: anywhere;
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
 }
 
 .aw-bridge-candidate-state {
@@ -573,7 +573,7 @@ body.aw-library-resizing {
 
 .aw-bridge-candidate-state span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
   line-height: 1.45;
 }
 
@@ -609,7 +609,7 @@ body.aw-library-resizing {
   gap: 7px;
   align-items: flex-start;
   margin: 0;
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   line-height: 1.45;
 }
 
@@ -628,7 +628,7 @@ body.aw-library-resizing {
   padding: 9px 10px;
   cursor: pointer;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   font-weight: 700;
 }
 
@@ -687,7 +687,7 @@ body.aw-library-resizing {
 
 .aw-library-classification-warning span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
   line-height: 1.4;
 }
 
@@ -716,7 +716,7 @@ body.aw-library-resizing {
   height: 27px;
   border-radius: 50%;
   background: var(--surface-soft);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
 }
 
@@ -728,7 +728,7 @@ body.aw-library-resizing {
 
 .aw-library-stage-grid small {
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   line-height: 1.35;
 }
 
@@ -790,7 +790,7 @@ body.aw-library-resizing {
 
 .aw-bridge-copy-card span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .aw-bridge-remote-assets {
@@ -802,7 +802,7 @@ body.aw-library-resizing {
 .aw-bridge-remote-assets summary {
   padding: 9px 10px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   font-weight: 700;
 }
 
@@ -813,7 +813,7 @@ body.aw-library-resizing {
   overflow-wrap: anywhere;
   border-radius: 7px;
   background: var(--surface);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
 }
 
 @media (max-width: 1080px) {
@@ -1143,7 +1143,7 @@ button.aw-library-stage-open:hover {
   height: 27px;
   border-radius: 50%;
   background: var(--surface-soft);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
 }
 
@@ -1162,7 +1162,7 @@ button.aw-library-stage-open:hover {
 .aw-library-stage-open small,
 .aw-library-stage-create small {
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   line-height: 1.35;
 }
 
@@ -1201,13 +1201,13 @@ button.aw-library-stage-open:hover {
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
   text-align: center;
 }
 
 .aw-preview-devices button small {
   color: var(--muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 500;
 }
 
@@ -1241,7 +1241,7 @@ button.aw-library-stage-open:hover {
   gap: 8px;
   align-items: center;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .aw-preview-pane-title strong {
@@ -1306,7 +1306,7 @@ button.aw-library-stage-open:hover {
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .aw-work-editor-tabs button.active {
@@ -1316,7 +1316,7 @@ button.aw-library-stage-open:hover {
 
 .aw-work-editor-tabs small {
   color: var(--muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
 }
 
 .aw-work-code-editor {
@@ -1342,7 +1342,7 @@ button.aw-library-stage-open:hover {
   border-radius: 999px;
   background: var(--surface-soft);
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   font-weight: 700;
 }
 
@@ -1435,7 +1435,7 @@ button.aw-library-stage-open:hover {
   }
 
   .aw-library-summary .aw-library-kpi > div > span {
-    font-size: 11px;
+    font-size: var(--aw-font-functional);
     white-space: nowrap;
   }
 
@@ -1461,14 +1461,14 @@ button.aw-library-stage-open:hover {
     min-height: 34px;
     padding: 6px 8px;
     border-radius: 8px;
-    font-size: 11px;
+    font-size: var(--aw-font-functional);
   }
 
   .aw-library-toolbar .primary-button,
   .aw-library-toolbar .secondary-button {
     min-height: 34px;
     padding: 6px 9px;
-    font-size: 10px;
+    font-size: var(--aw-font-functional);
   }
 
   .aw-library-checkbox {
@@ -1495,7 +1495,7 @@ button.aw-library-stage-open:hover {
   border-radius: 999px;
   background: color-mix(in srgb, var(--success) 7%, var(--surface));
   color: var(--success);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   font-weight: 750;
   white-space: nowrap;
 }
@@ -1522,10 +1522,8 @@ button.aw-library-stage-open:hover {
   border-radius: 999px;
   background: var(--surface-soft);
   color: var(--muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 750;
-  text-transform: uppercase;
-  letter-spacing: .04em;
 }
 
 .aw-reusable-field.image > span {
@@ -1541,7 +1539,7 @@ button.aw-library-stage-open:hover {
 .aw-reusable-field strong {
   overflow: hidden;
   color: var(--text);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1549,7 +1547,7 @@ button.aw-library-stage-open:hover {
 .aw-reusable-field small {
   overflow-wrap: anywhere;
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   line-height: 1.35;
 }
 
@@ -1581,7 +1579,7 @@ button.aw-library-stage-open:hover {
 
 .aw-library-head-toggle > small {
   color: var(--muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 700;
 }
 
@@ -1650,13 +1648,13 @@ details.aw-reusable-fields {
 
 .aw-reusable-fields-summary-copy h3 {
   margin: 1px 0 0;
-  font-size: 13px;
+  font-size: var(--aw-font-functional);
 }
 
 .aw-reusable-fields-summary-copy p {
   margin: 2px 0 0;
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   line-height: 1.35;
 }
 
@@ -1677,14 +1675,14 @@ details.aw-reusable-fields {
   border-radius: 8px;
   background: var(--surface);
   color: var(--text);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   font-weight: 700;
   white-space: nowrap;
 }
 
 .aw-reusable-fields-toggle b {
   color: var(--accent-strong);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   line-height: 1;
   transition: transform .16s ease;
 }
@@ -1738,7 +1736,7 @@ details.aw-reusable-fields {
 
 .aw-reusable-field.action small b {
   color: var(--text);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 750;
 }
 
@@ -1763,7 +1761,7 @@ details.aw-reusable-fields {
   border-radius: 9px;
   background: color-mix(in srgb, var(--accent-soft) 18%, var(--surface));
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
   line-height: 1.45;
 }
 
@@ -1787,12 +1785,12 @@ details.aw-reusable-fields {
   border-radius: 999px;
   background: var(--surface);
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
 }
 
 .aw-bridge-package-summary strong {
   color: var(--text);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 /* Bibliothèque — hiérarchie finale de fiche, pensée aussi pour les fenêtres partielles */
@@ -1841,7 +1839,7 @@ details.aw-reusable-fields {
   padding: 7px 9px;
   cursor: pointer;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
   font-weight: 700;
 }
 
@@ -1885,14 +1883,14 @@ details.aw-reusable-fields {
 
 .aw-library-secondary-panel > summary strong {
   color: var(--text);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
 }
 
 .aw-library-secondary-panel > summary::after {
   content: "⌄";
   flex: 0 0 auto;
   color: var(--accent-strong);
-  font-size: 13px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
   transition: transform 120ms ease;
 }
@@ -1910,7 +1908,7 @@ details.aw-reusable-fields {
   border-radius: 999px;
   background: var(--surface);
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   font-weight: 700;
   white-space: nowrap;
 }

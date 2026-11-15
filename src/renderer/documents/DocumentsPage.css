@@ -86,7 +86,7 @@
 .documents-table td > small {
   margin-top: 2px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
 }
 
 .documents-table-title {
@@ -170,7 +170,7 @@
 .documents-compact-item > small {
   overflow: hidden;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   font-weight: 400;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -299,7 +299,7 @@ body.documents-resizing {
 .documents-meta-grid span,
 .documents-info-sections section > div > span {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   font-weight: 700;
 }
 

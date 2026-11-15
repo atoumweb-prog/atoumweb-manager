@@ -13,7 +13,7 @@
 #client-panel-documents .client-documents-indicators strong{font-size:23px}
 #client-panel-documents .client-documents-indicators span{grid-column:1/-1;font-size:14px;text-align:center}
 #client-panel-documents .client-documents-toolbar{display:grid;grid-template-columns:minmax(200px,1.5fr) minmax(150px,1fr) minmax(180px,1fr) auto;gap:12px;align-items:end}
-#client-panel-documents .client-documents-toolbar label{display:grid;gap:7px;font-size:13px;color:var(--muted);min-width:0}
+#client-panel-documents .client-documents-toolbar label{display:grid;gap:7px;font-size: var(--aw-font-functional);color:var(--muted);min-width:0}
 #client-panel-documents .client-documents-toolbar select,#client-panel-documents .client-documents-toolbar input{min-height:40px;width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:8px;background:var(--surface-soft);color:var(--text);padding:8px 10px;font-size:14px}
 #client-panel-documents .client-documents-search em{position:relative;display:block;font-style:normal}
 #client-panel-documents .client-documents-search svg{position:absolute;left:11px;top:12px;width:17px;height:17px;color:var(--muted);pointer-events:none}
@@ -24,10 +24,10 @@
 #client-panel-documents .client-documents-view-tools label{display:flex;align-items:center;gap:8px;font-size:14px}
 #client-panel-documents .client-documents-view-tools input{accent-color:var(--accent);width:16px;height:16px}
 #client-panel-documents .client-documents-view-tools svg{width:17px;height:17px}
-#client-panel-documents .client-documents-results{margin:0;color:var(--muted);font-size:13px}
+#client-panel-documents .client-documents-results{margin:0;color:var(--muted);font-size: var(--aw-font-functional)}
 #client-panel-documents .client-documents-table-scroll{overflow-x:auto;min-width:0;border:1px solid var(--border);border-radius:10px}
 #client-panel-documents .client-documents-table{width:100%;min-width:880px;table-layout:fixed;border-collapse:collapse;font-size:14px}
-#client-panel-documents .client-documents-table th{padding:12px;text-align:left;background:var(--surface-soft);font-size:13px;font-weight:650}
+#client-panel-documents .client-documents-table th{padding:12px;text-align:left;background:var(--surface-soft);font-size: var(--aw-font-functional);font-weight:650}
 #client-panel-documents .client-documents-table th:nth-child(1){width:25%}
 #client-panel-documents .client-documents-table th:nth-child(2){width:11%}
 #client-panel-documents .client-documents-table th:nth-child(3){width:14%}
@@ -38,16 +38,16 @@
 #client-panel-documents .client-document-identity>svg{color:var(--accent);width:25px;height:30px;flex-shrink:0}
 #client-panel-documents .client-document-identity>div{display:grid;gap:6px;min-width:0}
 #client-panel-documents .client-document-identity strong{font-size:15px;line-height:1.4}
-#client-panel-documents .client-document-identity span{font-size:13px;color:var(--muted);line-height:1.4}
-#client-panel-documents .client-document-category{display:inline-block;border:1px solid var(--border);border-radius:16px;padding:4px 8px;font-size:13px;background:var(--surface-soft)}
+#client-panel-documents .client-document-identity span{font-size: var(--aw-font-functional);color:var(--muted);line-height:1.4}
+#client-panel-documents .client-document-category{display:inline-block;border:1px solid var(--border);border-radius:16px;padding:4px 8px;font-size: var(--aw-font-functional);background:var(--surface-soft)}
 #client-panel-documents .client-documents-table td>span>svg{width:16px;height:16px;margin-right:6px;vertical-align:middle}
-#client-panel-documents .client-documents-table td>small{display:block;color:var(--muted);font-size:13px;margin-top:6px}
+#client-panel-documents .client-documents-table td>small{display:block;color:var(--muted);font-size: var(--aw-font-functional);margin-top:6px}
 #client-panel-documents .client-document-states{display:grid;gap:6px;justify-items:start}
-#client-panel-documents .client-document-state{display:inline-block;padding:4px 8px;border-radius:12px;background:var(--surface-soft);font-size:12px}
-#client-panel-documents .client-document-availability{font-size:13px;color:var(--muted)}
+#client-panel-documents .client-document-state{display:inline-block;padding:4px 8px;border-radius:12px;background:var(--surface-soft);font-size: var(--aw-font-functional)}
+#client-panel-documents .client-document-availability{font-size: var(--aw-font-functional);color:var(--muted)}
 #client-panel-documents .client-document-availability[data-missing=true]{color:#ffb4a9}
 #client-panel-documents .client-document-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-#client-panel-documents .client-document-actions .aw-ui-button{min-height:34px;padding:7px 9px;gap:5px;font-size:13px;white-space:nowrap}
+#client-panel-documents .client-document-actions .aw-ui-button{min-height:34px;padding:7px 9px;gap:5px;font-size: var(--aw-font-functional);white-space:nowrap}
 #client-panel-documents .client-document-actions svg{width:15px;height:15px}
 #client-panel-documents .client-documents-info{display:flex;gap:14px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft);padding:16px;margin-top:12px}
 #client-panel-documents .client-documents-info>svg{width:26px;height:26px;flex-shrink:0;color:var(--accent)}
@@ -57,7 +57,7 @@
 #client-panel-documents .client-documents-empty>svg{width:30px;height:30px;color:var(--accent);margin-bottom:10px}
 #client-panel-documents .client-documents-error{font-size:14px;color:#ffb4a9;line-height:1.5}
 @container client-work (max-width:850px){#client-panel-documents .client-documents-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}#client-panel-documents .client-documents-count{display:none}}
-@container client-work (max-width:500px){#client-panel-documents .client-documents-toolbar{grid-template-columns:minmax(0,1fr)}#client-panel-documents .client-documents-heading h3{font-size:20px}#client-panel-documents .client-documents-indicators>div{padding:10px 5px}#client-panel-documents .client-documents-indicators span{font-size:12px}}
+@container client-work (max-width:500px){#client-panel-documents .client-documents-toolbar{grid-template-columns:minmax(0,1fr)}#client-panel-documents .client-documents-heading h3{font-size:20px}#client-panel-documents .client-documents-indicators>div{padding:10px 5px}#client-panel-documents .client-documents-indicators span{font-size: var(--aw-font-functional)}}
 #client-panel-documents .client-document-editor{display:grid;gap:12px;padding:16px;border:1px solid var(--accent);border-radius:10px;background:var(--surface-soft)}
 #client-panel-documents .client-document-editor h4{font-size:18px;margin:0}
 #client-panel-documents .client-document-editor p{margin:0;font-size:14px;color:var(--muted)}

@@ -7,7 +7,7 @@ body { font-size: 15px; line-height: 1.5; }
 input, select, textarea, button { font: inherit; }
 label, .nav-item, .primary-button, .secondary-button, .danger-button, table th, table td { font-size: 14px; }
 .muted, .page-heading p, .summary-list, .notice { font-size: 14px; }
-.status-pill, .eyebrow, small { font-size: 12px; }
+.status-pill, .eyebrow, small { font-size: var(--aw-font-functional); }
 .panel, .quotes-stack, .catalog-layout, .projects-layout, .operations-layout { min-width: 0; }
 aside.panel { min-height: 0; max-height: calc(100dvh - 180px); overflow-y: auto; overflow-x: hidden; }
 .table-panel, .quote-list-panel, .catalog-table-wrap, .table-wrap { overflow-x: auto; }
@@ -39,7 +39,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .app-shell { grid-template-columns: 135px minmax(0,1fr); }
   .sidebar .brand-block { padding: 12px 8px; }
   .brand-block .brand-mark { display: none; }
-  .nav-item { padding: 8px 4px; font-size: 13px; }
+  .nav-item { padding: 8px 4px; font-size: var(--aw-font-functional); }
   .content-area { padding: 12px; }
   .topbar { padding: 10px; }
   .panel { padding: 14px; }

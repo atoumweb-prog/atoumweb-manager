@@ -518,11 +518,11 @@
 .project-time-tasks small,
 .project-time-history small {
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
 }
 
 .project-time-summary strong {
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
 }
 
 .project-time-start {
@@ -543,7 +543,7 @@
 .project-time-start strong,
 .project-time-tasks > strong,
 .project-time-history > strong {
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .project-time-tasks,
@@ -598,7 +598,7 @@
 
 .project-time-history > div > span {
   flex: 0 0 auto;
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
 }
 

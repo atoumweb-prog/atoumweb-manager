@@ -48,13 +48,13 @@
 .technical-item-list strong {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .technical-item-list small,
 .technical-category {
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
 }
 
 .technical-category {
@@ -96,7 +96,7 @@
 }
 
 .technical-editor > strong {
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .technical-editor-grid {
@@ -109,7 +109,7 @@
   display: grid;
   gap: 4px;
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
 }
 
@@ -128,7 +128,7 @@
 .technical-code-input,
 .technical-code-view {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   line-height: 1.5;
 }
 
@@ -174,12 +174,12 @@
 }
 
 .technical-version-heading strong {
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .technical-version-heading small {
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
 }
 
 .technical-version-badges {
@@ -195,7 +195,7 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
 }
 
@@ -208,7 +208,7 @@
   padding: 2px 3px;
   background: transparent;
   color: var(--accent);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
   cursor: pointer;
 }
@@ -227,7 +227,7 @@
   border-radius: 999px;
   background: var(--surface-soft);
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
 }
 
 .technical-asset-chip {
@@ -237,7 +237,7 @@
 .technical-assets select {
   min-width: 145px;
   flex: 1;
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
 }
 
 .technical-history {
@@ -246,7 +246,7 @@
 }
 
 .technical-history > strong {
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .technical-safety-note {
@@ -255,7 +255,7 @@
   border-left: 3px solid var(--accent);
   background: var(--surface-soft);
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   line-height: 1.45;
 }
 

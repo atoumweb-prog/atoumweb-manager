@@ -26,7 +26,7 @@
   border-radius: 999px; font-weight: 800; font-size: 14px; color: var(--accent-strong); background: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 .quote-send-steps > li > span { font-size: 15px; font-weight: 700; }
-.quote-send-steps code { font-size: 13px; overflow-wrap: anywhere; color: var(--muted); }
+.quote-send-steps code { font-size: var(--aw-font-functional); overflow-wrap: anywhere; color: var(--muted); }
 .quote-send-steps em, .quote-send-steps small { font-size: 14px; color: var(--muted); }
 .quote-send-steps > li > div { display: flex; flex-wrap: wrap; gap: 8px; }
 .quote-send-steps label { display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
@@ -41,7 +41,7 @@
 .quote-abby-block pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 15px; color: var(--text); }
 .quote-abby-table { width: 100%; border-collapse: collapse; font-size: 15px; }
 .quote-abby-table th, .quote-abby-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
-.quote-abby-table th { font-size: 13px; color: var(--muted); font-weight: 700; }
+.quote-abby-table th { font-size: var(--aw-font-functional); color: var(--muted); font-weight: 700; }
 .quote-abby-table td.amount, .quote-abby-table th.amount { text-align: right; white-space: nowrap; }
 
 @media (max-width: 900px) { .quote-quick-row { grid-template-columns: 1fr; } }

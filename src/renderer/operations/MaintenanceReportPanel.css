@@ -28,7 +28,7 @@
 }
 
 .maintenance-report-toggle strong {
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
   overflow-wrap: anywhere;
 }
 
@@ -41,7 +41,7 @@
 .maintenance-report-loading {
   margin: 0;
   padding: 0 10px 10px;
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
 }
 
 .maintenance-report-content {
@@ -66,13 +66,13 @@
 }
 
 .maintenance-report-preview-head strong {
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   overflow-wrap: anywhere;
 }
 
 .maintenance-report-preview-head small {
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   line-height: 1.4;
 }
 
@@ -85,7 +85,7 @@
   display: grid;
   gap: 4px;
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
 }
 
@@ -101,7 +101,7 @@
 }
 
 .maintenance-report-section > strong {
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
 }
 
 .maintenance-report-line {
@@ -114,13 +114,13 @@
 }
 
 .maintenance-report-line span {
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   overflow-wrap: anywhere;
 }
 
 .maintenance-report-line small {
   color: var(--text-muted);
-  font-size: 7px;
+  font-size: var(--aw-font-functional);
   white-space: nowrap;
 }
 
@@ -138,17 +138,17 @@
   border-radius: 8px;
   background: var(--surface-soft);
   color: var(--text-muted);
-  font-size: 7px;
+  font-size: var(--aw-font-functional);
 }
 
 .maintenance-report-stats strong {
   color: var(--text);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .maintenance-report-note {
   align-self: center;
-  font-size: 7px;
+  font-size: var(--aw-font-functional);
   line-height: 1.4;
 }
 

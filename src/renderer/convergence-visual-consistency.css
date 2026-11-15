@@ -23,7 +23,7 @@
 .app-shell .catalog-stack.ot-table-fit .aw-data-table-scroll{flex:none;max-height:none;min-height:0;overflow:auto}
 .app-shell .catalog-stack.ot-table-fit .ot-pagination{background:var(--ot-panel)}
 .ot-historical-version-note{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 16px;margin:12px 0;border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;background:var(--surface-soft)}
-.ot-historical-version-note p{margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+.ot-historical-version-note p{margin:4px 0 0;color:var(--muted);font-size: var(--aw-font-functional);line-height:1.5}
 .ot-historical-version-note button{flex-shrink:0}
 @media(max-width:800px){.ot-historical-version-note{align-items:flex-start;flex-direction:column}}
 

@@ -5,7 +5,7 @@
 .prospect-detail-v2 input[type=checkbox],.contact-methods-panel input[type=checkbox],.prospect-modal input[type=checkbox] {appearance:auto!important;width:18px!important;height:18px!important;min-width:18px!important;min-height:18px!important;max-width:18px!important;padding:0!important;vertical-align:middle;flex:0 0 18px;accent-color:#ffda29;}
 .prospect-detail-v2 input[type=checkbox]+span {font-weight:400;}
 
-.identity-summary-grid>div>span,.reference-summary-grid>div>span,.research-company-strip small{font-size:13px;font-weight:500;color:var(--text-secondary,var(--text-muted,#a9bed1));}
+.identity-summary-grid>div>span,.reference-summary-grid>div>span,.research-company-strip small{font-size: var(--aw-font-functional);font-weight:500;color:var(--text-secondary,var(--text-muted,#a9bed1));}
 .identity-summary-grid strong,.reference-summary-grid strong,.research-company-strip strong {font-size:17px;font-weight:600;color:var(--text-primary,var(--text,#eef4fb));}
 .crm-journey {display:flex;gap:8px;flex-wrap:wrap;grid-column:1/-1;}
 .crm-journey button {padding:8px 12px;border:1px solid var(--border-color,#355269);border-radius:8px;background:transparent;color:inherit;font-size:14px;}
@@ -17,7 +17,7 @@
 .crm-contact-heading,.crm-timeline>header {display:flex;justify-content:space-between;align-items:center;gap:16px;margin:10px 0;}
 .crm-timeline ol {list-style:none;border-left:2px solid var(--border-color,#355269);padding-left:20px;margin-left:8px;}
 .crm-timeline li {display:flex;gap:16px;align-items:baseline;margin:14px 0;}
-.crm-timeline time {font-size:13px;opacity:.8;min-width:44px;}
+.crm-timeline time {font-size: var(--aw-font-functional);opacity:.8;min-width:44px;}
 .crm-timeline details {margin:12px 0 24px 30px;}
 .prospect-create-v2 .form-grid>div[hidden] {display:none!important;}
 .crm-catalog-results {display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;max-height:45vh;overflow:auto;}
@@ -26,14 +26,14 @@
 @media(max-width:950px){}
 
 .prospect-workspace [hidden],.prospect-modal [hidden]{display:none!important;}
-.app-shell .prospects-v2 .prospect-workspace .identity-summary-grid>div>span,.app-shell .prospects-v2 .reference-summary-grid>div>span,.app-shell .prospects-v2 .research-company-strip small{font-size:13px!important;font-weight:500!important;color:var(--muted)!important;}
+.app-shell .prospects-v2 .prospect-workspace .identity-summary-grid>div>span,.app-shell .prospects-v2 .reference-summary-grid>div>span,.app-shell .prospects-v2 .research-company-strip small{font-size: var(--aw-font-functional)!important;font-weight:500!important;color:var(--muted)!important;}
 .app-shell .prospects-v2 .prospect-workspace .identity-summary-grid>div>strong,.app-shell .prospects-v2 .reference-summary-grid>div>strong,.app-shell .prospects-v2 .research-company-strip strong{font-size:17px!important;font-weight:600!important;color:var(--text)!important;}
 .app-shell .prospects-v2 input:not([type=checkbox]),.app-shell .prospects-v2 select,.app-shell .prospects-v2 textarea,.prospect-modal input:not([type=checkbox]),.prospect-modal select,.prospect-modal textarea{font-size:16px!important;font-weight:400!important;color:var(--text)!important;}
 .app-shell .prospects-v2 label,.prospect-modal label{font-size:14px!important;font-weight:500!important;color:var(--muted)!important;}
 
 .crm-form .primary-button,.prospect-detail-v2 .primary-button,.prospect-modal .primary-button{background:#ffda29!important;color:#14212a!important;}
 
-.research-reading dt{font-size:13px!important;font-weight:500!important;color:var(--muted)!important;}
+.research-reading dt{font-size: var(--aw-font-functional)!important;font-weight:500!important;color:var(--muted)!important;}
 .research-reading dd{font-size:17px!important;font-weight:500!important;color:var(--text)!important;}
 
 .prospect-research-panel[data-research-scope=preparation] .research-save-bar>label,.prospect-research-panel[data-research-scope=preparation] .research-reading-source{display:none;}
@@ -90,7 +90,7 @@
 .crm-field-warning{padding:12px;border-left:4px solid #bf7c1d;background:var(--accent-soft);}
 .prospect-quote-workspace{display:grid;grid-template-columns:minmax(260px,.75fr) minmax(0,2fr);gap:18px;align-items:start;}
 .quote-dossier-context{padding:14px;border:1px solid var(--border);border-radius:10px;position:sticky;top:0;max-height:65vh;overflow:auto;}
-.quote-dossier-context dt{font-size:13px;color:var(--muted);margin-top:12px;}
+.quote-dossier-context dt{font-size: var(--aw-font-functional);color:var(--muted);margin-top:12px;}
 .quote-dossier-context dd{margin:4px 0;font-size:16px;white-space:pre-wrap;}
 .quote-dossier-context h3{margin-top:0;}
 .prospect-quote-editor{min-width:0;}

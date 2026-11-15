@@ -1,5 +1,14 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/11/2026 : passe de finitions, lot P5c Fiches et reste exécuté (recette de Carlos, commit local)
+
+- [x] Plan : `docs/refonte/plans/2026-11-15-p5c-fiches-zero.md`. **Décision de Carlos** (outil de question) : l'aperçu du devis « côté client » reste fidèle au PDF (les 12 déclarations `.quote-document-*` de `quote-client-preview.css` gardent les tailles du document ; le PDF réel, `buildQuoteHtml`, n'est pas touché).
+- [x] **Corrections, test d'abord** (`ui/p5cWiring.test.ts`) : 459 règles de 45 fichiers relevées au jeton `var(--aw-font-functional)` (`css-raise-all.cjs`) et 2 règles de la barre de l'aperçu ; seules des lignes de taille, de capitales et d'espacement changent ; unité « min » du temps estimé d'une étape (`projects.css`) qui se coupait à 14 px corrigée.
+- **Preuves** : 0 texte d'interface visible sous 14 px sur 37 vues (Accueil, fiche projet et ses six onglets, fiche client, fiche prospect et ses onglets, Parcours commercial, Interventions, Demandes, Maintenance, Packs, Bibliothèque, devis et aperçu, Documents, Dépenses, Facturation, Sauvegardes, Réglages) aux deux tailles ; débordements identiques avant et après (antérieurs : F69, F72, F73) ; budget **473 à 12** (exception) ; `npm run typecheck` propre ; `node scripts/run-tests.cjs` : **316 fichiers passés, 1 ignoré, 2 577 tests** ; natifs 72, 18/18, 25, 857 ; `lot10` 59 ; `03e-directory` 206 ; `check-offres-tarifs-lot1` 32 ; `home-shell-lot1` 96 ; `!important` 86 ; empreinte de la préproduction identique. Captures `C:\DEV\Livrables\Cadrage-parcours\captures-p5c\`.
+- **Visible partout** : les titres de groupe du rail ne sont plus en petites capitales (F74, signalé à Carlos).
+- **Non vu** : deux fiches que l'outil n'a pas ouvertes ; le détail d'une souscription de maintenance ; fenêtres de dialogue ; autres thèmes et densités (typographie native verte). **Revue finale : autocontrôle de l'auteur, pas un relecteur indépendant.**
+- Prochaine action : **P5d** (F27 chiffres clés, fiche courte à valider). Fichier de reprise : `docs/refonte/PASSATION-2026-11-15-apres-P5c.md`.
+
 ## 15/11/2026 : passe de finitions, lot P5b Listes et en-tête exécuté (recette de Carlos, commit local)
 
 - [x] Plan : `docs/refonte/plans/2026-11-15-p5b-listes-entete.md` (exécuté sans résumé préalable, à la demande de Carlos).
