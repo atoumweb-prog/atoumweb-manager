@@ -48,7 +48,8 @@
 .app-shell .prospects-v2 .prospect-workspace :is(.research-tabs,.prospect-desk-tabs) button.active{color:var(--accent)!important;border-bottom-color:var(--accent)!important;box-shadow:inset 0 -2px var(--accent);}
 
 /* Recipe corrections: same reference palette and form contrast in both windows. */
-:root[data-theme=noir] .prospect-reference-pilot{--canvas:#031321;--surface:#071b2d;--surface-soft:#10283d;--muted:#a9c2df;--border:#25445d;--accent:#ffd326;--accent-strong:#ffda39;--text:#f0f5fc;background:var(--canvas)!important;color:var(--text)!important;}
+:root[data-theme] .prospect-reference-pilot{background:var(--canvas)!important;color:var(--text)!important}
+:root[data-theme=noir] .prospect-reference-pilot{--canvas:#031321;--surface:#071b2d;--surface-soft:#10283d;--muted:#a9c2df;--border:#25445d;--accent:#ffd326;--accent-strong:#ffda39;--text:#f0f5fc}
 .prospect-reference-pilot{height:100dvh;min-height:0;overflow:auto;align-content:start;}
 .prospect-reference-pilot .reference-window-header{background:var(--surface-soft)!important;color:var(--text)!important;padding:14px;border:1px solid var(--border);border-radius:10px;}
 .prospect-reference-pilot .reference-window-header h1{font-size:24px;margin:0;}
@@ -107,12 +108,12 @@
 .prospect-history-event p{margin:0 0 6px;}
 @media(max-width:1100px){.prospect-history-layout.has-selection{grid-template-columns:minmax(0,1fr);overflow:auto;}.prospect-history-detail{max-height:50dvh;height:auto;}.prospect-history-detail-body{max-height:40dvh;}.app-shell .prospects-v2 .prospect-workspace .action-work-item{grid-template-columns:minmax(0,1fr) auto!important;}.app-shell .prospects-v2 .prospect-workspace .action-work-item>.secondary-button{grid-column:2;grid-row:2;}.app-shell .prospects-v2 .prospect-workspace .action-work-item>.work-item-main{grid-row:1/3;}}
 
-:root[data-theme=noir] .reference-window-shell.prospect-reference-pilot.prospect-detail-v2{background:var(--canvas)!important;color:var(--text)!important;}
+:root[data-theme] .reference-window-shell.prospect-reference-pilot.prospect-detail-v2{background:var(--canvas)!important;color:var(--text)!important}
 .prospect-reference-pilot .reference-window-identity>summary{cursor:pointer;padding:12px;border:1px solid var(--border);border-radius:8px;}
 
-:root[data-theme=noir] .prospect-reference-pilot .prospect-research-panel{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important;padding:14px;border-radius:10px;}
-:root[data-theme=noir] .prospect-reference-pilot :is(h3,legend,strong,.research-tabs button.active){color:var(--text)!important;}
-:root[data-theme=noir] .prospect-reference-pilot .research-tabs button.active{color:var(--accent)!important;border-color:var(--accent)!important;}
+:root[data-theme] .prospect-reference-pilot .prospect-research-panel{background:var(--surface)!important;color:var(--text)!important;border-color:var(--border)!important;padding:14px;border-radius:10px}
+:root[data-theme] .prospect-reference-pilot :is(h3,legend,strong,.research-tabs button.active){color:var(--text)!important}
+:root[data-theme] .prospect-reference-pilot .research-tabs button.active{color:var(--accent)!important;border-color:var(--accent)!important}
 
 /* The pipeline owns the width; opening work never compresses the six stages. */
 .app-shell .prospects-v2>.pipeline-layout{display:flex;flex-direction:column;overflow:hidden;}

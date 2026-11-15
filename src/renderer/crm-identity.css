@@ -197,10 +197,7 @@
   align-items: center;
 }
 
-:root[data-theme='noir'] .crm-identity-avatar,
-:root[data-theme='noir'] .crm-identity-asset-preview {
-  border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
-}
+:root[data-theme] .crm-identity-avatar,:root[data-theme] .crm-identity-asset-preview{border-color: color-mix(in srgb, var(--accent) 32%, var(--border))}
 
 @media (max-width: 720px) {
   .crm-identity-assets-compact {

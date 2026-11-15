@@ -97,22 +97,22 @@
 .sites-v2 .atelier-focus .project-component-settings-preview iframe {height:380px;}
 /* Focus mode gives the workshop the complete content height, without a modal
    or unmounting the Page. Returning restores the same project context. */
-:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.atelier-focus)>:is(.project-production-header,.project-production-header-compact,.project-production-nav) {display:none;}
+:root[data-theme][data-density] .project-production-page:has(.atelier-focus)>:is(.project-production-header,.project-production-header-compact,.project-production-nav){display:none}
 .sites-v2:has(.atelier-focus)>.project-sites-intro {display:none;}
 .sites-v2:has(.atelier-focus) {gap:0;}
 .sites-v2 .project-sites-inspector-shell {padding:0;}
 .sites-v2 .atelier-focus .project-sites-inspector-host {grid-column:1;grid-row:2;}
 /* Compact only the containing Project header while this tab is mounted. */
-:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) {gap:10px;}
-:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-header {padding:10px 16px;gap:12px;grid-template-columns:minmax(0,1fr) auto;border-color:var(--border);background:var(--surface);}
-:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-title {min-width:0;flex:1 1 400px;}
-:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-title>div {min-width:0;}
-:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-title h2 {font-size:20px;margin:2px 0;overflow-wrap:anywhere;}
-:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-title p {font-size: var(--aw-font-functional);margin:2px 0;color:var(--muted);}
-:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-actions {flex:0 1 auto;min-width:0;flex-wrap:wrap;gap:8px;}
-:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-status {grid-template-columns:minmax(140px,1fr) 70px;gap:8px;}
-:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-collapse-top {width:auto;min-width:90px;white-space:normal;}
-:root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-nav {gap:6px;}
+:root[data-theme][data-density] .project-production-page:has(.sites-v2){gap:10px}
+:root[data-theme][data-density] .project-production-page:has(.sites-v2) .project-production-header{padding:10px 16px;gap:12px;grid-template-columns:minmax(0,1fr) auto;border-color:var(--border);background:var(--surface)}
+:root[data-theme][data-density] .project-production-page:has(.sites-v2) .project-production-title{min-width:0;flex:1 1 400px}
+:root[data-theme][data-density] .project-production-page:has(.sites-v2) .project-production-title>div{min-width:0}
+:root[data-theme][data-density] .project-production-page:has(.sites-v2) .project-production-title h2{font-size:20px;margin:2px 0;overflow-wrap:anywhere}
+:root[data-theme][data-density] .project-production-page:has(.sites-v2) .project-production-title p{font-size: var(--aw-font-functional);margin:2px 0;color:var(--muted)}
+:root[data-theme][data-density] .project-production-page:has(.sites-v2) .project-production-actions{flex:0 1 auto;min-width:0;flex-wrap:wrap;gap:8px}
+:root[data-theme][data-density] .project-production-page:has(.sites-v2) .project-production-status{grid-template-columns:minmax(140px,1fr) 70px;gap:8px}
+:root[data-theme][data-density] .project-production-page:has(.sites-v2) .project-production-collapse-top{width:auto;min-width:90px;white-space:normal}
+:root[data-theme][data-density] .project-production-page:has(.sites-v2) .project-production-nav{gap:6px}
 @container sites (max-width:1400px) {
  .sites-v2 .project-sites-intro p {display:none;}
  .sites-v2 .project-sites-intro {padding:10px 14px;}
@@ -126,8 +126,8 @@
  .sites-v2 .atelier-focus .project-component-settings-preview {position:static;}
 }
 @media(max-width:900px) {
- :root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-header {grid-template-columns:minmax(0,1fr);}
- :root[data-theme='noir'][data-density='comfort'] .project-production-page:has(.sites-v2) .project-production-actions {justify-content:flex-start;}
+ :root[data-theme][data-density] .project-production-page:has(.sites-v2) .project-production-header{grid-template-columns:minmax(0,1fr)}
+ :root[data-theme][data-density] .project-production-page:has(.sites-v2) .project-production-actions{justify-content:flex-start}
 }
 /* P3b (F18) : un projet sans Site ni Page dit quoi faire au lieu d’afficher deux volets vides. Jetons uniquement. */
 .project-sites-empty-state {

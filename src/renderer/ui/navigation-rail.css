@@ -42,11 +42,11 @@
 /* Reuse the existing Home vector; neither the master pixels nor paths are redrawn. */
 .aw-manager-shell .aw-rail-brand .aw-brand-home-symbol{width:44px;max-width:44px;flex:none;}
 .aw-brand-home-symbol>svg{height:44px;}
-:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell .aw-rail-group-heading{font-size:14px;letter-spacing:.08em;min-height:36px;}
-:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell .aw-rail-destination{font-size:var(--ui-font-primary);min-height:var(--ui-control-height);}
-:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell .aw-rail-group-heading[data-group-active=true][aria-expanded=false]{color:var(--accent);box-shadow:inset 3px 0 var(--accent);}
+:root[data-theme][data-density] .aw-manager-shell .aw-rail-group-heading{font-size:14px;letter-spacing:.08em;min-height:36px}
+:root[data-theme][data-density] .aw-manager-shell .aw-rail-destination{font-size:var(--ui-font-primary);min-height:var(--ui-control-height)}
+:root[data-theme][data-density] .aw-manager-shell .aw-rail-group-heading[data-group-active=true][aria-expanded=false]{color:var(--accent);box-shadow:inset 3px 0 var(--accent)}
 
 /* Other themes retain their existing reduced master until their separate visual pass. */
 .aw-rail-home-mark .aw-brand-home-symbol{display:none;}
-:root[data-theme='noir'][data-density='comfort'] .aw-rail-home-mark>.aw-brand-symbol{display:none;}
-:root[data-theme='noir'][data-density='comfort'] .aw-rail-home-mark .aw-brand-home-symbol{display:block;}
+:root[data-theme][data-density] .aw-rail-home-mark>.aw-brand-symbol{display:none}
+:root[data-theme][data-density] .aw-rail-home-mark .aw-brand-home-symbol{display:block}

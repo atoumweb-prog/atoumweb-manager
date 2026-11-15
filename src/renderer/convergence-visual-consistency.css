@@ -3,14 +3,11 @@
  --canvas:#031321;--surface:#071b2d;--surface-soft:#10283d;--sidebar:#041321;--sidebar-text:#e9f2ff;
  --muted:#a9c2df;--border:#25445d;--accent:#ffda00;--accent-strong:#ffda00;--text:#f0f5fc;
 }
-:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell .catalog-stack{
- --ot-panel:var(--surface);--ot-card:var(--surface-soft);--ot-edge:var(--border);
-}
+:root[data-theme][data-density] .aw-manager-shell .catalog-stack{--ot-panel:var(--surface);--ot-card:var(--surface-soft);--ot-edge:var(--border)}
 .aw-rail-route-brand{display:contents}.aw-rail-consistent-brand{display:none}
-:root[data-theme='noir'][data-density='comfort'] .aw-rail-route-brand{display:none}
-:root[data-theme='noir'][data-density='comfort'] .aw-rail-consistent-brand{display:block;width:100%}
-:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell .content-area>.page-heading h1,
-:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell .ot-title h1{font-size:30px;line-height:1.25}
+:root[data-theme][data-density] .aw-rail-route-brand{display:none}
+:root[data-theme][data-density] .aw-rail-consistent-brand{display:block;width:100%}
+:root[data-theme][data-density] .aw-manager-shell .content-area>.page-heading h1,:root[data-theme][data-density] .aw-manager-shell .ot-title h1{font-size:30px;line-height:1.25}
 
 /* Les en-têtes entiers sont désormais assurés pour tous les tableaux par ui/table-layout.css (R2). */
 .app-shell .catalog-stack .aw-data-table th{height:auto;vertical-align:middle;line-height:1.4}
@@ -36,6 +33,6 @@
 /* With horizontal overflow, keep headers and cells in the same natural column track. */
 .app-shell .catalog-stack .aw-data-table [data-column-id=open]{position:static;box-shadow:none}
 
-:root[data-theme=noir][data-density=comfort] .aw-manager-shell .content-area h1{font-size:30px;line-height:1.25;letter-spacing:-.4px}
+:root[data-theme][data-density] .aw-manager-shell .content-area h1{font-size:30px;line-height:1.25;letter-spacing:-.4px}
 
 .app-shell .catalog-stack .catalog-table .status-pill{white-space:nowrap;overflow-wrap:normal;word-break:normal}

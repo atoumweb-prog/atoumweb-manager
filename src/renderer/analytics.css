@@ -334,7 +334,7 @@
 .phase7-statistics-metric-card.tone-violet { --metric-tone: #80699e; --metric-soft: #f1edf6; }
 .phase7-statistics-metric-card.tone-orange { --metric-tone: #b37c4d; --metric-soft: #f7efe7; }
 .phase7-statistics-metric-card.tone-rose { --metric-tone: #a86972; --metric-soft: #f7edef; }
-:root[data-theme='noir'] .phase7-statistics-metric-card { --metric-soft: color-mix(in srgb, var(--metric-tone) 13%, var(--surface)); }
+:root[data-theme] .phase7-statistics-metric-card{--metric-soft: color-mix(in srgb, var(--metric-tone) 13%, var(--surface))}
 .phase7-statistics-metric-top {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr) 32px;

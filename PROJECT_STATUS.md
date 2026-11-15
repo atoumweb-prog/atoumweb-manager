@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/11/2026 : fin de refonte, lot F2 (règles réservées au Noir hors Clients) exécuté (commit local)
+
+- [x] **Test d'abord** (`ui/finF2Wiring.test.ts`, 16 tests) : dans `ui-consistency-v2.css`, `home/HomeDashboardV2.css`, `projects/sites-pages-v2.css`, `ui/workspace-header.css`, `time.css`, `projects.css`, `commercial/catalog-workspace-v2.css`, `convergence-visual-consistency.css`, `ui/navigation-rail.css`, `crm/prospect-workspace-pilot.css`, `crm-identity.css`, `ui/shared-controls.css`, `directory/DirectoryPage.css`, `crm/prospection-directory-pilot.css`, `crm/prospect-workspace-tabs.css`, `analytics.css` : 92 règles communes et 13 partagées ; couleurs en dur et propriétés de thème (`color-scheme`, `filter`, `backdrop-filter`, `mix-blend-mode`) gardées en Noir. **Défaut de l'outil trouvé et corrigé avant commit** : un premier passage rendait commun `color-scheme: dark` (commandes natives sombres en Blanc) ; fichiers remis à l'état du commit et outil repassé. Test R2 du bouton principal adapté (règle commune, jeton `--aw-accent-on-solid` par thème : en AtoumWeb le texte des boutons principaux passe en foncé sur l'or).
+- **Preuves** : Noir / Confort comparé au pixel sur les 17 pages : identique sauf l'heure affichée (Gestion des temps), un survol de ligne (Prospection, absent d'une autre prise) et un lissage de texte sur l'en-tête collant de Projets (styles calculés identiques au dernier commit, sonde) ; `npm run typecheck` propre ; suite **320 fichiers, 2 618 tests** ; natifs 72, 18/18, 25, 857 ; `lot10` 59 ; `03e` 206 ; Accueil 96, `02d` 56, `shell-home` 836 ; Offres 32 ; budget 12 ; `!important` 86 ; empreinte identique.
+- **Non vu** : couleurs propres en Blanc et AtoumWeb (F3), densités (F4). **Autocontrôle de l'auteur.**
+- Prochaine action : **F3** (logo lisible en Blanc, contrastes mesurés en Blanc et AtoumWeb, Noir par défaut au premier lancement).
+
 ## 15/11/2026 : fin de refonte, lot F1 Clients (thèmes et densités) exécuté (commit local)
 
 - [x] Fiche : `docs/refonte/plans/2026-11-15-fin-refonte-themes-densites-design.md` (décisions de Carlos : règles communes en quatre lots F1 à F4 ; **Noir au premier lancement**). Carlos ne demande plus de recette sur captures (« fait le job je te fais confiance ») : mesures et preuves internes, point court par lot.

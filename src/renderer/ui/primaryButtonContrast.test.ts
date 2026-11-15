@@ -12,7 +12,8 @@ const contrast = (a: string, b: string) => (Math.max(luminance(a), luminance(b))
 describe('R2 : bouton principal lisible en Noir (mesuré à 1,37 pour 1 : blanc sur jaune, 14 écrans)', () => {
   it('shared-controls.css impose le texte sombre du jeton d’accent à tout bouton principal en Noir, sans !important', () => {
     const rules = [...read('shared-controls.css').matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({ selector: m[1].trim(), body: m[2].replace(/\s+/g, '') }));
-    const rule = rules.find((r) => r.selector === ":root[data-theme='noir'] :is(.primary-button,.primary-button:disabled)");
+    // Fin de refonte (F2) : la règle vaut pour tous les thèmes ; le jeton --aw-accent-on-solid a sa valeur par thème.
+    const rule = rules.find((r) => r.selector === ':root[data-theme] :is(.primary-button,.primary-button:disabled)');
     expect(rule).toBeDefined();
     expect(rule!.body).toContain('color:var(--aw-accent-on-solid)');
     expect(rule!.body).toContain('-webkit-text-fill-color:currentColor');
