@@ -46,10 +46,11 @@ export function DataTable<T>({ rows, columns, selectedId, getId, sort, onSort, c
   const adaptive=fitAvailable?adaptiveTableWidths(columns.map(c=>c.id),Math.max(0,available-4),widths,headerMinimums):widths;
   const [preview, setPreview] = useState<{ id: string; width: number } | null>(null);
   useEffect(() => setPreview(null), [preferenceScope]);
-  const widthOf = (id: string) => {
+  // La poignée reçoit la largeur SANS l'aperçu (withPreview = false) : son effet [id, width] annulerait le geste dès le premier mouvement (F50, F51).
+  const widthOf = (id: string, withPreview = true) => {
     const column = columns.find(candidate => candidate.id === id);
     if (column?.fixedWidth !== undefined) return column.fixedWidth;
-    const wanted = preview?.id === id ? preview.width : adaptive[id] ?? columnWidth(id, id === 'identity' ? 260 : 180);
+    const wanted = withPreview && preview?.id === id ? preview.width : adaptive[id] ?? columnWidth(id, id === 'identity' ? 260 : 180);
     return Math.max(column ? headerMinWidth(column.label) : 0, wanted);
   };
   const empty = tableEmptyMessage({ filtersActive });
@@ -57,7 +58,7 @@ export function DataTable<T>({ rows, columns, selectedId, getId, sort, onSort, c
     <table className={`aw-data-table ${className}`} style={onWidth ? { tableLayout: 'fixed', width: columns.reduce((total, column) => total + widthOf(column.id), 0) } : undefined}><caption>{caption}</caption>{onWidth && <colgroup>{columns.map(column => <col key={column.id} style={{ width: widthOf(column.id) }}/>)}</colgroup>}<thead><tr>{columns.map(column => <th key={column.id} scope="col" data-column-id={column.id}
       aria-sort={column.sortValue ? sort?.columnId === column.id ? sort.direction === 'asc' ? 'ascending' : 'descending' : 'none' : undefined}>
       {column.sortValue ? <AppButton variant="quiet" aria-label={`Trier par ${column.label}`} onAction={() => onSort(column.id)}>{column.label}{sort?.columnId === column.id ? sort.direction === 'asc' ? ' ↑' : ' ↓' : ''}</AppButton> : column.label}
-      {onWidth && !column.fixedWidth && <ColumnSizer key={`${preferenceScope}:${column.id}`} id={column.id} width={widthOf(column.id)} onPreview={width => setPreview(width === null ? null : { id: column.id, width })} onCommit={width => onWidth(column.id, width)}/>}
+      {onWidth && !column.fixedWidth && <ColumnSizer key={`${preferenceScope}:${column.id}`} id={column.id} width={widthOf(column.id, false)} onPreview={width => setPreview(width === null ? null : { id: column.id, width })} onCommit={width => onWidth(column.id, width)}/>}
     </th>)}</tr></thead><tbody>{rows.map(row => {const attributes=rowAttributes?.(row);return <tr key={getId(row)} {...attributes} className={[attributes?.className,selectedId===getId(row)?'selected-row':''].filter(Boolean).join(' ')} data-record-id={getId(row)} data-selected={selectedId === getId(row)} tabIndex={onRowActivate?0:undefined} onClick={onRowActivate?()=>onRowActivate(row):undefined} onKeyDown={onRowActivate?event=>{if(event.target===event.currentTarget&&['Enter',' '].includes(event.key)){event.preventDefault();onRowActivate(row);}}:undefined}>{columns.map(column => <td key={column.id} data-column-id={column.id}>{column.render(row)}</td>)}</tr>;})}</tbody></table>
     {!rows.length && !loading && !unavailable && <div className="aw-table-empty" role="status"><p>{filtersActive ? emptyFilteredText ?? empty.text : emptyText ?? empty.text}</p>{filtersActive && onClearFilters && empty.clearLabel && <AppButton onAction={onClearFilters}>{empty.clearLabel}</AppButton>}</div>}
   </div>;

@@ -244,6 +244,8 @@ if(!process.versions.electron){
       }await wait('!!document.querySelector(".contract-reading-scroll")');await wait('document.querySelector(".contract-reading-scroll")?.textContent.includes("Paramètres contractuels du devis")');
       const presentation=database.contractTerms.presentation(q.id);for(const label of ['Copier pour Abby','Copier le contrat','Copier tout']){await click(label);await wait(`document.querySelector('.contract-read-panel')?.textContent.includes(${JSON.stringify(label==='Copier pour Abby'?'Contenu pour Abby copié.':label==='Copier le contrat'?'Contrat copié.':'Bloc commercial et contrat copié.')})`);const text=await clipboard.readText();fs.writeFileSync(path.join(output,'expected-copy.txt'),presentation.text);fs.writeFileSync(path.join(output,'actual-copy.txt'),text);check(theme+' '+label,label==='Copier tout'?text.endsWith(presentation.text)&&text.includes('Total devis :'):text===presentation.text);check(theme+' copy has no presentation HTML '+label,!text.includes('<section class='));}
       await click('Copier cette section');await wait(`document.querySelector('.contract-read-panel')?.textContent.includes('Section copié.')`);check(theme+' section copy exact',await clipboard.readText()===presentation.sections[0].title+'\n\n'+presentation.sections[0].text);
+      /* P6a (F48) : la zone de lecture est dans le panneau d'onglet du parcours de devis, masque (hidden) tant que son onglet n'est pas actif : on active cet onglet. */
+      await js('(()=>{const e=document.querySelector(".contract-reading-scroll");const pane=e&&e.closest("[role=tabpanel]");if(pane&&pane.hidden){const tab=document.getElementById(pane.getAttribute("aria-labelledby"));if(tab)tab.click()}return true})()');await sleep(300);
       await js('void (window.__crs=()=>[...document.querySelectorAll(".contract-reading-scroll")].find(e=>e.getClientRects().length)||document.querySelector(".contract-reading-scroll"))');/* plusieurs zones de lecture peuvent exister : on mesure la visible */
       const crsVisible=await js('(()=>{const e=window.__crs();for(let d=e.closest("details");d;d=d.parentElement&&d.parentElement.closest("details"))d.open=true;return !!e.getClientRects().length})()');await sleep(250);
       if(crsVisible){
@@ -251,11 +253,13 @@ if(!process.versions.electron){
         await js('(()=>{const e=window.__crs();if(e.scrollHeight<=e.clientHeight+50)e.style.maxHeight=Math.max(120,Math.floor(e.scrollHeight/2))+"px"})()');
         check(theme+' actual scroll overflows',await js('(()=>{const e=window.__crs();return e.scrollHeight>e.clientHeight})()'));
         await js('window.__crs().scrollTop=400');check(theme+' scroll works',await js('window.__crs().scrollTop>0'));
-      }else console.log('[contract] zone de lecture masquée à cet instant (élément hidden dans l’écran actuel) : défilement non vérifié, à réparer');
+      }else check(theme+' reading zone reachable after opening its tab and sections',false);
       await js('document.querySelector(".contract-read-panel").scrollIntoView({block:"start"})');await shot('contrat-'+theme);
-      await click('Prévisualiser côté client');await wait('!!document.querySelector(".quote-client-preview")');{/* l'aperçu client est désormais paginé et ne montre le texte qu'à la génération du PDF : le contrôle du texte ne s'applique que si la zone de lecture est présente */
-      const clientReading=await js('!!document.querySelector(".quote-client-preview .contract-reading-scroll")');
-      if(clientReading)check(theme+' same client contract sections',await js('document.querySelector(".quote-client-preview .contract-reading-scroll").textContent.includes("Texte adapté '+theme+'")'));else console.log('[contract] aperçu client paginé : texte du contrat non vérifié dans l’aperçu, à réparer');}await shot('client-'+theme);await click('Fermer');
+      await click('Prévisualiser côté client');await wait('!!document.querySelector(".quote-client-preview")');{
+      /* P6a (F48) : l'aperçu client est un iframe dont le document est lisible (sandbox allow-same-origin) : on y vérifie le texte du contrat. */
+await wait('(()=>{const f=document.querySelector(".quote-client-preview iframe.quote-document-frame");const d=f&&f.contentDocument;return !!(d&&d.body&&d.body.textContent.length>200)})()');
+const clientDocument=await js('(()=>{const f=document.querySelector(".quote-client-preview iframe.quote-document-frame");return f.contentDocument.body.textContent})()');
+check(theme+' same client contract sections',clientDocument.includes('Texte adapté '+theme));}await shot('client-'+theme);await click('Fermer');
       S.finalizeForTest(db,database.quotes,q.id);const frozen=S.sendForTest(database.quotes,q.id),frozenBefore=frozen.contractSnapshotJson;S.acceptForTest(db,database.quotes,q.id);
       const newer=database.contractTerms.createVersion(module.id,{body:'NOUVEAU TEXTE APRES ACCEPTATION '+theme});database.contractTerms.publishVersion(newer.id);
       check(theme+' snapshot unchanged',database.quotes.get(q.id).contractSnapshotJson===frozenBefore&&database.contractTerms.presentation(q.id).text.includes('Texte adapté '+theme));
