@@ -1,14 +1,12 @@
 {
   "comment": "Budget des font-size en px inférieurs à 14 (R2). Ne peut que baisser : régénérer seulement à la baisse.",
-  "total": 617,
+  "total": 570,
   "files": {
     "analytics.css": 1,
     "backups/BusinessBackupsPage.css": 7,
     "bridge/BridgeSitesPage.css": 42,
     "client-detail.css": 9,
-    "commercial.css": 32,
-    "commercial/catalog-editor-v2.css": 12,
-    "commercial/catalog-workspace-v2.css": 17,
+    "commercial.css": 14,
     "commercial/quote-journey.css": 3,
     "commercial/quote-send.css": 2,
     "commercial/quote-wizard.css": 5,

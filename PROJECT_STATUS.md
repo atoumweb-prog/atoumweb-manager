@@ -1,5 +1,14 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/11/2026 : passe de finitions, lot P5a Offres & Tarifs exécuté (recette de Carlos sur captures, commit local)
+
+- [x] Fiche P5 : `docs/refonte/plans/2026-11-15-p5-petits-textes-design.md` (validée le 15/11/2026 : quatre lots par écran P5a, P5b, P5c, P5d ; 14 px partout sauf le logo). Plan : `…-p5a-offres-tarifs.md` (exécuté sans résumé préalable, à la demande de Carlos).
+- [x] **Relevé du rendu réel** (17 pages, premier écran) : Offres & Tarifs 215 textes visibles sous 14 px, puis Annuaire 33, Statistiques 32, Sites 31, Projets 20, Prospection 18, Clients 10, Temps 8, en-tête 3.
+- [x] **Corrections, test d'abord** (`ui/p5aWiring.test.ts`, 4 tests) : 47 règles du catalogue relevées au jeton `var(--aw-font-functional)` (`catalog-workspace-v2.css` 17, `catalog-editor-v2.css` 12, `commercial.css` 18 règles `.catalog-*` et `.offer-*`), capitales de l'en-tête du tableau du catalogue retirées ; fiche d'article en fenêtre étroite (défilement de 5 px, croix à +17 px, antérieur au lot) corrigée (`.catalog-detail-heading-actions`).
+- **Preuves** : 0 texte visible sous 14 px sur 19 vues d'Offres & Tarifs (11 en grande fenêtre, 8 en fenêtre étroite), aucun débordement ; budget des petits textes **617 à 570** (uniquement des baisses) ; `npm run typecheck` propre ; `node scripts/run-tests.cjs` : **314 fichiers passés, 1 ignoré, 2 565 tests** ; natifs 72, 18/18, 25, 857 ; `lot10` 59 ; `check-offres-tarifs-lot1` 32 ; recettes du catalogue `guidance-ui`, `recommendations-ui`, `recommendations-native`, `offres-tarifs-lot2-final`, `persistent-drafts` vertes ; `!important` 86 ; empreinte de la préproduction identique. **Rouges antérieures** (identiques sur `71726ffa`) : `check-catalog-identity-ui` (F67), `check-catalog-label-layout` (F68). Captures : `C:\DEV\Livrables\Cadrage-parcours\captures-p5a\` (`avant\`, `apres\`, `large\` et `etroite\`).
+- **Non vu** : fenêtres de dialogue du catalogue (duplication, création guidée), aperçu d'une offre dans le devis, autres thèmes et densités. **Revue finale : autocontrôle de l'auteur, pas un relecteur indépendant.**
+- Prochaine action : **P5b** (Statistiques, Annuaire, Sites, Projets, Prospection, Clients, Temps, en-tête). Fichier de reprise : `docs/refonte/PASSATION-2026-11-15-apres-P5a.md`.
+
 ## 15/11/2026 : passe de finitions, lot P6b États rares exécuté (recette de Carlos sur captures, commit local)
 
 - [x] Plan : `docs/refonte/plans/2026-11-15-p6b-etats-rares.md` (validé par Carlos le 15/11/2026, avec F42 complet). Fiche : `…-p6-etats-rares-design.md` (option A : états rares forcés **dans la copie jetable** de l'outil de capture, rien d'écrit dans la préproduction).

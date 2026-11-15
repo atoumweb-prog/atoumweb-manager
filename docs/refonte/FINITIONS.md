@@ -81,6 +81,8 @@ Règles en attendant :
 | F64 | Après un « Réessayer » réussi, l'avis d'erreur de la page reste affiché jusqu'à sa fermeture | P6b | `App.tsx` (avis global) | à voir (petit, avec D2) |
 | F65 | Liste Devis : la pastille « En négociation » dépasse encore de 3 px de la cellule « Décision » (le bouton est corrigé) | P6b | `commercial.css` (mesure `audit-p6b-apres`) | à voir |
 | F66 | `check-convergence-visual-consistency.cjs` échoue (« Timeout: historical version explanation ») **aussi sur le dernier commit `67101d76`** (vérifié sur copie détachée) ; elle attend une base dans TEMP et un rapport neuf en arguments ; jamais lancée pendant la refonte (F39) | P6b | `scripts/check-convergence-visual-consistency.cjs` | à diagnostiquer (antérieur à P6b) |
+| F67 | `check-catalog-identity-ui.cjs` échoue sur « Vue organisée Catalogue visible par défaut » : elle cherche `.catalog-overview`, composant `CatalogOverview` retiré en P2 (code mort prouvé) ; rouge aussi sur `71726ffa` (vérifié sur copie détachée) | P5a | `scripts/check-catalog-identity-ui.cjs` | à réécrire sur la vue organisée actuelle (`.ot-family-card`) |
+| F68 | `check-catalog-label-layout.cjs` (arguments : base dans TEMP, rapport neuf) échoue sur « 130 imported operational drafts through IPC » : elle attend un jeu de brouillons importés que la base de test n'a pas ; rouge aussi sur `71726ffa` | P5a | `scripts/check-catalog-label-layout.cjs` | à diagnostiquer (antérieur à P5a) |
 
 ## Avancement de la passe de finitions
 
@@ -94,7 +96,8 @@ Règles en attendant :
 | **P4b Ressources et Réglages** | **fait le 15/11/2026** (commit local après recette de Carlos) : F35, F38, F40 traitées, barre de Temps (option C) ; budget des petits textes inchangé à 617 |
 | **P6a Filet de sécurité** | **fait le 15/11/2026** (commit local après recette de Carlos) : F47 à F51 traitées, deux défauts du produit corrigés (redimensionnement de colonne, focus de l’Annuaire) ; F53 ajoutée (recette instable) ; budget des petits textes inchangé à 617 |
 | **P6b États rares** | **fait le 15/11/2026** (commit local après recette de Carlos) : F7, F19, F30, F36, F41 vus ; F42 et F53 traitées ; F54 (corrigé) ; F55 à F66 inscrites ; budget des petits textes inchangé à 617 |
-| P5 Petits textes | à faire |
+| **P5a Offres & Tarifs** | **fait le 15/11/2026** (commit local après recette de Carlos) : 47 règles du catalogue au plancher, budget des petits textes **617 à 570**, 0 texte visible sous 14 px sur 19 vues ; fiche d'article en fenêtre étroite corrigée ; F67 et F68 ajoutées |
+| P5b (listes, en-tête), P5c (fiches, reste jusqu'à zéro), P5d (F27) | à faire, dans cet ordre (fiche `docs/refonte/plans/2026-11-15-p5-petits-textes-design.md`) |
 
 ## Lots qui portent déjà leurs propres points
 
