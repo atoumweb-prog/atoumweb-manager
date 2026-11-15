@@ -172,7 +172,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
   const [projectTopCollapsed, setProjectTopCollapsed] = useState(returnContext?.projectTopCollapsed ?? false);
   const [sitesViewContext, setSitesViewContext] = useState<ProjectSitesViewContext | null>(returnContext?.sitesViewContext ?? null);
   const [productionOverlay, setProductionOverlay] = useState<'resources' | 'technical' | 'time' | 'secrets' | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); const [listError, setListError] = useState<string | null>(null); // P6b (D1)
   const [createMode, setCreateMode] = useState<'quote' | 'internal' | null>(null);
   const [quoteId, setQuoteId] = useState('');
   const [templateVersionId, setTemplateVersionId] = useState('');
@@ -199,7 +199,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
         window.atoumweb.projects.templates.list(),
         window.atoumweb.quotes.list({ status: 'accepted' }),
       ]);
-      setProjects(nextProjects);
+      setProjects(nextProjects); setListError(null);
       setTemplates(nextTemplates);
       const usedQuoteIds = new Set(nextProjects.map((project) => project.sourceQuoteId).filter(Boolean));
       setAcceptedQuotes(nextQuotes.filter((quote) => !usedQuoteIds.has(quote.id)));
@@ -207,7 +207,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
         setDetail(await window.atoumweb.projects.projects.get(selectedId));
       }
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de charger les projets.');
+      { const text = error instanceof Error ? error.message : 'Impossible de charger les projets.'; setListError(text); onMessage(text); }
     } finally {
       setLoading(false);
     }
@@ -890,7 +890,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
   return (
     <div className="projects-stack">
       <div className="module-toolbar projects-toolbar">
-        <div><strong>{filtered.length}</strong><span> projet{filtered.length > 1 ? 's' : ''}</span></div>
+        <div><strong>{listError ? '—' : filtered.length}</strong><span> projet{filtered.length > 1 ? 's' : ''}</span></div>
         <div className="toolbar-controls project-toolbar-controls">
           <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh"/>Actualiser</button>
           <button className="secondary-button" type="button" onClick={() => setView('templates')}>Modèles de projets</button>
@@ -945,7 +945,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
       {loading ? <div className="panel"><p className="muted">Chargement des projets…</p></div> : (
         <div className="projects-layout">
           <section className="panel project-list-panel">
-            <ConfiguredDataTable<(typeof filtered)[number]> defaultVisibleColumnIds={['identity','client','name','status','progress','target','open']} emptyText="Aucun projet pour l’instant. Crée-en un depuis un devis accepté." filtersActive={hasActiveFilters([query,statusFilter,commercialFilter])} onClearFilters={()=>{setQuery('');setStatusFilter('all');setCommercialFilter('all');}} scope="projects-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={project=>project.id} onSelect={project=>void openProject(project.id)} className="project-table" caption="Numéro · Client / prospect · Projet · État commercial · Statut · Progression · Temps estimé · Cible · source complète des résultats filtrés" columns={[
+            <ConfiguredDataTable<(typeof filtered)[number]> error={listError} onRetry={() => void refresh()} defaultVisibleColumnIds={['identity','client','name','status','progress','target','open']} emptyText="Aucun projet pour l’instant. Crée-en un depuis un devis accepté." filtersActive={hasActiveFilters([query,statusFilter,commercialFilter])} onClearFilters={()=>{setQuery('');setStatusFilter('all');setCommercialFilter('all');}} scope="projects-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={project=>project.id} onSelect={project=>void openProject(project.id)} className="project-table" caption="Numéro · Client / prospect · Projet · État commercial · Statut · Progression · Temps estimé · Cible · source complète des résultats filtrés" columns={[
 {id:"identity",label:"Numéro",required:true,sortValue:project=>project.number??null,render:project=><><strong>{project.number}</strong></>},
 {id:"client",label:"Client / prospect",sortValue:project=>project.clientLabel??null,render:project=><>{project.clientLabel}</>},
 {id:"name",label:"Projet",sortValue:project=>project.name??null,render:project=><><strong>{project.name}</strong><small>{projectTypeLabel(project.projectType)}</small></>},

@@ -1,5 +1,5 @@
 import {PageHeader} from './ui/PageHeader';
-import {DISPLAY_NOTICE_MS, noticeTimeout} from './ui/noticeLifetime';
+import {DISPLAY_NOTICE_MS, noticeStaysOnPage, noticeText, noticeTimeout} from './ui/noticeLifetime';
 import {useCallback} from 'react';
 import {SEARCH_DESTINATIONS,searchDestination,readSearchTarget,type SearchNavigationResult} from '../shared/searchNavigation';
 import {useMemo} from 'react';
@@ -222,6 +222,11 @@ function App() {
     setMessageAutoDismiss(options?.autoDismissMs ? { message: nextMessage, ms: options.autoDismissMs } : null);
   }
 
+  // P6b (D2) : la page d'une notice est notée quand le message change (effet déclaré AVANT celui du changement de page, l'ordre compte quand les deux changent ensemble) ; une notice d'une autre page se ferme.
+  const messagePageRef = useRef<string>(activePage);
+  useEffect(() => { messagePageRef.current = activePage; }, [message]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!noticeStaysOnPage(messagePageRef.current, activePage)) closeMessage(); }, [activePage]); // eslint-disable-line react-hooks/exhaustive-deps
+
   function closeMessage(): void {
     setMessage(null);
     setMessageAction(null);
@@ -419,8 +424,8 @@ function App() {
           {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && <PageHeader icon={<OperationIcon name={NAVIGATION_MODULES.find(item=>item.key===activePage)!.icon}/>} title={activePage} help={PAGE_HINTS[activePage]} />}
           {message && <div className={`notice ${messageAction?.message === message ? 'is-actionable' : ''}`} role="status">
             {messageAction?.message === message
-              ? <button className="notice-action" type="button" onClick={messageAction.run}><span>{message}</span><small>Ouvrir dans l’Explorateur</small></button>
-              : <span>{message}</span>}
+              ? <button className="notice-action" type="button" onClick={messageAction.run}><span>{noticeText(message)}</span><small>Ouvrir dans l’Explorateur</small></button>
+              : <span>{noticeText(message)}</span>}
             <button className="notice-close" type="button" aria-label="Fermer la notification" onClick={closeMessage}><OperationIcon name="close"/></button>
           </div>}
 

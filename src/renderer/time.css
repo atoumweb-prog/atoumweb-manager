@@ -89,7 +89,7 @@
   gap: 3px;
 }
 
-.timer-topline {
+.timer-topline { /* P6b (C5) : l'heure passe sous le libellé si la place manque */ flex-wrap: wrap;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -108,7 +108,7 @@
   letter-spacing: .03em;
 }
 
-.timer-label {
+.timer-label { /* P6b (C5) : « Timer · En cours » sur une seule ligne */ white-space: nowrap;
   color: var(--accent);
   font-size: 8px;
   font-weight: 900;

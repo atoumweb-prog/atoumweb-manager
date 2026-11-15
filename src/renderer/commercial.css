@@ -72,6 +72,7 @@
 .quote-step-content { display: grid; gap: 12px; max-width: 850px; }
 .quote-step-content h2, .quote-preview h2 { margin: 0; }
 .quote-step-content label { display: grid; gap: 5px; color: var(--muted); font-size: 9px; font-weight: 700; }
+.quote-step-content input::placeholder, .quote-step-content textarea::placeholder { font-weight: 400; } /* P6b (C7) : le champ hérite du gras du libellé ; l'exemple ne doit pas ressembler à une valeur saisie */
 .quote-step-content input, .quote-step-content select, .quote-step-content textarea, .quote-add-line input, .quote-add-line select { width: 100%; min-width: 0; border: 1px solid var(--border); border-radius: 8px; padding: 8px 9px; background: var(--surface); color: var(--text); outline: none; font: inherit; }
 .quote-step-content textarea { min-height: 88px; resize: vertical; }
 .quote-owner-toggle { display: flex; gap: 8px; }
@@ -110,7 +111,7 @@
 .quote-totals span { color: var(--muted); font-size: 9px; }
 .quote-totals strong { font-size: 10px; }
 .quote-total-main strong { font-size: 14px; color: var(--accent-strong); }
-.quote-decision-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 150px; }
+.quote-decision-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; } /* P6b (C6) : plus de 150 px forcés dans une cellule plus étroite */
 .quote-decision-actions .compact-button { min-height: 30px; padding: 5px 9px; }
 .quote-decision-actions .status-pill { white-space: nowrap; }
 

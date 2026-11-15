@@ -100,7 +100,7 @@ export function DirectoryPage(props:DirectoryPageProps){return <UnsavedGroup nam
 function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequest}:DirectoryPageProps) {
   const [organizations, setOrganizations] = useState<DirectoryOrganization[]>([]);
   const [contacts, setContacts] = useState<DirectoryContact[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); const [listError, setListError] = useState<string | null>(null); // P6b (D1)
   const [view, setView] = useState<DirectoryView>(initialTarget?.entityType === 'contact' ? 'contacts' : 'organizations');
   const [selectedType, setSelectedType] = useState<'organization' | 'contact' | null>(initialTarget?.entityType ?? null);
   const [selectedId, setSelectedId] = useState(initialTarget?.entityId ?? '');
@@ -143,6 +143,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
         window.atoumweb.crm.contacts.list(false),
       ]);
       if(epoch!==refreshEpoch.current)return;
+      setListError(null);
       const preserveDraft=editorGuard.dirty||busyRef.current;
       setOrganizations(previous=>preserveDraft&&selectedType==='organization'&&selectedId&&!nextOrganizations.some(item=>item.id===selectedId)?[...nextOrganizations,...previous.filter(item=>item.id===selectedId)]:nextOrganizations);
       setContacts(previous=>preserveDraft&&selectedType==='contact'&&selectedId&&!nextContacts.some(item=>item.id===selectedId)?[...nextContacts,...previous.filter(item=>item.id===selectedId)]:nextContacts);
@@ -165,7 +166,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
     } catch (error) {
       if(epoch!==refreshEpoch.current)return;
       if(preferred)onEntityReady?.(preferred.entityType,preferred.entityId,error instanceof Error?error.message:'Annuaire indisponible.');
-      onMessage(error instanceof Error ? error.message : 'Impossible de charger l’annuaire.');
+      { const text = error instanceof Error ? error.message : 'Impossible de charger l’annuaire.'; setListError(text); onMessage(text); }
     } finally {
       if(epoch===refreshEpoch.current)setLoading(false);
     }
@@ -325,14 +326,14 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
   }
 
   return <div className="directory-page-stack">{saveError&&<p role="alert" className="form-error">{saveError}</p>}
-    <KeyFigures ariaLabel="Synthèse de l’annuaire" items={[{ key: 'organizations', label: 'Organisations', value: organizations.length, helper: 'Entreprises et structures' }, { key: 'contacts', label: 'Contacts', value: contacts.length, helper: 'Interlocuteurs enregistrés' }, { key: 'clients', label: 'Clients liés', value: activeClients, helper: 'Organisations clientes' }, { key: 'prospects', label: 'Prospects actifs', value: activeProspects, helper: 'Organisations en prospection' }]} />
+    <KeyFigures ariaLabel="Synthèse de l’annuaire" items={[{ key: 'organizations', label: 'Organisations', value: organizations.length, helper: 'Entreprises et structures' }, { key: 'contacts', label: 'Contacts', value: contacts.length, helper: 'Interlocuteurs enregistrés' }, { key: 'clients', label: 'Clients liés', value: activeClients, helper: 'Organisations clientes' }, { key: 'prospects', label: 'Prospects actifs', value: activeProspects, helper: 'Organisations en prospection' }].map(item => listError ? { ...item, value: '—', helper: 'Indisponible : la liste n’a pas pu être chargée' } : item)} />
 
     <ListToolbar
       leading={<div className="directory-view-tabs">
-        <button type="button" className={view === 'organizations' ? 'active' : ''} onClick={() => chooseView('organizations')}><OperationIcon name="folder" size={16} /> Organisations <span>{organizations.length}</span></button>
-        <button type="button" className={view === 'contacts' ? 'active' : ''} onClick={() => chooseView('contacts')}><OperationIcon name="user" size={16} /> Contacts <span>{contacts.length}</span></button>
+        <button type="button" className={view === 'organizations' ? 'active' : ''} onClick={() => chooseView('organizations')}><OperationIcon name="folder" size={16} /> Organisations <span>{listError ? '—' : organizations.length}</span></button>
+        <button type="button" className={view === 'contacts' ? 'active' : ''} onClick={() => chooseView('contacts')}><OperationIcon name="user" size={16} /> Contacts <span>{listError ? '—' : contacts.length}</span></button>
       </div>}
-      countLabel={view === 'organizations' ? plural(organizations.length, 'organisation', 'organisations') : plural(contacts.length, 'contact', 'contacts')}
+      countLabel={listError ? '—' : view === 'organizations' ? plural(organizations.length, 'organisation', 'organisations') : plural(contacts.length, 'contact', 'contacts')}
       onRefresh={() => void refresh()}
       search={{ value: query, onChange: setQuery, placeholder: view === 'organizations' ? 'Entreprise, ville, activité…' : 'Contact, entreprise, fonction…', ariaLabel: 'Rechercher dans l’annuaire' }}
       filters={<>
@@ -366,7 +367,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
             <span className={`directory-relation-pill ${relationClass(item.relation)}`}>{RELATION_LABELS[item.relation]}</span>
           </button>)}
           {((view === 'organizations' && !filteredOrganizations.length) || (view === 'contacts' && !filteredContacts.length)) && <p className="muted directory-empty">{directoryEmptyText({ view, filtersActive: hasActiveFilters([query, relationFilter, secondaryFilter]) })}</p>}
-        </div> : view === 'organizations' ? <ConfiguredDataTable<DirectoryOrganization> filtersActive={hasActiveFilters([query,relationFilter,secondaryFilter])} onClearFilters={()=>{setQuery('');setRelationFilter('all');setSecondaryFilter('all');}} emptyText={directoryEmptyText({ view: 'organizations', filtersActive: false })} emptyFilteredText={directoryEmptyText({ view: 'organizations', filtersActive: true })} scope={DIRECTORY_ORGANIZATIONS_VIEW} store={window.atoumweb.visualPreferences} className="directory-table" rows={filteredOrganizations} selectedId={selectedType==='organization'?selectedId:null} getId={item=>item.id} onSelect={item=>selectOrganization(item.id)} rowAttributes={item=>({'data-directory-id':item.id})} caption="Organisations · source complète des résultats filtrés" columns={[
+        </div> : view === 'organizations' ? <ConfiguredDataTable<DirectoryOrganization> error={listError} onRetry={() => void refresh()} filtersActive={hasActiveFilters([query,relationFilter,secondaryFilter])} onClearFilters={()=>{setQuery('');setRelationFilter('all');setSecondaryFilter('all');}} emptyText={directoryEmptyText({ view: 'organizations', filtersActive: false })} emptyFilteredText={directoryEmptyText({ view: 'organizations', filtersActive: true })} scope={DIRECTORY_ORGANIZATIONS_VIEW} store={window.atoumweb.visualPreferences} className="directory-table" rows={filteredOrganizations} selectedId={selectedType==='organization'?selectedId:null} getId={item=>item.id} onSelect={item=>selectOrganization(item.id)} rowAttributes={item=>({'data-directory-id':item.id})} caption="Organisations · source complète des résultats filtrés" columns={[
           {id:'identity',label:'Organisation',required:true,sortValue:i=>i.name,render:i=><div className="directory-name-cell"><CrmIdentityAvatar organizationId={i.id} name={i.name}/><div><strong title={i.name}>{i.name}</strong>{(i.legalName||i.website)&&<small>{i.legalName||i.website}</small>}</div></div>},
           {id:'industry',label:'Activité',sortValue:i=>i.industry??null,render:i=>i.industry||unset},
           {id:'city',label:'Ville',sortValue:i=>i.city??null,render:i=>i.city||unset},
@@ -374,7 +375,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
           {id:'contacts',label:'Contacts',sortValue:i=>i.contactCount,render:i=>i.contactCount},
           {id:'relation',label:'Relation',sortValue:i=>RELATION_LABELS[i.relation],render:i=><span className={'directory-relation-pill '+relationClass(i.relation)}>{RELATION_LABELS[i.relation]}</span>},
           {id:'open',label:'Ouvrir',required:true,render:i=><button type="button" className="link-button" title={'Ouvrir '+i.name} aria-label={'Ouvrir '+i.name} onClick={e=>{e.stopPropagation();selectOrganization(i.id);}}><OperationIcon name="record-open"/></button>},
-        ]}/> : <ConfiguredDataTable<DirectoryContact> filtersActive={hasActiveFilters([query,relationFilter,secondaryFilter])} onClearFilters={()=>{setQuery('');setRelationFilter('all');setSecondaryFilter('all');}} emptyText={directoryEmptyText({ view: 'contacts', filtersActive: false })} emptyFilteredText={directoryEmptyText({ view: 'contacts', filtersActive: true })} scope={DIRECTORY_CONTACTS_VIEW} store={window.atoumweb.visualPreferences} className="directory-table" rows={filteredContacts} selectedId={selectedType==='contact'?selectedId:null} getId={i=>i.id} onSelect={i=>selectContact(i.id)} rowAttributes={i=>({'data-directory-id':i.id})} caption="Contacts · source complète des résultats filtrés" columns={[
+        ]}/> : <ConfiguredDataTable<DirectoryContact> error={listError} onRetry={() => void refresh()} filtersActive={hasActiveFilters([query,relationFilter,secondaryFilter])} onClearFilters={()=>{setQuery('');setRelationFilter('all');setSecondaryFilter('all');}} emptyText={directoryEmptyText({ view: 'contacts', filtersActive: false })} emptyFilteredText={directoryEmptyText({ view: 'contacts', filtersActive: true })} scope={DIRECTORY_CONTACTS_VIEW} store={window.atoumweb.visualPreferences} className="directory-table" rows={filteredContacts} selectedId={selectedType==='contact'?selectedId:null} getId={i=>i.id} onSelect={i=>selectContact(i.id)} rowAttributes={i=>({'data-directory-id':i.id})} caption="Contacts · source complète des résultats filtrés" columns={[
           {id:'identity',label:'Contact',required:true,sortValue:i=>i.lastName+' '+i.firstName,render:i=><div className="directory-name-cell"><CrmIdentityAvatar organizationId={i.organizationId} contactId={i.id} name={i.firstName+' '+i.lastName}/><div><strong title={i.firstName+' '+i.lastName}>{i.firstName} {i.lastName}</strong>{i.preferredChannel&&<small>{i.preferredChannel}</small>}</div></div>},
           {id:'organization',label:'Entreprise',sortValue:i=>i.organizationName??null,render:i=>i.organizationName||unset},
           {id:'jobTitle',label:'Fonction',sortValue:i=>i.jobTitle??null,render:i=>i.jobTitle||unset},

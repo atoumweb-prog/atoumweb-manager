@@ -71,7 +71,7 @@ export function BillingPage({ onMessage, statisticsDrilldown, onClearStatisticsD
   onClearStatisticsDrilldown?: () => void;
 }) {
   const [items, setItems] = useState<BillingItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); const [listError, setListError] = useState<string | null>(null); // P6b (D1)
   const [selectedId, setSelectedId] = useState('');
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | BillingItemStatus>('all');
@@ -91,13 +91,13 @@ export function BillingPage({ onMessage, statisticsDrilldown, onClearStatisticsD
     setLoading(true);
     try {
       const next = await window.atoumweb.billing.list();
-      setItems(next);
+      setItems(next); setListError(null);
       if (selectedId && !next.some((item) => item.id === selectedId)) {
         setSelectedId('');
         setExpanded(false);
       }
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de charger la facturation.');
+      { const text = error instanceof Error ? error.message : 'Impossible de charger la facturation.'; setListError(text); onMessage(text); }
     } finally {
       setLoading(false);
     }
@@ -262,7 +262,7 @@ export function BillingPage({ onMessage, statisticsDrilldown, onClearStatisticsD
       { key: 'ready', label: 'À facturer', value: readyItems.length, helper: `${money(amountReady)} prêts` },
       { key: 'invoiced', label: 'Facturés avec PDF', value: invoicedItems.length, helper: 'Facture Abby conservée, paiement non déduit' },
       { key: 'offered', label: 'Offerts / annulés', value: offeredOrCancelledItems.length, helper: 'Exclus du montant à facturer' },
-    ]} />
+    ].map(item => listError ? { ...item, value: '—', helper: 'Indisponible : la liste n’a pas pu être chargée' } : item)} />
 
     {drilldown && <section className="panel statistics-route-banner" aria-label="Filtre exact Statistiques">
       <strong>Facturation suivie · {drilldown.periodLabel}</strong>
@@ -271,7 +271,7 @@ export function BillingPage({ onMessage, statisticsDrilldown, onClearStatisticsD
       <button className="secondary-button" type="button" onClick={onClearStatisticsDrilldown}>Quitter ce filtre et voir toute la facturation</button>
     </section>}
     <ListToolbar
-      countLabel={plural(filtered.length, 'élément', 'éléments')}
+      countLabel={listError ? '—' : plural(filtered.length, 'élément', 'éléments')}
       onRefresh={() => invoiceDraft.request(() => { void refresh(); })}
       search={{ value: query, onChange: setQuery, placeholder: drilldown ? 'Filtre exact actif : quitter pour chercher' : 'Rechercher client, projet, facture…', ariaLabel: 'Rechercher un élément de facturation', disabled: !!drilldown }}
       filters={<>
@@ -320,7 +320,7 @@ export function BillingPage({ onMessage, statisticsDrilldown, onClearStatisticsD
             <span className="billing-compact-project">{item.projectLabel || 'Sans projet dédié'}</span>
           </button>)}
           {filtered.length === 0 && <div className="empty-table">{compactListEmptyText(billingEmptyText(), hasActiveFilters([query,statusFilter,sourceFilter,clientFilter,projectFilter,pdfFilter,exactReference,dueBefore,drilldown?'drilldown':'']))}</div>}
-        </div> : <div className="billing-table-wrap"><ConfiguredDataTable<(typeof filtered)[number]> emptyText={billingEmptyText()} filtersActive={hasActiveFilters([query,statusFilter,sourceFilter,clientFilter,projectFilter,pdfFilter,exactReference,dueBefore,drilldown?'drilldown':''])} onClearFilters={()=>{setQuery('');setStatusFilter('all');setSourceFilter('all');setClientFilter('all');setProjectFilter('all');setPdfFilter('all');setExactReference('');setDueBefore('');onClearStatisticsDrilldown?.();}} scope="billing-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>invoiceDraft.request(() => { setSelectedId(item.id); setExpanded(false); })} className="billing-table" caption="Client · Origine · Description · Projet · Montant · Statut · Facture · source complète des résultats filtrés" columns={[
+        </div> : <div className="billing-table-wrap"><ConfiguredDataTable<(typeof filtered)[number]> error={listError} onRetry={() => void refresh()} emptyText={billingEmptyText()} filtersActive={hasActiveFilters([query,statusFilter,sourceFilter,clientFilter,projectFilter,pdfFilter,exactReference,dueBefore,drilldown?'drilldown':''])} onClearFilters={()=>{setQuery('');setStatusFilter('all');setSourceFilter('all');setClientFilter('all');setProjectFilter('all');setPdfFilter('all');setExactReference('');setDueBefore('');onClearStatisticsDrilldown?.();}} scope="billing-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>invoiceDraft.request(() => { setSelectedId(item.id); setExpanded(false); })} className="billing-table" caption="Client · Origine · Description · Projet · Montant · Statut · Facture · source complète des résultats filtrés" columns={[
 {id:"identity",label:"Client",required:true,sortValue:item=>item.clientLabel??null,render:item=><><button className="billing-row-open" type="button" aria-label={`Ouvrir la facture de ${item.clientLabel} : ${item.description}`} onClick={(event) => { event.stopPropagation(); invoiceDraft.request(() => { setSelectedId(item.id); setExpanded(false); }); }}>{item.clientLabel}</button></>},
 {id:"source",label:"Origine",sortValue:item=>item.sourceType??null,render:item=><><span className="billing-source-pill"><OperationIcon name={SOURCE_ICONS[item.sourceType]} size={15} />{SOURCE_LABELS[item.sourceType]}</span></>},
 {id:"description",label:"Description",sortValue:item=>item.description??null,render:item=><>{item.description}</>},

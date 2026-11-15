@@ -133,3 +133,26 @@ describe('R9 : Mon entreprise dit où elle en est', () => {
     expect(component).toContain("number('depositPercent','Acompte proposé (%)',0,100)");
   });
 });
+
+describe('P6b (F42) : la recherche de Réglages garde sa largeur de 380 px', () => {
+  const page = read('settings/SettingsPage.tsx');
+  const styles = read('styles.css');
+  const r9 = read('settings/settings-r9.css');
+  const rule = (source: string, selector: string) => {
+    const start = source.indexOf(`${selector} {`);
+    return start < 0 ? '' : source.slice(start, source.indexOf('}', start));
+  };
+
+  it('le champ porte l’identifiant et la classe visés par les deux feuilles', () => {
+    expect(page).toMatch(/<input id="settings-quick-search" className="settings-search" type="search"/);
+  });
+
+  it('styles.css et settings-r9.css fixent 380 px, bornés à la largeur disponible', () => {
+    for (const [source, selector] of [[styles, '.settings-grid #settings-quick-search'], [r9, '.settings-search']] as const) {
+      const body = rule(source, selector);
+      expect(body, selector).toMatch(/width:\s*380px/);
+      expect(body, selector).toMatch(/max-width:\s*100%/);
+      expect(body, selector).not.toContain('!important');
+    }
+  });
+});

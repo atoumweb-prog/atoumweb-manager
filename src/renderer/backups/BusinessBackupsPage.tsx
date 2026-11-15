@@ -15,6 +15,8 @@ import { OperationIcon, type OperationIconName } from '../operations/OperationIc
 import { businessBackupInterventionLinkIssue, businessBackupLocationActionLabel, businessBackupLocationStatus, filterBusinessBackupAlerts } from '../../shared/businessBackupPresentation';
 import { useUnsavedDraft } from '../unsaved/unsaved';
 import { KeyFigures } from '../ui/KeyFigures';
+import { ListLoadError } from '../ui/ListLoadError';
+import { noticeText } from '../ui/noticeLifetime';
 import { ListToolbar } from '../ui/ListToolbar';
 import { limitItems, plural } from '../../shared/projectTabs';
 import { backupsEmptyText } from '../../shared/ressourcesEmpty';
@@ -70,6 +72,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
   const [creating, setCreating] = useState(false);
   const [showAllAlerts, setShowAllAlerts] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
   // Le verrou ref protège dès le premier clic, avant toute mise à jour React.
   const mutationLock = useRef(false);
   const [mutationBusy, setMutationBusy] = useState(false);
@@ -141,7 +144,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
           })),
       ]);
       if(epoch!==loadEpoch.current)return;
-      setRecords(nextRecords);
+      setRecords(nextRecords); setListError(null);
       setProjects(nextProjects);
       setClients(nextClients);
       setOverview(nextOverview);
@@ -162,7 +165,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
     } catch (loadError) {
       if(epoch!==loadEpoch.current)return;
       if(preferredId)onEntityReady?.('backup_record',preferredId,loadError instanceof Error?loadError.message:'Sauvegardes indisponibles.');
-      setError(loadError instanceof Error ? loadError.message : 'Impossible de charger les sauvegardes métier.');
+      setListError(loadError instanceof Error ? loadError.message : 'Impossible de charger les sauvegardes métier.'); // P6b (D1) : montré dans la liste, pas comme une notice brute
     }
   }
 
@@ -346,7 +349,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
 
   return (
     <div className="business-backups-page">
-      <KeyFigures ariaLabel="Synthèse des sauvegardes" items={[{ key: 'known', label: 'Sauvegardes connues', value: overview?.totalRecords ?? 0, helper: overview?.latestKnown ? dateLabel(overview.latestKnown.backupAt) : 'Aucune' }, { key: 'local', label: 'Copies locales présentes', value: overview?.localCopies ?? 0, helper: overview?.latestLocal ? `Dernière : ${dateLabel(overview.latestLocal.backupAt)}` : 'Aucune copie locale' }, { key: 'missing', label: 'Copies locales manquantes', value: overview?.missingLocalCopies ?? 0, helper: overview?.missingLocalCopies ? 'À relocaliser' : 'Aucune anomalie' }, { key: 'stable', label: 'Référence stable déclarée', value: overview?.latestStable ? '1' : '0', helper: overview?.latestStable?.label ?? 'Non définie' }]} />
+      <KeyFigures ariaLabel="Synthèse des sauvegardes" items={[{ key: 'known', label: 'Sauvegardes connues', value: overview?.totalRecords ?? 0, helper: overview?.latestKnown ? dateLabel(overview.latestKnown.backupAt) : 'Aucune' }, { key: 'local', label: 'Copies locales présentes', value: overview?.localCopies ?? 0, helper: overview?.latestLocal ? `Dernière : ${dateLabel(overview.latestLocal.backupAt)}` : 'Aucune copie locale' }, { key: 'missing', label: 'Copies locales manquantes', value: overview?.missingLocalCopies ?? 0, helper: overview?.missingLocalCopies ? 'À relocaliser' : 'Aucune anomalie' }, { key: 'stable', label: 'Référence stable déclarée', value: overview?.latestStable ? '1' : '0', helper: overview?.latestStable?.label ?? 'Non définie' }].map(item => listError ? { ...item, value: '—', helper: 'Indisponible : la liste n’a pas pu être chargée' } : item)} />
 
       <p className="business-backups-note" role="note">Ce registre recense des sauvegardes déclarées. Il ne crée pas de fichiers, ne restaure pas WordPress et ne certifie ni intégrité ni restauration testée. La sauvegarde SQLite du Manager est une opération distincte dans Réglages.</p>
 
@@ -402,10 +405,10 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
       <section className="panel business-backups-alerts" aria-label="Alertes de sauvegarde des projets">
         <div className="panel-title">
           <div><h2>Alertes des projets actifs</h2></div>
-          <span className="status-pill">{alertsError ? 'Indisponible' : contextAlerts.length}</span>
+          <span className="status-pill">{alertsError || listError ? 'Indisponible' : contextAlerts.length}</span>
         </div>
-        {alertsError
-          ? <p role="status" className="muted">Impossible de lire les alertes des sauvegardes : {alertsError}. Ce statut ne signifie pas qu’aucune alerte n’existe.</p>
+        {alertsError || listError
+          ? <p role="status" className="muted">Impossible de lire les alertes des sauvegardes : {noticeText(alertsError ?? listError ?? '')}. Ce statut ne signifie pas qu’aucune alerte n’existe.</p>
           : contextAlerts.length === 0
             ? <p className="muted">Aucune alerte remontée pour ce contexte. Cela ne certifie ni l’existence d’une sauvegarde ni la possibilité de restaurer.</p>
             : <div className="business-backups-alert-list">
@@ -425,7 +428,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
       {error && <div className="notice business-backups-error" role="alert"><span>{error}</span><button type="button" onClick={() => setError(null)} aria-label="Fermer" title="Fermer"><OperationIcon name="close"/></button></div>}
 
       <ListToolbar
-          countLabel={plural(records.length, 'sauvegarde', 'sauvegardes')}
+          countLabel={listError ? '—' : plural(records.length, 'sauvegarde', 'sauvegardes')}
           search={{ value: search, onChange: setSearch, placeholder: 'Sauvegarde ou emplacement…', ariaLabel: 'Rechercher des sauvegardes' }}
           filters={<>
             <select aria-label="Filtrer par client" value={clientFilter} onChange={(event) => { setClientFilter(event.target.value); setProjectFilter(''); }}><option value="">Tous les clients</option>{clients.map((client) => <option value={client.id} key={client.id}>{client.displayName}</option>)}</select>
@@ -455,8 +458,9 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         style={selected && !detailExpanded ? { gridTemplateColumns: `${splitPercent}% 8px minmax(0, 1fr)` } : undefined}
       >
         {!detailExpanded && <article className="panel business-backups-list">
-          <div className="panel-title"><div><h2>Sauvegardes</h2></div><span className="status-pill">{records.length}</span></div>
-          {records.length === 0 && <p className="muted">{backupsEmptyText({ total: records.length, filtersActive: Boolean(search.trim() || clientFilter || projectFilter || typeFilter || locationFilter) })}</p>}
+          <div className="panel-title"><div><h2>Sauvegardes</h2></div><span className="status-pill">{listError ? '—' : records.length}</span></div>
+          <ListLoadError error={listError} onRetry={() => void load()}/>
+          {records.length === 0 && !listError && <p className="muted">{backupsEmptyText({ total: records.length, filtersActive: Boolean(search.trim() || clientFilter || projectFilter || typeFilter || locationFilter) })}</p>}
           {records.map((record) => <button type="button" key={record.id} className={`business-backup-row ${selected?.id === record.id ? 'selected' : ''}`} disabled={mutationBusy} onClick={() => changeSelected(record)}>
             <div><strong>{record.label}</strong><span>{backupTypeLabel(record.backupType)} · {dateLabel(record.backupAt)}</span></div>
             <div>{record.stable && <span className="stable-badge">Stable</span>}<span>{record.locations.length} emplacement{record.locations.length > 1 ? 's' : ''}</span></div>

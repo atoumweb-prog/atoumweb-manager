@@ -4,7 +4,7 @@
 .aw-data-table caption{text-align:left;padding:12px;color:var(--text);background:var(--surface-soft)}.aw-data-table th,.aw-data-table td{text-align:left;padding:12px;border-bottom:1px solid var(--border);overflow-wrap:normal}.aw-data-table th{position:sticky;top:0;background:var(--surface);z-index:1}
 /* En-têtes : une seule typographie, jamais coupés au milieu d'un mot (largeur mini : tableHeader.ts).
    Sélecteur plus spécifique que les anciennes classes de tableau (.project-table th, .quote-table th...) sans !important. */
-.aw-data-table > thead > tr > th{text-transform:none;letter-spacing:normal;overflow-wrap:normal;word-break:normal;hyphens:manual;font-size:var(--ui-font-primary);font-weight:700;line-height:1.35}
+.aw-data-table > thead > tr > th{vertical-align:middle;text-transform:none;letter-spacing:normal;overflow-wrap:normal;word-break:normal;hyphens:manual;font-size:var(--ui-font-primary);font-weight:700;line-height:1.35}
 .aw-table-empty{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:16px 12px;color:var(--text)}.aw-table-empty p{margin:0}
 .aw-data-table tbody tr[data-selected=true]{background:var(--surface-soft)}.aw-table-identity{display:block;min-width:140px}.aw-table-id{display:block;font-size:max(14px,var(--ui-font-secondary));color:var(--muted)}.aw-data-table-scroll:focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px}.aw-table-outside{padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-soft)}
 .aw-data-table .aw-ui-button-label,.aw-data-table td[data-column-id=date],.aw-data-table td[data-column-id=amount]{white-space:nowrap}

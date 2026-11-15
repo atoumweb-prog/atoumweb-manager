@@ -30,7 +30,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test:assertTest,sleep,c
  await set('[aria-label="Visibilité site"]','public');await set('[aria-label="Statut d’article"]','inactive');test((await rows()).length===0,'Independent filters produce a real empty state');
  await button('.ot-filter-bar','Réinitialiser les filtres');await set('[aria-label="Rechercher dans le catalogue"]','TEST — Catalogue lot 1');await set('[aria-label="Lignes par page"]','50');
  await click('.aw-table-preferences>summary');await click('.aw-table-columns>summary');await click('[data-column-toggle="recommendedPrice"]');
- await js('document.querySelector("[aria-label=\\"Largeur identity\\"]").dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}))');await sleep(100);
+ await js('document.querySelector("th[data-column-id=identity] .aw-column-sizer").dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}))');await sleep(100);
  await set('#table-view-name','TEST — Vue Catalogue');await button('.aw-saved-views','Dupliquer la vue');
  const personal=await get('document.querySelector("#table-personal-view").value');test(personal.startsWith('personal-'),'Personal view created');
  const stored=JSON.parse(await get('window.atoumweb.visualPreferences.getItem("atoumweb:table-workshop:catalog-administration:personal:v1")')).views.find(v=>v.id===personal).preference;
