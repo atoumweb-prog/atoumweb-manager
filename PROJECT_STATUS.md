@@ -1,5 +1,14 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/11/2026 : fin de refonte, lot F1 Clients (thèmes et densités) exécuté (commit local)
+
+- [x] Fiche : `docs/refonte/plans/2026-11-15-fin-refonte-themes-densites-design.md` (décisions de Carlos : règles communes en quatre lots F1 à F4 ; **Noir au premier lancement**). Carlos ne demande plus de recette sur captures (« fait le job je te fais confiance ») : mesures et preuves internes, point court par lot.
+- [x] **Constat** : 455 règles CSS réservées au Noir (dont 359 au Noir / Confort), surtout dans les fiches Clients ; en Blanc, la fiche client complète gardait l'ancienne disposition (fenêtre sur le rail, onglets coupés).
+- [x] **F1, test d'abord** (`ui/finF1Wiring.test.ts`, 7 tests) : dans `crm/client-expanded-v2.css`, `client-list-quick-v2.css`, `client-contacts-v2.css`, `client-contracts-v2.css`, `client-commercial-v2.css`, `ClientsPageV2.css`, les déclarations de mise en page passent sous un préfixe commun de même spécificité (`:root[data-theme][data-density]`) ; les déclarations à couleur en dur (et la palette marine propre aux Clients en Noir) restent réservées au Noir, à traduire en jetons au lot F3. Outil hors dépôt : `outils-edition\css-unscope-theme.cjs`.
+- **Preuves** : Noir / Confort : 8 captures sur 10 identiques à l'octet, 2 à un ou deux octets près (curseur), fiches et onglets identiques ; Blanc et AtoumWeb : fiche complète disposée comme en Noir ; mesures identiques dans les cinq combinaisons ; `npm run typecheck` propre ; suite **319 fichiers, 2 602 tests** ; natifs 72, 18/18, 25, 857 ; `lot10` 59 ; `03e-directory` 206 ; `home-shell-lot1` 96 ; budget 12 ; `!important` 86 ; empreinte identique.
+- **Non vu** : couleurs propres aux Clients en Blanc et AtoumWeb (F3) ; logo (F3) ; densités (F4). **Autocontrôle de l'auteur.**
+- Prochaine action : **F2** (les autres règles réservées au Noir : `ui-consistency-v2.css`, `home/HomeDashboardV2.css`, en-tête, `time.css`, `projects.css`, Sites…).
+
 ## 15/11/2026 : passe de finitions, lot P5d2 Tuiles de l'Accueil exécuté (recette de Carlos, commit local) ; passe de finitions terminée
 
 - [x] Plan : `docs/refonte/plans/2026-11-15-p5d2-accueil.md` (fiche `…-p5d-chiffres-cles-design.md`).
