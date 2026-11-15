@@ -43,7 +43,8 @@ describe('R5b : onglet Résumé', () => {
   });
 
   it('tâches restantes : compte les tâches obligatoires non terminées, pas les phases', () => {
-    expect(summary()).toContain('<strong>1</strong>');
+    // P5d (F27) : la carte vient du composant commun ; la valeur porte le repère `aw-keyfigure-value`.
+    expect(summary()).toContain('<strong>Tâches restantes</strong><span class="aw-keyfigure-value">1</span>');
   });
 
   it('projet interne sans devis : pas de ligne « Origine »', () => {

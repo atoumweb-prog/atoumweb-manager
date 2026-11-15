@@ -1,5 +1,14 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/11/2026 : passe de finitions, lot P5d1 Chiffres clés (hors Accueil) exécuté (recette de Carlos, commit local)
+
+- [x] Fiche : `docs/refonte/plans/2026-11-15-p5d-chiffres-cles-design.md` (décisions de Carlos : les huit variantes en deux lots, P5d1 puis P5d2 pour l'Accueil ; icône et couleur d'état facultatives). Plan : `…-p5d1-chiffres-cles.md`.
+- [x] **Corrections, test d'abord** (`ui/p5d1Wiring.test.tsx`, 21 tests) : `ui/KeyFigures.tsx` (options `icon`, `tone`, repère `aw-keyfigure-value`, `className`, `children`) et ses styles (`ui/list-page.css`, jetons sémantiques de R0, valeur à 22 px même sous une règle de page) ; six écrans migrés (fiche projet Commercial et Résumé, Maintenance, pack d'heures, intervention avec le champ « Estimation actuelle » en fin de grille, rangée du bas de Statistiques, fiche client Interventions) ; CSS des anciennes variantes retiré (`css-prune.cjs` puis deux retouches à la main) ; test R5b et recette `check-client-interventions` adaptés au nouveau balisage.
+- **Preuves** : `npm run typecheck` propre ; `node scripts/run-tests.cjs` : **317 fichiers passés, 1 ignoré, 2 592 tests** ; natifs 72, 18/18, 25, 857 ; `lot10` 59 ; `03e-directory` 206 ; budget des petits textes 12 ; `!important` 86 ; aucun débordement nouveau (F73 inchangé) ; empreinte de la préproduction identique. **Rouge antérieure** : `check-client-interventions` (F75), identique sur `be664219`. Captures `C:\DEV\Livrables\Cadrage-parcours\captures-p5d1\`.
+- **Constat de Carlos** : thème Blanc avec des textes tronqués sur de nombreuses pages (F76) ; attendu, la refonte n'a été faite qu'en Noir / Confort ; traité au lot de fin de refonte.
+- **Non vu** : détail d'un pack d'heures ; autres thèmes et densités. **Revue finale : autocontrôle de l'auteur, pas un relecteur indépendant.**
+- Prochaine action : **P5d2** (Accueil). Fichier de reprise : `docs/refonte/PASSATION-2026-11-15-apres-P5d1.md`.
+
 ## 15/11/2026 : passe de finitions, lot P5c Fiches et reste exécuté (recette de Carlos, commit local)
 
 - [x] Plan : `docs/refonte/plans/2026-11-15-p5c-fiches-zero.md`. **Décision de Carlos** (outil de question) : l'aperçu du devis « côté client » reste fidèle au PDF (les 12 déclarations `.quote-document-*` de `quote-client-preview.css` gardent les tailles du document ; le PDF réel, `buildQuoteHtml`, n'est pas touché).

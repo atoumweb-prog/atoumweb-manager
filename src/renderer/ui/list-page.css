@@ -70,3 +70,22 @@
   outline: 2px solid var(--accent-strong);
   outline-offset: 2px;
 }
+
+/* P5d (F27) : un seul composant de chiffres clés. Icône facultative (une colonne à gauche) et couleur d'état
+   facultative, par les jetons sémantiques de R0 ; « > .classe » pour battre « .aw-keyfigure > span » (22 px). */
+.aw-keyfigure > .aw-keyfigure-value { font-size: 22px; font-weight: 800; line-height: 1.2; }
+.aw-keyfigure--with-icon { grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; }
+.aw-keyfigure--with-icon > :not(.aw-keyfigure-icon) { grid-column: 2; }
+.aw-keyfigure > .aw-keyfigure-icon { grid-column: 1; grid-row: 1 / span 4; align-self: start; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: var(--aw-accent-soft-bg); color: var(--aw-accent-soft-fg); font-size: 18px; font-weight: 800; line-height: 1; }
+.aw-keyfigure--tone-success { border-color: var(--aw-success-soft-fg); }
+.aw-keyfigure--tone-success > .aw-keyfigure-icon { background: var(--aw-success-soft-bg); color: var(--aw-success-soft-fg); }
+.aw-keyfigure--tone-warning { border-color: var(--aw-warning-soft-fg); }
+.aw-keyfigure--tone-warning > .aw-keyfigure-icon { background: var(--aw-warning-soft-bg); color: var(--aw-warning-soft-fg); }
+.aw-keyfigure--tone-warning > .aw-keyfigure-value { color: var(--aw-warning-soft-fg); }
+.aw-keyfigure--tone-danger { border-color: var(--aw-danger-soft-fg); }
+.aw-keyfigure--tone-danger > .aw-keyfigure-icon { background: var(--aw-danger-soft-bg); color: var(--aw-danger-soft-fg); }
+.aw-keyfigure--tone-danger > .aw-keyfigure-value { color: var(--aw-danger-soft-fg); }
+.aw-keyfigure--tone-info { border-color: var(--aw-info-soft-fg); }
+.aw-keyfigure--tone-info > .aw-keyfigure-icon { background: var(--aw-info-soft-bg); color: var(--aw-info-soft-fg); }
+.aw-keyfigure--tone-accent { border-color: var(--aw-accent-soft-fg); }
+.aw-keyfigure--tone-accent > .aw-keyfigure-icon { background: var(--aw-accent-soft-bg); color: var(--aw-accent-soft-fg); }

@@ -89,6 +89,8 @@ Règles en attendant :
 | F72 | Fiche projet, onglet Production : la ligne d’ajout d’étape (`.project-node-add-grid`) dépasse de 7 px à 1510 px ; en fenêtre étroite, l’en-tête et l’arbre du plan dépassent de 9 px. Mesuré identique avant et après P5c (antérieur) | P5c | `projects.css` | à voir |
 | F73 | Interventions, onglets Maintenance et Packs d’heures en fenêtre étroite : le tableau (`.operations-table`) dépasse de 356 px de sa carte (sans défilement de la page). Identique avant et après P5c (antérieur) | P5c | `operations.css` | à voir (défilement propre du tableau ou disposition en cartes) |
 | F74 | Rail de navigation : les titres de groupe (« Commercial », « Production »…) ne sont plus en petites capitales depuis P5c (règle commune : capitales retirées des petits sur-titres au passage à 14 px) ; visible sur toutes les pages | P5c | `ui/navigation-rail.css` | information (signalé à Carlos, recette OK) |
+| F75 | `check-client-interventions.cjs` échoue sur « Exact counters » (compteurs attendus « 1,0,0,1 » que la base de test ne donne plus) ; rouge aussi sur `be664219` (vérifié sur copie détachée) ; son sélecteur a été mis à jour en P5d1 (`.client-operations-kpis .aw-keyfigure-value`) | P5d1 | `scripts/check-client-interventions.cjs` | à diagnostiquer (antérieur à P5d1) |
+| F76 | **Thème Blanc : de nombreuses pages ont des textes tronqués** (constat de Carlos du 15/11/2026). Attendu : la refonte n'a été faite qu'en Noir / Confort (décision du 13/11/2026) ; les thèmes AtoumWeb et Blanc et les densités Compact et Confort + gardent des réglages anciens | test de Carlos | thèmes `blanc` et `atoumweb` | **lot de fin de refonte** (déjà prévu), avec captures de toutes les pages dans ces thèmes |
 
 ## Avancement de la passe de finitions
 
@@ -105,7 +107,9 @@ Règles en attendant :
 | **P5a Offres & Tarifs** | **fait le 15/11/2026** (commit local après recette de Carlos) : 47 règles du catalogue au plancher, budget des petits textes **617 à 570**, 0 texte visible sous 14 px sur 19 vues ; fiche d'article en fenêtre étroite corrigée ; F67 et F68 ajoutées |
 | **P5b Listes et en-tête** | **fait le 15/11/2026** (commit local après recette de Carlos, faite aussi en test direct dans une fenêtre jetable) : 97 règles au plancher, budget **570 à 473**, 0 texte visible sous 14 px sur 9 vues ; avatars, pastille d'alertes (20 px) et cadran de l'horloge (traits) adaptés ; F69 à F71 ajoutées (retours de Carlos) |
 | **P5c Fiches et reste** | **fait le 15/11/2026** (commit local après recette de Carlos) : 461 règles au plancher, budget **473 à 12** (exception de l’aperçu du document client, décision de Carlos), 0 texte d’interface visible sous 14 px sur 37 vues ; unité « min » de la fiche projet corrigée ; F9, F24, F26, F34 (petits textes), F70 faites ; F72 à F74 ajoutées |
-| P5d (F27 chiffres clés) | à faire (fiche courte à valider : la disposition de l’Accueil peut bouger) |
+| **P5d1 Chiffres clés hors Accueil** | **fait le 15/11/2026** (commit local après recette de Carlos) : `KeyFigures` enrichi (icône, couleur d'état, champ en plus) ; fiche projet, Maintenance, pack d'heures, intervention, rangée du bas de Statistiques, fiche client migrés ; CSS des anciennes variantes retiré ; F75 et F76 ajoutées |
+| P5d2 (Accueil, F27) | à faire (fiche décidée : `docs/refonte/plans/2026-11-15-p5d-chiffres-cles-design.md`) |
+| P5d (F27 chiffres clés), version d'origine | remplacée par P5d1 et P5d2 ; ancien libellé : à faire (fiche courte à valider : la disposition de l’Accueil peut bouger) |
 
 ## Lots qui portent déjà leurs propres points
 

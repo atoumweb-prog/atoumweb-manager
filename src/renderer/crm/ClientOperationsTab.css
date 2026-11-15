@@ -7,11 +7,6 @@
 #client-panel-operations .client-operations-heading p{font-size:14px;line-height:1.5;margin:0;color:var(--muted)}
 #client-panel-operations .client-operations-count{font-size: var(--aw-font-functional);border:1px solid var(--border);border-radius:18px;padding:8px 12px;background:var(--surface-soft);white-space:nowrap}
 #client-panel-operations .client-operations-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-#client-panel-operations .client-operation-kpi{display:grid;grid-template-columns:auto auto;justify-content:center;align-items:center;gap:6px 10px;padding:13px;border:1px solid var(--border);border-radius:10px;background:var(--surface-soft)}
-#client-panel-operations .client-operation-kpi:first-child{border-color:var(--accent)}
-#client-panel-operations .client-operation-kpi>svg{width:23px;height:23px;color:var(--accent)}
-#client-panel-operations .client-operation-kpi>strong{font-size:23px}
-#client-panel-operations .client-operation-kpi>span{grid-column:1/-1;font-size:14px;text-align:center}
 #client-panel-operations .client-operations-navigation{display:flex;gap:8px;flex-wrap:wrap}
 #client-panel-operations .client-operations-navigation>.aw-ui-button-wrap{flex:1;min-width:125px}
 #client-panel-operations .client-operations-navigation .aw-ui-button{width:100%;min-height:40px;padding:8px;font-size: var(--aw-font-functional)}

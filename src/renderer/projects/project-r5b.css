@@ -7,13 +7,7 @@
 .project-tab-content .project-section-title { margin: 0; font-size: var(--aw-font-body); font-weight: 700; color: var(--text); }
 .project-empty { margin: 0; color: var(--muted); font-size: var(--aw-font-functional); }
 
-/* Chiffres clés : libellé au-dessus, valeur en grand. */
-.project-keyfigures { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--ui-gap); }
-.project-keyfigure { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); color: var(--text); font: inherit; text-align: left; }
-.project-keyfigure > span { color: var(--muted); font-size: var(--aw-font-functional); }
-.project-keyfigure > strong { font-size: 18px; font-weight: 800; }
-button.project-keyfigure { cursor: pointer; }
-button.project-keyfigure:hover { border-color: var(--aw-accent-solid); }
+/* Chiffres clés : depuis P5d (F27), composant commun `KeyFigures` (ui/list-page.css). */
 
 /* Faits : libellé à gauche, valeur à droite. */
 .project-facts { display: grid; gap: 0; margin: 0; border-top: 1px solid var(--border); }

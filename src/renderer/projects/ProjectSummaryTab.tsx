@@ -2,6 +2,7 @@ import type { ProjectDetail } from '../../shared/projects';
 import { countMissingPrerequisites } from '../../shared/projectOverview';
 import { commercialModeLabel } from '../../shared/projectTabs';
 import { projectTypeLabel } from '../../shared/projectTypeLabel';
+import { KeyFigures } from '../ui/KeyFigures';
 import { dateLabel, duration } from './projectFormat';
 
 /** Résumé du projet : où il en est (quatre chiffres), puis ses informations. La progression reste dans l'en-tête, elle n'est pas répétée ici. */
@@ -13,14 +14,14 @@ export function ProjectSummaryTab({ project, onShowPrerequisites }: { project: P
     : null;
   return (
     <div className="project-tab-content">
-      <div className="project-keyfigures">
-        <div className="project-keyfigure"><span>Temps estimé{project.estimationIncomplete ? ' (incomplet)' : ''}</span><strong>{duration(project.estimatedMinutes)}</strong></div>
-        <div className="project-keyfigure"><span>Tâches restantes</span><strong>{openTasks}</strong></div>
-        {missing > 0
-          ? <button type="button" className="project-keyfigure" onClick={onShowPrerequisites} title="Ouvrir l’onglet Prérequis"><span>Prérequis manquants</span><strong>{missing}</strong></button>
-          : <div className="project-keyfigure"><span>Prérequis manquants</span><strong>0</strong></div>}
-        <div className="project-keyfigure"><span>Date cible</span><strong>{project.targetDate ? dateLabel(project.targetDate) : 'Non définie'}</strong></div>
-      </div>
+      <KeyFigures ariaLabel="Où en est le projet" items={[
+        { key: 'estimate', label: `Temps estimé${project.estimationIncomplete ? ' (incomplet)' : ''}`, value: duration(project.estimatedMinutes) },
+        { key: 'tasks', label: 'Tâches restantes', value: openTasks },
+        missing > 0
+          ? { key: 'prerequisites', label: 'Prérequis manquants', value: missing, onAction: onShowPrerequisites, actionLabel: 'ouvrir l’onglet Prérequis', tone: 'warning' as const }
+          : { key: 'prerequisites', label: 'Prérequis manquants', value: 0 },
+        { key: 'target', label: 'Date cible', value: project.targetDate ? dateLabel(project.targetDate) : 'Non définie' },
+      ]} />
       <strong className="project-section-title">Informations</strong>
       <dl className="project-facts">
         <div><dt>Type</dt><dd>{projectTypeLabel(project.projectType)}</dd></div>

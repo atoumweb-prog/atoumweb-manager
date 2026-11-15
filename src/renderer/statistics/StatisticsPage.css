@@ -310,67 +310,6 @@
   gap: 9px;
 }
 
-.statistics-snapshot {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 9px;
-  align-items: center;
-  min-width: 0;
-  padding: 10px 11px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-}
-
-.statistics-snapshot:hover {
-  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
-  background: var(--surface-soft);
-}
-
-.statistics-snapshot > span {
-  display: inline-grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--accent-soft) 54%, var(--surface));
-  color: var(--accent);
-}
-
-.statistics-snapshot > div {
-  display: grid;
-  min-width: 0;
-  gap: 1px;
-}
-
-.statistics-snapshot strong {
-  font-size: var(--aw-font-functional);
-  font-weight: 700;
-}
-
-.statistics-snapshot b {
-  font-size: 18px;
-  font-weight: 650;
-}
-
-.statistics-snapshot small {
-  overflow: hidden;
-  color: var(--text-muted);
-  font-size: var(--aw-font-functional);
-  font-weight: 400;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.statistics-snapshot em {
-  color: var(--text-muted);
-  font-size: 18px;
-  font-style: normal;
-}
-
 .statistics-pipeline {
   display: grid;
   grid-template-columns: repeat(4, minmax(80px, 1fr));

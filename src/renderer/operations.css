@@ -352,34 +352,6 @@
   gap: 8px;
 }
 
-.hour-pack-kpi-grid > div {
-  display: grid;
-  gap: 5px;
-  min-width: 0;
-  padding: 11px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface-soft);
-}
-
-.hour-pack-kpi-grid > div.warning {
-  border-color: color-mix(in srgb, #c44950 30%, var(--border));
-  background: color-mix(in srgb, #c44950 6%, var(--surface));
-}
-
-.hour-pack-kpi-grid strong {
-  color: var(--text-muted);
-  font-size: var(--aw-font-functional, 14px);
-  font-weight: 700;
-}
-
-.hour-pack-kpi-grid span {
-  color: var(--text);
-  font-size: var(--aw-font-body, 14px);
-  font-weight: 400;
-  line-height: 1.35;
-}
-
 .hour-pack-progress {
   display: grid;
   gap: 7px;
@@ -648,30 +620,6 @@ body.operation-resizing {
   display: grid;
   grid-template-columns: repeat(4, minmax(120px, 1fr));
   gap: 8px;
-}
-
-.intervention-kpi-grid > div {
-  display: grid;
-  gap: 5px;
-  min-width: 0;
-  padding: 11px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface-soft);
-}
-
-.intervention-kpi-grid strong {
-  color: var(--text-muted);
-  font-size: var(--aw-font-functional, 14px);
-  font-weight: 700;
-}
-
-.intervention-kpi-grid span {
-  overflow-wrap: anywhere;
-  color: var(--text);
-  font-size: var(--aw-font-body, 14px);
-  font-weight: 400;
-  line-height: 1.35;
 }
 
 .intervention-workbench-actions {
@@ -1130,63 +1078,7 @@ body.operation-resizing {
   }
 }
 
-/* Maintenance — dashboard et atelier */
-.maintenance-dashboard {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
-  gap: 9px;
-}
-
-.maintenance-dashboard article {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  padding: 12px 13px;
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface);
-}
-
-.maintenance-dashboard article > div {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-
-.maintenance-dashboard-icon {
-  display: inline-grid;
-  width: 38px;
-  height: 38px;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
-  color: var(--accent);
-  font-size: 18px;
-  font-weight: 650;
-}
-
-.maintenance-dashboard strong {
-  color: var(--text-muted);
-  font-size: var(--aw-font-functional, 14px);
-  font-weight: 700;
-}
-
-.maintenance-dashboard article span:not(.maintenance-dashboard-icon) {
-  color: var(--text);
-  font-size: 20px;
-  font-weight: 400;
-  line-height: 1.2;
-}
-
-.maintenance-dashboard small {
-  color: var(--text-muted);
-  font-size: var(--aw-font-functional, 14px);
-  font-weight: 400;
-}
-
+/* Maintenance : atelier (la synthèse passe par KeyFigures depuis P5d) */
 .maintenance-layout.with-detail {
   gap: 0;
   align-items: stretch;
@@ -1307,21 +1199,9 @@ body.operation-resizing {
   gap: 6px;
 }
 
-@media (max-width: 1250px) {
-  .maintenance-dashboard {
-    grid-template-columns: repeat(2, minmax(150px, 1fr));
-  }
-}
-
 @media (max-width: 850px) {
   .maintenance-detail-panel {
     margin-left: 0;
-  }
-}
-
-@media (max-width: 620px) {
-  .maintenance-dashboard {
-    grid-template-columns: 1fr;
   }
 }
 

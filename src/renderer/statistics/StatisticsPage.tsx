@@ -23,7 +23,7 @@ import { buildStatisticsEvidence, statisticsEvidenceTotal, type StatisticsEviden
 import { createStatisticsDrilldown, type StatisticsDrilldownKind } from '../../shared/statisticsDrilldown';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 import { StatisticsPage as Phase7StatisticsPage } from '../analytics/StatisticsPage';
-import { KeyFigureCard } from '../ui/KeyFigures';
+import { KeyFigureCard, KeyFigures, type KeyFigureItem } from '../ui/KeyFigures';
 import { allNewComparisons, NO_PREVIOUS_PERIOD_NOTE, compare, comparisonHelper } from './statisticsComparison';
 import './StatisticsPage.css';
 
@@ -356,12 +356,12 @@ export function StatisticsPage({ onMessage }: { onMessage: (message: string) => 
           </div>
         </article>
       </div>
-      <div className="statistics-snapshots">
-        <Snapshot icon="user" label="Prospects actifs" value={activeProspects.length} helper={countLabel(newProspects.length, 'contact créé', 'contacts créés') + ' sur la période'} onClick={() => openPage('Prospects')} />
-        <Snapshot icon="folder" label="Projets actifs" value={activeProjects.length} helper={countLabel(projectsCompleted.length, 'projet terminé', 'projets terminés') + ' sur la période'} onClick={() => openPage('Projets')} />
-        <Snapshot icon="wrench" label="Interventions actives" value={activeInterventions.length} helper={countLabel(interventionsCompleted.length, 'intervention terminée', 'interventions terminées') + ' sur la période'} onClick={() => openPage('Interventions & Maintenance')} />
-        <Snapshot icon="euro" label="À facturer" value={readyBilling.length} helper={money(readyAmount) + ' à préparer'} onClick={() => openPage('Facturation')} />
-      </div>
+      <KeyFigures ariaLabel="Accès aux pages de la période" className="statistics-snapshots" items={[
+        snapshot('prospects', 'user', 'Prospects actifs', activeProspects.length, countLabel(newProspects.length, 'contact créé', 'contacts créés') + ' sur la période', () => openPage('Prospects'), 'Prospection'),
+        snapshot('projects', 'folder', 'Projets actifs', activeProjects.length, countLabel(projectsCompleted.length, 'projet terminé', 'projets terminés') + ' sur la période', () => openPage('Projets'), 'Projets'),
+        snapshot('interventions', 'wrench', 'Interventions actives', activeInterventions.length, countLabel(interventionsCompleted.length, 'intervention terminée', 'interventions terminées') + ' sur la période', () => openPage('Interventions & Maintenance'), 'Interventions & Maintenance'),
+        snapshot('billing', 'euro', 'À facturer', readyBilling.length, money(readyAmount) + ' à préparer', () => openPage('Facturation'), 'Facturation'),
+      ]} />
     </>}
 
     {!invalidCustomPeriod && tab === 'commercial' && <>
@@ -491,8 +491,9 @@ function StatisticsEvidencePanel({ kind, rows, periodLabel }: { kind: Statistics
   </section>;
 }
 
-function Snapshot({ icon, label, value, helper, onClick }: { icon: OperationIconName; label: string; value: number; helper: string; onClick: () => void }) {
-  return <button className="statistics-snapshot" type="button" onClick={onClick}><span><OperationIcon name={icon} size={21} /></span><div><strong>{label}</strong><b>{value}</b><small>{helper}</small></div><em>›</em></button>;
+/** P5d (F27) : carte d'accès à une page, par le composant commun de chiffres clés (icône, libellé, valeur, aide, action). */
+function snapshot(key: string, icon: OperationIconName, label: string, value: number, helper: string, onClick: () => void, page: string): KeyFigureItem {
+  return { key, icon: <OperationIcon name={icon} size={21} />, label, value, helper, onAction: onClick, actionLabel: `ouvrir ${page}` };
 }
 
 function CardTitle({ eyebrow, title, action, onClick }: { eyebrow: string; title: string; action?: string; onClick?: () => void }) {

@@ -13,6 +13,7 @@ import {
 import type { ProjectSummary } from '../../shared/projects';
 import { HourPackShortfallPanel } from './HourPackShortfallPanel';
 import { OperationIcon } from './OperationIcon';
+import { KeyFigures } from '../ui/KeyFigures';
 
 const STATUS_LABELS: Record<HourPackStatus, string> = {
   active: 'Actif', exhausted: 'Épuisé', expired: 'Expiré', suspended: 'Suspendu', archived: 'Archivé',
@@ -395,12 +396,12 @@ export function HourPacksPanel({ onEntityReady, initialRequest, clients, project
           {selected.expiresAt && <span className="status-pill">Expire le {dateLabel(selected.expiresAt)}</span>}
         </div>
 
-        <div className="hour-pack-kpi-grid">
-          <div><strong>Acheté</strong><span>{hours(selected.purchasedSeconds)}</span></div>
-          <div><strong>Consommé</strong><span>{hours(selected.consumedSeconds)}</span></div>
-          <div className={selected.balanceSeconds < 0 ? 'warning' : ''}><strong>Restant</strong><span>{hours(selected.balanceSeconds)}</span></div>
-          <div><strong>Prix contractuel</strong><span>{money(selected.contractPriceCents)}</span></div>
-        </div>
+        <KeyFigures ariaLabel="Situation du pack" className="hour-pack-kpi-grid" items={[
+          { key: 'purchased', label: 'Acheté', value: hours(selected.purchasedSeconds) },
+          { key: 'consumed', label: 'Consommé', value: hours(selected.consumedSeconds) },
+          { key: 'balance', label: 'Restant', value: hours(selected.balanceSeconds), tone: selected.balanceSeconds < 0 ? 'warning' : undefined },
+          { key: 'price', label: 'Prix contractuel', value: money(selected.contractPriceCents) },
+        ]} />
 
         <div className="hour-pack-progress" aria-label={`Solde restant : ${Math.round(remainingRatio)} %`}>
           <div className="hour-pack-progress-heading"><strong>Solde disponible</strong><span>{Math.round(remainingRatio)} %</span></div>
