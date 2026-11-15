@@ -491,7 +491,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged, open, onToggle, high
   const openBlockingInformation = informationItems.filter((item) => item.status === 'open' && item.isBlocking);
   const openLaterInformation = informationItems.filter((item) => item.status !== 'resolved' && !item.isBlocking);
 
-  const sectionSummary = (id: 'brief' | 'commercial') => needsSectionSummary(id, { projectSummary: prospect?.projectSummary, budgetStatus: prospect?.budgetStatus, timelineStatus: prospect?.timelineStatus });
+  const sectionSummary = (id: 'brief' | 'commercial' | 'services') => needsSectionSummary(id, { projectSummary: prospect?.projectSummary, budgetStatus: prospect?.budgetStatus, timelineStatus: prospect?.timelineStatus, informationCount: informationItems.length, openInformationCount: informationItems.filter((item) => item.status === 'open').length, blockingInformationCount: openBlockingInformation.length });
   return <section className="prospect-work-section needs-panel-v2"><fieldset disabled={Boolean(prospect?.clientAccountId||prospect?.archivedAt)} style={{border:0,padding:0,margin:0,minWidth:0}}>
 
     {error && <p className="form-error" role="alert">{error}</p>}
@@ -543,7 +543,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged, open, onToggle, high
       </div>
     </div>
     </div>
-    <NeedsSectionHeader id="services" title="Prestations et points à confirmer" open={open.services} onToggle={onToggle} />
+    <NeedsSectionHeader id="services" title="Prestations et points à confirmer" summary={sectionSummary('services')} open={open.services} onToggle={onToggle} />
     <div id="needs-section-services" className="needs-section-body" hidden={!open.services}>
     <div className="need-identification-fields">
       <div className="workflow-fields">

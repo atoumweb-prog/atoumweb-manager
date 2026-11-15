@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/11/2026 : passe de finitions, lot P3a Prospection et Devis exécuté (recette de Carlos sur captures, commit local)
+
+- [x] Fiche : `docs/refonte/plans/2026-11-15-p3a-prospection-devis-design.md` (validée le 15/11/2026, cinq décisions). Plan : `…-p3a-prospection-devis.md` (11 tâches). Captures : `C:\DEV\Livrables\Cadrage-parcours\captures-p3a\` (`avant\`, `apres\`, outil `audit-p3a.cjs`).
+- [x] **Corrections, tests d’abord** : F2 `RecordHeader.closeAction` (Plus avant la croix) ; F1 `hideTitle` sur `ProspectResearchPanel` et « Origine · … » ; F4 `needsSectionSummary('services')` ; F3 raison à gauche de « Suivant » (`quote-wizard-next`, `aria-describedby`) ; F44 `ui/searchFocus.ts` (`shouldRestoreSearchFocus`) branché dans `WorkspaceHeader.closeSearch` ; F45 pastille de statut sur deux lignes dans la table de Prospection ; F46 requête `max-height: 600px` (l’en-tête, la Prochaine étape et les étapes défilent avec le contenu, onglets visibles) ; M8 règle locale d’en-têtes de table retirée.
+- **Défaut trouvé sur capture et corrigé** : les libellés d’onglet de la fiche se coupaient au milieu des mots en fenêtre étroite (F52). Mon premier correctif (`nowrap`) a élargi le cadre de la fiche (924 px pour 853 utiles) ; `contain: inline-size` sur la rangée l’a ramené à 794 px (test écrit d’abord).
+- **Écarts (règle I)** : F4 résume les points à confirmer et leurs bloquants (la section n’a plus de liste de prestations) ; F1 « Origine · … » au lieu de « Recommandation » seul. Aucune donnée, règle métier ni parcours modifiés ; l’acompte par défaut n’est pas touché.
+- **Preuves** : `npm run typecheck` propre ; `node scripts/run-tests.cjs` : **306 fichiers, 2 487 tests, 1 ignoré** (+1 fichier `searchFocus.test.ts`, +16 tests) ; scripts natifs : typographie 72, états 18/18, garde Abby 25, interface réelle 857 ; `check-ux-v2-lot10-ui` 59 ; recettes de P1 toujours vertes ; **`--desk` (20) et `--ux-lot` (26) passent au vert** ; `check-ux-v2-03e-directory` dépasse C08 (s’arrête sur F47) ; `check-shell-home-simplification` reste rouge sur F43 seul ; budget des petits textes 617 et `!important` ≤ 86 inchangés ; empreinte de la préproduction identique.
+- **Non vu** : étapes 2 à 5 de l’assistant de devis ; thèmes AtoumWeb et Blanc, densités autres que Confort ; section « Prestations » avec des points à confirmer sur capture (le prospect de test n’en a pas ; couvert par les tests unitaires). **Revue finale : autocontrôle de l’auteur, pas un relecteur indépendant.**
+- **Registre** : `docs/refonte/FINITIONS.md` (F1 à F4, F44 à F46, M8 « fait dans P3a » ; F52 ajouté et fait). Fichier de reprise : `docs/refonte/PASSATION-2026-11-15-apres-P3a.md`.
+- Prochaine action : **P3b Projets** (fiche courte à valider : F13 à F18, F20 filtre par projet, état vide de l’onglet Sites, F16 à regarder) ; ensuite P4, P6, P5 ; fin de refonte ; lot dédié pour l’acompte par défaut.
+
 ## 15/11/2026 : passe de finitions, lot P2 Nettoyage exécuté et commité en local
 
 - [x] Fiche : `docs/refonte/plans/2026-11-14-p2-nettoyage-design.md` (validée le 14/11/2026, cinq décisions). Plan : `…-p2-nettoyage.md` (7 tâches). Accord de Carlos pour exécuter et commiter : 15/11/2026.

@@ -37,6 +37,15 @@ describe('R3 : sections repliables de Besoins', () => {
     expect(needsSectionSummary('brief', { projectSummary: 'x'.repeat(200) }).length).toBeLessThanOrEqual(80);
     expect(needsSectionSummary('commercial', { budgetStatus: 'range', timelineStatus: 'date' })).toBe('Renseigné');
     expect(needsSectionSummary('commercial', { budgetStatus: null, timelineStatus: 'date' })).toBe('À renseigner');
-    expect(needsSectionSummary('services', {})).toBe('');
+  });
+
+  it('P3a (F4) : « Prestations et points à confirmer » résume les points à confirmer et leurs bloquants', () => {
+    expect(needsSectionSummary('services', {})).toBe('À préciser');
+    expect(needsSectionSummary('services', { informationCount: 0 })).toBe('À préciser');
+    expect(needsSectionSummary('services', { informationCount: 3, openInformationCount: 0 })).toBe('Tout est confirmé');
+    expect(needsSectionSummary('services', { informationCount: 3, openInformationCount: 1 })).toBe('1 point à confirmer');
+    expect(needsSectionSummary('services', { informationCount: 4, openInformationCount: 2, blockingInformationCount: 0 })).toBe('2 points à confirmer');
+    expect(needsSectionSummary('services', { informationCount: 4, openInformationCount: 2, blockingInformationCount: 1 })).toBe('2 points à confirmer · 1 bloquant');
+    expect(needsSectionSummary('services', { informationCount: 4, openInformationCount: 3, blockingInformationCount: 2 })).toBe('3 points à confirmer · 2 bloquants');
   });
 });

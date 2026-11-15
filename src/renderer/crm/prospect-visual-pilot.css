@@ -12,7 +12,6 @@
 .app-shell .prospects-v2 .prospect-directory-table-panel{padding:0;border:0;background:transparent;box-shadow:none}
 .app-shell .prospects-v2 .aw-data-table{font-size:var(--ui-font-primary);border-collapse:collapse}
 .app-shell .prospects-v2 .aw-data-table th,.app-shell .prospects-v2 .aw-data-table td{min-width:0;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--surface);color:var(--text);filter:none}
-.app-shell .prospects-v2 .aw-data-table th{font-weight:600}
 .app-shell .prospects-v2 .aw-data-table caption{font-size:var(--ui-font-secondary);padding:10px 12px;color:var(--muted);background:var(--surface-soft)}
 .app-shell .prospects-v2 .aw-data-table tr[data-selected=true] td{background:color-mix(in srgb,var(--accent) 9%,var(--surface))}
 .app-shell .prospects-v2 .aw-data-table tr:hover td{background:var(--surface-soft)}
@@ -69,3 +68,5 @@
 .app-shell .prospects-v2 .pipeline-state-icon svg{width:18px;height:18px}
 .app-shell .prospects-v2 .card-drag-handle:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
 @media(max-width:700px){.app-shell .prospects-v2 .prospect-work-accordion-trigger{grid-template-columns:auto minmax(0,1fr)}.app-shell .prospects-v2 .prospect-work-accordion-summary{grid-column:2}}
+/* P3a (F45) : dans la table de Prospection, une pastille d’état longue passe sur deux lignes au lieu de déborder de sa colonne (fenêtre étroite, zoom). */
+.app-shell .prospects-v2 .aw-data-table td .aw-status-pill{max-width:100%;white-space:normal;overflow-wrap:anywhere}

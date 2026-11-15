@@ -7,7 +7,7 @@ import { StatusPill, type StatusTone } from './StatusPill';
  * En-tête de dossier (contact, devis, projet) : titre, sous-titre, état, actions et menu « Plus ».
  * Les enfants forment l'emplacement du bloc « Prochaine étape », sous l'en-tête. Aucune règle métier.
  */
-export function RecordHeader({ leading, title, subtitle, status, actions, moreItems, onMore, children, className }: {
+export function RecordHeader({ leading, title, subtitle, status, actions, moreItems, onMore, closeAction, children, className }: {
   /** R3 : emplacement avant le titre (logo ou avatar du dossier). */
   leading?: ReactNode;
   title: string;
@@ -16,6 +16,8 @@ export function RecordHeader({ leading, title, subtitle, status, actions, moreIt
   actions?: ReactNode;
   moreItems?: MenuItem[];
   onMore?: (id: string) => void;
+  /** P3a (F2) : action de fermeture, toujours rendue en dernier, après le menu « Plus ». */
+  closeAction?: ReactNode;
   children?: ReactNode;
   className?: string;
 }) {
@@ -30,6 +32,7 @@ export function RecordHeader({ leading, title, subtitle, status, actions, moreIt
       {status && <StatusPill tone={status.tone}>{status.label}</StatusPill>}
       {actions}
       {hasMore && <MoreMenu items={moreItems as MenuItem[]} onSelect={(id) => onMore?.(id)} />}
+      {closeAction}
     </div>
     {children && <div className="aw-record-header-next">{children}</div>}
   </header>;

@@ -198,3 +198,66 @@ describe('R3 : en-tête de Clients', () => {
     expect(css).not.toMatch(/\.content-area>\.page-heading\{display:none\}/);
   });
 });
+
+describe('P3a : titres dits une fois (F1) et fiche en fenêtre basse (F46, M8)', () => {
+  const page = read('ProspectsPageV2.tsx');
+  const research = read('ProspectResearchPanel.tsx');
+  const reference = read('ProspectReferenceWindow.tsx');
+  const qualification = read('ProspectQualificationPanelV2.tsx');
+
+  it('la section « Analyse de l’entreprise » ne répète pas son titre dans le panneau', () => {
+    expect(page).toMatch(/<ProspectResearchPanel scope="research"[^>]*hideTitle/);
+    expect(research).toMatch(/hideTitle\??:\s*boolean/);
+    expect(research).toMatch(/!hideTitle&&<h3>/);
+  });
+
+  it('la fenêtre « Référence prospect » garde le titre du panneau', () => {
+    expect(reference).not.toContain('hideTitle');
+  });
+
+  it('l’étiquette de la qualification dit l’origine et non « Qualification » une seconde fois', () => {
+    expect(qualification).not.toContain('Qualification · ');
+    expect(qualification).toContain('Origine · ');
+  });
+
+  it('F46 : en fenêtre basse, l’en-tête, la Prochaine étape et les étapes défilent avec le contenu, onglets visibles', () => {
+    const css = read('prospect-workspace-pilot.css');
+    const block = css.match(/@media \(max-height: 600px\) \{[\s\S]*?\r?\n\}/);
+    expect(block, 'requête max-height: 600px').not.toBeNull();
+    expect(block![0]).toMatch(/\.prospect-detail-desk>\.prospect-workspace\{[^}]*overflow-y:\s*auto/);
+    expect(block![0]).toMatch(/\.prospect-workspace>\.prospect-desk-content\{[^}]*overflow:\s*visible/);
+    expect(block![0]).toMatch(/\.prospect-workspace>\.prospect-desk-tabs\{[^}]*position:\s*sticky/);
+    // Rien ne change hors fenêtre basse : ces déclarations n'existent nulle part ailleurs dans la feuille.
+    const outside = css.replace(block![0], '');
+    expect(outside).not.toMatch(/\.prospect-desk-tabs\{[^}]*position:\s*sticky/);
+    expect(outside).not.toMatch(/\.prospect-detail-desk>\.prospect-workspace\{[^}]*overflow-y:\s*auto/);
+    expect(block![0]).not.toContain('!important');
+  });
+
+  it('F46 : les libellés des onglets de la fiche ne se coupent plus au milieu d’un mot (la rangée défile)', () => {
+    const css = read('prospect-workspace-pilot.css');
+    const rule = css.match(/\.prospect-workspace>\.prospect-desk-tabs button\{[^}]*\}/);
+    expect(rule, 'règle des boutons d’onglet').not.toBeNull();
+    expect(rule![0]).toMatch(/flex:\s*0 0 auto/);
+    expect(rule![0]).toMatch(/white-space:\s*nowrap/);
+    expect(rule![0]).not.toContain('!important');
+    // La rangée ne doit pas élargir le cadre de la fiche (mesuré : 924 px pour 853 px utiles sans cette règle).
+    const row = css.match(/\.prospect-workspace>\.prospect-desk-tabs\{[^}]*contain:\s*inline-size[^}]*\}/);
+    expect(row, 'rangée d’onglets sans contribution à la largeur de la fiche').not.toBeNull();
+    expect(row![0]).not.toContain('!important');
+  });
+
+  it('F45 : la pastille de statut de la table de Prospection passe sur deux lignes au lieu de déborder', () => {
+    const css = read('prospect-visual-pilot.css');
+    const rule = css.match(/\.prospects-v2 \.aw-data-table td \.aw-status-pill\s*\{[^}]*\}/);
+    expect(rule, 'règle de la pastille dans la table de Prospection').not.toBeNull();
+    expect(rule![0]).toMatch(/max-width:\s*100%/);
+    expect(rule![0]).toMatch(/white-space:\s*normal/);
+    expect(rule![0]).not.toContain('!important');
+  });
+
+  it('M8 : les en-têtes de la table de Prospection suivent le style partagé de DataTable', () => {
+    const pilot = read('prospect-visual-pilot.css');
+    expect(pilot).not.toMatch(/\.aw-data-table th\s*\{\s*font-weight:\s*600/);
+  });
+});

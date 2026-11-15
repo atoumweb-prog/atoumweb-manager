@@ -124,3 +124,13 @@
 .app-shell .prospects-v2 .pipeline-card-summary{display:block;width:calc(100% - 24px);margin:4px 12px 8px;padding:4px 0;text-align:left;background:none;border:0;color:var(--muted);font-size:13px;cursor:pointer;}
 .app-shell .prospects-v2 .pipeline-layout .prospect-card-identity strong{font-size:15px;line-height:1.35;word-break:normal;}
 .app-shell .prospects-v2 .pipeline-layout .prospection-card-preview{font-size:14px;line-height:1.45;}
+/* P3a (F46) : les libellés des onglets ne se coupent plus au milieu d’un mot ; la rangée défile horizontalement quand elle ne tient pas. */
+.app-shell .prospects-v2 .prospect-workspace>.prospect-desk-tabs button{flex:0 0 auto;white-space:nowrap;overflow-wrap:normal;}
+/* P3a (F46) : la rangée défile sans élargir le cadre de la fiche (sans cette règle, 924 px pour 853 px utiles à zoom 150 %). */
+.app-shell .prospects-v2 .prospect-workspace>.prospect-desk-tabs{contain:inline-size;}
+/* P3a (F46) : fenêtre basse (par exemple 1280 x 720 en zoom 150 %) : l’en-tête, la Prochaine étape et les étapes défilent avec le contenu, les onglets restent visibles. Rien ne change à hauteur normale. */
+@media (max-height: 600px) {
+  .prospect-detail-desk>.prospect-workspace{overflow-y:auto;overscroll-behavior:contain;}
+  .app-shell .prospects-v2 .prospect-workspace>.prospect-desk-content{flex:0 0 auto;overflow:visible;min-height:auto;}
+  .app-shell .prospects-v2 .prospect-workspace>.prospect-desk-tabs{position:sticky;top:0;z-index:2;background:var(--surface);}
+}

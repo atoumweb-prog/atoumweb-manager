@@ -279,7 +279,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
 
   return <section className="prospect-work-section qualification-panel-v2">
     <div className="work-section-heading">
-      <div><span className="eyebrow">Qualification · {ORIGIN_LABELS[origin]}</span><strong>{readiness.filter((item) => item.ok).length}/{readiness.length} éléments minimums acquis</strong></div>
+      <div><span className="eyebrow">Origine · {ORIGIN_LABELS[origin]}</span><strong>{readiness.filter((item) => item.ok).length}/{readiness.length} éléments minimums acquis</strong></div>
     </div>
 
     <p className="qualification-progress-note">{allReady?'Les informations minimums sont acquises.':'À préciser : '+missing.map(item=>item.label).join(', ')}. Le passage à l’étape suivante reste une action explicite.</p>

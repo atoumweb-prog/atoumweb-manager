@@ -347,7 +347,7 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
     <div className="quote-wizard-actions">
       <button className="secondary-button" type="button" disabled={stepIndex === 0} onClick={() => { setError(null); setStepIndex(index => Math.max(0, index - 1)); }}>← Précédent</button>
       {step !== 'preview'
-        ? <><button className="primary-button" type="button" disabled={Boolean(blockedReason)} onClick={next}>Suivant →</button>{blockedReason && <span className="quote-wizard-hint" role="status">Choisis un prospect ou un client pour continuer.</span>}</>
+        ? <div className="quote-wizard-next">{blockedReason && <span id="quote-wizard-hint" className="quote-wizard-hint" role="status">Choisis un prospect ou un client pour continuer.</span>}<button className="primary-button" type="button" disabled={Boolean(blockedReason)} aria-describedby={blockedReason ? 'quote-wizard-hint' : undefined} onClick={next}>Suivant →</button></div>
         : <button className="primary-button" disabled={saving} type="button" onClick={() => void create()}>{saving ? 'Création…' : 'Créer le devis'}</button>}
     </div>
   </section>;

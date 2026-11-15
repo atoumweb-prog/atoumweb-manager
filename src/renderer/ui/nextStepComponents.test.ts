@@ -133,6 +133,23 @@ describe('RecordHeader', () => {
   it('omits the « Plus » menu when there is nothing in it', () => {
     expect(html(createElement(RecordHeader, { title: 'Dossier' }))).not.toContain('aw-more-menu');
   });
+
+  it('places the close action after the « Plus » menu (P3a, F2)', () => {
+    const markup = html(createElement(RecordHeader, {
+      title: 'Dossier',
+      moreItems: [{ id: 'archiver', label: 'Archiver' }],
+      onMore: () => undefined,
+      closeAction: createElement('button', { className: 'close-detail' }, 'X'),
+    }));
+    expect(markup).toContain('close-detail');
+    expect(markup.indexOf('aw-more-menu')).toBeLessThan(markup.indexOf('close-detail'));
+  });
+
+  it('renders the close action even without a « Plus » menu, and nothing when absent', () => {
+    const withClose = html(createElement(RecordHeader, { title: 'Dossier', closeAction: createElement('button', { className: 'close-detail' }, 'X') }));
+    expect(withClose).toContain('close-detail');
+    expect(html(createElement(RecordHeader, { title: 'Dossier' }))).not.toContain('close-detail');
+  });
 });
 
 describe('R3 : jaune unique et logo de fiche', () => {

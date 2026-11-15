@@ -71,8 +71,16 @@ describe('R4 : assistant de nouveau devis', () => {
 
   it('à l’étape « Pour qui », « Suivant » est inactif et dit pourquoi', () => {
     expect(wizard).toMatch(/const blockedReason = step === 'owner' \? validate\('owner'\) : null;/);
-    expect(wizard).toMatch(/<button className="primary-button" type="button" disabled=\{Boolean\(blockedReason\)\} onClick=\{next\}>Suivant →<\/button>/);
-    expect(wizard).toMatch(/\{blockedReason && <span className="quote-wizard-hint" role="status">Choisis un prospect ou un client pour continuer\.<\/span>\}/);
+    expect(wizard).toMatch(/<button className="primary-button" type="button" disabled=\{Boolean\(blockedReason\)\} aria-describedby=\{blockedReason \? 'quote-wizard-hint' : undefined\} onClick=\{next\}>Suivant →<\/button>/);
+    expect(wizard).toMatch(/\{blockedReason && <span id="quote-wizard-hint" className="quote-wizard-hint" role="status">Choisis un prospect ou un client pour continuer\.<\/span>\}/);
+  });
+
+  it('P3a (F3) : la raison du blocage se lit juste avant « Suivant », dans le même groupe à droite', () => {
+    expect(wizard).toMatch(/<div className="quote-wizard-next">\{blockedReason && <span id="quote-wizard-hint"[\s\S]*?<\/span>\}<button className="primary-button"[^>]*>Suivant →<\/button><\/div>/);
+    const css = read('quote-wizard.css');
+    expect(css).toMatch(/\.quote-wizard-next\s*\{[^}]*display:\s*flex/);
+    expect(css).toMatch(/\.quote-wizard-hint\s*\{(?![^}]*margin-left)/);
+    expect(css.match(/\.quote-wizard-(?:next|hint)\s*\{[^}]*\}/g)!.join('')).not.toContain('!important');
   });
 
   it('les autres étapes gardent le message d’erreur après tentative (aucun blocage a priori)', () => {

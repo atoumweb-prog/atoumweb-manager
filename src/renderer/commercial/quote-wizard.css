@@ -76,6 +76,8 @@
 }
 
 /* R4 : raison visible du blocage de « Suivant » et outil de recette replié. Jetons uniquement, aucun !important. */
-.quote-wizard-hint { align-self: center; margin-left: var(--ui-gap); color: var(--aw-quiet-text, var(--text)); font-size: var(--aw-font-functional); }
+/* P3a (F3) : la raison se lit juste avant « Suivant », dans le même groupe aligné à droite. */
+.quote-wizard-next { display: flex; align-items: center; justify-content: flex-end; gap: var(--ui-gap); min-width: 0; }
+.quote-wizard-hint { color: var(--aw-quiet-text, var(--text)); font-size: var(--aw-font-functional); }
 .quote-wizard-recipe { margin: 0 0 var(--ui-gap); }
 .quote-wizard-recipe > summary { cursor: pointer; color: var(--aw-quiet-text, var(--text)); font-size: var(--aw-font-functional); }

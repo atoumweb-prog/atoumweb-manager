@@ -281,9 +281,11 @@ function factMap(snapshot: ProspectResearchSnapshot): Map<string, string> {
   ]);
 }
 
-export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirst = false, scope = 'research', onEditCompany, onChanged }: {
+export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirst = false, scope = 'research', hideTitle = false, onEditCompany, onChanged }: {
   prospect: ProspectSummary;
   scope?: 'research'|'preparation';
+  /** P3a (F1) : le panneau est monté sous un en-tête de section qui porte déjà le titre. */
+  hideTitle?: boolean;
   onEditCompany?:()=>void;
   defaultOpen?: boolean;
   browseFirst?: boolean;
@@ -358,8 +360,8 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
   return <section className="prospect-work-section prospect-research-panel" data-research-scope={scope} data-browse-first={browseFirst} data-editing={editing}>
     <div className="research-heading">
       <div>
-        <span className="eyebrow">{scope==='preparation'?'Préparation':'Recherche entreprise'}</span>
-        <h3>{scope==='preparation'?'Préparation du prochain échange':'Analyse de l’entreprise'}</h3>
+        {!hideTitle&&<span className="eyebrow">{scope==='preparation'?'Préparation':'Recherche entreprise'}</span>}
+        {!hideTitle&&<h3>{scope==='preparation'?'Préparation du prochain échange':'Analyse de l’entreprise'}</h3>}
         <p className="muted">{scope==='preparation'?'Objectifs, questions et arguments pour le prochain échange.':'Observations, présence numérique et vérifications.'}</p>
       </div>
       {browseFirst&&<>{editing&&<button type="button" className="primary-button research-save-primary" disabled={busy||!loaded||conflict} onClick={()=>void save()}>{busy?'Enregistrement…':'Enregistrer'}</button>}<button type="button" className="secondary-button research-edit-toggle" disabled={busy} onClick={()=>{if(editing){guard.discard();setEditing(false);}else{setOpen(true);setEditing(true);}}}>{editing?'Annuler':scope==='preparation'?'Modifier la préparation':'Modifier l’analyse'}</button></>}

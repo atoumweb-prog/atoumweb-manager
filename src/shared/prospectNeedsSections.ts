@@ -31,7 +31,7 @@ export function sectionForMissingTab(tab: string): NeedsSectionId | null {
 
 const SUMMARY_MAX = 80;
 
-export function needsSectionSummary(id: NeedsSectionId, input: { qualificationGaps?: number; projectSummary?: string | null; budgetStatus?: string | null; timelineStatus?: string | null }): string {
+export function needsSectionSummary(id: NeedsSectionId, input: { qualificationGaps?: number; projectSummary?: string | null; budgetStatus?: string | null; timelineStatus?: string | null; informationCount?: number; openInformationCount?: number; blockingInformationCount?: number }): string {
   if (id === 'qualification') {
     const gaps = input.qualificationGaps ?? 0;
     return gaps === 0 ? 'Complète' : `${gaps} information${gaps > 1 ? 's' : ''} à compléter`;
@@ -42,5 +42,11 @@ export function needsSectionSummary(id: NeedsSectionId, input: { qualificationGa
     return text.length > SUMMARY_MAX ? `${text.slice(0, SUMMARY_MAX - 1).trimEnd()}…` : text;
   }
   if (id === 'commercial') return input.budgetStatus && input.timelineStatus ? 'Renseigné' : 'À renseigner';
-  return '';
+  // P3a (F4) : « Prestations et points à confirmer » résume les points à confirmer et ceux qui bloquent le devis.
+  if (!input.informationCount) return 'À préciser';
+  const open = input.openInformationCount ?? 0;
+  if (open === 0) return 'Tout est confirmé';
+  const blocking = input.blockingInformationCount ?? 0;
+  const base = `${open} point${open > 1 ? 's' : ''} à confirmer`;
+  return blocking > 0 ? `${base} · ${blocking} bloquant${blocking > 1 ? 's' : ''}` : base;
 }
