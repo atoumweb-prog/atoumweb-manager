@@ -16,6 +16,7 @@ import { openEntity } from '../workflow/DossierPanel';
 import { HomeTodoCard } from './HomeTodoCard';
 import { buildTodoList, draftQuoteCount } from '../../shared/homeTodo';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
+import { KeyFigures } from '../ui/KeyFigures';
 import './HomeDashboard.css';
 import './HomeDashboardV2.css';
 import './home-r6.css';
@@ -164,12 +165,12 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   const presentedPreference:HomeWidgetPreference={...preference,order:displayOrder,orderMode:'explicit'};
   const widgetIcons:Record<HomeWidgetKey,OperationIconName>={today:'calendar',watch:'alert',kpis:'chart',pipeline:'chart',time:'clock',actions:'folder'};
   const widgets:Record<HomeWidgetKey,ReactNode>={
-kpis:<div className="home-kpi-grid">
-      <HomeKpi icon="user" tone="red" label="Prospects à relancer" value={has("prospects","actions")?relaunchCount:"—"} helper={overdueRelaunchCount ? `${overdueRelaunchCount} en retard · à traiter dans le pipeline` : 'À traiter aujourd’hui dans le pipeline'} onClick={() => openProspectPipeline('relaunch')} />
-      <HomeKpi icon="file-text" tone="blue" label="Devis en brouillon" value={has("quotes")?draftQuoteCount(data.quotes ?? []):"—"} helper="Devis non finalisés · Ouvrir la liste des devis" onClick={() => openPage('Devis')} />
-      <HomeKpi icon="folder" tone="green" label="Projets à démarrer" value={has("projects")?projectsToStart:"—"} helper="Statut à préparer · Ouvrir tous les projets" onClick={() => openPage('Projets')} />
-      <HomeKpi icon="wrench" tone="orange" label="Interventions en cours" value={has("interventions")?interventionsInProgress:"—"} helper="Statut en cours · Ouvrir toutes les opérations" onClick={() => openPage('Interventions & Maintenance')} />
-    </div>,
+kpis:<KeyFigures ariaLabel="Indicateurs du jour" className="home-kpi-grid" items={[
+      { key: 'relaunch', icon: <OperationIcon name="user" size={22} />, tone: 'danger', label: 'Prospects à relancer', value: has("prospects","actions")?relaunchCount:"—", onAction: () => openProspectPipeline('relaunch'), actionLabel: overdueRelaunchCount ? `${overdueRelaunchCount} en retard, à traiter dans le pipeline` : 'à traiter aujourd’hui dans le pipeline' },
+      { key: 'drafts', icon: <OperationIcon name="file-text" size={22} />, tone: 'info', label: 'Devis en brouillon', value: has("quotes")?draftQuoteCount(data.quotes ?? []):"—", onAction: () => openPage('Devis'), actionLabel: 'devis non finalisés, ouvrir la liste des devis' },
+      { key: 'projects', icon: <OperationIcon name="folder" size={22} />, tone: 'success', label: 'Projets à démarrer', value: has("projects")?projectsToStart:"—", onAction: () => openPage('Projets'), actionLabel: 'statut à préparer, ouvrir tous les projets' },
+      { key: 'interventions', icon: <OperationIcon name="wrench" size={22} />, tone: 'warning', label: 'Interventions en cours', value: has("interventions")?interventionsInProgress:"—", onAction: () => openPage('Interventions & Maintenance'), actionLabel: 'statut en cours, ouvrir toutes les opérations' },
+    ]} />,
 today:<HomeTodoCard items={todoItems} ready={has('entries')} onOpen={openEntity} />,
 pipeline:<article className="home-card home-pipeline-card">
         <div className="home-card-title"><div><OperationIcon name="chart" size={20} /><strong>Pipeline commercial</strong></div><button type="button" onClick={() => openProspectPipeline()} aria-label="Ouvrir le pipeline commercial">›</button></div>
@@ -242,10 +243,3 @@ actions:<article className="home-card home-actions-card">
   </section>;
 }
 
-function HomeKpi({ icon, tone, label, value, helper, onClick }: { icon: OperationIconName; tone: string; label: string; value: number|string; helper: string; onClick: () => void }) {
-  return <button type="button" className={`home-kpi-card tone-${tone}`} onClick={onClick} title={`${label} : ${value}. ${helper}`}>
-    <span className="home-kpi-icon"><OperationIcon name={icon} size={28} /></span>
-    <span className="home-kpi-copy"><strong title={label}>{label}</strong><b>{value}</b></span>
-    <span className="home-kpi-open">›</span>
-  </button>;
-}

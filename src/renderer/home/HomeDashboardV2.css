@@ -1,5 +1,5 @@
 /* Preserve legacy cards, apply the existing global functional text floor after legacy media rules. */
-.home-dashboard :is(button, small, summary, label, .home-pipeline-label, .home-pipeline-step, .home-pipeline-footer, .home-kpi-copy > strong, .home-watch-copy strong, .home-card-title strong, .home-card-title span, .eyebrow) {
+.home-dashboard :is(button, small, summary, label, .home-pipeline-label, .home-pipeline-step, .home-pipeline-footer, .home-watch-copy strong, .home-card-title strong, .home-card-title span, .eyebrow) {
   font-size: var(--ui-font-small, 14px);
 }
 .home-dashboard button {min-height:var(--ui-control-height,36px);}
@@ -15,7 +15,6 @@
   padding:9px 12px;
   cursor:pointer;
 }
-.home-dashboard .home-kpi-copy small {display:block;white-space:normal;overflow:visible;text-overflow:clip;-webkit-line-clamp:unset;}
 
 /* First simplification: useful content first; no reduced typography. */
 .home-dashboard{container-name:home;container-type:inline-size;}
@@ -37,8 +36,6 @@
 .home-widget .home-pipeline-item{min-width:0;}
 .home-widget .home-pipeline-bar{display:none;}
 .home-widget .home-kpi-grid{padding:0 12px 12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));}
-.home-widget .home-kpi-card{box-shadow:none;min-height:92px;}
-.home-widget .home-kpi-icon{width:40px;height:40px;box-shadow:none;background:var(--surface-soft);color:var(--accent);border:1px solid var(--border);}
 .home-heading{flex-wrap:wrap;gap:8px;}
 .home-widget-settings>summary{font-weight:600;}
 .home-widget-settings .home-source-status{margin:8px 0;}
@@ -48,8 +45,6 @@
  .home-widget .home-billing-row{display:flex;flex-wrap:wrap;gap:8px;}
  .home-widget .home-billing-row span{min-width:0;overflow-wrap:anywhere;}
 }
-
-.home-dashboard .home-kpi-card .home-kpi-icon{background:var(--surface-soft);color:var(--accent);}
 
 /* Large displays must not inflate cards into empty fixed-height panels. */
 .home-heading h1{font-size:28px;line-height:1.2;letter-spacing:-.02em;}
@@ -88,10 +83,6 @@
 .home-widget-kpis .home-widget-fold{flex:1;min-width:0;}
 .home-widget-kpis .home-widget-fold>strong{font-size:18px;}
 .home-widget .home-kpi-grid{padding:10px;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;}
-.home-widget .home-kpi-card{--kpi:#008bff;min-height:96px;border-color:var(--kpi);border-radius:10px;background:color-mix(in srgb,var(--kpi) 9%,var(--surface));gap:14px;}
-.home-widget .home-kpi-card.tone-red{--kpi:#ff1757;}.home-widget .home-kpi-card.tone-green{--kpi:#00b98a;}.home-widget .home-kpi-card.tone-orange{--kpi:#ff8317;}
-.home-dashboard .home-kpi-card .home-kpi-icon{width:58px;height:58px;border:0;color:white;background:var(--kpi);}
-.home-kpi-copy>b{font-size:30px;}
 .home-widget .home-pipeline-items{grid-template-columns:repeat(7,minmax(0,1fr));padding:8px;gap:8px;}
 .home-widget .home-pipeline-item{min-height:96px;text-align:center;align-content:center;padding:12px 7px 8px;border-radius:8px;gap:8px;}
 .home-widget .home-pipeline-label{grid-row:1;font-weight:500;}
@@ -138,8 +129,6 @@
 .home-widget-today,.home-widget-watch{align-self:start;}
 .home-widget .home-watch-card{min-height:0;}
 .home-widget .home-empty-state{min-height:85px;}
-.home-widget .home-kpi-card{min-height:80px;padding:10px 12px;}
-.home-dashboard .home-kpi-card .home-kpi-icon{width:48px;height:48px;}
 .home-widget .home-watch-copy{padding:12px;}
 .home-widget .home-watch-card.is-clear{max-height:none;}
 .home-widget .home-widget-content:focus-visible{outline:2px solid var(--accent);outline-offset:-3px;}

@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/11/2026 : passe de finitions, lot P5d2 Tuiles de l'Accueil exécuté (recette de Carlos, commit local) ; passe de finitions terminée
+
+- [x] Plan : `docs/refonte/plans/2026-11-15-p5d2-accueil.md` (fiche `…-p5d-chiffres-cles-design.md`).
+- [x] **Corrections, test d'abord** (`ui/p5d2Wiring.test.ts`, 3 tests) : les quatre tuiles du widget « Indicateurs » passent par `KeyFigures` (`className="home-kpi-grid"`, icônes gardées, tons `danger`, `info`, `success`, `warning` par jetons à la place des dégradés en dur, aide passée en nom accessible, indice « Voir le détail › ») ; `HomeKpi` et règles `.home-kpi-card`, `.home-kpi-icon`, `.home-kpi-copy`, `.home-kpi-open` retirés de `HomeDashboard.css` et `HomeDashboardV2.css` ; la règle générale `.home-dashboard :is(…)` retirée par erreur par `css-prune.cjs` (virgules dans `:is()`) a été rétablie à l'identique sans `.home-kpi-copy > strong` ; test R6 adapté au nouveau balisage.
+- **Preuves** : `npm run typecheck` propre ; `node scripts/run-tests.cjs` : **318 fichiers passés, 1 ignoré, 2 595 tests** ; natifs 72, 18/18, 25, 857 ; `lot10` 59 ; `check-home-shell-lot1` 96 ; `check-ux-v2-02d-home` 56 ; `check-shell-home-simplification` 836 ; budget des petits textes 12 ; `!important` 86 ; aucun débordement ; empreinte de la préproduction identique. Captures `C:\DEV\Livrables\Cadrage-parcours\captures-p5d2\`.
+- **Non vu** : thèmes AtoumWeb et Blanc, densités Compact et Confort +. **Revue finale : autocontrôle de l'auteur, pas un relecteur indépendant.**
+- **Passe de finitions terminée** (P1 à P6b, P5a à P5d2). Prochaine action : **fin de refonte** (thèmes AtoumWeb et Blanc, F76 ; densités Compact et Confort +), fiche courte à valider ; puis lots à part (acompte par défaut et moteur des devis, F71 ; vue Parcours commercial, F69). Fichier de reprise : `docs/refonte/PASSATION-2026-11-15-apres-P5d2.md`.
+
 ## 15/11/2026 : passe de finitions, lot P5d1 Chiffres clés (hors Accueil) exécuté (recette de Carlos, commit local)
 
 - [x] Fiche : `docs/refonte/plans/2026-11-15-p5d-chiffres-cles-design.md` (décisions de Carlos : les huit variantes en deux lots, P5d1 puis P5d2 pour l'Accueil ; icône et couleur d'état facultatives). Plan : `…-p5d1-chiffres-cles.md`.

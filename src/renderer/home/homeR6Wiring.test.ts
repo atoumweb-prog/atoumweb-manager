@@ -36,11 +36,13 @@ describe('R6 : compteur honnête', () => {
   const page = readSource('HomeDashboard.tsx');
 
   it('« Devis en brouillon » compte de vrais devis et ouvre la liste des devis', () => {
-    expect(page).toContain('label="Devis en brouillon"');
+    // P5d2 (F27) : la tuile passe par KeyFigures (propriétés d'objet au lieu d'attributs JSX).
+    expect(page).toContain("label: 'Devis en brouillon'");
     expect(page).toContain('draftQuoteCount(data.quotes ?? [])');
     expect(page).toContain('has("quotes")');
-    expect(page).toContain("onClick={() => openPage('Devis')}");
+    expect(page).toContain("onAction: () => openPage('Devis')");
     expect(page).not.toContain('Compteur issu des Prospects');
+    expect(page).not.toContain("label: 'Devis à préparer'");
     expect(page).not.toContain('label="Devis à préparer"');
     expect(page).not.toContain('quotePrepareCount');
   });
