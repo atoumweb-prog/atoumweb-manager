@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { billingEmptyText, documentsEmptyText, expensesEmptyText, operationsEmptyText, timeEmptyTexts } from './gestionEmpty';
+import { billingEmptyText, compactListEmptyText, documentsEmptyText, expensesEmptyText, operationsEmptyText, timeEmptyTexts } from './gestionEmpty';
+
+describe('P4a : message vide d’une liste compacte', () => {
+  it('avec un filtre actif, le message standard des filtres', () => {
+    expect(compactListEmptyText(expensesEmptyText(), true)).toBe('Aucun résultat pour ces filtres.');
+    expect(compactListEmptyText(billingEmptyText(), true)).toBe('Aucun résultat pour ces filtres.');
+  });
+
+  it('sans filtre actif, le message propre à l’écran', () => {
+    expect(compactListEmptyText(expensesEmptyText(), false)).toBe(expensesEmptyText());
+    expect(compactListEmptyText(billingEmptyText(), false)).toBe(billingEmptyText());
+    expect(compactListEmptyText(operationsEmptyText('requests'), false)).toBe(operationsEmptyText('requests'));
+  });
+});
 
 describe('R7 : messages vides de Temps', () => {
   it('nomme la période, avec ou sans filtre', () => {

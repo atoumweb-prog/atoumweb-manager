@@ -67,6 +67,23 @@ describe('R7 : barre d’outils partagée', () => {
     expect(order.every((index) => index >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
+
+  it('P4a : l’action principale est à côté de la zone qui passe à la ligne, jamais dedans', () => {
+    const markup = renderToStaticMarkup(createElement(ListToolbar, {
+      countLabel: '11 demandes',
+      primary: createElement('button', { className: 'primary-button' }, '+ Action'),
+      filters: createElement('span', null, 'FILTRES'),
+    }));
+    expect(markup.indexOf('aw-list-toolbar-main')).toBeGreaterThanOrEqual(0);
+    // la zone « main » contient les filtres et se ferme avant le conteneur de l'action principale
+    expect(markup).toMatch(/FILTRES<\/span><\/div><\/div><div class="aw-list-toolbar-primary/);
+  });
+
+  it('P4a : sans filtres, aucune rangée de filtres ; sans action principale, aucun conteneur d’action', () => {
+    const markup = render();
+    expect(markup).not.toContain('aw-list-toolbar-filters');
+    expect(markup).not.toContain('aw-list-toolbar-primary');
+  });
 });
 
 describe('R7 : feuille list-page.css', () => {
@@ -77,9 +94,22 @@ describe('R7 : feuille list-page.css', () => {
   });
 
   it('la barre d’outils passe à la ligne au lieu de déborder', () => {
-    const rule = css.match(/\.aw-list-toolbar\s*\{([^}]*)\}/);
+    const rule = css.match(/\.aw-list-toolbar-main\s*\{([^}]*)\}/);
     expect(rule).not.toBeNull();
     expect(rule![1]).toContain('flex-wrap: wrap');
+  });
+
+  it('P4a : la barre est une grille [zone qui enroule | action principale en haut à droite]', () => {
+    const bar = css.match(/\.aw-list-toolbar\s*\{([^}]*)\}/);
+    expect(bar).not.toBeNull();
+    expect(bar![1]).toContain('display: grid');
+    expect(bar![1]).toContain('grid-template-columns: minmax(0, 1fr) auto');
+    const primary = css.match(/\.aw-list-toolbar-primary\s*\{([^}]*align-self[^}]*)\}/);
+    expect(primary).not.toBeNull();
+    expect(primary![1]).toContain('align-self: start');
+    expect(css).not.toMatch(/\.aw-list-toolbar-primary\s*\{[^}]*margin-left:\s*auto/);
+    expect(css).toMatch(/\.aw-list-toolbar-main\s*>\s*\.inline-search\s*\{[^}]*width: 270px/);
+    expect(css).not.toMatch(/\.aw-list-toolbar\s*>\s*\.inline-search/);
   });
 
   it('les deux composants importent la feuille', () => {

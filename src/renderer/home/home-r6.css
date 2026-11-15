@@ -12,6 +12,11 @@
 .home-todo-empty { display: grid; gap: 4px; padding: 18px 16px; color: var(--text); font-size: var(--aw-font-functional); }
 .home-todo-empty strong { font-size: var(--aw-font-body); }
 .home-todo-empty span { color: var(--muted); }
+/* P4a (F43) : la rangée d'actions de l'en-tête passe à la ligne ; en fenêtre étroite (497 px utiles) le bouton d'actualisation dépassait de 2 px. */
+.home-heading-actions { flex-wrap: wrap; min-width: 0; max-width: 100%; }
+/* P4a (F23) : les deux blocs de tête prennent toute la largeur ; côte à côte, « À surveiller » laissait un grand vide sous ses deux alertes
+   quand « À faire maintenant » compte huit lignes (HomeDashboardV2.css les mettait en grid-column: auto, d'où cette règle après lui). */
+.home-widget-today, .home-widget-watch { grid-column: 1 / -1; }
 @media (max-width: 760px) {
   .home-todo-row { grid-template-columns: minmax(0, 1fr) auto; }
   .home-todo-row > :first-child { grid-column: 1 / -1; justify-self: start; }

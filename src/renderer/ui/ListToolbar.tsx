@@ -14,15 +14,22 @@ export interface ListToolbarProps {
   primary?: ReactNode;
 }
 
-/** Barre d'outils commune des listes Gestion : une seule rangée qui passe à la ligne quand la place manque. */
+/**
+ * Barre d'outils commune des listes (P4a, F25). Deux zones côte à côte : la zone qui passe à la ligne (onglets, compteur,
+ * Actualiser, recherche, filtres) et l'action principale, qui reste en haut à droite. Quand les listes déroulantes
+ * prennent la largeur, ce sont les filtres qui descendent d'une rangée, jamais l'action principale qui reste seule sur
+ * une ligne ; quand tout tient, la barre garde une seule rangée. L'ordre du DOM (donc du clavier) ne change pas.
+ */
 export function ListToolbar({ countLabel, onRefresh, search, leading, filters, primary }: ListToolbarProps) {
   return (
     <div className="aw-list-toolbar">
-      {leading && <div className="aw-list-toolbar-leading">{leading}</div>}
-      <strong className="aw-list-toolbar-count">{countLabel}</strong>
-      {onRefresh && <button className="secondary-button" type="button" onClick={onRefresh}><OperationIcon name="refresh" size={16} /> Actualiser</button>}
-      {search && <input className="inline-search" type="search" value={search.value} disabled={search.disabled} placeholder={search.placeholder} aria-label={search.ariaLabel} onChange={(event) => search.onChange(event.target.value)} />}
-      {filters && <div className="aw-list-toolbar-filters">{filters}</div>}
+      <div className="aw-list-toolbar-main">
+        {leading && <div className="aw-list-toolbar-leading">{leading}</div>}
+        <strong className="aw-list-toolbar-count">{countLabel}</strong>
+        {onRefresh && <button className="secondary-button" type="button" onClick={onRefresh}><OperationIcon name="refresh" size={16} /> Actualiser</button>}
+        {search && <input className="inline-search" type="search" value={search.value} disabled={search.disabled} placeholder={search.placeholder} aria-label={search.ariaLabel} onChange={(event) => search.onChange(event.target.value)} />}
+        {filters && <div className="aw-list-toolbar-filters">{filters}</div>}
+      </div>
       {primary && <div className="aw-list-toolbar-primary">{primary}</div>}
     </div>
   );

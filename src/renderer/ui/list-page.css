@@ -6,12 +6,15 @@
 .aw-keyfigure > span { font-size: 22px; font-weight: 800; line-height: 1.2; }
 .aw-keyfigure > small { color: var(--muted); font-size: var(--aw-font-functional); }
 
-.aw-list-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px var(--ui-gap); min-width: 0; }
+/* P4a (F25) : grille [zone qui passe à la ligne | action principale]. L'action reste en haut à droite ; ce sont les filtres qui
+   descendent d'une rangée quand la place manque (une seule rangée quand tout tient). */
+.aw-list-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; min-width: 0; }
+.aw-list-toolbar-main { display: flex; flex-wrap: wrap; align-items: center; gap: 8px var(--ui-gap); min-width: 0; }
 .aw-list-toolbar-leading, .aw-list-toolbar-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
 .aw-list-toolbar-count { font-size: var(--aw-font-body); font-weight: 700; color: var(--text); white-space: nowrap; }
 .aw-list-toolbar .inline-search { flex: 1 1 200px; min-width: 160px; max-width: 360px; }
 .aw-list-toolbar select { min-width: 0; max-width: 190px; }
-.aw-list-toolbar-primary { margin-left: auto; }
+.aw-list-toolbar-primary { align-self: start; margin-left: var(--ui-gap); }
 
 /* Un seul ascenseur : dans les listes Gestion, le tableau n'a plus de boîte à défilement vertical propre, la page défile. */
 .operations-stack .aw-data-table-scroll,
@@ -30,7 +33,7 @@
 .aw-list-toolbar-primary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 /* R8 : la feuille globale ui-consistency-v2.css impose max-width: 100 % aux champs avec une spécificité que ces règles ne battent pas ;
    la recherche a donc une largeur posée par width et flex-basis (celle que les écrans de Gestion avaient déjà), sans croissance. */
-.aw-list-toolbar > .inline-search { width: 270px; flex: 0 1 270px; min-width: 160px; }
+.aw-list-toolbar-main > .inline-search { width: 270px; flex: 0 1 270px; min-width: 160px; }
 /* P3b (F20) : pastille de filtre retirable (« Projet : … ✕ »), jetons uniquement, texte à 14 px au moins. */
 .aw-filter-chip {
   display: inline-flex;

@@ -32,6 +32,14 @@ export function documentsEmptyText(input: { total: number; archived: number; arc
   return 'Aucun document dans cette vue.';
 }
 
+/**
+ * Message vide d'une liste compacte (fiche ouverte à côté de la liste) : le même texte que le tableau complet.
+ * Il ne parle de filtres que si un filtre est réellement actif ; sinon c'est le message propre à l'écran.
+ */
+export function compactListEmptyText(emptyText: string, filtersActive: boolean): string {
+  return filtersActive ? 'Aucun résultat pour ces filtres.' : emptyText;
+}
+
 export function billingEmptyText(): string {
   return 'Rien à facturer pour l’instant. Les éléments apparaissent quand un acompte, un solde, une intervention, un pack ou un abonnement est à facturer.';
 }

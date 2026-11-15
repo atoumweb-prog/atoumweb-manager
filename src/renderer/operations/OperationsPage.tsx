@@ -2,7 +2,7 @@ import { KeyFigures } from '../ui/KeyFigures';
 import { ListToolbar } from '../ui/ListToolbar';
 import { plural } from '../../shared/projectTabs';
 import { filterByProject, type OperationsProjectFilter } from '../../shared/operationsProjectFilter';
-import { operationsEmptyText } from '../../shared/gestionEmpty';
+import { compactListEmptyText, operationsEmptyText } from '../../shared/gestionEmpty';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import {hasActiveFilters} from '../ui/tableEmpty';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
@@ -542,7 +542,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
               <span className="request-compact-meta"><span>{SOURCE_LABELS[request.source]}</span><span>{REQUEST_STATUS_LABELS[request.status]}</span></span>
               <span className="request-compact-date">{dateLabel(request.receivedAt)}</span>
             </button>)}
-            {filteredRequests.length === 0 && <div className="empty-table">Aucune demande dans cette vue.</div>}
+            {filteredRequests.length === 0 && <div className="empty-table">{compactListEmptyText(operationsEmptyText('requests'), hasActiveFilters([query,requestStatus]))}</div>}
           </div> : <ConfiguredDataTable<(typeof filteredRequests)[number]> emptyText={operationsEmptyText('requests')} filtersActive={hasActiveFilters([query,requestStatus])} onClearFilters={()=>{setQuery('');setRequestStatus('all');}} scope="requests-list" store={window.atoumweb.visualPreferences} rows={filteredRequests} selectedId={null} getId={request=>request.id} onSelect={request=>requestUnsavedExit(()=>{ setSelectedRequest(request); setSelectedIntervention(null); setRequestExpanded(false); })} className="operations-table" caption="Reçue · Client · Sujet · Priorité · Statut · source complète des résultats filtrés" columns={[
 {id:"received",label:"Reçue",sortValue:request=>request.receivedAt??null,render:request=><>{dateLabel(request.receivedAt)}</>},
 {id:"client",label:"Client",sortValue:request=>request.clientLabel??null,render:request=><><strong>{request.clientLabel}</strong><small>{request.projectLabel || 'Sans projet'}</small></>},
@@ -608,7 +608,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
               <span className="intervention-compact-meta"><span>{INTERVENTION_TYPE_LABELS[intervention.type]}</span><span>{duration(intervention.totalTimeSeconds)}</span></span>
               <span className="intervention-compact-coverage">{COVERAGE_LABELS[intervention.coverageMode]}</span>
             </button>)}
-            {filteredInterventions.length === 0 && <div className="empty-table">Aucune intervention dans cette vue.</div>}
+            {filteredInterventions.length === 0 && <div className="empty-table">{compactListEmptyText(operationsEmptyText('interventions'), hasActiveFilters([query,interventionStatus]))}</div>}
           </div> : <ConfiguredDataTable<(typeof filteredInterventions)[number]> emptyText={operationsEmptyText('interventions')} filtersActive={hasActiveFilters([query,interventionStatus])} onClearFilters={()=>{setQuery('');setInterventionStatus('all');}} scope="interventions-list" store={window.atoumweb.visualPreferences} rows={filteredInterventions} selectedId={null} getId={intervention=>intervention.id} onSelect={intervention=>requestUnsavedExit(()=>{ setSelectedIntervention(intervention); setSelectedRequest(null); setInterventionExpanded(false); })} className="operations-table" caption="Numéro · Client · Intervention · Prise en charge · Temps · Statut · source complète des résultats filtrés" columns={[
 {id:"identity",label:"Numéro",required:true,sortValue:intervention=>intervention.number??null,render:intervention=><><strong>{intervention.number}</strong></>},
 {id:"client",label:"Client",sortValue:intervention=>intervention.clientLabel??null,render:intervention=><><strong>{intervention.clientLabel}</strong><small>{intervention.projectLabel || 'Sans projet'}{intervention.projectNodeLabel ? ` · ${intervention.projectNodeLabel}` : ''}</small></>},
