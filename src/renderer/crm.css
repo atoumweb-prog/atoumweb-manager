@@ -1,6 +1,6 @@
 .crm-stack { display: grid; gap: 16px; }
 .module-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.module-toolbar > div:first-child { color: var(--muted); font-size: 12px; }
+.module-toolbar > div:first-child { color: var(--muted); font-size: var(--aw-font-functional); }
 .module-toolbar > div:first-child strong { color: var(--text); font-size: 18px; }
 .toolbar-controls { display: flex; align-items: center; gap: 8px; }
 .inline-search, .toolbar-controls select, .crm-form input, .crm-form select, .prospect-card select { border: 1px solid var(--border); background: var(--surface-soft); color: var(--text); border-radius: 9px; padding: 9px 10px; outline: none; }
@@ -60,7 +60,7 @@
 .status-inactive { background: color-mix(in srgb, var(--muted) 11%, transparent); color: var(--muted); }
 .status-archived { background: color-mix(in srgb, #996b46 12%, transparent); color: #996b46; }
 .contact-stack { display: grid; gap: 2px; }
-.link-button { border: 0; background: transparent; color: var(--accent-strong); cursor: pointer; font-size: 9px; font-weight: 750; }
+.link-button { border: 0; background: transparent; color: var(--accent-strong); cursor: pointer; font-size: var(--aw-font-functional); font-weight: 750; }
 .danger-link { color: #b14c50; }
 .empty-table { padding: 34px; text-align: center; color: var(--muted); }
 .client-summary-panel {

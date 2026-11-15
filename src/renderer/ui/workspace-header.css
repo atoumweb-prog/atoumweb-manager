@@ -70,7 +70,7 @@
 .aw-manager-shell .aw-header-primary .aw-header-timer{flex:0 1 280px;}
 
 .aw-header-alerts{position:relative;flex:none;}
-.aw-header-alert-count{position:absolute;right:0;top:-5px;min-width:18px;height:18px;display:grid;place-items:center;padding:0 4px;border-radius:99px;background:#ad263b;color:#fff;font-size:12px;}
+.aw-header-alert-count{position:absolute;right:-2px;top:-7px;min-width:20px;height:20px;display:grid;place-items:center;padding:0 5px;border-radius:99px;background:#ad263b;color:#fff;font-size:var(--aw-font-functional);line-height:1;}/* P5b : 14 px, pastille agrandie (décision de Carlos du 15/11/2026) */
 .aw-header-alerts [role=dialog]{position:fixed;right:16px;top:80px;width:min(420px,calc(100vw - 32px));max-height:calc(100dvh - 100px);overflow:auto;padding:14px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 35px #0005;z-index:40;}
 .aw-header-alerts [role=dialog]>header{display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .aw-header-alerts [role=dialog] button{font:inherit;background:transparent;color:var(--text);border:1px solid var(--border);border-radius:8px;min-height:36px;padding:8px;cursor:pointer;}

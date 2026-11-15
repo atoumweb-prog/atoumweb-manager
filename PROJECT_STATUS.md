@@ -1,5 +1,14 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 15/11/2026 : passe de finitions, lot P5b Listes et en-tête exécuté (recette de Carlos, commit local)
+
+- [x] Plan : `docs/refonte/plans/2026-11-15-p5b-listes-entete.md` (exécuté sans résumé préalable, à la demande de Carlos).
+- [x] **Corrections, test d'abord** (`ui/p5bWiring.test.ts`, 9 tests) : 97 règles au jeton `var(--aw-font-functional)` : fichiers entiers `statistics/StatisticsPage.css`, `bridge/BridgeSitesPage.css`, `directory/DirectoryPage.css`, `crm-identity.css`, `crm/client-list-quick-v2.css` ; règles ciblées de `time.css` (chrono, tableau de Temps), `projects.css` (tableau des projets), `crm.css` (barre d'outils, liens), `prospect-workflow.css` (compteurs des onglets). Décisions de Carlos appliquées : initiales d'avatar à 14 px, pastille du nombre d'alertes à 20 px (`ui/workspace-header.css`), cadran de l'horloge de Temps en traits sans chiffres (`time/TimePage.tsx`, `time.css`). Outil hors dépôt ajouté : `outils-edition\css-raise-all.cjs`.
+- **Preuves** : 0 texte visible sous 14 px sur 9 vues (Statistiques, Annuaire organisations et contacts, Sites et une page, Projets, Prospection, Clients, Temps) aux deux tailles, aucun défilement horizontal ni débordement ; budget **570 à 473** ; `npm run typecheck` propre ; `node scripts/run-tests.cjs` : **315 fichiers passés, 1 ignoré, 2 574 tests** ; natifs 72, 18/18, 25, 857 ; `lot10` 59 ; `03e-directory` 206 ; `home-shell-lot1` 96 ; `!important` 86 ; empreinte de la préproduction identique. Captures `C:\DEV\Livrables\Cadrage-parcours\captures-p5b\`.
+- [x] **Premier test direct par Carlos** : Manager de la branche lancé (`electron-forge start`, profil à part) sur une **copie jetable** de la base de test ; empreinte de la préproduction identique avant et après ; copie supprimée. Retours de Carlos inscrits : F69 (vue « Parcours commercial » à repenser, lot à part), F70 (petits textes de la fiche Maintenance, P5c), F71 (moteur des devis et des mentions légales à tester après la refonte).
+- **Non vu** : fiches des écrans du lot (P5c) ; autres thèmes et densités. **Revue finale : autocontrôle de l'auteur, pas un relecteur indépendant.**
+- Prochaine action : **P5c** (fiches et reste jusqu'à zéro, F70). Fichier de reprise : `docs/refonte/PASSATION-2026-11-15-apres-P5b.md`.
+
 ## 15/11/2026 : passe de finitions, lot P5a Offres & Tarifs exécuté (recette de Carlos sur captures, commit local)
 
 - [x] Fiche P5 : `docs/refonte/plans/2026-11-15-p5-petits-textes-design.md` (validée le 15/11/2026 : quatre lots par écran P5a, P5b, P5c, P5d ; 14 px partout sauf le logo). Plan : `…-p5a-offres-tarifs.md` (exécuté sans résumé préalable, à la demande de Carlos).

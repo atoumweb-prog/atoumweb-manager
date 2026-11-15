@@ -271,10 +271,10 @@ export function TimePage({ onMessage, statisticsDrilldown, onClearStatisticsDril
           <span className="time-clock-hand time-clock-hour" style={{ transform: `translateX(-50%) rotate(${hoursAngle}deg)` }} />
           <span className="time-clock-hand time-clock-minute" style={{ transform: `translateX(-50%) rotate(${minutesAngle}deg)` }} />
           <span className="time-clock-hand time-clock-second" style={{ transform: `translateX(-50%) rotate(${secondsAngle}deg)` }} />
-          <span className="time-clock-mark mark-12">12</span>
-          <span className="time-clock-mark mark-3">3</span>
-          <span className="time-clock-mark mark-6">6</span>
-          <span className="time-clock-mark mark-9">9</span>
+          <span className="time-clock-mark mark-12" />
+          <span className="time-clock-mark mark-3" />
+          <span className="time-clock-mark mark-6" />
+          <span className="time-clock-mark mark-9" />
         </div>
         <div className="time-now-copy">
           <small className="time-now-label">Maintenant</small>

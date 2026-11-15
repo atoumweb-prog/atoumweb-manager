@@ -110,10 +110,8 @@
 
 .timer-label { /* P6b (C5) : « Timer · En cours » sur une seule ligne */ white-space: nowrap;
   color: var(--accent);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: .08em;
 }
 
 .timer-context {
@@ -123,7 +121,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text-muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
 }
 
 .timer-actions {
@@ -138,7 +136,7 @@
   border-left: 1px solid var(--border);
   background: transparent;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
   cursor: pointer;
 }
@@ -185,7 +183,7 @@
 }
 
 .timer-popover > div:first-child strong {
-  font-size: 13px;
+  font-size: var(--aw-font-functional);
 }
 
 .timer-popover label,
@@ -193,7 +191,7 @@
   display: grid;
   gap: 4px;
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
 }
 
@@ -291,17 +289,18 @@
 }
 
 .time-clock-mark {
+  /* P5b (décision de Carlos du 15/11/2026) : des traits à la place des chiffres à 8 px ; l'heure est écrite en clair à côté */
   position: absolute;
-  color: var(--text-muted);
-  font-size: 8px;
-  font-weight: 650;
-  line-height: 1;
+  width: 2px;
+  height: 8px;
+  border-radius: 1px;
+  background: var(--text-muted);
 }
 
 .time-clock-mark.mark-12 { top: 6px; left: 50%; transform: translateX(-50%); }
-.time-clock-mark.mark-3 { top: 50%; right: 7px; transform: translateY(-50%); }
+.time-clock-mark.mark-3 { top: 50%; right: 7px; transform: translateY(-50%); width: 8px; height: 2px; }
 .time-clock-mark.mark-6 { bottom: 6px; left: 50%; transform: translateX(-50%); }
-.time-clock-mark.mark-9 { top: 50%; left: 7px; transform: translateY(-50%); }
+.time-clock-mark.mark-9 { top: 50%; left: 7px; transform: translateY(-50%); width: 8px; height: 2px; }
 
 .time-now-copy {
   display: grid;
@@ -409,14 +408,12 @@
   border-bottom: 1px solid var(--border);
   text-align: left;
   vertical-align: top;
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
 }
 
 .time-table th {
   color: var(--text-muted);
-  font-size: 8px;
-  text-transform: uppercase;
-  letter-spacing: .04em;
+  font-size: var(--aw-font-functional);
 }
 
 .time-table td > strong,
@@ -427,7 +424,7 @@
 .time-table td > small {
   margin-top: 3px;
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
 }
 
 .time-table th {

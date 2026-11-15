@@ -31,7 +31,7 @@
   background: var(--accent-soft);
   color: var(--accent-strong);
   text-align: center;
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
 }
 
 .card-action-preview { display: grid; gap: 5px; }

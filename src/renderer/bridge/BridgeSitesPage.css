@@ -100,7 +100,7 @@
 
 .bridge-metric span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-metric strong {
@@ -119,7 +119,7 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--surface-soft);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   font-weight: 650;
 }
 
@@ -136,7 +136,7 @@
 .bridge-inspection-footer {
   align-items: center;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
 }
 
 /* Même logique que Clients / Prospection / Interventions :
@@ -263,7 +263,7 @@
 .bridge-site-card small {
   margin-top: 3px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-site-icon,
@@ -297,7 +297,7 @@
   overflow: hidden;
   max-width: 620px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -310,7 +310,7 @@
 }
 
 .bridge-snapshot-select label {
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   font-weight: 700;
 }
 
@@ -338,7 +338,7 @@
   background: var(--surface);
   color: var(--muted);
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-content-tabs button strong {
@@ -371,7 +371,7 @@
 .bridge-page-tools > span {
   flex: 0 0 auto;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-page-list {
@@ -408,7 +408,7 @@
 .bridge-page-builder {
   overflow: hidden;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -436,7 +436,7 @@
 .bridge-page-copy small {
   margin-top: 2px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-snapshot-technical,
@@ -461,7 +461,7 @@
   align-items: center;
   padding: 9px 10px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   font-weight: 700;
 }
 
@@ -489,7 +489,7 @@
   padding: 7px 9px;
   border-radius: 8px;
   background: var(--surface);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-snapshot-warnings > div {
@@ -507,7 +507,7 @@
   align-items: center;
   padding: 0 9px 9px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-detail-header {
@@ -549,7 +549,7 @@
 
 .bridge-page-summary small {
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-detail-intro {
@@ -559,12 +559,12 @@
 }
 
 .bridge-detail-intro strong {
-  font-size: 13px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-detail-intro span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   line-height: 1.45;
 }
 
@@ -599,9 +599,8 @@
 .bridge-node-kind {
   overflow: hidden;
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   font-weight: 700;
-  text-transform: uppercase;
   text-overflow: ellipsis;
 }
 
@@ -616,7 +615,7 @@
 .bridge-node-copy small {
   margin-top: 2px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-node-actions {
@@ -662,7 +661,7 @@
 
 .bridge-page-technical-grid h4 {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-source {
@@ -688,7 +687,7 @@
 .bridge-source small {
   margin-top: 2px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-dependencies {
@@ -698,7 +697,7 @@
   padding: 8px 9px;
   border-radius: 8px;
   background: var(--surface);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-dependencies span {
@@ -754,7 +753,7 @@
   padding: 9px 10px;
   border: 1px solid var(--border);
   border-radius: 9px;
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   line-height: 1.45;
 }
 
@@ -784,7 +783,7 @@
   border-radius: 999px;
   background: var(--surface-soft);
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-preview-layers > span.present {
@@ -812,7 +811,7 @@
   color: var(--muted);
   cursor: pointer;
   font: inherit;
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   font-weight: 650;
 }
 
@@ -848,7 +847,7 @@
   background: var(--surface-soft);
   color: var(--text);
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;
@@ -886,7 +885,7 @@
 
 .bridge-code-panel > header span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-code-panel pre {
@@ -910,7 +909,7 @@
   border-radius: 8px;
   background: var(--surface-soft);
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 /* Le navigateur et la fiche s'adaptent à leur vraie largeur, pas seulement à la fenêtre. */
@@ -1201,7 +1200,7 @@
   border-radius: 999px;
   background: var(--surface-soft);
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   font-weight: 700;
 }
 
@@ -1249,7 +1248,7 @@
 
 .bridge-reuse-banner span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-reuse-banner .primary-button {
@@ -1278,7 +1277,7 @@
   padding: 8px 10px;
   cursor: pointer;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
   font-weight: 650;
 }
 
@@ -1324,12 +1323,12 @@
 
 .bridge-candidate-grid span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-candidate-grid strong {
   overflow-wrap: anywhere;
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-candidate-instructions {
@@ -1351,7 +1350,7 @@
   gap: 7px;
   align-items: flex-start;
   margin: 0;
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   line-height: 1.45;
 }
 
@@ -1367,7 +1366,7 @@
   max-width: 680px;
   margin: 0;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
   line-height: 1.45;
 }
 
@@ -1574,13 +1573,13 @@
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
   text-align: center;
 }
 
 .bridge-responsive-toolbar button small {
   color: var(--muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 500;
 }
 
@@ -1792,7 +1791,7 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--accent-strong);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
 }
 
@@ -1839,7 +1838,7 @@
   border-radius: 999px;
   background: var(--surface);
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
   font-weight: 650;
 }
 
@@ -1882,7 +1881,7 @@
   gap: 5px;
   min-height: 30px;
   padding: 5px 8px;
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-node-match-review {
@@ -1909,7 +1908,7 @@
 .bridge-node-match-head > span {
   flex: 0 0 auto;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-node-match-list {
@@ -1963,7 +1962,7 @@
   gap: 6px 12px;
   align-items: center;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .bridge-node-match-meta small {
@@ -1982,7 +1981,7 @@
   border-radius: 999px;
   background: var(--surface-soft);
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 @media (max-width: 700px) {

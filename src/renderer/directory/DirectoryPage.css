@@ -39,7 +39,7 @@
   border-radius: 999px;
   background: var(--surface-soft);
   color: var(--text);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   font-weight: 650;
 }
 
@@ -112,7 +112,7 @@
 .directory-table td > small {
   margin-top: 2px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
 }
 
 .directory-name-cell {
@@ -142,7 +142,7 @@
 
 .directory-name-cell small {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   font-weight: 400;
 }
 
@@ -206,7 +206,7 @@
 .directory-compact-copy span,
 .directory-compact-copy small {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   font-weight: 400;
 }
 
@@ -218,7 +218,7 @@
   padding: 5px 8px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   font-weight: 650;
   white-space: nowrap;
 }
@@ -373,7 +373,7 @@ body.directory-resizing {
 .directory-meta-grid span,
 .directory-info-block > div > span {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   font-weight: 700;
 }
 
@@ -428,7 +428,7 @@ body.directory-resizing {
 
 .directory-linked-contacts button small {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   font-weight: 400;
 }
 

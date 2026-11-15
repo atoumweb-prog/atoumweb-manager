@@ -16,12 +16,12 @@
 .project-table { width: 100%; min-width: 900px; border-collapse: collapse; }
 .project-table th,
 .project-table td { padding: 13px 14px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
-.project-table th { color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
-.project-table td { font-size: 12px; }
+.project-table th { color: var(--text-muted); font-size: var(--aw-font-functional); }
+.project-table td { font-size: var(--aw-font-functional); }
 .project-table tbody tr { cursor: pointer; transition: background .14s ease; }
 .project-table tbody tr:hover,
 .project-table tbody tr.selected-row { background: var(--surface-soft); }
-.project-table td > small { display: block; margin-top: 3px; color: var(--text-muted); font-size: 9px; }
+.project-table td > small { display: block; margin-top: 3px; color: var(--text-muted); font-size: var(--aw-font-functional); }
 
 .status-in_progress { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
 .status-blocked { border-color: #b75b5b; }
@@ -29,7 +29,7 @@
 .status-archived { opacity: .65; }
 
 .project-progress-cell { display: grid; gap: 5px; min-width: 110px; }
-.project-progress-cell > span { font-size: 10px; font-weight: 800; }
+.project-progress-cell > span { font-size: var(--aw-font-functional); font-weight: 800; }
 .project-progress-cell i,
 .project-main-progress i { display: block; height: 6px; overflow: hidden; border-radius: 99px; background: var(--surface-soft); }
 .project-progress-cell b,

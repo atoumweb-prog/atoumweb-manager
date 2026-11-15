@@ -13,7 +13,7 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .crm-identity-avatar-large {
@@ -75,14 +75,14 @@
 
 .crm-identity-assets-summary strong {
   color: var(--text);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   font-weight: 750;
 }
 
 .crm-identity-assets-summary small {
   overflow: hidden;
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
