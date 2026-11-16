@@ -20,7 +20,8 @@
   - suite **328 fichiers, 2 694 tests** ; typecheck propre ;
   - recettes devis vertes (parcours 44/44, préparation contractuelle, options, conseils, contrats client 14/14, bibliothèque 148).
 - **Recette rouge avant le lot** : `check-vitrine-single-ui` (« Bouton absent : Créer le PDF ») ; même échec sur `3e0ed1b5` et sur `d83b5f88` (avant F71a), copies détachées : F79.
-- **Non vu** : écrans à l'oeil (accord de Carlos du 15/11) ; `docs/refonte/DESIGN.md` section 11 garde la décision du 13/11 (règle d'offre d'abord) : la fiche F71b la remplace pour les sites, mise à jour de DESIGN.md à montrer à Carlos (règle G). **Autocontrôle de l'auteur.**
+- [x] **`docs/refonte/DESIGN.md` section 11 mis à jour** à la demande de Carlos (16/11/2026) : décisions F71b ajoutées sous les entrées du 13/11, qu'elles remplacent pour les sites (historique conservé).
+- **Non vu** : écrans à l'oeil (accord de Carlos du 15/11). F79 (recette « vitrine seule ») : plus tard, accord de Carlos. **Autocontrôle de l'auteur.**
 - Prochaine action : lots à part au choix de Carlos : F69 (vue Parcours commercial, fiche), décisions F55 à F63, diagnostics F66 à F68, F75, F78, F79, débordements F72 et F73 ; particuliers hors établissement (J+8, rétractation en ligne) quand Carlos le décidera.
 
 ## 16/11/2026 : F71a, clauses des options, suggestions et champs vides (commit local)
