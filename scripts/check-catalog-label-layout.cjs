@@ -9,15 +9,20 @@ source='module.paths.unshift('+JSON.stringify(path.join(repo,'node_modules'))+')
  app.whenReady().then(async()=>{
  const workspace=S.ensureWorkspace(path.join(temp,'workspace')),{DatabaseSync,backup}=require('node:sqlite'),original=new DatabaseSync(${JSON.stringify(input)},{readOnly:true});try{await backup(original,workspace.databaseFile);}finally{original.close();}
  db=new S.DatabaseService(workspace);await db.initialize();db.setSetting('theme','noir');db.setSetting('display_density','comfort');
+ // F68 : précondition préparée dans la copie TEMP, un brouillon portant la provenance d'une version importée (la base de recette peut ne plus en avoir).
+ const imported=db.database.get("SELECT v.item_id,v.provenance_json FROM catalog_versions v WHERE v.status='published' AND v.provenance_json IS NOT NULL AND v.provenance_json<>'null' AND NOT EXISTS(SELECT 1 FROM catalog_versions d WHERE d.item_id=v.item_id AND d.status='draft' AND d.abandoned_at IS NULL) ORDER BY v.item_id LIMIT 1");assert(imported,'Imported published version available in TEMP copy');
+ {const current=db.catalog.getItem(imported.item_id).currentVersion;db.catalog.createVersion(imported.item_id,{priceMode:current.priceMode,priceCents:current.priceCents,nature:current.nature,description:'TEST brouillon de recette F68'});}
+ const importedDraft=db.database.get("SELECT id FROM catalog_versions WHERE item_id=? AND status='draft' AND abandoned_at IS NULL",[imported.item_id]).id;db.database.run('UPDATE catalog_versions SET provenance_json=? WHERE id=?',[imported.provenance_json,importedDraft]);
  const backendErrors=[],handle=ipcMain.handle.bind(ipcMain);ipcMain.handle=(channel,listener)=>handle(channel,async(...args)=>{try{return await listener(...args);}catch(e){backendErrors.push({channel,error:String(e)});throw e;}});
  const results=[],check=(ok,label)=>{assert(ok,label);results.push(label)};
  S.registerIpcHandlers(db,workspace);S.registerOperationsIpcHandlers(db);S.registerReferentialsIpcHandlers(db);S.registerBusinessBackupsIpcHandlers(db);S.registerTimeCorrectionIpcHandler(db);
  win=new BrowserWindow({show:false,width:1920,height:1080,useContentSize:true,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true}});win.webContents.on('console-message',e=>{if(e.level==='error'||e.level===3)consoleErrors.push(e.message)});
  await win.loadFile(path.join(temp,'index.html'));await wait('document.querySelectorAll("[data-nav-module]").length===17','bootstrap');await navigate('Offres & Tarifs');await wait('document.querySelector(".ot-spaces")','catalogue');
  check(await get('window.atoumweb.catalog.persistenceAvailable()'),'Schema 81 available through real preload/IPC');
- check((await get('window.atoumweb.catalog.listDrafts()')).length===130,'130 imported operational drafts through IPC');
+ check((await get('window.atoumweb.catalog.listDrafts()')).length>0,'Imported operational drafts listed through IPC');
+ const clauseDraftsBefore=db.database.get("SELECT count(*) AS n FROM contract_clause_versions WHERE status='draft'").n,clauseLinksBefore=db.database.get('SELECT count(*) AS n FROM catalog_contract_clause_links').n;
  await evalUI('const e=[...document.querySelectorAll(".ot-view-row button")].find(e=>e.textContent.includes("Mes brouillons"));e.click();');await wait('document.querySelector(".ot-draft-row")','drafts');check(true,'Mes brouillons renders imported copy');
- await evalUI('document.querySelector(".ot-draft-row .primary-button").click()');await wait('document.querySelector(".catalog-detail-panel")','detail');
+ await evalUI('document.querySelector('+JSON.stringify('.ot-draft-row[data-draft-version="'+importedDraft+'"] .primary-button')+').click()');await wait('document.querySelector(".catalog-detail-panel")','detail');
  const tabs=await get('Array.from(document.querySelectorAll("[id^=catalog-tab-]")).map(e=>e.id)');check(tabs.length===8,'Eight existing Offer/Service tabs retained');
  win.setContentSize(1920,1080);win.webContents.setZoomFactor(1);
  const layouts=[];
@@ -31,8 +36,8 @@ source='module.paths.unshift('+JSON.stringify(path.join(repo,'node_modules'))+')
  await navigate('Devis');check(true,'Historical Quotes page opens on migrated imported copy');
  await navigate('Documents & Contrats');check(true,'Documents and Contracts page opens on migrated imported copy');
  await evalUI('window.dispatchEvent(new CustomEvent("atoumweb:open-contract-library",{detail:null}))');await wait('document.querySelector(".contract-library")','contract library');check(true,'Contract library opens through normal UI route');
- check(db.database.get("SELECT count(*) AS n FROM contract_clause_versions WHERE status='draft'").n===119,'119 clauses remain draft after UI consultation');
- check(db.database.get('SELECT count(*) AS n FROM catalog_contract_clause_links').n===0,'Contract mappings remain inactive');
+ check(db.database.get("SELECT count(*) AS n FROM contract_clause_versions WHERE status='draft'").n===clauseDraftsBefore,'Draft clauses unchanged by UI consultation');
+ check(db.database.get('SELECT count(*) AS n FROM catalog_contract_clause_links').n===clauseLinksBefore,'Contract mappings unchanged by UI consultation');
  await sleep(300);check(backendErrors.filter(e=>!(e.channel==='projects:update-node'&&/archiv/i.test(e.error))).length===0,'No unexpected backend error; archived-site refusal is explicitly tested');check(consoleErrors.length===0,'No renderer error');check(db.database.all('PRAGMA foreign_key_check').length===0,'No FK violation');
  fs.writeFileSync(${JSON.stringify(output)},JSON.stringify({tempOnly:true,source:${JSON.stringify(input)},checks:results,tabs,layouts,consoleErrors,backendErrors,capturesProduced:1},null,2));console.log('ACTIVATION_UI '+JSON.stringify({checks:results.length,captures:1}));
  }).catch(e=>{console.error(e.stack||e);process.exitCode=1}).finally(()=>{if(win&&!win.isDestroyed())win.destroy();db?.close();app.quit();});

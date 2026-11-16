@@ -2,6 +2,8 @@
 module.exports=async({db,win,get,evalUI:js,navigate,wait,sleep,check,output})=>{
  const fs=require('node:fs'),path=require('node:path'),dir=path.dirname(output),styles=[],captures=[];
  win.setContentSize(1920,1080);win.webContents.setZoomFactor(1);
+ // F66 : la note de version historique ne s'affiche que si l'offre a aussi un brouillon ; la copie TEMP reçoit ce brouillon avant l'empreinte de départ.
+ {const lp=db.database.get("SELECT item_id FROM catalog_versions WHERE json_extract(provenance_json,'$.recordKey')='AW-LP-BASE' ORDER BY version_number DESC LIMIT 1");if(lp&&!db.database.get("SELECT id FROM catalog_versions WHERE item_id=? AND status='draft' AND abandoned_at IS NULL",[lp.item_id])){const current=db.catalog.getItem(lp.item_id).currentVersion;db.catalog.createVersion(lp.item_id,{priceMode:current.priceMode,priceCents:current.priceCents,nature:current.nature,description:'TEST brouillon de recette F66'});}}
  const before=JSON.stringify(['catalog_items','catalog_versions','contract_clause_versions','quotes','quote_lines'].map(t=>db.database.all('SELECT * FROM '+t+' ORDER BY id')));
  const button=async(scope,text)=>{await js('const b=[...document.querySelectorAll('+JSON.stringify(scope+' button')+')].find(e=>e.textContent.includes('+JSON.stringify(text)+'));if(!b)throw Error("Missing button");b.click()');await sleep(120);};
  const snap=async(name)=>{await js('document.querySelector(".content-area").scrollTop=0');await js('return new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');await sleep(200);fs.writeFileSync(path.join(dir,name+'.png'),(await win.webContents.capturePage()).toPNG());captures.push(name+'.png');};
