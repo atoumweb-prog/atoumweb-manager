@@ -61,16 +61,16 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     await wait('!!document.querySelector(".prospect-view-switch")','vue Prospection montée');
 
     await clickText('.prospect-view-switch button','Parcours commercial');
-    await wait('document.querySelectorAll(".pipeline-step-column").length===7','six colonnes et Conversion');
-    test(await get('document.querySelectorAll(".pipeline-step-column").length')===7,'R03B-03: 6+1 colonnes vraies');
+    await wait('document.querySelectorAll(".pipeline-step-column").length===6','six colonnes d’étape');
+    test(await get('document.querySelectorAll(".pipeline-step-column").length')===6,'R03B-03: six colonnes d’étape (la conversion est hors plateau, F69)');
     test(await get('!document.querySelector(".kanban-board").textContent.includes("TEST 03B Prospection Dijon")'),
       'R03B-01: new absent du pipeline');
     test(await get('!document.querySelector(".kanban-board").textContent.includes("TEST 03B Perdu")'),
       'R03B-16: perdu absent du pipeline');
     test(await get('!document.querySelector(".kanban-board").textContent.includes("TEST 03B Converti")'),
       'R03B-15: converti absent des colonnes actives');
-    test(await get('document.querySelector(".pipeline-conversion-history").textContent.includes("Conversion")'),
-      'R03B-15: Conversion est une section historique');
+    test(await get('!!document.querySelector(".pipeline-conversion-history")&&!document.querySelector(".pipeline-conversion-history").closest(".kanban-board")&&document.querySelector(".pipeline-conversion-history").textContent.includes("Clients acquis")'),
+      'R03B-15: les clients acquis sont un historique hors des colonnes');
     // Simuler un vrai dragstart Chromium, puis tenter Conversion et Finalisation :
     // ni la section historique ni la colonne E73 n'acceptent un drop métier.
     await js('const source=[...document.querySelectorAll(".prospect-card-head")].find(e=>e.textContent.includes("TEST 03B Actif Dijon"));'+
@@ -104,19 +104,22 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     test(!quoteStatus(quote.id).principleAgreementAt,'R03B-13: simple envoi ne vaut pas accord');
 
     await clickText('.prospect-card-head','TEST 03B Actif Dijon');
-    await wait('!!document.querySelector(".prospect-detail-panel")','fiche rapide');
-    await observe('prospect-rapid','.prospect-detail-panel');
-    await clickText('.prospect-detail-panel button','Ouvrir la fiche de travail');
+    // F86 : depuis F69, la carte entière ouvre directement la fiche de travail.
     await wait('!!document.querySelector(".prospect-desk-overlay")','fiche de travail réelle');
     await observe('prospect-desk','.prospect-desk-overlay');
+    // F86 : le suivi du devis est dans l’onglet « Devis » de la fiche de travail.
+    await clickText('.prospect-desk-overlay [role=tab]','Devis');
+    // L’onglet ouvre le devis complet ; « Fermer le devis » revient au suivi (accord de principe, relance).
+    await wait('!!document.querySelector(".prospect-desk-overlay .quote-detail-panel .close-detail")','devis intégré ouvert');
+    await js('document.querySelector(".prospect-desk-overlay .quote-detail-panel .close-detail").click()');await sleep(150);
     await wait('!!document.querySelector(".prospect-principle-agreement button")','commande E73 dans le vrai devis');
     await clickText('.prospect-principle-agreement button','Accord de principe confirmé');
     await wait('!!document.querySelector(".prospect-principle-agreement [role=status]")','confirmation E73 affichée');
     test(Boolean(quoteStatus(quote.id).principleAgreementAt),'R03B-12: accord horodaté dans SQLite TEMP');
     await wait('[...document.querySelectorAll(".pipeline-step-column")].find(e=>e.querySelector("header strong")?.textContent.trim()==="Finalisation")?.querySelectorAll(".prospect-card").length===1',
       'accord affiché dans Finalisation');
-    test(await get('[...document.querySelectorAll(".pipeline-step-column")].find(e=>e.querySelector("header strong")?.textContent.trim()==="Finalisation")?.querySelector(".prospect-card-step")?.textContent.includes("Étape 6")'),
-      'R03B-12: carte accord confirmé porte bien étape 6');
+    test(await get('[...document.querySelectorAll(".pipeline-step-column")].find(e=>e.querySelector("header strong")?.textContent.trim()==="Finalisation")?.querySelector(".prospect-card")?.textContent.includes("TEST 03B Actif Dijon")'),
+      'R03B-12: carte accord confirmé dans la colonne Finalisation (F69 : plus de libellé d’étape sur la carte)');
     test(quoteStatus(quote.id).status==='sent','R03B-12: envoi non converti en signature');
     test(prospectStage(active.id).stage==='negotiation'&&!prospectStage(active.id).clientAccountId,
       'R03B-12: l accord ne modifie ni l étape Négociation ni le Client');
@@ -153,14 +156,14 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       'R03B-12: retour à la colonne actuelle après révocation');
 
     // Historique : une conversion réelle ne se confond ni avec perdu ni avec archivé.
-    await clickText('.pipeline-conversion-history button','Voir les conversions');
-    await wait('!!document.querySelector(".history-prospect-list")','historique Conversion');
-    test(await get('document.querySelector(".history-prospect-list").textContent.includes("TEST 03B Converti")'),
+    await clickText('.pipeline-conversion-history button','Clients acquis');
+    await wait('!!document.querySelector(".prospect-history-table")','historique Conversion');
+    test(await get('document.querySelector(".prospect-history-table").textContent.includes("TEST 03B Converti")'),
       'R03B-17: conversion authentique affichée');
-    test(await get('!document.querySelector(".history-prospect-list").textContent.includes("TEST 03B Perdu")'),
+    test(await get('!document.querySelector(".prospect-history-table").textContent.includes("TEST 03B Perdu")'),
       'R03B-16: perdu n’apparaît pas en conversion');
-    await clickText('.history-prospect-row','TEST 03B Converti');
-    await wait('!!document.querySelector(".history-view-stack .prospect-detail-panel")','détail conversion');
+    await js('const row=[...document.querySelectorAll(".prospect-history-table tbody tr")].find(r=>r.textContent.includes("TEST 03B Converti"));if(!row)throw Error("Conversion absente");row.querySelector("button").click();');await sleep(110);
+    await wait('!!document.querySelector(".history-view-stack .prospect-history-detail")','détail conversion');
     await clickText('.history-view-stack button','Ouvrir la fiche Client');
     await wait('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label")==="Clients"',
       'navigation exacte Client');
@@ -180,7 +183,7 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       await wait('document.documentElement.dataset.density==='+JSON.stringify(density),'densité '+density);
       await navigate('Prospection');
       await clickText('.prospect-view-switch button','Parcours commercial');
-      await wait('document.querySelectorAll(".pipeline-step-column").length===7','kanban '+theme+'/'+density);
+      await wait('document.querySelectorAll(".pipeline-step-column").length===6','kanban '+theme+'/'+density);
       test(await get('document.documentElement.dataset.theme==='+JSON.stringify(theme)+'&&document.documentElement.dataset.density==='+JSON.stringify(density)),
         'R03B-19: présentation '+theme+'/'+density);
       test(await get('document.querySelector(".kanban-board").scrollWidth>0 && document.querySelector(".kanban-board").clientWidth>0'),
@@ -189,11 +192,11 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     }
     win.setSize(1024,720);
     await sleep(120);
-    test(await get('document.querySelectorAll(".pipeline-step-column").length===7'),
+    test(await get('document.querySelectorAll(".pipeline-step-column").length===6'),
       'R03B-19: colonnes restent montées dans fenêtre 1024x720');
     win.webContents.setZoomFactor(1.25);
     await sleep(120);
-    test(await get('document.querySelectorAll(".pipeline-step-column").length===7'),
+    test(await get('document.querySelectorAll(".pipeline-step-column").length===6'),
       'R03B-19: colonnes toujours accessibles à zoom 125 %');
     win.webContents.setZoomFactor(1);
     // 03C.5 : les deux chemins passent par les vrais handlers/preload. Le
@@ -289,7 +292,7 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     win.setSize(1510,1030);win.webContents.setZoomFactor(1);
     await navigate('Prospection');
     await clickText('.prospect-view-switch button','Parcours commercial');
-    await wait('document.querySelectorAll(".pipeline-step-column").length===7',
+    await wait('document.querySelectorAll(".pipeline-step-column").length===6',
       'pipeline 03C monté');
     // Les fixtures sont injectées côté main APRÈS le bootstrap du renderer :
     // forcer sa vraie synchronisation IPC plutôt que supposer un remount.
@@ -297,10 +300,10 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     await wait('[...document.querySelectorAll(".prospect-card-head")].some(e=>e.textContent.includes("TEST 03C Besoin Dijon"))',
       'nouveau Prospect 03C présent après refresh');
     await clickText('.prospect-card-head','TEST 03C Besoin Dijon');
-    await wait('!!document.querySelector(".prospect-detail-panel")','fiche Besoins sélectionnée');
-    await clickText('.prospect-detail-panel button','Ouvrir la fiche de travail');
-    await wait('!!document.querySelector(".prospect-desk-overlay .prequote-entry button")',
-      'pré-devis réel chargé depuis workflow et catalogue');
+    // F86 : la carte ouvre directement la fiche de travail.
+    await wait('!!document.querySelector(".prospect-desk-overlay")','fiche de travail 03C');
+    // F86 : besoins, checklist et projet sont dans l’onglet « Besoins » (le pré-devis n’est plus affiché depuis le 23/10/2026).
+    await clickText('.prospect-desk-overlay [role=tab]','Besoins');
     // La fiche de travail voit le snapshot initial ; une seconde fenêtre
     // modifie ensuite la checklist avant qu'un utilisateur valide localement.
     await wait('!!document.querySelector(".prospect-desk-overlay .missing-info-row select")',
@@ -342,7 +345,7 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       'if(!area)throw Error("Projet textarea absent");'+
       'Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value").set.call(area,"Projet local non enregistré");'+
       'area.dispatchEvent(new Event("input",{bubbles:true}));');
-    await clickText('.need-identification-fields button.primary-button','Enregistrer l’identification du besoin');
+    await clickText('.prospect-desk-overlay .needs-save-row button','Enregistrer'); /* F86 : bouton « Enregistrer » sous le besoin */
     await wait('[...document.querySelectorAll(".prospect-desk-overlay .prospect-checklist-conflict")].some(e=>e.textContent.includes("le projet, le budget"))',
       'bandeau de conflit Projet/ Budget visible');
     await observe('project-conflict','.need-identification-fields');
@@ -358,30 +361,8 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
       'R03C-16: la recharge du projet ne modifie pas la checklist');
     await observe('needs-saved','.need-identification-fields');
 
-    await clickText('.prequote-entry button','Contrôler avant devis');
-    await wait('!!document.querySelector(".prequote-actions button.primary-button")',
-      'contrôle pré-devis ouvert');
-    test(await get('document.querySelector(".prequote-solutions")?.textContent.includes("Audit de référencement 03C")'),
-      'R03C-07: besoin libre présent et prix à préciser');
-    test(await get('!document.querySelector(".prequote-actions button.primary-button").disabled'),
-      'R03C-08: contrôle complet autorise la création volontaire');
-    test(db.quotes.list({prospectId:needProspect.id}).length===0,
-      'R03C-08: ouvrir le contrôle ne crée aucun devis');
-    await observe('prequote','.prequote-actions');
-    await clickText('.prequote-actions button.primary-button','Passer à l’édition du devis');
-    for(let i=0;i<100&&db.quotes.list({prospectId:needProspect.id}).length===0;i++)await sleep(70);
-    const made = db.quotes.list({prospectId:needProspect.id});
-    test(made.length===1 && made[0].status==='draft',
-      'R03C-08: un seul devis brouillon créé après clic');
-    const full = db.quotes.get(made[0].id);
-    test(full.lines.length===1 && full.lines[0].label==='Audit de référencement 03C',
-      'R03C-08: seule la ligne libre volontaire est au devis');
-    test(!prospectStage(needProspect.id).clientAccountId && db.crm.listClients().length===1,
-      'R03C-08: préparer le devis ne convertit pas le Prospect');
-    await wait('document.querySelector("[data-nav-module][aria-current=page]")?.getAttribute("aria-label")==="Devis"',
-      'naviguer vers le véritable brouillon de devis');
-    await wait('!!document.querySelector(".quote-detail-panel")','détail devis réel chargé');
-    await observe('quote-draft','.quote-detail-panel');
+    // F86 : passage « Contrôler avant devis » retiré : le pré-devis a été remplacé par le devis intégré à la fiche (3c118101, 23/10/2026).
+    test(db.quotes.list({prospectId:needProspect.id}).length===0,'R03C-08: la qualification seule ne crée aucun devis');
     test(db.database.get('PRAGMA integrity_check').integrity_check==='ok',
       'R03C-18: intégrité SQLite TEMP après création devis');
     test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','R03B-20: intégrité SQLite TEMP');

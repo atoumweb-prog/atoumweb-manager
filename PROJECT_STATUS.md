@@ -1,5 +1,18 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : recettes F85 à F87 (commit local)
+
+- [x] **F87** `check-client-documents` : « Modifier » ouvre désormais un formulaire (plus de trois `window.prompt`) ; la recette remplit le formulaire. Verte, base de recette inchangée.
+- [x] **F86** recette Prospection 03B (`lot03b-real-scenarios`), rouge avant ce lot, transposée sur l'écran actuel (règle H) :
+  - six colonnes d'étape ; la conversion est le bouton « Clients acquis » sous le plateau ;
+  - la carte ouvre directement la fiche de travail ; suivi du devis par l'onglet Devis puis « Fermer le devis » ;
+  - besoins par l'onglet Besoins ; historique en tableau ; plus de libellé « Étape 6 » sur la carte (F69).
+  - **Retiré** : le passage « Contrôler avant devis » (création du devis depuis le pré-devis). Cet écran n'est plus affiché depuis le 23/10/2026 (`3c118101`, devis intégrés à la fiche) ; un scénario de création de devis depuis la fiche reste à écrire si Carlos le souhaite.
+  - Verte : **71 contrôles**, dont les boîtes F81 (accord de principe, annulation, rechargements de checklist et de projet).
+- [~] **F85** recette commerciale native : comparaison de la base de test au pack approuvé passée en **rapport seulement** (décision de Carlos du 16/11/2026). Écart relevé : 107 offres actives, 21 publiables non publiées, 10 publiées hors matrice, dont des offres « à vérifier avant commercialisation ». La recette reste rouge plus loin : dans la base de test, une seule offre publiée a encore un modèle de projet lié, et la recette prépare un projet pour chaque offre. **Décision de Carlos** : réaligner les liens Catalogue → Projet de la base de test (écriture dans la préproduction), ou faire construire sa base par la recette.
+- **Preuves** : recettes lancées sur copies jetables ; empreinte de la préproduction inchangée `5da9e5fcf5115d91`. Aucun code produit modifié. **Autocontrôle de l'auteur.**
+- Prochaine action : décision de Carlos sur F85.
+
 ## 16/11/2026 : F81, toutes les confirmations dans la boîte de la page (commit local)
 
 - **Décision de Carlos** (16/11/2026) : remplacer toutes les boîtes natives restantes, en un lot, comme l'acceptation Abby (F61).

@@ -56,10 +56,12 @@ if(!process.versions.electron){
   const missingPublished=expectedPublishable.map(item=>item.code_source).filter(code=>!publishedCodes.has(code));
   const unexpectedlyPublished=allCanonical.filter(item=>item.currentVersion?.status==='published'&&!expectedCodes.has(item.canonicalCode)).map(item=>item.canonicalCode);
   fs.writeFileSync(path.join(output,'commercial-publication-matrix.json'),JSON.stringify({sourceVersion:approved.version,sourceDate:approved.date_decision_metier,counts:{source:approved.references.length,expectedPublishable:expectedPublishable.length,expectedRestricted:expectedRestricted.length,clauses:clauses.clauses.length,activeCanonical:allCanonical.length,publishedCanonical:references.length,missingPublished:missingPublished.length,unexpectedlyPublished:unexpectedlyPublished.length},expectedPublishable:expectedPublishable.map(r=>({code:r.code_source,status:r.statut_source})),missingPublished,unexpectedlyPublished,restricted:expectedRestricted.map(r=>({code:r.code_source,status:r.statut_source}))},null,2));
-  check('Active canonical identity count',allCanonical.length===112);
-  check('Published catalogue matches approved publication matrix',missingPublished.length===0&&unexpectedlyPublished.length===0);
-  check('Published contract clause count matches approved matrix',database.database.get("SELECT COUNT(*) AS n FROM contract_clause_versions WHERE status='published'").n===clauses.clauses.length);
-  check('Restricted source references are not published',expectedRestricted.every(r=>!publishedCodes.has(r.code_source)));
+  // F85 (décision de Carlos du 16/11/2026, « rapport seulement ») : la base de recette n'est plus comparée au pack approuvé.
+  // L'écart est écrit dans commercial-publication-matrix.json et dans le rapport ; le pack reste vérifié par les tests automatiques sur base construite.
+  const matrixDrift={activeCanonical:allCanonical.length,duplicateCanonicalCodes:allCanonical.length-new Set(allCanonical.map(item=>item.canonicalCode)).size,missingPublished,unexpectedlyPublished,
+    publishedClauses:database.database.get("SELECT COUNT(*) AS n FROM contract_clause_versions WHERE status='published'").n,approvedClauses:clauses.clauses.length,
+    restrictedPublished:expectedRestricted.map(r=>r.code_source).filter(code=>publishedCodes.has(code))};
+  trace('approved-matrix-drift (rapport seulement)',matrixDrift);checks.push({name:'Approved matrix drift reported (not enforced on the recipe base)',passed:true,drift:matrixDrift});
   const parameters=async quote=>{
    // F71b : un devis « à définir » (acompte null) reçoit ici un échéancier choisi à la main pour la recette.
    const p=S.emptyContractParameters(quote.contractAudience,quote.depositPercent??30);
