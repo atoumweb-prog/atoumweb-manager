@@ -12,7 +12,8 @@
 - **Révision (règle I)** : 25 services récurrents au lieu de 24 annoncés dans la fiche (« Hébergement WordPress seul » ajouté) ; même périmètre.
 - **Non vérifié** : rendu des projets dans l'écran Projets ; les options ajoutées à un site vitrine arrivent dans des lots « Démarrage / Réalisation / … » distincts des lots du modèle vitrine (lots de noms différents), déduit du code, non regardé à l'écran.
 - **Preuves** : typecheck propre ; suite **336 fichiers, 2 808 tests** ; empreinte de la préproduction inchangée `5da9e5fcf5115d91`. **Autocontrôle de l'auteur.**
-- Prochaine action : relecture du rapport par Carlos, puis, sur son accord explicite, application dans la préproduction (`--apply` avec l'empreinte relue).
+- [x] **Appliqué dans la préproduction Manager-Claude-Codex** le 16/11/2026, sur accord explicite de Carlos (« Oui, appliquer »), après relecture du rapport : même empreinte que la simulation (`8321faed…`) ; 32 modèles, 100 liens ; sauvegarde avant écriture `Sauvegardes-lotsavant-modeles-referentiel-2026-11-16T20-25-27-056Z.sqlite` ; intégrité ok, 0 clé étrangère cassée. Nouvelle empreinte de la base : `56b6f4858c2d950d` (avant : `5da9e5fcf5115d91`). Contrôle sur copie de la base appliquée : **101 offres sur 101** deviennent un projet (aucun devis de test créé dans la préproduction). Rapport : `C:DEVLivrablesModeles-de-projetapport-application.md`.
+- Prochaine action : compléter les durées et relire les étapes « Proposé, à valider » dans l'éditeur de modèles (Carlos) ; la préproduction PREPRODUCTION-V394 n'est pas concernée.
 
 ## 16/11/2026 : modèles de projet pour toutes les offres, fiche validée (rien de codé)
 
