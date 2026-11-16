@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : modèles de projet pour toutes les offres, fiche validée (rien de codé)
+
+- **Constat** : 125 offres actives sur 126 sont publiées, mais une seule (« Site vitrine 5 pages ») est reliée à un modèle de projet ; sans modèle relié, un devis accepté ne peut pas devenir un projet. Le référentiel du 12/11 propose des étapes pour chaque offre (`scripts/referentiel/etapes.cjs`).
+- [x] **Fiche** `docs/refonte/plans/2026-11-16-modeles-de-projet-design.md`, validée par Carlos le 16/11/2026 : 79 prestations avec un modèle de base, 24 options en modèle complément, 24 services récurrents sans modèle de projet ; avant-vente hors du projet ; encaissements en tâches « Vérifier dans Abby » ; étapes proposées importées telles quelles avec « Proposé, à valider », durées vides ; modèles TEST de boutique et de landing gardés à part.
+- Prochaine action : plan d’implémentation (script de préparation, simulation sur copie jetable, rapport à relire) ; écriture dans la préproduction seulement après accord explicite de Carlos.
+
 ## 16/11/2026 : recettes F85 à F87 (commit local)
 
 - [x] **F87** `check-client-documents` : « Modifier » ouvre désormais un formulaire (plus de trois `window.prompt`) ; la recette remplit le formulaire. Verte, base de recette inchangée.
