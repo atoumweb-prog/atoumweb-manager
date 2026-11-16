@@ -1,6 +1,6 @@
 /* Lot 2: the approved Home palette, restricted to Sites & Pages in Noir/Confort.
    Layout decisions use the observed workspace width, including Windows scaling. */
-:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell:has(.sites-v2) {
+:root[data-theme='noir'][data-density] .aw-manager-shell:has(.sites-v2) {
   --canvas:#031321;--surface:#071b2d;--surface-soft:#10283d;--sidebar:#041321;
   --sidebar-text:#e9f2ff;--muted:#a9c2df;--text-muted:#a9c2df;--border:#25445d;
   --border-color:#25445d;--accent:#ffd326;--accent-strong:#ffda39;

@@ -36,11 +36,11 @@ html[data-theme=noir] .catalog-stack .primary-button{background:linear-gradient(
 /* Noir/Confort only: native table scrolling keeps its geometry and behavior. */
 html[data-theme][data-density] .catalog-stack .aw-data-table-scroll{scrollbar-color:auto}
 html[data-theme][data-density] .catalog-stack .aw-data-table-scroll::-webkit-scrollbar{width:14px;height:14px}
-html[data-theme=noir][data-density=comfort] .catalog-stack .aw-data-table-scroll::-webkit-scrollbar-track{background:#101b25}
+html[data-theme=noir][data-density] .catalog-stack .aw-data-table-scroll::-webkit-scrollbar-track{background:#101b25}
 html[data-theme][data-density] .catalog-stack .aw-data-table-scroll::-webkit-scrollbar-thumb{border-radius:8px}
-html[data-theme=noir][data-density=comfort] .catalog-stack .aw-data-table-scroll::-webkit-scrollbar-thumb{background:#64798a;border:3px solid #101b25}
-html[data-theme=noir][data-density=comfort] .catalog-stack .aw-data-table-scroll::-webkit-scrollbar-thumb:hover{background:#91a5b4}
-html[data-theme=noir][data-density=comfort] .catalog-stack .aw-data-table-scroll::-webkit-scrollbar-corner{background:#101b25}
+html[data-theme=noir][data-density] .catalog-stack .aw-data-table-scroll::-webkit-scrollbar-thumb{background:#64798a;border:3px solid #101b25}
+html[data-theme=noir][data-density] .catalog-stack .aw-data-table-scroll::-webkit-scrollbar-thumb:hover{background:#91a5b4}
+html[data-theme=noir][data-density] .catalog-stack .aw-data-table-scroll::-webkit-scrollbar-corner{background:#101b25}
 /* R8 : chiffres clés partagés (KeyFigures) et aide des compteurs */
 .ot-keyfigures{min-width:0}
 .ot-keyfigures .aw-keyfigures{grid-template-columns:repeat(6,minmax(0,1fr))}

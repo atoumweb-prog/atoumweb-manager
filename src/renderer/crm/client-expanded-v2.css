@@ -1,6 +1,6 @@
 /* Enlarged Client only; shell measurements supplied by ClientsPage. */
 :root[data-theme][data-density] .app-shell .client-large-view{position:fixed!important;inset:var(--client-desk-top,92px) 14px 14px var(--client-desk-left,260px)!important;height:calc(100dvh - var(--client-desk-top,92px) - 14px)!important;min-height:0!important;max-height:none!important;padding:14px!important;gap:12px;background:var(--surface)}
-:root[data-theme='noir'][data-density='comfort'] .app-shell .client-large-view{box-shadow:0 12px 35px #0004}
+:root[data-theme='noir'][data-density] .app-shell .client-large-view{box-shadow:0 12px 35px #0004}
 :root[data-theme][data-density] .app-shell .client-large-view .client-desk-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;padding:0 2px 10px;border-bottom:1px solid var(--border)}
 :root[data-theme][data-density] .app-shell .client-large-view .client-desk-heading>div{display:flex;align-items:center;gap:12px;min-width:0}
 :root[data-theme][data-density] .app-shell .client-large-view .client-desk-heading h2{font-size:21px!important;margin:0;white-space:nowrap}
@@ -58,7 +58,7 @@
 
 :root[data-theme][data-density] .app-shell .client-large-view .client-quick-actions button[hidden]{display:none}
 :root[data-theme][data-density] .app-shell .client-large-view .client-expanded-overdue{display:flex;align-items:center;gap:8px;font-size:14px;margin:10px 0}
-:root[data-theme='noir'][data-density='comfort'] .app-shell .client-large-view .client-expanded-overdue{color:#ffb4a9}
+:root[data-theme='noir'][data-density] .app-shell .client-large-view .client-expanded-overdue{color:#ffb4a9}
 :root[data-theme][data-density] .app-shell .client-large-view .client-association-info{font-size:14px;line-height:1.5;overflow-wrap:anywhere;margin:0}
 :root[data-theme][data-density] .app-shell .client-large-view .activity-item small{color:var(--text);font-size: var(--aw-font-functional)!important}
 :root[data-theme][data-density] .app-shell .client-large-view .crm-record-properties small{color:var(--text)}

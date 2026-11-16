@@ -7,7 +7,7 @@
 :root[data-theme][data-density] .client-large-view #client-panel-contacts .client-contacts-heading h3>span{font-size:14px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--muted)}
 :root[data-theme][data-density] .client-large-view #client-panel-contacts .client-contacts-heading p{font-size:14px;color:var(--muted);margin:8px 0 0}
 :root[data-theme][data-density] .client-large-view #client-panel-contacts .client-contacts-heading>.primary-button{background:var(--accent);min-height:42px;padding:10px 16px;font-size:14px}
-:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contacts-heading>.primary-button{color:#071c2b}
+:root[data-theme='noir'][data-density] .client-large-view #client-panel-contacts .client-contacts-heading>.primary-button{color:#071c2b}
 :root[data-theme][data-density] .client-large-view #client-panel-contacts .client-contacts-heading>.secondary-button{min-height:42px;padding:10px 16px;font-size:var(--aw-font-functional)}
 :root[data-theme][data-density] .client-large-view #client-panel-contacts .contact-cards-list{gap:16px}
 :root[data-theme][data-density] .client-large-view #client-panel-contacts .contact-card{display:grid;grid-template-columns:56px minmax(170px,1fr) auto;gap:16px;align-items:center;padding:20px;background:linear-gradient(130deg,var(--surface-soft),var(--surface))!important;border:1px solid var(--border);border-radius:12px}
@@ -16,7 +16,7 @@
 :root[data-theme][data-density] .client-large-view #client-panel-contacts .contact-card-main>small{font-size:14px;color:var(--muted);margin-top:5px}
 :root[data-theme][data-density] .client-large-view #client-panel-contacts .client-contact-badges{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:8px}
 :root[data-theme][data-density] .client-large-view #client-panel-contacts .client-contact-badges>span{font-size: var(--aw-font-functional);padding:4px 8px;border-radius:6px;background:var(--surface-soft);border:1px solid var(--border);color:var(--text)}
-:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-contacts .client-contact-badges>.client-contact-primary{background:#0d503e;color:#bdffe3;border-color:#286950}
+:root[data-theme='noir'][data-density] .client-large-view #client-panel-contacts .client-contact-badges>.client-contact-primary{background:#0d503e;color:#bdffe3;border-color:#286950}
 :root[data-theme][data-density] .client-large-view #client-panel-contacts .client-contact-actions{display:flex;align-items:stretch;gap:8px}
 :root[data-theme][data-density] .client-large-view #client-panel-contacts .client-contact-actions .link-button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;width:104px;min-height:68px;padding:9px;border:1px solid var(--border);border-radius:8px;background:var(--surface-soft);color:var(--text);text-align:center;font-size: var(--aw-font-functional)!important;line-height:1.3}
 :root[data-theme][data-density] .client-large-view #client-panel-contacts .client-contact-actions svg{color:var(--accent);width:21px;height:21px}

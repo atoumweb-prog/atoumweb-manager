@@ -564,3 +564,5 @@ body.directory-resizing {
 :root:not([data-theme='noir']) .directory-relation-pill.relation-prospect{color:color-mix(in srgb,#5c93dd 50%,var(--text))}
 :root:not([data-theme='noir']) .directory-relation-pill.relation-client-prospect{color:color-mix(in srgb,#9b72d3 50%,var(--text))}
 :root:not([data-theme='noir']) .directory-relation-pill.relation-external{color:color-mix(in srgb,#d2a24b 50%,var(--text))}
+/* Fin de refonte F4 : en Confort + surtout, le nom passe sur deux lignes au plus au lieu d’être coupé sur une seule (les autres colonnes passent déjà à la ligne). */
+:root[data-theme][data-density] .directory-name-cell strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;overflow-wrap:break-word}

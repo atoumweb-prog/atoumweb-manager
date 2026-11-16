@@ -476,3 +476,5 @@ body.documents-resizing {
   font-family: monospace;
   font-size: var(--aw-font-functional, 14px);
 }
+/* Fin de refonte F4 : en Confort + surtout, le nom passe sur deux lignes au plus au lieu d’être coupé sur une seule (les autres colonnes passent déjà à la ligne). */
+:root[data-theme][data-density] .documents-table-title strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;overflow-wrap:break-word}

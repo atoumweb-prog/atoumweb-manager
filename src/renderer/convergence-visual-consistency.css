@@ -1,5 +1,5 @@
 /* Shared approved Noir/Confort frame; module layouts and semantic status colours stay local. */
-:root[data-theme='noir'][data-density='comfort'] .aw-manager-shell.aw-manager-shell{
+:root[data-theme='noir'][data-density] .aw-manager-shell.aw-manager-shell{
  --canvas:#031321;--surface:#071b2d;--surface-soft:#10283d;--sidebar:#041321;--sidebar-text:#e9f2ff;
  --muted:#a9c2df;--border:#25445d;--accent:#ffda00;--accent-strong:#ffda00;--text:#f0f5fc;
 }

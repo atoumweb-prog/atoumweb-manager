@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : fin de refonte, lot F4 (densités Compact et Confort +) et logo visible dans tous les thèmes (F77) exécutés (commits locaux) ; fin de refonte terminée
+
+- [x] **F77, logo** (accord de Carlos du 16/11/2026 : « tu peux toucher à la couleur du logo… visible peu importe le thème ») : les quatre parties jaunes du logo vectoriel portent la classe `aw-brand-gold` ; sur le rail blanc du thème Blanc, elles prennent l'or foncé du thème (5,5:1) ; sur les rails sombres (Noir, AtoumWeb), le jaune et le blanc cassé restent (contrastes vérifiés par test). Tests ajoutés à `ui/finF3Wiring.test.ts` (24).
+- [x] **F4, test d'abord** (`ui/finF4Wiring.test.ts`, 4 tests) : **26 règles de couleur du Noir ne valaient qu'en densité Confort** (palette marine des Clients, coque, Sites, Offres) : elles valent désormais dans toutes les densités, à spécificité égale (`[data-density]`) ; garde : seule la feuille des densités nomme Compact ou Confort + ; les noms des tableaux Documents et Annuaire passent sur deux lignes au plus au lieu d'être coupés sur une seule.
+- **Preuves** : relevé des 17 pages en Noir (Confort, Compact, Confort +), Blanc (Compact, Confort +) et AtoumWeb (Compact, Confort +) : 0 texte sous 14 px, 0 débordement, 0 défilement horizontal ; seules coupures restantes : légendes de tableau masquées pour les lecteurs d'écran, identiques en Confort ; palette Noir des Clients vue en Compact ; suite **322 fichiers, 2 646 tests** ; typecheck propre ; empreinte de la source identique.
+- **Non vu** : fiches ouvertes, fenêtres et onglets secondaires en Compact et Confort + (le relevé lit les 17 pages au repos) ; fenêtre étroite dans ces densités. **Autocontrôle de l'auteur.**
+- Prochaine action : **fin de refonte terminée** ; lots à part : F71 (acompte par défaut, moteur des devis et des mentions légales), F69 (vue Parcours commercial, fiche), décisions F55 à F63, diagnostics F66 à F68 et F75, débordements F72 et F73. Push et PR seulement sur accord de Carlos.
+
 ## 16/11/2026 : fin de refonte, lot F3 (couleurs et contrastes de Blanc et AtoumWeb, Noir par défaut) exécuté (commit local)
 
 - [x] **Test d'abord** (`ui/finF3Wiring.test.ts`, 21 tests) : logo lisible sur le rail clair du Blanc (classe `aw-brand-ink`, « Atoum » et le triangle intérieur à la couleur du texte) ; **Noir au premier lancement** (réglage initial de la base et état de départ de l'interface, décision de Carlos du 15/11/2026) ; contrastes calculés depuis les jetons.

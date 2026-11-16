@@ -24,10 +24,10 @@
 :root[data-theme][data-density] .client-large-view #client-panel-commercial .client-commercial-reference strong{font-size:20px!important}
 :root[data-theme][data-density] .client-large-view #client-panel-commercial .client-commercial-reference p{font-size:14px;line-height:1.4;margin:6px 0 0;overflow-wrap:anywhere}
 :root[data-theme][data-density] .client-large-view #client-panel-commercial .client-commercial-status{font-size: var(--aw-font-functional);padding:5px 9px;border-radius:7px;white-space:nowrap}
-:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-commercial .client-commercial-status{background:#254457;color:#dfecf4}
-:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-commercial .client-commercial-status[data-status=accepted]{background:#0d503e;color:#bdffe3}
-:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-commercial .client-commercial-status[data-status=refused],.client-commercial-status[data-status=cancelled]{background:#4b3037;color:#ffd2d4}
-:root[data-theme='noir'][data-density='comfort'] .client-large-view #client-panel-commercial .client-commercial-status[data-status=expired]{background:#49402a;color:#ffe8b6}
+:root[data-theme='noir'][data-density] .client-large-view #client-panel-commercial .client-commercial-status{background:#254457;color:#dfecf4}
+:root[data-theme='noir'][data-density] .client-large-view #client-panel-commercial .client-commercial-status[data-status=accepted]{background:#0d503e;color:#bdffe3}
+:root[data-theme='noir'][data-density] .client-large-view #client-panel-commercial .client-commercial-status[data-status=refused],.client-commercial-status[data-status=cancelled]{background:#4b3037;color:#ffd2d4}
+:root[data-theme='noir'][data-density] .client-large-view #client-panel-commercial .client-commercial-status[data-status=expired]{background:#49402a;color:#ffe8b6}
 :root[data-theme][data-density] .client-large-view #client-panel-commercial .client-commercial-card .aw-ui-button{font-size: var(--aw-font-functional)!important;border-color:var(--accent);min-height:36px}
 :root[data-theme][data-density] .client-large-view #client-panel-commercial .client-commercial-card dl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;border-top:1px solid var(--border);padding-top:12px;margin:14px 0 0}
 :root[data-theme][data-density] .client-large-view #client-panel-commercial .client-commercial-card dl>div{min-width:0;border-right:1px solid var(--border);padding-right:10px}
