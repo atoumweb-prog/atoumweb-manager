@@ -4,7 +4,7 @@
 
 - [x] **Plan** `docs/refonte/plans/2026-11-16-modeles-de-projet-plan.md` (skills `superpowers:writing-plans`, `superpowers:test-driven-development`).
 - [x] **Code, tests d'abord** :
-  - `src/main/projects/referentialTemplatePlan.ts` : nature des offres, avant-vente exclue, encaissements en contrôle Abby, quatre lots dans l'ordre (36 tests) ;
+  - `src/main/projects/referentialTemplatePlan.ts` : nature des offres, avant-vente exclue, encaissements en contrôle Abby, quatre lots dans l'ordre (35 tests) ;
   - `src/main/projects/ReferentialProjectTemplates.ts` : plan en lecture seule et application vérifiée par empreinte, rejouable (7 tests, dont un vrai devis qui devient projet et une option seule refusée) ;
   - `scripts/preproduction/import-referential-templates.cjs` : aperçu, puis `--apply <empreinte>` avec sauvegarde, refus si le Manager est ouvert.
 - [x] **Simulation sur copie jetable** de Manager-Claude-Codex : 32 modèles publiés, 100 liens (base et complément), 25 services récurrents sans modèle, 8 offres V39 retrouvées par leur nom, 4 offres du pack absentes du catalogue (dont 3 options prioritaires et « Identité Visuelle Essentielle »), site vitrine laissé tel quel ; seconde application sans écriture. Contrôle : **101 offres sur 101** donnent un devis qui devient un projet avec ses tâches (options avec la base de leur famille ; prix TEST sur les offres sur devis).
