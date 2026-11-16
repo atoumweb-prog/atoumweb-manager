@@ -8,7 +8,8 @@
 - [x] **Simulation sur copie jetable** : 18 codes attribués, 27 modèles prêts, 27 suivis activés, 3 liens projet retirés ; seconde application sans écriture. Contrôles : une maintenance vendue devient un abonnement, un pack de 5 h un crédit valable 27 mois, un dépannage une intervention ; **98 offres sur 98** deviennent encore un projet ; 32 modèles de projet conservés.
 - **Écart signalé** : règle commerciale de la maintenance applicative « pas de renouvellement » alors que Carlos a choisi « annuelle, accord exprès » ; non modifiée.
 - **Preuves** : typecheck propre ; suite **338 fichiers, 2 813 tests** ; empreinte de la préproduction inchangée `56b6f4858c2d950d`. **Autocontrôle de l'auteur.**
-- Prochaine action : accord explicite de Carlos, puis application dans la préproduction Manager-Claude-Codex.
+- [x] **Appliqué dans la préproduction Manager-Claude-Codex** le 16/11/2026 sur accord explicite de Carlos (« Oui, applique ») : même empreinte que la simulation (`fea641bb…`) ; 18 codes, 27 suivis, 3 liens projet retirés ; sauvegarde avant écriture `Sauvegardes-lotsavant-suivi-apres-vente-2026-11-16T21-58-00-721Z.sqlite` ; intégrité ok, 0 clé étrangère cassée, 27 suivis prêts. Contrôle sur copie de la base appliquée : maintenance → abonnement, pack 5 h → crédit valable 27 mois, dépannage → intervention ; 98 offres sur 98 deviennent un projet ; aucun devis de test dans la préproduction. Nouvelle empreinte de la base : `5cf0a56743245dd1` (avant : `56b6f4858c2d950d`).
+- Prochaine action : écart à revoir avec Carlos (règle commerciale « pas de renouvellement » de la maintenance applicative) ; durées des routines V39 à compléter.
 
 ## 16/11/2026 : F88 corrigé, recette F85 avancée (commit local)
 
