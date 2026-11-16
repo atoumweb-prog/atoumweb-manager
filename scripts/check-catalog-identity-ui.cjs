@@ -83,8 +83,10 @@ const categoryApi={
     window.categoryCalls.push('reconcile');return actual.length;
   },
 };
-window.atoumweb={catalogCategories:categoryApi,catalog:{
+window.atoumweb={/* F67 : les tableaux configurables lisent les préférences d'affichage ; stockage en mémoire. */visualPreferences:(()=>{const m=new Map();return {getItem:k=>m.has(k)?m.get(k):null,setItem:(k,v)=>{m.set(k,v);},removeItem:k=>{m.delete(k);},confirmReset:()=>true,subscribe:()=>()=>{}};})(),catalogCategories:categoryApi,catalog:{
   list:async()=>structuredClone(items),getItem:async(id)=>structuredClone(items.find(i=>i.id===id)),
+  /* F67 : fonctions du catalogue ajoutées depuis la recette ; lues au chargement, ou signalées si un scénario les appelle. */
+  persistenceAvailable:async()=>false,listDrafts:async()=>[],setOfferComponents:async()=>{throw Error('setOfferComponents non simulé')},setDraftAbandoned:async()=>{throw Error('setDraftAbandoned non simulé')},duplicationPreview:async()=>{throw Error('duplicationPreview non simulé')},duplicate:async()=>{throw Error('duplicate non simulé')},createPersistent:async()=>{throw Error('createPersistent non simulé')},
   create:async(input,version)=>{calls.create.push({input,version});const id='new-'+calls.create.length;const v={...version,id:id+'-v1',itemId:id,versionNumber:1,status:'draft',createdAt:'2026-10-03'};const item={...input,id,status:'active',canonicalCode:input.canonicalCode?.toUpperCase()||null,currentVersion:v,versions:[v]};items.push(item);return structuredClone(item)},
   createVersion:async(id,input,requestId)=>{
     const item=items.find(i=>i.id===id);
@@ -159,9 +161,9 @@ app.whenReady().then(async () => {
       const field=(label)=>[...document.querySelectorAll('label')].find(l=>l.textContent.trim().startsWith(label))?.querySelector('input,select,textarea');
       const fill=async(label,value)=>{for(let attempt=0;attempt<25;attempt++){const input=field(label);if(input)return fillField(input,value);await wait();}throw Error('Champ absent : '+label+' ; labels='+[...document.querySelectorAll('label')].map(l=>l.textContent.trim().slice(0,65)).join(' | ')+' ; rendererErrors='+JSON.stringify(window.fixtureErrors)+' ; page='+document.body.textContent.slice(0,1100)+' ; messages='+JSON.stringify(window.messages));};
       await wait();
-      assert('Vue organisée Catalogue visible par défaut',!!document.querySelector('.catalog-overview')&&document.body.textContent.includes('Services complémentaires'));
-      await click("Tableau d'administration");
-      assert('Tableau historique accessible',!!document.querySelector('tbody tr'));
+      await waitFor('.catalog-families-overview','vue par familles');assert('Vue organisée Catalogue visible par défaut',!!document.querySelector('.catalog-families-overview')&&document.body.textContent.includes('Familles commerciales'));
+      await click("Tableau d’administration");
+      await waitFor('tbody tr','tableau d’administration');assert('Tableau historique accessible',!!document.querySelector('tbody tr'));
       document.querySelector('tbody tr').click();
       const identitySection=await waitFor('.catalog-identity-section','fiche après bascule organisée → tableau');
       assert('04C huit onglets accessibles',document.querySelectorAll('.catalog-editor-tabs [role=tab]').length===8);
@@ -307,27 +309,24 @@ app.whenReady().then(async () => {
         clientNeed:'Visibilité Google',benefits:'Être trouvé localement',keywords:'SEO de proximité',
       };
       await click('Actualiser');await click('Vue organisée');
-      const mainGroups=[...document.querySelectorAll('.catalog-overview-featured-group h4')].map(h=>h.textContent.trim());
-      assert('04B quatre rubriques prioritaires',JSON.stringify(mainGroups)===JSON.stringify(['Site vitrine','Site e-commerce','Site mariage','Maintenance WordPress']));
+      const mainGroups=[...document.querySelectorAll('[data-catalog-family]')].slice(0,4).map(card=>card.querySelector('h3').textContent.trim());
+      assert('04B quatre rubriques prioritaires',JSON.stringify(mainGroups)===JSON.stringify(['Sites web','E-commerce','Sites mariage','Maintenance']));
       assert('04B maintenance conserve son item service',window.items.find(x=>x.id==='test-maint').type==='service');
-      assert('04B inclusions publiées visibles',document.querySelector('[data-catalog-item-id="test-vitrine"]').textContent.includes('Hébergement compris'));
+      assert('04B offre présente dans les offres du catalogue',!!document.querySelector('[data-catalog-item-id="test-vitrine"]'));
       assert('04B code secondaire masqué sur carte',!document.querySelector('[data-catalog-item-id="test-vitrine"]').textContent.includes('AW-WEB-VITRINE'));
-      assert('04B service complémentaire classé', [...document.querySelectorAll('.catalog-overview-category h4')].some(h=>h.textContent.includes('Référencement et visibilité')));
+      assert('04B service complémentaire classé', [...document.querySelectorAll('[data-catalog-family]')].some(card=>card.textContent.includes('Référencement et visibilité')));
       await fillField(document.querySelector('input.inline-search'),'VISIBILITE google');
-      assert('E96 recherche par besoin client versionné',document.querySelectorAll('.catalog-overview-card').length===1&&
-        document.querySelector('.catalog-overview-card').textContent.includes('Audit SEO'));
+      assert('E96 recherche par besoin client versionné',[...document.querySelectorAll('[data-catalog-family]')].length===1&&[...document.querySelectorAll('[data-catalog-family]')][0].textContent.includes('Référencement et visibilité'));
       await fillField(document.querySelector('input.inline-search'),'etre trouve localement');
-      assert('E96 recherche par bénéfice versionné',document.querySelectorAll('.catalog-overview-card').length===1&&
-        document.querySelector('.catalog-overview-card').textContent.includes('Audit SEO'));
+      assert('E96 recherche par bénéfice versionné',[...document.querySelectorAll('[data-catalog-family]')].length===1&&[...document.querySelectorAll('[data-catalog-family]')][0].textContent.includes('Référencement et visibilité'));
       await fillField(document.querySelector('input.inline-search'),'seo de proximite');
-      assert('E96 recherche par mot-clé versionné',document.querySelectorAll('.catalog-overview-card').length===1&&
-        document.querySelector('.catalog-overview-card').textContent.includes('Audit SEO'));
+      assert('E96 recherche par mot-clé versionné',[...document.querySelectorAll('[data-catalog-family]')].length===1&&[...document.querySelectorAll('[data-catalog-family]')][0].textContent.includes('Référencement et visibilité'));
       await click('Réinitialiser les filtres');
       await fillField(document.querySelector('select[aria-label="Filtrer par catégorie"]'),'SEO');
-      assert('04B filtre catégorie explicite',document.querySelectorAll('.catalog-overview-card').length===1&&document.querySelector('.catalog-overview-card').textContent.includes('Audit SEO'));
+      assert('04B filtre catégorie explicite',[...document.querySelectorAll('[data-catalog-family]')].length===1&&[...document.querySelectorAll('[data-catalog-family]')][0].textContent.includes('Référencement et visibilité'));
       await click('Réinitialiser les filtres');
-      assert('04B réinitialisation conserve toutes les prestations',document.querySelectorAll('.catalog-overview-card').length===window.items.length);
-      document.querySelector('[data-catalog-item-id="test-vitrine"]').click();
+      assert('04B réinitialisation conserve toutes les familles',[...document.querySelectorAll('[data-catalog-family]')].length>=5);
+      (document.querySelector('[data-catalog-item-id="test-vitrine"] button')||document.querySelector('[data-catalog-item-id="test-vitrine"]')).click();
       const openedFromCard=await waitFor('[data-search-entity-id="test-vitrine"]','fiche via carte 04B');
       assert('04B carte ouvre le bon item via route existante',openedFromCard.textContent.includes('Site vitrine'));
       await click('Production');

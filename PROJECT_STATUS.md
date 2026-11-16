@@ -10,7 +10,8 @@
   - **F83** `check-project-operational-ui` : `visualPreferences` simulé, capture des erreurs de console réparée (niveau en mot dans Electron récent) ; 69/69.
 - **Preuves** : chaque recette relancée verte ; suite **333 fichiers, 2 764 tests** ; typecheck inchangé (aucun code produit modifié).
 - **Restent** : F67 (la vue organisée du catalogue est devenue la vue par familles : une dizaine de contrôles à transposer), F66 et F68 (base préparée et rapport en arguments), F75 (compteurs attendus « 1,0,0,1 » à réaligner sur les données de test). **Autocontrôle de l’auteur.**
-- Prochaine action : F67, puis F75, F66, F68 ; F81 attend la décision de Carlos.
+- [x] **Suite du même jour** : **F75** `check-client-interventions` réécrite (plus de comptage figé de la base de recette externe, règle AGENTS ; base inchangée, verte) ; **F67** `check-catalog-identity-ui` avancée (vue par familles, simulations, attente du tableau), parcours de création restant à transposer.
+- Prochaine action : finir F67 (parcours de création), puis F66 et F68 (base préparée et rapport en arguments) ; F81 attend la décision de Carlos.
 
 ## 16/11/2026 : lot G3, coque et libellés (F56, F59, F63) exécuté (commit local) ; décisions F55 à F63 toutes appliquées
 
