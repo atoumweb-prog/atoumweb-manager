@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : F88 corrigé, recette F85 avancée (commit local)
+
+- [x] **F88** (défaut réel du Manager, relevé par Carlos : une boîte « Modifications non enregistrées » s'ouvrait sans saisie) : « Vérification avant envoi » garde maintenant une référence à jour après chaque rechargement du devis (`QuoteQuickReview.tsx`, test `quoteQuickReviewGuard.test.ts`).
+- [x] **Recette commerciale native (F85)** remise à jour sur l'écran actuel (règle H) : CGV posées à la création du devis par « comparer puis appliquer », case RGPD du lot 6 cochée une fois le PDF prêt, moyen d'envoi saisi dans le bon champ, « Confirmer accepté dans Abby » (G1) ; **aucune boîte Windows ne peut plus s'ouvrir sur l'écran** : la recette les intercepte et échoue si l'une apparaît. Résultat : devis, envoi, acceptation et projet passent pour le devis de contexte.
+- **Reste rouge** : pour chacune des 107 offres, la recette lit la configuration opérationnelle (`catalog_operational_links`, lot 8B) ; la base de test n'en contient aucune. **Décision de Carlos.**
+- **Preuves** : suite **337 fichiers, 2 809 tests** ; recette lancée sur copies jetables ; empreinte de la préproduction inchangée par ce lot (`56b6f4858c2d950d`). Correction F88 non regardée dans l'application. **Autocontrôle de l'auteur.**
+
 ## 16/11/2026 : modèles de projet du référentiel, code et simulation (commit local, préproduction non modifiée)
 
 - [x] **Plan** `docs/refonte/plans/2026-11-16-modeles-de-projet-plan.md` (skills `superpowers:writing-plans`, `superpowers:test-driven-development`).

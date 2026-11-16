@@ -11,6 +11,8 @@ if(!process.versions.electron){
  const {app,BrowserWindow,clipboard,dialog}=require('electron'),args=process.argv.slice(2),option=k=>args[args.indexOf(k)+1];
  // Lot 4 : l'envoi d'un devis montre le PDF et ouvre un brouillon d'e-mail ; en recette, rien ne sort du banc.
  {const {shell}=require('electron');shell.openExternal=async()=>{};shell.showItemInFolder=()=>{};}
+ // F88 : aucune boîte Windows ne doit s’ouvrir pendant la recette (elle bloquerait l’écran de l’utilisateur) ; chacune est notée, répondue « Rester », et fait échouer la recette.
+ const nativeDialogs=[];{const stay=o=>{const x=o.find(v=>v&&typeof v==='object'&&!v.webContents)||{};nativeDialogs.push({message:x.message,detail:x.detail});return x.cancelId??0;};dialog.showMessageBoxSync=(...o)=>stay(o);dialog.showMessageBox=async(...o)=>({response:stay(o),checkboxChecked:false});}
  if(!args.includes('--development-confirmed')||!args.includes('--workspace')||!args.includes('--output'))throw Error('Explicit development confirmation, workspace and output required');
  const workspace=path.resolve(option('--workspace')),output=path.resolve(option('--output'));
  if(path.basename(workspace)!=='Validation-MSI')throw Error('Only Validation-MSI development is authorized');
@@ -73,9 +75,13 @@ if(!process.versions.electron){
    if(p.audience==='consumer')p.consumer.informationDelivered=true;
    await call('quotePreparation.save',quote.id,p);
   };
+  // F85 : appliquer les CGV passe par « comparer puis appliquer » (jeton de comparaison), comme dans l’écran.
+  const syncTerms=async id=>{const proposal=await call('contractTerms.quotes.proposeUpdate',id);return call('contractTerms.quotes.sync',id,proposal.token);};
   const newQuote=async(code,clientId)=>{
    let owner={clientAccountId:clientId};if(!clientId){const org=await call('crm.organizations.create',{name:`TEST — ${code} — ${new Date().toISOString()}`});const prospect=await call('crm.prospects.create',{organizationId:org.id,primaryNeed:`TEST ${code}`});owner={prospectId:prospect.id};}
-   return call('quotes.create',{...owner,subject:`TEST — recette ${code} — ${Date.now()}`,contractAudience:code.includes('MARIAGE')?'consumer':'professional'});
+   const created=await call('quotes.create',{...owner,subject:`TEST — recette ${code} — ${Date.now()}`,contractAudience:code.includes('MARIAGE')?'consumer':'professional'});
+   // F85 : l'assistant de devis pose les CGV dès la création (applyContractTerms) ; la recette, qui crée le devis vide, les pose ici.
+   await syncTerms(created.id);return call('quotes.get',created.id);
   };
   const addUI=async(quote,code,quantity=1)=>{
    await input('[aria-label="Rechercher dans le catalogue"]',code);const item=references.find(r=>r.canonicalCode===code);if(!item)throw Error('Unknown canonical '+code);
@@ -93,10 +99,12 @@ if(!process.versions.electron){
   const prepareUI=async quote=>{await click('Vérifier le plan sans créer de Projet');await wait('document.querySelector(".quote-project-create [role=status]")!==null');await click('Préparer le Projet');await wait(`document.querySelector('[aria-label="Périmètre commercial du Projet"]')!==null`);return call('quotes.get',quote.id);};
   const acceptUI=async quote=>{
    await parameters(await call('quotes.get',quote.id));await openQuote(await call('quotes.get',quote.id));
-   await click('Envoyer le devis','.quote-detail-panel button');await wait(`[...document.querySelectorAll('.quote-detail-panel button')].some(b=>b.textContent==='C’est envoyé')`);await input('.quote-detail-panel .quote-send-steps input','Recette native — envoi fictif');
+   await click('Envoyer le devis','.quote-detail-panel button');await wait(`[...document.querySelectorAll('.quote-detail-panel button')].some(b=>b.textContent==='C’est envoyé')`);await input('.quote-detail-panel .quote-send-steps input:not([type=checkbox])','Recette native — envoi fictif');
+   // F85 : lot 6 (RGPD), si l’offre exige le modèle d’accord, cocher « Modèle d’accord RGPD remis au client avec le devis » avant « C’est envoyé ».
+   if(await js("!!document.querySelector('.quote-detail-panel .quote-send-check input')")){await wait("!document.querySelector('.quote-detail-panel .quote-send-check input').disabled");await js("(()=>{const c=document.querySelector('.quote-detail-panel .quote-send-check input');if(!c.checked)c.click();return true;})()");await wait("document.querySelector('.quote-detail-panel .quote-send-check input').checked");}
    await click('C’est envoyé','.quote-detail-panel button');await wait(`document.querySelector('.quote-detail-panel .detail-badges .aw-status-pill')?.textContent==='Envoyé'`);
    await call('quotePreparation.recordAcceptance',quote.id,'TEST — acceptation explicite fictive, aucune signature réelle',new Date().toISOString(),'Recette native');
-   await click('Valider','.quote-detail-panel button');await wait(`document.querySelector('.quote-detail-panel .detail-badges .aw-status-pill')?.textContent==='Accepté'`);return call('quotes.get',quote.id);
+   await click('Confirmer accepté dans Abby','.quote-detail-panel button'); /* G1 (F61) : confirmation dans la boîte de la page */await wait(`document.querySelector('.quote-detail-panel .detail-badges .aw-status-pill')?.textContent==='Accepté'`);return call('quotes.get',quote.id);
   };
   // A real fake Prospect -> Quote -> provisional Project -> same frozen Project, used as operational context.
   let seed=await newQuote('CONTEXTE-WOO');await openQuote(seed);seed=await addUI(seed,'AW-ECOM-BASE');seed=await prepareUI(seed);const seedProjectId=seed.projectId;seed=await acceptUI(seed);
@@ -127,7 +135,7 @@ if(!process.versions.electron){
     if(model.lot==='8B'){params.serviceStartDate=new Date().toISOString().slice(0,10);params.periodAlignment='anniversary';params.operationalProjectId=seed.projectId;if(config.operations.targetRequirement==='site')params.siteId=contextSite.id;else if(config.operations.targetRequirement==='context')params.contextNodeId=code.startsWith('AW-SEO-GBP-')?(config.operations.kind==='recurring_addon'?extraGbpNode.id:mainGbpNode.id):contextNode.id;if(config.operations.kind==='recurring_addon')params.parentOperationalSaleId=principalGbpSale.id;if(config.operations.setupEstimateRequired)params.setupEstimateMinutes=60;}
     if(Object.keys(params).length)await call('quotes.setLineParameters',line.id,params);
     if(parent?.snapshot?.operational?.lot==='8B')await call('quotes.setLineParameters',parent.id,{serviceStartDate:new Date().toISOString().slice(0,10),periodAlignment:'anniversary',operationalProjectId:seed.projectId,siteId:contextSite.id});
-    const build=await call('contractTerms.quotes.sync',quote.id);check(code+' base clauses',build.clauses.some(c=>c.sourceKind==='base'&&c.enabled));
+    const build=await syncTerms(quote.id);check(code+' base clauses',build.clauses.some(c=>c.sourceKind==='base'&&c.enabled));
     result.clauses=build.clauses.filter(c=>c.enabled).map(c=>c.title);result.proof.push('Ajout par sélection native ; snapshot AW/version/prix ; clauses compilées ; bloc Abby');
     if(code==='AW-MARIAGE-HISTOIRE')check('Histoire particular conditions present',build.clauses.some(c=>c.title==='Conditions particulières — Mariage Histoire'&&c.body.includes('soixante jours')));
     const prepareProject=model.lot==='8A'&&!(rules?.attachment?.kind==='priority'&&parent?.snapshot?.operational?.lot==='8B');
@@ -229,6 +237,7 @@ if(!process.versions.electron){
     }
     fs.writeFileSync(path.join(output,'scenarios-transversaux.json'),JSON.stringify(supplemental,null,2));
   }
+  check('No native Windows dialog during the recipe'+(nativeDialogs.length?' : '+JSON.stringify(nativeDialogs):''),nativeDialogs.length===0);
   check('SQLite integrity',database.database.get('PRAGMA integrity_check').integrity_check==='ok');check('SQLite foreign keys',database.database.all('PRAGMA foreign_key_check').length===0);
   persist();process.stdout.write(JSON.stringify({references:results.length,blocked:results.filter(r=>r.status==='bloquante').length,checks:checks.length})+'\n');process.exitCode=results.some(r=>r.status==='bloquante')?1:0;
  }).catch(error=>{errors.push(error.stack||String(error));persist();process.stderr.write(error.stack+'\n');process.exitCode=1;}).finally(()=>{win?.destroy();database?.close();app.exit(process.exitCode||0);});

@@ -15,6 +15,7 @@ import './quote-send.css';
 export function QuoteQuickReview({quote, onSaved}: {quote: QuoteDetail; onSaved: () => void}) {
   const [parameters, setParameters] = useState<QuoteContractParameters | null>(null);
   const [answers, setAnswers] = useState<QuickAnswers | null>(null);
+  const [loadedKey, setLoadedKey] = useState('');
   const [pendingCodes, setPendingCodes] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -25,21 +26,23 @@ export function QuoteQuickReview({quote, onSaved}: {quote: QuoteDetail; onSaved:
     lines: quote.lines.map(line => ({id: line.id, label: line.label, periodicity: typeof line.snapshot?.periodicity === 'string' ? line.snapshot.periodicity : null})),
   };
   const lineKey = quote.lines.map(line => line.id).join(',');
+  // F88 : chaque rechargement du devis repose une nouvelle référence, sinon le garde signalerait une saisie qui n’existe pas.
+  const reloadKey = [quote.id, quote.updatedAt, lineKey].join('|');
 
-  const guard = useUnsavedDraft('Vérification avant envoi', answers, {group: 'quote:' + quote.id, ready: !!answers, pending: busy, discard: baseline => setAnswers(baseline)});
+  const guard = useUnsavedDraft('Vérification avant envoi', answers, {group: 'quote:' + quote.id, ready: !!answers && loadedKey === reloadKey, pending: busy, resetKey: reloadKey, discard: baseline => setAnswers(baseline)});
 
   useEffect(() => {
-    let active = true;
+    let active = true; const key = reloadKey;
     setAnswers(null); setParameters(null); setMessage('');
     void window.atoumweb.quotePreparation.get(quote.id).then(preparation => {
       if (!active || !preparation.parameters) return;
       const pending = preparation.issues.filter(issue => issue.severity === 'blocking' && QUICK_REVIEW_CODES.includes(issue.code)).map(issue => issue.code);
       setParameters(preparation.parameters); setPendingCodes(pending); setOpen(pending.length > 0);
-      setAnswers(proposeQuickAnswers(input, preparation.parameters));
+      setAnswers(proposeQuickAnswers(input, preparation.parameters)); setLoadedKey(key);
     }).catch(error => { if (active) setMessage(String(error)); });
     return () => { active = false; };
     // Rechargé quand le devis ou ses lignes changent ; une saisie en cours est protégée par le garde commun.
-  }, [quote.id, quote.updatedAt, lineKey]);
+  }, [reloadKey]);
 
   if (!answers || !parameters) return message ? <p role="alert">{message}</p> : null;
   const patch = (changes: Partial<QuickAnswers>) => setAnswers(current => current ? {...current, ...changes} : current);
