@@ -61,8 +61,11 @@ export class QuoteContractPreparationService {
   save(id: string, parameters: QuoteContractParameters,expected?:{parameters:QuoteContractParameters|null}): QuoteContractPreparation {
     this.assertEditable(id);
     if(expected!==undefined&&draftFingerprint(expected.parameters)!==draftFingerprint(this.parameters(id)))throw Error('Les paramètres du devis ont changé. Votre brouillon est conservé ; actualisez avant de réessayer.');
+    const stored=this.parameters(id),paymentKey=(x:QuoteContractParameters|null)=>JSON.stringify(x?[x.payment.preset,x.payment.milestones,x.payment.lineSchedules??null]:null);
+    // F71b : un échéancier changé à la main (facilité de paiement) n'est plus recalculé par la règle.
+    if(stored&&paymentKey(stored)!==paymentKey(parameters))parameters={...parameters,payment:{...parameters.payment,origin:'manual'}};
     this.validate(parameters);
-    const first = parameters.payment.milestones[0]?.percent;
+    const first = parameters.payment.milestones[0]?.percent ?? null;
     const paymentLines=this.paymentLines(id),total=Number(this.quote(id).contract_value_cents);
     const deposit=quotePaymentSchedule(parameters,paymentLines,total).filter(m=>m.first).reduce((n,m)=>n+m.amountCents,0);
     this.db.run('UPDATE quotes SET contract_parameters_json=?,contract_audience=?,deposit_percent=?,deposit_cents=?,balance_cents=contract_value_cents-?,updated_at=? WHERE id=?',[JSON.stringify(parameters),parameters.audience,first,deposit,deposit,new Date().toISOString(),id]);
@@ -186,7 +189,8 @@ export class QuoteContractPreparationService {
     check(p.digital.kinds.length>0&&(p.digital.mixed||p.digital.supply!==null)&&present(p.digital.delivery)&&present(p.digital.qualificationReason),'DIGITAL_QUALIFICATION','Qualification de la prestation et livraison à préciser');
     check((p.payment.lineSchedules?.flatMap(s=>s.milestones)??p.payment.milestones).every(m=>Boolean(m.dueDate)||present(m.event)),'PAYMENT_DATES','Dates ou événements objectifs de chaque échéance à renseigner');
     if(p.payment.lineSchedules){const ids=this.paymentLines(id).map(l=>l.id),selected=p.payment.lineSchedules.map(s=>s.lineId);check(selected.length===ids.length&&ids.every(id=>selected.includes(id))&&new Set(selected).size===selected.length,'PAYMENT_COVERAGE','Échéancier par prestation : chaque ligne doit être couverte exactement une fois.');}
-    check(Boolean(p.initialPayment.dueDate)||present(p.payment.milestones[0]?.event),'INITIAL_DUE','Échéance du paiement initial à renseigner');
+    check(p.payment.origin!=='to_define','PAYMENT_TO_DEFINE','Échéancier à définir : aucune règle ne s’applique à ces lignes, choisis-le avant l’envoi');
+    check(p.payment.origin==='to_define'||Boolean(p.initialPayment.dueDate)||present(p.payment.milestones[0]?.event),'INITIAL_DUE','Échéance du paiement initial à renseigner');
     const soldLines=this.db.all<{id:string}>('SELECT id FROM quote_lines WHERE quote_id=?',[id]);
     const lineDates=soldLines.length>0&&soldLines.every(l=>{const d=new CommercialRulesService(this.db).parameters(l.id);return Boolean(d?.acceptedDeadline||d?.serviceStartDate||d?.contractEvent?.trim());});
     check(lineDates||p.milestones.length>0&&p.milestones.every(m=>present(m.label)&&(Boolean(m.date)||present(m.event))),'DELIVERY_MILESTONE','Jalons d’exécution : renseigner une date ou un événement objectif pour chaque prestation, ou un calendrier commun convenu');
@@ -241,7 +245,7 @@ export class QuoteContractPreparationService {
     if(p.schemaVersion!==1||!['professional','consumer'].includes(p.audience))fail();
     const shapes:[unknown,Record<string,string>][]=[
       [p.initialPayment,{qualification:'string',dueDate:'nullable'}],
-      [p.payment,{preset:'string',milestones:'array',professionalTerms:'object_or_null',...(p.payment.lineSchedules!==undefined?{lineSchedules:'array'}:{})}],
+      [p.payment,{preset:'string',milestones:'array',professionalTerms:'object_or_null',...(p.payment.lineSchedules!==undefined?{lineSchedules:'array'}:{}),...(p.payment.origin!==undefined?{origin:'string'}:{})}],
       [p.conclusion,{channel:'nullable',context:'string',purchasePurpose:'string',professionalConsumerRegime:'string',offPremisesControlsVerified:'boolean',otherChannelReason:'string'}],
       [p.digital,{kinds:'array',mixed:'boolean',supply:'nullable',delivery:'string',hosting:'boolean',associatedServices:'string',qualificationReason:'string'}],
       [p.acceptance,{mode:'string',silenceHasEffect:'boolean'}],
@@ -259,10 +263,11 @@ export class QuoteContractPreparationService {
     if(p.digital.supply!==null&&!['one_off','continuous'].includes(p.digital.supply)||p.digital.kinds.some(k=>!['digital_content','digital_service','classical_service'].includes(k))||new Set(p.digital.kinds).size!==p.digital.kinds.length||p.digital.mixed!==(p.digital.kinds.length>1))fail();
     if(p.acceptance.mode!=='explicit'||p.acceptance.silenceHasEffect!==false||p.rsvp.mode!=='minimal'||p.rsvp.sensitiveEnabled!==false||!['disabled','direct_caterer'].includes(p.rsvp.sensitiveRoute))throw Error('Validation explicite uniquement ; RSVP sensible toujours désactivé.');
     if(!['express','monthly_no_commitment','contractual_automatic'].includes(p.renewal.mode)||!['applicable','not_applicable','unknown'].includes(p.consumer.withdrawal)||!['not_applicable','verified','unconfigured'].includes(p.consumer.onlineWithdrawal))fail();
-    if(!Array.isArray(p.milestones)||!Array.isArray(p.warranties)||!Array.isArray(p.annexes)||p.payment.milestones.length<1)fail();
+    if(!Array.isArray(p.milestones)||!Array.isArray(p.warranties)||!Array.isArray(p.annexes)||p.payment.milestones.length<1&&p.payment.origin!=='to_define')fail();
+    if(p.payment.origin!==undefined&&!['rule','manual','to_define'].includes(p.payment.origin))fail();
     if(p.payment.lineSchedules!==undefined){if(!Array.isArray(p.payment.lineSchedules)||!p.payment.lineSchedules.length)fail();const ids=new Set<string>();for(const line of p.payment.lineSchedules){keys(line,['lineId','milestones']);if(!present(line.lineId)||ids.has(line.lineId)||!Array.isArray(line.milestones)||!line.milestones.length)fail();ids.add(line.lineId);for(const m of line.milestones){keys(m,['label','percent','dueDate','event']);if(!present(m.label)||typeof m.event!=='string'||!Number.isInteger(m.percent)||m.percent<=0||m.percent>100||m.dueDate!==null&&!isoDate(m.dueDate))fail();}if(line.milestones.reduce((n,m)=>n+m.percent,0)!==100)throw Error('Chaque prestation doit totaliser 100 %.');}}
     for(const m of p.payment.milestones){keys(m,['label','percent','dueDate','event']);if(!present(m.label)||typeof m.event!=='string'||!Number.isInteger(m.percent)||m.percent<=0||m.percent>100||m.dueDate!==null&&!isoDate(m.dueDate))fail();}
-    if(Math.abs(p.payment.milestones.reduce((n,m)=>n+m.percent,0)-100)>0.000001)throw Error('L’échéancier doit totaliser exactement 100 %.');
+    if(p.payment.origin!=='to_define'&&Math.abs(p.payment.milestones.reduce((n,m)=>n+m.percent,0)-100)>0.000001)throw Error('L’échéancier doit totaliser exactement 100 %.');
     const expected=p.payment.preset==='order_100'?[100]:p.payment.preset==='30_70'?[30,70]:p.payment.preset==='30_40_30'?[30,40,30]:null;
     if(expected&&JSON.stringify(expected)!==JSON.stringify(p.payment.milestones.map(m=>m.percent)))fail();
     for(const m of p.milestones){keys(m,m.event===undefined?['label','date']:['label','date','event']);if(typeof m.label!=='string'||typeof m.date!=='string'||m.date!==''&&!isoDate(m.date)||m.event!==undefined&&typeof m.event!=='string')fail();}

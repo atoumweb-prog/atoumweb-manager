@@ -1,5 +1,28 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : F71b, échéancier des devis, fin du 30 % par défaut (commit local)
+
+- [x] **Fiche** `docs/refonte/plans/2026-11-16-f71b-echeancier-design.md`, validée par Carlos le 16/11/2026 (« Oui, code F71b »). Décisions du 16/11 : tous les sites selon le montant (40 / 60 sous 1 000 €, 30 / 40 / 30 à partir de 1 000 €, vitrines comprises, ce qui remplace la priorité OFF-007 pour les sites) ; familles WEB, ECOM, LANDING, MARIAGE, APP, DEVWP ; SEO Premium à 100 % ; réglage « Acompte proposé (%) » retiré de l'écran. Lecture validée avec la fiche : un développement de moins de 1 000 € se paie à 100 %.
+- [x] **Tests d'abord** :
+  - `shared/paymentScheduleRules.test.ts` (21) : règle partagée `defaultPaymentSchedule` ;
+  - `main/commercial/f71bSchedule.test.ts` (7) : branchement ;
+  - `renderer/commercial/f71bWizard.test.ts` (5) : interface ;
+  - un cas ajouté à `QuoteMixedBilling.test.ts` : DEV-2026-003 sans échéancier donné, création à 1 644 € en 30 / 40 / 30, maintenance à part.
+- [x] **Code** :
+  - origine de l'échéancier `payment.origin` : 'rule' (recalculé avec les lignes du brouillon), 'manual' (choix à la main, jamais écrasé ; une modification dans la préparation en fait un choix manuel), 'to_define' (aucune règle : point bloquant `PAYMENT_TO_DEFINE`, acompte vide) ; absente sur les devis antérieurs, jamais recalculés ;
+  - abonnement seul : échéance propre (il retombait sur 30 / 70) ;
+  - assistant : échéancier de la règle affiché avec sa raison, « Une facilité de paiement » sans valeur pré-remplie ;
+  - Réglages : champ « Acompte proposé (%) » retiré (valeur gardée en base, inutilisée) ;
+  - préparation : phrase « Échéancier posé par la règle » ou « Échéancier à définir ».
+- [x] **Tests et recettes réécrits (règle H)** : `quotePreparationFixture` et `check-native-commercial-ui` choisissent à la main 30 / 70 pour un devis de test « à définir » ; attentes du réglage d'acompte et du 30 / 70 historique remplacées (`QuoteDocumentSettingsService`, `QuoteQuickStart`, `settingsR9Wiring`) ; relevé F71 sans échéancier imposé.
+- **Preuves** :
+  - relevé sur copie jetable de la préproduction (125 prestations) : **0 à 30 / 70**, 104 à 100 % (ponctuelles et abonnements à échéance propre), 5 sites en 40 / 60, 16 en 30 / 40 / 30 (5 sites de 1 000 € et plus et des développements sur devis chiffrés à 1 000 € par le relevé), 0 erreur, options toujours à 0 écart ; préproduction seulement lue (empreinte identique) ;
+  - suite **328 fichiers, 2 694 tests** ; typecheck propre ;
+  - recettes devis vertes (parcours 44/44, préparation contractuelle, options, conseils, contrats client 14/14, bibliothèque 148).
+- **Recette rouge avant le lot** : `check-vitrine-single-ui` (« Bouton absent : Créer le PDF ») ; même échec sur `3e0ed1b5` et sur `d83b5f88` (avant F71a), copies détachées : F79.
+- **Non vu** : écrans à l'oeil (accord de Carlos du 15/11) ; `docs/refonte/DESIGN.md` section 11 garde la décision du 13/11 (règle d'offre d'abord) : la fiche F71b la remplace pour les sites, mise à jour de DESIGN.md à montrer à Carlos (règle G). **Autocontrôle de l'auteur.**
+- Prochaine action : lots à part au choix de Carlos : F69 (vue Parcours commercial, fiche), décisions F55 à F63, diagnostics F66 à F68, F75, F78, F79, débordements F72 et F73 ; particuliers hors établissement (J+8, rétractation en ligne) quand Carlos le décidera.
+
 ## 16/11/2026 : F71a, clauses des options, suggestions et champs vides (commit local)
 
 - [x] **Diagnostic** (`src/main/commercial/f71Diagnostic.test.ts`, test facultatif lancé seulement avec `F71_DIAG_OUT`, et `F71_DIAG_DB` pour une copie jetable d'une base ; la base source est seulement lue) : 125 prestations, professionnel et particulier. Constats : clauses d'une option ajoutée après la création absentes (1 à 30 changements à appliquer à la main) ; 24 options suggérées sur 42 visant une version retirée ; champs facultatifs d'offres vides partout ; 122 prestations sur 125 à 30 % d'acompte (F71b).

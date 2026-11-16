@@ -61,7 +61,8 @@ if(!process.versions.electron){
   check('Published contract clause count matches approved matrix',database.database.get("SELECT COUNT(*) AS n FROM contract_clause_versions WHERE status='published'").n===clauses.clauses.length);
   check('Restricted source references are not published',expectedRestricted.every(r=>!publishedCodes.has(r.code_source)));
   const parameters=async quote=>{
-   const p=S.emptyContractParameters(quote.contractAudience,quote.depositPercent);
+   // F71b : un devis « à définir » (acompte null) reçoit ici un échéancier choisi à la main pour la recette.
+   const p=S.emptyContractParameters(quote.contractAudience,quote.depositPercent??30);
    p.conclusion={...p.conclusion,channel:'on_premises',context:'TEST — faux dossier en établissement',purchasePurpose:'Recette de développement'};
    p.digital={...p.digital,kinds:['classical_service'],supply:'one_off',delivery:'TEST livraison explicitement convenue',qualificationReason:'Qualification fictive pour tester le parcours, non validation juridique de la prestation'};
    p.rights.reviewed=true;p.renewal.reviewed=true;p.milestones=[{label:'TEST livraison',date:'2027-06-01'}];

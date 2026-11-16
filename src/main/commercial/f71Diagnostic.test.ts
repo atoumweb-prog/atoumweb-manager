@@ -9,7 +9,6 @@ import { QuoteService } from './QuoteService';
 import { ContractTermsService } from './ContractTermsService';
 import { QuoteContractPreparationService } from './QuoteContractPreparationService';
 import { applyStarterPublication, planStarterPublication } from './StarterOffersPublication';
-import { approvedPaymentPlanForCode } from '../../shared/approvedPaymentPlans';
 import { emptyAdministration } from '../../shared/quoteContractPreparation';
 
 /**
@@ -49,15 +48,16 @@ describe.skipIf(!OUT)('F71 : relevé du moteur des devis sur le catalogue approu
         const row: Record<string, unknown> = { code: v.code ?? '', name: v.name, type: v.type, audience, price: v.price };
         try {
           const prospect = crm.createProspect({ organizationId: org, primaryNeed: 'TEST F71' });
-          const plan = approvedPaymentPlanForCode(v.code);
+          // F71b : aucun échéancier imposé, la règle du service s’applique (chemin réel de l’assistant).
           const unit = v.price ?? 100000;
-          const q = quotes.createWithLines({ prospectId: prospect.id, subject: `TEST ${v.name}`, contractAudience: audience, ...(plan ? { paymentPlan: plan.id } : {}) },
+          const q = quotes.createWithLines({ prospectId: prospect.id, subject: `TEST ${v.name}`, contractAudience: audience },
             [{ catalogVersionId: v.vid, input: { label: v.name, proposedUnitPriceCents: unit, catalogUnitPriceCents: unit } }], { applyContractTerms: true });
           const build = terms.getQuoteBuild(q.id);
           const enabled = build.clauses.filter((c) => c.enabled);
           const codes = enabled.map((c) => clauseCode(c.sourceClauseVersionId ?? null));
           const linked = db.all<{ code: string }>('SELECT t.code FROM catalog_contract_clause_links l JOIN contract_clause_templates t ON t.id=l.clause_id WHERE l.catalog_item_id=? AND t.status=\'active\'', [v.iid]).map((r) => r.code);
           row.deposit = q.depositPercent;
+          row.origin = preparation.parameters(q.id)?.payment.origin ?? null;
           row.preset = preparation.parameters(q.id)?.payment.preset ?? null;
           row.milestones = (preparation.parameters(q.id)?.payment.milestones ?? []).map((m) => m.percent).join('/');
           row.clauses = codes.length;
@@ -74,7 +74,7 @@ describe.skipIf(!OUT)('F71 : relevé du moteur des devis sur le catalogue approu
             const optionGaps: string[] = [];
             for (const o of options) {
               const p2 = crm.createProspect({ organizationId: org, primaryNeed: 'TEST F71 option' });
-              const q2 = quotes.createWithLines({ prospectId: p2.id, subject: `TEST option ${o.name}`, contractAudience: audience, ...(plan ? { paymentPlan: plan.id } : {}) },
+              const q2 = quotes.createWithLines({ prospectId: p2.id, subject: `TEST option ${o.name}`, contractAudience: audience },
                 [{ catalogVersionId: v.vid, input: { label: v.name, proposedUnitPriceCents: unit, catalogUnitPriceCents: unit } }], { applyContractTerms: true });
               quotes.addCatalogLine(q2.id, o.target, { label: o.name, proposedUnitPriceCents: o.price ?? 10000, catalogUnitPriceCents: o.price ?? 10000 });
               const before = terms.getQuoteBuild(q2.id).clauses.filter((x) => x.enabled).length;
@@ -86,7 +86,7 @@ describe.skipIf(!OUT)('F71 : relevé du moteur des devis sur le catalogue approu
               })].filter(Boolean).join(' | ');
               // Même offre et même option choisies ensemble dès la création (chemin de l'assistant).
               const p3 = crm.createProspect({ organizationId: org, primaryNeed: 'TEST F71 option à la création' });
-              const q3 = quotes.createWithLines({ prospectId: p3.id, subject: `TEST création ${o.name}`, contractAudience: audience, ...(plan ? { paymentPlan: plan.id } : {}) },
+              const q3 = quotes.createWithLines({ prospectId: p3.id, subject: `TEST création ${o.name}`, contractAudience: audience },
                 [{ catalogVersionId: v.vid, input: { label: v.name, proposedUnitPriceCents: unit, catalogUnitPriceCents: unit } },
                   { catalogVersionId: o.target, input: { label: o.name, proposedUnitPriceCents: o.price ?? 10000, catalogUnitPriceCents: o.price ?? 10000 } }], { applyContractTerms: true });
               const atCreation = terms.proposeQuoteUpdate(q3.id).changes.length;

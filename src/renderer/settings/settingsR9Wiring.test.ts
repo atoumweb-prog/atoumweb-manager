@@ -130,7 +130,8 @@ describe('R9 : Mon entreprise dit où elle en est', () => {
   it('le bouton d’enregistrement reste l’action principale et l’acompte n’est pas touché', () => {
     expect(component).toContain('className="primary-button"');
     expect(component).toContain('Enregistrer et actualiser l’aperçu');
-    expect(component).toContain("number('depositPercent','Acompte proposé (%)',0,100)");
+    // F71b (décision de Carlos du 16/11/2026) : le réglage « Acompte proposé (%) » est retiré de l’écran.
+    expect(component).not.toContain("Acompte proposé");
   });
 });
 

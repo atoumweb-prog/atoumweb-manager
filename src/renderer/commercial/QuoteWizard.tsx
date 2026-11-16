@@ -1,13 +1,13 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
 import type {CatalogItemSummary, QuoteDetail, QuoteLineInput} from '../../shared/commercial';
 import type {ClientSummary, ProspectSummary} from '../../shared/crm';
-import {approvedPaymentPlanForCode} from '../../shared/approvedPaymentPlans';
+import {defaultPaymentSchedule} from '../../shared/paymentScheduleRules';
 import {catalogMatchesQuery} from '../../shared/catalogDiscovery';
 import {OperationIcon} from '../operations/OperationIcon';
 import {QuoteDraftLines, type DraftLine} from '../workflow/QuoteDraftLines';
 import {useUnsavedDraft} from '../unsaved/unsaved';
 import {quoteWizardPriceCents} from './quoteWizardPrice';
-import {catalogSourceCode, quoteStartFromProspect, resolveSuggestions, wizardFamilies, wizardMoney, wizardPriceLabel, type WizardSuggestion} from './quoteWizardModel';
+import {quoteStartFromProspect, resolveSuggestions, wizardFamilies, wizardMoney, wizardPriceLabel, type WizardSuggestion} from './quoteWizardModel';
 import './quote-wizard.css';
 
 /**
@@ -26,7 +26,8 @@ interface Draft {
   subject: string; subjectEdited: boolean; needSummary: string;
   offerVersionId: string; offerPrice: string;
   lines: DraftLine[];
-  payment: 'plan' | 'percent'; depositPercent: string;
+  /** F71b : 'rule' = échéancier de la règle ; 'manual' = facilité de paiement choisie à la main. */
+  payment: 'rule' | 'manual'; depositPercent: string;
   validityDays: string; estimatedDelay: string;
   contractAudience: 'professional' | 'consumer'; specialTerms: string;
 }
@@ -45,7 +46,7 @@ function emptyDraft(prospect: ProspectSummary | undefined): Draft {
     ownerKind: 'prospect', ownerId: prospect?.id ?? '',
     subject: start.subject, subjectEdited: false, needSummary: start.needSummary,
     offerVersionId: '', offerPrice: '', lines: [],
-    payment: 'percent', depositPercent: '30', validityDays: '30', estimatedDelay: start.estimatedDelay,
+    payment: 'rule', depositPercent: '', validityDays: '30', estimatedDelay: start.estimatedDelay,
     contractAudience: prospect && !prospect.organizationId ? 'consumer' : 'professional', specialTerms: '',
   };
 }
@@ -63,7 +64,6 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
   const step = steps[stepIndex];
   const [draft, setDraft] = useState<Draft>(() => emptyDraft(presetProspect));
   const [defaultsReady, setDefaultsReady] = useState(false);
-  const defaultDeposit = useRef('30');
   const [search, setSearch] = useState('');
   const [familyKey, setFamilyKey] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -73,13 +73,12 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
   const createInFlight = useRef(false); // verrou immédiat, avant le prochain rendu React.
   const patch = (changes: Partial<Draft>) => setDraft(current => ({...current, ...changes}));
 
-  // Validité et acompte habituels : ceux des Réglages, avant toute saisie.
+  // Validité habituelle : celle des Réglages, avant toute saisie (F71b : plus d'acompte par défaut).
   useEffect(() => {
     let active = true;
     void window.atoumweb.quoteDocumentSettings.get().then(defaults => {
       if (!active) return;
-      defaultDeposit.current = String(defaults.depositPercent);
-      setDraft(current => ({...current, validityDays: String(defaults.validityDays), depositPercent: String(defaults.depositPercent)}));
+      setDraft(current => ({...current, validityDays: String(defaults.validityDays)}));
     }).catch(() => undefined).finally(() => { if (active) setDefaultsReady(true); });
     return () => { active = false; };
   }, []);
@@ -88,7 +87,6 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
 
   const families = useMemo(() => wizardFamilies(catalog), [catalog]);
   const offer = catalog.find(item => item.currentVersion?.id === draft.offerVersionId) ?? null;
-  const plan = approvedPaymentPlanForCode(catalogSourceCode(offer));
   const found = search.trim() ? catalog.filter(item => catalogMatchesQuery(item, search, 'selection')) : null;
   const openFamily = families.find(family => family.key === familyKey) ?? null;
   const ownerOptions = draft.ownerKind === 'prospect'
@@ -128,15 +126,12 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
 
   function chooseOffer(item: CatalogItemSummary | null): void {
     const version = item?.currentVersion ?? null;
-    const nextPlan = approvedPaymentPlanForCode(catalogSourceCode(item));
     setError(null);
     setDraft(current => ({
       ...current,
       offerVersionId: version?.id ?? '', offerPrice: '',
       // L'objet suit le nom de l'offre tant qu'il n'a pas été écrit à la main.
       subject: current.subjectEdited || current.subject.trim() && !catalog.some(other => other.name === current.subject) ? current.subject : item?.name ?? '',
-      payment: nextPlan ? 'plan' : 'percent',
-      depositPercent: nextPlan ? current.depositPercent : String(version?.defaultDepositPercent ?? defaultDeposit.current),
       estimatedDelay: current.estimatedDelay.trim() || !version?.recommendedDelayDays ? current.estimatedDelay : `${version.recommendedDelayDays} jours`,
     }));
   }
@@ -151,6 +146,18 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
   function offerPriceCents(): number | null {
     return offer ? quoteWizardPriceCents(draft.offerPrice, offer.currentVersion?.priceCents) : null;
   }
+
+  // F71b : même règle que le service (paymentScheduleRules) sur les lignes en cours de saisie.
+  const scheduleDecision = (() => {
+    const snapshot = (item: CatalogItemSummary | undefined | null) => item?.currentVersion ? {familyCode: item.currentVersion.familyCode ?? null, itemType: item.type, periodicity: item.currentVersion.periodicity ?? null} : null;
+    const cents = (run: () => number | null) => { try { return run() ?? 0; } catch { return 0; } };
+    const rows = [
+      ...(offer ? [{id: 'offer', snapshot: snapshot(offer), contractLineValueCents: cents(offerPriceCents)}] : []),
+      ...draft.lines.map((line, index) => ({id: 'line-' + index, snapshot: snapshot(catalog.find(item => item.currentVersion?.id === line.versionId)),
+        contractLineValueCents: cents(() => Math.round((eurosToCents(line.price) ?? 0) * Number(line.quantity.replace(',', '.'))))})),
+    ];
+    return defaultPaymentSchedule(rows);
+  })();
 
   function validate(target: StepId): string | null {
     if (target === 'owner' && !draft.ownerId) return 'Choisis un prospect ou un client.';
@@ -170,7 +177,7 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
       if (!draft.subject.trim()) return 'Donne un titre au devis (son objet).';
       const validity = Number(draft.validityDays), deposit = Number(draft.depositPercent);
       if (!Number.isInteger(validity) || validity <= 0) return 'La durée de validité doit être un nombre de jours.';
-      if (!(draft.payment === 'plan' && plan) && (!Number.isInteger(deposit) || deposit < 0 || deposit > 100)) return 'L’acompte doit être un pourcentage entre 0 et 100.';
+      if (draft.payment === 'manual' && (!draft.depositPercent.trim() || !Number.isInteger(deposit) || deposit <= 0 || deposit > 100)) return 'Indique l’acompte de la facilité de paiement, en pourcentage entre 1 et 100.';
     }
     return null;
   }
@@ -191,7 +198,7 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
       const vitrine = catalog.find(item => item.canonicalCode === 'AW-WEB-VITRINE'), article = catalog.find(item => item.canonicalCode === 'AW-CONT-ART-SEO');
       setDraft(current => ({
         ...current, ownerKind: 'prospect', ownerId: owner.id, subject: 'TEST — Site vitrine', subjectEdited: true, needSummary: 'TEST — Site vitrine et Article SEO',
-        offerVersionId: vitrine?.currentVersion?.id ?? '', offerPrice: '', payment: approvedPaymentPlanForCode(catalogSourceCode(vitrine)) ? 'plan' : 'percent',
+        offerVersionId: vitrine?.currentVersion?.id ?? '', offerPrice: '', payment: 'rule',
         lines: article?.currentVersion ? [{versionId: article.currentVersion.id, label: article.name, quantity: '1', price: String((article.currentVersion.priceCents ?? 0) / 100)}] : [],
       }));
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
@@ -209,14 +216,13 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
         input: {label: line.label.trim(), quantityMilli: Math.round(Number(line.quantity.replace(',', '.')) * 1000), proposedUnitPriceCents: eurosToCents(line.price) ?? 0},
       }));
       if (offer) lines.unshift({catalogVersionId: draft.offerVersionId, input: {label: offer.name, proposedUnitPriceCents: offerPriceCents() ?? 0}});
-      const usePlan = draft.payment === 'plan' && plan;
       const created = await window.atoumweb.quotes.createWithLines({
         prospectId: draft.ownerKind === 'prospect' ? draft.ownerId : null,
         clientAccountId: draft.ownerKind === 'client' ? draft.ownerId : null,
         subject: draft.subject.trim(), needSummary: draft.needSummary.trim() || null,
         validityDays: Number(draft.validityDays), estimatedDelay: draft.estimatedDelay.trim() || null,
         contractAudience: draft.contractAudience, specialTerms: draft.specialTerms.trim() || null,
-        ...(usePlan ? {paymentPlan: plan.id} : {depositPercent: Number(draft.depositPercent)}),
+        ...(draft.payment === 'manual' ? {depositPercent: Number(draft.depositPercent)} : {}),
       }, lines, {applyContractTerms: true, advanceNewProspect: true});
       guard.saved(draft);
       await onCreated(created);
@@ -224,7 +230,7 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
     finally { createInFlight.current = false; setSaving(false); }
   }
 
-  const paymentSummary = draft.payment === 'plan' && plan ? plan.summary : `${draft.depositPercent || '0'} % à la commande, le solde ensuite`;
+  const paymentSummary = draft.payment === 'manual' ? `${draft.depositPercent || '0'} % à la commande, le solde ensuite (facilité de paiement)` : scheduleDecision.reason;
   const previewTotal = (() => {
     try {
       const lines = draft.lines.reduce((sum, line) => sum + Math.round((eurosToCents(line.price) ?? 0) * Number(line.quantity.replace(',', '.'))), 0);
@@ -307,8 +313,8 @@ export function QuoteWizard({catalog, prospects, clients, presetProspect, develo
         <label>Besoin du client<textarea value={draft.needSummary} onChange={e => patch({needSummary: e.target.value})} placeholder="En quelques phrases : ce que le client attend."/></label>
         <fieldset className="quote-payment-choice">
           <legend>Paiement</legend>
-          {plan && <label className="quote-radio"><input type="radio" name="quote-payment" checked={draft.payment === 'plan'} onChange={() => patch({payment: 'plan'})}/><span><strong>{plan.summary}</strong><small>Échéancier prévu pour cette offre.</small></span></label>}
-          <label className="quote-radio"><input type="radio" name="quote-payment" checked={draft.payment === 'percent' || !plan} onChange={() => patch({payment: 'percent'})}/><span><strong>{plan ? 'Un autre acompte' : 'Acompte à la commande'}</strong><span className="quote-deposit-field"><input aria-label="Acompte en pourcentage" inputMode="numeric" value={draft.depositPercent} disabled={draft.payment === 'plan' && !!plan} onChange={e => patch({depositPercent: e.target.value})}/> % à la commande, le solde ensuite</span></span></label>
+          <label className="quote-radio"><input type="radio" name="quote-payment" checked={draft.payment === 'rule'} onChange={() => patch({payment: 'rule'})}/><span><strong>{scheduleDecision.status === 'rule' ? scheduleDecision.reason : 'Échéancier à définir'}</strong><small>{scheduleDecision.status === 'rule' ? 'Échéancier prévu par les règles AtoumWeb ; il suit les lignes du devis.' : scheduleDecision.reason + ' Tu le choisiras dans la préparation du devis ; l’envoi attend ce choix.'}</small></span></label>
+          <label className="quote-radio"><input type="radio" name="quote-payment" checked={draft.payment === 'manual'} onChange={() => patch({payment: 'manual'})}/><span><strong>Une facilité de paiement</strong><span className="quote-deposit-field"><input aria-label="Acompte en pourcentage" inputMode="numeric" value={draft.depositPercent} disabled={draft.payment !== 'manual'} placeholder="—" onChange={e => patch({depositPercent: e.target.value})}/> % à la commande, le solde ensuite</span></span></label>
         </fieldset>
         <div className="quote-three-fields">
           <label>Ton client est<select value={draft.contractAudience} onChange={e => patch({contractAudience: e.target.value as Draft['contractAudience']})}><option value="professional">Un professionnel</option><option value="consumer">Un particulier</option></select></label>
