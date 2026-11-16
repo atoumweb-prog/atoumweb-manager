@@ -40,7 +40,7 @@ if(!process.versions.electron){
    database.quotes.accept=()=>{calls++;return new Promise((_resolve,reject)=>{rejectPending=()=>reject(new Error('TEMP ACCEPTANCE REJECTION'));});};
    const rowSelector='.quote-decision-actions button.secondary-button.compact-button',detailSelector='.quote-status-actions button.primary-button';
    await wait('!!document.querySelector('+JSON.stringify(rowSelector)+')&&!![...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby")');
-   await js('window.confirm=()=>true');
+   // Lot G1, F61 : l'acceptation Abby se confirme dans la boîte de la page (plus de window.confirm).
    // L'acceptation depuis la liste doit refuser de contourner la saisie contractuelle sale.
    const originalAdministration=await value(admin),dirtyAdministration='UNSAVED BEFORE ABBY '+theme,previousDialogs=dialogs.length;
    await input(admin,dirtyAdministration);
@@ -51,6 +51,7 @@ if(!process.versions.electron){
    check(theme+' declining acceptance preserves dirty administration draft',await value(admin)===dirtyAdministration);
    await input(admin,originalAdministration??'');
    await js('const row=document.querySelector('+JSON.stringify(rowSelector)+');const detail=[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby");row.click();detail.click();row.click()');
+   await wait('!!document.querySelector(".page-confirm-dialog[open] .primary-button")');await js('document.querySelector(".page-confirm-dialog[open] .primary-button").click()');
    for(let i=0;i<100&&!rejectPending;i++)await sleep(20);
    check(theme+' first Abby approval reaches IPC once',typeof rejectPending==='function');
    check(theme+' list and detail simultaneous approval result in one IPC',calls===1);
@@ -60,6 +61,7 @@ if(!process.versions.electron){
    check(theme+' rejected Abby approval keeps status unchanged',database.quotes.get(quote.id).status==='sent');
    database.quotes.accept=()=>{calls++;return Promise.reject(new Error('TEMP ACCEPTANCE RETRY FAILURE'));};
    await js('[...document.querySelectorAll(".quote-status-actions button")].find(b=>b.textContent.trim()==="Confirmer accepté dans Abby").click()');
+   await wait('!!document.querySelector(".page-confirm-dialog[open] .primary-button")');await js('document.querySelector(".page-confirm-dialog[open] .primary-button").click()');
    for(let i=0;i<100&&calls<2;i++)await sleep(20);
    check(theme+' detail action can retry after rejected list action',calls===2);
    await wait('document.querySelector('+JSON.stringify(rowSelector)+')?.disabled===false');

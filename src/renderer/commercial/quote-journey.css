@@ -58,7 +58,6 @@ html[data-theme] .quote-journey-tabs button[aria-selected=true]{background:#ffda
 .quote-detail-panel:has(.quote-journey)>.detail-panel-heading h2{margin:5px 0;font-size:22px;}
 .quote-detail-panel:has(.quote-journey)>.detail-panel-heading p{margin:5px 0;}
 .quote-detail-panel:has(.quote-journey)>.detail-badges{margin:6px 0;}
-.quote-detail-panel:has(.quote-journey)>.quote-preview-button{margin:6px 0;padding:8px 12px;}
 @media(max-width:1000px){.clause-desk-layout{grid-template-columns:1fr;}.clause-desk-outline{grid-template-columns:repeat(3,minmax(0,1fr));}.app-shell .quote-detail-panel:has(.quote-journey){width:calc(100vw - 40px);}.clause-desk-document{padding:14px;}}
 @media(max-width:650px){.quote-journey-tabs button{min-width:0;padding:10px 6px;font-size: var(--aw-font-functional);}.clause-desk-outline{grid-template-columns:1fr;}.preparation-compact [data-contract-section=administration][open]{grid-template-columns:1fr;}}
 .quote-document-frame{display:block;width:100%;height:calc(100vh - 220px);min-height:450px;background:#fff;border:1px solid #d6dce2;border-radius:5px;}
@@ -71,3 +70,10 @@ html[data-theme] .quote-journey-tabs button[aria-selected=true]{background:#ffda
 .quote-line-parameters .quote-line-editor-grid{min-width:0;}
 .quote-line-parameters .quote-line-editor-grid>label{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0;}
 .quote-line-parameters .quote-line-editor-grid>label>input:not([type=checkbox]),.quote-line-parameters .quote-line-editor-grid>label>select,.quote-line-parameters .quote-line-editor-grid>label>textarea{width:100%;min-width:0;max-width:100%;box-sizing:border-box;}
+/* Lot G1, F62 (décision de Carlos du 16/11/2026) : « Prévisualiser côté client » et « Plus » sur une même ligne d’outils. */
+.quote-journey .quote-editor-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+.quote-journey .quote-editor-tools .quote-preview-button{width:auto;margin:0;}
+/* Lot G1, F55 : devis envoyé ou accepté en vue de lecture ; l’onglet actif n’est plus un bouton jaune. */
+.quote-journey.is-record .quote-journey-tabs [role=tab][aria-selected=true]{background:var(--surface-soft)!important;color:var(--text)!important;-webkit-text-fill-color:var(--text)!important;border-color:var(--accent);box-shadow:inset 0 -3px 0 var(--accent);}
+.quote-state-banner{display:grid;gap:4px;margin:0 0 12px;padding:12px 14px;border:1px solid var(--border);border-left:4px solid var(--aw-info-solid);border-radius:8px;background:var(--surface-soft);color:var(--text);font-size:var(--aw-font-functional);line-height:1.45;}
+.quote-state-banner strong{font-size:var(--ui-font-primary);}

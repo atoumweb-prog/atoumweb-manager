@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : lot G1, fiche devis (F55, F61, F62) exécuté (commit local)
+
+- [x] **Fiche** `docs/refonte/plans/2026-11-16-f55-f63-decisions-design.md` validée par Carlos (« Oui, code G1 »). **Tests d’abord** (`commercial/g1QuoteWiring.test.ts`, 8 tests).
+- [x] **F55** : `QuoteJourney` reçoit `record` (bandeau `QuoteStateBanner` : « Accepté le… », « Envoyé le… ») hors brouillon : onglets sans numéro (« Prestations et prix », « Conditions et CGV », « Suivi et documents »), ouverture sur « Suivi et documents », pied « Continuer » retiré, onglet actif non jaune.
+- [x] **F61** : acceptation Abby depuis la liste et depuis la fiche dans la boîte de la page (`ui/usePageConfirm.tsx`, `ui/page-confirm.css`, sur `ProspectDialog`). « Prolonger la validité » : la fonction de la page n’a jamais eu de bouton (historique Git) ; code mort retiré (règle F), service `quotes.extendValidity` conservé ; la validité d’un brouillon se règle dans ses conditions.
+- [x] **F62** : « Prévisualiser côté client » passe dans la ligne d’outils du parcours, à côté de « Plus » ; règle CSS devenue sans cible retirée (règle F).
+- [x] **Recette réécrite (règle H)** : `check-unsaved-inputs-ui --lot-accept` confirme dans la boîte de la page au lieu de `window.confirm`.
+- **Preuves** : mesures avant / après (devis accepté : onglets numérotés et « Continuer vers les CGV » puis vue de lecture avec bandeau ; « Prévisualiser » et « Plus » de deux lignes à une) ; suite **330 fichiers, 2 723 tests** ; typecheck propre ; recettes `--lot-accept`, parcours devis 44/44, préparation contractuelle, options vertes ; empreinte de la source identique.
+- **Non vu** : devis envoyé (aucun dans la base de test ; même composant, bandeau « Envoyé le… ») ; autres thèmes à l’oeil. **Au registre** : F81 (autres boîtes natives, décision de Carlos) ; F56 complété (deux boutons jaunes sur un devis accepté, lot G3). **Autocontrôle de l’auteur.**
+- Prochaine action : lot G2 (F57, F58, F60).
+
 ## 16/11/2026 : décisions de Carlos sur F55 à F63 (consignées, rien de codé)
 
 - [x] Neuf décisions prises le 16/11/2026, toutes sur l’option recommandée : F55 vue de lecture d’un devis envoyé ou accepté ; F56 un seul bouton jaune par vue ; F57 prochaine étape selon l’état du devis ; F58 bandeau « Projet terminé », chrono permis ; F59 rail replié automatiquement en fenêtre étroite ; F60 focus sur la fiche rapide ; F61 boîte de la page au lieu des boîtes natives ; F62 en-tête de la fiche devis sur une ligne ; F63 français simple dans Sites.
