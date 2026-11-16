@@ -465,6 +465,10 @@ export class QuoteService {
       });
     }
     this.recalculate(quoteId);
+    // F71a (décision de Carlos du 16/11/2026) : une ligne ajoutée à un brouillon dont les CGV sont posées apporte
+    // aussitôt ses clauses (composition seule : les clauses présentes et leurs versions ne bougent pas).
+    // Un devis créé sans CGV n'en reçoit pas d'office ; un devis figé est refusé plus haut par assertEditable.
+    if (this.database.get('SELECT 1 AS present FROM quote_contract_clauses WHERE quote_id=? LIMIT 1', [quoteId])) this.contractTerms.composeQuote(quoteId);
     return this.get(quoteId);
   }
 

@@ -800,6 +800,13 @@ export class ContractTermsService {
       for (const clause of desired.values()) {
         const row = existingByKey.get(clause.sourceKey);
         if (row) {
+          // F71a : en composition seule, une clause posée garde texte et version ; seule sa place suit l'ordre
+          // canonique quand une ligne ajoutée intercale ses clauses (sauf ordre choisi à la main ou clause personnalisée).
+          if(compositionOnly&&!row.is_customized&&!manualOrder&&row.sort_order!==clause.sortOrder)this.database.run('UPDATE quote_contract_clauses SET sort_order=?,updated_at=? WHERE id=?',[clause.sortOrder,now,row.id]);
+          // Une clause déjà posée qui sert aussi à la ligne ajoutée retient cette provenance : retirer plus tard l'une
+          // des deux lignes ne la retire pas tant que l'autre en a besoin. Texte et version restent inchangés.
+          const provenance=JSON.stringify(clause.sourceCatalogItemIds);
+          if(compositionOnly&&row.source_catalog_item_ids_json!==provenance)this.database.run('UPDATE quote_contract_clauses SET source_catalog_item_ids_json=?,updated_at=? WHERE id=?',[provenance,now,row.id]);
           if(compositionOnly||row.is_customized)continue;
           const reenable = Boolean(row.is_orphaned) && !Boolean(row.is_customized);
           this.database.run(

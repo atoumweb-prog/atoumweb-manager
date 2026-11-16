@@ -754,7 +754,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
             ) : catalogView === 'organized' ? (
               <CatalogFamiliesOverview items={filtered} formatPrice={formatPrice} onFamily={openFamily} onOpen={(id) => void openItem(id)} />
             ) : (
-              <ConfiguredDataTable<CatalogItemSummary> filtersActive={hasFilters} onClearFilters={resetFilters} scope={CATALOG_ADMIN_VIEW} fitAvailable={false} defaultWidths={{category:130,identity:340,type:135,price:155,recommendedPrice:140,priceMode:135,status:100,public:80,version:180,open:80}} catalogContext={{value:filters,onApply:context=>{setFilters(context);setTablePage(1);}}} pagination={{page:tablePage,pageSize:filters.pageSize,onPage:setTablePage,onSize:size=>changeFilter('pageSize',size)}} store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>void openItem(item.id)} className="catalog-table" caption="Administration du catalogue · source complète · tri sur tous les résultats filtrés" columns={[
+              <ConfiguredDataTable<CatalogItemSummary> defaultVisibleColumnIds={['category','identity','type','price','priceMode','status','public','version','open']} filtersActive={hasFilters} onClearFilters={resetFilters} scope={CATALOG_ADMIN_VIEW} fitAvailable={false} defaultWidths={{category:130,identity:340,type:135,price:155,recommendedPrice:140,priceMode:135,status:100,public:80,version:180,open:80}} catalogContext={{value:filters,onApply:context=>{setFilters(context);setTablePage(1);}}} pagination={{page:tablePage,pageSize:filters.pageSize,onPage:setTablePage,onSize:size=>changeFilter('pageSize',size)}} store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={item=>item.id} onSelect={item=>void openItem(item.id)} className="catalog-table" caption="Administration du catalogue · source complète · tri sur tous les résultats filtrés" columns={[
                 {id:'category',label:'Catégorie',sortValue:item=>item.category||null,render:item=>item.category||'—'},
                 {id:'identity',label:'Nom',required:true,sortValue:item=>item.name,render:item=><><strong>{item.name}</strong>{item.canonicalCode&&<small className="catalog-canonical-code">{item.canonicalCode}</small>}</>},
                 {id:'type',label:'Type',sortValue:item=>item.type,render:item=><span className="status-pill">{item.currentVersion?.commercialKind?KIND_LABELS[item.currentVersion.commercialKind]:item.type==='offer'?'Offre':'Service'}</span>},
@@ -846,11 +846,11 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                       <Summary label="Unité" value={displayedVersion.unit || 'Non renseignée'} />
                       <Summary label="Périodicité" value={displayedVersion.periodicity || 'Non renseignée'} />
                       {displayedVersion.provenance && <Summary label="Source" wide value={[displayedVersion.provenance.reference, displayedVersion.provenance.recordKey, displayedVersion.provenance.sha256].filter(Boolean).join(' · ')} />}
-                      <Summary label="Prix conseillé" value={displayedVersion.recommendedPriceCents != null ? `${(displayedVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €` : '—'} />
-                      <Summary label="Acompte par défaut" value={displayedVersion.defaultDepositPercent != null ? `${displayedVersion.defaultDepositPercent} %` : '—'} />
+                      {displayedVersion.recommendedPriceCents != null && <Summary label="Prix conseillé" value={`${(displayedVersion.recommendedPriceCents / 100).toLocaleString('fr-FR')} €`} />}
+                      {displayedVersion.defaultDepositPercent != null && <Summary label="Acompte par défaut" value={`${displayedVersion.defaultDepositPercent} %`} />}
                       <Summary label="Durée estimée" value={displayedVersion.estimatedMinutes != null ? `${displayedVersion.estimatedMinutes} min` : '—'} />
-                      <Summary label="Délai recommandé" value={displayedVersion.recommendedDelayDays != null ? `${displayedVersion.recommendedDelayDays} jours` : '—'} />
-                      <Summary label="Ancien libellé contractuel (legacy)" value={displayedVersion.contractType || '—'} />
+                      {displayedVersion.recommendedDelayDays != null && <Summary label="Délai recommandé" value={`${displayedVersion.recommendedDelayDays} jours`} />}
+                      {displayedVersion.contractType && <Summary label="Ancien libellé contractuel (legacy)" value={displayedVersion.contractType} />}
                       <Summary label={displayedVersion.publishedAt ? 'Publiée le' : 'Créée le'} value={formatCatalogDate(displayedVersion.publishedAt ?? displayedVersion.createdAt)} />
                     </div>
                   </section>}

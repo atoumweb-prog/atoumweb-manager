@@ -199,6 +199,9 @@ export interface CatalogRecommendationLink {
   targetVersionNumber: number;
   targetVersionStatus: CatalogVersionStatus;
   targetItemStatus: CatalogItemStatus;
+  /** F71a : version publiée actuelle de la prestation visée (null si aucune). */
+  targetPublishedVersionId?: string | null;
+  targetPublishedVersionNumber?: number | null;
   sortOrder: number;
   reason?: string;
   status?: 'active' | 'paused';

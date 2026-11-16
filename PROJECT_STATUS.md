@@ -1,5 +1,20 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : F71a, clauses des options, suggestions et champs vides (commit local)
+
+- [x] **Diagnostic** (`src/main/commercial/f71Diagnostic.test.ts`, test facultatif lancé seulement avec `F71_DIAG_OUT`, et `F71_DIAG_DB` pour une copie jetable d'une base ; la base source est seulement lue) : 125 prestations, professionnel et particulier. Constats : clauses d'une option ajoutée après la création absentes (1 à 30 changements à appliquer à la main) ; 24 options suggérées sur 42 visant une version retirée ; champs facultatifs d'offres vides partout ; 122 prestations sur 125 à 30 % d'acompte (F71b).
+- [x] **Fiche** `docs/refonte/plans/2026-11-16-f71a-clauses-options-champs-design.md`, validée par Carlos le 16/11/2026 (« Oui, code F71a ») avec ses deux décisions : clauses automatiques sur un brouillon ; suggestions sur la version publiée.
+- [x] **Tests d'abord** (`f71aClauses.test.ts` 5, `shared/f71aRecommendations.test.ts` 4, `commercial/f71aCatalogEmpty.test.ts` 5) :
+  - `QuoteService.addCatalogLine` recompose les clauses quand les CGV du devis sont posées (`composeQuote`, composition seule) ; un devis sans CGV ne reçoit rien ; un devis figé reste refusé ;
+  - en composition, une clause déjà posée garde texte et version ; seuls sa place (hors ordre manuel et clause personnalisée) et sa provenance suivent, pour qu'une clause partagée par l'offre et l'option reste due tant que l'une des deux est au devis ;
+  - suggestions : `CatalogRecommendationsService.list` donne la version publiée de la prestation visée ; `resolveRecommendationTargets` résout et retire les doublons ; branché dans `QuoteCatalogRecommendationsPanel` ;
+  - Offres & Tarifs : colonne « Prix conseillé » hors de la vue standard (toujours dans « Colonnes et vues ») ; prix conseillé, acompte par défaut, délai recommandé et ancien libellé contractuel affichés seulement s'ils sont renseignés.
+- [x] **Recette réécrite (règle H)** : `scripts/fixtures/quote-journey.cjs` attendait la clause de la prestation manquante puis appliquée à la main ; elle vérifie désormais qu'elle est présente dès l'ouverture des CGV.
+- **Preuves** : relevé sur copie jetable de la préproduction après correction : **0 écart sur 35 options de 8 offres**, 0 erreur, 0 clause vide, 0 champ à renseigner ; empreinte de la préproduction identique (`5da9e5fc…`) ; suite **325 fichiers, 2 660 tests** ; typecheck propre ; recettes : parcours devis 44/44, préparation contractuelle, options, conseils commerciaux, contrats client 14/14, bibliothèque des clauses 148.
+- **Recette rouge avant le lot** (même échec au premier passage, avant tout code) : `check-contract-terms-builder-ui` (« Bouton absent : Supprimer définitivement ») : F78.
+- **Non vu** : écrans à l'oeil (pas de capture, accord de Carlos du 15/11) ; offres sans option suggérée ajoutées à la main avec des clauses partagées autres que celles mesurées. **Autocontrôle de l'auteur.**
+- Prochaine action : **F71b, échéancier** (règles décidées le 13/11 : règle de l'offre d'abord, 1 000 € et plus en 30 / 40 / 30 pour la création de site et le développement sur devis, ponctuelles à 100 %, abonnements hors acompte, sinon « Échéancier à définir » et envoi bloqué) : fiche à valider, avec deux ou trois questions.
+
 ## 16/11/2026 : fin de refonte, lot F4 (densités Compact et Confort +) et logo visible dans tous les thèmes (F77) exécutés (commits locaux) ; fin de refonte terminée
 
 - [x] **F77, logo** (accord de Carlos du 16/11/2026 : « tu peux toucher à la couleur du logo… visible peu importe le thème ») : les quatre parties jaunes du logo vectoriel portent la classe `aw-brand-gold` ; sur le rail blanc du thème Blanc, elles prennent l'or foncé du thème (5,5:1) ; sur les rails sombres (Noir, AtoumWeb), le jaune et le blanc cassé restent (contrastes vérifiés par test). Tests ajoutés à `ui/finF3Wiring.test.ts` (24).
