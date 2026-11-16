@@ -1,5 +1,19 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : modèles de projet du référentiel, code et simulation (commit local, préproduction non modifiée)
+
+- [x] **Plan** `docs/refonte/plans/2026-11-16-modeles-de-projet-plan.md` (skills `superpowers:writing-plans`, `superpowers:test-driven-development`).
+- [x] **Code, tests d'abord** :
+  - `src/main/projects/referentialTemplatePlan.ts` : nature des offres, avant-vente exclue, encaissements en contrôle Abby, quatre lots dans l'ordre (36 tests) ;
+  - `src/main/projects/ReferentialProjectTemplates.ts` : plan en lecture seule et application vérifiée par empreinte, rejouable (7 tests, dont un vrai devis qui devient projet et une option seule refusée) ;
+  - `scripts/preproduction/import-referential-templates.cjs` : aperçu, puis `--apply <empreinte>` avec sauvegarde, refus si le Manager est ouvert.
+- [x] **Simulation sur copie jetable** de Manager-Claude-Codex : 32 modèles publiés, 100 liens (base et complément), 25 services récurrents sans modèle, 8 offres V39 retrouvées par leur nom, 4 offres du pack absentes du catalogue (dont 3 options prioritaires et « Identité Visuelle Essentielle »), site vitrine laissé tel quel ; seconde application sans écriture. Contrôle : **101 offres sur 101** donnent un devis qui devient un projet avec ses tâches (options avec la base de leur famille ; prix TEST sur les offres sur devis).
+- **Rapport à relire par Carlos** : `C:\DEV\Livrables\Modeles-de-projet\rapport-simulation.md` (modèles, tâches par lot, liens), `controle-devis-projet.json`.
+- **Révision (règle I)** : 25 services récurrents au lieu de 24 annoncés dans la fiche (« Hébergement WordPress seul » ajouté) ; même périmètre.
+- **Non vérifié** : rendu des projets dans l'écran Projets ; les options ajoutées à un site vitrine arrivent dans des lots « Démarrage / Réalisation / … » distincts des lots du modèle vitrine (lots de noms différents), déduit du code, non regardé à l'écran.
+- **Preuves** : typecheck propre ; suite **336 fichiers, 2 808 tests** ; empreinte de la préproduction inchangée `5da9e5fcf5115d91`. **Autocontrôle de l'auteur.**
+- Prochaine action : relecture du rapport par Carlos, puis, sur son accord explicite, application dans la préproduction (`--apply` avec l'empreinte relue).
+
 ## 16/11/2026 : modèles de projet pour toutes les offres, fiche validée (rien de codé)
 
 - **Constat** : 125 offres actives sur 126 sont publiées, mais une seule (« Site vitrine 5 pages ») est reliée à un modèle de projet ; sans modèle relié, un devis accepté ne peut pas devenir un projet. Le référentiel du 12/11 propose des étapes pour chaque offre (`scripts/referentiel/etapes.cjs`).
