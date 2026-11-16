@@ -1,5 +1,11 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : décisions de Carlos sur F55 à F63 (consignées, rien de codé)
+
+- [x] Neuf décisions prises le 16/11/2026, toutes sur l’option recommandée : F55 vue de lecture d’un devis envoyé ou accepté ; F56 un seul bouton jaune par vue ; F57 prochaine étape selon l’état du devis ; F58 bandeau « Projet terminé », chrono permis ; F59 rail replié automatiquement en fenêtre étroite ; F60 focus sur la fiche rapide ; F61 boîte de la page au lieu des boîtes natives ; F62 en-tête de la fiche devis sur une ligne ; F63 français simple dans Sites.
+- [x] Découpage décidé : trois lots, G1 devis (F55, F61, F62), G2 Prospection et projets (F57, F58, F60), G3 coque et libellés (F56, F59, F63). Fiche : `docs/refonte/plans/2026-11-16-f55-f63-decisions-design.md` (à valider avant le code, règle J).
+- Prochaine action : validation de la fiche par Carlos, puis lot G1.
+
 ## 16/11/2026 : F69, vue « Parcours commercial » de Prospection en tableau compact (commit local)
 
 - [x] **Fiche** `docs/refonte/plans/2026-11-16-f69-parcours-commercial-design.md` (constats mesurés sur capture, direction « tableau compact » choisie par Carlos), validée le 16/11/2026 (« Oui, code F69 ») ; skill `atoumweb-design` (critique sur code et capture).
