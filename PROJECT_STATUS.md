@@ -6,7 +6,8 @@
 - [x] **F73** Interventions, onglets Maintenance et Packs d'heures : `.maintenance-list-panel` et `.hour-pack-list-panel` imposaient `overflow: hidden`, qui écrasait le défilement du panneau commun ; le tableau (720 px minimum) était coupé et Prix et Statut étaient inaccessibles en fenêtre étroite. Correction dans `operations.css` : les deux cartes défilent (764 px de contenu pour 385 visibles).
 - **Relevé au passage** : F84 inscrite (sous-titre du suivi opérationnel coupé en fenêtre étroite), non traitée.
 - **Preuves** : mesure avant et après sur copie jetable (Noir, Confort, 1510 px et fenêtre étroite) ; typecheck propre ; suite **333 fichiers, 2 764 tests**. **Autocontrôle de l'auteur** ; captures prises mais regardées seulement en haut de page.
-- Prochaine action : F81 attend la décision de Carlos ; F84 à voir.
+- [x] **F84** : sous-titre du suivi opérationnel des Interventions qui passe à la ligne au lieu d’être coupé (`operations.css`) ; 0 texte coupé mesuré ; suite 2 764 tests verte.
+- Prochaine action : F81 attend la décision de Carlos.
 
 ## 16/11/2026 : recettes rouges du registre, cinq remises en état (F78, F79, F80, F82, F83) (commit local)
 

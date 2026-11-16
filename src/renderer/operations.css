@@ -1310,13 +1310,12 @@ body.operation-resizing {
   font-weight: 700;
 }
 
+/* F84 : le sous-titre passe à la ligne en fenêtre étroite au lieu d’être coupé. */
 .operations-health-main small {
-  overflow: hidden;
   color: var(--text-muted);
   font-size: var(--aw-font-functional, 14px);
   font-weight: 400;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .operations-health-counters {
