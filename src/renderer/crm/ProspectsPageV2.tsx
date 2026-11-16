@@ -21,6 +21,7 @@ import './prospect-density-options.css';
 import './prospect-workspace-pilot.css';
 import './prospection-ux.css';
 import './prospect-pipeline-compact.css';
+import './prospect-desk-g3.css';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit,unsavedRegistry} from '../unsaved/unsaved';
 import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';

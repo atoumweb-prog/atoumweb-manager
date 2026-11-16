@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : lot G3, coque et libellés (F56, F59, F63) exécuté (commit local) ; décisions F55 à F63 toutes appliquées
+
+- [x] **Tests d’abord** (`renderer/g3Wiring.test.ts`, 27 tests) ; fiche `2026-11-16-f55-f63-decisions-design.md` validée par Carlos (« Oui, code G3 »).
+- [x] **F56** : relevé des boutons jaunes par vue avant / après. Fiche de travail du prospect : 4 jaunes dans la fiche (prochaine étape, onglet actif, actions du devis intégré) puis 1 (`crm/prospect-desk-g3.css`, jetons, spécificité supérieure aux couches pilotes) ; projet onglet Production : 2 puis 1 (« ▶ Démarrer » en secondaire) ; devis accepté onglet Suivi : 2 puis 1 dans le panneau (« Ouvrir le projet » en secondaire) ; Sites et Réglages : 1 déjà. Reste le bouton de la page en arrière-plan (« Prospect », « + Nouveau devis »), hors du panneau.
+- [x] **F59** : `NavigationRail` suit `(max-width: 760px)` ; en fenêtre étroite, rail replié sans changer le réglage, bouton du rail = ouverture à la demande (sans enregistrer), refermé au changement de page. **Écart (règle I)** : seuil de 760 px, celui de la feuille du rail qui fait passer le rail déplié par-dessus la page, au lieu des « environ 900 px » de la fiche.
+- [x] **F63** : seize libellés de `BridgeSitesPage` en français simple (« copie du site », « comparaison », « Importer une copie depuis le Bridge ») ; données, formats, échanges et messages du processus principal inchangés.
+- [x] **Recettes réécrites (règle H)** : `fixtures/prospection-flow.cjs` (onglet actif souligné et à la couleur de texte du thème au lieu de « texte foncé sur jaune ») ; `check-ux-v2-lot02b-workshop` (restauration du mode durable du rail en grande fenêtre).
+- **Preuves** : jaunes par vue mesurés ; rail : réglage « replié » puis « déplié » conservés après passage en fenêtre étroite, ouverture à 250 px et repli après un choix ; Sites : 0 « snapshot », 0 « diff » ; suite **333 fichiers, 2 764 tests** (un premier passage avait 12 échecs par délais dépassés de la machine, passés seuls puis suite complète repassée verte) ; typecheck propre ; recettes `lot02a` 8, `lot02b` 9, Prospection 29/29, parcours devis 44/44, projet prévisionnel 60/60, `shell-home` vertes.
+- **Non vu** : Sites et Réglages dans leurs autres états (site ouvert, comparaison, confirmations) ; autres thèmes à l’oeil. **Autocontrôle de l’auteur.**
+- Prochaine action : au choix de Carlos : F81 (autres boîtes natives), diagnostics F66 à F68, F75, F78 à F80, F82, F83, débordements F72 et F73.
+
 ## 16/11/2026 : lot G2, Prospection et projets (F57, F58, F60) exécuté (commit local)
 
 - [x] **Tests d’abord** (`shared/g2NextStep.test.ts` 6, `renderer/g2Wiring.test.ts` 10) ; fiche `2026-11-16-f55-f63-decisions-design.md` validée par Carlos (« Oui, code G2 »).

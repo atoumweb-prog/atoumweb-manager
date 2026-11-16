@@ -1,0 +1,6 @@
+/* Lot G3, F56 (décision de Carlos du 16/11/2026) : un seul bouton jaune par vue dans la fiche de travail du prospect.
+   Le jaune reste à l’action de la prochaine étape ; l’onglet actif et les actions du devis intégré passent en secondaire.
+   Spécificité supérieure aux couches pilotes qui forcent le jaune avec !important ; jetons du thème, aucune couleur en dur. */
+:root[data-theme][data-density] .app-shell .prospects-v2 .prospect-workspace .prospect-desk-tabs button[aria-selected=true]{background:var(--surface-soft)!important;color:var(--text)!important;-webkit-text-fill-color:var(--text)!important;border-color:var(--accent)!important;box-shadow:inset 0 -3px 0 var(--accent)!important;}
+:root[data-theme][data-density] .app-shell .prospect-detail-desk .quotes-embedded .primary-button{background:var(--surface-soft)!important;color:var(--text)!important;-webkit-text-fill-color:var(--text)!important;border-color:var(--border)!important;}
+:root[data-theme][data-density] .app-shell .prospect-detail-desk .quotes-embedded .primary-button:hover:not(:disabled){border-color:var(--accent)!important;}

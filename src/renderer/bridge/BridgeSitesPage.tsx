@@ -163,7 +163,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
       setAllContents(nextContents);
       setContents(filterBridgeContents(nextContents, 'pages', ''));
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Impossible de charger ce snapshot.');
+      setError(reason instanceof Error ? reason.message : 'Impossible de charger cette copie du site.');
     }
   }
 
@@ -229,7 +229,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
       const next = await window.atoumweb.bridgeSnapshots.inspectImport();
       if (next) setInspection(next);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Le snapshot Bridge ne peut pas être validé.');
+      setError(reason instanceof Error ? reason.message : 'La copie envoyée par le Bridge ne peut pas être validée.');
     } finally {
       setBusy(false);
     }
@@ -244,8 +244,8 @@ export function BridgeSitesPage({ onMessage }: Props) {
       setInspection(null);
       await refreshSites(result.site.id);
       onMessage(result.alreadyImported
-        ? 'Ce snapshot Bridge était déjà importé : aucune duplication créée.'
-        : `Snapshot Bridge importé : ${result.site.name} · ${result.snapshot.counts.pages} contenu(s).`);
+        ? 'Cette copie du site était déjà importée : aucune duplication créée.'
+        : `Copie du site importée : ${result.site.name} · ${result.snapshot.counts.pages} contenu(s).`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Import du snapshot Bridge impossible.');
     } finally {
@@ -409,7 +409,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
       setNodeMatchReview(null);
       setSnapshotDiff(await window.atoumweb.bridgeSnapshots.compareSnapshots(orderedIds[0], orderedIds[1]));
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Comparaison des snapshots impossible.');
+      setError(reason instanceof Error ? reason.message : 'Comparaison des copies impossible.');
     } finally {
       setBusy(false);
     }
@@ -434,7 +434,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
 
   function openSnapshotComparison(): void {
     if (!site || site.snapshots.length < 2) {
-      setError('Il faut au moins deux snapshots du même site pour les comparer.');
+      setError('Il faut au moins deux copies du même site pour les comparer.');
       return;
     }
 
@@ -496,7 +496,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
         </div>
         <button className="primary-button bridge-import-button" type="button" disabled={busy} onClick={() => void inspectImport()}>
           <OperationIcon name="upload" size={18} />
-          {busy ? 'Validation…' : 'Importer un snapshot Bridge'}
+          {busy ? 'Validation…' : 'Importer une copie depuis le Bridge'}
         </button>
       </section>
 
@@ -524,7 +524,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
           </div>
           <div className="bridge-compare-body">
             {!snapshotDiff
-              ? <div className="bridge-empty"><OperationIcon name="repeat" size={28} /><strong>Comparaison prête</strong><span>Choisis les deux copies puis lance le diff. Rien n’est modifié dans les snapshots.</span></div>
+              ? <div className="bridge-empty"><OperationIcon name="repeat" size={28} /><strong>Comparaison prête</strong><span>Choisis les deux copies puis lance la comparaison. Rien n’est modifié dans les copies.</span></div>
               : <>
                   <div className="bridge-compare-summary">
                     <Metric label="Ajoutés" value={String(snapshotDiff.summary.added)} />
@@ -565,9 +565,9 @@ export function BridgeSitesPage({ onMessage }: Props) {
                         pageTitle={item.titleAfter ?? item.titleBefore ?? 'Page'} beforeDate={snapshotDiff.before.generatedAt} afterDate={snapshotDiff.after.generatedAt}
                         busy={nodeMatchBusy} error={nodeMatchError} onDecision={decideNodeMatch} />}
                     </div>)}
-                    {snapshotDiff.pages.every((item) => item.status === 'unchanged') && <div className="bridge-empty"><OperationIcon name="check-circle" size={28} /><strong>Aucun changement détecté</strong><span>Les deux copies ont le même contenu observable selon Snapshot V1.</span></div>}
+                    {snapshotDiff.pages.every((item) => item.status === 'unchanged') && <div className="bridge-empty"><OperationIcon name="check-circle" size={28} /><strong>Aucun changement détecté</strong><span>Les deux copies ont le même contenu visible.</span></div>}
                   </div>
-                  <p className="muted bridge-compare-note">Snapshots en lecture seule. Les identités logiques sont des annotations Manager créées uniquement après validation humaine.</p>
+                  <p className="muted bridge-compare-note">Copies en lecture seule. Les identités logiques sont des annotations Manager créées uniquement après validation humaine.</p>
                 </>}
           </div>
         </section>
@@ -595,7 +595,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
           <div>{inspection.issues.map((issue, index) => <p key={`${issue.code}-${index}`}><strong>{issue.code}</strong> — {issue.message}</p>)}</div>
         </details>}
         <div className="bridge-inspection-footer">
-          <span>Le snapshot reste une copie en lecture seule dans le Manager.</span>
+          <span>La copie reste en lecture seule dans le Manager.</span>
           <div className="button-row">
             <button className="secondary-button" type="button" disabled={busy} onClick={() => setInspection(null)}>Annuler</button>
             <button className="primary-button" type="button" disabled={busy} onClick={() => void importSnapshot()}>
@@ -605,7 +605,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
         </div>
       </section>}
 
-      {sitesLoaded && sites.length === 0 ? <section className="bridge-empty large panel" role="status"><OperationIcon name="server" size={38} /><strong>Aucun site importé</strong><span>Importe la première copie envoyée par AtoumWeb Bridge (un « snapshot » : une photographie lisible du site) avec « Importer un snapshot Bridge », en haut à droite.</span></section> : <section className={`bridge-workspace ${page ? 'with-detail' : ''} ${detailExpanded ? 'detail-expanded' : ''}`} style={workspaceStyle}>
+      {sitesLoaded && sites.length === 0 ? <section className="bridge-empty large panel" role="status"><OperationIcon name="server" size={38} /><strong>Aucun site importé</strong><span>Importe la première copie envoyée par AtoumWeb Bridge (une photographie lisible du site) avec « Importer une copie depuis le Bridge », en haut à droite.</span></section> : <section className={`bridge-workspace ${page ? 'with-detail' : ''} ${detailExpanded ? 'detail-expanded' : ''}`} style={workspaceStyle}>
         {!detailExpanded && <div className="bridge-master">
           <aside className="bridge-sites panel">
             <div className="bridge-panel-title"><div><span className="eyebrow">Mes sites</span><h3>{sites.length} site{sites.length > 1 ? 's' : ''}</h3></div></div>
@@ -785,7 +785,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
           </div>
           <div className="bridge-preview-confidence reconstructed">
             <OperationIcon name="alert" size={16} />
-            <span>Rendu reconstruit depuis le snapshot Bridge : {pagePreview.renderedModuleCount} module(s) affiché(s) sur {pagePreview.totalModuleCount}. {pagePreview.omittedModuleCount > 0 ? `${pagePreview.omittedModuleCount} élément(s) Divi non reconstructible(s) automatiquement peuvent manquer.` : 'Tous les modules détectés ont pu être reconstruits.'}</span>
+            <span>Rendu reconstruit depuis la copie du site : {pagePreview.renderedModuleCount} module(s) affiché(s) sur {pagePreview.totalModuleCount}. {pagePreview.omittedModuleCount > 0 ? `${pagePreview.omittedModuleCount} élément(s) Divi non reconstructible(s) automatiquement peuvent manquer.` : 'Tous les modules détectés ont pu être reconstruits.'}</span>
           </div>
           <BridgeResponsivePreview
             device={previewDevice}
@@ -801,7 +801,7 @@ export function BridgeSitesPage({ onMessage }: Props) {
         <section className="bridge-preview bridge-module-preview panel" role="dialog" aria-modal="true" aria-label="Aperçu reconstruit du module">
           <div className="bridge-detail-header">
             <div>
-              <span className="eyebrow">Module du snapshot · {modulePreview.builderGeneration === '5' ? 'Divi 5' : modulePreview.builderGeneration === '4' ? 'Divi 4' : 'Divi'}</span>
+              <span className="eyebrow">Module de la copie · {modulePreview.builderGeneration === '5' ? 'Divi 5' : modulePreview.builderGeneration === '4' ? 'Divi 4' : 'Divi'}</span>
               <h2>{modulePreview.reuse.suggestedName}</h2>
               <p>{modulePreview.pageTitle}{modulePreview.pageUrl ? ` · ${modulePreview.pageUrl}` : ''}</p>
             </div>
@@ -811,8 +811,8 @@ export function BridgeSitesPage({ onMessage }: Props) {
           <div className={`bridge-preview-confidence ${modulePreview.frontendValidated ? 'validated' : 'reconstructed'}`}>
             <OperationIcon name={modulePreview.frontendValidated ? 'check-circle' : 'alert'} size={16} />
             <span>{modulePreview.frontendValidated
-              ? 'Aperçu reconstruit à partir des sources Bridge avec contrôle frontend joint au snapshot.'
-              : 'Aperçu reconstruit — ce n’est pas une capture exacte du site. Bridge n’a pas joint de contrôle frontend pour ce snapshot.'}</span>
+              ? 'Aperçu reconstruit à partir des sources Bridge avec contrôle frontend joint à la copie.'
+              : 'Aperçu reconstruit — ce n’est pas une capture exacte du site. Bridge n’a pas joint de contrôle frontend pour cette copie.'}</span>
           </div>
 
           <div className="bridge-reuse-banner">

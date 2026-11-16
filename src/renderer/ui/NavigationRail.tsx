@@ -6,11 +6,17 @@ import {OperationIcon} from '../operations/OperationIcon';
 import './navigation-rail.css';
 function ModuleIcon({module}:{module:NavigationModule}){return <OperationIcon name={module.icon}/>;}
 export interface NavigationRailControls{toggle:()=>void}
+// F59 (décision de Carlos du 16/11/2026) : en fenêtre étroite, le rail se replie sans toucher au réglage enregistré ;
+// le seuil est celui de la feuille du rail, qui fait alors passer le rail déplié par-dessus la page.
+const NARROW_RAIL_QUERY='(max-width: 760px)';
 export function NavigationRail({active,onNavigate,store,confirmReset,controlsRef,onCollapsedChange,appVersion}:{active:NavigationModuleKey;onNavigate:(key:NavigationModuleKey)=>boolean;store:VisualPreferenceStore;confirmReset:()=>boolean;controlsRef?:Ref<NavigationRailControls>;onCollapsedChange?:(value:boolean)=>void;appVersion?:string}){
  const [preference,setPreference]=useState<NavigationPreference>(defaultNavigationPreference),latest=useRef(preference),[temporary,setTemporary]=useState<true|null>(null),[openGroup,setOpenGroup]=useState<NavigationGroup|null>(null),[error,setError]=useState('');
  const root=useRef<HTMLElement>(null),trigger=useRef<HTMLButtonElement|null>(null),flyout=useRef<HTMLElement>(null);
  const [flyoutStyle,setFlyoutStyle]=useState<CSSProperties>({});
- const collapsed=temporary??preference.railCollapsed;
+ const [narrow,setNarrow]=useState(()=>typeof window!=='undefined'&&typeof window.matchMedia==='function'&&window.matchMedia(NARROW_RAIL_QUERY).matches),[narrowOpen,setNarrowOpen]=useState(false);
+ useEffect(()=>{if(typeof window.matchMedia!=='function')return;const query=window.matchMedia(NARROW_RAIL_QUERY),changed=()=>{setNarrow(query.matches);setNarrowOpen(false);};changed();query.addEventListener('change',changed);return()=>query.removeEventListener('change',changed);},[]);
+ useEffect(()=>{setNarrowOpen(false);},[active]);
+ const collapsed=temporary??(narrow?!narrowOpen:preference.railCollapsed);
  // Keep the menu below the real header instead of covering its search/timer.
  // Measure again when that header wraps, the window zooms, or the rail scrolls.
  useLayoutEffect(()=>{
@@ -34,7 +40,7 @@ export function NavigationRail({active,onNavigate,store,confirmReset,controlsRef
  useEffect(()=>{const contextual=(event:Event)=>{const value=(event as CustomEvent<unknown>).detail;if(typeof value==='boolean')setTemporary(value?true:null);};window.addEventListener('atoumweb:sidebar-collapse',contextual);return()=>window.removeEventListener('atoumweb:sidebar-collapse',contextual);},[]);
  useEffect(()=>{if(!openGroup)return;root.current?.querySelector<HTMLButtonElement>('.aw-rail-flyout .aw-rail-destination')?.focus();const outside=(event:PointerEvent)=>{if(!root.current?.contains(event.target as Node)){setOpenGroup(null);trigger.current?.focus();}};window.addEventListener('pointerdown',outside);return()=>window.removeEventListener('pointerdown',outside);},[openGroup]);
  function update(next:NavigationPreference){latest.current=next;setPreference(next);try{writeNavigationPreference(store,next);setError('');}catch{setError('Préférences de navigation non mémorisées ; les brouillons sont conservés.');}}
- function toggle(){update({...latest.current,railCollapsed:!collapsed});setTemporary(null);setOpenGroup(null);}
+ function toggle(){if(narrow){setNarrowOpen(value=>!value);setTemporary(null);setOpenGroup(null);return;}update({...latest.current,railCollapsed:!collapsed});setTemporary(null);setOpenGroup(null);}
  useImperativeHandle(controlsRef,()=>({toggle}));
  useEffect(()=>onCollapsedChange?.(collapsed),[collapsed,onCollapsedChange]);
  function pin(key:NavigationModuleKey){const current=latest.current;update({...current,favoriteModuleKeys:current.favoriteModuleKeys.includes(key)?current.favoriteModuleKeys.filter(value=>value!==key):[...current.favoriteModuleKeys,key]});}

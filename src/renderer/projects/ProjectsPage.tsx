@@ -1323,7 +1323,7 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
       <small>{activeOnNode ? (activeTime?.paused ? 'En pause' : 'En cours sur cette étape') : 'Temps rattaché à cette étape'}</small>
       <div className="project-node-timer-actions">
         {!activeOnNode
-          ? <button className="primary-button" type="button" disabled={timerBusy} onClick={() => void startNodeTimer()}>▶ Démarrer</button>
+          ? <button className="secondary-button" type="button" disabled={timerBusy} onClick={() => void startNodeTimer()}>▶ Démarrer</button>
           : <>
               <button className="secondary-button" type="button" disabled={timerBusy} onClick={() => void pauseOrResumeNodeTimer()}>{activeTime?.paused ? '▶ Reprendre' : 'Ⅱ Pause'}</button>
               <button className="secondary-button" type="button" disabled={timerBusy} onClick={() => void stopNodeTimer()}>■ Arrêter</button>
