@@ -1,5 +1,15 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : suivi après vente (configurations opérationnelles), code et simulation (commit local, préproduction non modifiée)
+
+- [x] **Fiche** `docs/refonte/plans/2026-11-16-suivi-apres-vente-design.md` validée par Carlos : compatibilité des 17 configurations d'octobre avec le catalogue et le référentiel actuels (14 compatibles, packs corrigés à 27 mois, reconductions déjà portées par les règles commerciales, maintenance applicative annuelle), décisions des 06-07/10 expliquées, 10 abonnements V39 écrits, 18 codes AW attribués, 3 offres devenues interventions.
+- [x] **Données** `data/operations/atoumweb-suivi-apres-vente-v1.json` (27 modèles et règles, 18 codes, 3 détachements), produites depuis le manifeste d'octobre (classeur AtoumWeb_Referentiel_Operationnel_V1_REVU.xlsx) et les règles validées.
+- [x] **Code, tests d'abord** : `src/main/operations/FollowUpImport.ts` (plan en lecture seule, application vérifiée par empreinte, rejouable, 4 tests) ; script `scripts/preproduction/import-follow-up.cjs` (aperçu, `--apply`, sauvegarde, refus si le Manager est ouvert). Import par le chemin normal du Manager (`OperationalReferenceService`), aucune garde contournée.
+- [x] **Simulation sur copie jetable** : 18 codes attribués, 27 modèles prêts, 27 suivis activés, 3 liens projet retirés ; seconde application sans écriture. Contrôles : une maintenance vendue devient un abonnement, un pack de 5 h un crédit valable 27 mois, un dépannage une intervention ; **98 offres sur 98** deviennent encore un projet ; 32 modèles de projet conservés.
+- **Écart signalé** : règle commerciale de la maintenance applicative « pas de renouvellement » alors que Carlos a choisi « annuelle, accord exprès » ; non modifiée.
+- **Preuves** : typecheck propre ; suite **338 fichiers, 2 813 tests** ; empreinte de la préproduction inchangée `56b6f4858c2d950d`. **Autocontrôle de l'auteur.**
+- Prochaine action : accord explicite de Carlos, puis application dans la préproduction Manager-Claude-Codex.
+
 ## 16/11/2026 : F88 corrigé, recette F85 avancée (commit local)
 
 - [x] **F88** (défaut réel du Manager, relevé par Carlos : une boîte « Modifications non enregistrées » s'ouvrait sans saisie) : « Vérification avant envoi » garde maintenant une référence à jour après chaque rechargement du devis (`QuoteQuickReview.tsx`, test `quoteQuickReviewGuard.test.ts`).

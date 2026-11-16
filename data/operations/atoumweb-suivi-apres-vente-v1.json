@@ -1,0 +1,1541 @@
+{
+ "_origine": "Fiche docs/refonte/plans/2026-11-16-suivi-apres-vente-design.md, décisions de Carlos du 16/11/2026. Modèles d’octobre : manifeste AtoumWeb_Referentiel_Operationnel_V1_REVU.xlsx (sha256 c2c5c139…), règles validées les 06-07/10/2026.",
+ "codeAssignments": [
+  {
+   "sourceCode": "V39-GBP-ESS-M",
+   "code": "AW-SEO-GBP-ESS-M"
+  },
+  {
+   "sourceCode": "V39-GBP-ESS-A",
+   "code": "AW-SEO-GBP-ESS-A"
+  },
+  {
+   "sourceCode": "V39-STAT-ESS-M",
+   "code": "AW-DATA-SUIVI-ESS-M"
+  },
+  {
+   "sourceCode": "V39-STAT-ESS-A",
+   "code": "AW-DATA-SUIVI-ESS-A"
+  },
+  {
+   "sourceCode": "V39-NL-1-M",
+   "code": "AW-NL-REC1-M"
+  },
+  {
+   "sourceCode": "V39-NL-1-A",
+   "code": "AW-NL-REC1-A"
+  },
+  {
+   "sourceCode": "V39-NL-2-M",
+   "code": "AW-NL-REC2-M"
+  },
+  {
+   "sourceCode": "V39-NL-2-A",
+   "code": "AW-NL-REC2-A"
+  },
+  {
+   "sourceCode": "V39-HOST-LUNE",
+   "code": "AW-HOST-LUNE"
+  },
+  {
+   "sourceCode": "V39-HOST-DOMAINE",
+   "code": "AW-HOST-DOMAINE"
+  },
+  {
+   "sourceCode": "V39-WEB-BUSINESS",
+   "code": "AW-WEB-BUSINESS"
+  },
+  {
+   "sourceCode": "V39-WEB-VISIBILITE",
+   "code": "AW-WEB-VISIBILITE"
+  },
+  {
+   "sourceCode": "V39-ECOM-BUSINESS",
+   "code": "AW-ECOM-BUSINESS"
+  },
+  {
+   "sourceCode": "V39-ECOM-VISIBILITE",
+   "code": "AW-ECOM-VISIBILITE"
+  },
+  {
+   "sourceCode": "V39-BRAND-CHARTE",
+   "code": "AW-BRAND-CHARTE"
+  },
+  {
+   "sourceCode": "V39-BRAND-DUO",
+   "code": "AW-BRAND-DUO"
+  },
+  {
+   "sourceCode": "V39-NL-PONCT-SIMPLE",
+   "code": "AW-NL-PONCT-SIMPLE"
+  },
+  {
+   "sourceCode": "V39-NL-PONCT-COMPLETE",
+   "code": "AW-NL-PONCT-COMPLETE"
+  }
+ ],
+ "source": {
+  "schemaVersion": 1,
+  "source": {
+   "file": "AtoumWeb_Referentiel_Operationnel_V1_REVU.xlsx",
+   "sha256": "c2c5c139d66d4d9fe9d90863f3cdacb6dad617eb4ce692e6ac31cf352eeb26cf"
+  },
+  "models": [
+   {
+    "code": "AW-APP-EVOL",
+    "name": "Petite évolution application",
+    "lot": "8B",
+    "model": "Intervention / évolution",
+    "unit": "évolution",
+    "estimateRequired": true,
+    "quantityRule": "Minimum 1 h puis estimation si nécessaire",
+    "recurrence": "À la demande",
+    "trigger": "Activation / demande après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 60,
+    "sourceRow": 52,
+    "notes": "Selon complexité",
+    "actions": [
+     {
+      "key": "AW-APP-EVOL-A01",
+      "phase": "Diagnostic",
+      "name": "Qualifier évolution et impact",
+      "checklist": "Régression",
+      "minutes": 20,
+      "category": "Supplément facturable",
+      "required": true,
+      "sourceRow": 428
+     },
+     {
+      "key": "AW-APP-EVOL-A02",
+      "phase": "Évolution",
+      "name": "Réaliser évolution",
+      "checklist": "Socle",
+      "minutes": 25,
+      "category": "Supplément facturable",
+      "required": true,
+      "sourceRow": 429
+     },
+     {
+      "key": "AW-APP-EVOL-A03",
+      "phase": "Recette",
+      "name": "Tester et documenter",
+      "checklist": "Validation",
+      "minutes": 15,
+      "category": "Supplément facturable",
+      "required": true,
+      "sourceRow": 430
+     }
+    ]
+   },
+   {
+    "code": "AW-APP-MAINT",
+    "name": "Maintenance applicative",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": true,
+    "quantityRule": "Routine contractuelle + interventions réelles",
+    "recurrence": "Annuel, renouvellement sur accord exprès",
+    "trigger": "Activation / demande après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 60,
+    "sourceRow": 113,
+    "notes": "Charge définie par contrat",
+    "actions": [
+     {
+      "key": "AW-APP-MAINT-A01",
+      "phase": "Maintenance applicative",
+      "name": "Contrôler état, alertes et sauvegardes",
+      "checklist": "Selon contrat",
+      "minutes": 20,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 431
+     },
+     {
+      "key": "AW-APP-MAINT-A02",
+      "phase": "Maintenance applicative",
+      "name": "Appliquer maintenance préventive prévue",
+      "checklist": "Dépendances",
+      "minutes": 25,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 432
+     },
+     {
+      "key": "AW-APP-MAINT-A03",
+      "phase": "Maintenance applicative",
+      "name": "Recette rapide et compte rendu",
+      "checklist": "Fonctions clés",
+      "minutes": 15,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 433
+     }
+    ]
+   },
+   {
+    "code": "AW-DATA-SUIVI-A",
+    "name": "Suivi statistiques annuel",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "Même routine mensuelle, facturation annuelle",
+    "recurrence": "Mensuel",
+    "trigger": "Activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 60,
+    "sourceRow": 112,
+    "notes": "Renouvellement explicite",
+    "actions": [
+     {
+      "key": "AW-DATA-SUIVI-A-A01",
+      "phase": "Suivi",
+      "name": "Collecter et contrôler les données",
+      "checklist": "Période",
+      "minutes": 15,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 400
+     },
+     {
+      "key": "AW-DATA-SUIVI-A-A02",
+      "phase": "Suivi",
+      "name": "Analyser tendances / écarts",
+      "checklist": "KPIs",
+      "minutes": 30,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 401
+     },
+     {
+      "key": "AW-DATA-SUIVI-A-A03",
+      "phase": "Suivi",
+      "name": "Restituer points clés et actions",
+      "checklist": "Synthèse",
+      "minutes": 15,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 402
+     }
+    ]
+   },
+   {
+    "code": "AW-DATA-SUIVI-M",
+    "name": "Suivi statistiques mensuel",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "1 analyse/reporting par mois",
+    "recurrence": "Mensuel",
+    "trigger": "Activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 60,
+    "sourceRow": 111,
+    "notes": "Suivi statistiques",
+    "actions": [
+     {
+      "key": "AW-DATA-SUIVI-M-A01",
+      "phase": "Suivi",
+      "name": "Collecter et contrôler les données",
+      "checklist": "Période",
+      "minutes": 15,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 397
+     },
+     {
+      "key": "AW-DATA-SUIVI-M-A02",
+      "phase": "Suivi",
+      "name": "Analyser tendances / écarts",
+      "checklist": "KPIs",
+      "minutes": 30,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 398
+     },
+     {
+      "key": "AW-DATA-SUIVI-M-A03",
+      "phase": "Suivi",
+      "name": "Restituer points clés et actions",
+      "checklist": "Synthèse",
+      "minutes": 15,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 399
+     }
+    ]
+   },
+   {
+    "code": "AW-DEVWP-AJUST",
+    "name": "Ajustement technique WordPress",
+    "lot": "8B",
+    "model": "Intervention horaire",
+    "unit": "intervention",
+    "estimateRequired": false,
+    "quantityRule": "Temps réel, minimum commercial 1 h",
+    "recurrence": "À la demande",
+    "trigger": "Activation / demande après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 60,
+    "sourceRow": 45,
+    "notes": "Petit ajustement technique",
+    "actions": [
+     {
+      "key": "AW-DEVWP-AJUST-A01",
+      "phase": "Diagnostic",
+      "name": "Comprendre l'ajustement demandé",
+      "checklist": "Impact",
+      "minutes": 15,
+      "category": "Supplément facturable",
+      "required": true,
+      "sourceRow": 403
+     },
+     {
+      "key": "AW-DEVWP-AJUST-A02",
+      "phase": "Intervention",
+      "name": "Réaliser l'ajustement",
+      "checklist": "Temps réel",
+      "minutes": 30,
+      "category": "Supplément facturable",
+      "required": true,
+      "sourceRow": 404
+     },
+     {
+      "key": "AW-DEVWP-AJUST-A03",
+      "phase": "Recette",
+      "name": "Tester et documenter",
+      "checklist": "Validation",
+      "minutes": 15,
+      "category": "Supplément facturable",
+      "required": true,
+      "sourceRow": 405
+     }
+    ]
+   },
+   {
+    "code": "AW-MAINT-WC-A",
+    "name": "Maintenance WooCommerce annuelle",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "Même routine mensuelle, facturation annuelle",
+    "recurrence": "Mensuel",
+    "trigger": "Ligne vendue / activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 60,
+    "sourceRow": 106,
+    "notes": "Renouvellement annuel explicite",
+    "actions": [
+     {
+      "key": "AW-MAINT-WC-A-A01",
+      "phase": "Maintenance",
+      "name": "Vérifier sauvegarde, commandes et état général",
+      "checklist": "Boutique",
+      "minutes": 20,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 182
+     },
+     {
+      "key": "AW-MAINT-WC-A-A02",
+      "phase": "Maintenance",
+      "name": "Appliquer mises à jour courantes",
+      "checklist": "Woo/core/plugins",
+      "minutes": 25,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 183
+     },
+     {
+      "key": "AW-MAINT-WC-A-A03",
+      "phase": "Maintenance",
+      "name": "Tester boutique et parcours de commande",
+      "checklist": "Produit/panier/checkout",
+      "minutes": 15,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 184
+     }
+    ]
+   },
+   {
+    "code": "AW-MAINT-WC-M",
+    "name": "Maintenance WooCommerce mensuelle",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "Routine mensuelle + interventions réelles",
+    "recurrence": "Mensuel",
+    "trigger": "Ligne vendue / activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 60,
+    "sourceRow": 105,
+    "notes": "4 interventions mineures/mois",
+    "actions": [
+     {
+      "key": "AW-MAINT-WC-M-A01",
+      "phase": "Maintenance",
+      "name": "Vérifier sauvegarde, commandes et état général",
+      "checklist": "Boutique",
+      "minutes": 20,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 179
+     },
+     {
+      "key": "AW-MAINT-WC-M-A02",
+      "phase": "Maintenance",
+      "name": "Appliquer mises à jour courantes",
+      "checklist": "Woo/core/plugins",
+      "minutes": 25,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 180
+     },
+     {
+      "key": "AW-MAINT-WC-M-A03",
+      "phase": "Maintenance",
+      "name": "Tester boutique et parcours de commande",
+      "checklist": "Produit/panier/checkout",
+      "minutes": 15,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 181
+     }
+    ]
+   },
+   {
+    "code": "AW-MAINT-WP-A",
+    "name": "Maintenance WordPress annuelle",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "Même routine mensuelle, facturation annuelle",
+    "recurrence": "Mensuel",
+    "trigger": "Ligne vendue / activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 45,
+    "sourceRow": 104,
+    "notes": "Renouvellement annuel explicite",
+    "actions": [
+     {
+      "key": "AW-MAINT-WP-A-A01",
+      "phase": "Maintenance",
+      "name": "Vérifier sauvegarde et état général",
+      "checklist": "Sauvegarde/alertes",
+      "minutes": 15,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 176
+     },
+     {
+      "key": "AW-MAINT-WP-A-A02",
+      "phase": "Maintenance",
+      "name": "Appliquer mises à jour courantes",
+      "checklist": "Core/thème/plugins",
+      "minutes": 20,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 177
+     },
+     {
+      "key": "AW-MAINT-WP-A-A03",
+      "phase": "Maintenance",
+      "name": "Contrôler le front après mises à jour",
+      "checklist": "Pages clés",
+      "minutes": 10,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 178
+     }
+    ]
+   },
+   {
+    "code": "AW-MAINT-WP-M",
+    "name": "Maintenance WordPress mensuelle",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "Routine mensuelle + interventions réelles",
+    "recurrence": "Mensuel",
+    "trigger": "Ligne vendue / activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 45,
+    "sourceRow": 103,
+    "notes": "2 interventions mineures/mois",
+    "actions": [
+     {
+      "key": "AW-MAINT-WP-M-A01",
+      "phase": "Maintenance",
+      "name": "Vérifier sauvegarde et état général",
+      "checklist": "Sauvegarde/alertes",
+      "minutes": 15,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 173
+     },
+     {
+      "key": "AW-MAINT-WP-M-A02",
+      "phase": "Maintenance",
+      "name": "Appliquer mises à jour courantes",
+      "checklist": "Core/thème/plugins",
+      "minutes": 20,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 174
+     },
+     {
+      "key": "AW-MAINT-WP-M-A03",
+      "phase": "Maintenance",
+      "name": "Contrôler le front après mises à jour",
+      "checklist": "Pages clés",
+      "minutes": 10,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 175
+     }
+    ]
+   },
+   {
+    "code": "AW-MARIAGE-RENOUV",
+    "name": "Renouvellement site mariage",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "renouvellement",
+    "estimateRequired": false,
+    "quantityRule": "1 renouvellement = 1 période annuelle",
+    "recurrence": "Annuel",
+    "trigger": "Activation / échéance explicite",
+    "creditMinutes": 0,
+    "referenceMinutes": 20,
+    "sourceRow": 110,
+    "notes": "Renouvellement explicite",
+    "actions": [
+     {
+      "key": "AW-MARIAGE-RENOUV-A01",
+      "phase": "Renouvellement",
+      "name": "Vérifier besoin de conservation",
+      "checklist": "Confirmation de conservation",
+      "minutes": 5,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 379
+     },
+     {
+      "key": "AW-MARIAGE-RENOUV-A02",
+      "phase": "Renouvellement",
+      "name": "Renouveler hébergement/configuration",
+      "checklist": "Renouvellement / continuité",
+      "minutes": 10,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 380
+     },
+     {
+      "key": "AW-MARIAGE-RENOUV-A03",
+      "phase": "Renouvellement",
+      "name": "Contrôler disponibilité du site",
+      "checklist": "Contrôle final",
+      "minutes": 5,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 381
+     }
+    ]
+   },
+   {
+    "code": "AW-SEO-GBP-A",
+    "name": "Suivi Google Business Profile annuel",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "Même routine mensuelle, facturation annuelle",
+    "recurrence": "Mensuel",
+    "trigger": "Activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 90,
+    "sourceRow": 109,
+    "notes": "Renouvellement annuel explicite",
+    "actions": [
+     {
+      "key": "AW-SEO-GBP-A-A01",
+      "phase": "Suivi GBP",
+      "name": "Contrôler fiche et alertes",
+      "checklist": "Infos/avis",
+      "minutes": 20,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 233
+     },
+     {
+      "key": "AW-SEO-GBP-A-A02",
+      "phase": "Suivi GBP",
+      "name": "Mettre à jour / publier contenu courant",
+      "checklist": "Action standard",
+      "minutes": 40,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 234
+     },
+     {
+      "key": "AW-SEO-GBP-A-A03",
+      "phase": "Suivi GBP",
+      "name": "Analyser performance et actions",
+      "checklist": "Visibilité",
+      "minutes": 30,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 235
+     }
+    ]
+   },
+   {
+    "code": "AW-SEO-GBP-ETAB-M",
+    "name": "Établissement GBP supplémentaire en suivi",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "établissement",
+    "estimateRequired": false,
+    "quantityRule": "Multiplier par établissement supplémentaire",
+    "recurrence": "Mensuel",
+    "trigger": "Activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 45,
+    "sourceRow": 79,
+    "notes": "Complément suivi GBP",
+    "actions": [
+     {
+      "key": "AW-SEO-GBP-ETAB-M-A01",
+      "phase": "Suivi GBP",
+      "name": "Contrôler établissement supplémentaire",
+      "checklist": "Infos",
+      "minutes": 15,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 236
+     },
+     {
+      "key": "AW-SEO-GBP-ETAB-M-A02",
+      "phase": "Suivi GBP",
+      "name": "Mise à jour / contenu courant",
+      "checklist": "Standard",
+      "minutes": 20,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 237
+     },
+     {
+      "key": "AW-SEO-GBP-ETAB-M-A03",
+      "phase": "Suivi GBP",
+      "name": "Analyse rapide",
+      "checklist": "Points à signaler",
+      "minutes": 10,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 238
+     }
+    ]
+   },
+   {
+    "code": "AW-SEO-GBP-M",
+    "name": "Suivi Google Business Profile mensuel",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "Routine par mois",
+    "recurrence": "Mensuel",
+    "trigger": "Activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 90,
+    "sourceRow": 108,
+    "notes": "Suivi GBP",
+    "actions": [
+     {
+      "key": "AW-SEO-GBP-M-A01",
+      "phase": "Suivi GBP",
+      "name": "Contrôler fiche et alertes",
+      "checklist": "Infos/avis",
+      "minutes": 20,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 230
+     },
+     {
+      "key": "AW-SEO-GBP-M-A02",
+      "phase": "Suivi GBP",
+      "name": "Mettre à jour / publier contenu courant",
+      "checklist": "Action standard",
+      "minutes": 40,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 231
+     },
+     {
+      "key": "AW-SEO-GBP-M-A03",
+      "phase": "Suivi GBP",
+      "name": "Analyser performance et actions",
+      "checklist": "Visibilité",
+      "minutes": 30,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 232
+     }
+    ]
+   },
+   {
+    "code": "AW-TECH-DEPANNAGE",
+    "name": "Dépannage WordPress ponctuel",
+    "lot": "8B",
+    "model": "Intervention horaire",
+    "unit": "intervention",
+    "estimateRequired": false,
+    "quantityRule": "Temps réel, minimum commercial 1 h",
+    "recurrence": "À la demande",
+    "trigger": "Ligne vendue / activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 60,
+    "sourceRow": 11,
+    "notes": "Charge ajustée au diagnostic",
+    "actions": [
+     {
+      "key": "AW-TECH-DEPANNAGE-A01",
+      "phase": "Diagnostic",
+      "name": "Reproduire et qualifier l'incident",
+      "checklist": "Logs/périmètre",
+      "minutes": 15,
+      "category": "Supplément facturable",
+      "required": true,
+      "sourceRow": 155
+     },
+     {
+      "key": "AW-TECH-DEPANNAGE-A02",
+      "phase": "Intervention",
+      "name": "Corriger ou contourner l'incident",
+      "checklist": "Temps réel prolongeable",
+      "minutes": 30,
+      "category": "Supplément facturable",
+      "required": true,
+      "sourceRow": 156
+     },
+     {
+      "key": "AW-TECH-DEPANNAGE-A03",
+      "phase": "Recette",
+      "name": "Vérifier et documenter",
+      "checklist": "Test",
+      "minutes": 15,
+      "category": "Supplément facturable",
+      "required": true,
+      "sourceRow": 157
+     }
+    ]
+   },
+   {
+    "code": "AW-TECH-PACK-10H",
+    "name": "Pack interventions 10 h",
+    "lot": "8B",
+    "model": "Crédit temps",
+    "unit": "pack",
+    "estimateRequired": false,
+    "quantityRule": "Crée un crédit de 10 h, pas des tâches",
+    "recurrence": "27 mois (24 + 3 de prolongation gratuite)",
+    "trigger": "Ligne vendue / activation après acceptation",
+    "creditMinutes": 600,
+    "referenceMinutes": 0,
+    "sourceRow": 92,
+    "notes": "Consommé par interventions",
+    "actions": []
+   },
+   {
+    "code": "AW-TECH-PACK-3H",
+    "name": "Pack interventions 3 h",
+    "lot": "8B",
+    "model": "Crédit temps",
+    "unit": "pack",
+    "estimateRequired": false,
+    "quantityRule": "Crée un crédit de 3 h, pas des tâches",
+    "recurrence": "27 mois (24 + 3 de prolongation gratuite)",
+    "trigger": "Ligne vendue / activation après acceptation",
+    "creditMinutes": 180,
+    "referenceMinutes": 0,
+    "sourceRow": 90,
+    "notes": "Consommé par interventions",
+    "actions": []
+   },
+   {
+    "code": "AW-TECH-PACK-5H",
+    "name": "Pack interventions 5 h",
+    "lot": "8B",
+    "model": "Crédit temps",
+    "unit": "pack",
+    "estimateRequired": false,
+    "quantityRule": "Crée un crédit de 5 h, pas des tâches",
+    "recurrence": "27 mois (24 + 3 de prolongation gratuite)",
+    "trigger": "Ligne vendue / activation après acceptation",
+    "creditMinutes": 300,
+    "referenceMinutes": 0,
+    "sourceRow": 91,
+    "notes": "Consommé par interventions",
+    "actions": []
+   },
+   {
+    "code": "AW-SEO-GBP-ESS-M",
+    "name": "Google Business Profile Essentiel — mensuel",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "Routine par mois : jusqu’à 2 publications et 5 réponses aux avis",
+    "recurrence": "Mensuel",
+    "trigger": "Activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 90,
+    "sourceRow": 108,
+    "notes": "Calqué sur AW-SEO-GBP-M (décision de Carlos du 16/11/2026), durées à ajuster",
+    "actions": [
+     {
+      "key": "AW-SEO-GBP-ESS-M-A01",
+      "phase": "Suivi GBP",
+      "name": "Contrôler fiche et alertes",
+      "checklist": "Infos/avis",
+      "minutes": 20,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 230
+     },
+     {
+      "key": "AW-SEO-GBP-ESS-M-A02",
+      "phase": "Suivi GBP",
+      "name": "Mettre à jour / publier contenu courant",
+      "checklist": "Action standard",
+      "minutes": 40,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 231
+     },
+     {
+      "key": "AW-SEO-GBP-ESS-M-A03",
+      "phase": "Suivi GBP",
+      "name": "Analyser performance et actions",
+      "checklist": "Visibilité",
+      "minutes": 30,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 232
+     }
+    ]
+   },
+   {
+    "code": "AW-SEO-GBP-ESS-A",
+    "name": "Google Business Profile Essentiel — annuel",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "Routine par mois : jusqu’à 2 publications et 5 réponses aux avis",
+    "recurrence": "Mensuel",
+    "trigger": "Activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 90,
+    "sourceRow": 109,
+    "notes": "Calqué sur AW-SEO-GBP-A (décision de Carlos du 16/11/2026), durées à ajuster",
+    "actions": [
+     {
+      "key": "AW-SEO-GBP-ESS-A-A01",
+      "phase": "Suivi GBP",
+      "name": "Contrôler fiche et alertes",
+      "checklist": "Infos/avis",
+      "minutes": 20,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 233
+     },
+     {
+      "key": "AW-SEO-GBP-ESS-A-A02",
+      "phase": "Suivi GBP",
+      "name": "Mettre à jour / publier contenu courant",
+      "checklist": "Action standard",
+      "minutes": 40,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 234
+     },
+     {
+      "key": "AW-SEO-GBP-ESS-A-A03",
+      "phase": "Suivi GBP",
+      "name": "Analyser performance et actions",
+      "checklist": "Visibilité",
+      "minutes": 30,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 235
+     }
+    ]
+   },
+   {
+    "code": "AW-DATA-SUIVI-ESS-M",
+    "name": "Suivi statistiques Essentiel — mensuel",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "1 analyse/reporting par mois",
+    "recurrence": "Mensuel",
+    "trigger": "Activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 60,
+    "sourceRow": 111,
+    "notes": "Calqué sur AW-DATA-SUIVI-M (décision de Carlos du 16/11/2026), durées à ajuster",
+    "actions": [
+     {
+      "key": "AW-DATA-SUIVI-ESS-M-A01",
+      "phase": "Suivi",
+      "name": "Collecter et contrôler les données",
+      "checklist": "Période",
+      "minutes": 15,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 397
+     },
+     {
+      "key": "AW-DATA-SUIVI-ESS-M-A02",
+      "phase": "Suivi",
+      "name": "Analyser tendances / écarts",
+      "checklist": "KPIs",
+      "minutes": 30,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 398
+     },
+     {
+      "key": "AW-DATA-SUIVI-ESS-M-A03",
+      "phase": "Suivi",
+      "name": "Restituer points clés et actions",
+      "checklist": "Synthèse",
+      "minutes": 15,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 399
+     }
+    ]
+   },
+   {
+    "code": "AW-DATA-SUIVI-ESS-A",
+    "name": "Suivi statistiques Essentiel — annuel",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "Même routine mensuelle, facturation annuelle",
+    "recurrence": "Mensuel",
+    "trigger": "Activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 60,
+    "sourceRow": 112,
+    "notes": "Calqué sur AW-DATA-SUIVI-A (décision de Carlos du 16/11/2026), durées à ajuster",
+    "actions": [
+     {
+      "key": "AW-DATA-SUIVI-ESS-A-A01",
+      "phase": "Suivi",
+      "name": "Collecter et contrôler les données",
+      "checklist": "Période",
+      "minutes": 15,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 400
+     },
+     {
+      "key": "AW-DATA-SUIVI-ESS-A-A02",
+      "phase": "Suivi",
+      "name": "Analyser tendances / écarts",
+      "checklist": "KPIs",
+      "minutes": 30,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 401
+     },
+     {
+      "key": "AW-DATA-SUIVI-ESS-A-A03",
+      "phase": "Suivi",
+      "name": "Restituer points clés et actions",
+      "checklist": "Synthèse",
+      "minutes": 15,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 402
+     }
+    ]
+   },
+   {
+    "code": "AW-NL-REC1-M",
+    "name": "Newsletter récurrente — 1 envoi(s)/mois",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "1 envoi par mois après BAT écrit",
+    "recurrence": "Mensuel",
+    "trigger": "Activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 0,
+    "sourceRow": 0,
+    "notes": "Proposition du 16/11/2026, durées à compléter",
+    "actions": [
+     {
+      "key": "AW-NL-REC1-M-A01",
+      "phase": "Suivi",
+      "name": "Préparer la newsletter et obtenir le BAT écrit",
+      "checklist": "",
+      "minutes": 0,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 0
+     },
+     {
+      "key": "AW-NL-REC1-M-A02",
+      "phase": "Suivi",
+      "name": "Envoyer la newsletter",
+      "checklist": "",
+      "minutes": 0,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 0
+     },
+     {
+      "key": "AW-NL-REC1-M-A03",
+      "phase": "Suivi",
+      "name": "Suivre les envois",
+      "checklist": "",
+      "minutes": 0,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 0
+     }
+    ]
+   },
+   {
+    "code": "AW-NL-REC1-A",
+    "name": "Newsletter récurrente annuelle — 1 envoi(s)/mois",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "1 envoi par mois après BAT écrit",
+    "recurrence": "Mensuel, facturé à l’année",
+    "trigger": "Activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 0,
+    "sourceRow": 0,
+    "notes": "Proposition du 16/11/2026, durées à compléter",
+    "actions": [
+     {
+      "key": "AW-NL-REC1-A-A01",
+      "phase": "Suivi",
+      "name": "Préparer la newsletter et obtenir le BAT écrit",
+      "checklist": "",
+      "minutes": 0,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 0
+     },
+     {
+      "key": "AW-NL-REC1-A-A02",
+      "phase": "Suivi",
+      "name": "Envoyer la newsletter",
+      "checklist": "",
+      "minutes": 0,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 0
+     },
+     {
+      "key": "AW-NL-REC1-A-A03",
+      "phase": "Suivi",
+      "name": "Suivre les envois",
+      "checklist": "",
+      "minutes": 0,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 0
+     }
+    ]
+   },
+   {
+    "code": "AW-NL-REC2-M",
+    "name": "Newsletter récurrente — 2 envoi(s)/mois",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "2 envois par mois après BAT écrit",
+    "recurrence": "Mensuel",
+    "trigger": "Activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 0,
+    "sourceRow": 0,
+    "notes": "Proposition du 16/11/2026, durées à compléter",
+    "actions": [
+     {
+      "key": "AW-NL-REC2-M-A01",
+      "phase": "Suivi",
+      "name": "Préparer les newsletters et obtenir les BAT écrits",
+      "checklist": "",
+      "minutes": 0,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 0
+     },
+     {
+      "key": "AW-NL-REC2-M-A02",
+      "phase": "Suivi",
+      "name": "Envoyer les newsletters",
+      "checklist": "",
+      "minutes": 0,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 0
+     },
+     {
+      "key": "AW-NL-REC2-M-A03",
+      "phase": "Suivi",
+      "name": "Suivre les envois",
+      "checklist": "",
+      "minutes": 0,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 0
+     }
+    ]
+   },
+   {
+    "code": "AW-NL-REC2-A",
+    "name": "Newsletter récurrente annuelle — 2 envoi(s)/mois",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "2 envois par mois après BAT écrit",
+    "recurrence": "Mensuel, facturé à l’année",
+    "trigger": "Activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 0,
+    "sourceRow": 0,
+    "notes": "Proposition du 16/11/2026, durées à compléter",
+    "actions": [
+     {
+      "key": "AW-NL-REC2-A-A01",
+      "phase": "Suivi",
+      "name": "Préparer les newsletters et obtenir les BAT écrits",
+      "checklist": "",
+      "minutes": 0,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 0
+     },
+     {
+      "key": "AW-NL-REC2-A-A02",
+      "phase": "Suivi",
+      "name": "Envoyer les newsletters",
+      "checklist": "",
+      "minutes": 0,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 0
+     },
+     {
+      "key": "AW-NL-REC2-A-A03",
+      "phase": "Suivi",
+      "name": "Suivre les envois",
+      "checklist": "",
+      "minutes": 0,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 0
+     }
+    ]
+   },
+   {
+    "code": "AW-HOST-LUNE",
+    "name": "Hébergement isolé avec Lune dédiée",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "Administration technique périodique",
+    "recurrence": "Mensuel",
+    "trigger": "Ligne vendue / activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 20,
+    "sourceRow": 107,
+    "notes": "Calqué sur AW-TECH-HEBERG-WP (décision de Carlos du 16/11/2026), durées à ajuster",
+    "actions": [
+     {
+      "key": "AW-HOST-LUNE-A01",
+      "phase": "Hébergement",
+      "name": "Contrôler disponibilité / espace / SSL",
+      "checklist": "Contrôle léger / alertes ; privilégier l'automatisation",
+      "minutes": 5,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 185
+     },
+     {
+      "key": "AW-HOST-LUNE-A02",
+      "phase": "Hébergement",
+      "name": "Traiter administration courante hébergeur",
+      "checklist": "Administration/renouvellement annuel moyen",
+      "minutes": 15,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 186
+     }
+    ]
+   },
+   {
+    "code": "AW-HOST-DOMAINE",
+    "name": "Gestion annuelle d’un domaine standard — hors mariage",
+    "lot": "8B",
+    "model": "Récurrent",
+    "unit": "abonnement",
+    "estimateRequired": false,
+    "quantityRule": "Suivi de l’échéance du domaine",
+    "recurrence": "Annuel",
+    "trigger": "Activation après acceptation",
+    "creditMinutes": 0,
+    "referenceMinutes": 0,
+    "sourceRow": 0,
+    "notes": "Proposition du 16/11/2026, durées à compléter",
+    "actions": [
+     {
+      "key": "AW-HOST-DOMAINE-A01",
+      "phase": "Suivi",
+      "name": "Suivre l’échéance du domaine",
+      "checklist": "",
+      "minutes": 0,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 0
+     },
+     {
+      "key": "AW-HOST-DOMAINE-A02",
+      "phase": "Suivi",
+      "name": "Demander l’accord exprès avant tout renouvellement",
+      "checklist": "",
+      "minutes": 0,
+      "category": "Inclus au forfait",
+      "required": true,
+      "sourceRow": 0
+     }
+    ]
+   }
+  ],
+  "decisions": []
+ },
+ "policies": {
+  "AW-APP-EVOL": {
+   "schemaVersion": 1,
+   "kind": "intervention",
+   "cadence": "once",
+   "billingPeriod": "once",
+   "targetRequirement": "context",
+   "requires": [],
+   "quantityMode": "hours",
+   "minimumBillableMinutes": 60,
+   "quantityMeaning": "hours"
+  },
+  "AW-APP-MAINT": {
+   "schemaVersion": 1,
+   "kind": "recurring",
+   "cadence": "monthly",
+   "billingPeriod": "yearly",
+   "targetRequirement": "context",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-DATA-SUIVI-A": {
+   "schemaVersion": 1,
+   "kind": "recurring",
+   "cadence": "monthly",
+   "billingPeriod": "yearly",
+   "targetRequirement": "site",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-DATA-SUIVI-M": {
+   "schemaVersion": 1,
+   "kind": "recurring",
+   "cadence": "monthly",
+   "billingPeriod": "monthly",
+   "targetRequirement": "site",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-DEVWP-AJUST": {
+   "schemaVersion": 1,
+   "kind": "intervention",
+   "cadence": "once",
+   "billingPeriod": "once",
+   "minimumBillableMinutes": 60,
+   "targetRequirement": "site",
+   "requires": [],
+   "quantityMode": "hours",
+   "quantityMeaning": "hours"
+  },
+  "AW-MAINT-WC-A": {
+   "schemaVersion": 1,
+   "kind": "maintenance",
+   "cadence": "monthly",
+   "billingPeriod": "yearly",
+   "minorInterventions": 4,
+   "maximumMinorMinutes": 30,
+   "targetRequirement": "site",
+   "requires": [
+    "woocommerce"
+   ],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-MAINT-WC-M": {
+   "schemaVersion": 1,
+   "kind": "maintenance",
+   "cadence": "monthly",
+   "billingPeriod": "monthly",
+   "minorInterventions": 4,
+   "maximumMinorMinutes": 30,
+   "targetRequirement": "site",
+   "requires": [
+    "woocommerce"
+   ],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-MAINT-WP-A": {
+   "schemaVersion": 1,
+   "kind": "maintenance",
+   "cadence": "monthly",
+   "billingPeriod": "yearly",
+   "minorInterventions": 2,
+   "maximumMinorMinutes": 30,
+   "targetRequirement": "site",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-MAINT-WP-M": {
+   "schemaVersion": 1,
+   "kind": "maintenance",
+   "cadence": "monthly",
+   "billingPeriod": "monthly",
+   "minorInterventions": 2,
+   "maximumMinorMinutes": 30,
+   "targetRequirement": "site",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-MARIAGE-RENOUV": {
+   "schemaVersion": 1,
+   "kind": "recurring",
+   "cadence": "yearly",
+   "billingPeriod": "yearly",
+   "targetRequirement": "site",
+   "requires": [],
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-SEO-GBP-A": {
+   "schemaVersion": 1,
+   "kind": "recurring",
+   "cadence": "monthly",
+   "billingPeriod": "yearly",
+   "targetRequirement": "context",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-SEO-GBP-ETAB-M": {
+   "schemaVersion": 1,
+   "kind": "recurring_addon",
+   "cadence": "monthly",
+   "billingPeriod": "monthly",
+   "targetRequirement": "context",
+   "requires": [],
+   "parentCodes": [
+    "AW-SEO-GBP-M",
+    "AW-SEO-GBP-A"
+   ],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "additional_targets"
+  },
+  "AW-SEO-GBP-M": {
+   "schemaVersion": 1,
+   "kind": "recurring",
+   "cadence": "monthly",
+   "billingPeriod": "monthly",
+   "targetRequirement": "context",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-TECH-DEPANNAGE": {
+   "schemaVersion": 1,
+   "kind": "intervention",
+   "cadence": "once",
+   "billingPeriod": "once",
+   "minimumBillableMinutes": 60,
+   "targetRequirement": "site",
+   "requires": [],
+   "quantityMode": "hours",
+   "quantityMeaning": "hours"
+  },
+  "AW-TECH-PACK-10H": {
+   "schemaVersion": 1,
+   "kind": "hour_pack",
+   "cadence": "once",
+   "billingPeriod": "once",
+   "creditMinutes": 600,
+   "validityMonths": 27,
+   "targetRequirement": "none",
+   "requires": [],
+   "quantityMeaning": "credits"
+  },
+  "AW-TECH-PACK-3H": {
+   "schemaVersion": 1,
+   "kind": "hour_pack",
+   "cadence": "once",
+   "billingPeriod": "once",
+   "creditMinutes": 180,
+   "validityMonths": 27,
+   "targetRequirement": "none",
+   "requires": [],
+   "quantityMeaning": "credits"
+  },
+  "AW-TECH-PACK-5H": {
+   "schemaVersion": 1,
+   "kind": "hour_pack",
+   "cadence": "once",
+   "billingPeriod": "once",
+   "creditMinutes": 300,
+   "validityMonths": 27,
+   "targetRequirement": "none",
+   "requires": [],
+   "quantityMeaning": "credits"
+  },
+  "AW-SEO-GBP-ESS-M": {
+   "schemaVersion": 1,
+   "kind": "recurring",
+   "cadence": "monthly",
+   "billingPeriod": "monthly",
+   "targetRequirement": "context",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-SEO-GBP-ESS-A": {
+   "schemaVersion": 1,
+   "kind": "recurring",
+   "cadence": "monthly",
+   "billingPeriod": "yearly",
+   "targetRequirement": "context",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-DATA-SUIVI-ESS-M": {
+   "schemaVersion": 1,
+   "kind": "recurring",
+   "cadence": "monthly",
+   "billingPeriod": "monthly",
+   "targetRequirement": "site",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-DATA-SUIVI-ESS-A": {
+   "schemaVersion": 1,
+   "kind": "recurring",
+   "cadence": "monthly",
+   "billingPeriod": "yearly",
+   "targetRequirement": "site",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-NL-REC1-M": {
+   "schemaVersion": 1,
+   "kind": "recurring",
+   "cadence": "monthly",
+   "billingPeriod": "monthly",
+   "targetRequirement": "context",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-NL-REC1-A": {
+   "schemaVersion": 1,
+   "kind": "recurring",
+   "cadence": "monthly",
+   "billingPeriod": "yearly",
+   "targetRequirement": "context",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-NL-REC2-M": {
+   "schemaVersion": 1,
+   "kind": "recurring",
+   "cadence": "monthly",
+   "billingPeriod": "monthly",
+   "targetRequirement": "context",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-NL-REC2-A": {
+   "schemaVersion": 1,
+   "kind": "recurring",
+   "cadence": "monthly",
+   "billingPeriod": "yearly",
+   "targetRequirement": "context",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-HOST-LUNE": {
+   "schemaVersion": 1,
+   "kind": "hosting",
+   "cadence": "monthly",
+   "billingPeriod": "yearly",
+   "setupEstimateRequired": true,
+   "targetRequirement": "site",
+   "requires": [],
+   "periodAlignment": "anniversary",
+   "quantityMeaning": "billing_periods"
+  },
+  "AW-HOST-DOMAINE": {
+   "schemaVersion": 1,
+   "kind": "recurring",
+   "cadence": "yearly",
+   "billingPeriod": "yearly",
+   "targetRequirement": "site",
+   "requires": [],
+   "quantityMeaning": "billing_periods"
+  }
+ },
+ "detachProjectTemplates": [
+  "AW-TECH-DEPANNAGE",
+  "AW-DEVWP-AJUST",
+  "AW-APP-EVOL"
+ ]
+}
