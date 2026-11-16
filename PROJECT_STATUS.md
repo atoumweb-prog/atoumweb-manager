@@ -1,5 +1,13 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : débordements F72 et F73 corrigés (commit local)
+
+- [x] **F72** fiche projet, onglet Production : en grande fenêtre, plus aucun dépassement (déjà disparu). En fenêtre étroite, la barre d'actions du plan (filtre, tailles, « Ajouter », 373 px) ne passait pas à la ligne et élargissait la colonne du panneau (355 px). Correction dans `projects.css` : actions qui passent à la ligne, colonne bornée au panneau. 0 dépassement mesuré.
+- [x] **F73** Interventions, onglets Maintenance et Packs d'heures : `.maintenance-list-panel` et `.hour-pack-list-panel` imposaient `overflow: hidden`, qui écrasait le défilement du panneau commun ; le tableau (720 px minimum) était coupé et Prix et Statut étaient inaccessibles en fenêtre étroite. Correction dans `operations.css` : les deux cartes défilent (764 px de contenu pour 385 visibles).
+- **Relevé au passage** : F84 inscrite (sous-titre du suivi opérationnel coupé en fenêtre étroite), non traitée.
+- **Preuves** : mesure avant et après sur copie jetable (Noir, Confort, 1510 px et fenêtre étroite) ; typecheck propre ; suite **333 fichiers, 2 764 tests**. **Autocontrôle de l'auteur** ; captures prises mais regardées seulement en haut de page.
+- Prochaine action : F81 attend la décision de Carlos ; F84 à voir.
+
 ## 16/11/2026 : recettes rouges du registre, cinq remises en état (F78, F79, F80, F82, F83) (commit local)
 
 - [x] Chaque échec diagnostiqué jusqu’à sa cause ; toutes décrivaient un affichage antérieur à la refonte ou un jeu de test incomplet, aucun défaut du produit trouvé. Recettes réécrites sur des règles durables (règle H) :

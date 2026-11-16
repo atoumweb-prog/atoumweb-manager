@@ -215,7 +215,8 @@
 
 .hour-pack-list-panel {
   max-height: calc(100dvh - 250px);
-  overflow: hidden;
+  /* F73 : même règle que la liste des maintenances. */
+  overflow: auto;
 }
 
 .hour-pack-compact-list {
@@ -1090,7 +1091,8 @@ body.operation-resizing {
 
 .maintenance-list-panel {
   max-height: calc(100dvh - 250px);
-  overflow: hidden;
+  /* F73 : le tableau (720 px minimum) défile dans sa carte au lieu d’être coupé en fenêtre étroite. */
+  overflow: auto;
 }
 
 .maintenance-compact-list {

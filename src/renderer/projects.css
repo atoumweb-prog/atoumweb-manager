@@ -874,6 +874,8 @@
 
 .project-production-tree-panel {
   display: grid;
+  /* F72 : la colonne ne s’élargit pas au-delà du panneau en fenêtre étroite. */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   gap: 9px;
   min-width: 0;
@@ -1908,6 +1910,8 @@ body.project-resizing * {
 /* Projet V2 — plan plus compact et fiche orientée travail */
 .project-production-tree-actions {
   display: flex;
+  /* F72 : en fenêtre étroite, les actions du plan passent à la ligne au lieu de dépasser. */
+  flex-wrap: wrap;
   align-items: center;
   gap: 5px;
 }
