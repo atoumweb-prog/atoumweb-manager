@@ -285,10 +285,10 @@ app.whenReady().then(async () => {
         !!document.querySelector('[aria-label="Comparer les versions du Catalogue"]')&&
         document.body.textContent.includes('Aides à la vente'));
       await click('Fermer la comparaison');
-      const oldConfirm=window.confirm;window.confirm=()=>true;
+      /* F81 : réponse dans la boîte de la page */(a=>{window.__pcAnswer=a;window.__pcLog=window.__pcLog||[];if(window.__pcObs)return true;const act=()=>{const d=document.querySelector("dialog.page-confirm-dialog[open]");if(!d||d.__pcDone)return;d.__pcDone=true;window.__pcLog.push(d.querySelector("h2").textContent+" "+(d.querySelector(".page-confirm-body")?.textContent||""));const v=window.__pcAnswer,t=d.querySelector("textarea");if(t&&typeof v==="string"){Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value").set.call(t,v);t.dispatchEvent(new Event("input",{bubbles:true}));}setTimeout(()=>{const b=d.querySelectorAll(".form-actions button");(v===false?b[0]:b[1]).click();},60);};window.__pcObs=new MutationObserver(act);window.__pcObs.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:["open"]});return true;})(true);
       const restoreButton=[...historyV1.querySelectorAll('button')]
         .find(button=>button.textContent==='Reprendre dans un brouillon');
-      restoreButton.click();await wait();window.confirm=oldConfirm;
+      restoreButton.click();await wait();(a=>{window.__pcAnswer=a;window.__pcLog=window.__pcLog||[];if(window.__pcObs)return true;const act=()=>{const d=document.querySelector("dialog.page-confirm-dialog[open]");if(!d||d.__pcDone)return;d.__pcDone=true;window.__pcLog.push(d.querySelector("h2").textContent+" "+(d.querySelector(".page-confirm-body")?.textContent||""));const v=window.__pcAnswer,t=d.querySelector("textarea");if(t&&typeof v==="string"){Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value").set.call(t,v);t.dispatchEvent(new Event("input",{bubbles:true}));}setTimeout(()=>{const b=d.querySelectorAll(".form-actions button");(v===false?b[0]:b[1]).click();},60);};window.__pcObs=new MutationObserver(act);window.__pcObs.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:["open"]});return true;})(false);
       assert('04C restauration historique prépare un brouillon sans publication',
         !!document.querySelector('.catalog-version-editor')&&
         calls.publish===0&&items[0].currentVersion.id==='old-v1'&&

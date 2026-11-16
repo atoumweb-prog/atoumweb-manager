@@ -8,6 +8,7 @@ import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { NeedsSectionHeader } from './NeedsSectionHeader';
 import { needsSectionSummary } from '../../shared/prospectNeedsSections';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePageConfirm } from '../ui/usePageConfirm';
 import type { CatalogItemSummary, CatalogVersion, PriceMode } from '../../shared/commercial';
 import { prospectProjectBriefSnapshot, type ProspectProjectBrief, type ProspectSummary } from '../../shared/crm';
 import type { Need, NeedInput } from '../../shared/workflow';
@@ -206,6 +207,7 @@ function newInformationId(): string {
 
 export function ProspectNeedsPanel({ prospectId, onChanged, open, onToggle, highlightMissing=false }: { prospectId: string; onChanged?: () => void; /** R3 : sections repliables, pilotées par la fiche (le contenu reste monté même replié). */ open: Record<'brief'|'commercial'|'services', boolean>; onToggle: (id: string) => void; highlightMissing?:boolean; }) {
   const [prospect, setProspect] = useState<ProspectSummary | null>(null);
+  const { dialog: confirmDialog, askConfirm } = usePageConfirm();
   const [projectSummary, setProjectSummary] = useState('');
   const [projectContext, setProjectContext] = useState('');
   const [budgetPreset, setBudgetPreset] = useState<BudgetPreset>('not_disclosed');
@@ -344,7 +346,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged, open, onToggle, high
 
   async function reloadChecklistAfterConflict() {
     if (busy || activeInformationWrites.current !== 0 || !informationConflictRef.current) return;
-    if (!window.confirm('Recharger les points enregistrés dans le dossier ? Les modifications locales NON enregistrées de cette checklist seront remplacées. Les autres champs saisis resteront inchangés.')) return;
+    if (!(await askConfirm({title: 'Recharger les points enregistrés dans le dossier ?', body: 'Les modifications locales NON enregistrées de cette checklist seront remplacées. Les autres champs saisis resteront inchangés.', confirmLabel: 'Recharger'}))) return;
     const ownerId = prospectId;
     setBusy(true);
     try {
@@ -390,7 +392,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged, open, onToggle, high
 
   async function reloadProjectBriefAfterConflict() {
     if (busy || savingProjectBriefRef.current || !projectBriefConflictRef.current) return;
-    if (!window.confirm('Recharger le projet, le budget et le calendrier enregistrés ? Les modifications locales de CES champs seront remplacées. La checklist reste inchangée.')) return;
+    if (!(await askConfirm({title: 'Recharger le projet, le budget et le calendrier enregistrés ?', body: 'Les modifications locales de CES champs seront remplacées. La checklist reste inchangée.', confirmLabel: 'Recharger'}))) return;
     const ownerId = prospectId;
     setBusy(true);
     try {
@@ -492,7 +494,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged, open, onToggle, high
   const openLaterInformation = informationItems.filter((item) => item.status !== 'resolved' && !item.isBlocking);
 
   const sectionSummary = (id: 'brief' | 'commercial' | 'services') => needsSectionSummary(id, { projectSummary: prospect?.projectSummary, budgetStatus: prospect?.budgetStatus, timelineStatus: prospect?.timelineStatus, informationCount: informationItems.length, openInformationCount: informationItems.filter((item) => item.status === 'open').length, blockingInformationCount: openBlockingInformation.length });
-  return <section className="prospect-work-section needs-panel-v2"><fieldset disabled={Boolean(prospect?.clientAccountId||prospect?.archivedAt)} style={{border:0,padding:0,margin:0,minWidth:0}}>
+  return <section className="prospect-work-section needs-panel-v2">{confirmDialog}<fieldset disabled={Boolean(prospect?.clientAccountId||prospect?.archivedAt)} style={{border:0,padding:0,margin:0,minWidth:0}}>
 
     {error && <p className="form-error" role="alert">{error}</p>}
     {projectBriefConflict && <div className="prospect-checklist-conflict" role="status">

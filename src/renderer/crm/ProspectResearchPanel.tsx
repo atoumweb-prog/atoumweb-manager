@@ -1,6 +1,7 @@
 import {ProspectValue} from './ProspectValue';
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePageConfirm } from '../ui/usePageConfirm';
 import type {
   ProspectResearchCheckStatus,
   ProspectResearchChecklistItem,
@@ -292,6 +293,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
   onChanged?: (message?: string) => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const { dialog: confirmDialog, askConfirm } = usePageConfirm();
   const [tab, setTab] = useState<ResearchTab>(scope==='preparation'?'conversation':'company');
   const [history, setHistory] = useState<ProspectResearchSnapshot[]>([]);
   const [draft, setDraft] = useState<ProspectResearchSnapshotInput>(() => emptySnapshot(prospect));
@@ -357,7 +359,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
   const legal = mergeCheck({ overallStatus: 'review', items: LEGAL_ITEMS.map((item) => ({ ...item })), observations: '', talkingPoint: '', source: 'Site public', url: '' }, draft.legalNotices);
 
   if(!loaded)return <section className="prospect-research-panel"><p role="status">{loadError||'Chargement de la référence…'}</p>{loadError&&<button type="button" onClick={()=>void load()}>Réessayer</button>}</section>;
-  return <section className="prospect-work-section prospect-research-panel" data-research-scope={scope} data-browse-first={browseFirst} data-editing={editing}>
+  return <section className="prospect-work-section prospect-research-panel" data-research-scope={scope} data-browse-first={browseFirst} data-editing={editing}>{confirmDialog}
     <div className="research-heading">
       <div>
         {!hideTitle&&<span className="eyebrow">{scope==='preparation'?'Préparation':'Recherche entreprise'}</span>}
@@ -459,7 +461,7 @@ export function ProspectResearchPanel({ prospect, defaultOpen = true, browseFirs
               <label>Priorité<select value={item.priority} onChange={(event) => updateOpportunity(index, { priority: event.target.value as ProspectResearchOpportunity['priority'] })} disabled={busy}><option value="low">Faible</option><option value="medium">Moyenne</option><option value="high">Forte</option></select></label>
               <label>Note<input value={item.note ?? ''} onChange={(event) => updateOpportunity(index, { note: event.target.value })} disabled={busy} /></label>
               <label className="research-keep"><input type="checkbox" checked={item.keep} onChange={(event) => updateOpportunity(index, { keep: event.target.checked })} disabled={busy} /> Retenir</label>
-              <button type="button" className="secondary-button" disabled={busy||guard.dirty} title={guard.dirty?'Enregistre la référence avant de reprendre une opportunité.':undefined} onClick={()=>void (async()=>{try{const current=(await window.atoumweb.crm.prospects.list()).find(p=>p.id===prospect.id);if(!current)throw Error('Dossier introuvable.');if(current.detectedOpportunity&&!window.confirm('Remplacer l’opportunité de qualification par ce constat ?'))return;const sourceId=JSON.parse(baselineVersion.current??'[]')[1];if(!sourceId)throw Error('Enregistre la référence avant de reprendre cette opportunité.');await window.atoumweb.crm.prospects.research.adoptOpportunity(prospect.id,sourceId,index,current.detectedOpportunity??null);window.dispatchEvent(new Event('atoumweb:changed'));onChanged?.('Opportunité reprise dans la qualification.');}catch(e){onChanged?.(String(e));}})()}>Reprendre dans la qualification</button>
+              <button type="button" className="secondary-button" disabled={busy||guard.dirty} title={guard.dirty?'Enregistre la référence avant de reprendre une opportunité.':undefined} onClick={()=>void (async()=>{try{const current=(await window.atoumweb.crm.prospects.list()).find(p=>p.id===prospect.id);if(!current)throw Error('Dossier introuvable.');if(current.detectedOpportunity&&!(await askConfirm({title:'Remplacer l’opportunité de qualification par ce constat ?',confirmLabel:'Remplacer l’opportunité'})))return;const sourceId=JSON.parse(baselineVersion.current??'[]')[1];if(!sourceId)throw Error('Enregistre la référence avant de reprendre cette opportunité.');await window.atoumweb.crm.prospects.research.adoptOpportunity(prospect.id,sourceId,index,current.detectedOpportunity??null);window.dispatchEvent(new Event('atoumweb:changed'));onChanged?.('Opportunité reprise dans la qualification.');}catch(e){onChanged?.(String(e));}})()}>Reprendre dans la qualification</button>
               <button type="button" className="secondary-button danger-outline" onClick={() => setDraft({ ...draft, opportunities: (draft.opportunities ?? []).filter((_, itemIndex) => itemIndex !== index) })}>Supprimer</button>
             </div>)}
             {(draft.opportunities ?? []).length === 0 && <p className="muted">Aucune opportunité enregistrée.</p>}

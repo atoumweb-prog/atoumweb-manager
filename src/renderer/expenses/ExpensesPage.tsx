@@ -6,6 +6,7 @@ import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
 import {hasActiveFilters} from '../ui/tableEmpty';
 
 import { useEffect, useMemo, useState } from 'react';
+import { usePageConfirm } from '../ui/usePageConfirm';
 import type { ClientSummary } from '../../shared/crm';
 import {
   EXPENSE_CATEGORIES,
@@ -153,6 +154,7 @@ function formFromExpense(item: Expense): ExpenseFormState {
 
 export function ExpensesPage({ onMessage }: { onMessage: (message: string) => void }) {
   const [items, setItems] = useState<Expense[]>([]);
+  const { dialog: confirmDialog, askConfirm } = usePageConfirm();
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -304,7 +306,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
       const input = buildInput();
       if (!createOpen && selected?.status === 'paid'
           && JSON.stringify(form) !== JSON.stringify(formFromExpense(selected))
-          && !window.confirm('Cette dépense est déclarée payée. Confirmer la correction de ses informations ? Le paiement bancaire ne sera pas vérifié.')) {
+          && !(await askConfirm({title: 'Confirmer la correction de ses informations ?', body: 'Cette dépense est déclarée payée. Le paiement bancaire ne sera pas vérifié.', confirmLabel: 'Confirmer la correction'}))) {
         return;
       }
       const saved = createOpen
@@ -395,6 +397,7 @@ export function ExpensesPage({ onMessage }: { onMessage: (message: string) => vo
   const detailOpen = Boolean(selected || createOpen);
 
   return <div className="expenses-page-stack">
+    {confirmDialog}
     <KeyFigures ariaLabel="Synthèse des dépenses" items={[
       { key: 'month', label: 'Engagé ce mois', value: money(committedThisMonth), helper: plural(monthItems.length, 'dépense', 'dépenses') },
       { key: 'to-pay', label: 'À payer', value: money(toPay), helper: 'Dépenses engagées non réglées' },

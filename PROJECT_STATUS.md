@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : F81, toutes les confirmations dans la boîte de la page (commit local)
+
+- **Décision de Carlos** (16/11/2026) : remplacer toutes les boîtes natives restantes, en un lot, comme l'acceptation Abby (F61).
+- [x] **Boîte de la page** `ui/usePageConfirm.tsx` : texte facultatif (retours à la ligne conservés) et nouvelle variante `askText` avec champ de saisie obligatoire (remplace `window.prompt`).
+- [x] **25 appels remplacés dans 13 écrans** : devis (avertissements CGV, reprise du brouillon, attestation d'envoi), envoi et correction du devis, application des changements de CGV, brouillons et restauration du catalogue, devis côté prospect (envoi, acceptation Abby, accord de principe), passage d'étape et rechargements de la prospection, opportunité de la référence, coordonnées et associations des contacts, clôture d'intervention, correction d'une dépense payée. Mêmes textes et mêmes choix ; titre et bouton nommés selon l'action. **Écart à signaler** : l'attestation d'envoi du devis (fiche Devis) réunit saisie et confirmation dans une seule boîte au lieu de deux à la suite.
+- [x] **Test** `ui/nativeDialogs.test.ts` : aucun `window.confirm`, `window.prompt` ni `window.alert` dans le code de l'interface.
+- [x] **Recettes réécrites (règle H)** : un répondeur clique dans la boîte de la page au lieu de simuler `window.confirm` (catalogue, devis EC03, prospection 03B, dépenses 09C, Offres & Tarifs, recette commerciale native). EC03 remise à jour au passage (bouton « Comparer les clauses applicables », choix de la condition particulière) : **203 contrôles verts**, dont annulation puis confirmation des nouvelles boîtes ; 09C **67 verts** ; catalogue, Offres & Tarifs (trois recettes) vertes.
+- **Inscrits au registre, non traités** : F85 (recette commerciale native : 112 offres attendues, comptage figé), F86 (recette 03B sur l'ancien parcours en colonnes, rouge avant ce lot), F87 (recette documents client, rouge avant ce lot).
+- **Preuves** : typecheck propre ; suite **334 fichiers, 2 766 tests** ; empreinte de la préproduction inchangée `5da9e5fcf5115d91` (recette native lancée sur une copie TEMP). **Autocontrôle de l'auteur** ; boîtes non regardées à l'écran (Carlos ne demande plus de captures).
+- Prochaine action : F85 à F87 (recettes), au choix de Carlos.
+
 ## 16/11/2026 : débordements F72 et F73 corrigés (commit local)
 
 - [x] **F72** fiche projet, onglet Production : en grande fenêtre, plus aucun dépassement (déjà disparu). En fenêtre étroite, la barre d'actions du plan (filtre, tailles, « Ajouter », 373 px) ne passait pas à la ligne et élargissait la colonne du panneau (355 px). Correction dans `projects.css` : actions qui passent à la ligne, colonne bornée au panneau. 0 dépassement mesuré.

@@ -126,7 +126,7 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
   const [customPrice, setCustomPrice] = useState('');
   const [editingLineId, applyEditingLineId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const {dialog: confirmDialog, askConfirm} = usePageConfirm();
+  const {dialog: confirmDialog, askConfirm, askText} = usePageConfirm();
   const [detailExpanded, setDetailExpanded] = useState(true);
   const quoteGroup='quote:'+detail?.id;
   useUnsavedDraft('Ligne libre à ajouter',{customLabel,customPrice},{group:quoteGroup,ready:!!detail,discard:()=>{setCustomLabel('');setCustomPrice('');}});
@@ -306,21 +306,22 @@ export function QuotesPage({ onEntityReady, onMessage, initialId, initialRequest
         const review = await window.atoumweb.contractTerms.quotes.get(detail.id);
         if (review.warnings.length > 0) {
           const warningText = review.warnings.map((warning) => `• ${warning}`).join('\n');
-          if (!window.confirm(`Avertissements CGV avant finalisation :\n\n${warningText}\n\nFinaliser quand même le devis ?`)) return;
+          if (!(await askConfirm({title: 'Avertissements CGV avant finalisation', body: `${warningText}\n\nFinaliser quand même le devis ?`, confirmLabel: 'Finaliser quand même'}))) return;
         }
       }
       let next: QuoteDetail;
       if (action === 'finalized') next = await trackQuoteMutation(()=>window.atoumweb.quotes.finalize(detail.id,canonicalReview));
       else if (action === 'resumed') {
-        if(!detail.contractPreparationId||!window.confirm('Reprendre ce brouillon avant envoi ? La préparation précédente sera conservée et un nouveau contrôle sera nécessaire.'))return;
+        if(!detail.contractPreparationId||!(await askConfirm({title:'Reprendre ce brouillon avant envoi ?',body:'La préparation précédente sera conservée et un nouveau contrôle sera nécessaire.',confirmLabel:'Reprendre le brouillon'})))return;
         next=await trackQuoteMutation(()=>window.atoumweb.quotes.resumeDraft(detail.id,detail.contractPreparationId!));
       }
       else if (action === 'sent') {
         const state=await window.atoumweb.quotes.transmissionState(detail.id);
         if(selectedRef.current!==detail.id)return;
         if(!state.contentHash)throw Error('Version contractuelle absente : envoi refusé.');
-        const provenance=window.prompt('Attestation d’envoi réel au client : indique le canal et la référence du message ou du document transmis. La copie vers Abby seule ne vaut pas envoi.');
-        if(!provenance?.trim()||!window.confirm(`Attester l’envoi effectif du devis ${detail.number} au client ? Vérifie la version préparée et le document réellement transmis. Le contrat sera figé.`))return;
+        // F81 : attestation et confirmation réunies dans une seule boîte de la page (mêmes textes, saisie obligatoire).
+        const provenance=await askText({title:`Attester l’envoi effectif du devis ${detail.number} au client ?`,body:'Vérifie la version préparée et le document réellement transmis. Le contrat sera figé.\n\nLa copie vers Abby seule ne vaut pas envoi.',inputLabel:'Canal et référence du message ou du document transmis',confirmLabel:'Attester l’envoi'});
+        if(!provenance?.trim())return;
         if(unsavedRegistry.active(quoteGroup).length)throw Error('Une saisie est en cours : envoi refusé.');
         next=await trackQuoteMutation(()=>window.atoumweb.quotes.markSent(detail.id,{operationId:crypto.randomUUID(),preparationId:state.preparationId,contentHash:state.contentHash!,confirmed:true,channel:'other',provenance:provenance.trim(),occurredAt:'now'}));
       }

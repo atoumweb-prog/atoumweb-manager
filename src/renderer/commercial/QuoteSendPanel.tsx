@@ -6,6 +6,7 @@ import {quoteEmailDraft} from '../../shared/quoteEmailDraft';
 import {QUICK_REVIEW_CODES} from '../../shared/quoteQuickReview';
 import {unsavedRegistry} from '../unsaved/unsaved';
 import {focusContractField} from './contractFieldNavigation';
+import {usePageConfirm} from '../ui/usePageConfirm';
 import './quote-send.css';
 
 /**
@@ -26,6 +27,7 @@ export function QuoteSendPanel({quote, onChanged, onMessage}: {quote: QuoteDetai
   const group = 'quote:' + quote.id;
   const prepared = Boolean(quote.finalizedAt);
   const draft = quoteEmailDraft(quote);
+  const {dialog: confirmDialog, askConfirm} = usePageConfirm();
 
   useEffect(() => { setPdfPath(''); setNote(''); setHow(''); }, [quote.id]);
   useEffect(() => {
@@ -66,7 +68,7 @@ export function QuoteSendPanel({quote, onChanged, onMessage}: {quote: QuoteDetai
   const send = (canonicalReview = false) => run('Préparation du devis…', async () => {
     const id = quote.id;
     const review = await window.atoumweb.contractTerms.quotes.get(id);
-    if (review.warnings.length > 0 && !window.confirm(`Points d’attention sur les CGV :\n\n${review.warnings.map(warning => '• ' + warning).join('\n')}\n\nContinuer quand même ?`)) return;
+    if (review.warnings.length > 0 && !(await askConfirm({title: 'Points d’attention sur les CGV', body: `${review.warnings.map(warning => '• ' + warning).join('\n')}\n\nContinuer quand même ?`, confirmLabel: 'Continuer quand même'}))) return;
     const next = await window.atoumweb.quotes.finalize(id, canonicalReview);
     onChanged(next);
     await prepareDocuments(id);
@@ -77,14 +79,14 @@ export function QuoteSendPanel({quote, onChanged, onMessage}: {quote: QuoteDetai
     if (!provenance) throw Error('Indique comment tu as envoyé le devis (par exemple : e-mail à l’adresse du client).');
     const state = await window.atoumweb.quotes.transmissionState(id);
     if (!state.contentHash) throw Error('Le devis préparé est introuvable : clique sur « Corriger le devis », puis renvoie-le.');
-    if (!window.confirm(`Confirmer que le devis ${quote.number} a bien été envoyé au client ?\n\nSon texte et ses CGV seront figés : pour le modifier ensuite, il faudra créer une révision.`)) return;
+    if (!(await askConfirm({title: `Confirmer que le devis ${quote.number} a bien été envoyé au client ?`, body: 'Son texte et ses CGV seront figés : pour le modifier ensuite, il faudra créer une révision.', confirmLabel: 'Confirmer l’envoi'}))) return;
     const next = await window.atoumweb.quotes.markSent(id, {operationId: crypto.randomUUID(), preparationId: state.preparationId, contentHash: state.contentHash, confirmed: true, channel: 'other', provenance, occurredAt: 'now'});
     onChanged(next);
     onMessage(`Devis ${next.number} envoyé. Sa version est figée.`);
   });
 
   const resume = () => run('Réouverture du devis…', async () => {
-    if (!quote.contractPreparationId || !window.confirm('Corriger ce devis avant de l’envoyer ? Tu devras cliquer de nouveau sur « Envoyer le devis » ensuite.')) return;
+    if (!quote.contractPreparationId || !(await askConfirm({title: 'Corriger ce devis avant de l’envoyer ?', body: 'Tu devras cliquer de nouveau sur « Envoyer le devis » ensuite.', confirmLabel: 'Corriger le devis'}))) return;
     onChanged(await window.atoumweb.quotes.resumeDraft(quote.id, quote.contractPreparationId));
     setPdfPath('');
   });
@@ -97,6 +99,7 @@ export function QuoteSendPanel({quote, onChanged, onMessage}: {quote: QuoteDetai
   const quick = blocking.filter(issue => QUICK_REVIEW_CODES.includes(issue.code)).length;
 
   if (prepared) return <section className="quote-send-panel" aria-label="Envoyer le devis">
+    {confirmDialog}
     <strong>Ton devis est prêt à partir</strong>
     <ol className="quote-send-steps">
       <li><span>Le PDF (devis + CGV)</span>{pdfPath ? <code>{pdfPath}</code> : <em>à créer</em>}
@@ -120,6 +123,7 @@ export function QuoteSendPanel({quote, onChanged, onMessage}: {quote: QuoteDetai
   </section>;
 
   return <section className="quote-send-panel quote-finalization-check" aria-label="Envoyer le devis">
+    {confirmDialog}
     <strong>{error ? 'Vérification impossible' : !issues ? 'Vérification du devis…' : blocking.length ? `Encore ${blocking.length} point${blocking.length > 1 ? 's' : ''} à régler avant l’envoi` : 'Tout est prêt : tu peux envoyer ce devis'}</strong>
     {error && <p role="alert">{error}</p>}
     {quick > 0 && <p className="muted">{quick === blocking.length ? 'Ils se règlent tous dans « Avant d’envoyer : 6 réponses à valider », juste au-dessus.' : 'Une partie se règle dans « Avant d’envoyer : 6 réponses à valider », juste au-dessus.'}</p>}

@@ -97,7 +97,7 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
     await wait('document.querySelectorAll(".expenses-table tbody tr").length===2','paid item refresh');
     await js('const row=[...document.querySelectorAll(".expenses-table tbody tr")].find(e=>e.textContent.includes("Frais TEST 09C 1"));row.click()');
     await wait('document.querySelector(".expenses-form-grid input[type=number]")?.value==="149"','paid expense form ready');
-    await js('window.__09cPaidPrompts=[];window.confirm=message=>{window.__09cPaidPrompts.push(message);return false;};');
+    await js("window.__pcLog=[];(a=>{window.__pcAnswer=a;window.__pcLog=window.__pcLog||[];if(window.__pcObs)return true;const act=()=>{const d=document.querySelector(\"dialog.page-confirm-dialog[open]\");if(!d||d.__pcDone)return;d.__pcDone=true;window.__pcLog.push(d.querySelector(\"h2\").textContent+\" \"+(d.querySelector(\".page-confirm-body\")?.textContent||\"\"));const v=window.__pcAnswer,t=d.querySelector(\"textarea\");if(t&&typeof v===\"string\"){Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,\"value\").set.call(t,v);t.dispatchEvent(new Event(\"input\",{bubbles:true}));}setTimeout(()=>{const b=d.querySelectorAll(\".form-actions button\");(v===false?b[0]:b[1]).click();},60);};window.__pcObs=new MutationObserver(act);window.__pcObs.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:[\"open\"]});return true;})(false)"); /* F81 : réponse dans la boîte de la page */
     await js('const el=document.querySelector(".expenses-form-grid input[type=number]");el.focus();el.select();');
     await win.webContents.insertText('178.50');
     await wait('Number(document.querySelector(".expenses-form-grid input[type=number]")?.value)===178.5','paid edit');
@@ -106,9 +106,9 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
     await sleep(120);
     test(db.expenses.get(first.id).amountCents===14900,
       '09C-UI-14: refused correction preserves original paid amount');
-    test(await get('window.__09cPaidPrompts.length===1&&window.__09cPaidPrompts[0].includes("déclarée payée")'),
+    test(await get('window.__pcLog.length===1&&window.__pcLog[0].includes("déclarée payée")'),
       '09C-UI-15: paid correction asks for explicit confirmation');
-    await js('window.confirm=message=>{window.__09cPaidPrompts.push(message);return true;};');
+    await js("(a=>{window.__pcAnswer=a;window.__pcLog=window.__pcLog||[];if(window.__pcObs)return true;const act=()=>{const d=document.querySelector(\"dialog.page-confirm-dialog[open]\");if(!d||d.__pcDone)return;d.__pcDone=true;window.__pcLog.push(d.querySelector(\"h2\").textContent+\" \"+(d.querySelector(\".page-confirm-body\")?.textContent||\"\"));const v=window.__pcAnswer,t=d.querySelector(\"textarea\");if(t&&typeof v===\"string\"){Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,\"value\").set.call(t,v);t.dispatchEvent(new Event(\"input\",{bubbles:true}));}setTimeout(()=>{const b=d.querySelectorAll(\".form-actions button\");(v===false?b[0]:b[1]).click();},60);};window.__pcObs=new MutationObserver(act);window.__pcObs.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:[\"open\"]});return true;})(true)");
     await save();
     for(let i=0;i<90&&db.expenses.get(first.id).amountCents!==17850;i++)await sleep(50);
     test(db.expenses.get(first.id).amountCents===17850,

@@ -1,5 +1,6 @@
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePageConfirm } from '../ui/usePageConfirm';
 import {ProspectDecisionEditor} from './ProspectDecisionEditor';
 import { FieldHelp } from '../ui/FieldHelp';
 export { FieldHelp } from '../ui/FieldHelp';
@@ -68,6 +69,7 @@ function cleanError(error: unknown): string {
 export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { prospect: ProspectSummary; onSaved: (message?: string) => void; onGoTo?: (target: 'identity' | 'decision' | 'contact' | 'need' | 'followup') => void }) {
   const origin = inferOrigin(prospect);
   const [draft, setDraft] = useState<Partial<ProspectInput>>({ ...prospect, originType: origin });
+  const { dialog: confirmDialog, askConfirm } = usePageConfirm();
   const [contactCount, setContactCount] = useState(0);
   const [decisionMakerLabel, setDecisionMakerLabel] = useState('');
   const [busy, setBusy] = useState(false);
@@ -198,7 +200,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
 
   async function reloadQualificationAfterConflict() {
     if (busy || savingRef.current || !conflictRef.current) return;
-    if (!window.confirm('Recharger la qualification enregistrée ? Les changements locaux NON sauvegardés de la qualification et du contexte seront remplacés. Les autres sections resteront inchangées.')) return;
+    if (!(await askConfirm({title: 'Recharger la qualification enregistrée ?', body: 'Les changements locaux NON sauvegardés de la qualification et du contexte seront remplacés. Les autres sections resteront inchangées.', confirmLabel: 'Recharger'}))) return;
     const ownerId = prospect.id;
     setBusy(true);
     try {
@@ -249,7 +251,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
       setError('Renseigne au moins une information de qualification avant de passer à l’étape suivante.');
       return;
     }
-    if (!allReady && !window.confirm(`Il reste à préciser : ${missing.map((item) => item.label).join(', ')}.\n\nPasser quand même à « Besoin à identifier » ?\nTu pourras compléter ces informations plus tard.`)) return;
+    if (!allReady && !(await askConfirm({title: 'Passer quand même à « Besoin à identifier » ?', body: `Il reste à préciser : ${missing.map((item) => item.label).join(', ')}.\n\nTu pourras compléter ces informations plus tard.`, confirmLabel: 'Passer quand même'}))) return;
     savingRef.current = true;
     setBusy(true); setError('');
     try {
@@ -278,6 +280,7 @@ export function ProspectQualificationPanelV2({ prospect, onSaved, onGoTo }: { pr
         : 'La situation du décisionnaire reste à renseigner.';
 
   return <section className="prospect-work-section qualification-panel-v2">
+    {confirmDialog}
     <div className="work-section-heading">
       <div><span className="eyebrow">Origine · {ORIGIN_LABELS[origin]}</span><strong>{readiness.filter((item) => item.ok).length}/{readiness.length} éléments minimums acquis</strong></div>
     </div>

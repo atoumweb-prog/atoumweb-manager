@@ -55,7 +55,7 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
     test(prospectStage(newProspect.id).stage==='new','R03B-01: un nouveau contact reste new');
     test(!prospectStage(newProspect.id).clientAccountId,'R03B-01: aucun Client créé');
     test(!quoteStatus(quote.id).principleAgreementAt,'R03B-13: envoyé ne suffit pas à Finalisation');
-    await js('window.__03bConfirmations=[];window.confirm=message=>{window.__03bConfirmations.push(message);return true;};');
+    await js("(a=>{window.__pcAnswer=a;window.__pcLog=window.__pcLog||[];if(window.__pcObs)return true;const act=()=>{const d=document.querySelector(\"dialog.page-confirm-dialog[open]\");if(!d||d.__pcDone)return;d.__pcDone=true;window.__pcLog.push(d.querySelector(\"h2\").textContent+\" \"+(d.querySelector(\".page-confirm-body\")?.textContent||\"\"));const v=window.__pcAnswer,t=d.querySelector(\"textarea\");if(t&&typeof v===\"string\"){Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,\"value\").set.call(t,v);t.dispatchEvent(new Event(\"input\",{bubbles:true}));}setTimeout(()=>{const b=d.querySelectorAll(\".form-actions button\");(v===false?b[0]:b[1]).click();},60);};window.__pcObs=new MutationObserver(act);window.__pcObs.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:[\"open\"]});return true;})(true)"); /* F81 : réponse dans la boîte de la page */
     await js('window.dispatchEvent(new Event("atoumweb:changed"));');
     await navigate('Prospection');
     await wait('!!document.querySelector(".prospect-view-switch")','vue Prospection montée');

@@ -23,6 +23,7 @@ import './prospection-ux.css';
 import './prospect-pipeline-compact.css';
 import './prospect-desk-g3.css';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
+import {usePageConfirm} from '../ui/usePageConfirm';
 import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit,unsavedRegistry} from '../unsaved/unsaved';
 import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';
 import { normalizeWebUrl } from '../../shared/webUrl';
@@ -208,6 +209,7 @@ function quoteCardState(prospect: ProspectSummary, quote: QuoteSummary): string 
 
 export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView = 'directory', initialPipelineFilter = 'all', initialRequest }: { onMessage: (message: string) => void; initialId?: string | null; initialView?: View; initialPipelineFilter?: ProspectPipelineFilter;initialRequest?:number;onEntityReady?:EntityReady }) {
   const [prospects, setProspects] = useState<ProspectSummary[]>([]);
+  const {dialog: confirmDialog, askConfirm} = usePageConfirm();
   const [actions, setActions] = useState<CrmAction[]>([]);
   const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
@@ -400,7 +402,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     } catch (e) {
       const message = cleanBusinessError(e, 'vérifie les informations nécessaires à cette étape.');
       if (prospect.stage === 'qualifying' && stage === 'need_identified' && /qualification incomplète/i.test(message)) {
-        const confirmed = window.confirm(`${message}\n\nPasser quand même à « ${STAGE_LABELS[stage]} » ?\nLes informations manquantes resteront visibles et pourront être complétées plus tard.`);
+        const confirmed = await askConfirm({title: `Passer quand même à « ${STAGE_LABELS[stage]} » ?`, body: `${message}\n\nLes informations manquantes resteront visibles et pourront être complétées plus tard.`, confirmLabel: 'Passer quand même'});
         if (!confirmed) {
           onMessage('Le prospect reste à l’étape « À qualifier ».');
           return false;
@@ -523,6 +525,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   };
 
   return <div className="crm-stack prospects-v2" data-prospect-view={view}>
+    {confirmDialog}
     <PageHeader icon={<OperationIcon name="user"/>} title="Prospection" help="Liste, parcours commercial et historique. Une ligne ouvre la fiche rapide ; Agrandir ouvre le même dossier." actions={view==='directory'?<button type="button" className={showForm ? 'secondary-button' : 'primary-button'} onClick={()=>showForm?closeCreation():setShowForm(true)}><OperationIcon name={showForm?'close':'plus'}/>{showForm?'Fermer la création':'Prospect'}</button>:undefined}/>
     <div className="prospect-view-switch" role="tablist">
       <button className={view === 'directory' ? 'active' : ''} onClick={() => setView('directory')}><OperationIcon name="contact"/>Liste <span>{listError ? '—' : directory.length}</span></button>

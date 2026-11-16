@@ -8,6 +8,7 @@ import {hasActiveFilters} from '../ui/tableEmpty';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import {requestUnsavedExit,useUnsavedDraft} from '../unsaved/unsaved';
 import {useDraftSection} from '../unsaved/useDraftSection';
+import {usePageConfirm} from '../ui/usePageConfirm';
 import {InterventionEditor,InterventionExtraFields} from '../workflow/InterventionFields';
 import type {InterventionInput} from '../../shared/operations';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -65,6 +66,7 @@ function projectNodeLabel(node: ProjectNode): string {
 
 export function OperationsPage({ onEntityReady, onMessage, initialTarget, initialRequest, projectFilter, onClearProjectFilter }: { onMessage: (message: string) => void; initialTarget?: OperationsSearchTarget | null;initialRequest?:number;onEntityReady?:EntityReady;projectFilter?: OperationsProjectFilter | null;onClearProjectFilter?: () => void }) {
   const [view, setView] = useState<OperationsView>('requests');
+  const {dialog: confirmDialog, askConfirm} = usePageConfirm();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
@@ -386,7 +388,8 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
         } else if (current.coverageMode === 'out_of_scope') {
           context = [`Montant facturable enregistré : ${(current.billableAmountCents ?? 0) / 100} € (aucune facture émise automatiquement)`];
         }
-        if (!window.confirm(interventionCompletionReview(current, context))) return false;
+        const [reviewTitle, ...reviewLines] = interventionCompletionReview(current, context).split('\n');
+        if (!(await askConfirm({title: reviewTitle, body: reviewLines.join('\n'), confirmLabel: 'Clôturer l’intervention'}))) return false;
       } catch (error) {
         onMessage(error instanceof Error ? `Prévalidation impossible : ${error.message}` : 'Prévalidation impossible : données de prise en charge indisponibles.');
         return false;
@@ -500,6 +503,7 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
   const activeInterventions = interventions.filter((item) => !['completed', 'cancelled', 'archived'].includes(item.status));
 
   return <div className="operations-stack">
+    {confirmDialog}
     <KeyFigures ariaLabel="Synthèse Interventions et Maintenance" items={[
       { key: 'open-requests', label: 'Demandes ouvertes', value: openRequests.length, helper: 'À traiter ou à qualifier' },
       { key: 'urgent', label: 'Urgentes', value: urgentOpenRequests.length, helper: 'Demandes ouvertes prioritaires' },

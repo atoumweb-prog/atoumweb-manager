@@ -22,6 +22,7 @@ import { CatalogProductionPanel } from './CatalogProductionPanel';
 import { CatalogRecommendationsPanel } from './CatalogRecommendationsPanel';
 import {CATALOG_EDITOR_TABS,catalogTabHasVersionFields,type CatalogEditorTab} from './catalogEditorTabs';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePageConfirm } from '../ui/usePageConfirm';
 import {
   PRICE_MODES,
   CATALOG_COMMERCIAL_KINDS,
@@ -237,9 +238,9 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   useEffect(()=>{window.atoumweb.catalog.persistenceAvailable().then(setPersistent).catch(()=>setPersistent(false));},[]);
   async function refreshDrafts(){try{setDraftRows(await window.atoumweb.catalog.listDrafts());setDraftListError('');}catch(e){setDraftListError(e instanceof Error?e.message:'Brouillons indisponibles.');}}
   useEffect(()=>{if(persistent&&(showDrafts||showForm))void refreshDrafts();},[persistent,showDrafts,showForm]);
-  useEffect(()=>{if(resumeVersionId&&detail){const v=detail.versions.find(v=>v.id===resumeVersionId);if(v){prepareNewVersion(v,true);setResumeVersionId(null);}}},[resumeVersionId,detail]);
+  useEffect(()=>{if(resumeVersionId&&detail){const v=detail.versions.find(v=>v.id===resumeVersionId);if(v){void prepareNewVersion(v,true);setResumeVersionId(null);}}},[resumeVersionId,detail]);
   async function resumeDraft(row:CatalogDraftEntry){await openItem(row.item.id,row.version.id);}
-  async function changeDraftState(row:CatalogDraftEntry,abandoned:boolean){if(!window.confirm(abandoned?'Abandonner ce brouillon ? Il restera restaurable dans l’historique.':'Restaurer ce brouillon ? Un seul brouillon peut être opérationnel.'))return;setSaving(true);try{await window.atoumweb.catalog.setDraftAbandoned(row.version.id,row.version,abandoned);await refresh();await refreshDrafts();}catch(e){setDraftListError(e instanceof Error?e.message:'Changement impossible.');}finally{setSaving(false);}}
+  async function changeDraftState(row:CatalogDraftEntry,abandoned:boolean){if(!(await askConfirm(abandoned?{title:'Abandonner ce brouillon ?',body:'Il restera restaurable dans l’historique.',confirmLabel:'Abandonner le brouillon'}:{title:'Restaurer ce brouillon ?',body:'Un seul brouillon peut être opérationnel.',confirmLabel:'Restaurer le brouillon'})))return;setSaving(true);try{await window.atoumweb.catalog.setDraftAbandoned(row.version.id,row.version,abandoned);await refresh();await refreshDrafts();}catch(e){setDraftListError(e instanceof Error?e.message:'Changement impossible.');}finally{setSaving(false);}}
 
   const [consultedVersionId,setConsultedVersionId]=useState<string|null>(null);
   const displayedVersion=detail?.versions.find(v=>v.id===consultedVersionId)??detail?.currentVersion??null;
@@ -272,6 +273,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   const [detailLoading,setDetailLoading]=useState(false);
   useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;detailEpoch.current++;listEpoch.current++;};},[]);
   useSearchTargetConfirmation('catalog',showForm?null:detail?.id,loading||detailLoading,onEntityReady);
+  const {dialog: confirmDialog, askConfirm} = usePageConfirm();
   const createGuard=useUnsavedDraft('Nouvelle prestation',draft,{group:'catalog:create',ready:showForm,pending:saving,savePriority:100,save:()=>createItem(),discard:baseline=>{setDraft(baseline);setCreateCategoryId('');setShowForm(false);}});
   const versionGuard=useUnsavedDraft('Version Catalogue',versionDraft,{group:'catalog:'+detail?.id,ready:versionMode,pending:saving,resetKey:detail?.id+':'+versionMode,savePriority:100,save:()=>createVersion(),discard:baseline=>{setVersionDraft(baseline);setVersionMode(false);}});
   const identityGuard=useUnsavedDraft('Code Catalogue',canonicalCodeDraft,{group:'catalog:'+detail?.id,ready:!!detail,pending:saving,resetKey:detail?.id,savePriority:100,save:()=>assignCode(),discard:setCanonicalCodeDraft});
@@ -444,12 +446,12 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
     }
   }
 
-  async function recoverCreation(){const command=pendingCreation.current;if(!command)return;setSaving(true);try{const found=await window.atoumweb.catalog.createPersistent(command.input,command.payload,command.requestId);if(!window.confirm('Enregistrement retrouvé. Ouvrir ce brouillon et abandonner la saisie locale actuelle ?')){setFormError('Brouillon retrouvé ; la saisie actuelle est conservée.');return;}pendingCreation.current=null;createGuard.saved(EMPTY_DRAFT);setDraft(EMPTY_DRAFT);setShowForm(false);setVersionMode(false);setSelectedId(found.id);setDetailExpanded(true);await refresh();await loadDetail(found.id);setResumeVersionId(found.versions[0].id);}catch(e){setFormError(e instanceof Error?e.message:'Rejeu impossible ; saisie conservée.');}finally{setSaving(false);}}
+  async function recoverCreation(){const command=pendingCreation.current;if(!command)return;setSaving(true);try{const found=await window.atoumweb.catalog.createPersistent(command.input,command.payload,command.requestId);if(!(await askConfirm({title:'Enregistrement retrouvé',body:'Ouvrir ce brouillon et abandonner la saisie locale actuelle ?',confirmLabel:'Ouvrir le brouillon'}))){setFormError('Brouillon retrouvé ; la saisie actuelle est conservée.');return;}pendingCreation.current=null;createGuard.saved(EMPTY_DRAFT);setDraft(EMPTY_DRAFT);setShowForm(false);setVersionMode(false);setSelectedId(found.id);setDetailExpanded(true);await refresh();await loadDetail(found.id);setResumeVersionId(found.versions[0].id);}catch(e){setFormError(e instanceof Error?e.message:'Rejeu impossible ; saisie conservée.');}finally{setSaving(false);}}
 
-  function prepareNewVersion(restoreFrom?: CatalogVersion,resume=false): boolean {
+  async function prepareNewVersion(restoreFrom?: CatalogVersion,resume=false): Promise<boolean> {
     if (!detail || (!detail.currentVersion&&!restoreFrom) || versionMode) return false;
     if(restoreFrom && !resume && (!detail.versions.some(version=>version.id===restoreFrom.id) ||
-      !window.confirm(`Préparer le contenu de la version v${restoreFrom.versionNumber} dans un brouillon ? Aucune version historique ne sera modifiée. L’enregistrement restera une action distincte.`)))return false;
+      !(await askConfirm({title:`Préparer le contenu de la version v${restoreFrom.versionNumber} dans un brouillon ?`,body:'Aucune version historique ne sera modifiée. L’enregistrement restera une action distincte.',confirmLabel:'Préparer le brouillon'}))))return false;
     // 04C/E99: reopen the existing draft instead of generating vN+1 on
     // every edit. A published version is only copied when no draft exists.
     const existingDraft = detail.versions.find(version => version.status === 'draft'&&!version.abandonedAt) ?? null;
@@ -648,6 +650,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
   return (
     <div className={`catalog-stack ${showDrafts?'ot-drafts-active':''} ${detail||showForm?'ot-editor-active':''} ${space==='catalog'&&catalogView==='table'&&!detail&&!showForm?'ot-table-fit':''}`}>
       <UnsavedSaveDialog/>
+      {confirmDialog}
       {duplication&&<CatalogDuplicateDialog preview={duplication} onClose={()=>setDuplication(null)} onCreated={created=>{setDuplication(null);void refresh();requestAnimationFrame(()=>requestAnimationFrame(()=>void openItem(created.id,created.versions[0].id)));}}/>}
       <header className="ot-workspace-heading"><div className="ot-title"><span className="ot-title-icon"><OperationIcon name="package"/></span><div><span className="eyebrow">Commercial</span><h1>Offres & Tarifs</h1><p>Catalogue des offres et services AtoumWeb</p></div></div><div className="ot-heading-actions"><button type="button" className="secondary-button" onClick={()=>void refresh()}><OperationIcon name="refresh"/>Actualiser</button><button className={showForm ? 'secondary-button' : 'primary-button'} type="button" onClick={()=>requestUnsavedExit(()=>{setSpace('catalog');if(showForm)createGuard.request(()=>setShowForm(false));else {setCreationStep('identity');setCreationPriceChosen(false);setShowDrafts(false);setShowForm(true);}})}>{showForm?'Fermer la création':'+ Service / Offre'}</button></div></header>
       <nav className="ot-spaces" aria-label="Espaces Offres et Tarifs">{([['catalog','Catalogue'],['administration','Administration']] as const).map(([id,label])=><button type="button" key={id} aria-current={space===id?'page':undefined} onClick={()=>changeSpace(id)}>{label}</button>)}</nav>
@@ -824,7 +827,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
               {activeTab==='scope' && displayedVersion && (!displayedVersion.nature || !displayedVersion.description || (displayedVersion.inclusions?.length ?? 0) === 0) && (
                 <div className="catalog-completeness">
                   <div><strong>Fiche à compléter</strong><span>Nature, description et contenu inclus permettent de comprendre immédiatement ce qui est réellement vendu.</span></div>
-                  <button className="secondary-button" type="button" disabled={versionMode || saving} onClick={()=>prepareNewVersion()}>Compléter la fiche</button>
+                  <button className="secondary-button" type="button" disabled={versionMode || saving} onClick={()=>void prepareNewVersion()}>Compléter la fiche</button>
                 </div>
               )}
 
@@ -875,7 +878,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 </div>
               ) : !displayedVersion ? <p className="muted">Aucune version.</p> : null}
 
-              {activeTab==='identity' && <div className="catalog-detail-actions"><button className="secondary-button" type="button" disabled={versionMode || saving} onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select aria-label="Statut de la prestation" value={pendingItemStatus ?? detail.status} disabled={versionMode || saving} onChange={(e) => setPendingItemStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion || versionMode || saving} onClick={()=>prepareNewVersion()}>{detail.versions.some(v => v.status === 'draft'&&!v.abandonedAt) ? 'Reprendre le brouillon' : 'Modifier via une nouvelle version'}</button></div>}
+              {activeTab==='identity' && <div className="catalog-detail-actions"><button className="secondary-button" type="button" disabled={versionMode || saving} onClick={() => void toggleVisibility()}>{detail.visiblePublic ? 'Masquer du site' : 'Rendre visible site'}</button><select aria-label="Statut de la prestation" value={pendingItemStatus ?? detail.status} disabled={versionMode || saving} onChange={(e) => setPendingItemStatus(e.target.value as CatalogItemStatus)}><option value="active">Actif</option><option value="inactive">Inactif</option><option value="archived">Archivé</option></select><button className="primary-button" type="button" disabled={!detail.currentVersion || versionMode || saving} onClick={()=>void prepareNewVersion()}>{detail.versions.some(v => v.status === 'draft'&&!v.abandonedAt) ? 'Reprendre le brouillon' : 'Modifier via une nouvelle version'}</button></div>}
 
               {activeTab==='identity' && pendingItemStatus && pendingItemStatus!==detail.status && <div className="catalog-status-confirmation" role="group" aria-label="Confirmer le statut">
                 <p>Passer la prestation à « {STATUS_LABELS[pendingItemStatus]} » ? Cette modification ne supprime ni les versions ni les Devis historiques.</p>
@@ -948,7 +951,7 @@ export function CatalogPage({ onEntityReady, onMessage, initialId, initialReques
                 <button type="button" className="secondary-button compact-button" disabled={saving}
                   onClick={()=>setComparisonVersionId(version.id)}>Comparer</button>
                 <button type="button" className="secondary-button compact-button" disabled={saving||versionMode}
-                  onClick={()=>{if(prepareNewVersion(version))setActiveTab('sales');}}>Reprendre dans un brouillon</button>
+                  onClick={()=>void prepareNewVersion(version).then(ok=>{if(ok)setActiveTab('sales');})}>Reprendre dans un brouillon</button>
                 </div>{version.status === 'draft' && !version.abandonedAt && <button className="primary-button compact-button" type="button" disabled={versionMode || saving} title={versionMode ? 'Enregistrer ou annuler le brouillon avant publication.' : 'Préparer une confirmation distincte, sans publier le site WordPress.'} onClick={() => setPublicationCandidate(structuredClone(version))}>Préparer la publication</button>}</div>)}</div>}
               </div>
             </aside>
