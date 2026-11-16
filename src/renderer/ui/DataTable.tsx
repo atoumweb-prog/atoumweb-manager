@@ -44,6 +44,9 @@ export function DataTable<T>({ rows, columns, selectedId, getId, sort, onSort, c
   rowAttributes?:(row:T)=>{className?:string;[key:`data-${string}`]:string|undefined};
 }) {
   const scrollRef=useRef<HTMLDivElement>(null),[available,setAvailable]=useState(0);
+  // F64 : quand la liste se recharge après une erreur, le tableau le signale pour lever l'avis d'erreur de la page.
+  const previousError=useRef(error);
+  useEffect(()=>{const before=previousError.current;previousError.current=error;if(before&&!error)window.dispatchEvent(new CustomEvent('atoumweb:list-recovered',{detail:{error:before}}));},[error]);
   useEffect(()=>{const node=scrollRef.current;if(!node)return;const read=()=>setAvailable(node.clientWidth);read();const observer=new ResizeObserver(read);observer.observe(node);return()=>observer.disconnect();},[]);
   const headerMinimums=Object.fromEntries(columns.filter(c=>c.fixedWidth===undefined).map(c=>[c.id,headerMinWidth(c.label)]));
   const adaptive=fitAvailable?adaptiveTableWidths(columns.map(c=>c.id),Math.max(0,available-4),widths,headerMinimums):widths;

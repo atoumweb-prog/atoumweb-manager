@@ -1,5 +1,5 @@
 import {PageHeader} from './ui/PageHeader';
-import {DISPLAY_NOTICE_MS, noticeStaysOnPage, noticeText, noticeTimeout} from './ui/noticeLifetime';
+import {DISPLAY_NOTICE_MS, noticeClearedByRecovery, noticeStaysOnPage, noticeText, noticeTimeout} from './ui/noticeLifetime';
 import {useCallback} from 'react';
 import {SEARCH_DESTINATIONS,searchDestination,readSearchTarget,type SearchNavigationResult} from '../shared/searchNavigation';
 import {useMemo} from 'react';
@@ -224,6 +224,10 @@ function App() {
 
   // P6b (D2) : la page d'une notice est notée quand le message change (effet déclaré AVANT celui du changement de page, l'ordre compte quand les deux changent ensemble) ; une notice d'une autre page se ferme.
   const messagePageRef = useRef<string>(activePage);
+  // F64 : une liste rétablie lève l'avis qui montrait sa propre erreur.
+  const messageRef = useRef<string | null>(message); messageRef.current = message;
+  useEffect(() => { const recovered = (event: Event) => { const error = String((event as CustomEvent<{error?: string}>).detail?.error ?? ''); if (noticeClearedByRecovery(messageRef.current, error)) closeMessage(); };
+    window.addEventListener('atoumweb:list-recovered', recovered); return () => window.removeEventListener('atoumweb:list-recovered', recovered); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { messagePageRef.current = activePage; }, [message]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!noticeStaysOnPage(messagePageRef.current, activePage)) closeMessage(); }, [activePage]); // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -113,7 +113,8 @@
 .quote-total-main strong { font-size: 14px; color: var(--accent-strong); }
 .quote-decision-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; } /* P6b (C6) : plus de 150 px forcés dans une cellule plus étroite */
 .quote-decision-actions .compact-button { min-height: 30px; padding: 5px 9px; }
-.quote-decision-actions .status-pill { white-space: nowrap; }
+/* F65 : la pastille de la colonne Décision passe à la ligne dans sa cellule au lieu d’en dépasser (classe commune aw-status-pill). */
+.quote-decision-actions .aw-status-pill { white-space: normal; overflow-wrap: normal; word-break: normal; hyphens: none; max-width: 100%; text-align: center; }
 
 .quote-status-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
 

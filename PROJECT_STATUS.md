@@ -1,5 +1,12 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 17/11/2026 : finitions F64, F65 et F76 (commit local)
+
+- [x] **F64** : un « Réessayer » réussi ferme l'avis d'erreur de la page qui montrait la même erreur (`DataTable` signale le rétablissement, `App.tsx` l'écoute ; `noticeClearedByRecovery`, test `ui/f64NoticeRecovery.test.ts`).
+- [x] **F65** : pastille « En négociation » de la liste Devis : la règle visait l'ancienne classe ; la pastille passe à la ligne entre les mots dans sa cellule. Mesure sur copie jetable : 19 px de dépassement en fenêtre étroite avant, 0 après ; vu sur capture.
+- [x] **F76 clos** : relevé des 17 pages en Blanc et en AtoumWeb (Confort) : aucun texte sous 14 px, aucun débordement, aucun défilement horizontal ; seules les légendes de tableau pour lecteurs d'écran apparaissent « coupées ».
+- **Preuves** : typecheck propre ; suite **340 fichiers, 2 817 tests**. Compact et Confort + non relevés dans ce lot (vus aux lots F4). **Autocontrôle de l'auteur.**
+
 ## 16/11/2026 : suivi après vente (configurations opérationnelles), code et simulation (commit local, préproduction non modifiée)
 
 - [x] **Fiche** `docs/refonte/plans/2026-11-16-suivi-apres-vente-design.md` validée par Carlos : compatibilité des 17 configurations d'octobre avec le catalogue et le référentiel actuels (14 compatibles, packs corrigés à 27 mois, reconductions déjà portées par les règles commerciales, maintenance applicative annuelle), décisions des 06-07/10 expliquées, 10 abonnements V39 écrits, 18 codes AW attribués, 3 offres devenues interventions.
