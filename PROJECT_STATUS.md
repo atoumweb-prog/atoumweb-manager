@@ -1,5 +1,28 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : F69, vue « Parcours commercial » de Prospection en tableau compact (commit local)
+
+- [x] **Fiche** `docs/refonte/plans/2026-11-16-f69-parcours-commercial-design.md` (constats mesurés sur capture, direction « tableau compact » choisie par Carlos), validée le 16/11/2026 (« Oui, code F69 ») ; skill `atoumweb-design` (critique sur code et capture).
+- [x] **Tests d'abord** (`crm/f69PipelineWiring.test.ts`, 21 tests). Nouvelle feuille commune `crm/prospect-pipeline-compact.css` (tous thèmes et densités, sans couleur en dur), chargée après les couches pilotes :
+  - les colonnes se partagent la largeur (194 px au lieu de 200 px fixes qui débordaient) ;
+  - une colonne vide se réduit à 160 px et reste cible du dépôt ;
+  - plus aucun défilement interne : la zone de travail défile, le plateau seul défile en largeur en fenêtre étroite ;
+  - carte : avatar et « ⋯ » sur la première ligne, nom complet dessous sur toute la largeur, un mot n'étant coupé que s'il ne tient pas ; prochaine action sur deux lignes au plus ;
+  - « Ouvrir la fiche » retiré (la carte entière ouvre la fiche) ; icône d'étape retirée (elle répétait toujours la colonne) ;
+  - « Rappel et étape » devient un bouton « ⋯ » nommé, même contenu, champs du menu limités à la carte ;
+  - hors Noir, date en retard au ton danger.
+- **Écarts (règle I)**, dans le même périmètre et pour le même résultat :
+  - premier essai à « ⋯ » en bas de carte, puis réservé à droite du nom, ce qui coupait les mots (vu sur capture) : remplacé par l'en-tête sur deux lignes ;
+  - colonne vide à 160 px au lieu de 132 px, et sans icône, pour ne pas couper « Finalisation ».
+- **Preuves** :
+  - mesures avant / après en Noir Confort, grande fenêtre : défilement du plateau oui puis non ; défilement interne oui puis 0 ; noms coupés plusieurs puis 0 ; hauteur des cartes 241 à 290 px puis 166 à 244 px ; 0 texte sous 14 px ;
+  - mêmes mesures en Blanc, AtoumWeb, Compact et Confort + ; les tailles du plateau ne varient pas avec la densité, les couches pilotes fixant les tailles des cartes en pixels ;
+  - fenêtre étroite : plateau seul en défilement horizontal, 0 défilement interne ;
+  - suite **329 fichiers, 2 715 tests** ; typecheck propre ; `check-shell-home-simplification` vert ; empreinte de la source identique à chaque relevé.
+- **Recette rouge avant le lot** : `check-ux-v2-final-crm` (`.crm-pane-separator-left` absent) ; même échec sur `7c3ef3d3` (copie détachée) : F80. `check-ux-v2-lot01a-real-ui` demande un mode en argument (non lancée seule).
+- **Non vu** : glisser-déposer à la souris (fonction inchangée, non rejouée) ; fenêtre étroite avec rail déplié qui recouvre la page (F59, décision de Carlos). **Autocontrôle de l'auteur.**
+- Prochaine action : au choix de Carlos : décisions F55 à F63, diagnostics F66 à F68, F75, F78 à F80, débordements F72 et F73.
+
 ## 16/11/2026 : F71b, échéancier des devis, fin du 30 % par défaut (commit local)
 
 - [x] **Fiche** `docs/refonte/plans/2026-11-16-f71b-echeancier-design.md`, validée par Carlos le 16/11/2026 (« Oui, code F71b »). Décisions du 16/11 : tous les sites selon le montant (40 / 60 sous 1 000 €, 30 / 40 / 30 à partir de 1 000 €, vitrines comprises, ce qui remplace la priorité OFF-007 pour les sites) ; familles WEB, ECOM, LANDING, MARIAGE, APP, DEVWP ; SEO Premium à 100 % ; réglage « Acompte proposé (%) » retiré de l'écran. Lecture validée avec la fiche : un développement de moins de 1 000 € se paie à 100 %.
