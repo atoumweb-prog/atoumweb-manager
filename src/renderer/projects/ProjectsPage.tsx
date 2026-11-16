@@ -35,8 +35,8 @@ import { ProjectTechnicalLibraryTab } from './ProjectTechnicalLibraryTab';
 import { ProjectTimeTab } from './ProjectTimeTab';
 import { StatusPill } from '../ui/StatusPill';
 import { projectStatusTone } from '../ui/projectStatusTone';
-import { defaultTaskToOpen, filterActionNodes, phaseDisplayName, projectNowSummary, projectOpeningTab, rootAncestorId } from '../../shared/projectOverview';
-import { ProjectNowLine } from './ProjectNowLine';
+import { countMissingPrerequisites, defaultTaskToOpen, filterActionNodes, phaseDisplayName, projectNowSummary, projectOpeningTab, rootAncestorId } from '../../shared/projectOverview';
+import { ProjectClosedLine, ProjectNowLine } from './ProjectNowLine';
 import { projectTypeLabel } from '../../shared/projectTypeLabel';
 import './project-r5a.css';
 import './project-r5b.css';
@@ -701,7 +701,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
               <span className="eyebrow">{detail.number} · {detail.commercialState === 'provisional' ? 'Projet prévisionnel · devis non signé' : detail.commercialState === 'frozen' ? 'Projet confirmé · devis accepté' : 'Projet historique'}</span>
               <h2>{detail.name}</h2>
               <p>{detail.commercialState === 'provisional' && !detail.clientAccountId ? 'Prospect : ' : 'Client / contact : '}{detail.clientLabel}{detail.sourceQuoteId && <> · Devis source associé <button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'quote', entityId: detail.sourceQuoteId, title: 'Devis source du Projet', parentEntityId: detail.id, projectContext: { projectId: detail.id, detailTab, selectedNodeId, expandedPhaseIds: [...expandedPhaseIds], query, statusFilter, commercialFilter, projectTopCollapsed, productionTreeCollapsed, productionSplitPercent, sitesViewContext } } }))}>Ouvrir le devis</button></>}</p>
-              <ProjectNowLine summary={projectNowSummary(detail.nodes, detail.prerequisites, detail.status === 'completed' || detail.status === 'archived' ? null : detail.targetDate)} onShowAction={() => { selectProjectTab('plan'); setActionOnly(true); }} onShowPrerequisites={() => selectProjectTab('prerequisites')} />
+              {detail.status === 'completed' ? <ProjectClosedLine completedAt={detail.completedAt} prerequisitesMissing={countMissingPrerequisites(detail.prerequisites)} openTasks={detail.nodes.filter((node) => ['task', 'checklist'].includes(node.type) && node.required && node.status !== 'done').length} onShowAction={() => { selectProjectTab('plan'); setActionOnly(true); }} onShowPrerequisites={() => selectProjectTab('prerequisites')} /> : <ProjectNowLine summary={projectNowSummary(detail.nodes, detail.prerequisites, detail.status === 'archived' ? null : detail.targetDate)} onShowAction={() => { selectProjectTab('plan'); setActionOnly(true); }} onShowPrerequisites={() => selectProjectTab('prerequisites')} />}
               {detail.commercialState === 'provisional' && <p className="muted">Préparation interne : ce dossier n’est pas une commande acceptée.</p>}
             </div>
           </div>

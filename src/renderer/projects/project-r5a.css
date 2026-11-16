@@ -16,3 +16,8 @@
 /* En-tête du plan : les boutons gardent leur texte sur une ligne, l'en-tête passe à la ligne si la place manque. */
 .project-production-add > summary { white-space: nowrap; }
 .project-production-tree-head { flex-wrap: wrap; row-gap: 6px; }
+/* Lot G2, F58 : bandeau d’un projet terminé, à la place de « En ce moment » ; aucun ton d’alerte. */
+.project-closed-banner { display: grid; gap: 4px; margin: 8px 0 0; padding: 10px 12px; border: 1px solid var(--border); border-left: 4px solid var(--aw-success-solid); border-radius: 8px; background: var(--surface-soft); color: var(--text); font-size: var(--aw-font-functional); line-height: 1.45; }
+.project-closed-banner > strong { font-size: var(--ui-font-primary); }
+.project-closed-banner-item { padding: 0; border: 0; background: none; color: var(--text); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.project-closed-banner-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

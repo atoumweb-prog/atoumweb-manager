@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : lot G2, Prospection et projets (F57, F58, F60) exécuté (commit local)
+
+- [x] **Tests d’abord** (`shared/g2NextStep.test.ts` 6, `renderer/g2Wiring.test.ts` 10) ; fiche `2026-11-16-f55-f63-decisions-design.md` validée par Carlos (« Oui, code G2 »).
+- [x] **F57** : `prospectNextStep` reçoit le statut du devis le plus récent (fiche rapide et fiche de travail) ; à l’étape devis : envoyé ou vu, « Enregistrer la réponse du client » avec « Programmer une relance » ; refusé ou expiré, « Revoir le devis (révision ou nouveau devis) » ; accepté sur un dossier non clos, « Voir le devis accepté ». Affichage seul : ni étape CRM ni donnée modifiée.
+- [x] **F58** : `ProjectClosedLine` remplace « En ce moment » sur un projet terminé : « Projet terminé le… », « Non fait à la clôture : N prérequis, N tâches » (liens vers les onglets), « Le chrono reste possible pour des retouches après livraison » ; résumé : « Tâches non faites à la clôture », « Prérequis non faits à la clôture », sans ton d’alerte. Test R5a adapté (même vérification sur la nouvelle branche).
+- [x] **F60** : la fiche rapide d’un prospect prend le focus sur son titre à l’ouverture ; Échap la ferme et le focus revient sur la ligne (comme « Fermer »).
+- **Preuves** : focus mesuré (ouverture : titre H2 dans la fiche ; Échap : ligne du tableau, fiche fermée) ; projet passé en « Terminé » sur copie jetable : bandeau affiché, « En ce moment » absent, résumé sans alerte (capture) ; suite **332 fichiers, 2 737 tests** ; typecheck propre ; recettes `check-prospection-flow-native` 29/29, `check-prospection-tabs-native`, `check-project-provisional-ui` 60/60 vertes ; empreinte de la source identique.
+- **Recettes rouges avant le lot** (même échec sur `d2d697a0`, copie détachée) : `check-prospect-ux-ui` (F82), `check-project-operational-ui` (F83).
+- **Non vu** : prochaine étape d’un prospect avec devis envoyé à l’écran (aucun devis envoyé dans la base de test ; couvert par les tests) ; autres thèmes à l’oeil. **Autocontrôle de l’auteur.**
+- Prochaine action : lot G3 (F56 un seul jaune par vue, F59 rail replié en fenêtre étroite, F63 Sites en français simple).
+
 ## 16/11/2026 : lot G1, fiche devis (F55, F61, F62) exécuté (commit local)
 
 - [x] **Fiche** `docs/refonte/plans/2026-11-16-f55-f63-decisions-design.md` validée par Carlos (« Oui, code G1 »). **Tests d’abord** (`commercial/g1QuoteWiring.test.ts`, 8 tests).

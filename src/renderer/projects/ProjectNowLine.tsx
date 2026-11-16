@@ -20,3 +20,19 @@ export function ProjectNowLine({ summary, onShowAction, onShowPrerequisites }: {
     {summary.overdue && <span className="project-now-line-overdue">Date cible dépassée</span>}
   </p>;
 }
+
+/**
+ * F58 (décision de Carlos du 16/11/2026) : en tête d’un projet terminé, à la place de « En ce moment ». Ce qui restait
+ * à la clôture est dit sans alerte ; le chrono reste possible pour des retouches après livraison.
+ */
+export function ProjectClosedLine({ completedAt, prerequisitesMissing, openTasks, onShowAction, onShowPrerequisites }: { completedAt?: string | null; prerequisitesMissing: number; openTasks: number; onShowAction: () => void; onShowPrerequisites: () => void }) {
+  const date = completedAt ? ` le ${new Date(completedAt).toLocaleDateString('fr-FR')}` : '';
+  const items: Array<{ key: string; label: string; onClick: () => void }> = [];
+  if (prerequisitesMissing > 0) items.push({ key: 'prerequisites', label: `${prerequisitesMissing} prérequis`, onClick: onShowPrerequisites });
+  if (openTasks > 0) items.push({ key: 'tasks', label: `${openTasks} ${openTasks > 1 ? 'tâches' : 'tâche'}`, onClick: onShowAction });
+  return <div className="project-closed-banner" role="status">
+    <strong>Projet terminé{date}</strong>
+    {items.length ? <span>Non fait à la clôture : {items.map((item, index) => <span key={item.key}>{index > 0 && ', '}<button type="button" className="project-closed-banner-item" onClick={item.onClick}>{item.label}</button></span>)}.</span> : <span>Tout était fait à la clôture.</span>}
+    <span className="muted">Le chrono reste possible pour des retouches après livraison.</span>
+  </div>;
+}

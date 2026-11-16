@@ -112,7 +112,9 @@ describe('R5a : ligne « En ce moment » et filtre d’action', () => {
 
   it('l’en-tête rend la ligne « En ce moment », calculée sur les données du projet, sans date cible pour un projet clos', () => {
     expect(page).toContain('<ProjectNowLine');
-    expect(page).toContain("projectNowSummary(detail.nodes, detail.prerequisites, detail.status === 'completed' || detail.status === 'archived' ? null : detail.targetDate)");
+    // G2 (F58) : un projet terminé affiche le bandeau ProjectClosedLine ; la ligne « En ce moment » ne sert plus qu'aux projets non terminés.
+    expect(page).toContain("{detail.status === 'completed' ? <ProjectClosedLine");
+    expect(page).toContain("projectNowSummary(detail.nodes, detail.prerequisites, detail.status === 'archived' ? null : detail.targetDate)");
   });
 
   it('les compteurs d’action ouvrent le plan filtré, les prérequis ouvrent leur onglet', () => {

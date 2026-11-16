@@ -496,6 +496,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
 
   const detail = selected ? <div ref={sidePanelRef} className="prospect-side-panel-boundary"><ProspectDetailV2
     prospect={selected}
+    quoteStatus={latestQuotesByProspect.get(selected.id)?.status ?? null}
     actions={selectedActions}
     activity={activity}
     mode="panel"
@@ -613,7 +614,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
 
     {(view === 'history' || view === 'conversions') && <>{view === 'conversions' && <div className="module-toolbar prospect-toolbar"><strong>Clients acquis · {historicalConversions.length}</strong><AppButton variant="quiet" onAction={() => setView('pipeline')}>Retour au parcours commercial</AppButton></div>}<HistoryView prospects={historyVisible} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected && historyVisible.some((item) => item.id === selected.id) ? selected : null} activity={activity} onClose={() => {if(setSelectedId(null))requestAnimationFrame(()=>document.querySelector<HTMLElement>(`tr[data-record-id="${selected?.id}"]`)?.focus({preventScroll:true}));}} /></>}
     {quickDateFor&&<ProspectDialog label="Programmer un rappel" className="prospect-action-dialog" onClose={()=>quickDateGuard.request(()=>{quickDateGuard.discard();setQuickDateFor(null);})}><div className="inline-editor"><h2>Rappel — {quickDateFor.displayName}</h2><label>Date du rappel<input type="date" value={quickDate} onChange={event=>setQuickDate(event.target.value)}/></label>{quickError&&<p role="alert" className="form-error">{quickError}</p>}<div className="inline-editor-actions"><button type="button" className="secondary-button" onClick={()=>quickDateGuard.request(()=>{quickDateGuard.discard();setQuickDateFor(null);})}>Annuler la saisie</button><button type="button" className="primary-button" disabled={!quickDate||quickSaving} onClick={()=>void scheduleQuick(quickDateFor,0,quickDate)}>Programmer le rappel</button></div></div></ProspectDialog>}
-    {deskProspect && <ProspectDialog className="prospect-desk-dialog prospect-desk-overlay" label={`Fiche de travail ${deskProspect.displayName}`} onClose={()=>setDeskModeId(null)}><div className="prospect-desk-shell"><ProspectDetailV2 prospect={deskProspect} actions={actions.filter((item) => item.ownerId === deskProspect.id)} activity={selectedId === deskProspect.id ? activity : []} mode="desk" initialTab={deskStartTab} initialAction={deskAction} initialCreate={deskCreate} onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setDeskModeId(null)} onTemperature={(temperature) => void updateTemperature(deskProspect, temperature)} onStage={stage=>void changeStage(deskProspect,stage)} onStart={() => void startProspecting(deskProspect)} onLost={(code, reason) => markLost(deskProspect, code, reason)} onArchive={() => archive(deskProspect)} /></div></ProspectDialog>}
+    {deskProspect && <ProspectDialog className="prospect-desk-dialog prospect-desk-overlay" label={`Fiche de travail ${deskProspect.displayName}`} onClose={()=>setDeskModeId(null)}><div className="prospect-desk-shell"><ProspectDetailV2 prospect={deskProspect} quoteStatus={latestQuotesByProspect.get(deskProspect.id)?.status ?? null} actions={actions.filter((item) => item.ownerId === deskProspect.id)} activity={selectedId === deskProspect.id ? activity : []} mode="desk" initialTab={deskStartTab} initialAction={deskAction} initialCreate={deskCreate} onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setDeskModeId(null)} onTemperature={(temperature) => void updateTemperature(deskProspect, temperature)} onStage={stage=>void changeStage(deskProspect,stage)} onStart={() => void startProspecting(deskProspect)} onLost={(code, reason) => markLost(deskProspect, code, reason)} onArchive={() => archive(deskProspect)} /></div></ProspectDialog>}
   </div>;
 }
 
@@ -643,7 +644,7 @@ function ProspectWorkAccordion({ title, summary, defaultOpen = false, children, 
 }
 
 function ProspectDetailV2(props:Parameters<typeof ProspectDetailV2Inner>[0]){return <UnsavedGroup name={'prospect:'+props.prospect.id+'/'+props.mode}><ProspectDetailV2Inner {...props}/></UnsavedGroup>;}
-function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, onClose, onOpenDesk, initialTab='commercial', initialAction=false, initialCreate=false, onTemperature, onStage, onStart, onLost, onArchive }: {
+function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, onClose, onOpenDesk, initialTab='commercial', initialAction=false, initialCreate=false, onTemperature, onStage, onStart, onLost, onArchive, quoteStatus=null }: {
   prospect: ProspectSummary;
   actions: CrmAction[];
   activity: ActivityEvent[];
@@ -659,8 +660,13 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
   onStart: () => void;
   onLost: (code: string, reason: string) => Promise<boolean>;
   onArchive: () => Promise<boolean>;
+  /** F57 : statut du devis courant du prospect. */
+  quoteStatus?: QuoteSummary['status'] | null;
 }) {
   const [closingBusy,setClosingBusy]=useState(false);
+  // F60 (décision de Carlos du 16/11/2026) : à l'ouverture de la fiche rapide, le focus va à son titre ; Échap la ferme et le focus revient sur la ligne.
+  const panelRef=useRef<HTMLElement|null>(null);
+  useEffect(()=>{if(mode!=='panel')return;const heading=panelRef.current?.querySelector<HTMLElement>('.detail-panel-heading h2');if(!heading)return;heading.tabIndex=-1;heading.focus({preventScroll:true});},[prospect.id,mode]);
   const [lossOpen, setLossOpen] = useState(false);
   const [archiveOpen,setArchiveOpen]=useState(false);
   const [associationsOpen,setAssociationsOpen]=useState(false),[stageOpen,setStageOpen]=useState(false),[nextStepError,setNextStepError]=useState('');
@@ -716,7 +722,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
 
   useEffect(()=>{if(mode==='desk'&&initialAction){const timer=window.setTimeout(()=>{showSection(`prospect-followup-section-${prospect.id}`);},50);return()=>window.clearTimeout(timer);}},[]);
   if (mode === 'panel') {
-    return <aside data-prospect-id={prospect.id} className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-panel prospect-temperature-${prospect.temperature ?? 'neutral'}`}>
+    return <aside ref={panelRef} data-prospect-id={prospect.id} onKeyDown={event=>{if(event.key==='Escape'&&!event.defaultPrevented){event.preventDefault();onClose();}}} className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-panel prospect-temperature-${prospect.temperature ?? 'neutral'}`}>
       <div className="detail-panel-heading">
         <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large" /><div><span className="eyebrow">{prospect.stage === 'new' ? 'Fiche annuaire' : 'Fiche de travail'}</span><h2>{prospect.displayName}</h2><div className="prospect-header-meta"><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>{prospect.organizationIndustry && <span className="status-pill">{prospect.organizationIndustry}</span>}{prospect.organizationCity && <span className="status-pill">{prospect.organizationCity}</span>}</div></div></div>
         <div className="detail-heading-actions">{onOpenDesk && <button className="secondary-button open-desk-button" type="button" aria-label="Agrandir la fiche" title="Agrandir la fiche" onClick={()=>onOpenDesk?.()}><OperationIcon name="record-expand"/></button>}<button className="close-detail" type="button" aria-label="Fermer la fiche prospect" title="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button></div>
@@ -748,7 +754,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
   }
 
   const dossierClosed=Boolean(prospect.clientAccountId||prospect.archivedAt)||prospect.stage==='won'||prospect.stage==='lost';
-  const nextStep=prospectNextStep({stage:prospect.stage??'new',clientAccountId:prospect.clientAccountId,archivedAt:prospect.archivedAt,qualificationGaps:qualificationGaps.length});
+  const nextStep=prospectNextStep({stage:prospect.stage??'new',clientAccountId:prospect.clientAccountId,archivedAt:prospect.archivedAt,qualificationGaps:qualificationGaps.length,quoteStatus});
   const headerStatus=prospect.clientAccountId?{key:'client',label:'Client'}:prospect.archivedAt?{key:'archived',label:'Archivé'}:{key:directoryStatus(prospect).tone,label:STAGE_LABELS[prospect.stage??'new']};
   const nextStepTitle=nextStep.kind==='closed'?nextStep.closedLabel??'Dossier clos':nextStep.primaryLabel??'';
   const nextStepReason=nextStep.kind==='closed'?undefined:nextAction?`${nextAction.title}${nextAction.dueAt?' · '+formatDate(nextAction.dueAt):''}${nextAction.dueAt&&new Date(nextAction.dueAt).getTime()<Date.now()?' · En retard':''}`:'Aucune action programmée.';
@@ -778,7 +784,7 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
       closeAction={<button type="button" className="close-detail" aria-label="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button>}
       moreItems={moreItems}
       onMore={handleMore}>
-      <NextStepCard title={nextStepTitle} reason={nextStepReason} primary={nextStepPrimary} primaryDemoted={hasUnsaved} secondary={nextStep.kind==='closed'?[]:[{label:'Programmer une action',onAction:openActionDialog}]} alerts={nextStepError?[{tone:'danger',text:nextStepError}]:[]}/>
+      <NextStepCard title={nextStepTitle} reason={nextStepReason} primary={nextStepPrimary} primaryDemoted={hasUnsaved} secondary={nextStep.kind==='closed'?[]:[{label:nextStep.kind==='record_reply'?'Programmer une relance':'Programmer une action',onAction:openActionDialog}]} alerts={nextStepError?[{tone:'danger',text:nextStepError}]:[]}/>
       <ol className="crm-journey crm-journey-progress" aria-label="Avancement du dossier">{PROSPECT_PIPELINE_COLUMNS.map((column,index)=><li key={column.id} aria-current={currentColumn===column.id?'step':undefined} className={currentColumn===column.id?'current':''}>{index+1}. {column.label}</li>)}</ol>
     </RecordHeader>
     <div className="prospect-desk-tabs crm-workspace-tabs" role="tablist" aria-label="Informations de la fiche">{tabs.map(([id,label])=><button type="button" role="tab" aria-selected={workspaceTab===id} key={id} className={workspaceTab===id?'active':''} onClick={()=>{setViewStage(null);goTab(id);}}>{label}</button>)}</div>
