@@ -71,6 +71,8 @@ module.exports=async ctx=>{
   test(await get('document.querySelector(".crm-record-left .role-logo .crm-identity-asset-copy small").textContent==="newer-company-logo.png"&&!document.querySelector(".crm-record-left [role=alert]")'),'Late old failure cannot erase current image or announce a false current error');
   const logo=assets().find(a=>a.role==='logo');
   const originalSet=db.setSetting.bind(db);let writes=0;db.setSetting=(key,v)=>{if(key==='ux_v2_visual_preferences_v1')writes++;return originalSet(key,v);};
+  // F80 : la fiche complète passe en mode compact (sans séparateur) sous 1 050 px utiles (f05ed48e) ; on donne la largeur nécessaire.
+  win.setSize(1700,1050);await sleep(200);await js("if(document.querySelector('.aw-navigation-rail')?.dataset.railCollapsed!=='true')document.querySelector('.aw-rail-toggle')?.click()");await wait('!!document.querySelector(".crm-pane-separator-left")','CRM separator in full layout');writes=0;
   try{
    await js("const s=document.querySelector('.crm-pane-separator-left');s.dispatchEvent(new PointerEvent('pointerdown',{button:0,pointerId:31,clientX:260,bubbles:true}));window.dispatchEvent(new PointerEvent('pointermove',{pointerId:31,clientX:310}));");
    test(writes===0,'CRM separator previews without persistence');
@@ -102,26 +104,26 @@ module.exports=async ctx=>{
   let conflict=false;try{await importAsset({sender:win.webContents},'organization',client.organizationId,'logo');}catch(e){conflict=/autre fenêtre/.test(e.message);}test(conflict,'Cross-window logo change is rejected instead of silently overwritten');
   await navigate('Prospection');await textClick('.prospect-view-switch button','Liste');
   await wait(`!!document.querySelector('[data-record-id="${prospect.id}"]')`,'synthetic active Prospect row');
-  await js(`document.querySelector('[data-record-id="${prospect.id}"]').click()`);await wait('!!document.querySelector(".prospect-detail-v2")','Prospect');await click('[aria-label="Agrandir la fiche"]');await wait('!!document.querySelector(".prospect-detail-desk .crm-record-layout")','three-zone prospect');
+  await js(`document.querySelector('[data-record-id="${prospect.id}"]').click()`);await wait('!!document.querySelector(".prospect-detail-v2")','Prospect');await click('[aria-label="Agrandir la fiche"]');await wait('!!document.querySelector(".prospect-detail-desk .prospect-workspace")','prospect work desk');
   await wait('!!document.querySelector(".prospect-detail-desk .crm-identity-avatar img")','same organization logo');
   test(await get('!!document.querySelector(".prospect-detail-desk .crm-identity-avatar img")'),'Prospect shares exact organization logo persisted from Client');
   await js("document.querySelectorAll('.prospect-detail-desk details.prospect-section-group:not([open])').forEach(e=>e.querySelector(':scope>summary').click())");await sleep(80);
-  await js('window.__finalProspect=document.querySelector(".prospect-detail-desk");window.__finalAccordion=document.querySelector(".prospect-work-accordion")');
+  await js('window.__finalProspect=document.querySelector(".prospect-detail-desk");window.__finalWorkspace=document.querySelector(".prospect-detail-desk .prospect-workspace")');await js("[...document.querySelectorAll('.prospect-detail-desk .prospect-desk-tabs button')].find(b=>b.textContent.trim()==='Devis')?.click()");await wait('!!document.querySelector(".prospect-detail-desk .quote-detail-panel .detail-panel-heading .muted")','prospect quotes tab');
   const snapshot=()=>JSON.stringify(db.database.all("SELECT name FROM sqlite_master WHERE type='table' AND name<>'settings' ORDER BY name").map(({name})=>[name,db.database.all('SELECT * FROM "'+name+'" ORDER BY rowid')]));
   const baseline=snapshot();
   for(const theme of ['atoumweb','noir','blanc'])for(const density of ['compact','comfort','comfort_plus']){
    await js(`document.documentElement.dataset.theme=${JSON.stringify(theme)};document.documentElement.dataset.density=${JSON.stringify(density)}`);
    for(const [width,height]of[[1920,1080],[1510,1030]]){
     win.setSize(width,height);await sleep(100);
-    test(await get('(()=>{const r=document.querySelector(".prospect-detail-desk .crm-record-layout"),l=r.querySelector(".crm-record-left").getBoundingClientRect(),c=r.querySelector(".crm-record-work").getBoundingClientRect(),a=r.querySelector(".crm-record-right").getBoundingClientRect();return l.right<=c.left+2&&c.right<=a.left+2&&c.width>l.width&&c.width>a.width})()'),'Three unequal Prospect regions '+width+'/'+theme+'/'+density);
-    test(await get('[...document.querySelectorAll(".prospect-work-accordion.open")].every(e=>e.scrollHeight<=e.clientHeight+2)'), 'Open Prospect content is never vertically clipped '+width+'/'+theme+'/'+density);
-    test(await contrast('.quote-command-header small','.prospect-quote-panel')>=4.5,'Prospect quote subtitle contrast >=4.5 '+width+'/'+theme+'/'+density);
+    test(await get('(()=>{const d=document.querySelector(".prospect-detail-desk");return !!d&&d.scrollWidth<=d.clientWidth+2})()'),'Prospect desk fits its width '+width+'/'+theme+'/'+density);
+    test(await get('[...document.querySelectorAll(".prospect-detail-desk .prospect-workspace [role=tabpanel]:not([hidden])")].every(e=>e.scrollWidth<=e.clientWidth+2)'),'Open Prospect tab content is never cut '+width+'/'+theme+'/'+density);
+    test(await contrast('.prospect-detail-desk .quote-detail-panel .detail-panel-heading .muted','.prospect-detail-desk .quote-detail-panel')>=4.5,'Prospect quote subtitle contrast >=4.5 '+width+'/'+theme+'/'+density);
     await capture('prospect-'+width,theme,density);
    }
   }
   for(const theme of ['atoumweb','noir','blanc'])for(const density of ['compact','comfort','comfort_plus'])for(const zoom of [1,1.25,1.5]){
    win.setSize(1280,720);win.webContents.setZoomFactor(zoom);await js(`document.documentElement.dataset.theme=${JSON.stringify(theme)};document.documentElement.dataset.density=${JSON.stringify(density)}`);await sleep(100);
-   test(await get('window.__finalProspect===document.querySelector(".prospect-detail-desk")&&window.__finalAccordion.isConnected'),'Prospect retains exact component at narrow/zoom '+theme+'/'+zoom);await capture('prospect-narrow-'+zoom,theme,density);
+   test(await get('window.__finalProspect===document.querySelector(".prospect-detail-desk")&&window.__finalWorkspace.isConnected'),'Prospect retains exact component at narrow/zoom '+theme+'/'+zoom);await capture('prospect-narrow-'+zoom,theme,density);
   }
   win.webContents.setZoomFactor(1);win.setSize(1510,1030);await click('.prospect-desk-overlay [aria-label="Fermer la fiche prospect"]');
   if(await get('!!document.querySelector(".prospect-detail-v2")'))await click('.prospect-detail-v2 [aria-label="Fermer la fiche prospect"]');
@@ -135,10 +137,10 @@ module.exports=async ctx=>{
   await navigate('Clients');await click('.aw-rail-toggle');
   for(const theme of ['atoumweb','noir','blanc'])for(const density of ['compact','comfort','comfort_plus']){
    await js(`document.documentElement.dataset.theme=${JSON.stringify(theme)};document.documentElement.dataset.density=${JSON.stringify(density)}`);await sleep(100);
-   test(await get('document.querySelector(".aw-brand-logotype img").complete&&document.querySelector(".aw-brand-logotype img").naturalWidth===2048'),'Exact original master decoded in header '+theme+'/'+density);
+   /* F80 : le rail affiche le logo vectoriel unique (fin de refonte), plus le PNG maître. */test(await get('[...document.querySelectorAll(".aw-navigation-rail .aw-brand-logotype svg[data-brand-status=home-reference]")].some(e=>e.getClientRects().length)'),'Brand logo shown in rail '+theme+'/'+density);
    test(await get('document.querySelector(".global-timer")===window.__finalTimer&&document.querySelectorAll(".global-timer").length===1'),'True timer instance survives record work '+theme+'/'+density);
    test(await get('(()=>{const s=document.querySelector(".aw-data-table-scroll");return s.scrollWidth<=s.clientWidth})()'),'No avoidable Client table horizontal scroll '+theme+'/'+density);
-   test(await get('(()=>{const r=document.querySelector(".aw-brand-symbol").getBoundingClientRect();return r.width===44&&r.height===44})()'),'Rail brand keeps its actual 44px viewport '+theme+'/'+density);
+   /* F80 : rail replié, le symbole affiché est celui du logo vectoriel unique (les autres variantes sont masquées). */test(await get('(()=>{const e=[...document.querySelectorAll(".aw-navigation-rail .aw-brand-home-symbol, .aw-navigation-rail .aw-brand-symbol")].find(x=>x.getClientRects().length);if(!e)return false;const r=e.getBoundingClientRect();return Math.round(r.width)===44&&Math.round(r.height)<=44})()'),'Rail brand keeps its 44px symbol '+theme+'/'+density);
    await capture('header-reduced-rail',theme,density);
   }
   const current=assets().find(a=>a.role==='logo');dialog.showMessageBox=async()=>({response:1});test(await removeAsset(null,current.id)===true&&assets().length===count,'Confirmed removal clears persisted shared logo');

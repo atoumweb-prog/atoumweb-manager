@@ -89,8 +89,9 @@ app.whenReady().then(async () => {
       renderQuote({status:'sent',updatedAt:'historical'});await wait();
       assert('Absence historique explicite',document.body.textContent.includes('Absence historique de snapshot'));
       assert('Pas de contrat historique reconstruit',!document.querySelector('.contract-reading-scroll').textContent.includes('Texte futur')&&calls.sync===syncBefore);
-      renderDocuments();await wait();await click('Supprimer définitivement');
-      assert('Refus de suppression visible dans les documents Client',document.querySelector('.form-error')?.textContent.includes('suppression interdite'));
+      // F78 : depuis Clients V2, les documents archivés sont masqués tant que « Afficher les archives » n'est pas coché.
+      renderDocuments();await wait();[...document.querySelectorAll('label')].find(label=>label.textContent.includes('Afficher les archives'))?.querySelector('input')?.click();await wait();await click('Supprimer définitivement');
+      assert('Refus de suppression visible dans les documents Client',[...document.querySelectorAll('[role=alert]')].some(e=>e.textContent.includes('suppression interdite')));
       assert('Document toujours présent après refus',document.body.textContent.includes('PDF accepté'));
       const publishBefore=calls.publish;
       renderImportedLibrary();await wait();await click('Bibliothèque CGV');

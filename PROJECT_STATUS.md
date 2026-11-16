@@ -1,5 +1,17 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 16/11/2026 : recettes rouges du registre, cinq remises en état (F78, F79, F80, F82, F83) (commit local)
+
+- [x] Chaque échec diagnostiqué jusqu’à sa cause ; toutes décrivaient un affichage antérieur à la refonte ou un jeu de test incomplet, aucun défaut du produit trouvé. Recettes réécrites sur des règles durables (règle H) :
+  - **F78** `check-contract-terms-builder-ui` : cocher « Afficher les archives » (Clients V2) ; refus attendu en alerte ;
+  - **F79** `fixtures/vitrine-single-ui` : « Créer le PDF » dans le menu « Plus » des documents (R4) ; 10/10 ;
+  - **F80** `fixtures/final-crm-scenarios` : largeur suffisante pour la fiche complète (mode compact sous 1 050 px), fiche prospect à onglets au lieu des trois zones, contraste du sous-titre du devis intégré, logo vectoriel du rail ; 401/401 ;
+  - **F82** `check-prospect-ux-ui` : simulations alignées (sélecteur d’offres, sections des besoins, statut actif, fonctions ajoutées) ; 34, 0 erreur ;
+  - **F83** `check-project-operational-ui` : `visualPreferences` simulé, capture des erreurs de console réparée (niveau en mot dans Electron récent) ; 69/69.
+- **Preuves** : chaque recette relancée verte ; suite **333 fichiers, 2 764 tests** ; typecheck inchangé (aucun code produit modifié).
+- **Restent** : F67 (la vue organisée du catalogue est devenue la vue par familles : une dizaine de contrôles à transposer), F66 et F68 (base préparée et rapport en arguments), F75 (compteurs attendus « 1,0,0,1 » à réaligner sur les données de test). **Autocontrôle de l’auteur.**
+- Prochaine action : F67, puis F75, F66, F68 ; F81 attend la décision de Carlos.
+
 ## 16/11/2026 : lot G3, coque et libellés (F56, F59, F63) exécuté (commit local) ; décisions F55 à F63 toutes appliquées
 
 - [x] **Tests d’abord** (`renderer/g3Wiring.test.ts`, 27 tests) ; fiche `2026-11-16-f55-f63-decisions-design.md` validée par Carlos (« Oui, code G3 »).
