@@ -164,13 +164,13 @@
 }
 
 .expense-status.status-planned {
-  color: #4a6f9b;
-  background: color-mix(in srgb, #4a7fb3 12%, var(--surface));
+  color: var(--aw-info-soft-fg);
+  background: var(--aw-info-soft-bg);
 }
 
 .expense-status.status-committed {
-  color: #946b19;
-  background: color-mix(in srgb, #c58b24 12%, var(--surface));
+  color: var(--aw-warning-soft-fg);
+  background: var(--aw-warning-soft-bg);
 }
 
 .expense-status.status-paid,
@@ -180,8 +180,8 @@
 }
 
 .expense-status.status-cancelled {
-  color: #a63d43;
-  background: color-mix(in srgb, #c44950 9%, var(--surface));
+  color: var(--aw-danger-soft-fg);
+  background: var(--aw-danger-soft-bg);
 }
 
 .expense-category-pill {

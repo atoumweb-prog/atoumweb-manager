@@ -129,7 +129,7 @@ function App() {
   useEffect(()=>()=>cancelSearchNavigation(),[cancelSearchNavigation]);
 
   function requestPage(page:PageName,run:()=>void,replace=false){const transition=()=>{cancelSearchNavigation();if(page!==activePageRef.current||replace){visibleEntity.current=null;setQuoteReturnProjectId(null);setProjectReturnContext(null);}if((page==='Clients'||page==='Prospects')&&page!==activePageRef.current)setCrmTarget(null);run();};if(page===activePageRef.current&&!replace)transition();else requestUnsavedExit(transition);}
-  const [theme, setTheme] = useState<ThemeName>('atoumweb');
+  const [theme, setTheme] = useState<ThemeName>('noir');
   const [displayDensity, setDisplayDensity] = useState<DisplayDensity>('comfort');
   const [showHoverHelp, setShowHoverHelp] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);

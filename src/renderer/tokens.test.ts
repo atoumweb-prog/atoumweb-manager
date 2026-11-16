@@ -53,7 +53,7 @@ const PINNED: Record<Theme, Record<(typeof ROLES)[number], [string, string, stri
     warning: ['#f2b705', '#1f2933', '#fdf5dc', '#6b4e00'],
     danger: ['#d62828', '#ffffff', '#f9e1e1', '#8c1d1d'],
     info: ['#1565c0', '#ffffff', '#dee9f6', '#0d47a1'],
-    accent: ['#b9965c', '#18212b', '#f5f0e8', '#6b5128'],
+    accent: ['#806439', '#ffffff', '#f5f0e8', '#6b5128'],
   },
   noir: {
     success: ['#55b98b', '#0e1115', '#28473e', '#9ce3c0'],

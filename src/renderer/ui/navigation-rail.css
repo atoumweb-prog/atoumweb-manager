@@ -50,3 +50,7 @@
 .aw-rail-home-mark .aw-brand-home-symbol{display:none;}
 :root[data-theme][data-density] .aw-rail-home-mark>.aw-brand-symbol{display:none}
 :root[data-theme][data-density] .aw-rail-home-mark .aw-brand-home-symbol{display:block}
+/* Fin de refonte F3 : sur le rail clair du thème Blanc, le blanc cassé du logo (« Atoum », triangle intérieur) passe à la couleur du texte. */
+:root[data-theme='blanc'] .aw-brand-ink{fill:var(--text)}
+/* Fin de refonte F3 : sur le rail sombre du thème AtoumWeb, les titres de groupe prennent la couleur atténuée du rail (6,5:1). */
+:root[data-theme='atoumweb'] .aw-manager-shell .aw-rail-group-heading{color:var(--sidebar-muted)}

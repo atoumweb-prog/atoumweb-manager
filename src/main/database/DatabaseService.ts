@@ -193,7 +193,7 @@ export class DatabaseService {
   }
 
   private seedDefaults(): void {
-    this.setSettingIfMissing('theme', 'atoumweb');
+    this.setSettingIfMissing('theme', 'noir'); // Fin de refonte (décision de Carlos du 15/11/2026) : Noir au premier lancement
     this.setSettingIfMissing('display_density', 'comfort');
     this.setSettingIfMissing('show_hover_help', true);
     this.setSettingIfMissing('business_backups_default_max_known_age_days', 7);

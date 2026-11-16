@@ -18,6 +18,7 @@ Poser, avant toute refonte d'écran, deux fondations : des **couleurs sémantiqu
 
 - Accent Noir = **jaune #ffda00**. Cette décision remplace une réponse précédente « or #c6a46c » dans la même conversation ; la dernière fait foi.
 - AtoumWeb garde son or (#b9965c), Blanc garde son accent actuel (#92733f).
+- Révision (décision de Carlos du 15/11/2026, fin de refonte F3) : l’or passe à #806439 en AtoumWeb et en Blanc pour tout (bordures, fonds, texte), car l’or servait aussi de couleur de texte sous 4,5:1. AtoumWeb : `--accent-strong` #6b5128, `accent solid / on-solid` #806439 / #ffffff (5,53).
 - Inter : copie des fichiers officiels avec la licence OFL 1.1, sans dépendance.
 - Intégrer la correction de `--danger` dans R0.
 
@@ -43,7 +44,7 @@ Poser, avant toute refonte d'écran, deux fondations : des **couleurs sémantiqu
 | danger soft-bg / soft-fg | #f9e1e1 / #8c1d1d (7,31) | #513536 / #f5b2ab (6,19) | #f9e1e1 / #8c1d1d (7,31) |
 | info solid / on-solid | #1565c0 / #ffffff (5,75) | #79a9d7 / #0e1115 (7,63) | #1565c0 / #ffffff (5,75) |
 | info soft-bg / soft-fg | #dee9f6 / #0d47a1 (7,03) | #324253 / #bad8f2 (6,96) | #dee9f6 / #0d47a1 (7,03) |
-| accent solid / on-solid | #b9965c / #18212b (5,87) | #ffda00 / #111111 (13,74) | #90713e / #ffffff (4,55, corrigé en R1) |
+| accent solid / on-solid | #806439 / #ffffff (5,53, révisé en F3 ; avant #b9965c / #18212b) | #ffda00 / #111111 (13,74) | #90713e / #ffffff (4,55, corrigé en R1) |
 | accent soft-bg / soft-fg | #f5f0e8 / #6b5128 (6,53) | #575017 / #ffe66a (6,54) | #f0ebe4 / #5c4724 (7,43) |
 
 Points d'attention : (1) Blanc accent `on-solid` fait 4,42, sous le seuil de 4,5 : acceptable pour du texte gras ou grand seulement ; exception documentée, à trancher plus tard. (2) Sur fond clair, `warning solid` (1,82) et `accent solid` AtoumWeb (2,77) ne suffisent pas seuls pour une icône ou une bordure : utiliser `soft-fg` ou accompagner d'un texte.

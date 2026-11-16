@@ -89,3 +89,5 @@
 }
 
 .app-shell .prospects-v2 .pipeline-flow{min-height:0;overflow:auto;}
+/* Fin de refonte F3 : hors Noir, le rose de l’échéance dépassée (2,6:1 sur blanc) prend le ton danger. */
+:root:not([data-theme='noir']) .app-shell .prospects-v2 .prospection-due-overdue{color:var(--aw-danger-soft-fg)}

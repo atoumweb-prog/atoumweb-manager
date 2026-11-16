@@ -149,3 +149,6 @@
   background: color-mix(in srgb, #d62828 10%, var(--surface));
   color: #d62828;
 }
+/* Fin de refonte F3 : hors Noir, statuts client sur les tons sémantiques (vert 4,4:1 et brun 4:1 auparavant). */
+:root:not([data-theme='noir']) .client-status.status-active{color:var(--aw-success-soft-fg)}
+:root:not([data-theme='noir']) .client-status.status-archived{color:var(--aw-warning-soft-fg)}

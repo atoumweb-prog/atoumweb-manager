@@ -559,3 +559,8 @@ body.directory-resizing {
 :root[data-theme='noir'] .directory-page-stack .primary-button{color:#18212b;}
 /* R8 : champ vide en mot gris, nom coupe sur une ligne. */
 .directory-unset { color: var(--muted); font-size: var(--aw-font-functional); }
+/* Fin de refonte F3 : hors Noir, le texte des pastilles de relation se mélange à 50 % avec le texte (au moins 5:1 sur fond clair). */
+:root:not([data-theme='noir']) .directory-relation-pill.relation-client{color:color-mix(in srgb,#48b77d 50%,var(--text))}
+:root:not([data-theme='noir']) .directory-relation-pill.relation-prospect{color:color-mix(in srgb,#5c93dd 50%,var(--text))}
+:root:not([data-theme='noir']) .directory-relation-pill.relation-client-prospect{color:color-mix(in srgb,#9b72d3 50%,var(--text))}
+:root:not([data-theme='noir']) .directory-relation-pill.relation-external{color:color-mix(in srgb,#d2a24b 50%,var(--text))}

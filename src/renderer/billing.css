@@ -260,8 +260,8 @@
 
 .billing-status.status-ready,
 .billing-status.status-planned {
-  color: #946b19;
-  background: color-mix(in srgb, #c58b24 12%, var(--surface));
+  color: var(--aw-warning-soft-fg);
+  background: var(--aw-warning-soft-bg);
 }
 
 .billing-status.status-invoiced,
@@ -271,18 +271,18 @@
 }
 
 .billing-status.status-offered {
-  color: #6b5c97;
-  background: color-mix(in srgb, #6b5c97 10%, var(--surface));
+  color: var(--aw-accent-soft-fg);
+  background: var(--aw-accent-soft-bg);
 }
 
 .billing-status.status-cancelled {
-  color: #a63d43;
-  background: color-mix(in srgb, #c44950 9%, var(--surface));
+  color: var(--aw-danger-soft-fg);
+  background: var(--aw-danger-soft-bg);
 }
 
 .billing-source-pill {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  color: var(--aw-accent-soft-fg);
+  background: var(--aw-accent-soft-bg);
 }
 
 .billing-splitter {
