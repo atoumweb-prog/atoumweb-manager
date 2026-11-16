@@ -54,3 +54,5 @@
 :root[data-theme='blanc'] .aw-brand-ink{fill:var(--text)}
 /* Fin de refonte F3 : sur le rail sombre du thème AtoumWeb, les titres de groupe prennent la couleur atténuée du rail (6,5:1). */
 :root[data-theme='atoumweb'] .aw-manager-shell .aw-rail-group-heading{color:var(--sidebar-muted)}
+/* F77 (accord de Carlos du 16/11/2026) : sur le rail blanc du thème Blanc, le jaune du logo prend l’or foncé du thème (5,5:1). */
+:root[data-theme='blanc'] .aw-brand-gold{fill:var(--accent)}

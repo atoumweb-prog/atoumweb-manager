@@ -119,3 +119,24 @@ describe('F3 : pastilles de relation (Annuaire) et de statut client lisibles hor
     expect(css).toContain(":root:not([data-theme='noir']) .client-status.status-archived{color:var(--aw-warning-soft-fg)}");
   });
 });
+
+describe('F77 : logo du Manager visible quel que soit le thème (accord de Carlos du 16/11/2026)', () => {
+  it('les parties jaunes du logo vectoriel portent la classe d’or (deux formes, « Web », « MANAGER »)', () => {
+    const mark = read('ui/BrandMark.tsx');
+    expect((mark.match(/className="aw-brand-gold"[^>]*fill="#ffda00"/g) ?? []).length).toBe(4);
+  });
+
+  it('en Blanc, l’or du logo prend l’or foncé du thème, lisible sur le rail blanc', () => {
+    expect(strip(read('ui/navigation-rail.css'))).toContain(":root[data-theme='blanc'] .aw-brand-gold{fill:var(--accent)}");
+    const t = themeTokens('blanc');
+    expect(ratio(t.accent, t.sidebar)).toBeGreaterThanOrEqual(4.5);
+    expect(ratio(t.text, t.sidebar)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('sur les rails sombres (Noir, AtoumWeb), le jaune et le blanc cassé du logo restent lisibles', () => {
+    for (const sidebar of ['#080a0d', themeTokens('atoumweb').sidebar]) {
+      expect(ratio('#ffda00', sidebar)).toBeGreaterThanOrEqual(4.5);
+      expect(ratio('#f7f7f4', sidebar)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});
