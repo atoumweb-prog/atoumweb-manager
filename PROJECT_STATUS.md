@@ -14,7 +14,8 @@
 - [x] **Maintenance WooCommerce** (décision de Carlos) : exigence de site certifié WooCommerce retirée (seule la couche d'octobre savait certifier) ; rattachée au site choisi.
 - [x] **Recettes** : F85 recentrée sur les 27 services suivis, **27/27 verts** (25 en recette complète, les 2 maintenances WooCommerce après la décision) ; 03B : création du devis depuis la fiche (75 contrôles).
 - **Preuves** : suite **343 fichiers, 2 832 tests**, typecheck propre. Simulations sur copies ; la fiche Site et la règle WooCommerce ne sont pas encore écrites en préproduction.
-- Prochaine action : accord de Carlos pour écrire la fiche Site et la règle WooCommerce en préproduction ; reconstruire l'application ; push et PR sur accord.
+- [x] **Appliqué en préproduction** (accord « Oui, applique tout ») : fiche Site sur 7 modèles (sauvegarde `avant-sites-modeles-2026-11-17T00-42-21-540Z`), règle WooCommerce (sauvegarde `avant-suivi-apres-vente-2026-11-17T00-42-23-055Z`) ; application remplacée par la version du commit `edd72113`, précédente conservée dans `Application-precedente-20261117-avant-sites`. Intégrité ok ; empreinte `5643dc9750a920b2`.
+- Prochaine action : tests de Carlos dans la préproduction ; push et PR sur son accord.
 
 ## 17/11/2026 : finitions F64, F65 et F76 (commit local)
 
