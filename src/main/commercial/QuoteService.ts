@@ -1,5 +1,6 @@
 import { reconcileLineSchedules } from '../../shared/quoteBillingRules';
 import { defaultPaymentSchedule } from '../../shared/paymentScheduleRules';
+import { withOffPremisesPaymentDelay } from '../../shared/offPremisesRules';
 import {commercialDescription} from '../../shared/commercialDescription';
 import {defaultVitrineLineScope} from '../../shared/siteVitrinePages';
 import {quotePaymentSchedule} from '../../shared/quotePaymentSchedule';
@@ -1119,8 +1120,9 @@ export class QuoteService {
       const decision = defaultPaymentSchedule(lines);
       parameters.payment.origin = decision.status === 'rule' ? 'rule' : 'to_define';
       parameters.payment.preset = decision.status === 'rule' ? decision.preset : 'custom';
-      parameters.payment.milestones = decision.status === 'rule' ? decision.milestones : [];
-      const schedules = decision.status === 'rule' ? reconcileLineSchedules(lines, decision.milestones, undefined) : undefined;
+      // Hors établissement (décision du 17/11/2026, art. L. 221-10) : aucun paiement avant le 8e jour après la signature.
+      parameters.payment.milestones = decision.status === 'rule' ? withOffPremisesPaymentDelay(decision.milestones, parameters.conclusion.channel) : [];
+      const schedules = decision.status === 'rule' ? reconcileLineSchedules(lines, parameters.payment.milestones, undefined) : undefined;
       if (schedules) parameters.payment.lineSchedules = schedules; else delete parameters.payment.lineSchedules;
       const first = decision.status === 'rule' ? decision.milestones[0].percent : null;
       this.database.run('UPDATE quotes SET contract_parameters_json=?, deposit_percent=? WHERE id=?', [JSON.stringify(parameters), first, quote.id]);

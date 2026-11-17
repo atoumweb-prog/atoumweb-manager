@@ -1,0 +1,1635 @@
+{
+ "_origine": "Proposition du 17/11/2026 (Carlos : « complète d’après ton estimation »). Base : temps de référence d’octobre (manifeste AtoumWeb_Referentiel_Operationnel_V1_REVU.xlsx), médiane quand plusieurs offres partagent un modèle ; répartition : contrôle Abby 5 min, démarrage 15 min, livraison 20 min, corrections et validations 15 % du total, le reste aux tâches de réalisation (« Réaliser », « Rédiger », « Créer »…).",
+ "modeles": [
+  {
+   "modele": "Référentiel · Analytics + Search Console",
+   "offres": [
+    "AW-DATA-GA-SC"
+   ],
+   "tempsOctobre": {
+    "min": 120,
+    "median": 120,
+    "max": 120
+   },
+   "total": 125,
+   "taches": [
+    {
+     "id": "9b3f7c46-c1e7-4bd4-9aab-08d2c557473a",
+     "lot": "Démarrage",
+     "name": "Obtenir les accès au site et vérifier si le client a déjà des comptes Google…",
+     "minutes": 15
+    },
+    {
+     "id": "527d751c-6df9-44b5-882f-e537c7a3aaa1",
+     "lot": "Réalisation",
+     "name": "Installer Google Analytics 4 et la balise, créer la Search Console et le sitemap",
+     "minutes": 35
+    },
+    {
+     "id": "b734bb0e-91ad-4331-a910-6092b8cc91f8",
+     "lot": "Réalisation",
+     "name": "Vérifier que la collecte fonctionne, en tenant compte du consentement aux cookies",
+     "minutes": 35
+    },
+    {
+     "id": "05c949a1-204c-4a69-a20d-033347190e5c",
+     "lot": "Livraison",
+     "name": "Remettre les accès au client et une courte explication",
+     "minutes": 20
+    },
+    {
+     "id": "b21a4de0-16a0-4b2b-b356-e8b3050597b9",
+     "lot": "Livraison",
+     "name": "Proposer un suivi régulier si le client veut des bilans",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Avis Google automatiques",
+   "offres": [
+    "AW-WEB-AVIS-GOOGLE"
+   ],
+   "tempsOctobre": {
+    "min": 90,
+    "median": 90,
+    "max": 90
+   },
+   "total": 90,
+   "taches": [
+    {
+     "id": "1f8cb5c2-be8b-4f50-8079-ef41fec3c527",
+     "lot": "Démarrage",
+     "name": "Vérifier que l’affichage des avis Google n’est pas déjà compris (Business, Visibilité,…",
+     "minutes": 15
+    },
+    {
+     "id": "a6fc6dca-2f60-40cb-a916-ed40d234a46f",
+     "lot": "Démarrage",
+     "name": "Obtenir l’accès à la fiche Google du client",
+     "minutes": 15
+    },
+    {
+     "id": "d445b641-8562-41e9-b862-d562667a1c6c",
+     "lot": "Réalisation",
+     "name": "Réaliser dans le style du site, puis tester sur ordinateur et sur mobile",
+     "minutes": 30
+    },
+    {
+     "id": "41a47a17-cae9-4766-ab68-8c04276e77db",
+     "lot": "Corrections et validation",
+     "name": "Faire valider le résultat par le client, par écrit",
+     "minutes": 15
+    },
+    {
+     "id": "47b15c1a-691a-474c-9a2d-3f0001746cca",
+     "lot": "Corrections et validation",
+     "name": "Tracer le temps passé et le livrable dans le dossier",
+     "minutes": 15
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Boutique WooCommerce",
+   "offres": [
+    "AW-ECOM-BASE"
+   ],
+   "tempsOctobre": {
+    "min": 2550,
+    "median": 2550,
+    "max": 2550
+   },
+   "total": 2550,
+   "taches": [
+    {
+     "id": "63b5d86f-cfa2-4d21-923f-b5d60c04d592",
+     "lot": "Démarrage",
+     "name": "Vérifier dans Abby l’encaissement de l’acompte de 30 %",
+     "minutes": 5
+    },
+    {
+     "id": "bde2ccc0-e6b7-400c-a7d4-032080b61e6b",
+     "lot": "Démarrage",
+     "name": "Contrôler avant de démarrer",
+     "minutes": 15
+    },
+    {
+     "id": "533cedc1-82ac-4faa-b386-37466de1f668",
+     "lot": "Corrections et validation",
+     "name": "Livrer la maquette et demander un retour sous 10 jours ouvrés",
+     "minutes": 190
+    },
+    {
+     "id": "8adaba2d-d2d3-4552-a4af-e8bc8d4375ab",
+     "lot": "Corrections et validation",
+     "name": "Vérifier dans Abby l’encaissement : 40 % à la validation du design, puis premier cycle de corrections.",
+     "minutes": 5
+    },
+    {
+     "id": "28a0062d-e310-4a22-9138-28a2671ba16a",
+     "lot": "Corrections et validation",
+     "name": "Réaliser la boutique",
+     "minutes": 2100
+    },
+    {
+     "id": "a659f619-ef9e-4595-a5f1-b443bcf7e49b",
+     "lot": "Corrections et validation",
+     "name": "Tester les paiements et les livraisons, puis second cycle de corrections avant la…",
+     "minutes": 190
+    },
+    {
+     "id": "f0ada510-4aa0-4fc3-ae72-1a8b82c159df",
+     "lot": "Corrections et validation",
+     "name": "Vérifier dans Abby l’encaissement : le solde de 30 % avant la mise en ligne.",
+     "minutes": 5
+    },
+    {
+     "id": "f560f096-0fdb-4a7f-accf-ca337eacf38b",
+     "lot": "Livraison",
+     "name": "Livraison officielle constatée par écrit, formation de 2 h, remise des accès",
+     "minutes": 20
+    },
+    {
+     "id": "c3826987-3012-4c1d-9fff-c0e56f6aac8c",
+     "lot": "Livraison",
+     "name": "Rappeler que la gestion quotidienne (commandes, stocks, remboursements) revient au…",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Cadrage outil métier",
+   "offres": [
+    "AW-APP-CADRAGE"
+   ],
+   "tempsOctobre": {
+    "min": 300,
+    "median": 300,
+    "max": 300
+   },
+   "total": 300,
+   "taches": [
+    {
+     "id": "dc4ddd96-56a7-4514-996b-15cf4f7b7c69",
+     "lot": "Démarrage",
+     "name": "Faire l’atelier besoin",
+     "minutes": 225
+    },
+    {
+     "id": "9a2b1238-aceb-4fb4-8a7b-2c2c72eb7c27",
+     "lot": "Démarrage",
+     "name": "Séparer le premier outil (MVP) des évolutions",
+     "minutes": 15
+    },
+    {
+     "id": "2b2ea9c6-6a02-4af1-9ad7-8237f3d09a40",
+     "lot": "Livraison",
+     "name": "Remettre le cadrage écrit et une première estimation",
+     "minutes": 20
+    },
+    {
+     "id": "3ed8e141-f41f-42b2-97b5-f3866a8edbc0",
+     "lot": "Livraison",
+     "name": "Rappeler que le cadrage n’engage ni à réaliser l’application ni à un prix ou un calendrier",
+     "minutes": 20
+    },
+    {
+     "id": "73dde941-dce2-47a3-b029-7bce6b8f0183",
+     "lot": "Livraison",
+     "name": "Si le client poursuit, chiffrer le développement sur devis séparé",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Contenu et rédaction",
+   "offres": [
+    "AW-CONT-PAGE",
+    "AW-CONT-REWRITE",
+    "AW-CONT-ART-ESS",
+    "AW-CONT-ART-SEO",
+    "AW-CONT-PACK4-SEO",
+    "AW-CONT-LIVRE-BLANC",
+    "AW-CONT-INTEG-WP",
+    "AW-CONT-IMG3",
+    "AW-CONT-URGENT-48",
+    "AW-CONT-MEP-ADV",
+    "AW-CONT-RECH-TECH"
+   ],
+   "tempsOctobre": {
+    "min": 30,
+    "median": 120,
+    "max": 840
+   },
+   "total": 120,
+   "taches": [
+    {
+     "id": "9a976418-1481-4b73-a5a9-99332c2df08d",
+     "lot": "Démarrage",
+     "name": "Cadrer le besoin",
+     "minutes": 15
+    },
+    {
+     "id": "470ba259-0888-4474-875c-1f6aa367e5d3",
+     "lot": "Réalisation",
+     "name": "Confirmer le volume et le format prévus par l’offre",
+     "minutes": 30
+    },
+    {
+     "id": "00ba6e38-960c-454d-ae8a-e5cd8d208fa7",
+     "lot": "Réalisation",
+     "name": "Rédiger ou corriger, puis soumettre au client",
+     "minutes": 30
+    },
+    {
+     "id": "45563538-99a8-439d-8265-7638a370b07d",
+     "lot": "Corrections et validation",
+     "name": "Un cycle de corrections, regroupé",
+     "minutes": 15
+    },
+    {
+     "id": "d23c636b-ea5a-4010-b6d4-fedffe6cc874",
+     "lot": "Corrections et validation",
+     "name": "Obtenir la validation écrite avant toute publication",
+     "minutes": 15
+    },
+    {
+     "id": "3cfe3ae0-a021-4443-8249-7f33b3873923",
+     "lot": "Corrections et validation",
+     "name": "Intégrer dans WordPress si l’offre le prévoit",
+     "minutes": 15
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Domaine premium ou supplémentaire — mariage",
+   "offres": [
+    "AW-MARIAGE-DOMAINE"
+   ],
+   "tempsOctobre": {
+    "min": 45,
+    "median": 45,
+    "max": 45
+   },
+   "total": 105,
+   "taches": [
+    {
+     "id": "0c78465e-6a57-49a2-95a2-89768271c191",
+     "lot": "Démarrage",
+     "name": "Recueillir les informations",
+     "minutes": 15
+    },
+    {
+     "id": "ed5f054d-a7c4-4c7d-b7cf-d0533ae8cabc",
+     "lot": "Réalisation",
+     "name": "Réaliser le site selon la formule, avec un RSVP simple",
+     "minutes": 15
+    },
+    {
+     "id": "158d7fee-37fd-4d68-aaea-a10aa70d02d3",
+     "lot": "Corrections et validation",
+     "name": "Appliquer les cycles de corrections de la formule, puis faire valider par écrit",
+     "minutes": 15
+    },
+    {
+     "id": "8de02d2d-d3e3-4913-ac01-1575af8b79e3",
+     "lot": "Livraison",
+     "name": "Mettre en ligne et remettre les accès",
+     "minutes": 20
+    },
+    {
+     "id": "e5568d79-bfa0-4273-82e2-b8bbcd2af868",
+     "lot": "Livraison",
+     "name": "Après le mariage (formule Histoire)",
+     "minutes": 20
+    },
+    {
+     "id": "3bb0d65e-bf56-4eee-90c2-e0a7a38577fc",
+     "lot": "Livraison",
+     "name": "À la fin de la période incluse",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Dépannage WordPress ponctuel",
+   "offres": [],
+   "tempsOctobre": null,
+   "total": 75,
+   "taches": [
+    {
+     "id": "f55370b2-ee80-4180-a529-50836ea800c5",
+     "lot": "Démarrage",
+     "name": "Contrôler le statut tarifaire et le devis (69 € l’heure, minimum 1 h)",
+     "minutes": 15
+    },
+    {
+     "id": "4a858cc7-efef-4177-a4f0-3e82332ebdb9",
+     "lot": "Démarrage",
+     "name": "Demander une sauvegarde récente et les accès avant d’intervenir",
+     "minutes": 15
+    },
+    {
+     "id": "937346e1-bdd0-4a45-9242-40e4132cae98",
+     "lot": "Réalisation",
+     "name": "Annoncer d’abord le diagnostic, puis chiffrer la suite avec l’accord du client",
+     "minutes": 15
+    },
+    {
+     "id": "265264ba-a62a-4fa9-be33-b40c773ecb71",
+     "lot": "Réalisation",
+     "name": "Intervenir, tester, puis tracer le temps passé",
+     "minutes": 15
+    },
+    {
+     "id": "50e81d57-7e58-4c54-b115-5f1a5bd3a56c",
+     "lot": "Réalisation",
+     "name": "Proposer un pack d’heures ou la maintenance si les demandes sont régulières",
+     "minutes": 15
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Développement sur mesure",
+   "offres": [
+    "AW-DEVWP-FONCTION",
+    "AW-DEVWP-PLUGIN",
+    "AW-DEVWP-AUTO",
+    "AW-APP-PROTOTYPE",
+    "AW-APP-DEV"
+   ],
+   "tempsOctobre": {
+    "min": 120,
+    "median": 150,
+    "max": 720
+   },
+   "total": 155,
+   "taches": [
+    {
+     "id": "975feda6-f9d5-46f7-9432-851534aa1f17",
+     "lot": "Réalisation",
+     "name": "Rédiger le périmètre et le chiffrer au devis, avec l’échéancier",
+     "minutes": 45
+    },
+    {
+     "id": "03497647-0ae2-45b6-9e0e-4162eb87fbd9",
+     "lot": "Réalisation",
+     "name": "Développer sur un environnement de test, en distinguant le premier outil (MVP) des…",
+     "minutes": 45
+    },
+    {
+     "id": "02f99936-bdf0-48d1-83d4-598b59bd2e2d",
+     "lot": "Corrections et validation",
+     "name": "Tester avec le client et recueillir sa validation écrite",
+     "minutes": 25
+    },
+    {
+     "id": "20bcd07c-11b4-405b-a8c0-7ac92e821739",
+     "lot": "Livraison",
+     "name": "Livrer officiellement par écrit",
+     "minutes": 20
+    },
+    {
+     "id": "ee1b546b-33a7-4dfc-9fa6-c44a18a5ff40",
+     "lot": "Livraison",
+     "name": "Proposer la maintenance",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Identité visuelle",
+   "offres": [
+    "AW-BRAND-LOGO",
+    "AW-BRAND-CARTE",
+    "AW-BRAND-DECLI-LOGO",
+    "AW-BRAND-SOCIAL-5",
+    "AW-BRAND-SOCIAL-10",
+    "AW-BRAND-PAPETERIE",
+    "AW-BRAND-DOC-4P",
+    "AW-BRAND-DOC-PAGE",
+    "AW-BRAND-LOGO-ANIM",
+    "AW-BRAND-REVISION",
+    "AW-BRAND-MOTION",
+    "AW-BRAND-CHARTE",
+    "AW-BRAND-DUO"
+   ],
+   "tempsOctobre": {
+    "min": 30,
+    "median": 120,
+    "max": 420
+   },
+   "total": 100,
+   "taches": [
+    {
+     "id": "21f4b9c4-3568-4ef7-856e-0a89905aade9",
+     "lot": "Démarrage",
+     "name": "Faire le brief",
+     "minutes": 15
+    },
+    {
+     "id": "bc72aa11-170e-4ea3-9ab1-865f8579282d",
+     "lot": "Démarrage",
+     "name": "Vérifier ce qui existe déjà (logo, couleurs, polices) et ce que le client doit fournir",
+     "minutes": 15
+    },
+    {
+     "id": "c7b03eab-fa20-43a3-ac45-d5a450ddfb57",
+     "lot": "Corrections et validation",
+     "name": "Présenter la proposition prévue par l’offre et faire valider la direction avant de…",
+     "minutes": 15
+    },
+    {
+     "id": "85e64a59-6b55-4d27-9dec-fadbd049637f",
+     "lot": "Corrections et validation",
+     "name": "Appliquer les cycles de corrections de l’offre",
+     "minutes": 15
+    },
+    {
+     "id": "ae3cd1b0-8f81-4a3e-96f2-8b0139cc4763",
+     "lot": "Livraison",
+     "name": "Livrer les fichiers prévus",
+     "minutes": 20
+    },
+    {
+     "id": "24c9dd16-00f5-4266-a751-97adcf463040",
+     "lot": "Livraison",
+     "name": "Les droits d’exploitation sont accordés après paiement intégral, selon les usages…",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Intervention technique et Développement sur mesure",
+   "offres": [
+    "AW-TECH-AUDIT-REPRISE",
+    "AW-TECH-REMISE-WP",
+    "AW-TECH-REMISE-WC",
+    "AW-TECH-MIGRATION-CPLX",
+    "AW-TECH-RESPONSIVE",
+    "AW-TECH-PLUGIN-STD"
+   ],
+   "tempsOctobre": {
+    "min": 60,
+    "median": 210,
+    "max": 360
+   },
+   "total": 215,
+   "taches": [
+    {
+     "id": "136b6253-016f-439e-810b-a3053ea9dc3b",
+     "lot": "Démarrage",
+     "name": "Demander une sauvegarde récente et les accès nécessaires avant toute intervention",
+     "minutes": 15
+    },
+    {
+     "id": "d133d190-5246-4d54-8afa-d45e697f5dc7",
+     "lot": "Réalisation",
+     "name": "Faire le diagnostic et l’annoncer au client avant de chiffrer la suite",
+     "minutes": 60
+    },
+    {
+     "id": "411a7bae-5a48-4d82-9d39-e176521437b8",
+     "lot": "Réalisation",
+     "name": "Si la demande dépasse la prestation, proposer un devis ou un pack d’heures et obtenir…",
+     "minutes": 60
+    },
+    {
+     "id": "192420c0-6361-451e-aa96-0fa4840c9d35",
+     "lot": "Réalisation",
+     "name": "Intervenir, puis tester le résultat",
+     "minutes": 60
+    },
+    {
+     "id": "65c5461f-aeee-4c7a-9052-ef435d464c2f",
+     "lot": "Livraison",
+     "name": "Remettre un compte rendu écrit et tracer le temps passé",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Intervention urgente / prioritaire",
+   "offres": [
+    "AW-TECH-URGENT"
+   ],
+   "tempsOctobre": {
+    "min": 60,
+    "median": 60,
+    "max": 60
+   },
+   "total": 60,
+   "taches": [
+    {
+     "id": "83e80d8c-6c20-4f1f-a944-a52ff874f5cc",
+     "lot": "Réalisation",
+     "name": "Prendre les mesures conservatoires proportionnées, tracer, prévenir le client",
+     "minutes": 20
+    },
+    {
+     "id": "0791c9c8-c8e1-4d65-900a-a3e68694f4ce",
+     "lot": "Réalisation",
+     "name": "Rappeler qu’aucune garantie hors heures ouvrées ni 24 h/24 n’est donnée",
+     "minutes": 20
+    },
+    {
+     "id": "bbfbeed4-9bb6-46b1-b2ca-8a4ad0f51649",
+     "lot": "Livraison",
+     "name": "Remettre un rapport écrit et la suite proposée",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Intégration newsletter standard",
+   "offres": [
+    "AW-WEB-NEWSLETTER"
+   ],
+   "tempsOctobre": {
+    "min": 120,
+    "median": 120,
+    "max": 120
+   },
+   "total": 120,
+   "taches": [
+    {
+     "id": "16d8b26c-3758-42f9-a051-1bfe70d73b32",
+     "lot": "Démarrage",
+     "name": "Vérifier que l’intégration n’est pas déjà comprise (WooCommerce Business et Visibilité)",
+     "minutes": 15
+    },
+    {
+     "id": "dd014760-278e-416f-9cd4-494fc1006419",
+     "lot": "Démarrage",
+     "name": "Obtenir l’accès à l’outil d’envoi du client (Brevo, Mailchimp ou équivalent)",
+     "minutes": 15
+    },
+    {
+     "id": "d1394486-98aa-4bed-9314-865f2462e5f3",
+     "lot": "Réalisation",
+     "name": "Intégrer le formulaire d’inscription et le consentement, puis tester",
+     "minutes": 30
+    },
+    {
+     "id": "39e17849-18cd-4e7b-aaa4-f0804e1edaf4",
+     "lot": "Réalisation",
+     "name": "Expliquer brièvement l’utilisation au client",
+     "minutes": 30
+    },
+    {
+     "id": "67627a7b-7f4f-43ba-9b0a-a6d3a30a94f9",
+     "lot": "Réalisation",
+     "name": "Tracer le temps passé",
+     "minutes": 30
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Landing Page",
+   "offres": [
+    "AW-LP-BASE"
+   ],
+   "tempsOctobre": {
+    "min": 765,
+    "median": 765,
+    "max": 765
+   },
+   "total": 760,
+   "taches": [
+    {
+     "id": "03627bff-e759-4572-ba00-addfcefc5297",
+     "lot": "Démarrage",
+     "name": "Définir l’action attendue du visiteur",
+     "minutes": 15
+    },
+    {
+     "id": "939f3e18-faab-4a1e-8494-ebefb0bf3f21",
+     "lot": "Démarrage",
+     "name": "Recueillir les contenus et les visuels",
+     "minutes": 15
+    },
+    {
+     "id": "cfe0f205-6cc9-4249-b4a9-3a9b5f813a34",
+     "lot": "Réalisation",
+     "name": "Réaliser la page (jusqu’à 6 sections), puis tester sur ordinateur et sur mobile",
+     "minutes": 600
+    },
+    {
+     "id": "4bd4109d-10aa-46a5-a5f1-8c301299d2ed",
+     "lot": "Corrections et validation",
+     "name": "Un cycle de corrections, puis validation écrite",
+     "minutes": 55
+    },
+    {
+     "id": "5546a000-5ecc-4e32-9acc-5feacc0b5550",
+     "lot": "Corrections et validation",
+     "name": "Préciser l’hébergement et le domaine si la page est un site autonome",
+     "minutes": 55
+    },
+    {
+     "id": "76823997-fe43-4084-b661-b32600b9e812",
+     "lot": "Livraison",
+     "name": "Mettre en ligne et vérifier le formulaire ou le bouton d’action",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Langue supplémentaire site vitrine",
+   "offres": [
+    "AW-WEB-LANG-SUP"
+   ],
+   "tempsOctobre": {
+    "min": 210,
+    "median": 210,
+    "max": 210
+   },
+   "total": 210,
+   "taches": [
+    {
+     "id": "79434b59-075a-49b8-8653-b08d26212b6c",
+     "lot": "Démarrage",
+     "name": "Rappeler que les traductions sont fournies par le client",
+     "minutes": 15
+    },
+    {
+     "id": "8ef649ce-e16f-49b2-a6bd-d80478193538",
+     "lot": "Démarrage",
+     "name": "Recueillir les contenus, accès et informations nécessaires",
+     "minutes": 15
+    },
+    {
+     "id": "55d7b7b4-b963-4729-9b26-40b094643711",
+     "lot": "Réalisation",
+     "name": "Réaliser dans le style du site, puis tester sur ordinateur et sur mobile",
+     "minutes": 150
+    },
+    {
+     "id": "4a6fae3e-f27a-4251-b0f7-7eb0ffb7eb7b",
+     "lot": "Corrections et validation",
+     "name": "Faire valider le résultat par le client, par écrit",
+     "minutes": 15
+    },
+    {
+     "id": "fc43ef00-b1b7-4871-8bf7-bbfd53c9050a",
+     "lot": "Corrections et validation",
+     "name": "Tracer le temps passé et le livrable dans le dossier",
+     "minutes": 15
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Migration WordPress externe standard vers AtoumWeb",
+   "offres": [
+    "AW-TECH-MIGRATION-AW"
+   ],
+   "tempsOctobre": {
+    "min": 120,
+    "median": 120,
+    "max": 120
+   },
+   "total": 120,
+   "taches": [
+    {
+     "id": "e1753f8b-cda7-4962-b889-00902ffa228c",
+     "lot": "Démarrage",
+     "name": "Faire une sauvegarde complète du site source et vérifier les accès à l’hébergeur d’origine",
+     "minutes": 15
+    },
+    {
+     "id": "1c59353f-b98b-4c1c-a3b1-faae45336212",
+     "lot": "Démarrage",
+     "name": "Vérifier les boîtes e-mail et les réglages DNS",
+     "minutes": 15
+    },
+    {
+     "id": "47cdd79c-7ada-4763-968b-914a048de402",
+     "lot": "Réalisation",
+     "name": "Transférer les fichiers et la base, configurer, activer le SSL",
+     "minutes": 30
+    },
+    {
+     "id": "783e80ae-8f90-48ce-b48a-f8676e1ca72d",
+     "lot": "Réalisation",
+     "name": "Vérifier le site sur le nouvel hébergement, puis basculer le DNS",
+     "minutes": 30
+    },
+    {
+     "id": "3bbdba0a-5449-4295-993d-16180ca25d72",
+     "lot": "Réalisation",
+     "name": "Contrôler après bascule, puis remettre un compte rendu",
+     "minutes": 30
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Newsletter",
+   "offres": [
+    "AW-NL-PONCT-SIMPLE",
+    "AW-NL-PONCT-COMPLETE"
+   ],
+   "tempsOctobre": {
+    "min": 120,
+    "median": 120,
+    "max": 240
+   },
+   "total": 125,
+   "taches": [
+    {
+     "id": "dbc03bef-d07d-4f2b-bef4-3c8d7b496d70",
+     "lot": "Démarrage",
+     "name": "Vérifier l’origine licite des contacts et la plateforme d’envoi",
+     "minutes": 15
+    },
+    {
+     "id": "05a1fdaa-00de-4615-9933-7327168ee5db",
+     "lot": "Réalisation",
+     "name": "Fixer le planning avec le client",
+     "minutes": 20
+    },
+    {
+     "id": "90e1c2a8-9a62-479a-8ad0-d53498e9a05c",
+     "lot": "Réalisation",
+     "name": "Préparer le bon à tirer (BAT) et le transmettre environ 3 jours ouvrés avant l’envoi",
+     "minutes": 20
+    },
+    {
+     "id": "d5d4b78b-9177-4287-87f7-01f5220cb340",
+     "lot": "Corrections et validation",
+     "name": "Obtenir la validation écrite du client au plus tard 2 jours ouvrés avant",
+     "minutes": 15
+    },
+    {
+     "id": "8544e9f0-dee1-4a1d-a195-2a2559597f16",
+     "lot": "Corrections et validation",
+     "name": "Envoyer uniquement sur BAT écrit, puis contrôler le statut de l’envoi",
+     "minutes": 15
+    },
+    {
+     "id": "e2493995-e784-4482-8e13-489cfe7f1612",
+     "lot": "Livraison",
+     "name": "Remettre le bilan simplifié (10 à 15 minutes)",
+     "minutes": 20
+    },
+    {
+     "id": "ea9ad496-91d7-497b-9767-0bf32d1f04d5",
+     "lot": "Livraison",
+     "name": "À la fin du service",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Options de landing",
+   "offres": [
+    "AW-LP-SECTION",
+    "AW-LP-REDACTION",
+    "AW-LP-MERCI",
+    "AW-LP-POPUP",
+    "AW-LP-LANG-SUP"
+   ],
+   "tempsOctobre": {
+    "min": 35,
+    "median": 75,
+    "max": 210
+   },
+   "total": 95,
+   "taches": [
+    {
+     "id": "277084dc-2b94-46b9-a914-97cb39c56b27",
+     "lot": "Démarrage",
+     "name": "Définir l’action attendue du visiteur",
+     "minutes": 15
+    },
+    {
+     "id": "3094766d-1c3a-4623-aafc-0b323f665050",
+     "lot": "Démarrage",
+     "name": "Recueillir les contenus et les visuels",
+     "minutes": 15
+    },
+    {
+     "id": "49550fe1-a27d-4837-bf89-91592e7b285d",
+     "lot": "Réalisation",
+     "name": "Réaliser la page (jusqu’à 6 sections), puis tester sur ordinateur et sur mobile",
+     "minutes": 15
+    },
+    {
+     "id": "030754aa-50fc-430a-bae9-d79beb0127ee",
+     "lot": "Corrections et validation",
+     "name": "Un cycle de corrections, puis validation écrite",
+     "minutes": 15
+    },
+    {
+     "id": "7987ded8-fe75-4a29-bcb7-444b5f6e6c6c",
+     "lot": "Corrections et validation",
+     "name": "Préciser l’hébergement et le domaine si la page est un site autonome",
+     "minutes": 15
+    },
+    {
+     "id": "8dd687e1-b861-428f-9720-e7c8cfa18a35",
+     "lot": "Livraison",
+     "name": "Mettre en ligne et vérifier le formulaire ou le bouton d’action",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Options de site et Options de boutique",
+   "offres": [
+    "AW-WEB-BLOG",
+    "AW-WEB-PORTFOLIO",
+    "AW-WEB-PORTFOLIO-ADV",
+    "AW-WEB-RESA-EXT",
+    "AW-WEB-FORM-ADV",
+    "AW-WEB-ESPACE-MEMBRE",
+    "AW-ECOM-PROD-SIMPLE",
+    "AW-ECOM-PROD-VAR",
+    "AW-ECOM-IMPORT",
+    "AW-ECOM-MULTILINGUE",
+    "AW-ECOM-PAIEMENT-ADV",
+    "AW-ECOM-LIVRAISON-ADV"
+   ],
+   "tempsOctobre": {
+    "min": 30,
+    "median": 90,
+    "max": 180
+   },
+   "total": 90,
+   "taches": [
+    {
+     "id": "02e7f6e0-9a7e-4206-91fd-c8ec16f1845f",
+     "lot": "Démarrage",
+     "name": "Vérifier que l’option n’est pas déjà comprise dans la formule vendue",
+     "minutes": 15
+    },
+    {
+     "id": "cb1bb970-0c5e-44ec-bbe1-8788867a739e",
+     "lot": "Réalisation",
+     "name": "Si elle est hors périmètre, proposer un devis ou un pack d’heures et obtenir l’accord…",
+     "minutes": 15
+    },
+    {
+     "id": "fea88e7f-f6cb-46cf-8cde-a17bc0bfef71",
+     "lot": "Réalisation",
+     "name": "Recueillir les contenus, accès et informations nécessaires",
+     "minutes": 15
+    },
+    {
+     "id": "5e4df6da-1d5c-4b3c-96a7-566ffe3220a7",
+     "lot": "Réalisation",
+     "name": "Réaliser dans le style du site, puis tester sur ordinateur et sur mobile",
+     "minutes": 15
+    },
+    {
+     "id": "6ad85ef7-1927-4443-b57f-451997e9be6f",
+     "lot": "Corrections et validation",
+     "name": "Faire valider le résultat par le client, par écrit",
+     "minutes": 15
+    },
+    {
+     "id": "2fb86ad0-8598-4d07-88f5-7c22eb0f5308",
+     "lot": "Corrections et validation",
+     "name": "Tracer le temps passé et le livrable dans le dossier",
+     "minutes": 15
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Pack SEO",
+   "offres": [
+    "AW-SEO-AUDIT",
+    "AW-SEO-ESSENTIEL",
+    "AW-SEO-AVANCE",
+    "AW-SEO-PREMIUM"
+   ],
+   "tempsOctobre": {
+    "min": 270,
+    "median": 360,
+    "max": 1080
+   },
+   "total": 360,
+   "taches": [
+    {
+     "id": "c1e03b6b-849a-424b-a741-4f4911cfa3eb",
+     "lot": "Démarrage",
+     "name": "Demander uniquement les droits nécessaires (WordPress, Search Console, hébergement si…",
+     "minutes": 15
+    },
+    {
+     "id": "5216c17b-9aa4-45a6-ac80-e8e0d57daf69",
+     "lot": "Corrections et validation",
+     "name": "Proposer les URL et, selon l’offre, les concurrents à analyser, puis obtenir la…",
+     "minutes": 55
+    },
+    {
+     "id": "39abc529-e22e-4df4-bdab-caff942c9d6e",
+     "lot": "Corrections et validation",
+     "name": "Réaliser l’analyse et rédiger le rapport",
+     "minutes": 250
+    },
+    {
+     "id": "a3085abb-8296-4c08-a410-0e34bae8b145",
+     "lot": "Livraison",
+     "name": "Remettre le rapport officiellement",
+     "minutes": 20
+    },
+    {
+     "id": "0d8f6b29-8fbb-43bd-b768-8bc0195c8b8b",
+     "lot": "Livraison",
+     "name": "Rappeler au client qu’aucun classement, trafic ni vente n’est garanti",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Page supplémentaire",
+   "offres": [
+    "AW-WEB-PAGE-SUP"
+   ],
+   "tempsOctobre": {
+    "min": 105,
+    "median": 105,
+    "max": 105
+   },
+   "total": 105,
+   "taches": [
+    {
+     "id": "25c8b4e1-ec97-4550-8b49-14da05501534",
+     "lot": "Démarrage",
+     "name": "Vérifier le nombre de pages comprises dans la formule",
+     "minutes": 15
+    },
+    {
+     "id": "d8866fb3-6e4b-42f5-82b4-0e48de38c033",
+     "lot": "Réalisation",
+     "name": "Si elle est hors périmètre, proposer un devis ou un pack d’heures et obtenir l’accord…",
+     "minutes": 20
+    },
+    {
+     "id": "f4f300ce-2c21-48dc-a4bd-0bf755ab75d5",
+     "lot": "Réalisation",
+     "name": "Recueillir les contenus, accès et informations nécessaires",
+     "minutes": 20
+    },
+    {
+     "id": "9219861c-81b2-46a1-8a8a-5c40f268c4fa",
+     "lot": "Réalisation",
+     "name": "Réaliser dans le style du site, puis tester sur ordinateur et sur mobile",
+     "minutes": 20
+    },
+    {
+     "id": "77c6e1cc-4069-415e-ac62-34335d46a315",
+     "lot": "Corrections et validation",
+     "name": "Faire valider le résultat par le client, par écrit",
+     "minutes": 15
+    },
+    {
+     "id": "6c3c9f34-d0b9-431a-8e7d-6453d29cdaa6",
+     "lot": "Corrections et validation",
+     "name": "Tracer le temps passé et le livrable dans le dossier",
+     "minutes": 15
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Paiement simple",
+   "offres": [
+    "AW-WEB-PAIEMENT-SIMPLE"
+   ],
+   "tempsOctobre": {
+    "min": 90,
+    "median": 90,
+    "max": 90
+   },
+   "total": 90,
+   "taches": [
+    {
+     "id": "1edc5384-98c9-4542-b1a9-47dceea2e009",
+     "lot": "Démarrage",
+     "name": "Vérifier que le client a son propre compte de paiement",
+     "minutes": 15
+    },
+    {
+     "id": "382e5f05-e8d4-4d87-a3e6-846e9c5e48d1",
+     "lot": "Démarrage",
+     "name": "Recueillir les contenus, accès et informations nécessaires",
+     "minutes": 15
+    },
+    {
+     "id": "aab31da0-1693-4be8-8041-af160ebdc110",
+     "lot": "Réalisation",
+     "name": "Réaliser dans le style du site, puis tester sur ordinateur et sur mobile",
+     "minutes": 30
+    },
+    {
+     "id": "233dfcdb-65d8-45a5-997d-721b9ef98581",
+     "lot": "Corrections et validation",
+     "name": "Faire valider le résultat par le client, par écrit",
+     "minutes": 15
+    },
+    {
+     "id": "f7b2e54e-94be-4d41-b78b-7a36c9b82a98",
+     "lot": "Corrections et validation",
+     "name": "Tracer le temps passé et le livrable dans le dossier",
+     "minutes": 15
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Retouche photo",
+   "offres": [
+    "AW-PHOTO-RET-ESS",
+    "AW-PHOTO-RET-ADV",
+    "AW-PHOTO-DETOUR",
+    "AW-PHOTO-PACK10",
+    "AW-PHOTO-PACK30",
+    "AW-PHOTO-PACK60",
+    "AW-PHOTO-SUP"
+   ],
+   "tempsOctobre": {
+    "min": 10,
+    "median": 30,
+    "max": 600
+   },
+   "total": 85,
+   "taches": [
+    {
+     "id": "34604832-60eb-4523-bacf-b1aa07efa7cb",
+     "lot": "Démarrage",
+     "name": "Recevoir les fichiers d’origine, en bonne qualité",
+     "minutes": 15
+    },
+    {
+     "id": "f5b8ab42-74d4-4ed8-a5d2-18ea175ae62f",
+     "lot": "Démarrage",
+     "name": "Demander un échantillon avant de chiffrer un gros lot",
+     "minutes": 15
+    },
+    {
+     "id": "29f64afa-dc8d-46a9-b063-457b037d48f2",
+     "lot": "Réalisation",
+     "name": "Retoucher selon le niveau de l’offre (essentielle, avancée, détourage ou pack homogène)",
+     "minutes": 15
+    },
+    {
+     "id": "c6268cfe-a4ed-4914-ab7e-4452f00f8937",
+     "lot": "Livraison",
+     "name": "Livrer en JPEG ou PNG, sans fichiers de travail éditables",
+     "minutes": 20
+    },
+    {
+     "id": "01e9d087-31c6-4e4a-acda-742fc1d31d4a",
+     "lot": "Livraison",
+     "name": "Un cycle de corrections mineures, à demander sous 7 jours calendaires",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Référencement",
+   "offres": [
+    "AW-SEO-PERF",
+    "AW-SEO-LOCAL-ETAB",
+    "AW-SEO-PAGE-LOCAL",
+    "AW-SEO-NETLINKING",
+    "AW-SEO-DISCOVER"
+   ],
+   "tempsOctobre": {
+    "min": 120,
+    "median": 120,
+    "max": 180
+   },
+   "total": 120,
+   "taches": [
+    {
+     "id": "e8d53de0-d2da-4075-801c-21118cbddf8b",
+     "lot": "Démarrage",
+     "name": "Obtenir les accès nécessaires et vérifier le périmètre au devis",
+     "minutes": 15
+    },
+    {
+     "id": "40046afc-2061-48d3-bcd2-be451e7512a7",
+     "lot": "Réalisation",
+     "name": "Réaliser la prestation décrite dans la fiche",
+     "minutes": 65
+    },
+    {
+     "id": "17542067-d3f5-4abe-9c7e-a9729f4aa5cc",
+     "lot": "Livraison",
+     "name": "Remettre un compte rendu écrit",
+     "minutes": 20
+    },
+    {
+     "id": "ea75493e-941b-46cd-8439-4f1150e29988",
+     "lot": "Livraison",
+     "name": "Rappeler qu’aucun classement ni résultat n’est garanti",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · SEO local",
+   "offres": [
+    "AW-SEO-LOCAL"
+   ],
+   "tempsOctobre": {
+    "min": 300,
+    "median": 300,
+    "max": 300
+   },
+   "total": 300,
+   "taches": [
+    {
+     "id": "ca6f1de0-6671-46bc-a29c-8ba5d2634a89",
+     "lot": "Démarrage",
+     "name": "Vérifier si le client a déjà une fiche Google Business Profile et qui en est propriétaire",
+     "minutes": 15
+    },
+    {
+     "id": "ebc35b45-5a2d-4396-859d-d207b249716a",
+     "lot": "Démarrage",
+     "name": "Obtenir l’accès délégué et les justificatifs de vérification",
+     "minutes": 15
+    },
+    {
+     "id": "2dead448-c24a-4a97-a2ee-53a183858041",
+     "lot": "Réalisation",
+     "name": "Créer ou optimiser la fiche",
+     "minutes": 125
+    },
+    {
+     "id": "28c69fea-a95e-4cce-b1af-261151c76fe9",
+     "lot": "Réalisation",
+     "name": "Optimiser une page locale du site, puis contrôler l’indexation",
+     "minutes": 125
+    },
+    {
+     "id": "93349ca7-ae5c-443e-9630-72ef024f27c9",
+     "lot": "Livraison",
+     "name": "Remettre un mini bilan",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Shooting photo",
+   "offres": [
+    "AW-PHOTO-SHOOT-ESS",
+    "AW-PHOTO-SHOOT-ACT",
+    "AW-PHOTO-SHOOT-CPLX"
+   ],
+   "tempsOctobre": {
+    "min": 120,
+    "median": 240,
+    "max": 420
+   },
+   "total": 240,
+   "taches": [
+    {
+     "id": "f2b14cb2-56c9-4853-ace5-0d116c9800bf",
+     "lot": "Démarrage",
+     "name": "Faire le brief",
+     "minutes": 15
+    },
+    {
+     "id": "1cc81347-e06e-4313-8039-842779b61a26",
+     "lot": "Démarrage",
+     "name": "Vérifier le lieu",
+     "minutes": 15
+    },
+    {
+     "id": "e1dac54d-5ecd-4370-98a4-a9366e2619a2",
+     "lot": "Réalisation",
+     "name": "Fixer la date, puis réaliser la séance dans la durée prévue par l’offre",
+     "minutes": 85
+    },
+    {
+     "id": "b93f7b99-546e-4e4e-a82f-181fef6c69a5",
+     "lot": "Réalisation",
+     "name": "Sélectionner et retoucher les photos prévues (retouches essentielles)",
+     "minutes": 85
+    },
+    {
+     "id": "cba550f9-3514-438f-a36e-8762e93b511e",
+     "lot": "Livraison",
+     "name": "Livrer les photos finalisées en JPEG haute résolution et en versions web",
+     "minutes": 20
+    },
+    {
+     "id": "ba818323-3398-4c4e-8bad-4beb586a7692",
+     "lot": "Livraison",
+     "name": "Préciser par écrit les droits d’utilisation",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Site de mariage",
+   "offres": [
+    "AW-MARIAGE-ESS",
+    "AW-MARIAGE-GRAND",
+    "AW-MARIAGE-HISTOIRE"
+   ],
+   "tempsOctobre": {
+    "min": 630,
+    "median": 1020,
+    "max": 1380
+   },
+   "total": 1020,
+   "taches": [
+    {
+     "id": "14aef8d0-17de-4c30-a2ce-06007804bcb1",
+     "lot": "Démarrage",
+     "name": "Recueillir les informations",
+     "minutes": 15
+    },
+    {
+     "id": "5b343c32-39ec-473b-ac36-dea66a489e05",
+     "lot": "Réalisation",
+     "name": "Réaliser le site selon la formule, avec un RSVP simple",
+     "minutes": 790
+    },
+    {
+     "id": "2ea868e3-a3ad-4726-befe-7426f42878ed",
+     "lot": "Corrections et validation",
+     "name": "Appliquer les cycles de corrections de la formule, puis faire valider par écrit",
+     "minutes": 155
+    },
+    {
+     "id": "0723501d-4964-4cfa-aa65-f62e9e2d7674",
+     "lot": "Livraison",
+     "name": "Mettre en ligne et remettre les accès",
+     "minutes": 20
+    },
+    {
+     "id": "55084ca7-2f04-4101-b87d-453a5d4e42ed",
+     "lot": "Livraison",
+     "name": "Après le mariage (formule Histoire)",
+     "minutes": 20
+    },
+    {
+     "id": "864cf7b8-7054-411f-8e83-9a5b9700881c",
+     "lot": "Livraison",
+     "name": "À la fin de la période incluse",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Site vitrine bilingue",
+   "offres": [
+    "AW-WEB-BILINGUE"
+   ],
+   "tempsOctobre": {
+    "min": 360,
+    "median": 360,
+    "max": 360
+   },
+   "total": 355,
+   "taches": [
+    {
+     "id": "0b3a4870-9a1a-4d11-81f3-307642c49efc",
+     "lot": "Démarrage",
+     "name": "Rappeler que les traductions sont fournies par le client et que l’offre porte sur 5…",
+     "minutes": 15
+    },
+    {
+     "id": "9c616d2f-49dd-4274-8dcf-148f2838d2e5",
+     "lot": "Démarrage",
+     "name": "Recueillir les contenus, accès et informations nécessaires",
+     "minutes": 15
+    },
+    {
+     "id": "0a0b7e00-82da-45ce-b0c2-aee2c310fc39",
+     "lot": "Réalisation",
+     "name": "Réaliser dans le style du site, puis tester sur ordinateur et sur mobile",
+     "minutes": 275
+    },
+    {
+     "id": "7ac5f4c3-fb10-43d0-a166-52e110e44d45",
+     "lot": "Corrections et validation",
+     "name": "Faire valider le résultat par le client, par écrit",
+     "minutes": 25
+    },
+    {
+     "id": "8a71f53c-0e78-422c-a607-9be7a275d3e7",
+     "lot": "Corrections et validation",
+     "name": "Tracer le temps passé et le livrable dans le dossier",
+     "minutes": 25
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Statistiques",
+   "offres": [
+    "AW-DATA-GTM",
+    "AW-DATA-DASH",
+    "AW-DATA-ANALYSE"
+   ],
+   "tempsOctobre": {
+    "min": 120,
+    "median": 180,
+    "max": 210
+   },
+   "total": 180,
+   "taches": [
+    {
+     "id": "131e7e79-106a-4a52-ae74-f73682aa4a21",
+     "lot": "Démarrage",
+     "name": "Obtenir les accès et vérifier les comptes existants",
+     "minutes": 15
+    },
+    {
+     "id": "37897479-de17-4769-8d9a-e573dc91f117",
+     "lot": "Réalisation",
+     "name": "Réaliser la prestation décrite dans la fiche, puis tester",
+     "minutes": 125
+    },
+    {
+     "id": "d6a124a9-a104-4738-8dcf-0650a67e6520",
+     "lot": "Livraison",
+     "name": "Remettre un compte rendu et les accès au client",
+     "minutes": 20
+    },
+    {
+     "id": "7eb5fe5b-6c72-4b1a-9d45-7d1bfbbfc4f5",
+     "lot": "Livraison",
+     "name": "Rappeler que la mesure dépend du consentement aux cookies",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Vitrine Business",
+   "offres": [
+    "AW-WEB-BUSINESS"
+   ],
+   "tempsOctobre": {
+    "min": 2130,
+    "median": 2130,
+    "max": 2130
+   },
+   "total": 2125,
+   "taches": [
+    {
+     "id": "31398470-0faf-4644-8880-504501593bd3",
+     "lot": "Démarrage",
+     "name": "Vérifier dans Abby l’encaissement de l’acompte de 40 %",
+     "minutes": 5
+    },
+    {
+     "id": "9e2bcc90-1a51-4c42-a32c-3f72d8e0db66",
+     "lot": "Démarrage",
+     "name": "Contrôler avant de démarrer",
+     "minutes": 15
+    },
+    {
+     "id": "aef04180-09b4-4242-b02c-8150d1a93a60",
+     "lot": "Corrections et validation",
+     "name": "Livrer la maquette et demander un retour sous 10 jours ouvrés (à titre indicatif)",
+     "minutes": 105
+    },
+    {
+     "id": "94625247-f064-45ed-9eba-e60785b00981",
+     "lot": "Corrections et validation",
+     "name": "Premier cycle de corrections après la maquette",
+     "minutes": 105
+    },
+    {
+     "id": "26a839f0-8d9e-41d4-a840-8e4529cd53b7",
+     "lot": "Corrections et validation",
+     "name": "Réaliser le site avec la rédaction de 3 pages sur brief, les avis Google standards, GA4…",
+     "minutes": 1745
+    },
+    {
+     "id": "95396976-e842-4256-ab93-71c39a30b75e",
+     "lot": "Corrections et validation",
+     "name": "Second cycle de corrections avant la livraison",
+     "minutes": 105
+    },
+    {
+     "id": "59b36f99-3fa1-4f66-a2ce-e00e18f41fc7",
+     "lot": "Corrections et validation",
+     "name": "Vérifier dans Abby l’encaissement : le solde de 60 % avant la mise en ligne.",
+     "minutes": 5
+    },
+    {
+     "id": "b029a9fa-e6b3-48c6-8f7f-f4ce63745e9e",
+     "lot": "Livraison",
+     "name": "Livraison officielle constatée par écrit (signature ou e-mail explicite), avec la…",
+     "minutes": 20
+    },
+    {
+     "id": "cbc5e000-da91-451b-acbe-8fe3b409527f",
+     "lot": "Livraison",
+     "name": "À la livraison",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · Vitrine Visibilité",
+   "offres": [
+    "AW-WEB-VISIBILITE"
+   ],
+   "tempsOctobre": {
+    "min": 2520,
+    "median": 2520,
+    "max": 2520
+   },
+   "total": 2515,
+   "taches": [
+    {
+     "id": "e7391132-8b71-41e1-ac59-214ce4b8eb27",
+     "lot": "Démarrage",
+     "name": "Vérifier dans Abby l’encaissement de l’acompte de 40 %",
+     "minutes": 5
+    },
+    {
+     "id": "e150ce53-b03a-4f82-b4b9-1b19fb149d51",
+     "lot": "Démarrage",
+     "name": "Contrôler avant de démarrer",
+     "minutes": 15
+    },
+    {
+     "id": "40ec68ff-03bd-4a4c-8b05-fc3322568093",
+     "lot": "Corrections et validation",
+     "name": "Livrer la maquette et demander un retour sous 10 jours ouvrés (à titre indicatif)",
+     "minutes": 125
+    },
+    {
+     "id": "f9e86ec7-2df0-4e69-938f-7b9ecc746a09",
+     "lot": "Corrections et validation",
+     "name": "Premier cycle de corrections après la maquette",
+     "minutes": 125
+    },
+    {
+     "id": "0fb3ab21-dfe6-4657-a6b0-1677a63f57fa",
+     "lot": "Corrections et validation",
+     "name": "Réaliser le site comme Business, avec en plus le blog technique et un article SEO publié",
+     "minutes": 2075
+    },
+    {
+     "id": "22319d13-561e-42b2-bc4b-2fb96aa04a65",
+     "lot": "Corrections et validation",
+     "name": "Second cycle de corrections avant la livraison",
+     "minutes": 125
+    },
+    {
+     "id": "243091f0-a4de-42c7-bed9-277c1546b50c",
+     "lot": "Corrections et validation",
+     "name": "Vérifier dans Abby l’encaissement : le solde de 60 % avant la mise en ligne.",
+     "minutes": 5
+    },
+    {
+     "id": "ced824a0-a241-480c-bfc5-3162505e880a",
+     "lot": "Livraison",
+     "name": "Livraison officielle constatée par écrit (signature ou e-mail explicite), avec la…",
+     "minutes": 20
+    },
+    {
+     "id": "ad8bd5ca-bf3d-43fd-99fd-29f5a883965f",
+     "lot": "Livraison",
+     "name": "À la livraison",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · WooCommerce Business",
+   "offres": [
+    "AW-ECOM-BUSINESS"
+   ],
+   "tempsOctobre": {
+    "min": 2820,
+    "median": 2820,
+    "max": 2820
+   },
+   "total": 2815,
+   "taches": [
+    {
+     "id": "6db048c6-6600-4c98-abe8-9797e62dd12a",
+     "lot": "Démarrage",
+     "name": "Vérifier dans Abby l’encaissement de l’acompte de 30 %",
+     "minutes": 5
+    },
+    {
+     "id": "2b1e9039-f89a-4df0-ade5-ed410d408d21",
+     "lot": "Démarrage",
+     "name": "Contrôler avant de démarrer",
+     "minutes": 15
+    },
+    {
+     "id": "9fbfeee4-d7b3-47f2-bde0-53abe1e75c7d",
+     "lot": "Corrections et validation",
+     "name": "Livrer la maquette et demander un retour sous 10 jours ouvrés",
+     "minutes": 210
+    },
+    {
+     "id": "8ed94e53-f671-488b-a31d-348a2620e663",
+     "lot": "Corrections et validation",
+     "name": "Vérifier dans Abby l’encaissement : 40 % à la validation du design, puis premier cycle de corrections.",
+     "minutes": 5
+    },
+    {
+     "id": "65643431-91b1-4e4a-ae57-a6af1eeadac0",
+     "lot": "Corrections et validation",
+     "name": "Réaliser la boutique avec 25 produits simples au total, l’intégration newsletter…",
+     "minutes": 2325
+    },
+    {
+     "id": "bd255961-d15b-46ee-b301-1b1328e3c913",
+     "lot": "Corrections et validation",
+     "name": "Tester les paiements et les livraisons, puis second cycle de corrections avant la…",
+     "minutes": 210
+    },
+    {
+     "id": "e5f160be-4cfb-4011-822c-ce30b20d24b4",
+     "lot": "Corrections et validation",
+     "name": "Vérifier dans Abby l’encaissement : le solde de 30 % avant la mise en ligne.",
+     "minutes": 5
+    },
+    {
+     "id": "aeb08164-82c5-4771-a0f1-03468c0713fb",
+     "lot": "Livraison",
+     "name": "Livraison officielle constatée par écrit, formation de 2 h, remise des accès",
+     "minutes": 20
+    },
+    {
+     "id": "c4688f90-0598-4fa6-bc3c-46d503251bde",
+     "lot": "Livraison",
+     "name": "Rappeler que la gestion quotidienne (commandes, stocks, remboursements) revient au…",
+     "minutes": 20
+    }
+   ]
+  },
+  {
+   "modele": "Référentiel · WooCommerce Visibilité",
+   "offres": [
+    "AW-ECOM-VISIBILITE"
+   ],
+   "tempsOctobre": {
+    "min": 3360,
+    "median": 3360,
+    "max": 3360
+   },
+   "total": 3355,
+   "taches": [
+    {
+     "id": "64040dcf-e54d-448e-b614-a19d4a78bcf1",
+     "lot": "Démarrage",
+     "name": "Vérifier dans Abby l’encaissement de l’acompte de 30 %",
+     "minutes": 5
+    },
+    {
+     "id": "11260caf-229e-422f-a7bb-3ebaf75ddb00",
+     "lot": "Démarrage",
+     "name": "Contrôler avant de démarrer",
+     "minutes": 15
+    },
+    {
+     "id": "b7c97ca6-4754-4f30-ac8b-eb4f7f41a283",
+     "lot": "Corrections et validation",
+     "name": "Livrer la maquette et demander un retour sous 10 jours ouvrés",
+     "minutes": 250
+    },
+    {
+     "id": "6185b0b0-c175-4060-a44a-80043aa8ed5d",
+     "lot": "Corrections et validation",
+     "name": "Vérifier dans Abby l’encaissement : 40 % à la validation du design, puis premier cycle de corrections.",
+     "minutes": 5
+    },
+    {
+     "id": "5f6fb7a4-c73f-4636-8ebb-52a83150fd0e",
+     "lot": "Corrections et validation",
+     "name": "Réaliser la boutique comme Business, avec en plus le blog technique, un article SEO…",
+     "minutes": 2785
+    },
+    {
+     "id": "8c43ffe3-e835-4f58-9c1f-b12b63962631",
+     "lot": "Corrections et validation",
+     "name": "Tester les paiements et les livraisons, puis second cycle de corrections avant la…",
+     "minutes": 250
+    },
+    {
+     "id": "ec07a7f0-87aa-4b96-9263-86d4784ffb28",
+     "lot": "Corrections et validation",
+     "name": "Vérifier dans Abby l’encaissement : le solde de 30 % avant la mise en ligne.",
+     "minutes": 5
+    },
+    {
+     "id": "f7e61436-bd24-4779-a2fb-638a05d194ca",
+     "lot": "Livraison",
+     "name": "Livraison officielle constatée par écrit, formation de 2 h, remise des accès",
+     "minutes": 20
+    },
+    {
+     "id": "380cc182-ef0e-46d5-b917-6397b1246168",
+     "lot": "Livraison",
+     "name": "Rappeler que la gestion quotidienne (commandes, stocks, remboursements) revient au…",
+     "minutes": 20
+    }
+   ]
+  }
+ ]
+}

@@ -119,6 +119,26 @@ describe('applyReferentialTemplates : écriture vérifiée', () => {
     expect(both.filter(n => n === 'Réalisation')).toHaveLength(1);
   });
 
+  it('devis mixte (décision de Carlos du 17/11/2026) : l’offre qui porte un site porte le projet, les autres y ajoutent leurs tâches', () => {
+    applyReferentialTemplates(db, f.projects, offers, planReferentialTemplates(db, offers).planSha256);
+    const prospectId = f.createQuote().prospectId!;
+    const quote = f.quotes.create({prospectId, subject: 'TEST devis mixte'});
+    f.quotes.addCatalogLine(quote.id, f.offer.currentVersion!.id);
+    f.quotes.addCatalogLine(quote.id, f.catalog.list({status: 'active'}).find(i => i.canonicalCode === 'AW-LP-BASE')!.currentVersion!.id);
+    const project = f.projects.commercial.prepare({quoteId: quote.id});
+    const names = db.all<{name: string}>('SELECT name FROM project_nodes WHERE project_id=?', [project.id]).map(n => n.name);
+    expect(names).toContain('Accueil');
+    expect(names).toContain('Réaliser la page et la tester sur mobile');
+    expect(f.sites.list(project.id)).toHaveLength(1);
+  });
+
+  it('devis mixte sans site : la première ligne porte le projet, la seconde y ajoute ses tâches', () => {
+    applyReferentialTemplates(db, f.projects, offers, planReferentialTemplates(db, offers).planSha256);
+    const names = (() => { const q = quoteWith('AW-LP-BASE', 'V39-NL-PONCT-SIMPLE'); const p = f.projects.commercial.prepare({quoteId: q.id}); return db.all<{name: string}>('SELECT name FROM project_nodes WHERE project_id=?', [p.id]).map(n => n.name); })();
+    expect(names).toContain('Réaliser la page et la tester sur mobile');
+    expect(names).toContain('Rédiger et envoyer la newsletter');
+  });
+
   it('une option vendue sans base est refusée par l’aperçu, sans écriture', () => {
     applyReferentialTemplates(db, f.projects, offers, planReferentialTemplates(db, offers).planSha256);
     const quote = quoteWith('AW-LP-SECTION');

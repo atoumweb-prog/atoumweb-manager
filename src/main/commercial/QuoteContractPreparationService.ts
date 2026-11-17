@@ -1,6 +1,7 @@
 import {resolveContractFields,hasUnresolvedContractFields} from '../../shared/contractFields';
 import { adminChecklistLabel, GDPR_QUOTE_LINE, involvesPersonalData } from '../../shared/companyAdministration';
 import {quotePaymentSchedule} from '../../shared/quotePaymentSchedule';
+import { offPremisesPaymentIssue, withOffPremisesPaymentDelay } from '../../shared/offPremisesRules';
 import { activePreparation, contractHash } from './quoteTransmission';
 import {draftFingerprint} from '../../shared/draftSection';
 import { deriveQuoteContractDefaults } from '../../shared/quoteContractDefaults';
@@ -64,6 +65,8 @@ export class QuoteContractPreparationService {
     const stored=this.parameters(id),paymentKey=(x:QuoteContractParameters|null)=>JSON.stringify(x?[x.payment.preset,x.payment.milestones,x.payment.lineSchedules??null]:null);
     // F71b : un échéancier changé à la main (facilité de paiement) n'est plus recalculé par la règle.
     if(stored&&paymentKey(stored)!==paymentKey(parameters))parameters={...parameters,payment:{...parameters.payment,origin:'manual'}};
+    // Hors établissement (17/11/2026) : un échéancier posé par la règle décale le paiement à la commande au 8e jour après la signature.
+    if(parameters.payment.origin==='rule')parameters={...parameters,payment:{...parameters.payment,milestones:withOffPremisesPaymentDelay(parameters.payment.milestones,parameters.conclusion.channel)}};
     this.validate(parameters);
     const first = parameters.payment.milestones[0]?.percent ?? null;
     const paymentLines=this.paymentLines(id),total=Number(this.quote(id).contract_value_cents);
@@ -210,10 +213,12 @@ export class QuoteContractPreparationService {
     }
     const off=p.conclusion.channel==='off_premises';
     if (off) {
-      check(p.conclusion.offPremisesControlsVerified,'OFF_PREMISES','Parcours hors établissement à vérifier : informations, preuves, perception des sommes');
+      check(p.conclusion.offPremisesControlsVerified,'OFF_PREMISES','Parcours hors établissement à vérifier : formulaire de rétractation remis, demande expresse de démarrage anticipé recueillie sur papier ou support durable (art. L. 221-25), aucun paiement avant le 8e jour après la signature (art. L. 221-10)');
       if(p.audience==='professional')check(p.conclusion.professionalConsumerRegime!=='unknown','PRO_CONSUMER_REGIME','Applicabilité du régime hors établissement au professionnel à déterminer');
     }
     const consumer=p.audience==='consumer'||off&&p.conclusion.professionalConsumerRegime==='applicable';
+    const offPremisesPayment=offPremisesPaymentIssue(p.payment.milestones,p.conclusion.channel,consumer);
+    if(offPremisesPayment)check(false,'OFF_PREMISES_PAYMENT',offPremisesPayment);
     if (consumer) {
       check(p.consumer.informationDelivered,'CONSUMER_INFORMATION','Informations précontractuelles à remettre et tracer');
       if(p.audience==='consumer')check(admin.mediator.state==='filled'&&present(admin.mediator.value),'MEDIATOR','Médiateur effectivement compétent à renseigner');

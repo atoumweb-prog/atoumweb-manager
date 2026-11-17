@@ -1,5 +1,16 @@
 # AtoumWeb Manager — Suivi du projet
 
+## 17/11/2026 : devis mixte, durées, ventes hors établissement (commit local, préproduction : application mise à jour, données à venir)
+
+- [x] **Application de la préproduction remplacée** (accord de Carlos « point 1 ok ») par la version du commit `967f7591` ; ancienne conservée dans `Application-precedente-20261117-avant-refonte`.
+- [x] **Fiche** `docs/refonte/plans/2026-11-17-durees-offres-particuliers-design.md` validée (réponses section 6).
+- [x] **Devis mixte** (régression des modèles du 16/11, vue sur copie : « site vitrine + logo » refusé) : un seul projet par devis ; la base qui déclare un site porte le projet, les autres bases sans site deviennent des compléments ; deux bases avec site restent refusées (`ProjectBlueprintCompositionService`, 2 tests ; 58 tests de composition verts).
+- [x] **Durées** : `ProjectService.setTemplateNodeMinutes` (brouillon seulement), service `ReferentialTemplateDurations` (nouvelle version, liens déplacés, projets existants inchangés ; 4 tests), données `data/projects/durees-modeles-referentiel-v1.json` (temps d'octobre) ; routines des newsletters récurrentes et de la gestion de domaine dans `data/operations/atoumweb-suivi-apres-vente-v1.json`.
+- [x] **Hors établissement** : `shared/offPremisesRules.ts` (5 tests) ; échéancier de règle décalé au 8e jour ; échéancier manuel bloquant (`OFF_PREMISES_PAYMENT`) ; contrôle détaillé.
+- **Décisions** : 3 options « délai accéléré » : décision du 11/11 conservée ; 10 offres gardées.
+- **Preuves** : typecheck propre ; suite **342 fichiers, 2 829 tests**. **Autocontrôle de l'auteur.**
+- Prochaine action : simulation puis application des durées et des routines en préproduction ; recettes F85 et devis depuis la fiche prospect ; nouvelle construction de l'application.
+
 ## 17/11/2026 : finitions F64, F65 et F76 (commit local)
 
 - [x] **F64** : un « Réessayer » réussi ferme l'avis d'erreur de la page qui montrait la même erreur (`DataTable` signale le rétablissement, `App.tsx` l'écoute ; `noticeClearedByRecovery`, test `ui/f64NoticeRecovery.test.ts`).

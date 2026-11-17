@@ -986,16 +986,16 @@
     "recurrence": "Mensuel",
     "trigger": "Activation après acceptation",
     "creditMinutes": 0,
-    "referenceMinutes": 0,
+    "referenceMinutes": 120,
     "sourceRow": 0,
-    "notes": "Proposition du 16/11/2026, durées à compléter",
+    "notes": "Proposition du 16/11/2026, durées proposées le 17/11/2026 (Carlos : « propose-moi »)",
     "actions": [
      {
       "key": "AW-NL-REC1-M-A01",
       "phase": "Suivi",
       "name": "Préparer la newsletter et obtenir le BAT écrit",
       "checklist": "",
-      "minutes": 0,
+      "minutes": 90,
       "category": "Inclus au forfait",
       "required": true,
       "sourceRow": 0
@@ -1005,7 +1005,7 @@
       "phase": "Suivi",
       "name": "Envoyer la newsletter",
       "checklist": "",
-      "minutes": 0,
+      "minutes": 15,
       "category": "Inclus au forfait",
       "required": true,
       "sourceRow": 0
@@ -1015,7 +1015,7 @@
       "phase": "Suivi",
       "name": "Suivre les envois",
       "checklist": "",
-      "minutes": 0,
+      "minutes": 15,
       "category": "Inclus au forfait",
       "required": true,
       "sourceRow": 0
@@ -1033,16 +1033,16 @@
     "recurrence": "Mensuel, facturé à l’année",
     "trigger": "Activation après acceptation",
     "creditMinutes": 0,
-    "referenceMinutes": 0,
+    "referenceMinutes": 120,
     "sourceRow": 0,
-    "notes": "Proposition du 16/11/2026, durées à compléter",
+    "notes": "Proposition du 16/11/2026, durées proposées le 17/11/2026 (Carlos : « propose-moi »)",
     "actions": [
      {
       "key": "AW-NL-REC1-A-A01",
       "phase": "Suivi",
       "name": "Préparer la newsletter et obtenir le BAT écrit",
       "checklist": "",
-      "minutes": 0,
+      "minutes": 90,
       "category": "Inclus au forfait",
       "required": true,
       "sourceRow": 0
@@ -1052,7 +1052,7 @@
       "phase": "Suivi",
       "name": "Envoyer la newsletter",
       "checklist": "",
-      "minutes": 0,
+      "minutes": 15,
       "category": "Inclus au forfait",
       "required": true,
       "sourceRow": 0
@@ -1062,7 +1062,7 @@
       "phase": "Suivi",
       "name": "Suivre les envois",
       "checklist": "",
-      "minutes": 0,
+      "minutes": 15,
       "category": "Inclus au forfait",
       "required": true,
       "sourceRow": 0
@@ -1080,16 +1080,16 @@
     "recurrence": "Mensuel",
     "trigger": "Activation après acceptation",
     "creditMinutes": 0,
-    "referenceMinutes": 0,
+    "referenceMinutes": 240,
     "sourceRow": 0,
-    "notes": "Proposition du 16/11/2026, durées à compléter",
+    "notes": "Proposition du 16/11/2026, durées proposées le 17/11/2026 (Carlos : « propose-moi »)",
     "actions": [
      {
       "key": "AW-NL-REC2-M-A01",
       "phase": "Suivi",
       "name": "Préparer les newsletters et obtenir les BAT écrits",
       "checklist": "",
-      "minutes": 0,
+      "minutes": 180,
       "category": "Inclus au forfait",
       "required": true,
       "sourceRow": 0
@@ -1099,7 +1099,7 @@
       "phase": "Suivi",
       "name": "Envoyer les newsletters",
       "checklist": "",
-      "minutes": 0,
+      "minutes": 30,
       "category": "Inclus au forfait",
       "required": true,
       "sourceRow": 0
@@ -1109,7 +1109,7 @@
       "phase": "Suivi",
       "name": "Suivre les envois",
       "checklist": "",
-      "minutes": 0,
+      "minutes": 30,
       "category": "Inclus au forfait",
       "required": true,
       "sourceRow": 0
@@ -1127,16 +1127,16 @@
     "recurrence": "Mensuel, facturé à l’année",
     "trigger": "Activation après acceptation",
     "creditMinutes": 0,
-    "referenceMinutes": 0,
+    "referenceMinutes": 240,
     "sourceRow": 0,
-    "notes": "Proposition du 16/11/2026, durées à compléter",
+    "notes": "Proposition du 16/11/2026, durées proposées le 17/11/2026 (Carlos : « propose-moi »)",
     "actions": [
      {
       "key": "AW-NL-REC2-A-A01",
       "phase": "Suivi",
       "name": "Préparer les newsletters et obtenir les BAT écrits",
       "checklist": "",
-      "minutes": 0,
+      "minutes": 180,
       "category": "Inclus au forfait",
       "required": true,
       "sourceRow": 0
@@ -1146,7 +1146,7 @@
       "phase": "Suivi",
       "name": "Envoyer les newsletters",
       "checklist": "",
-      "minutes": 0,
+      "minutes": 30,
       "category": "Inclus au forfait",
       "required": true,
       "sourceRow": 0
@@ -1156,7 +1156,7 @@
       "phase": "Suivi",
       "name": "Suivre les envois",
       "checklist": "",
-      "minutes": 0,
+      "minutes": 30,
       "category": "Inclus au forfait",
       "required": true,
       "sourceRow": 0
@@ -1211,16 +1211,16 @@
     "recurrence": "Annuel",
     "trigger": "Activation après acceptation",
     "creditMinutes": 0,
-    "referenceMinutes": 0,
+    "referenceMinutes": 20,
     "sourceRow": 0,
-    "notes": "Proposition du 16/11/2026, durées à compléter",
+    "notes": "Proposition du 16/11/2026, durées proposées le 17/11/2026 (Carlos : « propose-moi »)",
     "actions": [
      {
       "key": "AW-HOST-DOMAINE-A01",
       "phase": "Suivi",
       "name": "Suivre l’échéance du domaine",
       "checklist": "",
-      "minutes": 0,
+      "minutes": 10,
       "category": "Inclus au forfait",
       "required": true,
       "sourceRow": 0
@@ -1230,7 +1230,7 @@
       "phase": "Suivi",
       "name": "Demander l’accord exprès avant tout renouvellement",
       "checklist": "",
-      "minutes": 0,
+      "minutes": 10,
       "category": "Inclus au forfait",
       "required": true,
       "sourceRow": 0
