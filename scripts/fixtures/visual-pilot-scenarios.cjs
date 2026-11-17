@@ -15,7 +15,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,select,test,sleep,saveS
  await js('window.dispatchEvent(new Event("atoumweb:changed"))');
  for(const [theme,name] of [['atoumweb','AtoumWeb'],['noir','Noir'],['blanc','Blanc']])for(const[density,label,font,height]of[['compact','Compact',14,36],['comfort','Confort',16,42],['comfort_plus','Confort +',18,48]]){
   await select(theme,name,density,label,font,height);await navigate('Prospection');
-  await text('.prospect-view-switch button','Annuaire prospects');
+  await text('.prospect-view-switch button','Liste');
   await wait('document.querySelectorAll(".prospects-v2 tbody tr").length>=4','four synthetic prospects');
   if(!before){
    test(await get('!document.querySelector(".aw-configured-table [role=alert]")'),'Real preferences readable '+theme+'/'+density);
@@ -53,7 +53,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,select,test,sleep,saveS
   dialog.showMessageBoxSync=(...args)=>{confirmations.push(args.at(-1));return answers.shift()??0;};
   const input=async(selector,value)=>{await js(`const e=document.querySelector(${JSON.stringify(selector)});Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}))`);await sleep(90);};
   try{
-   await text('.prospect-view-switch button','Annuaire prospects');
+   await text('.prospect-view-switch button','Liste');
    await click('.prospects-v2 tbody tr');
    await js('window.__pilotQuick=document.querySelector(".prospect-detail-v2");window.__pilotTimer=document.querySelector(".global-timer")');
    await text('.prospect-directory-toolbar button','Ajouter une entreprise');

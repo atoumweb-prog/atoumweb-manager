@@ -1,7 +1,14 @@
+import { KeyFigures } from '../ui/KeyFigures';
+import { ListToolbar } from '../ui/ListToolbar';
+import { plural } from '../../shared/projectTabs';
+import { filterByProject, type OperationsProjectFilter } from '../../shared/operationsProjectFilter';
+import { compactListEmptyText, operationsEmptyText } from '../../shared/gestionEmpty';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {hasActiveFilters} from '../ui/tableEmpty';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import {requestUnsavedExit,useUnsavedDraft} from '../unsaved/unsaved';
 import {useDraftSection} from '../unsaved/useDraftSection';
+import {usePageConfirm} from '../ui/usePageConfirm';
 import {InterventionEditor,InterventionExtraFields} from '../workflow/InterventionFields';
 import type {InterventionInput} from '../../shared/operations';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -30,29 +37,13 @@ import { MaintenancePanel } from './MaintenancePanel';
 import { OperationsAlertsPanel } from './OperationsAlertsPanel';
 import { InterventionBackupPanel } from './InterventionBackupPanel';
 import { OperationIcon } from './OperationIcon';
+import { COVERAGE_LABELS, INTERVENTION_STATUS_LABELS, INTERVENTION_TYPE_LABELS, PRIORITY_LABELS, REQUEST_STATUS_LABELS, SOURCE_LABELS } from '../../shared/operationLabels';
 
 type OperationsView = 'requests' | 'interventions' | 'maintenance' | 'packs';
 export type OperationsSearchTarget = {
   entityType: Extract<SearchResult['entityType'], 'service_request' | 'intervention' | 'maintenance' | 'hour_pack'>;
   entityId: string;
   focus?: 'conclusion';
-};
-
-const REQUEST_STATUS_LABELS: Record<ServiceRequestStatus, string> = {
-  new: 'Nouveau', to_qualify: 'À qualifier', waiting_client: 'En attente client', planned: 'Planifié', converted: 'Transformé', closed: 'Clos sans intervention', archived: 'Archivé',
-};
-const SOURCE_LABELS: Record<ServiceRequestSource, string> = {
-  email: 'Email', phone: 'Téléphone', website_form: 'Formulaire site', message: 'Message', meeting: 'Réunion', atoumweb_detection: 'Détection AtoumWeb', other: 'Autre',
-};
-const PRIORITY_LABELS: Record<ServiceRequestPriority, string> = { low: 'Basse', normal: 'Normale', high: 'Haute', urgent: 'Urgente' };
-const INTERVENTION_TYPE_LABELS: Record<InterventionType, string> = {
-  correction: 'Correction', modification: 'Modification', addition: 'Ajout', maintenance: 'Maintenance', incident: 'Incident', support: 'Support', training: 'Formation', other: 'Autre',
-};
-const INTERVENTION_STATUS_LABELS: Record<InterventionStatus, string> = {
-  to_plan: 'À planifier', planned: 'Planifiée', in_progress: 'En cours', waiting_client: 'En attente client', blocked: 'Bloquée', to_validate: 'À valider', completed: 'Terminée', cancelled: 'Annulée', archived: 'Archivée',
-};
-const COVERAGE_LABELS: Record<InterventionCoverageMode, string> = {
-  maintenance: 'Inclus maintenance', hour_pack: 'Déduit pack d’heures', out_of_scope: 'Hors forfait facturable', commercial_gesture: 'Geste commercial', included_project: 'Inclus projet', internal: 'Interne AtoumWeb',
 };
 
 function money(cents?: number): string { return `${((cents ?? 0) / 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`; }
@@ -73,8 +64,9 @@ function projectNodeLabel(node: ProjectNode): string {
   return `${kind} · ${node.name}`;
 }
 
-export function OperationsPage({ onEntityReady, onMessage, initialTarget, initialRequest }: { onMessage: (message: string) => void; initialTarget?: OperationsSearchTarget | null;initialRequest?:number;onEntityReady?:EntityReady }) {
+export function OperationsPage({ onEntityReady, onMessage, initialTarget, initialRequest, projectFilter, onClearProjectFilter }: { onMessage: (message: string) => void; initialTarget?: OperationsSearchTarget | null;initialRequest?:number;onEntityReady?:EntityReady;projectFilter?: OperationsProjectFilter | null;onClearProjectFilter?: () => void }) {
   const [view, setView] = useState<OperationsView>('requests');
+  const {dialog: confirmDialog, askConfirm} = usePageConfirm();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
@@ -282,21 +274,24 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
 
   const filteredRequests = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('fr-FR');
-    return requests.filter((request) => {
+    return filterByProject(requests, projectFilter?.projectId).filter((request) => {
       if (requestStatus !== 'all' && request.status !== requestStatus) return false;
       if (!needle) return true;
       return [request.subject, request.description ?? '', request.clientLabel, request.projectLabel ?? ''].some((value) => value.toLocaleLowerCase('fr-FR').includes(needle));
     });
-  }, [requests, query, requestStatus]);
+  }, [requests, query, requestStatus, projectFilter?.projectId]);
 
   const filteredInterventions = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('fr-FR');
-    return interventions.filter((intervention) => {
+    return filterByProject(interventions, projectFilter?.projectId).filter((intervention) => {
       if (interventionStatus !== 'all' && intervention.status !== interventionStatus) return false;
       if (!needle) return true;
       return [intervention.number, intervention.subject, intervention.description ?? '', intervention.clientLabel, intervention.projectLabel ?? '', intervention.projectNodeLabel ?? ''].some((value) => value.toLocaleLowerCase('fr-FR').includes(needle));
     });
-  }, [interventions, query, interventionStatus]);
+  }, [interventions, query, interventionStatus, projectFilter?.projectId]);
+
+  // P3b (F20) : le lien « Voir toutes (N) » d'un projet ouvre la vue demandée (demandes ou interventions).
+  useEffect(() => { if (projectFilter?.view) setView(projectFilter.view); }, [projectFilter?.projectId, projectFilter?.view, initialRequest]);
 
   const requestProjects = projects.filter((project) => project.clientAccountId === requestClientId && project.status !== 'archived');
   const interventionProjects = projects.filter((project) => project.clientAccountId === interventionClientId && project.status !== 'archived');
@@ -389,11 +384,12 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
             return false;
           }
           context = [`Période : ${period.periodStart} → ${period.periodEnd} · état : ${period.status}`,
-            `Quota actuel : ${period.usage.interventionCount} intervention(s) · restant : ${period.usage.remainingInterventions ?? 'sans limite'} · dépassement : ${period.usage.interventionsOverQuota}`];
+            `Quota actuel : ${plural(period.usage.interventionCount, 'intervention', 'interventions')} · restant : ${period.usage.remainingInterventions ?? 'sans limite'} · dépassement : ${period.usage.interventionsOverQuota}`];
         } else if (current.coverageMode === 'out_of_scope') {
           context = [`Montant facturable enregistré : ${(current.billableAmountCents ?? 0) / 100} € (aucune facture émise automatiquement)`];
         }
-        if (!window.confirm(interventionCompletionReview(current, context))) return false;
+        const [reviewTitle, ...reviewLines] = interventionCompletionReview(current, context).split('\n');
+        if (!(await askConfirm({title: reviewTitle, body: reviewLines.join('\n'), confirmLabel: 'Clôturer l’intervention'}))) return false;
       } catch (error) {
         onMessage(error instanceof Error ? `Prévalidation impossible : ${error.message}` : 'Prévalidation impossible : données de prise en charge indisponibles.');
         return false;
@@ -507,12 +503,13 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
   const activeInterventions = interventions.filter((item) => !['completed', 'cancelled', 'archived'].includes(item.status));
 
   return <div className="operations-stack">
-    <section className="operations-kpi-grid" aria-label="Synthèse Interventions et Maintenance">
-      <article><span className="operations-kpi-icon"><OperationIcon name="inbox" /></span><div><strong>Demandes ouvertes</strong><span>{openRequests.length}</span><small>À traiter ou à qualifier</small></div></article>
-      <article><span className="operations-kpi-icon"><OperationIcon name="alert" /></span><div><strong>Urgentes</strong><span>{urgentOpenRequests.length}</span><small>Demandes ouvertes prioritaires</small></div></article>
-      <article><span className="operations-kpi-icon"><OperationIcon name="wrench" /></span><div><strong>Interventions actives</strong><span>{activeInterventions.length}</span><small>Planifiées, en cours ou à valider</small></div></article>
-      <article><span className="operations-kpi-icon"><OperationIcon name="clock" /></span><div><strong>En attente client</strong><span>{waitingClientCount}</span><small>Demandes + interventions</small></div></article>
-    </section>
+    {confirmDialog}
+    <KeyFigures ariaLabel="Synthèse Interventions et Maintenance" items={[
+      { key: 'open-requests', label: 'Demandes ouvertes', value: openRequests.length, helper: 'À traiter ou à qualifier' },
+      { key: 'urgent', label: 'Urgentes', value: urgentOpenRequests.length, helper: 'Demandes ouvertes prioritaires' },
+      { key: 'active-interventions', label: 'Interventions actives', value: activeInterventions.length, helper: 'Planifiées, en cours ou à valider' },
+      { key: 'waiting-client', label: 'En attente client', value: waitingClientCount, helper: 'Demandes + interventions' },
+    ]} />
     <OperationsAlertsPanel refreshKey={alertRefreshKey} onNavigate={(target) => requestUnsavedExit(() => setView(target))} onMessage={onMessage} />
     <div className="operations-view-tabs">
       <button type="button" className={view === 'requests' ? 'active' : ''} onClick={() => {if(view!=='requests')requestUnsavedExit(()=>setView('requests'));}}>Demandes <span>{requests.filter((item) => !['closed', 'converted', 'archived'].includes(item.status)).length}</span></button>
@@ -521,7 +518,13 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
       <button type="button" className={view === 'packs' ? 'active' : ''} onClick={() => {if(view!=='packs')requestUnsavedExit(()=>setView('packs'));}}>Packs d’heures</button>
     </div>
 
-    {(view === 'requests' || view === 'interventions') && <div className="module-toolbar operations-toolbar"><div><strong>{view === 'requests' ? filteredRequests.length : filteredInterventions.length}</strong><span>{view === 'requests' ? ' demande(s)' : ' intervention(s)'}</span></div><div className="toolbar-controls"><button className="secondary-button" type="button" onClick={() => void refresh({ showLoading: false })}><OperationIcon name="refresh" size={16} /> Actualiser</button><input className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher client, sujet, numéro…" />{view === 'requests' ? <select value={requestStatus} onChange={(event) => setRequestStatus(event.target.value as typeof requestStatus)}><option value="all">Tous les statuts</option>{SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{REQUEST_STATUS_LABELS[status]}</option>)}</select> : <select value={interventionStatus} onChange={(event) => setInterventionStatus(event.target.value as typeof interventionStatus)}><option value="all">Tous les statuts</option>{INTERVENTION_STATUSES.map((status) => <option key={status} value={status}>{INTERVENTION_STATUS_LABELS[status]}</option>)}</select>}{view === 'requests' ? <button className="primary-button" type="button" onClick={() => setCreateRequestOpen((value) => !value)}>+ Nouvelle demande</button> : <button className="primary-button" type="button" onClick={() => setCreateInterventionOpen((value) => !value)}>+ Intervention</button>}</div></div>}
+    {(view === 'requests' || view === 'interventions') && <ListToolbar
+      countLabel={view === 'requests' ? plural(filteredRequests.length, 'demande', 'demandes') : plural(filteredInterventions.length, 'intervention', 'interventions')}
+      onRefresh={() => void refresh({ showLoading: false })}
+      search={{ value: query, onChange: setQuery, placeholder: 'Rechercher client, sujet, numéro…', ariaLabel: view === 'requests' ? 'Rechercher une demande' : 'Rechercher une intervention' }}
+      filters={<>{projectFilter && <span className="aw-filter-chip" role="status">Projet : {projectFilter.projectLabel}<button type="button" className="aw-filter-chip-clear" aria-label="Retirer le filtre Projet" title="Retirer le filtre Projet" onClick={onClearProjectFilter}>✕</button></span>}{view === 'requests' ? <select value={requestStatus} onChange={(event) => setRequestStatus(event.target.value as typeof requestStatus)}><option value="all">Tous les statuts</option>{SERVICE_REQUEST_STATUSES.map((status) => <option key={status} value={status}>{REQUEST_STATUS_LABELS[status]}</option>)}</select> : <select value={interventionStatus} onChange={(event) => setInterventionStatus(event.target.value as typeof interventionStatus)}><option value="all">Tous les statuts</option>{INTERVENTION_STATUSES.map((status) => <option key={status} value={status}>{INTERVENTION_STATUS_LABELS[status]}</option>)}</select>}</>}
+      primary={view === 'requests' ? <button className="primary-button" type="button" onClick={() => setCreateRequestOpen((value) => !value)}>+ Nouvelle demande</button> : <button className="primary-button" type="button" onClick={() => setCreateInterventionOpen((value) => !value)}>+ Intervention</button>}
+    />}
 
     {view === 'requests' && <>
       {createRequestOpen && <section className="panel operation-create-panel"><div className="panel-title"><div><span className="eyebrow">Nouvelle demande</span><h2>Enregistrer un besoin entrant</h2></div><button className="close-detail" type="button" onClick={() => setCreateRequestOpen(false)} aria-label="Fermer" title="Fermer"><OperationIcon name="close"/></button></div><div className="operation-create-grid"><label>Client<select value={requestClientId} onChange={(event) => { setRequestClientId(event.target.value); setRequestProjectId(''); }}><option value="">Choisir…</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.displayName}</option>)}</select></label><label>Projet éventuel<select value={requestProjectId} onChange={(event) => setRequestProjectId(event.target.value)} disabled={!requestClientId}><option value="">Aucun projet</option>{requestProjects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select></label><label>Origine<select value={requestSource} onChange={(event) => setRequestSource(event.target.value as ServiceRequestSource)}>{SERVICE_REQUEST_SOURCES.map((source) => <option key={source} value={source}>{SOURCE_LABELS[source]}</option>)}</select></label><label>Priorité<select value={requestPriority} onChange={(event) => setRequestPriority(event.target.value as ServiceRequestPriority)}>{SERVICE_REQUEST_PRIORITIES.map((priority) => <option key={priority} value={priority}>{PRIORITY_LABELS[priority]}</option>)}</select></label><label className="wide">Sujet<input value={requestSubject} onChange={(event) => setRequestSubject(event.target.value)} placeholder="Ex. Modifier le formulaire de contact" /></label><label className="wide">Description<textarea value={requestDescription} onChange={(event) => setRequestDescription(event.target.value)} placeholder="Demande du client, contexte…" /></label></div><div className="button-row"><button className="primary-button" disabled={saving || !requestClientId || !requestSubject.trim()} type="button" onClick={() => void createRequest()}>Créer la demande</button><button className="secondary-button" type="button" onClick={() => { resetRequestForm(); setCreateRequestOpen(false); }}>Annuler</button></div></section>}
@@ -543,8 +546,8 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
               <span className="request-compact-meta"><span>{SOURCE_LABELS[request.source]}</span><span>{REQUEST_STATUS_LABELS[request.status]}</span></span>
               <span className="request-compact-date">{dateLabel(request.receivedAt)}</span>
             </button>)}
-            {filteredRequests.length === 0 && <div className="empty-table">Aucune demande dans cette vue.</div>}
-          </div> : <ConfiguredDataTable<(typeof filteredRequests)[number]> scope="requests-list" store={window.atoumweb.visualPreferences} rows={filteredRequests} selectedId={null} getId={request=>request.id} onSelect={request=>requestUnsavedExit(()=>{ setSelectedRequest(request); setSelectedIntervention(null); setRequestExpanded(false); })} className="operations-table" caption="Reçue · Client · Sujet · Priorité · Statut · source complète des résultats filtrés" columns={[
+            {filteredRequests.length === 0 && <div className="empty-table">{compactListEmptyText(operationsEmptyText('requests'), hasActiveFilters([query,requestStatus]))}</div>}
+          </div> : <ConfiguredDataTable<(typeof filteredRequests)[number]> emptyText={operationsEmptyText('requests')} filtersActive={hasActiveFilters([query,requestStatus])} onClearFilters={()=>{setQuery('');setRequestStatus('all');}} scope="requests-list" store={window.atoumweb.visualPreferences} rows={filteredRequests} selectedId={null} getId={request=>request.id} onSelect={request=>requestUnsavedExit(()=>{ setSelectedRequest(request); setSelectedIntervention(null); setRequestExpanded(false); })} className="operations-table" caption="Reçue · Client · Sujet · Priorité · Statut · source complète des résultats filtrés" columns={[
 {id:"received",label:"Reçue",sortValue:request=>request.receivedAt??null,render:request=><>{dateLabel(request.receivedAt)}</>},
 {id:"client",label:"Client",sortValue:request=>request.clientLabel??null,render:request=><><strong>{request.clientLabel}</strong><small>{request.projectLabel || 'Sans projet'}</small></>},
 {id:"identity",label:"Sujet",required:true,sortValue:request=>request.subject??null,render:request=><><strong>{request.subject}</strong><small>{SOURCE_LABELS[request.source]}</small></>},
@@ -609,8 +612,8 @@ export function OperationsPage({ onEntityReady, onMessage, initialTarget, initia
               <span className="intervention-compact-meta"><span>{INTERVENTION_TYPE_LABELS[intervention.type]}</span><span>{duration(intervention.totalTimeSeconds)}</span></span>
               <span className="intervention-compact-coverage">{COVERAGE_LABELS[intervention.coverageMode]}</span>
             </button>)}
-            {filteredInterventions.length === 0 && <div className="empty-table">Aucune intervention dans cette vue.</div>}
-          </div> : <ConfiguredDataTable<(typeof filteredInterventions)[number]> scope="interventions-list" store={window.atoumweb.visualPreferences} rows={filteredInterventions} selectedId={null} getId={intervention=>intervention.id} onSelect={intervention=>requestUnsavedExit(()=>{ setSelectedIntervention(intervention); setSelectedRequest(null); setInterventionExpanded(false); })} className="operations-table" caption="Numéro · Client · Intervention · Prise en charge · Temps · Statut · source complète des résultats filtrés" columns={[
+            {filteredInterventions.length === 0 && <div className="empty-table">{compactListEmptyText(operationsEmptyText('interventions'), hasActiveFilters([query,interventionStatus]))}</div>}
+          </div> : <ConfiguredDataTable<(typeof filteredInterventions)[number]> emptyText={operationsEmptyText('interventions')} filtersActive={hasActiveFilters([query,interventionStatus])} onClearFilters={()=>{setQuery('');setInterventionStatus('all');}} scope="interventions-list" store={window.atoumweb.visualPreferences} rows={filteredInterventions} selectedId={null} getId={intervention=>intervention.id} onSelect={intervention=>requestUnsavedExit(()=>{ setSelectedIntervention(intervention); setSelectedRequest(null); setInterventionExpanded(false); })} className="operations-table" caption="Numéro · Client · Intervention · Prise en charge · Temps · Statut · source complète des résultats filtrés" columns={[
 {id:"identity",label:"Numéro",required:true,sortValue:intervention=>intervention.number??null,render:intervention=><><strong>{intervention.number}</strong></>},
 {id:"client",label:"Client",sortValue:intervention=>intervention.clientLabel??null,render:intervention=><><strong>{intervention.clientLabel}</strong><small>{intervention.projectLabel || 'Sans projet'}{intervention.projectNodeLabel ? ` · ${intervention.projectNodeLabel}` : ''}</small></>},
 {id:"subject",label:"Intervention",sortValue:intervention=>intervention.subject??null,render:intervention=><><strong>{intervention.subject}</strong><small>{INTERVENTION_TYPE_LABELS[intervention.type]}</small></>},
@@ -696,12 +699,15 @@ function InterventionDetail({ onSaved, intervention, expanded, onExpand, onClose
       <span className={`operation-priority priority-${intervention.priority}`}>{PRIORITY_LABELS[intervention.priority]}</span>
     </div>
 
-    <div className="intervention-kpi-grid">
-      <div><strong>Temps réel</strong><span>{duration(intervention.totalTimeSeconds)}</span></div><div><strong>Référence initiale</strong><span>{intervention.referenceMinutes==null?'Non définie':`${intervention.referenceMinutes} min`}</span></div><label>Estimation actuelle (minutes)<input type="number" min="0" value={intervention.estimatedMinutes??''} disabled={locked} onChange={e=>void window.atoumweb.operations.interventions.update(intervention.id,{estimatedMinutes:e.target.value===''?null:Number(e.target.value)}).then(onSaved).catch(e=>onMessage(String(e)))}/></label>
-      <div><strong>Facturable</strong><span>{money(intervention.billableAmountCents)}</span></div>
-      <div><strong>Valeur théorique</strong><span>{money(intervention.theoreticalValueCents)}</span></div>
-      <div><strong>Prise en charge</strong><span>{COVERAGE_LABELS[intervention.coverageMode]}</span></div>
-    </div>
+    <KeyFigures ariaLabel="Temps et valeur de l’intervention" className="intervention-kpi-grid" items={[
+      { key: 'time', label: 'Temps réel', value: duration(intervention.totalTimeSeconds) },
+      { key: 'reference', label: 'Référence initiale', value: intervention.referenceMinutes==null?'Non définie':`${intervention.referenceMinutes} min` },
+      { key: 'billable', label: 'Facturable', value: money(intervention.billableAmountCents) },
+      { key: 'theoretical', label: 'Valeur théorique', value: money(intervention.theoreticalValueCents) },
+      { key: 'coverage', label: 'Prise en charge', value: COVERAGE_LABELS[intervention.coverageMode] },
+    ]}>
+      <label className="intervention-estimate-field">Estimation actuelle (minutes)<input type="number" min="0" value={intervention.estimatedMinutes??''} disabled={locked} onChange={e=>void window.atoumweb.operations.interventions.update(intervention.id,{estimatedMinutes:e.target.value===''?null:Number(e.target.value)}).then(onSaved).catch(e=>onMessage(String(e)))}/></label>
+    </KeyFigures>
 
     <div className="intervention-workbench-actions">
       {!!intervention.operationalChecklist?.length&&<details><summary>Phases et checklist de la prestation vendue</summary>{intervention.operationalChecklist.map(a=><section key={a.key}><strong>{a.phase} — {a.name} · {a.minutes} min de référence</strong><p>{a.checklist}</p></section>)}</details>}

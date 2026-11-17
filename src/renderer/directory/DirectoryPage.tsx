@@ -1,6 +1,7 @@
 import {CrmReconciliationPanel} from '../crm/CrmReconciliationPanel';
 import {OrganizationContactLinks} from '../crm/OrganizationContactLinks';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {hasActiveFilters} from '../ui/tableEmpty';
 import {DIRECTORY_ORGANIZATIONS_VIEW,DIRECTORY_CONTACTS_VIEW} from '../../shared/realTableSchemas';
 import '../crm/crm-visual-foundation.css';
 import { layoutKey, readLayout, writeLayout } from '../../shared/panelLayout';
@@ -20,6 +21,10 @@ import { CrmIdentityAssetEditor, CrmIdentityAvatar } from '../crm/CrmIdentityVis
 import { ContactMethodsPanel } from '../crm/ContactMethodsPanel';
 import { OperationIcon } from '../operations/OperationIcon';
 import { openEntity } from '../workflow/DossierPanel';
+import { KeyFigures } from '../ui/KeyFigures';
+import { ListToolbar } from '../ui/ListToolbar';
+import { plural } from '../../shared/projectTabs';
+import { directoryEmptyText } from '../../shared/ressourcesEmpty';
 import './DirectoryPage.css';
 
 export type DirectorySearchTarget = {
@@ -76,6 +81,9 @@ function fullAddress(item: DirectoryOrganization): string {
   return [item.addressLine1, item.addressLine2, [item.postalCode, item.city].filter(Boolean).join(' '), item.country].filter(Boolean).join(' · ') || 'Non renseignée';
 }
 
+/** Champ vide : un mot gris, jamais un tiret qu’on prend pour une donnée. */
+const unset = <span className="directory-unset">Non renseigné</span>;
+
 function formatPhone(value?: string | null): string {
   if (!value) return '—';
   const digits = value.replace(/\D/g, '');
@@ -92,7 +100,7 @@ export function DirectoryPage(props:DirectoryPageProps){return <UnsavedGroup nam
 function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequest}:DirectoryPageProps) {
   const [organizations, setOrganizations] = useState<DirectoryOrganization[]>([]);
   const [contacts, setContacts] = useState<DirectoryContact[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); const [listError, setListError] = useState<string | null>(null); // P6b (D1)
   const [view, setView] = useState<DirectoryView>(initialTarget?.entityType === 'contact' ? 'contacts' : 'organizations');
   const [selectedType, setSelectedType] = useState<'organization' | 'contact' | null>(initialTarget?.entityType ?? null);
   const [selectedId, setSelectedId] = useState(initialTarget?.entityId ?? '');
@@ -135,6 +143,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
         window.atoumweb.crm.contacts.list(false),
       ]);
       if(epoch!==refreshEpoch.current)return;
+      setListError(null);
       const preserveDraft=editorGuard.dirty||busyRef.current;
       setOrganizations(previous=>preserveDraft&&selectedType==='organization'&&selectedId&&!nextOrganizations.some(item=>item.id===selectedId)?[...nextOrganizations,...previous.filter(item=>item.id===selectedId)]:nextOrganizations);
       setContacts(previous=>preserveDraft&&selectedType==='contact'&&selectedId&&!nextContacts.some(item=>item.id===selectedId)?[...nextContacts,...previous.filter(item=>item.id===selectedId)]:nextContacts);
@@ -157,7 +166,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
     } catch (error) {
       if(epoch!==refreshEpoch.current)return;
       if(preferred)onEntityReady?.(preferred.entityType,preferred.entityId,error instanceof Error?error.message:'Annuaire indisponible.');
-      onMessage(error instanceof Error ? error.message : 'Impossible de charger l’annuaire.');
+      { const text = error instanceof Error ? error.message : 'Impossible de charger l’annuaire.'; setListError(text); onMessage(text); }
     } finally {
       if(epoch===refreshEpoch.current)setLoading(false);
     }
@@ -215,7 +224,7 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
   const showDetail = Boolean(selectedOrganization || selectedContact || createMode);
 
   function closeDirectory():void {
-    requestUnsavedExit(()=>{refreshEpoch.current++;setLoading(false);setCreateMode(null);setSelectedType(null);setSelectedId('');setExpanded(false);setEditing(false);requestAnimationFrame(()=>{if(selectedIdentityRef.current)return;const row=selectedId?document.querySelector<HTMLElement>('[data-directory-id="'+CSS.escape(selectedId)+'"]'):null;if(row)row.focus();else if(directoryOpener.current?.isConnected)directoryOpener.current.focus();else document.querySelector<HTMLInputElement>('.directory-toolbar .inline-search')?.focus();});});
+    requestUnsavedExit(()=>{refreshEpoch.current++;setLoading(false);setCreateMode(null);setSelectedType(null);setSelectedId('');setExpanded(false);setEditing(false);requestAnimationFrame(()=>{if(selectedIdentityRef.current)return;const row=selectedId?document.querySelector<HTMLElement>('[data-directory-id="'+CSS.escape(selectedId)+'"]'):null;if(row)row.focus();else if(directoryOpener.current?.isConnected)directoryOpener.current.focus();else document.querySelector<HTMLInputElement>('.aw-list-toolbar .inline-search')?.focus();});});
   }
   function toggleEdit():void {
     if(editing){editorGuard.request(()=>setEditing(false));return;}
@@ -317,21 +326,17 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
   }
 
   return <div className="directory-page-stack">{saveError&&<p role="alert" className="form-error">{saveError}</p>}
-    <div className="directory-kpi-grid">
-      <DirectoryKpi icon="folder" label="Organisations" value={organizations.length} helper="Entreprises et structures" />
-      <DirectoryKpi icon="user" label="Contacts" value={contacts.length} helper="Interlocuteurs enregistrés" />
-      <DirectoryKpi icon="check-circle" label="Clients liés" value={activeClients} helper="Organisations clientes" />
-      <DirectoryKpi icon="chart" label="Prospects actifs" value={activeProspects} helper="Organisations en prospection" />
-    </div>
+    <KeyFigures ariaLabel="Synthèse de l’annuaire" items={[{ key: 'organizations', label: 'Organisations', value: organizations.length, helper: 'Entreprises et structures' }, { key: 'contacts', label: 'Contacts', value: contacts.length, helper: 'Interlocuteurs enregistrés' }, { key: 'clients', label: 'Clients liés', value: activeClients, helper: 'Organisations clientes' }, { key: 'prospects', label: 'Prospects actifs', value: activeProspects, helper: 'Organisations en prospection' }].map(item => listError ? { ...item, value: '—', helper: 'Indisponible : la liste n’a pas pu être chargée' } : item)} />
 
-    <div className="directory-toolbar">
-      <div className="directory-view-tabs">
-        <button type="button" className={view === 'organizations' ? 'active' : ''} onClick={() => chooseView('organizations')}><OperationIcon name="folder" size={16} /> Organisations <span>{organizations.length}</span></button>
-        <button type="button" className={view === 'contacts' ? 'active' : ''} onClick={() => chooseView('contacts')}><OperationIcon name="user" size={16} /> Contacts <span>{contacts.length}</span></button>
-      </div>
-      <div className="toolbar-controls">
-        <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh" size={16} /> Actualiser</button>
-        <input aria-label="Rechercher dans l’annuaire" className="inline-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={view === 'organizations' ? 'Rechercher entreprise, ville, activité…' : 'Rechercher contact, entreprise, fonction…'} />
+    <ListToolbar
+      leading={<div className="directory-view-tabs">
+        <button type="button" className={view === 'organizations' ? 'active' : ''} onClick={() => chooseView('organizations')}><OperationIcon name="folder" size={16} /> Organisations <span>{listError ? '—' : organizations.length}</span></button>
+        <button type="button" className={view === 'contacts' ? 'active' : ''} onClick={() => chooseView('contacts')}><OperationIcon name="user" size={16} /> Contacts <span>{listError ? '—' : contacts.length}</span></button>
+      </div>}
+      countLabel={listError ? '—' : view === 'organizations' ? plural(organizations.length, 'organisation', 'organisations') : plural(contacts.length, 'contact', 'contacts')}
+      onRefresh={() => void refresh()}
+      search={{ value: query, onChange: setQuery, placeholder: view === 'organizations' ? 'Entreprise, ville, activité…' : 'Contact, entreprise, fonction…', ariaLabel: 'Rechercher dans l’annuaire' }}
+      filters={<>
         <select value={relationFilter} onChange={(event) => setRelationFilter(event.target.value as 'all' | DirectoryRelation)}>
           <option value="all">Toutes les relations</option>
           <option value="client">Clients</option>
@@ -342,9 +347,9 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
         {view === 'organizations'
           ? <select value={secondaryFilter} onChange={(event) => setSecondaryFilter(event.target.value)}><option value="all">Toutes les activités</option>{organizationIndustries.map((industry) => <option key={industry} value={industry}>{industry}</option>)}</select>
           : <select value={secondaryFilter} onChange={(event) => setSecondaryFilter(event.target.value)}><option value="all">Toutes les entreprises</option>{contactOrganizations.map((organization) => <option key={organization.id} value={organization.id}>{organization.name}</option>)}</select>}
-        <button className="primary-button" type="button" onClick={() => openCreate(view === 'organizations' ? 'organization' : 'contact')}><OperationIcon name={view === 'organizations' ? 'folder' : 'user'} size={16} /> + {view === 'organizations' ? 'Organisation' : 'Contact'}</button>
-      </div>
-    </div>
+      </>}
+      primary={<button className="primary-button" type="button" onClick={() => openCreate(view === 'organizations' ? 'organization' : 'contact')}><OperationIcon name={view === 'organizations' ? 'folder' : 'user'} size={16} /> + {view === 'organizations' ? 'Organisation' : 'Contact'}</button>}
+    />
 
     <div
       className={`directory-workspace ${showDetail ? 'with-detail' : ''} ${expanded ? 'detail-expanded' : ''}`}
@@ -361,20 +366,20 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
             <span className="directory-compact-copy"><strong>{item.firstName} {item.lastName}</strong><span>{item.organizationName || 'Sans entreprise'}</span><small>{item.jobTitle || 'Fonction non renseignée'}</small></span>
             <span className={`directory-relation-pill ${relationClass(item.relation)}`}>{RELATION_LABELS[item.relation]}</span>
           </button>)}
-          {((view === 'organizations' && !filteredOrganizations.length) || (view === 'contacts' && !filteredContacts.length)) && <p className="muted directory-empty">Aucun résultat dans cette vue.</p>}
-        </div> : view === 'organizations' ? <ConfiguredDataTable<DirectoryOrganization> scope={DIRECTORY_ORGANIZATIONS_VIEW} store={window.atoumweb.visualPreferences} className="directory-table" rows={filteredOrganizations} selectedId={selectedType==='organization'?selectedId:null} getId={item=>item.id} onSelect={item=>selectOrganization(item.id)} rowAttributes={item=>({'data-directory-id':item.id})} caption="Organisations · source complète des résultats filtrés" columns={[
-          {id:'identity',label:'Organisation',required:true,sortValue:i=>i.name,render:i=><div className="directory-name-cell"><CrmIdentityAvatar organizationId={i.id} name={i.name}/><div><strong>{i.name}</strong><small>{i.legalName||i.website||'Organisation professionnelle'}</small></div></div>},
-          {id:'industry',label:'Activité',sortValue:i=>i.industry??null,render:i=>i.industry||'—'},
-          {id:'city',label:'Ville',sortValue:i=>i.city??null,render:i=>i.city||'—'},
-          {id:'coordinates',label:'Coordonnées',sortValue:i=>i.email||i.phone||null,render:i=><><span>{i.email||'—'}</span><small>{formatPhone(i.phone)}</small></>},
+          {((view === 'organizations' && !filteredOrganizations.length) || (view === 'contacts' && !filteredContacts.length)) && <p className="muted directory-empty">{directoryEmptyText({ view, filtersActive: hasActiveFilters([query, relationFilter, secondaryFilter]) })}</p>}
+        </div> : view === 'organizations' ? <ConfiguredDataTable<DirectoryOrganization> error={listError} onRetry={() => void refresh()} filtersActive={hasActiveFilters([query,relationFilter,secondaryFilter])} onClearFilters={()=>{setQuery('');setRelationFilter('all');setSecondaryFilter('all');}} emptyText={directoryEmptyText({ view: 'organizations', filtersActive: false })} emptyFilteredText={directoryEmptyText({ view: 'organizations', filtersActive: true })} scope={DIRECTORY_ORGANIZATIONS_VIEW} store={window.atoumweb.visualPreferences} className="directory-table" rows={filteredOrganizations} selectedId={selectedType==='organization'?selectedId:null} getId={item=>item.id} onSelect={item=>selectOrganization(item.id)} rowAttributes={item=>({'data-directory-id':item.id})} caption="Organisations · source complète des résultats filtrés" columns={[
+          {id:'identity',label:'Organisation',required:true,sortValue:i=>i.name,render:i=><div className="directory-name-cell"><CrmIdentityAvatar organizationId={i.id} name={i.name}/><div><strong title={i.name}>{i.name}</strong>{(i.legalName||i.website)&&<small>{i.legalName||i.website}</small>}</div></div>},
+          {id:'industry',label:'Activité',sortValue:i=>i.industry??null,render:i=>i.industry||unset},
+          {id:'city',label:'Ville',sortValue:i=>i.city??null,render:i=>i.city||unset},
+          {id:'coordinates',label:'Coordonnées',sortValue:i=>i.email||i.phone||null,render:i=><><span>{i.email||unset}</span>{i.phone&&<small>{formatPhone(i.phone)}</small>}</>},
           {id:'contacts',label:'Contacts',sortValue:i=>i.contactCount,render:i=>i.contactCount},
           {id:'relation',label:'Relation',sortValue:i=>RELATION_LABELS[i.relation],render:i=><span className={'directory-relation-pill '+relationClass(i.relation)}>{RELATION_LABELS[i.relation]}</span>},
           {id:'open',label:'Ouvrir',required:true,render:i=><button type="button" className="link-button" title={'Ouvrir '+i.name} aria-label={'Ouvrir '+i.name} onClick={e=>{e.stopPropagation();selectOrganization(i.id);}}><OperationIcon name="record-open"/></button>},
-        ]}/> : <ConfiguredDataTable<DirectoryContact> scope={DIRECTORY_CONTACTS_VIEW} store={window.atoumweb.visualPreferences} className="directory-table" rows={filteredContacts} selectedId={selectedType==='contact'?selectedId:null} getId={i=>i.id} onSelect={i=>selectContact(i.id)} rowAttributes={i=>({'data-directory-id':i.id})} caption="Contacts · source complète des résultats filtrés" columns={[
-          {id:'identity',label:'Contact',required:true,sortValue:i=>i.lastName+' '+i.firstName,render:i=><div className="directory-name-cell"><CrmIdentityAvatar organizationId={i.organizationId} contactId={i.id} name={i.firstName+' '+i.lastName}/><div><strong>{i.firstName} {i.lastName}</strong><small>{i.preferredChannel||'Contact professionnel'}</small></div></div>},
-          {id:'organization',label:'Entreprise',sortValue:i=>i.organizationName??null,render:i=>i.organizationName||'—'},
-          {id:'jobTitle',label:'Fonction',sortValue:i=>i.jobTitle??null,render:i=>i.jobTitle||'—'},
-          {id:'coordinates',label:'Coordonnées',sortValue:i=>i.email||i.phone||null,render:i=><><span>{i.email||'—'}</span><small>{formatPhone(i.phone)}</small></>},
+        ]}/> : <ConfiguredDataTable<DirectoryContact> error={listError} onRetry={() => void refresh()} filtersActive={hasActiveFilters([query,relationFilter,secondaryFilter])} onClearFilters={()=>{setQuery('');setRelationFilter('all');setSecondaryFilter('all');}} emptyText={directoryEmptyText({ view: 'contacts', filtersActive: false })} emptyFilteredText={directoryEmptyText({ view: 'contacts', filtersActive: true })} scope={DIRECTORY_CONTACTS_VIEW} store={window.atoumweb.visualPreferences} className="directory-table" rows={filteredContacts} selectedId={selectedType==='contact'?selectedId:null} getId={i=>i.id} onSelect={i=>selectContact(i.id)} rowAttributes={i=>({'data-directory-id':i.id})} caption="Contacts · source complète des résultats filtrés" columns={[
+          {id:'identity',label:'Contact',required:true,sortValue:i=>i.lastName+' '+i.firstName,render:i=><div className="directory-name-cell"><CrmIdentityAvatar organizationId={i.organizationId} contactId={i.id} name={i.firstName+' '+i.lastName}/><div><strong title={i.firstName+' '+i.lastName}>{i.firstName} {i.lastName}</strong>{i.preferredChannel&&<small>{i.preferredChannel}</small>}</div></div>},
+          {id:'organization',label:'Entreprise',sortValue:i=>i.organizationName??null,render:i=>i.organizationName||unset},
+          {id:'jobTitle',label:'Fonction',sortValue:i=>i.jobTitle??null,render:i=>i.jobTitle||unset},
+          {id:'coordinates',label:'Coordonnées',sortValue:i=>i.email||i.phone||null,render:i=><><span>{i.email||unset}</span>{i.phone&&<small>{formatPhone(i.phone)}</small>}</>},
           {id:'relation',label:'Relation',sortValue:i=>RELATION_LABELS[i.relation],render:i=><span className={'directory-relation-pill '+relationClass(i.relation)}>{RELATION_LABELS[i.relation]}</span>},
           {id:'open',label:'Ouvrir',required:true,render:i=><button type="button" className="link-button" title={'Ouvrir '+i.firstName+' '+i.lastName} aria-label={'Ouvrir '+i.firstName+' '+i.lastName} onClick={e=>{e.stopPropagation();selectContact(i.id);}}><OperationIcon name="record-open"/></button>},
         ]}/>}
@@ -457,10 +462,6 @@ function DirectoryPageContent({onEntityReady,onMessage,initialTarget,initialRequ
       </article>}
     </div>
   </div>;
-}
-
-function DirectoryKpi({ icon, label, value, helper }: { icon: 'folder' | 'user' | 'check-circle' | 'chart'; label: string; value: number; helper: string }) {
-  return <article><span className="directory-kpi-icon"><OperationIcon name={icon} size={27} /></span><div><strong>{label}</strong><span>{value}</span><small>{helper}</small></div></article>;
 }
 
 function DirectoryDetailActions({ expanded, onExpand, onClose }: { expanded: boolean; onExpand: () => void; onClose: () => void }) {

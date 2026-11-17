@@ -73,7 +73,7 @@
 
 .home-greeting span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
 }
 
 .home-kpi-grid {
@@ -82,93 +82,18 @@
   gap: 10px;
 }
 
-.home-kpi-card,
 .home-card {
   border: 1px solid var(--border);
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   box-shadow: var(--shadow);
 }
 
-.home-kpi-card {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  min-height: 105px;
-  padding: 13px 14px;
-  border-radius: 15px;
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-}
-
-.home-kpi-card:hover,
 .home-card-title > button:hover,
-.home-today-item:hover,
 .home-pipeline-item:hover,
 .home-billing-row:hover,
 .home-watch-action:hover {
   border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
   transform: translateY(-1px);
-}
-
-.home-kpi-icon {
-  display: inline-grid;
-  width: 56px;
-  height: 56px;
-  place-items: center;
-  border-radius: 50%;
-  color: white;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%), 0 7px 18px rgb(0 0 0 / 15%);
-}
-
-.home-kpi-card.tone-red .home-kpi-icon { background: linear-gradient(145deg, #c94242, #e56b64); }
-.home-kpi-card.tone-blue .home-kpi-icon { background: linear-gradient(145deg, #2866c7, #4797ff); }
-.home-kpi-card.tone-green .home-kpi-icon { background: linear-gradient(145deg, #23975a, #49c978); }
-.home-kpi-card.tone-orange .home-kpi-icon { background: linear-gradient(145deg, #d45f22, #f28b43); }
-
-.home-kpi-copy {
-  display: grid;
-  min-width: 0;
-  gap: 2px;
-}
-
-.home-kpi-copy > strong {
-  display: -webkit-box;
-  overflow: hidden;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.15;
-  white-space: normal;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.home-kpi-copy > b {
-  color: var(--text);
-  font-size: 31px;
-  font-weight: 650;
-  line-height: 1.05;
-}
-
-.home-kpi-copy > small {
-  display: -webkit-box;
-  overflow: hidden;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 400;
-  line-height: 1.2;
-  white-space: normal;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.home-kpi-open {
-  color: var(--muted);
-  font-size: 25px;
-  font-weight: 300;
 }
 
 .home-main-grid {
@@ -217,7 +142,7 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--text);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   font-weight: 650;
 }
 
@@ -238,79 +163,6 @@
   cursor: pointer;
 }
 
-.home-today-card {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-}
-
-.home-today-scroll {
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-}
-
-.home-today-item {
-  display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  padding: 10px 12px;
-  border: 0;
-  border-bottom: 1px solid var(--border);
-  background: transparent;
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-}
-
-.home-today-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
-}
-
-.home-today-icon {
-  display: inline-grid;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  color: var(--accent-strong);
-  background: var(--surface-soft);
-}
-
-.home-today-copy {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.home-today-copy strong,
-.home-today-copy small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.home-today-copy strong {
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.home-today-copy small {
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.home-today-open {
-  color: var(--muted);
-  font-size: 18px;
-}
-
 .home-empty-state {
   display: grid;
   min-height: 145px;
@@ -328,11 +180,11 @@
 
 .home-empty-state strong {
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--aw-font-functional);
 }
 
 .home-empty-state span {
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .home-pipeline-card {
@@ -423,10 +275,8 @@
   align-items: center;
   gap: 6px;
   color: var(--muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 850;
-  letter-spacing: .08em;
-  text-transform: uppercase;
 }
 
 .home-pipeline-step i {
@@ -452,7 +302,7 @@
   min-height: 28px;
   overflow: hidden;
   color: var(--text);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
   font-weight: 760;
   line-height: 1.25;
   -webkit-box-orient: vertical;
@@ -461,7 +311,7 @@
 
 .home-pipeline-item > small {
   color: var(--muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 650;
 }
 
@@ -499,12 +349,12 @@
   align-items: center;
   padding: 9px 14px 11px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
 }
 
 .home-pipeline-footer strong {
   color: var(--text);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   font-weight: 750;
 }
 
@@ -558,7 +408,7 @@
 
 .home-time-donut small {
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
 }
 
 .home-time-legend {
@@ -586,12 +436,12 @@
 
 .home-time-legend small {
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
 }
 
 .home-time-legend strong {
   color: var(--text);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   font-weight: 650;
 }
 
@@ -620,7 +470,7 @@
 
 .home-billing-row small {
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
 }
 
 .home-billing-row strong {
@@ -630,7 +480,7 @@
 
 .home-billing-row em {
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   font-style: normal;
 }
 
@@ -697,7 +547,7 @@
   max-width: 420px;
   overflow: hidden;
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -711,7 +561,7 @@
   background: var(--surface-soft);
   color: var(--text);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
   font-weight: 650;
 }
 
@@ -777,7 +627,7 @@
   border: 1px solid transparent;
   border-radius: 10px;
   color: white;
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   font-weight: 700;
   cursor: pointer;
 }
@@ -790,22 +640,6 @@
 :root[data-theme='atoumweb'] .home-pipeline-item,
 :root[data-theme='blanc'] .home-quick-actions button {
   box-shadow: none;
-}
-
-@media (max-width: 1220px) {
-  .home-kpi-card {
-    gap: 8px;
-    padding: 11px 12px;
-  }
-
-  .home-kpi-icon {
-    width: 48px;
-    height: 48px;
-  }
-
-  .home-kpi-copy > b {
-    font-size: 28px;
-  }
 }
 
 @media (max-width: 1050px) {
@@ -843,30 +677,12 @@
   }
 
   .home-heading p {
-    font-size: 12px;
-  }
-
-  .home-kpi-card {
-    min-height: 82px;
-    padding: 8px 10px;
-  }
-
-  .home-kpi-icon {
-    width: 44px;
-    height: 44px;
-  }
-
-  .home-kpi-copy > b {
-    font-size: 24px;
+    font-size: var(--aw-font-functional);
   }
 
   .home-card-title {
     min-height: 39px;
     padding: 7px 10px;
-  }
-
-  .home-today-item {
-    padding: 8px 10px;
   }
 
   .home-time-body {
@@ -916,16 +732,16 @@
 
   .home-pipeline-label {
     min-height: 40px;
-    font-size: 13px;
+    font-size: var(--aw-font-functional);
     line-height: 1.3;
   }
 
   .home-pipeline-item > small {
-    font-size: 10px;
+    font-size: var(--aw-font-functional);
   }
 
   .home-pipeline-step {
-    font-size: 9px;
+    font-size: var(--aw-font-functional);
   }
 
   .home-pipeline-bar {
@@ -935,11 +751,11 @@
 
   .home-pipeline-footer {
     padding: 10px 18px 13px;
-    font-size: 10px;
+    font-size: var(--aw-font-functional);
   }
 
   .home-pipeline-footer strong {
-    font-size: 10px;
+    font-size: var(--aw-font-functional);
   }
 }
 
@@ -968,15 +784,15 @@
 
   .home-pipeline-label {
     min-height: 24px;
-    font-size: 9px;
+    font-size: var(--aw-font-functional);
   }
 
   .home-pipeline-item > small {
-    font-size: 7px;
+    font-size: var(--aw-font-functional);
   }
 
   .home-pipeline-step {
-    font-size: 7px;
+    font-size: var(--aw-font-functional);
   }
 
   .home-pipeline-bar {
@@ -986,11 +802,11 @@
 
   .home-pipeline-footer {
     padding: 7px 10px 9px;
-    font-size: 8px;
+    font-size: var(--aw-font-functional);
   }
 
   .home-pipeline-footer strong {
-    font-size: 8px;
+    font-size: var(--aw-font-functional);
   }
 }
 
@@ -1022,10 +838,6 @@
 
   .home-time-card .home-card-title {
     grid-column: auto;
-  }
-
-  .home-today-scroll {
-    max-height: 260px;
   }
 
   .home-quick-actions {

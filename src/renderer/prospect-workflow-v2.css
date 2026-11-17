@@ -23,28 +23,6 @@
 .detail-heading-actions { display: flex; align-items: center; gap: 8px; }
 .open-desk-button { white-space: nowrap; }
 
-.prospect-temperature-control {
-  display: flex;
-  justify-content: flex-end;
-  margin: 12px 0 14px;
-}
-.prospect-temperature-control label {
-  display: grid;
-  gap: 5px;
-  min-width: 190px;
-  color: var(--muted);
-  font-size: var(--ui-font-small);
-  font-weight: 750;
-}
-.prospect-temperature-control select {
-  min-height: var(--ui-control-height);
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  color: var(--text);
-  padding: var(--ui-control-pad-y) var(--ui-control-pad-x);
-}
-
 .prospect-desk-overlay {
   position: fixed;
   inset: 0;
@@ -404,8 +382,8 @@
   .prospect-desk-overlay { padding: 0; }
   .prospect-desk-shell { width: 100vw; height: 100dvh; }
   .prospect-detail-desk { border-radius: 0; }
-  .prospect-temperature-control { justify-content: stretch; }
-  .prospect-temperature-control label { width: 100%; }
+  
+  
   .quick-date-scheduler,
   .followup-inline,
   .waiting-form { grid-template-columns: 1fr; }

@@ -54,6 +54,21 @@ describe('Devis mixte création + maintenance (décisions du 11/11/2026)', {time
     expect(q.balanceCents).toBe(cents(2183 - 657.6));
   });
 
+  it('F71b : sans échéancier donné, la création de 1 644 € passe en 30 / 40 / 30 ; la maintenance reste payable d’avance, à part', () => {
+    const q = quotes.createWithLines({prospectId: prospect().id, subject: 'TEST DEV-2026-003 règle'}, [
+      {catalogVersionId: versionOf('V39-WEB-BUSINESS'), input: {label: 'Vitrine Business'}},
+      {catalogVersionId: versionOf('AW-CONT-PAGE'), input: {label: 'Rédaction page web', quantityMilli: 5000}},
+      {catalogVersionId: versionOf('AW-MAINT-WP-A'), input: {label: 'Maintenance WordPress annuelle'}},
+    ], quick);
+    const p = preparation.parameters(q.id)!;
+    expect(p.payment.origin).toBe('rule');
+    expect(p.payment.milestones.map(m => m.percent)).toEqual([30, 40, 30]);
+    const rows = quotePaymentSchedule(p, q.lines.map(l => ({id: l.id, label: l.label, contractLineValueCents: l.contractLineValueCents, snapshot: l.snapshot as Record<string, unknown>})), q.contractValueCents);
+    const creation = (r: typeof rows[number]) => !['annuelle', 'yearly'].includes(r.periodicity ?? '');
+    expect(rows.filter(r => !creation(r)).reduce((n, r) => n + r.amountCents, 0)).toBe(cents(539));
+    expect(q.depositCents).toBe(Math.round(cents(1644) * 0.3));
+  });
+
   it('un devis de création seule garde l’échéancier simple', () => {
     const q = quotes.createWithLines({prospectId: prospect().id, subject: 'TEST simple', paymentPlan: 'sites_vitrines'}, [{catalogVersionId: versionOf('AW-WEB-VITRINE'), input: {label: 'Vitrine'}}], quick);
     expect(preparation.parameters(q.id)!.payment.lineSchedules).toBeUndefined();

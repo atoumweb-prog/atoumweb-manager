@@ -73,7 +73,7 @@ module.exports=async context=>{
 
   await click(`[data-directory-id="${other.id}"]`);test(dialogs.length===n+3&&await get('window.__directoryInput.value==="TEST03E UNSAVED"'),'Selecting another identity preserves refused draft');
 
-  await input('.directory-toolbar input','NO MATCH');test(await get('window.__directoryEditor.isConnected'),'Filter hiding selected identity never unmounts editor');await input('.directory-toolbar input','');
+  await input('.aw-list-toolbar input','NO MATCH');test(await get('window.__directoryEditor.isConnected'),'Filter hiding selected identity never unmounts editor');await input('.aw-list-toolbar input','');
 
   await click('.directory-detail-panel .operation-detail-expand');test(await get('window.__directoryEditor===document.querySelector(".directory-editor")'),'Enlarging keeps Annuaire editor mounted');
 
@@ -109,7 +109,7 @@ module.exports=async context=>{
 
   // Lost reply after atomic creation: same operation token must not create a second identity.
 
-  await click('.directory-toolbar .primary-button');await input('.directory-editor input','TEST03E RETRY');
+  await click('.aw-list-toolbar .primary-button');await input('.directory-editor input','TEST03E RETRY');
 
   saveMode='lost';const countBefore=db.database.get('SELECT count(*) n FROM organizations').n;
 
@@ -147,7 +147,7 @@ module.exports=async context=>{
 
   test(db.crm.directoryVerification('organization',created.id).verifiedAt!==null,'Prior human verification retained as provenance');
 
-  await click('.directory-detail-panel .close-detail');await textClick('.directory-view-tabs button','Contacts');await click('.directory-toolbar .primary-button');
+  await click('.directory-detail-panel .close-detail');await textClick('.directory-view-tabs button','Contacts');await click('.aw-list-toolbar .primary-button');
 
   await input('.directory-editor label:nth-child(1) input','TEST03E PERSON');await input('.directory-editor label:nth-child(2) input','SHARED');await input('.directory-editor input[inputmode=email]','person03e@example.test');
 
@@ -190,13 +190,13 @@ module.exports=async context=>{
 
   try{
 
-    hold=true;await textClick('.directory-toolbar button','Actualiser');for(let i=0;i<50&&!finishList;i++)await sleep(20);test(!!finishList,'Old directory list actually held');
+    hold=true;await textClick('.aw-list-toolbar button','Actualiser');for(let i=0;i<50&&!finishList;i++)await sleep(20);test(!!finishList,'Old directory list actually held');
 
     await textClick('.directory-view-tabs button','Contacts');await click(`[data-directory-id="${person.id}"]`);finishList();await sleep(130);
 
     test(await get('document.querySelector(".directory-detail-panel").dataset.searchEntityId')===person.id,'Late organization list cannot replace Contact selection');
 
-    finishList=null;hold=true;await textClick('.directory-toolbar button','Actualiser');for(let i=0;i<50&&!finishList;i++)await sleep(20);test(!!rejectList,'Old directory error actually armed');
+    finishList=null;hold=true;await textClick('.aw-list-toolbar button','Actualiser');for(let i=0;i<50&&!finishList;i++)await sleep(20);test(!!rejectList,'Old directory error actually armed');
 
     await textClick('.directory-view-tabs button','Organisations');await click(`[data-directory-id="${other.id}"]`);rejectList(Error('OBSOLETE_DIRECTORY_FAILURE'));await sleep(130);
 
@@ -205,12 +205,12 @@ module.exports=async context=>{
   }finally{db.crm.listDirectoryOrganizations=originalList;}
 
   await wait('document.querySelector(".directory-verification button")','current verification');
-  await js('document.querySelector(".directory-detail-panel .contact-method-add").closest("details").open=true');await input('.directory-detail-panel .contact-method-add input','0612345678');
+  /* P6a : depuis R3 le formulaire s'ouvre dans une fenêtre « Ajouter une coordonnée » (bouton du volet Coordonnées) */await js('document.querySelector(".directory-detail-panel .contact-methods-panel").open=true');await sleep(60);await textClick('.directory-detail-panel .contact-methods-panel button','Ajouter une coordonnée');await wait('!!document.querySelector(".contact-method-add input")','add coordinate dialog');await input('.contact-method-add input','0612345678');
   await click('.directory-verification button');await wait('document.querySelector(".directory-verification [role=alert]")','unsaved method refuses verification');
   test(db.crm.directoryVerification('organization',other.id).verifiedAt===null&&await get('document.querySelector(".contact-method-add input").value==="0612345678"'),'Unsaved coordinate never becomes a human verification event');
   answers.push(1);await click('.directory-detail-panel .close-detail');
-  await click(`[data-directory-id="${other.id}"]`);await input('.directory-toolbar input','NO MATCH LAST');await js('document.querySelector(".directory-detail-panel .close-detail").focus()');await click('.directory-detail-panel .close-detail');
-  await wait('document.activeElement.matches(".directory-toolbar .inline-search")','filtered Directory close focus');test(await get('document.activeElement.value')==='NO MATCH LAST','Closing Directory hidden by filter restores query focus without erasing it');
+  await click(`[data-directory-id="${other.id}"]`);await input('.aw-list-toolbar input','NO MATCH LAST');await js('document.querySelector(".directory-detail-panel .close-detail").focus()');await click('.directory-detail-panel .close-detail');
+  await wait('document.activeElement.matches(".aw-list-toolbar .inline-search")','filtered Directory close focus');test(await get('document.activeElement.value')==='NO MATCH LAST','Closing Directory hidden by filter restores query focus without erasing it');
   test(await get('document.querySelectorAll(".global-timer").length===1')&&db.database.get('SELECT count(*) n FROM time_sessions').n===timerSessions,'Client and Directory preserve unique real timer without starting a session');
   console.log('DIRECTORY03E_EVIDENCE '+JSON.stringify({captures,dialogs:dialogs.length,convertedClientId:converted.id,organizationId:org.id,onlyTemp:true}));
 

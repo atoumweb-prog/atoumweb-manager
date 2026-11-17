@@ -5,11 +5,13 @@ import {qualificationMissing,type ProspectMissing} from '../../shared/prospectPr
 import {ProspectTimeline} from './ProspectTimeline';
 import {activePipelineColumn} from '../../shared/prospectPipelineProjection';
 import './prospect-workspace-tabs.css';
+import './prospect-record.css';
 import {readLayout,writeLayout,layoutKey} from '../../shared/panelLayout';
 import {ProspectDialog} from './ProspectDialog';
 import {ProspectValue} from './ProspectValue';
 import {ProspectRelatedRecords} from './ProspectRelatedRecords';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {hasActiveFilters} from '../ui/tableEmpty';
 import {PROSPECT_DIRECTORY_VIEW} from '../../shared/prospectTablePresentation';
 import {OperationIcon, type OperationIconName} from '../operations/OperationIcon';
 import {AppButton} from '../ui/AppButton';
@@ -18,12 +20,22 @@ import './prospection-directory-pilot.css';
 import './prospect-density-options.css';
 import './prospect-workspace-pilot.css';
 import './prospection-ux.css';
+import './prospect-pipeline-compact.css';
+import './prospect-desk-g3.css';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
-import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
+import {usePageConfirm} from '../ui/usePageConfirm';
+import {UnsavedGroup,useUnsavedDraft,requestUnsavedExit,unsavedRegistry} from '../unsaved/unsaved';
 import { normalizeEmail, normalizePhone } from '../../shared/contactValidation';
 import { normalizeWebUrl } from '../../shared/webUrl';
 import { historyOutcome, projectPipeline, withCurrentQuoteSignal, PROSPECT_PIPELINE_COLUMNS } from '../../shared/prospectPipelineProjection';
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type FormEvent, type ReactNode } from 'react';
+import { RecordHeader } from '../ui/RecordHeader';
+import { PageHeader } from '../ui/PageHeader';
+import { StatusPill, type StatusTone } from '../ui/StatusPill';
+import type { MenuItem } from '../ui/moreMenuModel';
+import { NextStepCard, type NextStepAction } from '../ui/NextStepCard';
+import { prospectStatusTone } from '../ui/prospectStatusTone';
+import { prospectNextStep, prospectOpeningTab } from '../../shared/prospectNextStep';
 import type { QuoteSummary } from '../../shared/commercial';
 import {
   PROSPECT_SOURCES,
@@ -38,6 +50,8 @@ import {
 import { ProspectActionsPanel } from './ProspectActionsPanel';
 import { ProspectIdentityPanel } from './ProspectIdentityPanel';
 import { ProspectNeedsPanel } from './ProspectNeedsPanel';
+import { NeedsSectionHeader } from './NeedsSectionHeader';
+import { initialNeedsOpen, initialPreparationOpen, needsSectionSummary, sectionForMissingTab, type NeedsSectionId, type PreparationSectionId, type SavedSectionState } from '../../shared/prospectNeedsSections';
 import {ProspectPreQuoteReviewPanel} from './ProspectPreQuoteReview';
 import { FieldHelp, ProspectQualificationPanelV2 } from './ProspectQualificationPanelV2';
 import { ProspectQuotePanel } from './ProspectQuotePanel';
@@ -195,6 +209,7 @@ function quoteCardState(prospect: ProspectSummary, quote: QuoteSummary): string 
 
 export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView = 'directory', initialPipelineFilter = 'all', initialRequest }: { onMessage: (message: string) => void; initialId?: string | null; initialView?: View; initialPipelineFilter?: ProspectPipelineFilter;initialRequest?:number;onEntityReady?:EntityReady }) {
   const [prospects, setProspects] = useState<ProspectSummary[]>([]);
+  const {dialog: confirmDialog, askConfirm} = usePageConfirm();
   const [actions, setActions] = useState<CrmAction[]>([]);
   const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
@@ -204,8 +219,10 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   const [directoryIndustry, setDirectoryIndustry] = useState('');
   const [directoryCity, setDirectoryCity] = useState('');
   const [directoryStatusFilter, setDirectoryStatusFilter] = useState<DirectoryStatusFilter>('all'); // lot 5 : aucun filtre actif à l'ouverture, tous les prospects sont visibles
+  const clearDirectoryFilters = () => { setDirectorySearch(''); setDirectoryIndustry(''); setDirectoryCity(''); setDirectoryStatusFilter('all'); };
   const sidePanelRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(()=>{try{if(sessionStorage.getItem('home-quick-action')==='prospect'){sessionStorage.removeItem('home-quick-action');return true;}}catch{}return false;});
   const closeCreation=()=>requestUnsavedExit(()=>setShowForm(false),'prospect:create');
   const [creationTab,setCreationTab]=useState('company');
@@ -222,6 +239,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
   const [prospectSplitPercent, applyProspectSplitPercent] = useState(()=>{try{return Math.max(40,Math.min(74,readLayout(window.atoumweb.visualPreferences,splitKey,66)));}catch{return 66;}});
   function setProspectSplitPercent(value:number|((before:number)=>number)){applyProspectSplitPercent(before=>{const next=Math.max(40,Math.min(74,typeof value==='number'?value:value(before)));try{writeLayout(window.atoumweb.visualPreferences,splitKey,next);}catch{/* Keep current layout usable. */}return next;});}
   const [deskAction,setDeskAction]=useState(false);
+  const [deskCreate,setDeskCreate]=useState(false);
   const [deskStartTab,setDeskStartTab]=useState<'commercial'|'reference'>('commercial');
   const [deskModeId, applyDeskModeId] = useState<string | null>(null);
   const [quickDateFor,setQuickDateFor]=useState<ProspectSummary|null>(null),[quickDate,setQuickDate]=useState(''),[quickSaving,setQuickSaving]=useState(false),[quickError,setQuickError]=useState('');
@@ -248,11 +266,11 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
       ]);
       if(generation!==refreshGeneration.current)return;
       if(initialId&&!nextProspects.some(item=>item.id===initialId))onEntityReady?.('prospect',initialId,'Prospect introuvable.');
-      setProspects(nextProspects); setActions(nextActions); setQuotes(nextQuotes);
+      setProspects(nextProspects); setActions(nextActions); setQuotes(nextQuotes); setListError(null);
       const current=selectionRef.current;
       if (current.selectedId && !nextProspects.some((item) => item.id === current.selectedId)) requestUnsavedExit(()=>applySelectedId(null),'prospect:'+current.selectedId+'/panel');
       if (current.deskModeId && !nextProspects.some((item) => item.id === current.deskModeId)) requestUnsavedExit(()=>applyDeskModeId(null),'prospect:'+current.deskModeId+'/desk');
-    } catch(error) { if(generation===refreshGeneration.current)throw error; }
+    } catch(error) { if(generation===refreshGeneration.current){ setListError(error instanceof Error ? error.message : 'Prospection indisponible.'); throw error; } }
     finally { if(generation===refreshGeneration.current){loadedOnce.current=true;setLoading(false);} }
   }
   useEffect(()=>()=>{refreshGeneration.current++;},[]);
@@ -384,7 +402,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
     } catch (e) {
       const message = cleanBusinessError(e, 'vérifie les informations nécessaires à cette étape.');
       if (prospect.stage === 'qualifying' && stage === 'need_identified' && /qualification incomplète/i.test(message)) {
-        const confirmed = window.confirm(`${message}\n\nPasser quand même à « ${STAGE_LABELS[stage]} » ?\nLes informations manquantes resteront visibles et pourront être complétées plus tard.`);
+        const confirmed = await askConfirm({title: `Passer quand même à « ${STAGE_LABELS[stage]} » ?`, body: `${message}\n\nLes informations manquantes resteront visibles et pourront être complétées plus tard.`, confirmLabel: 'Passer quand même'});
         if (!confirmed) {
           onMessage('Le prospect reste à l’étape « À qualifier ».');
           return false;
@@ -481,12 +499,13 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
 
   const detail = selected ? <div ref={sidePanelRef} className="prospect-side-panel-boundary"><ProspectDetailV2
     prospect={selected}
+    quoteStatus={latestQuotesByProspect.get(selected.id)?.status ?? null}
     actions={selectedActions}
     activity={activity}
     mode="panel"
     onRefresh={(message) => { void refresh(); if (message) onMessage(message); }}
     onClose={() => {if(setSelectedId(null))requestAnimationFrame(()=>document.querySelector<HTMLElement>(`tr[data-record-id="${selected?.id}"]`)?.focus({preventScroll:true}));}}
-    onOpenDesk={(tab='commercial',action=false) => {setDeskStartTab(tab);setDeskAction(action);setDeskModeId(selected.id);}}
+    onOpenDesk={(tab='commercial',action=false,create=false) => {setDeskStartTab(tab);setDeskAction(action||create);setDeskCreate(create);setDeskModeId(selected.id);}}
     onTemperature={(temperature) => void updateTemperature(selected, temperature)}
     onStage={stage=>void changeStage(selected,stage)} onStart={() => void startProspecting(selected)}
     onLost={(code, reason) => markLost(selected, code, reason)}
@@ -495,26 +514,23 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
 
   const renderProspectCard = (prospect: ProspectSummary, draggable = true) => {
     const nextAction = nextOpenAction(actions.filter(action => action.ownerId === prospect.id && action.status === 'open'));
-    const signal=latestQuotesByProspect.get(prospect.id)?.principleAgreementAt;
-    const group = signal&&isQuoteFollowUpStage(prospect.stage)?PIPELINE_GROUPS.find(item=>item.id==='finalization'):PIPELINE_GROUPS.find(item => item.stages.includes(prospect.stage ?? 'new'));
-    const openCard = () => {if(!setSelectedId(prospect.id))return;setDeskStartTab('commercial');setDeskAction(false);setDeskModeId(prospect.id);};
+    const openCard = () => {if(!setSelectedId(prospect.id))return;setDeskStartTab('commercial');setDeskAction(false);setDeskCreate(false);setDeskModeId(prospect.id);};
     return <article data-prospect-id={prospect.id} className={`prospect-card stacked-card prospect-temperature-${prospect.temperature ?? 'neutral'} collapsed-card ${selectedId === prospect.id ? 'selected-prospect' : ''}`} key={prospect.id}>
       <div className="prospect-card-head card-drag-handle" title={prospect.displayName} role="button" tabIndex={0} aria-label={'Ouvrir '+prospect.displayName} draggable={draggable} onDragStart={(e) => { if (!draggable) return; setDraggingId(prospect.id); e.dataTransfer.setData('text/plain', prospect.id); }} onDragEnd={() => { setDraggingId(null); setDropStage(null); }} onClick={openCard} onKeyDown={event=>{if(event.target===event.currentTarget&&['Enter',' '].includes(event.key)){event.preventDefault();openCard();}}}>
         <div className="prospect-card-identity"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} /><strong>{prospect.displayName}</strong></div>
-        {group && <span className="pipeline-state-icon" title={group.label}><OperationIcon name={group.icon}/></span>}
       </div>
-      <button type="button" className="pipeline-card-summary" aria-haspopup="dialog" onClick={openCard}>Ouvrir la fiche</button>
       <div className="prospection-card-preview"><span>{nextAction?.title||'Aucune action programmée'}</span>{nextAction?.dueAt&&<time className={new Date(nextAction.dueAt).getTime()<Date.now()?'is-overdue':''}>{formatDate(nextAction.dueAt)}{new Date(nextAction.dueAt).getTime()<Date.now()?' · En retard':''}</time>}</div>
-      <details className="pipeline-card-tools"><summary>Rappel et étape</summary><div className="quick-followups"><button type="button" disabled={quickSaving} onClick={()=>void scheduleQuick(prospect,1)}>Demain</button><button type="button" disabled={quickSaving} onClick={()=>void scheduleQuick(prospect,7)}>Dans 7 jours</button><button type="button" disabled={quickSaving} onClick={()=>{setQuickDate('');setQuickError('');setQuickDateFor(prospect);}}>Choisir une date</button></div>{manualStages(prospect).some(stage=>stage!==prospect.stage)&&<label>Déplacer vers<select value="" aria-label={'Changer l’étape de '+prospect.displayName} onChange={event=>{if(event.target.value)void changeStage(prospect,event.target.value as ProspectStage);}}><option value="">Choisir une transition…</option>{manualStages(prospect).filter(stage=>stage!==prospect.stage).map(stage=><option key={stage} value={stage}>{STAGE_LABELS[stage]}</option>)}</select></label>}</details>
+      <details className="pipeline-card-tools"><summary aria-label={'Rappel et étape de '+prospect.displayName} title="Rappel et étape"><span aria-hidden="true">⋯</span></summary><div className="quick-followups"><button type="button" disabled={quickSaving} onClick={()=>void scheduleQuick(prospect,1)}>Demain</button><button type="button" disabled={quickSaving} onClick={()=>void scheduleQuick(prospect,7)}>Dans 7 jours</button><button type="button" disabled={quickSaving} onClick={()=>{setQuickDate('');setQuickError('');setQuickDateFor(prospect);}}>Choisir une date</button></div>{manualStages(prospect).some(stage=>stage!==prospect.stage)&&<label>Déplacer vers<select value="" aria-label={'Changer l’étape de '+prospect.displayName} onChange={event=>{if(event.target.value)void changeStage(prospect,event.target.value as ProspectStage);}}><option value="">Choisir une transition…</option>{manualStages(prospect).filter(stage=>stage!==prospect.stage).map(stage=><option key={stage} value={stage}>{STAGE_LABELS[stage]}</option>)}</select></label>}</details>
     </article>;
   };
 
   return <div className="crm-stack prospects-v2" data-prospect-view={view}>
-    <header className="page-heading prospection-pilot-heading"><div><h1>Prospection</h1><FieldHelp text="Annuaire, parcours commercial et historique. Une ligne ouvre la fiche rapide ; Agrandir ouvre le même dossier."/></div>{view==='directory'&&<button type="button" className="primary-button" onClick={()=>showForm?closeCreation():setShowForm(true)}><OperationIcon name={showForm?'close':'plus'}/>{showForm?'Fermer la création':'Prospect'}</button>}</header>
+    {confirmDialog}
+    <PageHeader icon={<OperationIcon name="user"/>} title="Prospection" help="Liste, parcours commercial et historique. Une ligne ouvre la fiche rapide ; Agrandir ouvre le même dossier." actions={view==='directory'?<button type="button" className={showForm ? 'secondary-button' : 'primary-button'} onClick={()=>showForm?closeCreation():setShowForm(true)}><OperationIcon name={showForm?'close':'plus'}/>{showForm?'Fermer la création':'Prospect'}</button>:undefined}/>
     <div className="prospect-view-switch" role="tablist">
-      <button className={view === 'directory' ? 'active' : ''} onClick={() => setView('directory')}><OperationIcon name="contact"/>Annuaire prospects <span>{directory.length}</span></button>
-      <button className={view === 'pipeline' ? 'active' : ''} onClick={() => { setView('pipeline'); setPipelineFilter('all'); }}><OperationIcon name="layers"/>Parcours commercial <span>{pipelineActive.length}</span></button>
-      <button className={view === 'history' || view === 'conversions' ? 'active' : ''} onClick={() => setView('history')}><OperationIcon name="clock"/>Historique <span>{closed.length}</span></button>
+      <button className={view === 'directory' ? 'active' : ''} onClick={() => setView('directory')}><OperationIcon name="contact"/>Liste <span>{listError ? '—' : directory.length}</span></button>
+      <button className={view === 'pipeline' ? 'active' : ''} onClick={() => { setView('pipeline'); setPipelineFilter('all'); }}><OperationIcon name="layers"/>Parcours commercial <span>{listError ? '—' : pipelineActive.length}</span></button>
+      <button className={view === 'history' || view === 'conversions' ? 'active' : ''} onClick={() => setView('history')}><OperationIcon name="clock"/>Historique <span>{listError ? '—' : closed.length}</span></button>
     </div>
 
     {view === 'directory' && <>
@@ -523,7 +539,7 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
         ['qualifying','À qualifier',directory.filter(p=>p.stage==='qualifying').length,'search'],
         ['relaunch','À relancer',directory.filter(p=>followUpBuckets.relaunch.has(p.id)).length,'clock'],
         ['quote_to_prepare','Devis à préparer',directory.filter(p=>p.stage==='quote_to_prepare').length,'file-text']
-      ] as const).map(([filter,label,count,icon])=><button type="button" key={filter} data-prospect-filter={filter} title={filter==='relaunch'?'Rappels ouverts dus au plus tard aujourd’hui, retards inclus. Compteurs non additifs.':filter==='all'?'Tous les dossiers non archivés. Compteurs non additifs.':'Dossiers non archivés correspondant à cette situation. Compteurs non additifs.'} aria-pressed={directoryStatusFilter===filter} onClick={()=>setDirectoryStatusFilter(value=>value===filter?'follow':filter)}><strong>{count}</strong><OperationIcon name={icon}/><span>{label}</span></button>)}</div></details>
+      ] as const).map(([filter,label,count,icon])=><button type="button" key={filter} data-prospect-filter={filter} title={filter==='relaunch'?'Rappels ouverts dus au plus tard aujourd’hui, retards inclus. Compteurs non additifs.':filter==='all'?'Tous les dossiers non archivés. Compteurs non additifs.':'Dossiers non archivés correspondant à cette situation. Compteurs non additifs.'} aria-pressed={directoryStatusFilter===filter} onClick={()=>setDirectoryStatusFilter(value=>value===filter?'follow':filter)}><strong>{listError ? '—' : count}</strong><OperationIcon name={icon}/><span>{label}</span></button>)}</div></details>
       <div className="prospect-directory-filters">
         <input aria-label="Rechercher les prospects" value={directorySearch} onChange={(e) => setDirectorySearch(e.target.value)} placeholder="Rechercher une entreprise, un contact…" />
         <select aria-label="Filtrer par activité" value={directoryIndustry} onChange={(e) => setDirectoryIndustry(e.target.value)}><option value="">Tous les métiers</option>{directoryIndustries.map((value) => <option key={value} value={value}>{value}</option>)}</select>
@@ -545,9 +561,9 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
           <option value="won">Gagné</option>
           <option value="lost">Perdu</option>
         </select>
-        <button type="button" className="secondary-button" aria-label="Effacer les filtres" onClick={()=>{setDirectorySearch('');setDirectoryIndustry('');setDirectoryCity('');setDirectoryStatusFilter('all');}}>Effacer les filtres</button><AppButton variant="quiet" aria-label="Actualiser les prospects" title="Actualiser les prospects" icon={<OperationIcon name="refresh"/>} onAction={refresh}/>
+        <button type="button" className="secondary-button" aria-label="Effacer les filtres" onClick={clearDirectoryFilters}>Effacer les filtres</button><AppButton variant="quiet" aria-label="Actualiser les prospects" title="Actualiser les prospects" icon={<OperationIcon name="refresh"/>} onAction={refresh}/>
       </div>
-      <p className="prospection-pilot-results" role="status"><span>{[directorySearch.trim(),directoryIndustry,directoryCity,directoryStatusFilter!=='all'?directoryStatusFilter:''].filter(Boolean).length} filtre(s) actif(s) · </span>{directoryFiltered.length} résultat{directoryFiltered.length>1?'s':''}{directoryStatusFilter!=='all'?' · filtre : '+({follow:'À suivre',prepare:'À préparer',ready:'Prêt pour démarchage',relaunch:'À relancer',overdue:'Relance en retard',...STAGE_LABELS}[directoryStatusFilter]):''}</p>
+      <p className="prospection-pilot-results" role="status"><span>{[directorySearch.trim(),directoryIndustry,directoryCity,directoryStatusFilter!=='all'?directoryStatusFilter:''].filter(Boolean).length} filtre(s) actif(s) · </span>{listError ? '—' : directoryFiltered.length} résultat{directoryFiltered.length>1?'s':''}{directoryStatusFilter!=='all'?' · filtre : '+({follow:'À suivre',prepare:'À préparer',ready:'Prêt pour démarchage',relaunch:'À relancer',overdue:'Relance en retard',...STAGE_LABELS}[directoryStatusFilter]):''}</p>
       {showForm && <ProspectDialog label="Nouveau prospect" onClose={closeCreation} className="prospect-create-dialog"><form className="panel crm-form prospect-create-v2" onSubmit={(e) => void submitProspect(e)}><div className="panel-title"><div><span className="eyebrow">Prospection</span><h2>Nouveau prospect</h2><p className="muted">Le nom suffit pour commencer. Tout le reste est facultatif et se complète plus tard, depuis la fiche.</p></div></div><div className="prospect-create-tabs prospect-create-single"><button type="button" className="prospect-create-logo-tab" aria-label="Charger le logo de l’entreprise" onClick={()=>void window.atoumweb.crm.identityAssets.chooseDraft().then(logo=>{if(logo)setDraftLogo(logo);}).catch(e=>setFormError(String(e)))}>{draftLogo?<><img src={draftLogo.preview} alt="Logo sélectionné"/> Logo</>:'+ Logo'}</button>{draftLogo&&<button type="button" className="prospect-create-logo-clear" onClick={()=>setDraftLogo(null)}>Retirer</button>}</div><div className="form-grid">
         <div className="form-span-3 form-grid"><label className="form-span-3">Rechercher une entreprise existante<select aria-label="Entreprise existante" value={draft.organizationId??''} onChange={e=>{const org=existingOrganizations.find(o=>o.id===e.target.value);setDraft({...draft,organizationId:e.target.value,industry:org?.industry??'',activityDescription:org?.notes??'',website:org?.website??'',websitePresence:org?.website?'present':'review'});}}><option value="">Créer une nouvelle entreprise</option>{existingOrganizations.map(o=><option key={o.id} value={o.id}>{o.name} · {o.city||'Ville non renseignée'}</option>)}</select></label>
         {!draft.organizationId&&<><label>Société <FieldHelp text="Nom commercial ou nom de la structure." /><input value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} /></label>
@@ -567,14 +583,14 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
       </div></details></div>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="form-actions"><button className="secondary-button" type="button" onClick={closeCreation}>Annuler</button><button className="primary-button" disabled={saving} type="submit">{saving ? 'Création…' : 'Créer le prospect'}</button></div></form></ProspectDialog>}
       {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className={selected && !deskProspect ? 'prospects-layout with-detail' : 'prospects-layout'} style={prospectSplitStyle}>
         <div className="panel table-panel prospect-directory-table-panel">
-          <ConfiguredDataTable<ProspectSummary> fitAvailable defaultVisibleColumnIds={['identity','next_action','due','status']} scope={PROSPECT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} rows={directoryFiltered} selectedId={selectedId} getId={p=>p.id} onSelect={p=>setSelectedId(p.id)} className="prospect-directory-table" caption="Annuaire prospects · source complète · tri sur tous les résultats filtrés" columns={[
+          <ConfiguredDataTable<ProspectSummary> error={listError} onRetry={() => void refresh().catch(error => onMessage(error instanceof Error ? error.message : 'Prospection indisponible.'))} fitAvailable defaultVisibleColumnIds={['identity','next_action','due','status']} filtersActive={hasActiveFilters([directorySearch,directoryIndustry,directoryCity,directoryStatusFilter])} onClearFilters={clearDirectoryFilters} scope={PROSPECT_DIRECTORY_VIEW} store={window.atoumweb.visualPreferences} rows={directoryFiltered} selectedId={selectedId} getId={p=>p.id} onSelect={p=>setSelectedId(p.id)} className="prospect-directory-table" caption="Liste des prospects · source complète · tri sur tous les résultats filtrés" columns={[
             {id:'identity',label:'Entreprise',required:true,sortValue:p=>p.displayName,render:p=><div className="client-name-cell"><CrmIdentityAvatar organizationId={p.organizationId} contactId={p.contactId} name={p.displayName}/><div><strong title={p.displayName}>{p.displayName}</strong><small><span className={'prospect-temperature-dot '+(p.temperature??'neutral')} title={TEMPERATURE_LABELS[p.temperature??'neutral']} aria-label={'Température commerciale : '+TEMPERATURE_LABELS[p.temperature??'neutral']}/> {SOURCE_LABELS[p.source??'other']}</small></div></div>},
             {id:'next_action',label:'Prochaine action',sortValue:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.title??null,render:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.title||<span className="muted">Aucune action programmée</span>},
             {id:'due',label:'Échéance',sortValue:p=>nextOpenAction(actions.filter(a=>a.ownerId===p.id))?.dueAt??null,render:p=>{const a=nextOpenAction(actions.filter(a=>a.ownerId===p.id)),date=a?.dueAt;return <span className={date&&new Date(date).getTime()<Date.now()?'prospection-due-overdue':''}>{date?formatDate(date):'—'}</span>;}},
             {id:'industry',label:'Activité',sortValue:p=>p.organizationIndustry??null,render:p=>p.organizationIndustry||<span className="muted">À compléter</span>},
             {id:'city',label:'Ville',sortValue:p=>p.organizationCity??null,render:p=>p.organizationCity||'—'},
             {id:'contact',label:'Contact',sortValue:p=>p.secondaryLabel??null,render:p=>p.secondaryLabel||'À identifier'},
-            {id:'status',label:'Statut',sortValue:p=>directoryStatus(p).label,render:p=><span className={'prospect-directory-status prospect-directory-status-'+directoryStatus(p).tone} title={p.stage==='new'&&!prospectReadiness(p).ready?'À compléter : '+prospectReadiness(p).missing.join(', '):directoryStatus(p).label}>{directoryStatus(p).label}</span>},
+            {id:'status',label:'Statut',sortValue:p=>directoryStatus(p).label,render:p=><StatusPill tone={prospectStatusTone(directoryStatus(p).tone)}>{directoryStatus(p).label}</StatusPill>},
           ]}/>
 
         </div>
@@ -587,23 +603,22 @@ export function ProspectsPage({ onEntityReady, onMessage, initialId, initialView
       <div className="module-toolbar prospect-toolbar">
         <div><strong>{pipelineFiltered.length}</strong><span> opportunité{pipelineFiltered.length > 1 ? 's' : ''} commerciale{pipelineFiltered.length > 1 ? 's' : ''}{pipelineFilter === 'relaunch' ? ' à relancer' : pipelineFilter === 'overdue' ? ' en retard' : ''}</span></div>
         <div className="toolbar-controls">
-          <button className={pipelineFilter === 'all' ? 'primary-button' : 'secondary-button'} type="button" onClick={() => setPipelineFilter('all')}>Tous · {pipelineActive.length}</button>
-          <button className={pipelineFilter === 'relaunch' ? 'primary-button' : 'secondary-button'} type="button" title="Rappels ouverts dus aujourd’hui ou en retard ; les retards sont inclus." onClick={() => setPipelineFilter('relaunch')}>À relancer · {relaunchCount}</button>
-          <button className={pipelineFilter === 'overdue' ? 'primary-button' : 'secondary-button'} type="button" title="Sous-ensemble des dossiers à relancer dont l’échéance est dépassée." onClick={() => setPipelineFilter('overdue')}>En retard · {overdueCount}</button>
+          <button className="secondary-button" aria-pressed={pipelineFilter === 'all'} type="button" onClick={() => setPipelineFilter('all')}>Tous · {pipelineActive.length}</button>
+          <button className="secondary-button" aria-pressed={pipelineFilter === 'relaunch'} type="button" title="Rappels ouverts dus aujourd’hui ou en retard ; les retards sont inclus." onClick={() => setPipelineFilter('relaunch')}>À relancer · {relaunchCount}</button>
+          <button className="secondary-button" aria-pressed={pipelineFilter === 'overdue'} type="button" title="Sous-ensemble des dossiers à relancer dont l’échéance est dépassée." onClick={() => setPipelineFilter('overdue')}>En retard · {overdueCount}</button>
           <AppButton variant="quiet" aria-label="Actualiser les prospects" title="Actualiser les prospects" icon={<OperationIcon name="refresh"/>} onAction={refresh}/>
-          <button className="secondary-button" onClick={() => setView('directory')}>Annuaire prospects</button>
         </div>
       </div>
       {loading ? <div className="panel"><p className="muted">Chargement…</p></div> : <div className="prospects-layout pipeline-layout"><div className="pipeline-flow"><div className="kanban-board" tabIndex={0} aria-label="Parcours commercial : six étapes">{PIPELINE_GROUPS.map((group) => {
         const groupProspects = pipelineProjection.columns.find((column) => column.id === group.id)?.prospects ?? [];
         const targetStage = group.stages[0];
-        return <section className={`kanban-column pipeline-step-column ${targetStage && dropStage === targetStage ? 'drag-over' : ''}`} key={group.id} onDragOver={(e) => { if (targetStage && draggingId) e.preventDefault(); }} onDragEnter={() => { if (targetStage && draggingId) setDropStage(targetStage); }} onDrop={(e) => { if (!targetStage || !draggingId) return; e.preventDefault(); void handleGroupDrop(group.stages); }}><header><OperationIcon name={group.icon}/><div><small>Étape {group.step}</small><strong>{group.label}</strong></div><span>{groupProspects.length}</span></header><div className="kanban-cards stacked-cards">{groupProspects.map((prospect) => renderProspectCard(prospect))}{groupProspects.length === 0 && <div className="kanban-empty">Aucun dossier</div>}</div></section>;
-      })}</div><div className="pipeline-conversion-history"><button className="secondary-button" type="button" onClick={()=>setView('conversions')}><OperationIcon name="check-circle"/>Clients acquis · {historicalConversions.length}</button></div></div></div>}
+        return <section className={`kanban-column pipeline-step-column ${groupProspects.length === 0 ? 'is-empty' : ''} ${targetStage && dropStage === targetStage ? 'drag-over' : ''}`} key={group.id} onDragOver={(e) => { if (targetStage && draggingId) e.preventDefault(); }} onDragEnter={() => { if (targetStage && draggingId) setDropStage(targetStage); }} onDrop={(e) => { if (!targetStage || !draggingId) return; e.preventDefault(); void handleGroupDrop(group.stages); }}><header><OperationIcon name={group.icon}/><div><small>Étape {group.step}</small><strong>{group.label}</strong></div><span>{groupProspects.length}</span></header><div className="kanban-cards stacked-cards">{groupProspects.map((prospect) => renderProspectCard(prospect))}{groupProspects.length === 0 && <div className="kanban-empty">Aucun dossier</div>}</div></section>;
+      })}</div><div className="pipeline-conversion-history"><AppButton variant="quiet" icon={<OperationIcon name="check-circle"/>} onAction={()=>setView('conversions')}>Clients acquis · {historicalConversions.length}</AppButton></div></div></div>}
     </>}
 
-    {(view === 'history' || view === 'conversions') && <>{view === 'conversions' && <div className="module-toolbar prospect-toolbar"><strong>Clients acquis · {historicalConversions.length}</strong><button className="secondary-button" type="button" onClick={() => setView('pipeline')}>Retour au parcours commercial</button></div>}<HistoryView prospects={historyVisible} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected && historyVisible.some((item) => item.id === selected.id) ? selected : null} activity={activity} onClose={() => {if(setSelectedId(null))requestAnimationFrame(()=>document.querySelector<HTMLElement>(`tr[data-record-id="${selected?.id}"]`)?.focus({preventScroll:true}));}} /></>}
+    {(view === 'history' || view === 'conversions') && <>{view === 'conversions' && <div className="module-toolbar prospect-toolbar"><strong>Clients acquis · {historicalConversions.length}</strong><AppButton variant="quiet" onAction={() => setView('pipeline')}>Retour au parcours commercial</AppButton></div>}<HistoryView prospects={historyVisible} search={historySearch} onSearch={setHistorySearch} onSelect={(item) => setSelectedId(item.id)} selected={selected && historyVisible.some((item) => item.id === selected.id) ? selected : null} activity={activity} onClose={() => {if(setSelectedId(null))requestAnimationFrame(()=>document.querySelector<HTMLElement>(`tr[data-record-id="${selected?.id}"]`)?.focus({preventScroll:true}));}} /></>}
     {quickDateFor&&<ProspectDialog label="Programmer un rappel" className="prospect-action-dialog" onClose={()=>quickDateGuard.request(()=>{quickDateGuard.discard();setQuickDateFor(null);})}><div className="inline-editor"><h2>Rappel — {quickDateFor.displayName}</h2><label>Date du rappel<input type="date" value={quickDate} onChange={event=>setQuickDate(event.target.value)}/></label>{quickError&&<p role="alert" className="form-error">{quickError}</p>}<div className="inline-editor-actions"><button type="button" className="secondary-button" onClick={()=>quickDateGuard.request(()=>{quickDateGuard.discard();setQuickDateFor(null);})}>Annuler la saisie</button><button type="button" className="primary-button" disabled={!quickDate||quickSaving} onClick={()=>void scheduleQuick(quickDateFor,0,quickDate)}>Programmer le rappel</button></div></div></ProspectDialog>}
-    {deskProspect && <ProspectDialog className="prospect-desk-dialog prospect-desk-overlay" label={`Fiche de travail ${deskProspect.displayName}`} onClose={()=>setDeskModeId(null)}><div className="prospect-desk-shell"><ProspectDetailV2 prospect={deskProspect} actions={actions.filter((item) => item.ownerId === deskProspect.id)} activity={selectedId === deskProspect.id ? activity : []} mode="desk" initialTab={deskStartTab} initialAction={deskAction} onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setDeskModeId(null)} onTemperature={(temperature) => void updateTemperature(deskProspect, temperature)} onStage={stage=>void changeStage(deskProspect,stage)} onStart={() => void startProspecting(deskProspect)} onLost={(code, reason) => markLost(deskProspect, code, reason)} onArchive={() => archive(deskProspect)} /></div></ProspectDialog>}
+    {deskProspect && <ProspectDialog className="prospect-desk-dialog prospect-desk-overlay" label={`Fiche de travail ${deskProspect.displayName}`} onClose={()=>setDeskModeId(null)}><div className="prospect-desk-shell"><ProspectDetailV2 prospect={deskProspect} quoteStatus={latestQuotesByProspect.get(deskProspect.id)?.status ?? null} actions={actions.filter((item) => item.ownerId === deskProspect.id)} activity={selectedId === deskProspect.id ? activity : []} mode="desk" initialTab={deskStartTab} initialAction={deskAction} initialCreate={deskCreate} onRefresh={(message) => { void refresh(); if (message) onMessage(message); }} onClose={() => setDeskModeId(null)} onTemperature={(temperature) => void updateTemperature(deskProspect, temperature)} onStage={stage=>void changeStage(deskProspect,stage)} onStart={() => void startProspecting(deskProspect)} onLost={(code, reason) => markLost(deskProspect, code, reason)} onArchive={() => archive(deskProspect)} /></div></ProspectDialog>}
   </div>;
 }
 
@@ -633,29 +648,35 @@ function ProspectWorkAccordion({ title, summary, defaultOpen = false, children, 
 }
 
 function ProspectDetailV2(props:Parameters<typeof ProspectDetailV2Inner>[0]){return <UnsavedGroup name={'prospect:'+props.prospect.id+'/'+props.mode}><ProspectDetailV2Inner {...props}/></UnsavedGroup>;}
-function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, onClose, onOpenDesk, initialTab='commercial', initialAction=false, onTemperature, onStage, onStart, onLost, onArchive }: {
+function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, onClose, onOpenDesk, initialTab='commercial', initialAction=false, initialCreate=false, onTemperature, onStage, onStart, onLost, onArchive, quoteStatus=null }: {
   prospect: ProspectSummary;
   actions: CrmAction[];
   activity: ActivityEvent[];
   mode: 'panel' | 'desk';
   onRefresh: (message?: string) => void;
   onClose: () => void;
-  onOpenDesk?: (tab?:'commercial'|'reference',action?:boolean) => void;
+  onOpenDesk?: (tab?:'commercial'|'reference',action?:boolean,create?:boolean) => void;
   initialAction?:boolean;
+  initialCreate?:boolean;
   initialTab?:'commercial'|'reference';
   onTemperature: (value: ProspectTemperature) => void;
   onStage: (stage:ProspectStage)=>void;
   onStart: () => void;
   onLost: (code: string, reason: string) => Promise<boolean>;
   onArchive: () => Promise<boolean>;
+  /** F57 : statut du devis courant du prospect. */
+  quoteStatus?: QuoteSummary['status'] | null;
 }) {
   const [closingBusy,setClosingBusy]=useState(false);
+  // F60 (décision de Carlos du 16/11/2026) : à l'ouverture de la fiche rapide, le focus va à son titre ; Échap la ferme et le focus revient sur la ligne.
+  const panelRef=useRef<HTMLElement|null>(null);
+  useEffect(()=>{if(mode!=='panel')return;const heading=panelRef.current?.querySelector<HTMLElement>('.detail-panel-heading h2');if(!heading)return;heading.tabIndex=-1;heading.focus({preventScroll:true});},[prospect.id,mode]);
   const [lossOpen, setLossOpen] = useState(false);
   const [archiveOpen,setArchiveOpen]=useState(false);
+  const [associationsOpen,setAssociationsOpen]=useState(false),[stageOpen,setStageOpen]=useState(false),[nextStepError,setNextStepError]=useState('');
   const [quickContact,setQuickContact]=useState<{role:string;email:string;phone:string}>({role:'',email:'',phone:''});
   useEffect(()=>{let current=true;const load=async()=>{try{const identity=await window.atoumweb.workflow.identity('prospect',prospect.id);const methods=identity.contact?await window.atoumweb.crm.contactMethods.list('contact',identity.contact.id):[];if(current)setQuickContact({role:identity.contact?.jobTitle||'',email:(methods.find(method=>method.type==='email'&&method.isPrimary)||methods.find(method=>method.type==='email'))?.value||'',phone:(methods.find(method=>method.type==='phone'&&method.isPrimary)||methods.find(method=>method.type==='phone'))?.value||''});}catch{if(current)setQuickContact({role:'',email:'',phone:''});}};void load();window.addEventListener('atoumweb:changed',load);return()=>{current=false;window.removeEventListener('atoumweb:changed',load);};},[prospect.id,mode]);
-  const [workspaceTab,applyWorkspaceTab]=useState(initialAction?'actions':initialTab==='reference'?'preparation':prospect.stage==='new'?'company':prospect.stage==='qualifying'?'preparation':'needs');
-  const [preparationSection,setPreparationSection]=useState<'research'|'preparation'>('research');
+  const [workspaceTab,applyWorkspaceTab]=useState<string>(prospectOpeningTab({stage:prospect.stage??'new',clientAccountId:prospect.clientAccountId,archivedAt:prospect.archivedAt,initialAction,initialTab}));
   const [highlightMissing,setHighlightMissing]=useState(false),[hasNeeds,setHasNeeds]=useState(false),[hasContactMethod,setHasContactMethod]=useState(true);
   const [phaseWarning,setPhaseWarning]=useState<{target:string;missing:ProspectMissing[]}|null>(null);
   const acknowledged=useRef(new Set<string>());
@@ -663,17 +684,27 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
 
   const qualificationGaps=[...qualificationMissing(prospect),...(!hasContactMethod?[{key:'contact',label:'Moyen de contact valide',tab:'contacts' as const}]:[])];
   const warningKey=(target:string,missing:ProspectMissing[])=>target+':'+prospect.stage+':'+missing.map(m=>m.key).join(',');
-  function completeMissing(item:ProspectMissing){requestUnsavedExit(()=>{setPhaseWarning(null);setHighlightMissing(true);if(item.tab==='contacts')applyWorkspaceTab('contacts');else{applyWorkspaceTab('needs');setNeedsSection(item.tab==='qualification'?'qualification':item.tab);requestAnimationFrame(()=>{document.querySelector<HTMLElement>('.prospect-desk-content [aria-invalid=true]')?.focus();});}});}
+  function completeMissing(item:ProspectMissing){requestUnsavedExit(()=>{setPhaseWarning(null);setHighlightMissing(true);if(item.tab==='contacts')applyWorkspaceTab('contacts');else{applyWorkspaceTab('needs');openNeedsSection(sectionForMissingTab(item.tab)??'brief');requestAnimationFrame(()=>{Array.from(document.querySelectorAll<HTMLElement>('.prospect-desk-content [aria-invalid=true]')).find(field=>!field.closest('[hidden]'))?.focus();});}});}
   function goTab(tab:string){requestUnsavedExit(()=>{const missing=tab==='needs'&&['new','qualifying'].includes(prospect.stage??'new')?qualificationGaps:[];if(missing.length&&!acknowledged.current.has(warningKey(tab,missing))){setPhaseWarning({target:tab,missing});return;}setViewStage(null);applyWorkspaceTab(tab);});}
 
-  function validateOrShowQualification(){if(qualificationGaps.length){if(workspaceTab==='needs'&&needsSection==='qualification'){setHighlightMissing(true);document.querySelector<HTMLElement>('.qualification-panel-v2 [aria-invalid=true]')?.focus();}else requestUnsavedExit(()=>{setHighlightMissing(true);applyWorkspaceTab('needs');setNeedsSection('qualification');});}else requestUnsavedExit(()=>onStage('need_identified'));}
-  const [needsSection,setNeedsSection]=useState('brief');
+  function validateOrShowQualification(){if(qualificationGaps.length){if(workspaceTab==='needs'&&needsOpen.qualification){setHighlightMissing(true);document.querySelector<HTMLElement>('.qualification-panel-v2 [aria-invalid=true]')?.focus();}else requestUnsavedExit(()=>{setHighlightMissing(true);applyWorkspaceTab('needs');openNeedsSection('qualification');});}else requestUnsavedExit(()=>onStage('need_identified'));}
+  const savedSection=(id:string):SavedSectionState=>{try{const value=window.atoumweb.visualPreferences.getItem('atoumweb:prospection:needs-section:'+id);return value==='open'||value==='closed'?value:null;}catch{return null;}};
+  const [needsOpen,setNeedsOpen]=useState(()=>initialNeedsOpen(prospect.stage,{qualification:savedSection('qualification'),brief:savedSection('brief'),commercial:savedSection('commercial'),services:savedSection('services')}));
+  const [prepOpen,setPrepOpen]=useState(()=>initialPreparationOpen({research:savedSection('research'),preparation:savedSection('preparation')}));
+  function rememberSection(id:string,open:boolean){try{window.atoumweb.visualPreferences.setItem('atoumweb:prospection:needs-section:'+id,open?'open':'closed');}catch{/* L'affichage reste utilisable sans mémorisation. */}}
+  function toggleNeedsSection(id:string){const key=id as NeedsSectionId;setNeedsOpen(current=>{rememberSection(id,!current[key]);return {...current,[key]:!current[key]};});}
+  function openNeedsSection(id:NeedsSectionId){setNeedsOpen(current=>current[id]?current:{...current,[id]:true});}
+  function togglePrepSection(id:string){const key=id as PreparationSectionId;setPrepOpen(current=>{rememberSection(id,!current[key]);return {...current,[key]:!current[key]};});}
   const previousStage=useRef(prospect.stage);
-  useEffect(()=>{if(previousStage.current!==prospect.stage&&prospect.stage==='need_identified'){setNeedsSection('brief');applyWorkspaceTab('needs');}previousStage.current=prospect.stage;},[prospect.stage]);
+  useEffect(()=>{if(previousStage.current!==prospect.stage&&prospect.stage==='need_identified'){openNeedsSection('brief');applyWorkspaceTab('needs');}previousStage.current=prospect.stage;},[prospect.stage]);
   const [viewStage,setViewStage]=useState<string|null>(null);
   const [logoOpen,setLogoOpen]=useState(false);
   const [deskTab, applyDeskTab] = useState<'commercial' | 'reference'>(initialTab);
   function setDeskTab(tab:'commercial'|'reference'){if(tab!==deskTab)requestUnsavedExit(()=>applyDeskTab(tab),'prospect:'+prospect.id+'/'+mode);}
+  const group='prospect:'+prospect.id+'/'+mode;
+  const hasUnsaved=useSyncExternalStore(unsavedRegistry.subscribe,()=>unsavedRegistry.active(group).length>0);
+  const [actionRequested,setActionRequested]=useState(initialCreate);
+  function openActionDialog(){requestUnsavedExit(()=>{setViewStage(null);applyWorkspaceTab('actions');setActionRequested(true);});}
   const [identityFocus, setIdentityFocus] = useState<{ target: 'decision' | 'contact'; sequence: number } | null>(null);
   const [lossCode, setLossCode] = useState('no_response');
   const [lossOther, setLossOther] = useState('');
@@ -695,14 +726,14 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
 
   useEffect(()=>{if(mode==='desk'&&initialAction){const timer=window.setTimeout(()=>{showSection(`prospect-followup-section-${prospect.id}`);},50);return()=>window.clearTimeout(timer);}},[]);
   if (mode === 'panel') {
-    return <aside data-prospect-id={prospect.id} className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-panel prospect-temperature-${prospect.temperature ?? 'neutral'}`}>
+    return <aside ref={panelRef} data-prospect-id={prospect.id} onKeyDown={event=>{if(event.key==='Escape'&&!event.defaultPrevented){event.preventDefault();onClose();}}} className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-panel prospect-temperature-${prospect.temperature ?? 'neutral'}`}>
       <div className="detail-panel-heading">
         <div className="prospect-detail-identity-head"><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large" /><div><span className="eyebrow">{prospect.stage === 'new' ? 'Fiche annuaire' : 'Fiche de travail'}</span><h2>{prospect.displayName}</h2><div className="prospect-header-meta"><span className="status-pill">{STAGE_LABELS[prospect.stage ?? 'new']}</span>{prospect.organizationIndustry && <span className="status-pill">{prospect.organizationIndustry}</span>}{prospect.organizationCity && <span className="status-pill">{prospect.organizationCity}</span>}</div></div></div>
         <div className="detail-heading-actions">{onOpenDesk && <button className="secondary-button open-desk-button" type="button" aria-label="Agrandir la fiche" title="Agrandir la fiche" onClick={()=>onOpenDesk?.()}><OperationIcon name="record-expand"/></button>}<button className="close-detail" type="button" aria-label="Fermer la fiche prospect" title="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button></div>
       </div>
         {prospect.stage === 'new' && <div className={`prospect-readiness-card ${readiness.ready ? 'ready' : 'incomplete'}`}><div><span>Préparation</span><strong>{readiness.ready ? 'Prêt pour démarchage' : 'À compléter avant ou pendant le premier contact'}</strong>{!readiness.ready && <small>Manque : {readiness.missing.join(', ')}</small>}</div><button className="primary-button" type="button" onClick={()=>requestUnsavedExit(onStart,'prospect:'+prospect.id+'/'+mode)}>Démarrer la prospection</button></div>}
       <div className="prospect-compact-scroll" tabIndex={0} role="region" aria-label="Contenu défilable de la fiche rapide">
-        <section className="prospection-quick-next"><span><OperationIcon name="calendar"/>Prochaine action{nextAction?.dueAt&&<time>{formatDate(nextAction.dueAt)}{new Date(nextAction.dueAt).getTime()<Date.now()?' · En retard':''}</time>}</span><h3>{nextAction?.title||'Aucune action programmée'}</h3>{onOpenDesk&&<button type="button" className="primary-button" onClick={()=>onOpenDesk?.('commercial',true)}>{nextAction?'Consulter l’action':'Programmer une action'}<span aria-hidden="true">›</span></button>}</section>
+        <section className="prospection-quick-next"><span><OperationIcon name="calendar"/>Prochaine action{nextAction?.dueAt&&<time>{formatDate(nextAction.dueAt)}{new Date(nextAction.dueAt).getTime()<Date.now()?' · En retard':''}</time>}</span><h3>{nextAction?.title||'Aucune action programmée'}</h3>{onOpenDesk&&<button type="button" className="primary-button" onClick={()=>nextAction?onOpenDesk?.('commercial',true):onOpenDesk?.('commercial',true,true)}>{nextAction?'Consulter l’action':'Programmer une action'}<span aria-hidden="true">›</span></button>}</section>
         <section className="prospection-quick-contact"><h3>Contact principal</h3><strong>{prospect.secondaryLabel||'Contact à identifier'}</strong>{quickContact.role&&<p>{quickContact.role}</p>}{quickContact.email&&<p><ProspectValue value={quickContact.email} kind="email"/></p>}{quickContact.phone&&<p><ProspectValue value={quickContact.phone} kind="phone"/></p>}</section>
         <section className="prospection-quick-activity"><h3>Dernière activité</h3>{activity.length?<><p>{humanActivity([...activity].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0].summary)}</p><small>{formatDate([...activity].sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0].createdAt)}</small></>:<p>Aucune activité enregistrée</p>}</section>
         <details className="prospection-quick-more"><summary>Informations et préparation</summary>
@@ -726,35 +757,63 @@ function ProspectDetailV2Inner({ prospect, actions, activity, mode, onRefresh, o
     </aside>;
   }
 
+  const dossierClosed=Boolean(prospect.clientAccountId||prospect.archivedAt)||prospect.stage==='won'||prospect.stage==='lost';
+  const nextStep=prospectNextStep({stage:prospect.stage??'new',clientAccountId:prospect.clientAccountId,archivedAt:prospect.archivedAt,qualificationGaps:qualificationGaps.length,quoteStatus});
+  const headerStatus=prospect.clientAccountId?{key:'client',label:'Client'}:prospect.archivedAt?{key:'archived',label:'Archivé'}:{key:directoryStatus(prospect).tone,label:STAGE_LABELS[prospect.stage??'new']};
+  const nextStepTitle=nextStep.kind==='closed'?nextStep.closedLabel??'Dossier clos':nextStep.primaryLabel??'';
+  const nextStepReason=nextStep.kind==='closed'?undefined:nextAction?`${nextAction.title}${nextAction.dueAt?' · '+formatDate(nextAction.dueAt):''}${nextAction.dueAt&&new Date(nextAction.dueAt).getTime()<Date.now()?' · En retard':''}`:'Aucune action programmée.';
+  async function goQuotesSaving(){
+    setNextStepError('');
+    const done=await unsavedRegistry.saveThenRun(()=>{setViewStage(null);applyWorkspaceTab('quotes');},(labels,pending)=>window.atoumweb.unsaved.confirmExit(labels,pending),group);
+    if(!done&&unsavedRegistry.active(group).length>0&&unsavedRegistry.active(group).every(entry=>entry.save))setNextStepError('L’enregistrement a échoué : corrige le formulaire signalé, puis réessaie.');
+  }
+  const nextStepAction=(label:string,onAction:()=>void):NextStepAction=>({label,onAction});
+  const nextStepPrimary:NextStepAction|undefined=nextStep.primaryLabel==null?undefined:nextStep.kind==='start'?nextStepAction(nextStep.primaryLabel,()=>requestUnsavedExit(onStart,group)):nextStep.kind==='validate_qualification'||nextStep.kind==='complete_qualification'?nextStepAction(nextStep.primaryLabel,validateOrShowQualification):nextStepAction(nextStep.primaryLabel,goQuotesSaving);
+  const moreItems:MenuItem[]=[
+    {id:'identity',label:'Identité et logo'},{id:'associations',label:'Associations'},
+    ...(!dossierClosed&&prospect.stage!=='new'&&prospect.stage!=='qualifying'&&manualStages(prospect).some(stage=>stage!==prospect.stage)?[{id:'change_stage',label:'Changer la situation'}]:[]),
+    ...(!dossierClosed?[{id:'lost',label:'Classer comme perdu',danger:true}]:[]),
+    {id:'archive',label:'Archiver',danger:true}
+  ];
+  function handleMore(id:string){if(id==='identity'){goTab('company');setLogoOpen(true);}else if(id==='associations')setAssociationsOpen(true);else if(id==='change_stage')setStageOpen(true);else if(id==='lost')setLossOpen(true);else if(id==='archive')setArchiveOpen(true);}
   const tabs=[['company','Entreprise'],['contacts','Contacts'],['preparation','Préparer l’échange'],['needs','Besoins'],['actions','Actions et échanges'],['quotes','Devis'],['history','Historique']];
   const currentColumn=activePipelineColumn(prospect);
   return <aside data-prospect-composition="balanced" className={`panel prospect-detail-panel prospect-detail-v2 prospect-detail-desk prospect-temperature-${prospect.temperature??'neutral'}`}><div className="prospect-workspace">
-    <header className="prospect-workspace-header">
-      <div className="prospect-detail-identity-head"><button type="button" className="crm-logo-button" aria-label="Voir la fiche express et modifier le logo" onClick={()=>setLogoOpen(true)}><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large"/></button><div><h2>{prospect.displayName}</h2><p>{[prospect.organizationIndustry,prospect.organizationCity].filter(Boolean).join(' · ')}</p><strong className="status-pill">{prospect.clientAccountId?'Client':prospect.archivedAt?'Archivé':STAGE_LABELS[prospect.stage??'new']}</strong></div></div>
-      <div className="prospect-workspace-tools"><button className="secondary-button" type="button" onClick={()=>{goTab('company');setLogoOpen(true);}}>Identité et logo</button><details className="prospect-workspace-associations"><summary>Associations</summary><ProspectRelatedRecords prospect={prospect}/></details><button type="button" className="close-detail" aria-label="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button></div>
-      <section className="prospect-focus-summary" aria-label="Synthèse commerciale"><label>Température commerciale<select disabled={Boolean(prospect.clientAccountId||prospect.archivedAt)} value={prospect.temperature??'neutral'} onChange={e=>onTemperature(e.target.value as ProspectTemperature)}>{PROSPECT_TEMPERATURES.map(t=><option key={t} value={t}>{TEMPERATURE_LABELS[t]}</option>)}</select></label><div><span>Prochaine action{nextAction?.dueAt?' · '+formatDate(nextAction.dueAt):''}</span><strong>{nextAction?.title||'À programmer'}</strong><button type="button" className="secondary-button" onClick={()=>goTab('actions')}>{nextAction?'Consulter l’action':'Programmer une action'}</button></div><div className="crm-journey-actions">{!prospect.clientAccountId&&!prospect.archivedAt&&prospect.stage!=='lost'&&prospect.stage!=='won'&&<>{prospect.stage==='new'?<button type="button" className="primary-button" onClick={()=>requestUnsavedExit(onStart,'prospect:'+prospect.id+'/'+mode)}>Démarrer la prospection</button>:prospect.stage==='qualifying'?<button type="button" className="primary-button" onClick={validateOrShowQualification}>{qualificationGaps.length?'Compléter la qualification avant l’étape Besoins':'Valider la qualification et passer à Besoins'}</button>:<button type="button" className="primary-button" onClick={()=>goTab('quotes')}>{prospect.stage==='need_identified'?'Préparer le devis':'Poursuivre le devis'}</button>}{prospect.stage!=='new'&&prospect.stage!=='qualifying'&&manualStages(prospect).filter(stage=>stage!==prospect.stage).length>0&&<label>Changer la situation<select aria-label="Changer la situation commerciale" value="" onChange={e=>{const stage=e.target.value as ProspectStage;if(stage)requestUnsavedExit(()=>onStage(stage),'prospect:'+prospect.id+'/'+mode);}}><option value="">Choisir une transition…</option>{manualStages(prospect).filter(stage=>stage!==prospect.stage).map(stage=><option key={stage} value={stage}>{STAGE_LABELS[stage]}</option>)}</select></label>}<button type="button" className="secondary-button danger-outline" onClick={()=>setLossOpen(true)}>Classer comme perdu</button></>}<button type="button" className="secondary-button" onClick={()=>setArchiveOpen(true)}>Archiver</button></div></section>
+    <RecordHeader className="prospect-record-header"
+      leading={<button type="button" className="crm-logo-button" aria-label="Voir la fiche express et modifier le logo" onClick={()=>setLogoOpen(true)}><CrmIdentityAvatar organizationId={prospect.organizationId} contactId={prospect.contactId} name={prospect.displayName} size="large"/></button>}
+      title={prospect.displayName}
+      subtitle={[prospect.organizationIndustry,prospect.organizationCity].filter(Boolean).join(' · ')||undefined}
+      status={{label:headerStatus.label,tone:prospectStatusTone(headerStatus.key)}}
+      actions={<><label className="prospect-record-temperature">Température commerciale<select disabled={Boolean(prospect.clientAccountId||prospect.archivedAt)} value={prospect.temperature??'neutral'} onChange={e=>onTemperature(e.target.value as ProspectTemperature)}>{PROSPECT_TEMPERATURES.map(t=><option key={t} value={t}>{TEMPERATURE_LABELS[t]}</option>)}</select></label></>}
+      closeAction={<button type="button" className="close-detail" aria-label="Fermer la fiche prospect" onClick={onClose}><OperationIcon name="close"/></button>}
+      moreItems={moreItems}
+      onMore={handleMore}>
+      <NextStepCard title={nextStepTitle} reason={nextStepReason} primary={nextStepPrimary} primaryDemoted={hasUnsaved} secondary={nextStep.kind==='closed'?[]:[{label:nextStep.kind==='record_reply'?'Programmer une relance':'Programmer une action',onAction:openActionDialog}]} alerts={nextStepError?[{tone:'danger',text:nextStepError}]:[]}/>
       <ol className="crm-journey crm-journey-progress" aria-label="Avancement du dossier">{PROSPECT_PIPELINE_COLUMNS.map((column,index)=><li key={column.id} aria-current={currentColumn===column.id?'step':undefined} className={currentColumn===column.id?'current':''}>{index+1}. {column.label}</li>)}</ol>
-    </header>
+    </RecordHeader>
     <div className="prospect-desk-tabs crm-workspace-tabs" role="tablist" aria-label="Informations de la fiche">{tabs.map(([id,label])=><button type="button" role="tab" aria-selected={workspaceTab===id} key={id} className={workspaceTab===id?'active':''} onClick={()=>{setViewStage(null);goTab(id);}}>{label}</button>)}</div>
     <div className="prospect-desk-content" role="tabpanel" tabIndex={0} aria-label={tabs.find(([id])=>id===workspaceTab)?.[1]}>
       {viewStage&&<p className="crm-stage-consultation" role="status">Consultation : {PROSPECT_PIPELINE_COLUMNS.find(c=>c.id===viewStage)?.label}. Le dossier reste « {STAGE_LABELS[prospect.stage??'new']} ».</p>}
       {(workspaceTab==='company'||workspaceTab==='contacts')&&<ProspectIdentityPanel key={workspaceTab} section={workspaceTab==='company'?'company':'contacts'} directoryLinks={false} prospect={prospect} focusRequest={identityFocus} onSaved={()=>onRefresh('Informations enregistrées.')}/>}
-      {workspaceTab==='preparation'&&<><div className="research-tabs" role="tablist" aria-label="Préparer l’échange"><button type="button" role="tab" aria-selected={preparationSection==='research'} className={preparationSection==='research'?'active':''} onClick={()=>requestUnsavedExit(()=>setPreparationSection('research'))}>Analyse de l’entreprise</button><button type="button" role="tab" aria-selected={preparationSection==='preparation'} className={preparationSection==='preparation'?'active':''} onClick={()=>requestUnsavedExit(()=>setPreparationSection('preparation'))}>Objectif et questions</button></div><ProspectResearchPanel key={preparationSection} scope={preparationSection} onEditCompany={()=>goTab('company')} prospect={prospect} defaultOpen browseFirst onChanged={onRefresh}/>{preparationSection==='research'&&<button type="button" className="secondary-button" onClick={()=>goTab('company')}>Renseigner le site et l’identité dans Entreprise</button>}</>}
-      {workspaceTab==='needs'&&<><div className="research-tabs" role="tablist" aria-label="Informations du besoin">{[['qualification','Qualification'],['brief','Demande et besoin'],['commercial','Budget et délais'],['services','Prestations et points à confirmer']].map(([id,label])=><button type="button" role="tab" key={id} aria-selected={needsSection===id} className={needsSection===id?'active':''} onClick={()=>{if((id==='qualification')!==(needsSection==='qualification'))requestUnsavedExit(()=>setNeedsSection(id));else setNeedsSection(id);}}>{label}</button>)}</div>{highlightMissing&&qualificationGaps.length>0&&<div className="crm-missing-list"><strong>Qualification à compléter</strong>{qualificationGaps.map(m=><button type="button" className="secondary-button" key={m.key} onClick={()=>completeMissing(m)}>{m.label} · Compléter</button>)}</div>}{needsSection==='qualification'?<ProspectQualificationPanelV2 prospect={prospect} onSaved={onRefresh} onGoTo={target=>{if(target==='decision'||target==='contact'){goTab('contacts');setIdentityFocus(null);}else setNeedsSection('brief');}}/>:<ProspectNeedsPanel prospectId={prospect.id} section={needsSection as 'brief'|'commercial'|'services'} highlightMissing={highlightMissing} onChanged={()=>onRefresh()} onPrepareQuote={()=>goTab('quotes')} onContinue={needsSection==='services'?undefined:()=>setNeedsSection(needsSection==='brief'?'commercial':'services')}/>}</>}
-      {workspaceTab==='actions'&&<ProspectActionsPanel prospect={prospect} actions={actions} onChanged={onRefresh} showJournal={false}/>}
+      {workspaceTab==='preparation'&&<><NeedsSectionHeader id="research" title="Analyse de l’entreprise" open={prepOpen.research} onToggle={togglePrepSection}/><div id="needs-section-research" className="needs-section-body" hidden={!prepOpen.research}><ProspectResearchPanel scope="research" hideTitle onEditCompany={()=>goTab('company')} prospect={prospect} defaultOpen browseFirst onChanged={onRefresh}/><button type="button" className="secondary-button" onClick={()=>goTab('company')}>Renseigner le site et l’identité dans Entreprise</button></div><NeedsSectionHeader id="preparation" title="Objectif et questions" open={prepOpen.preparation} onToggle={togglePrepSection}/><div id="needs-section-preparation" className="needs-section-body" hidden={!prepOpen.preparation}><ProspectResearchPanel scope="preparation" onEditCompany={()=>goTab('company')} prospect={prospect} defaultOpen browseFirst onChanged={onRefresh}/></div></>}
+      {workspaceTab==='needs'&&<>{highlightMissing&&qualificationGaps.length>0&&<div className="crm-missing-list"><strong>Qualification à compléter</strong>{qualificationGaps.map(m=><button type="button" className="secondary-button" key={m.key} onClick={()=>completeMissing(m)}>{m.label} · Compléter</button>)}</div>}<NeedsSectionHeader id="qualification" title="Qualification" summary={needsSectionSummary('qualification',{qualificationGaps:qualificationGaps.length})} open={needsOpen.qualification} onToggle={toggleNeedsSection}/><div id="needs-section-qualification" className="needs-section-body" hidden={!needsOpen.qualification}><ProspectQualificationPanelV2 prospect={prospect} onSaved={onRefresh} onGoTo={target=>{if(target==='decision'||target==='contact'){goTab('contacts');setIdentityFocus(null);}else openNeedsSection('brief');}}/></div><ProspectNeedsPanel prospectId={prospect.id} open={needsOpen} onToggle={toggleNeedsSection} highlightMissing={highlightMissing} onChanged={()=>onRefresh()}/></>}
+      {workspaceTab==='actions'&&<ProspectActionsPanel prospect={prospect} actions={actions} onChanged={onRefresh} showJournal={false} openCreateRequest={actionRequested} onCreateRequestConsumed={()=>setActionRequested(false)}/>}
       {workspaceTab==='quotes'&&<ProspectQuoteWorkspace prospect={prospect} actions={actions} onChanged={onRefresh} onComplete={tab=>completeMissing({key:tab,label:'Compléter',tab:tab as ProspectMissing['tab']})}/>}
       {workspaceTab==='history'&&<ProspectTimeline activity={activity} actions={actions}/>}
     </div>
     {phaseWarning&&<ProspectDialog label="Phase précédente incomplète" onClose={()=>setPhaseWarning(null)}><h3>Des informations restent à compléter</h3><p>Tu peux consulter cette phase sans changer l’étape du dossier. Les protections métier restent appliquées.</p><ul>{phaseWarning.missing.map(m=><li key={m.key}>{m.label}</li>)}</ul><div className="form-actions"><button type="button" className="secondary-button" onClick={()=>completeMissing(phaseWarning.missing[0])}>Compléter d’abord</button><button type="button" className="primary-button" onClick={()=>{acknowledged.current.add(warningKey(phaseWarning.target,phaseWarning.missing));setHighlightMissing(true);applyWorkspaceTab(phaseWarning.target);setPhaseWarning(null);}}>Continuer sans changer d’étape</button><button type="button" className="secondary-button" onClick={()=>setPhaseWarning(null)}>Annuler</button></div></ProspectDialog>}
+    {associationsOpen&&<ProspectDialog label="Associations" onClose={()=>setAssociationsOpen(false)}><h3>Associations</h3><ProspectRelatedRecords prospect={prospect}/><button type="button" className="secondary-button" onClick={()=>setAssociationsOpen(false)}>Fermer</button></ProspectDialog>}
+    {stageOpen&&<ProspectDialog label="Changer la situation" onClose={()=>setStageOpen(false)}><h3>Changer la situation</h3><p>Le dossier reste « {STAGE_LABELS[prospect.stage??'new']} » tant que tu ne choisis pas une transition.</p><div className="form-actions">{manualStages(prospect).filter(stage=>stage!==prospect.stage).map(stage=><button type="button" className="secondary-button" key={stage} onClick={()=>{setStageOpen(false);requestUnsavedExit(()=>onStage(stage),group);}}>{STAGE_LABELS[stage]}</button>)}<button type="button" className="secondary-button" onClick={()=>setStageOpen(false)}>Annuler</button></div></ProspectDialog>}
     {logoOpen&&<ProspectDialog label="Fiche express entreprise" onClose={()=>setLogoOpen(false)}><h3>{prospect.displayName}</h3><dl><dt>Contact principal</dt><dd>{prospect.secondaryLabel||'À identifier'}</dd><dt>Téléphone préféré</dt><dd>{quickContact.phone?<ProspectValue value={quickContact.phone} kind="phone"/>:'Non renseigné'}</dd><dt>Service / besoin</dt><dd>{prospect.projectSummary||prospect.primaryNeed||'À préciser'}</dd><dt>Prochaine échéance</dt><dd>{nextAction?.dueAt?formatDate(nextAction.dueAt):'Aucune échéance programmée'}</dd></dl><CrmIdentityAssetEditor organizationId={prospect.organizationId} contactId={prospect.contactId} onMessage={onRefresh}/><button type="button" className="secondary-button" onClick={()=>setLogoOpen(false)}>Fermer</button></ProspectDialog>}
     {lossOpen&&<ProspectDialog label="Classer le dossier comme perdu" onClose={()=>setLossOpen(false)}><h3>Classer comme perdu</h3><label>Raison<select value={lossCode} onChange={e=>setLossCode(e.target.value)}>{LOSS_REASONS.map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>{lossCode==='other'&&<label>Préciser<input value={lossOther} onChange={e=>setLossOther(e.target.value)}/></label>}<div className="form-actions"><button type="button" className="secondary-button" onClick={()=>setLossOpen(false)}>Annuler</button><button type="button" className="primary-button" disabled={!lossReason||closingBusy} onClick={()=>void (async()=>{setClosingBusy(true);try{if(await onLost(lossCode,lossReason))setLossOpen(false);}finally{setClosingBusy(false);}})()}>Confirmer Perdu</button></div></ProspectDialog>}
     {archiveOpen&&<ProspectDialog label="Archiver le dossier" onClose={()=>setArchiveOpen(false)}><h3>Archiver le dossier ?</h3><p>Il restera consultable dans l’historique.</p><button type="button" className="secondary-button" onClick={()=>setArchiveOpen(false)}>Annuler</button><button type="button" className="primary-button" disabled={closingBusy} onClick={()=>void (async()=>{setClosingBusy(true);try{if(await onArchive())setArchiveOpen(false);}finally{setClosingBusy(false);}})()}>Confirmer l’archivage</button></ProspectDialog>}
   </div></aside>;
 }
 
+function historyOutcomeTone(kind: 'converted' | 'lost' | 'won' | 'archived'): StatusTone { return kind === 'lost' ? 'danger' : kind === 'archived' ? 'neutral' : 'success'; }
 function HistoryView({ prospects, search, onSearch, onSelect, selected, activity, onClose }: { prospects: ProspectSummary[]; search: string; onSearch: (value: string) => void; onSelect: (item: ProspectSummary) => void; selected: ProspectSummary | null; activity: ActivityEvent[]; onClose: () => void }) {
   const [outcome,setOutcome]=useState('all'),[order,setOrder]=useState('recent'),[from,setFrom]=useState('');
   const visible=prospects.filter(item=>(outcome==='all'||historyOutcome(item).kind===outcome)&&(!from||(item.lostAt||item.wonAt||item.archivedAt||'').slice(0,10)>=from)).sort((a,b)=>order==='name'?a.displayName.localeCompare(b.displayName,'fr'):(b.lostAt||b.wonAt||b.archivedAt||'').localeCompare(a.lostAt||a.wonAt||a.archivedAt||''));
-  return <div className="history-view-stack prospect-history-view"><div className="prospect-history-toolbar"><strong>{visible.length} dossier{visible.length>1?'s':''}</strong><input aria-label="Rechercher l’historique" value={search} onChange={e=>onSearch(e.target.value)} placeholder="Rechercher une entreprise…"/><label>Issue<select value={outcome} onChange={e=>setOutcome(e.target.value)}><option value="all">Toutes les issues</option><option value="lost">Perdu</option><option value="won">Gagné sans compte client</option><option value="converted">Converti en client</option><option value="archived">Archivé</option></select></label><label>Depuis le<input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label>Tri<select value={order} onChange={e=>setOrder(e.target.value)}><option value="recent">Plus récent</option><option value="name">Entreprise</option></select></label></div><div className={'prospect-history-layout'+(selected?' has-selection':'')}><div className="prospect-history-table-scroll" tabIndex={0} role="region" aria-label="Dossiers historiques"><table className="prospect-history-table"><thead><tr><th>Entreprise</th><th>Résultat</th><th>Besoin</th><th>Date</th><th>Fiche</th></tr></thead><tbody>{visible.map(item=><tr key={item.id} aria-selected={selected?.id===item.id}><td><strong>{item.displayName}</strong>{item.secondaryLabel&&<small>{item.secondaryLabel}</small>}</td><td>{historyOutcome(item).label}</td><td>{item.primaryNeed||'—'}</td><td>{formatDate(item.lostAt||item.wonAt||item.archivedAt)}</td><td><button type="button" className="secondary-button" onClick={()=>onSelect(item)}>Consulter</button></td></tr>)}</tbody></table>{!visible.length&&<p>Aucun dossier pour ces critères.</p>}</div>{selected&&<aside className="prospect-history-detail"><header><h2>{selected.displayName}</h2><button type="button" className="secondary-button" aria-label="Fermer le détail historique" onClick={onClose}><OperationIcon name="close"/></button></header><div className="prospect-history-detail-body" tabIndex={0}><dl><dt>Résultat</dt><dd>{historyOutcome(selected).label}</dd><dt>Besoin</dt><dd>{selected.primaryNeed||'Non renseigné'}</dd>{selected.estimatedValueCents!=null&&<><dt>Valeur estimée</dt><dd>{(selected.estimatedValueCents/100).toLocaleString('fr-FR',{style:'currency',currency:'EUR'})}</dd></>}{selected.lostReason&&<><dt>Motif</dt><dd>{selected.lostReason}</dd></>}</dl>{selected.clientAccountId&&<button type="button" className="primary-button" onClick={()=>window.dispatchEvent(new CustomEvent('atoumweb:navigate',{detail:{entityType:'client',entityId:selected.clientAccountId,title:selected.displayName}}))}>Ouvrir la fiche Client</button>}<h3>Journal</h3>{activity.map(event=><div className="prospect-history-event" key={event.id}><p>{humanActivity(event.summary)}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div>)}{!activity.length&&<p>Aucune activité enregistrée.</p>}</div></aside>}</div></div>;
+  return <div className="history-view-stack prospect-history-view"><div className="prospect-history-toolbar"><strong>{visible.length} dossier{visible.length>1?'s':''}</strong><input aria-label="Rechercher l’historique" value={search} onChange={e=>onSearch(e.target.value)} placeholder="Rechercher une entreprise…"/><label>Issue<select value={outcome} onChange={e=>setOutcome(e.target.value)}><option value="all">Toutes les issues</option><option value="lost">Perdu</option><option value="won">Gagné sans compte client</option><option value="converted">Converti en client</option><option value="archived">Archivé</option></select></label><label>Depuis le<input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label>Tri<select value={order} onChange={e=>setOrder(e.target.value)}><option value="recent">Plus récent</option><option value="name">Entreprise</option></select></label></div><div className={'prospect-history-layout'+(selected?' has-selection':'')}><div className="prospect-history-table-scroll" tabIndex={0} role="region" aria-label="Dossiers historiques"><table className="prospect-history-table"><thead><tr><th>Entreprise</th><th>Résultat</th><th>Besoin</th><th>Date</th><th>Fiche</th></tr></thead><tbody>{visible.map(item=><tr key={item.id} aria-selected={selected?.id===item.id}><td><strong>{item.displayName}</strong>{item.secondaryLabel&&<small>{item.secondaryLabel}</small>}</td><td><StatusPill tone={historyOutcomeTone(historyOutcome(item).kind)}>{historyOutcome(item).label}</StatusPill></td><td>{item.primaryNeed||'—'}</td><td>{formatDate(item.lostAt||item.wonAt||item.archivedAt)}</td><td><button type="button" className="secondary-button" onClick={()=>onSelect(item)}>Consulter</button></td></tr>)}</tbody></table>{!visible.length&&<p>Aucun dossier pour ces critères.</p>}</div>{selected&&<aside className="prospect-history-detail"><header><h2>{selected.displayName}</h2><button type="button" className="secondary-button" aria-label="Fermer le détail historique" onClick={onClose}><OperationIcon name="close"/></button></header><div className="prospect-history-detail-body" tabIndex={0}><dl><dt>Résultat</dt><dd>{historyOutcome(selected).label}</dd><dt>Besoin</dt><dd>{selected.primaryNeed||'Non renseigné'}</dd>{selected.estimatedValueCents!=null&&<><dt>Valeur estimée</dt><dd>{(selected.estimatedValueCents/100).toLocaleString('fr-FR',{style:'currency',currency:'EUR'})}</dd></>}{selected.lostReason&&<><dt>Motif</dt><dd>{selected.lostReason}</dd></>}</dl>{selected.clientAccountId&&<button type="button" className="primary-button" onClick={()=>window.dispatchEvent(new CustomEvent('atoumweb:navigate',{detail:{entityType:'client',entityId:selected.clientAccountId,title:selected.displayName}}))}>Ouvrir la fiche Client</button>}<h3>Journal</h3>{activity.map(event=><div className="prospect-history-event" key={event.id}><p>{humanActivity(event.summary)}</p><small>{new Date(event.createdAt).toLocaleString('fr-FR')}</small></div>)}{!activity.length&&<p>Aucune activité enregistrée.</p>}</div></aside>}</div></div>;
 
 }

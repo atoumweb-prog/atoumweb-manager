@@ -1,0 +1,91 @@
+/* R7 : chiffres clés et barre d'outils communs aux écrans de liste de Gestion.
+   Jetons uniquement : aucune couleur écrite en dur, aucun !important (garde-fou : ui/importantBudget.test.ts), aucun texte sous 14 px. */
+.aw-keyfigures { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--ui-gap); }
+.aw-keyfigure { display: grid; gap: 2px; align-content: start; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); color: var(--text); }
+.aw-keyfigure > strong { font-size: var(--aw-font-functional); font-weight: 600; color: var(--muted); }
+.aw-keyfigure > span { font-size: 22px; font-weight: 800; line-height: 1.2; }
+.aw-keyfigure > small { color: var(--muted); font-size: var(--aw-font-functional); }
+
+/* P4a (F25) : grille [zone qui passe à la ligne | action principale]. L'action reste en haut à droite ; ce sont les filtres qui
+   descendent d'une rangée quand la place manque (une seule rangée quand tout tient). */
+.aw-list-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; min-width: 0; }
+.aw-list-toolbar-main { display: flex; flex-wrap: wrap; align-items: center; gap: 8px var(--ui-gap); min-width: 0; }
+.aw-list-toolbar-leading, .aw-list-toolbar-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.aw-list-toolbar-count { font-size: var(--aw-font-body); font-weight: 700; color: var(--text); white-space: nowrap; }
+.aw-list-toolbar .inline-search { flex: 1 1 200px; min-width: 160px; max-width: 360px; }
+.aw-list-toolbar select { min-width: 0; max-width: 190px; }
+.aw-list-toolbar-primary { align-self: start; margin-left: var(--ui-gap); }
+
+/* Un seul ascenseur : dans les listes Gestion, le tableau n'a plus de boîte à défilement vertical propre, la page défile. */
+.operations-stack .aw-data-table-scroll,
+.billing-page-stack .aw-data-table-scroll,
+.expenses-page-stack .aw-data-table-scroll,
+.documents-page-stack .aw-data-table-scroll,
+.time-page-stack .aw-data-table-scroll { max-height: none; }
+
+/* R8 : carte de chiffre cliquable (Statistiques). Même aspect que la carte, plus le survol et le focus. */
+.aw-keyfigure--action { text-align: left; font: inherit; cursor: pointer; width: 100%; }
+.aw-keyfigure--action:hover { border-color: var(--accent); }
+.aw-keyfigure--action:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.aw-keyfigure--action[aria-expanded="true"] { border-color: var(--accent); }
+/* P4b (F35) : indice visible du clic, dans la carte. */
+/* La règle « .aw-keyfigure > span » (la valeur en 22 px) vise aussi ce span : « > » devant la classe pour la battre. */
+.aw-keyfigure > .aw-keyfigure-cue { margin-top: 4px; color: var(--accent-strong); font-size: var(--aw-font-functional); font-weight: 600; line-height: 1.4; }
+.aw-keyfigure--action:hover > .aw-keyfigure-cue, .aw-keyfigure--action:focus-visible > .aw-keyfigure-cue { text-decoration: underline; }
+
+/* R8 : l action principale peut regrouper plusieurs boutons (retours Bridge, Plus, Nouveau composant). */
+.aw-list-toolbar-primary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* R8 : la feuille globale ui-consistency-v2.css impose max-width: 100 % aux champs avec une spécificité que ces règles ne battent pas ;
+   la recherche a donc une largeur posée par width et flex-basis (celle que les écrans de Gestion avaient déjà), sans croissance. */
+.aw-list-toolbar-main > .inline-search { width: 270px; flex: 0 1 270px; min-width: 160px; }
+/* P3b (F20) : pastille de filtre retirable (« Projet : … ✕ »), jetons uniquement, texte à 14 px au moins. */
+.aw-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font-size: var(--aw-font-functional);
+  font-weight: 600;
+}
+.aw-filter-chip-clear {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  min-height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-size: var(--aw-font-functional);
+  cursor: pointer;
+}
+.aw-filter-chip-clear:hover {
+  background: var(--surface);
+}
+.aw-filter-chip-clear:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+
+/* P5d (F27) : un seul composant de chiffres clés. Icône facultative (une colonne à gauche) et couleur d'état
+   facultative, par les jetons sémantiques de R0 ; « > .classe » pour battre « .aw-keyfigure > span » (22 px). */
+.aw-keyfigure > .aw-keyfigure-value { font-size: 22px; font-weight: 800; line-height: 1.2; }
+.aw-keyfigure--with-icon { grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; }
+.aw-keyfigure--with-icon > :not(.aw-keyfigure-icon) { grid-column: 2; }
+.aw-keyfigure > .aw-keyfigure-icon { grid-column: 1; grid-row: 1 / span 4; align-self: start; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: var(--aw-accent-soft-bg); color: var(--aw-accent-soft-fg); font-size: 18px; font-weight: 800; line-height: 1; }
+.aw-keyfigure--tone-success { border-color: var(--aw-success-soft-fg); }
+.aw-keyfigure--tone-success > .aw-keyfigure-icon { background: var(--aw-success-soft-bg); color: var(--aw-success-soft-fg); }
+.aw-keyfigure--tone-warning { border-color: var(--aw-warning-soft-fg); }
+.aw-keyfigure--tone-warning > .aw-keyfigure-icon { background: var(--aw-warning-soft-bg); color: var(--aw-warning-soft-fg); }
+.aw-keyfigure--tone-warning > .aw-keyfigure-value { color: var(--aw-warning-soft-fg); }
+.aw-keyfigure--tone-danger { border-color: var(--aw-danger-soft-fg); }
+.aw-keyfigure--tone-danger > .aw-keyfigure-icon { background: var(--aw-danger-soft-bg); color: var(--aw-danger-soft-fg); }
+.aw-keyfigure--tone-danger > .aw-keyfigure-value { color: var(--aw-danger-soft-fg); }
+.aw-keyfigure--tone-info { border-color: var(--aw-info-soft-fg); }
+.aw-keyfigure--tone-info > .aw-keyfigure-icon { background: var(--aw-info-soft-bg); color: var(--aw-info-soft-fg); }
+.aw-keyfigure--tone-accent { border-color: var(--aw-accent-soft-fg); }
+.aw-keyfigure--tone-accent > .aw-keyfigure-icon { background: var(--aw-accent-soft-bg); color: var(--aw-accent-soft-fg); }

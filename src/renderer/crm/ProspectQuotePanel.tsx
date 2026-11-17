@@ -1,5 +1,6 @@
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useState } from 'react';
+import { usePageConfirm } from '../ui/usePageConfirm';
 import type { QuoteDetail, QuoteSummary } from '../../shared/commercial';
 import type { CrmAction, ProspectSummary } from '../../shared/crm';
 import { canAccessQuoteProject } from '../../shared/quoteProjectEligibility';
@@ -63,6 +64,7 @@ function cleanError(error: unknown): string {
 
 export function ProspectQuotePanel({ prospect, onChanged }: { prospect: ProspectSummary; onChanged: (message?: string) => void }) {
   const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
+  const { dialog: confirmDialog, askConfirm } = usePageConfirm();
   const [detail, setDetail] = useState<QuoteDetail | null>(null);
   const [crmActions, setCrmActions] = useState<CrmAction[]>([]);
   const [busy, setBusy] = useState(false);
@@ -162,7 +164,7 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
     await run(async () => {
       const state=await window.atoumweb.quotes.transmissionState(quote.id);
       if(!state.contentHash)throw Error('Version à envoyer absente.');
-      if(!window.confirm(`Confirmer l’envoi effectif de ${quote.number} à ${recipient.trim()} ? Un transfert vers Abby seul ne vaut pas envoi au client.`))throw Error('Envoi non attesté ; devis inchangé.');
+      if(!(await askConfirm({title:`Confirmer l’envoi effectif de ${quote.number} à ${recipient.trim()} ?`,body:'Un transfert vers Abby seul ne vaut pas envoi au client.',confirmLabel:'Confirmer l’envoi'})))throw Error('Envoi non attesté ; devis inchangé.');
       await window.atoumweb.quotes.markSent(quote.id,{operationId:crypto.randomUUID(),preparationId:state.preparationId,contentHash:state.contentHash,channel:'other',provenance:`${channel} — ${recipient.trim()} — ${sendNote.trim()}`,occurredAt:'now',confirmed:true});
       const action = await window.atoumweb.crm.actions.create({
         ownerType: 'prospect', ownerId: prospect.id, type: 'action', title: `Devis ${quote.number} envoyé`, relatedType: 'quote', relatedId: quote.id,
@@ -207,7 +209,7 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
   }
 
   async function accept() {
-    if (!quote || !window.confirm(`Confirmer que le devis ${quote.number} a réellement été accepté / signé dans Abby ?\n\nCette action déclenche la conversion du Prospect en Client. Un simple accord de principe ne suffit pas.`)) return;
+    if (!quote || !(await askConfirm({title: `Confirmer que le devis ${quote.number} a réellement été accepté / signé dans Abby ?`, body: 'Cette action déclenche la conversion du Prospect en Client. Un simple accord de principe ne suffit pas.', confirmLabel: 'Confirmer l’acceptation'}))) return;
     await run(() => window.atoumweb.quotes.accept(quote.id), 'Devis accepté / signé : le prospect est converti ou rattaché au client.');
   }
 
@@ -244,6 +246,7 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
   const subtitle = canEdit && !isFinalized ? 'Brouillon modifiable · en attente d’édition' : `${QUOTE_LABELS[quote.status] ?? quote.status}${isFinalized && canEdit ? ' · validé pour envoi' : ''}`;
 
   return <section className="prospect-work-section prospect-quote-panel">
+    {confirmDialog}
     <div className="quote-command-header"><div><span className="eyebrow">{panelTitle}</span><strong>{quote.number} · {quote.subject}</strong><small>{subtitle}</small></div><button type="button" className="secondary-button compact-button" onClick={() => openQuote(quote)}>Ouvrir le devis complet</button></div>
 
     {canEdit && !isFinalized ? <details className="quote-draft-waiting"><summary>À propos de ce brouillon</summary><span>Le brouillon peut encore être modifié ou abandonné. Les lignes, montants, remises et conditions se travaillent dans l’éditeur de devis.</span></details> : <div className="quote-command-summary"><div><span>Montant</span><strong>{money(quote.contractValueCents)}</strong></div><div><span>Envoyé le</span><strong>{date(quote.sentAt)}</strong></div><div><span>Valable jusqu’au</span><strong>{date(quote.validUntil)}</strong></div>{sent && <div><span>Temps restant</span><strong className={remaining != null && remaining <= 7 ? 'quote-expiry-warning' : ''}>{remaining == null ? '—' : remaining < 0 ? 'Expiré' : `${remaining} jour${remaining > 1 ? 's' : ''}`}</strong></div>}</div>}
@@ -255,16 +258,16 @@ export function ProspectQuotePanel({ prospect, onChanged }: { prospect: Prospect
     {sent && <div className="prospect-principle-agreement" aria-label="Accord de principe avant signature">
       {quote.principleAgreementAt ? <>
         <p role="status"><strong>Finalisation — accord de principe confirmé</strong> · {new Date(quote.principleAgreementAt).toLocaleString('fr-FR')}. La signature Abby reste à confirmer séparément.</p>
-        <button className="secondary-button" type="button" disabled={busy} onClick={() => {
-          if (!window.confirm('Annuler l’accord de principe enregistré pour ce devis ? La trace restera dans l’historique.')) return;
-          void run(() => window.atoumweb.quotes.revokePrincipleAgreement(quote.id), 'Accord de principe annulé : retour au suivi commercial.');
-        }}>Annuler l’accord de principe</button>
+        <button className="secondary-button" type="button" disabled={busy} onClick={() => void (async () => {
+          if (!(await askConfirm({title: 'Annuler l’accord de principe enregistré pour ce devis ?', body: 'La trace restera dans l’historique.', confirmLabel: 'Annuler l’accord', cancelLabel: 'Garder l’accord'}))) return;
+          await run(() => window.atoumweb.quotes.revokePrincipleAgreement(quote.id), 'Accord de principe annulé : retour au suivi commercial.');
+        })()}>Annuler l’accord de principe</button>
       </> : <>
         <p>Accord de principe obtenu ? Il permet de suivre les dernières formalités sans signer le devis ni convertir le Prospect.</p>
-        <button className="secondary-button" type="button" disabled={busy} onClick={() => {
-          if (!window.confirm(`Confirmer l’accord de principe pour le devis ${quote.number} ?\n\nCela ne vaut pas signature, acceptation Abby ni conversion en Client.`)) return;
-          void run(() => window.atoumweb.quotes.confirmPrincipleAgreement(quote.id), 'Accord de principe confirmé : signature encore attendue.');
-        }}>Accord de principe confirmé</button>
+        <button className="secondary-button" type="button" disabled={busy} onClick={() => void (async () => {
+          if (!(await askConfirm({title: `Confirmer l’accord de principe pour le devis ${quote.number} ?`, body: 'Cela ne vaut pas signature, acceptation Abby ni conversion en Client.', confirmLabel: 'Confirmer l’accord de principe'}))) return;
+          await run(() => window.atoumweb.quotes.confirmPrincipleAgreement(quote.id), 'Accord de principe confirmé : signature encore attendue.');
+        })()}>Accord de principe confirmé</button>
       </>}
     </div>}
 

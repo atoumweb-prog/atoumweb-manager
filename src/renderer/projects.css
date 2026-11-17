@@ -6,7 +6,7 @@
 
 .project-create-panel { display: grid; gap: 16px; }
 .project-create-grid { display: grid; grid-template-columns: repeat(5, minmax(160px, 1fr)); gap: 12px; }
-.project-create-grid label { display: grid; gap: 6px; color: var(--text-muted); font-size: 11px; font-weight: 700; }
+.project-create-grid label { display: grid; gap: 6px; color: var(--text-muted); font-size: var(--aw-font-functional); font-weight: 700; }
 .project-create-grid input,
 .project-create-grid select { width: 100%; min-width: 0; }
 
@@ -16,20 +16,20 @@
 .project-table { width: 100%; min-width: 900px; border-collapse: collapse; }
 .project-table th,
 .project-table td { padding: 13px 14px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
-.project-table th { color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
-.project-table td { font-size: 12px; }
+.project-table th { color: var(--text-muted); font-size: var(--aw-font-functional); }
+.project-table td { font-size: var(--aw-font-functional); }
 .project-table tbody tr { cursor: pointer; transition: background .14s ease; }
 .project-table tbody tr:hover,
 .project-table tbody tr.selected-row { background: var(--surface-soft); }
-.project-table td > small { display: block; margin-top: 3px; color: var(--text-muted); font-size: 9px; }
-.project-status { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 8px; border-radius: 999px; background: var(--surface-soft); border: 1px solid var(--border); font-size: 10px; font-weight: 800; white-space: nowrap; }
+.project-table td > small { display: block; margin-top: 3px; color: var(--text-muted); font-size: var(--aw-font-functional); }
+
 .status-in_progress { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
 .status-blocked { border-color: #b75b5b; }
 .status-completed { border-color: #66a77a; }
 .status-archived { opacity: .65; }
 
 .project-progress-cell { display: grid; gap: 5px; min-width: 110px; }
-.project-progress-cell > span { font-size: 10px; font-weight: 800; }
+.project-progress-cell > span { font-size: var(--aw-font-functional); font-weight: 800; }
 .project-progress-cell i,
 .project-main-progress i { display: block; height: 6px; overflow: hidden; border-radius: 99px; background: var(--surface-soft); }
 .project-progress-cell b,
@@ -42,28 +42,17 @@
 .project-main-progress { margin-top: 8px; }
 .project-main-progress i { height: 8px; }
 .project-tabs { display: flex; gap: 5px; margin: 16px 0 0; overflow-x: auto; padding-bottom: 4px; }
-.project-tabs button { flex: 0 0 auto; border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; background: transparent; color: var(--text-muted); font-size: 10px; font-weight: 800; cursor: pointer; }
+.project-tabs button { flex: 0 0 auto; border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; background: transparent; color: var(--text-muted); font-size: var(--aw-font-functional); font-weight: 800; cursor: pointer; }
 .project-tabs button.active { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); color: var(--text); }
 .project-tab-content { display: grid; gap: 14px; margin-top: 14px; }
 
-.project-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.project-kpis > div { display: grid; gap: 4px; padding: 11px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); }
-.project-kpis span,
-.project-summary-list span,
-.project-commercial-values span { color: var(--text-muted); font-size: 9px; text-transform: uppercase; letter-spacing: .04em; }
-.project-kpis strong { font-size: 17px; }
-.project-summary-list { display: grid; gap: 0; border-top: 1px solid var(--border); }
-.project-summary-list > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-.project-summary-list strong { text-align: right; font-size: 11px; }
-.project-note { display: grid; gap: 5px; }
-.project-note p { margin: 0; color: var(--text-muted); font-size: 11px; line-height: 1.5; }
 
 .project-node-add { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); }
-.project-node-add > strong { font-size: 11px; }
+.project-node-add > strong { font-size: var(--aw-font-functional); }
 .project-node-add-grid { display: grid; grid-template-columns: minmax(140px, 1.3fr) minmax(100px, .8fr); gap: 7px; }
 .project-node-add-grid select,
 .project-node-add-grid input { min-width: 0; width: 100%; }
-.project-checkbox { display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 10px; }
+.project-checkbox { display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: var(--aw-font-functional); }
 .project-checkbox input { width: auto; }
 .project-tree,
 .template-tree { display: grid; gap: 4px; }
@@ -75,38 +64,21 @@
 .template-tree-node.node-lot { border-left: 3px solid var(--accent); }
 .project-tree-node.node-module,
 .template-tree-node.node-module { border-left: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); }
-.project-node-kind { color: var(--accent); font-size: 8px; font-weight: 900; letter-spacing: .05em; }
+.project-node-kind { color: var(--accent); font-size: var(--aw-font-functional); font-weight: 900; }
 .project-node-name,
 .template-tree-node > div { display: grid; gap: 2px; min-width: 0; }
 .project-node-name strong,
-.template-tree-node strong { overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+.template-tree-node strong { overflow: hidden; text-overflow: ellipsis; font-size: var(--aw-font-functional); }
 .project-node-name small,
-.template-tree-node small { color: var(--text-muted); font-size: 9px; }
-.project-tree-node select { width: 118px; min-width: 0; font-size: 9px; padding: 6px 7px; }
+.template-tree-node small { color: var(--text-muted); font-size: var(--aw-font-functional); }
+.project-tree-node select { width: 118px; min-width: 0; font-size: var(--aw-font-functional); padding: 6px 7px; }
 
-.project-prerequisite-add { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
-.project-prerequisites { display: grid; gap: 7px; }
-.project-prerequisite { display: grid; grid-template-columns: minmax(0, 1fr) 150px; align-items: center; gap: 10px; padding: 9px; border: 1px solid var(--border); border-radius: 9px; }
-.project-prerequisite > div { display: grid; gap: 2px; min-width: 0; }
-.project-prerequisite strong { font-size: 11px; }
-.project-prerequisite small { color: var(--text-muted); font-size: 9px; }
-.project-prerequisite select { min-width: 0; width: 100%; }
 
-.project-resources-tab > strong { font-size: 13px; }
-.project-path { margin: 0; padding: 9px; border-radius: 8px; background: var(--surface-soft); color: var(--text-muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 9px; line-height: 1.45; overflow-wrap: anywhere; }
+.project-resources-tab > strong { font-size: var(--aw-font-functional); }
+.project-path { margin: 0; padding: 9px; border-radius: 8px; background: var(--surface-soft); color: var(--text-muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: var(--aw-font-functional); line-height: 1.45; overflow-wrap: anywhere; }
 .resource-folder-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-.resource-folder-list span { padding: 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 9px; }
+.resource-folder-list span { padding: 8px; border: 1px solid var(--border); border-radius: 8px; font-size: var(--aw-font-functional); }
 
-.project-commercial-values { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
-.project-commercial-values > div { display: grid; gap: 4px; padding: 10px; border: 1px solid var(--border); border-radius: 9px; }
-.project-commercial-values strong { font-size: 12px; }
-.project-section-title { font-size: 11px; }
-.project-services { display: grid; gap: 6px; }
-.project-services > div { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
-.project-services > div > div { display: grid; gap: 2px; }
-.project-services strong { font-size: 10px; }
-.project-services small { color: var(--text-muted); font-size: 8px; }
-.project-services > div > span { font-size: 10px; font-weight: 800; white-space: nowrap; }
 
 .project-templates-layout { display: grid; grid-template-columns: minmax(260px, .72fr) minmax(0, 1.65fr); gap: 14px; align-items: start; }
 .project-template-list,
@@ -118,19 +90,19 @@
 .project-template-items > button { display: flex; justify-content: space-between; gap: 10px; width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 9px; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
 .project-template-items > button.active { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); background: var(--accent-soft); }
 .project-template-items > button > div { display: grid; gap: 2px; }
-.project-template-items strong { font-size: 11px; }
+.project-template-items strong { font-size: var(--aw-font-functional); }
 .project-template-items small,
-.project-template-items > button > span { color: var(--text-muted); font-size: 9px; }
+.project-template-items > button > span { color: var(--text-muted); font-size: var(--aw-font-functional); }
 .project-template-editor { display: grid; gap: 14px; }
 .template-version-banner { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-soft); }
-.template-version-banner > span:first-child { color: var(--text-muted); font-size: 9px; text-transform: uppercase; }
-.template-version-banner strong { font-size: 13px; }
+.template-version-banner > span:first-child { color: var(--text-muted); font-size: var(--aw-font-functional); }
+.template-version-banner strong { font-size: var(--aw-font-functional); }
 .template-node-add { display: grid; grid-template-columns: minmax(130px, 1.2fr) 110px minmax(130px, 1fr) 90px auto; gap: 7px; }
 .template-node-add > * { min-width: 0; }
 .template-tree-node { grid-template-columns: auto minmax(0, 1fr) auto; }
 .template-history { display: grid; gap: 0; margin-top: 8px; border-top: 1px solid var(--border); }
-.template-history > strong { padding: 10px 0; font-size: 11px; }
-.template-history > div { display: grid; grid-template-columns: 45px 90px 1fr auto; gap: 10px; padding: 8px 0; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 9px; }
+.template-history > strong { padding: 10px 0; font-size: var(--aw-font-functional); }
+.template-history > div { display: grid; grid-template-columns: 45px 90px 1fr auto; gap: 10px; padding: 8px 0; border-top: 1px solid var(--border); color: var(--text-muted); font-size: var(--aw-font-functional); }
 
 @media (max-width: 1350px) {
   .project-create-grid { grid-template-columns: repeat(3, minmax(160px, 1fr)); }
@@ -152,12 +124,9 @@
   .project-node-add-grid { grid-template-columns: 1fr; }
   .project-tree-node { grid-template-columns: auto minmax(0, 1fr); }
   .project-tree-node select { grid-column: 1 / -1; width: 100%; }
-  .project-prerequisite { grid-template-columns: 1fr; }
-  .project-commercial-values { grid-template-columns: 1fr; }
   .resource-folder-list { grid-template-columns: 1fr; }
   .template-node-add { grid-template-columns: 1fr; }
 }
-
 
 /* Harmonisation des formulaires Projets avec Clients / Prospection / Devis. */
 .projects-stack input,
@@ -272,7 +241,6 @@
     flex-direction: column;
   }
 }
-
 
 /* Projet V2 — atelier de production */
 .projects-layout.with-detail.project-workshop-layout {
@@ -391,7 +359,7 @@
   border-radius: 999px;
   background: var(--surface-soft);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   font-weight: 750;
 }
 .project-workbench-badges span.paused {
@@ -406,7 +374,7 @@
   display: grid;
   gap: 5px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   font-weight: 750;
 }
 .project-workbench-estimate label > div {
@@ -420,8 +388,9 @@
   min-width: 0;
 }
 .project-workbench-estimate label > div > span {
+  white-space: nowrap; /* P5c : « min » à 14 px ne se coupe plus */
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
 }
 .project-workbench-description {
   margin: -2px 0 0;
@@ -459,7 +428,7 @@
 }
 .project-workbench-section-title > span {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
 }
 .project-work-card-fields {
   display: grid;
@@ -525,7 +494,7 @@
   font-weight: 900;
 }
 .project-workbench-tool-grid button strong {
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
 }
 .project-workbench-tool-grid button small {
   color: var(--text-muted);
@@ -571,7 +540,7 @@
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
 }
 .project-companion-title > div:last-child {
   display: grid;
@@ -638,7 +607,7 @@
   background: var(--surface-soft);
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 @media (max-width: 1500px) {
@@ -682,7 +651,6 @@
     grid-template-columns: 1fr;
   }
 }
-
 
 /* Projet V2 — fiche projet en side-sheet */
 .projects-layout.with-detail,
@@ -746,29 +714,10 @@
   background: var(--surface-soft);
 }
 
-.project-legacy-plan-note {
-  display: grid;
-  gap: 8px;
-  padding: 11px 12px;
-  border: 1px solid color-mix(in srgb, #b98342 35%, var(--border));
-  border-radius: 11px;
-  background: color-mix(in srgb, #b98342 7%, var(--surface));
-}
-.project-legacy-plan-note > div {
-  display: grid;
-  gap: 3px;
-}
-.project-legacy-plan-note strong {
-  font-size: 14px;
-}
-.project-legacy-plan-note span,
-.project-legacy-plan-note small {
+/* P3b (F13) : l’origine du plan tient dans la ligne du plan, plus de boîte de 75 px. */
+.project-plan-origin {
   color: var(--text-muted);
-  line-height: 1.45;
-}
-.project-legacy-plan-note small {
-  padding-top: 7px;
-  border-top: 1px solid color-mix(in srgb, #b98342 18%, var(--border));
+  font-weight: 400;
 }
 
 @media (max-width: 980px) {
@@ -795,11 +744,10 @@
   }
 }
 
-
 /* Projet V2 — véritable page de production */
 .project-production-page {
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   width: 100%;
   max-width: 100%;
@@ -807,6 +755,14 @@
   min-height: 620px;
   min-width: 0;
   overflow-x: hidden;
+}
+/* R5a : les enfants de la page (en-tête, périmètre, onglets, contenu) sont en nombre variable ; seul le dernier remplit la hauteur. */
+.project-production-page > :not(:last-child) {
+  flex: 0 0 auto;
+}
+.project-production-page > :last-child {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .project-production-header {
@@ -884,6 +840,8 @@
 
 .project-production-nav {
   display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
   gap: 6px;
   overflow-x: auto;
   padding: 2px 0 4px;
@@ -916,6 +874,8 @@
 
 .project-production-tree-panel {
   display: grid;
+  /* F72 : la colonne ne s’élargit pas au-delà du panneau en fenêtre étroite. */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   gap: 9px;
   min-width: 0;
@@ -1119,7 +1079,6 @@
   }
 }
 
-
 /* Quand un projet est ouvert, le contenu principal devient directement l'atelier de production. */
 .content-area:has(> .project-production-page) {
   display: flex;
@@ -1139,7 +1098,6 @@
   height: auto;
   min-height: 0;
 }
-
 
 /* Projet V2 — simplification atelier : phases, étapes, barre de travail */
 .project-production-actions {
@@ -1192,6 +1150,7 @@
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 9%, transparent);
 }
 .project-phase-row {
+  container-type: inline-size;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -1224,21 +1183,18 @@
 }
 .project-phase-number {
   color: var(--accent-strong);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: .04em;
 }
 .project-phase-name {
-  overflow: hidden;
+  min-width: 0;
   font-size: 15px;
   font-weight: 850;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
 }
 .project-phase-meta {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   white-space: nowrap;
 }
 .project-phase-progress {
@@ -1265,7 +1221,7 @@
 .project-phase.status-waiting_client .project-phase-progress b { background: #d8a34e; }
 .project-phase-progress strong {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
 }
 .project-phase-steps {
   display: grid;
@@ -1329,7 +1285,7 @@
   display: inline-flex;
   justify-content: center;
   color: var(--accent-strong);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
@@ -1339,15 +1295,19 @@
   min-width: 0;
 }
 .project-step-content strong {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
+  overflow-wrap: anywhere;
   font-size: 14px;
   font-weight: 800;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
 }
 .project-step-content small {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   line-height: 1.3;
 }
 .project-step-status {
@@ -1356,7 +1316,7 @@
   height: 34px;
   padding: 5px 26px 5px 8px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   font-weight: 750;
 }
 .project-step-status.status-done { background: color-mix(in srgb, #6f9b75 10%, var(--surface)); }
@@ -1413,7 +1373,7 @@
   display: grid;
   gap: 4px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
 }
 
 /* Fiche : moins de blocs, plus d'actions. */
@@ -1430,10 +1390,8 @@
 }
 .project-workbench-kicker {
   color: var(--accent-strong);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   font-weight: 850;
-  letter-spacing: .04em;
-  text-transform: uppercase;
 }
 .project-workbench-head.compact h3 {
   margin: 2px 0 5px;
@@ -1443,7 +1401,7 @@
   min-height: 21px;
   padding: 2px 7px;
   border: 0;
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
 }
 .project-workbench-badges .status-done { background: color-mix(in srgb, #6f9b75 11%, var(--surface)); color: #577b5d; }
 .project-workbench-badges .status-in_progress { background: color-mix(in srgb, var(--accent) 11%, var(--surface)); color: var(--accent-strong); }
@@ -1465,10 +1423,8 @@
 }
 .project-node-timer.compact > div:first-child > span {
   color: var(--accent-strong);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   font-weight: 850;
-  text-transform: uppercase;
-  letter-spacing: .06em;
 }
 .project-node-timer.compact > div:first-child > strong {
   font-size: 21px;
@@ -1476,7 +1432,7 @@
 .project-node-timer.compact > small {
   overflow: hidden;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1544,10 +1500,8 @@
 }
 .project-workbench-goal.compact > span {
   color: var(--accent-strong);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
   font-weight: 850;
-  text-transform: uppercase;
-  letter-spacing: .05em;
 }
 .project-workbench-goal.compact p {
   margin-top: 2px;
@@ -1613,7 +1567,7 @@
   border-radius: 999px;
   background: var(--surface);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--aw-font-functional);
 }
 .project-companion-compact .project-companion-cards {
   padding: 0 8px 8px;
@@ -1686,7 +1640,6 @@
   }
 }
 
-
 .project-workbench-title-input {
   width: min(100%, 560px);
   min-height: 34px;
@@ -1710,7 +1663,6 @@
   background: var(--surface) !important;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 8%, transparent);
 }
-
 
 /* Projet V2 — séparation redimensionnable */
 .project-production-workspace {
@@ -1955,10 +1907,11 @@ body.project-resizing * {
   }
 }
 
-
 /* Projet V2 — plan plus compact et fiche orientée travail */
 .project-production-tree-actions {
   display: flex;
+  /* F72 : en fenêtre étroite, les actions du plan passent à la ligne au lieu de dépasser. */
+  flex-wrap: wrap;
   align-items: center;
   gap: 5px;
 }
@@ -2235,7 +2188,6 @@ body.project-resizing * {
   }
 }
 
-
 .project-production-header-compact{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
 .project-production-header-compact strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .project-production-collapse-top{margin-left:4px}
@@ -2248,7 +2200,7 @@ body.project-resizing * {
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface-soft);
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
   overflow-wrap: anywhere;
 }
 .project-blueprint-origins strong { color: var(--accent-strong); }
@@ -2272,3 +2224,12 @@ body.project-resizing * {
 .project-target-choice button { justify-self:start; padding:10px 14px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text); font:inherit; font-weight:600; text-decoration:none; cursor:pointer; }
 .project-target-choice button:disabled { cursor:default; opacity:.55; }
 .project-target-choice:disabled { opacity:.8; }
+/* P3b (F15) : sous 640 px de ligne, les cinq colonnes ne tiennent pas ; la barre d’avancement sortait de la ligne et n’en laissait que de petits traits. */
+@container (max-width: 640px) {
+  .project-phase-main {
+    grid-template-columns: 24px 68px minmax(110px, 1fr) auto;
+  }
+  .project-phase-progress {
+    display: none;
+  }
+}

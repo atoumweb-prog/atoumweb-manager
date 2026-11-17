@@ -22,13 +22,13 @@
 }
 
 .project-completion-heading strong {
-  font-size: 13px;
+  font-size: var(--aw-font-functional);
 }
 
 .project-completion-heading small,
 .project-completion-note {
   color: var(--text-muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   line-height: 1.45;
 }
 
@@ -67,7 +67,7 @@
   height: 22px;
   border-radius: 999px;
   background: var(--surface-soft);
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
   font-weight: 900;
 }
 
@@ -90,18 +90,18 @@
 }
 
 .project-completion-item strong {
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .project-completion-item small {
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   line-height: 1.4;
 }
 
 .project-completion-source {
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   white-space: nowrap;
 }
 

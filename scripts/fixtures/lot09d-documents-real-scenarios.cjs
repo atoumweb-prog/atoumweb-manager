@@ -24,11 +24,11 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
   await navigate('Documents & Contrats');
   await wait('document.querySelectorAll(".documents-table tbody tr").length>=2',
     'actual Documents list');
-  test(await get('document.querySelectorAll(".documents-entry-grid .documents-entry").length===4'),
-    '09D-UI-01: four honest navigation entry points');
-  test(await get('document.querySelector(".documents-entry-unavailable")?.textContent.includes("non encore disponible")'),
+  test(await get('document.querySelectorAll(".documents-library-link button").length===1'),
+    '09D-UI-01: one honest library entry point (library and editor share one door)');
+  test(await get('document.querySelector(".documents-unavailable-note")?.textContent.includes("pas encore disponible")'),
     '09D-UI-02: general documents storage is not falsely advertised');
-  await js('document.querySelector(".documents-entry-grid button").click()');
+  await js('document.querySelector(".documents-library-link button").click()');
   await wait('!!document.querySelector(".contract-toolbar button")','true contract library route');
   test(await get('document.body.textContent.includes("Bibliothèque contractuelle")'),
     '09D-UI-03: canonical contract library reached');
@@ -120,11 +120,11 @@ module.exports=async({win,db,temp,evalUI:js,get,wait,navigate,select,test,sleep}
     for(const [density,label,font,height] of [['compact','Compact',14,36],['comfort','Confort',16,42],['comfort_plus','Confort +',18,48]]){
       await select(theme,title,density,label,font,height);
       await navigate('Documents & Contrats');
-      await wait('!!document.querySelector(".documents-entry-grid")','Documents '+theme+'/'+density);
+      await wait('!!document.querySelector(".documents-library-link")','Documents '+theme+'/'+density);
       const state=await get('({theme:document.documentElement.dataset.theme,density:document.documentElement.dataset.density,'+
-       'entries:document.querySelectorAll(".documents-entry-grid .documents-entry").length,'+
+       'entries:document.querySelectorAll(".documents-library-link button").length,'+
        'scroll:document.querySelector(".content-area")?.scrollWidth,width:document.querySelector(".content-area")?.clientWidth})');
-      test(state.theme===theme&&state.density===density&&state.entries===4,
+      test(state.theme===theme&&state.density===density&&state.entries===1,
         '09D-3x3: correct Documents navigation in '+theme+'/'+density);
       test(state.scroll<=state.width+20,
         '09D-3x3: no broad content overflow in '+theme+'/'+density);

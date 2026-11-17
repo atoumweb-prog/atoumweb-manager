@@ -13,9 +13,13 @@ import type { ProjectSummary } from '../../shared/projects';
 import type { TimeSummary } from '../../shared/time';
 import type { DashboardEntry } from '../../shared/workflow';
 import { openEntity } from '../workflow/DossierPanel';
+import { HomeTodoCard } from './HomeTodoCard';
+import { buildTodoList, draftQuoteCount } from '../../shared/homeTodo';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
+import { KeyFigures } from '../ui/KeyFigures';
 import './HomeDashboard.css';
 import './HomeDashboardV2.css';
+import './home-r6.css';
 
 type HomePageName = 'Prospects' | 'Devis' | 'Projets' | 'Interventions & Maintenance' | 'Gestion des temps' | 'Facturation';
 
@@ -93,7 +97,7 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   const [personalizationOpen,setPersonalizationOpen]=useState(false);
   const personalizationTrigger=useRef<HTMLButtonElement>(null),personalizationPanel=useRef<HTMLDetailsElement>(null);
   const closePersonalization=()=>{setPersonalizationOpen(false);personalizationTrigger.current?.focus();};
-  const widgetLabels:Record<HomeWidgetKey,string>={today:'Aujourd’hui',kpis:'Indicateurs',pipeline:'Pipeline commercial',time:'Temps & facturation',watch:'À surveiller',actions:'Projets récents'};
+  const widgetLabels:Record<HomeWidgetKey,string>={today:'À faire maintenant',kpis:'Indicateurs',pipeline:'Pipeline commercial',time:'Temps & facturation',watch:'À surveiller',actions:'Projets récents'};
   const sourceLabels:Record<keyof HomeData,string>={entries:'Dossiers du jour',prospects:'Prospects',quotes:'Devis du pipeline',actions:'Relances',projects:'Projets',interventions:'Interventions',time:'Temps du mois',billing:'Éléments à facturer',alerts:'Alertes opérationnelles'};
   const loading=Object.keys(resources).length===0||Object.values(resources).some(source=>source.status==='loading');
   const failed=(Object.keys(resources) as (keyof HomeData)[]).filter(key=>resources[key]?.status==='error');
@@ -123,7 +127,7 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
     };
   }, []);
 
-  const todayEntries = useMemo(() => data.entries?.filter((entry) => entry.group === 'Aujourd’hui') ?? [], [data]);
+  const todoItems = useMemo(() => buildTodoList(data.entries ?? []), [data.entries]);
   const activeProspects = useMemo(() => data.prospects?.filter((item) => !item.archivedAt && !item.clientAccountId && !['won', 'lost'].includes(item.stage ?? 'new')) ?? [], [data]);
   const pipelineProspects = useMemo(() => activeProspects.filter((item) => (item.stage ?? 'new') !== 'new'), [activeProspects]);
   const dueFollowUps = useMemo(() => {
@@ -143,7 +147,6 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   }, [data?.actions]);
   const relaunchCount = pipelineProspects.filter((item) => dueFollowUps.due.has(item.id)).length;
   const overdueRelaunchCount = pipelineProspects.filter((item) => dueFollowUps.overdue.has(item.id)).length;
-  const quotePrepareCount = activeProspects.filter((item) => ['quote_to_prepare', 'quote_to_send'].includes(item.stage ?? 'new')).length;
   const projectsToStart = data.projects?.filter((item) => item.status === 'to_prepare').length ?? 0;
   const interventionsInProgress = data.interventions?.filter((item) => item.status === 'in_progress').length ?? 0;
 
@@ -162,24 +165,13 @@ export function HomeDashboard({ onMessage }: { onMessage: (message: string) => v
   const presentedPreference:HomeWidgetPreference={...preference,order:displayOrder,orderMode:'explicit'};
   const widgetIcons:Record<HomeWidgetKey,OperationIconName>={today:'calendar',watch:'alert',kpis:'chart',pipeline:'chart',time:'clock',actions:'folder'};
   const widgets:Record<HomeWidgetKey,ReactNode>={
-kpis:<div className="home-kpi-grid">
-      <HomeKpi icon="user" tone="red" label="Prospects à relancer" value={has("prospects","actions")?relaunchCount:"—"} helper={overdueRelaunchCount ? `${overdueRelaunchCount} en retard · à traiter dans le pipeline` : 'À traiter aujourd’hui dans le pipeline'} onClick={() => openProspectPipeline('relaunch')} />
-      <HomeKpi icon="file-text" tone="blue" label="Devis à préparer" value={has("prospects")?quotePrepareCount:"—"} helper="Compteur issu des Prospects · Ouvrir tous les devis" onClick={() => openPage('Devis')} />
-      <HomeKpi icon="folder" tone="green" label="Projets à démarrer" value={has("projects")?projectsToStart:"—"} helper="Statut à préparer · Ouvrir tous les projets" onClick={() => openPage('Projets')} />
-      <HomeKpi icon="wrench" tone="orange" label="Interventions en cours" value={has("interventions")?interventionsInProgress:"—"} helper="Statut en cours · Ouvrir toutes les opérations" onClick={() => openPage('Interventions & Maintenance')} />
-    </div>,
-today:<article className="home-card home-today-card">
-        <div className="home-card-title"><div><OperationIcon name="calendar" size={20} /><strong>Aujourd’hui</strong><span>{has("entries")?todayEntries.length:"—"}</span></div><button type="button" onClick={() => openPage('Prospects')} aria-label="Ouvrir les actions">›</button></div>
-        <div className="home-today-scroll" tabIndex={0} aria-label="Dossiers du jour">
-          {todayEntries.map((entry, index) => <button className="home-today-item" type="button" key={`${entry.target.entityType}-${entry.target.entityId}-${index}`} onClick={() => openEntity(entry.target)}>
-            <span className="home-today-dot" />
-            <span className="home-today-icon"><OperationIcon name={targetIcon(entry.target)} size={17} /></span>
-            <span className="home-today-copy"><strong>{entry.target.title}</strong><small>{entry.target.subtitle || entry.target.status || 'Action du jour'}</small></span>
-            <span className="home-today-open">›</span>
-          </button>)}
-          {todayEntries.length === 0 && <div className="home-empty-state"><OperationIcon name="check-circle" size={30} /><strong>{has("entries")?"Aucun dossier du jour signalé":"Dossiers du jour indisponibles"}</strong>{resources.entries?.status!=="ready"&&<span>Actualisation non confirmée ; consultez le détail des sources.</span>}</div>}
-        </div>
-      </article>,
+kpis:<KeyFigures ariaLabel="Indicateurs du jour" className="home-kpi-grid" items={[
+      { key: 'relaunch', icon: <OperationIcon name="user" size={22} />, tone: 'danger', label: 'Prospects à relancer', value: has("prospects","actions")?relaunchCount:"—", onAction: () => openProspectPipeline('relaunch'), actionLabel: overdueRelaunchCount ? `${overdueRelaunchCount} en retard, à traiter dans le pipeline` : 'à traiter aujourd’hui dans le pipeline' },
+      { key: 'drafts', icon: <OperationIcon name="file-text" size={22} />, tone: 'info', label: 'Devis en brouillon', value: has("quotes")?draftQuoteCount(data.quotes ?? []):"—", onAction: () => openPage('Devis'), actionLabel: 'devis non finalisés, ouvrir la liste des devis' },
+      { key: 'projects', icon: <OperationIcon name="folder" size={22} />, tone: 'success', label: 'Projets à démarrer', value: has("projects")?projectsToStart:"—", onAction: () => openPage('Projets'), actionLabel: 'statut à préparer, ouvrir tous les projets' },
+      { key: 'interventions', icon: <OperationIcon name="wrench" size={22} />, tone: 'warning', label: 'Interventions en cours', value: has("interventions")?interventionsInProgress:"—", onAction: () => openPage('Interventions & Maintenance'), actionLabel: 'statut en cours, ouvrir toutes les opérations' },
+    ]} />,
+today:<HomeTodoCard items={todoItems} ready={has('entries')} onOpen={openEntity} />,
 pipeline:<article className="home-card home-pipeline-card">
         <div className="home-card-title"><div><OperationIcon name="chart" size={20} /><strong>Pipeline commercial</strong></div><button type="button" onClick={() => openProspectPipeline()} aria-label="Ouvrir le pipeline commercial">›</button></div>
         <div className="home-pipeline-items">
@@ -221,7 +213,7 @@ watch:<article tabIndex={0} aria-label="Liste des alertes opérationnelles" clas
         <div className="home-watch-sparkline" aria-hidden="true"><span /><span /><span /><span /><span /><i /></div>
       </article>,
 actions:<article className="home-card home-actions-card">
-        <div className="home-card-title"><div><OperationIcon name="bolt" size={20} /><strong>Actions rapides</strong></div></div>
+        <div className="home-card-title"><div><OperationIcon name="bolt" size={20} /><strong>Projets récents</strong></div></div>
         <div className="home-recent-projects">{recentProjects.map(project=><button type="button" key={project.id} data-home-project={project.id} onClick={()=>openEntity({entityType:'project',entityId:project.id,title:project.name})}><OperationIcon name="folder"/><span><strong>{project.name}</strong><small>{project.clientLabel || project.number}</small></span><span>›</span></button>)}{!recentProjects.length&&<p className="home-project-empty">{has('projects')?'Aucun projet récent':'Projets indisponibles'}</p>}</div><details className="home-shortcuts"><summary>Accès rapides</summary><div className="home-quick-actions">
           <button className="quick-prospect" type="button" onClick={() => openPage('Prospects')}><OperationIcon name="user" size={19} />Ouvrir Prospection</button>
           <button className="quick-quote" type="button" onClick={() => openPage('Devis')}><OperationIcon name="file-text" size={19} />Ouvrir Devis</button>
@@ -234,12 +226,12 @@ actions:<article className="home-card home-actions-card">
   function renderWidget(key:HomeWidgetKey){
     const folded=preference.collapsed?.includes(key)??false;
     return <div key={key} data-home-widget={key} className={'home-widget home-widget-'+key} hidden={preference.hidden.includes(key)}>
-      <div className="home-widget-heading"><button type="button" className="home-widget-fold" aria-expanded={!folded} aria-controls={'home-content-'+key} aria-label={`${folded?'Déplier':'Replier'} ${widgetLabels[key]}`} onClick={()=>persist({...preference,collapsed:folded?(preference.collapsed??[]).filter(value=>value!==key):[...(preference.collapsed??[]),key]})}><OperationIcon name={widgetIcons[key]}/><strong>{widgetLabels[key]}</strong>{key==='today'&&has('entries')&&<span>{todayEntries.length}</span>}<span className="home-fold-symbol" aria-hidden="true">{folded?'+':'−'}</span></button>{!['kpis','time'].includes(key)&&<button type="button" className="home-widget-open" onClick={widgetOpen[key]} aria-label={key==='today'?'Ouvrir les actions':key==='pipeline'?'Ouvrir le pipeline commercial':key==='time'?'Ouvrir la gestion des temps':key==='actions'?'Ouvrir les projets':'Ouvrir les opérations'}>Voir tout <span aria-hidden="true">›</span></button>}</div>
+      <div className="home-widget-heading"><button type="button" className="home-widget-fold" aria-expanded={!folded} aria-controls={'home-content-'+key} aria-label={`${folded?'Déplier':'Replier'} ${widgetLabels[key]}`} onClick={()=>persist({...preference,collapsed:folded?(preference.collapsed??[]).filter(value=>value!==key):[...(preference.collapsed??[]),key]})}><OperationIcon name={widgetIcons[key]}/><strong>{widgetLabels[key]}</strong>{key==='today'&&has('entries')&&<span>{todoItems.length}</span>}<span className="home-fold-symbol" aria-hidden="true">{folded?'+':'−'}</span></button>{!['kpis','time','today'].includes(key)&&<button type="button" className="home-widget-open" onClick={widgetOpen[key]} aria-label={key==='today'?'Ouvrir les actions':key==='pipeline'?'Ouvrir le pipeline commercial':key==='time'?'Ouvrir la gestion des temps':key==='actions'?'Ouvrir les projets':'Ouvrir les opérations'}>Voir tout <span aria-hidden="true">›</span></button>}</div>
       <div id={'home-content-'+key} className="home-widget-content" hidden={folded}>{widgets[key]}</div>
     </div>;
   }
   return <section className="home-dashboard" aria-busy={loading}>
-   <header className="home-heading"><div><h1>Accueil</h1></div><div className="home-heading-actions"><div className="home-quick-create" role="group" aria-label="Créer rapidement"><button type="button" className="primary-button" onClick={()=>quickCreate('Prospects','prospect')}><OperationIcon name="plus" size={18}/>Prospect</button><button type="button" className="primary-button" onClick={()=>quickCreate('Devis','quote')}><OperationIcon name="plus" size={18}/>Devis</button><button type="button" className="primary-button" onClick={()=>quickCreate('Interventions & Maintenance','request')}><OperationIcon name="plus" size={18}/>Demande</button></div><button ref={personalizationTrigger} type="button" className="home-personalize" aria-controls="home-personalization" aria-expanded={personalizationOpen} onClick={()=>{const next=!personalizationOpen;setPersonalizationOpen(next);if(next)requestAnimationFrame(()=>personalizationPanel.current?.querySelector<HTMLElement>('summary')?.focus());}}><OperationIcon name="settings"/>Personnaliser</button><AppButton aria-label="Actualiser l’Accueil" title="Actualiser" icon={<OperationIcon name="refresh"/>} onAction={load}/></div></header>
+   <header className="home-heading"><div><h1>Accueil</h1></div><div className="home-heading-actions"><div className="home-quick-create" role="group" aria-label="Créer rapidement"><button type="button" className="secondary-button" onClick={()=>quickCreate('Prospects','prospect')}><OperationIcon name="plus" size={18}/>Prospect</button><button type="button" className="primary-button" onClick={()=>quickCreate('Devis','quote')}><OperationIcon name="plus" size={18}/>Devis</button><button type="button" className="secondary-button" onClick={()=>quickCreate('Interventions & Maintenance','request')}><OperationIcon name="plus" size={18}/>Demande</button></div><button ref={personalizationTrigger} type="button" className="home-personalize" aria-controls="home-personalization" aria-expanded={personalizationOpen} onClick={()=>{const next=!personalizationOpen;setPersonalizationOpen(next);if(next)requestAnimationFrame(()=>personalizationPanel.current?.querySelector<HTMLElement>('summary')?.focus());}}><OperationIcon name="settings"/>Personnaliser</button><AppButton aria-label="Actualiser l’Accueil" title="Actualiser" icon={<OperationIcon name="refresh"/>} onAction={load}/></div></header>
    {failed.length>0&&<AppNotice level="error" action={{label:'Réessayer',onClick:()=>void load()}}>Sources indisponibles : {failed.map(key=>sourceLabels[key]).join(', ')}. Les dernières données confirmées, si disponibles, peuvent être anciennes.</AppNotice>}
 
    {resources.alerts?.status!=='ready'&&<AppNotice level="warning">La source des alertes n’est pas confirmée pour cette actualisation. {has("alerts")?"Les alertes précédemment connues restent affichées.":"La situation des alertes reste inconnue."}</AppNotice>}
@@ -251,10 +243,3 @@ actions:<article className="home-card home-actions-card">
   </section>;
 }
 
-function HomeKpi({ icon, tone, label, value, helper, onClick }: { icon: OperationIconName; tone: string; label: string; value: number|string; helper: string; onClick: () => void }) {
-  return <button type="button" className={`home-kpi-card tone-${tone}`} onClick={onClick} title={`${label} : ${value}. ${helper}`}>
-    <span className="home-kpi-icon"><OperationIcon name={icon} size={28} /></span>
-    <span className="home-kpi-copy"><strong title={label}>{label}</strong><b>{value}</b></span>
-    <span className="home-kpi-open">›</span>
-  </button>;
-}

@@ -41,8 +41,7 @@
 .prospect-detail-v2 input,
 .prospect-detail-v2 select,
 .prospect-detail-v2 textarea { background: #fff !important; color: #18212B !important; border-color: rgba(24,33,43,.24) !important; }
-.prospect-detail-v2 .prospect-temperature-control label { color: #fff; }
-.prospect-detail-v2 .prospect-temperature-control select { color: #18212B; }
+
 .prospect-detail-v2 .close-detail { background: #fff; color: #18212B; }
 .prospect-detail-v2 .prospect-work-section .muted,
 .prospect-detail-v2 .activity-journal small { color: #475569; }
@@ -110,7 +109,7 @@
 .prospect-detail-v2 { background: var(--business-pastel) !important; color: #18212B !important; border-color: var(--business-pastel) !important; overflow-x: hidden; }
 .prospect-detail-v2 .detail-panel-heading { background: var(--business-pastel) !important; color: #18212B !important; border-bottom-color: color-mix(in srgb, var(--business-ink) 25%, transparent); }
 .prospect-detail-v2 .detail-panel-heading .eyebrow { color: var(--business-ink); }
-.prospect-detail-v2 .prospect-temperature-control label { color: #18212B; }
+
 .prospect-detail-v2 :is(.prospect-work-section, .prospect-quote-panel, .activity-preview, .activity-journal, .linked-contacts-panel, .qualification-recap, .prospect-missing-actions) { background: var(--business-pastel) !important; color: #18212B !important; border-color: color-mix(in srgb, var(--business-ink) 22%, transparent) !important; }
 .prospect-detail-v2 :is(.prospect-work-section, .prospect-quote-panel, .activity-journal, .qualification-recap) :is(h2, h3, legend),
 .client-summary-panel :is(h2, h3, .panel-title) { color: var(--business-ink) !important; }

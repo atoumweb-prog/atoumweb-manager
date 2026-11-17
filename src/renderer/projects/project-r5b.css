@@ -1,0 +1,53 @@
+/* R5b : onglets Résumé, Commercial, Interventions et Prérequis d'un projet.
+   Jetons uniquement : aucune couleur écrite en dur, aucun !important (garde-fou : ui/importantBudget.test.ts), aucun texte sous 14 px. */
+
+/* Un onglet secondaire prend la hauteur de son contenu : plus de vide jusqu'au bas de la fenêtre. S'il est plus haut que l'écran, il défile. */
+.project-production-page > .project-production-secondary.project-production-secondary--fit { flex: 0 1 auto; }
+
+.project-tab-content .project-section-title { margin: 0; font-size: var(--aw-font-body); font-weight: 700; color: var(--text); }
+.project-empty { margin: 0; color: var(--muted); font-size: var(--aw-font-functional); }
+
+/* Chiffres clés : depuis P5d (F27), composant commun `KeyFigures` (ui/list-page.css). */
+
+/* Faits : libellé à gauche, valeur à droite. */
+.project-facts { display: grid; gap: 0; margin: 0; border-top: 1px solid var(--border); }
+.project-facts > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.project-facts dt { color: var(--muted); font-size: var(--aw-font-functional); }
+.project-facts dd { margin: 0; text-align: right; font-size: var(--aw-font-functional); font-weight: 700; color: var(--text); overflow-wrap: anywhere; }
+
+.project-note { display: grid; gap: 5px; }
+.project-note p { margin: 0; color: var(--muted); font-size: var(--aw-font-functional); line-height: 1.5; }
+
+/* Prestations figées (Commercial). */
+.project-services-list { display: grid; gap: 0; border-top: 1px solid var(--border); }
+.project-services-list > div { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.project-services-list > div > div { display: grid; gap: 2px; min-width: 0; }
+.project-services-list strong { font-size: var(--aw-font-functional); overflow-wrap: anywhere; }
+.project-services-list small { color: var(--muted); font-size: var(--aw-font-functional); }
+.project-services-list > div > span { font-size: var(--aw-font-functional); font-weight: 800; white-space: nowrap; }
+
+/* Prérequis. */
+.project-prerequisites-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px var(--ui-gap); }
+.project-prerequisites-count { margin: 0; font-size: var(--aw-font-functional); font-weight: 700; color: var(--text); }
+.project-prerequisites-filter { display: inline-flex; align-items: center; gap: 8px; font-size: var(--aw-font-functional); color: var(--text); cursor: pointer; }
+.project-prerequisite-add { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.project-prerequisites-table { width: 100%; border-collapse: collapse; }
+.project-prerequisites-table th { padding: 6px 8px; text-align: left; color: var(--muted); font-size: var(--aw-font-functional); font-weight: 600; border-bottom: 1px solid var(--border); }
+.project-prerequisites-table td { padding: 10px 8px; vertical-align: top; border-bottom: 1px solid var(--border); font-size: var(--aw-font-functional); }
+.project-prerequisites-table td:first-child { overflow-wrap: anywhere; }
+.project-prerequisites-table td:last-child { width: 1%; white-space: nowrap; }
+.project-prerequisite-label { display: grid; gap: 2px; }
+.project-prerequisite-label strong { font-weight: 700; }
+.project-prerequisite-label small { color: var(--muted); font-size: var(--aw-font-functional); }
+.project-prerequisite-optional { margin-left: 8px; color: var(--muted); font-weight: 400; }
+.project-prerequisite-status { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.project-prerequisite-status select { min-width: 150px; }
+
+/* Interventions. */
+.project-operations-view { display: grid; gap: var(--ui-gap); }
+.project-operation-section { display: grid; gap: 4px; }
+.project-operation-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.project-operation-row > div { display: grid; gap: 2px; min-width: 0; }
+.project-operation-row strong { font-size: var(--aw-font-functional); overflow-wrap: anywhere; }
+.project-operation-row small { color: var(--muted); font-size: var(--aw-font-functional); }
+.project-operation-more { margin: 0; color: var(--muted); font-size: var(--aw-font-functional); }

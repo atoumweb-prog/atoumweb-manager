@@ -18,6 +18,8 @@ export interface CatalogRecommendationRow {
   targetVersionNumber: number;
   targetVersionStatus: 'draft' | 'published' | 'retired';
   targetItemStatus: 'active' | 'inactive' | 'archived';
+  targetPublishedVersionId: string | null;
+  targetPublishedVersionNumber: number | null;
   sortOrder: number;
   reason: string;
   status: 'active' | 'paused';
@@ -32,10 +34,13 @@ export class CatalogRecommendationsService {
       id:string;source_version_id:string;target_version_id:string;sort_order:number;
       reason:string;rule_status:'active'|'paused';conditions:string;provenance:string;
       target_item_id:string;target_name:string;target_version_number:number;target_version_status:CatalogRecommendationRow['targetVersionStatus'];target_item_status:CatalogRecommendationRow['targetItemStatus'];
+      target_published_version_id:string|null;target_published_version_number:number|null;
     }>(`SELECT r.id,r.source_version_id,r.target_version_id,r.sort_order,
               r.reason,r.rule_status,r.conditions,r.provenance,
               i.id AS target_item_id,i.name AS target_name,v.version_number AS target_version_number,v.status AS target_version_status,
-              i.status AS target_item_status
+              i.status AS target_item_status,
+              (SELECT p.id FROM catalog_versions p WHERE p.item_id=i.id AND p.status='published' ORDER BY p.version_number DESC LIMIT 1) AS target_published_version_id,
+              (SELECT p.version_number FROM catalog_versions p WHERE p.item_id=i.id AND p.status='published' ORDER BY p.version_number DESC LIMIT 1) AS target_published_version_number
        FROM catalog_version_recommendations r
        JOIN catalog_versions v ON v.id=r.target_version_id
        JOIN catalog_items i ON i.id=v.item_id
@@ -45,7 +50,10 @@ export class CatalogRecommendationsService {
       id:x.id,sourceVersionId:x.source_version_id,targetVersionId:x.target_version_id,
       targetItemId:x.target_item_id,targetName:x.target_name,targetVersionNumber:Number(x.target_version_number),
       targetVersionStatus:x.target_version_status,
-      targetItemStatus:x.target_item_status,sortOrder:x.sort_order,
+      targetItemStatus:x.target_item_status,
+      targetPublishedVersionId:x.target_published_version_id,
+      targetPublishedVersionNumber:x.target_published_version_number==null?null:Number(x.target_published_version_number),
+      sortOrder:x.sort_order,
       reason:x.reason,status:x.rule_status,conditions:x.conditions,provenance:x.provenance,
     }));
   }

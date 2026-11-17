@@ -1,0 +1,48 @@
+{
+  "note": "Cas de figure fictifs pour juger les écrans Gestion (R7) : Temps, Facturation, Documents. Appliqué par scripts/seed-gestion-cas-de-figure.cjs aux trois projets TEST. Données uniquement fictives. Aucune session de chrono n'est laissée en cours : elle resterait active dans la base de test.",
+  "projects": [
+    {
+      "projectName": "TEST — Site vitrine à 699 €",
+      "cas": "Un client avec ses documents, une facture Abby rattachée (élément facturé), du temps sur la journée et la semaine",
+      "documents": [
+        { "title": "Contrat de création du site", "category": "contract", "file": "contrat-creation-site-TEST.pdf" },
+        { "title": "Brief du client", "category": "brief", "file": "brief-client-TEST.txt" },
+        { "title": "Facture TEST FA-TEST-001", "category": "invoice", "file": "facture-FA-TEST-001.pdf" }
+      ],
+      "billing": { "hourPacks": true, "invoice": { "document": "Facture TEST FA-TEST-001", "reference": "FA-TEST-001", "item": "pack" } },
+      "sessions": [
+        { "daysAgo": 0, "start": "09:00", "end": "10:30", "category": "design", "billable": true, "activity": "Maquette de l’accueil" },
+        { "daysAgo": 0, "start": "11:00", "end": "11:45", "category": "meeting", "billable": false, "activity": "Point avec le client" },
+        { "daysAgo": 2, "start": "14:00", "end": "17:00", "category": "production", "billable": true, "activity": "Intégration des pages" }
+      ]
+    },
+    {
+      "projectName": "TEST — Boutique en ligne",
+      "cas": "Un client dont TOUS les documents sont archivés (M2), des éléments à facturer de plusieurs origines (intervention facturable, geste commercial), du temps sur la semaine et le mois",
+      "documents": [
+        { "title": "Charte graphique (ancienne version)", "category": "content", "file": "charte-graphique-ancienne-TEST.pdf", "archived": true },
+        { "title": "Brief de la boutique", "category": "brief", "file": "brief-boutique-TEST.txt", "archived": true }
+      ],
+      "interventions": [
+        { "subject": "Modification de la page de livraison", "type": "modification", "coverageMode": "out_of_scope", "billableAmountCents": 18000, "theoreticalValueCents": 18000 },
+        { "subject": "Correction du logo (geste commercial)", "type": "correction", "coverageMode": "commercial_gesture", "billableAmountCents": 0, "theoreticalValueCents": 9000 }
+      ],
+      "sessions": [
+        { "daysAgo": 3, "start": "09:30", "end": "12:30", "category": "development", "billable": true, "activity": "Import du catalogue" },
+        { "daysAgo": 9, "start": "10:00", "end": "11:00", "category": "support", "billable": true, "activity": "Aide à la prise en main" },
+        { "daysAgo": 12, "start": "15:00", "end": "16:30", "category": "administrative", "billable": false, "activity": "Préparation du dossier" }
+      ]
+    },
+    {
+      "projectName": "TEST — Landing page",
+      "cas": "Un document à conserver bientôt (à surveiller), un pack d'heures à facturer au nom très long",
+      "documents": [
+        { "title": "Mentions légales signées", "category": "legal", "file": "mentions-legales-TEST.pdf", "retentionInDays": 30, "retentionCode": "TEST-30", "retentionReason": "Conservation de test" }
+      ],
+      "billing": { "hourPacks": true },
+      "sessions": [
+        { "daysAgo": 0, "start": "16:00", "end": "17:15", "category": "client_correction", "billable": true, "activity": "Correction du formulaire" }
+      ]
+    }
+  ]
+}

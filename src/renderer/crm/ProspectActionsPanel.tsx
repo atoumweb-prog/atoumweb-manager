@@ -111,8 +111,11 @@ function humanActivity(summary: string) {
     .replace(/\blost\b/g, 'Perdu');
 }
 
-export function ProspectActionsPanel({ prospect, actions, onChanged, showJournal = true }: {
+export function ProspectActionsPanel({ prospect, actions, onChanged, showJournal = true, openCreateRequest = false, onCreateRequestConsumed }: {
   showJournal?: boolean;
+  /** R3 : la fiche demande l'ouverture de la fenêtre « Planifier une action » ; le panneau l'ouvre une fois puis consomme la demande. */
+  openCreateRequest?: boolean;
+  onCreateRequestConsumed?: () => void;
   prospect: ProspectSummary;
   actions: CrmAction[];
   onChanged: (message?: string) => void;
@@ -126,6 +129,7 @@ export function ProspectActionsPanel({ prospect, actions, onChanged, showJournal
   const [journal, setJournal] = useState<ActivityEvent[]>([]);
   const [showAllJournal, setShowAllJournal] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  useEffect(() => { if (openCreateRequest) { setCreateOpen(true); onCreateRequestConsumed?.(); } }, [openCreateRequest]);
   const [preset, setPreset] = useState<string>(quoteContext ? 'follow_up_quote' : 'call');
   const [title, setTitle] = useState(quoteContext ? 'Relancer pour le devis' : 'Appeler le prospect');
   const [targetContactId, setTargetContactId] = useState('');
@@ -295,7 +299,7 @@ export function ProspectActionsPanel({ prospect, actions, onChanged, showJournal
 
   return <>
     <section className="prospect-work-section prospect-actions-panel">
-      <div className="work-section-heading"><div><span className="eyebrow">Actions & relances</span><strong>{openActions.length} en cours</strong></div><button className="secondary-button compact-button" type="button" onClick={() => {if(createOpen)actionGuard.request(()=>{actionGuard.discard();setCreateOpen(false);});else setCreateOpen(true);}}>{createOpen ? 'Planification ouverte' : '+ Action'}</button></div>
+      <div className="work-section-heading"><div><span className="eyebrow">Actions & relances</span><strong>{openActions.length} en cours</strong></div><button className="secondary-button compact-button" type="button" onClick={() => {if(createOpen)actionGuard.request(()=>{actionGuard.discard();setCreateOpen(false);});else setCreateOpen(true);}}>Programmer une action</button></div>
 
       {createOpen && <ProspectDialog label="Planifier une action" className="prospect-action-dialog" onClose={()=>actionGuard.request(()=>{actionGuard.discard();setCreateOpen(false);})}><div className="inline-editor">
         <strong>1. Planifier une action</strong>{error&&<p role="alert" className="form-error">{error}</p>}

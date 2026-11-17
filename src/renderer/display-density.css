@@ -57,7 +57,6 @@ small { font-size: max(14px, var(--ui-font-small)); }
 
 .status-pill,
 .eyebrow,
-.database-chip,
 .kpi-card > span,
 .kpi-card small,
 .success-badge,

@@ -99,7 +99,19 @@ export class ProjectBlueprintCompositionService {
       fail(c.quantityMode===(c.configuration!.quantity.structureMode==='per_unit'?'per_unit':'once'),'Quantités actions/structure incohérentes.');
     }
     let bases = contributions.filter(c => c.role === 'base');
-    const origins = new Set(bases.map(c => hash([c.quoteLineId,c.templateVersionId])));
+    // Devis mixte (décision de Carlos du 17/11/2026) : un seul projet par devis. La base qui déclare un site porte le projet
+    // (à défaut, la première ligne) ; les autres bases sans site deviennent des compléments du même projet. Deux bases qui
+    // déclarent chacune un site restent concurrentes et bloquent, comme avant.
+    const originOf = (c: SoldBlueprintContribution) => hash([c.quoteLineId,c.templateVersionId]);
+    if (!configured && new Set(bases.map(originOf)).size > 1) {
+      const withSites = bases.filter(c => c.sites.length);
+      if (new Set(withSites.map(originOf)).size <= 1) {
+        const primary = originOf(withSites[0] ?? bases[0]);
+        for (const c of bases) if (originOf(c) !== primary) { c.role = 'addon'; c.siteMode = 'extend_base'; }
+        bases = bases.filter(c => c.role === 'base');
+      }
+    }
+    const origins = new Set(bases.map(originOf));
     fail(configured || origins.size <= 1, 'Plusieurs blueprints de base concurrents : résoudre les lignes ou liens Catalogue avant conversion.');
     const explicitlyReplacedBases: SoldBlueprintContribution[] = [];
     fail(!configured || !explicitVersionId || bases.length===1&&bases[0].templateVersionId===explicitVersionId,'Plan v2 : substitution manuelle de la base non autorisée.');

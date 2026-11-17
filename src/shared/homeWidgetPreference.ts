@@ -2,7 +2,9 @@ export const HOME_WIDGET_PREFERENCE_KEY='atoumweb:home:widgets:v1';
 export const HOME_WIDGET_KEYS=['today','kpis','pipeline','time','watch','actions'] as const;
 export type HomeWidgetKey=typeof HOME_WIDGET_KEYS[number];
 export type HomeWidgetPreference={version:1;order:HomeWidgetKey[];hidden:HomeWidgetKey[];collapsed?:HomeWidgetKey[];orderMode?:'explicit'};
-export const defaultHomeWidgets=():HomeWidgetPreference=>({version:1,order:[...HOME_WIDGET_KEYS],hidden:[]});
+// R6 : sans disposition enregistrée, « À faire maintenant » (today) et « À surveiller » (watch) restent ouverts ; les blocs de suivi sont repliés (un clic les déplie).
+// Une disposition déjà enregistrée n'est jamais modifiée : normalizeHomeWidgets ne rajoute aucun repli.
+export const defaultHomeWidgets=():HomeWidgetPreference=>({version:1,order:[...HOME_WIDGET_KEYS],hidden:[],collapsed:['kpis','pipeline','time','actions']});
 // Legacy default has a visual projection; an explicit personal order must never be reinterpreted.
 export function homeWidgetDisplayOrder(preference:HomeWidgetPreference):HomeWidgetKey[]{
  return preference.orderMode!=='explicit'&&preference.order.join(',')===HOME_WIDGET_KEYS.join(',')?['today','watch','kpis','pipeline','time','actions']:[...preference.order];

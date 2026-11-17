@@ -1,4 +1,5 @@
-import {OperationIcon} from '../operations/OperationIcon';
+import type { ReactNode } from 'react';
+import { OperationIcon } from '../operations/OperationIcon';
 import { useEffect, useState } from 'react';
 import type {
   HourPack,
@@ -6,7 +7,25 @@ import type {
   MaintenanceSubscription,
   ServiceRequest,
 } from '../../shared/operations';
+import {
+  COVERAGE_LABELS,
+  HOUR_PACK_STATUS_LABELS,
+  INTERVENTION_STATUS_LABELS,
+  INTERVENTION_TYPE_LABELS,
+  MAINTENANCE_SUBSCRIPTION_STATUS_LABELS,
+  PRIORITY_LABELS,
+  REQUEST_STATUS_LABELS,
+  SOURCE_LABELS,
+  readableLabel,
+} from '../../shared/operationLabels';
+import { OPEN_OPERATIONS_PROJECT_EVENT, type OperationsProjectFilter } from '../../shared/operationsProjectFilter';
+import { limitItems, plural } from '../../shared/projectTabs';
+import { StatusPill } from '../ui/StatusPill';
+import { operationStatusTone } from '../ui/operationStatusTone';
 import './ProjectOperationsTab.css';
+
+const REQUEST_LIMIT = 6;
+const INTERVENTION_LIMIT = 8;
 
 function duration(seconds: number): string {
   const minutes = Math.max(0, Math.round(seconds / 60));
@@ -15,7 +34,75 @@ function duration(seconds: number): string {
   return hours ? `${hours} h ${String(rest).padStart(2, '0')}` : `${rest} min`;
 }
 
-export function ProjectOperationsTab({ projectId, onMessage }: { projectId: string; onMessage: (message: string) => void }) {
+/** « + 2 autres demandes non affichées » : ce que la limite d'affichage cache est toujours dit. */
+function hiddenLabel(hidden: number, noun: string): string {
+  const many = hidden > 1;
+  return `+ ${hidden} ${many ? 'autres' : 'autre'} ${noun}${many ? 's' : ''} non affichée${many ? 's' : ''}`;
+}
+
+export interface ProjectOperationsViewProps {
+  requests: ServiceRequest[];
+  interventions: Intervention[];
+  maintenance: MaintenanceSubscription[];
+  packs: HourPack[];
+  onRefresh: () => void;
+  /** P3b (F20) : quand le projet est connu, « Voir toutes (N) » ouvre la page Interventions filtrée par ce projet. */
+  projectId?: string;
+  projectLabel?: string;
+}
+
+/** Interventions d'un projet : un seul message quand tout est vide, sinon seulement les sections qui ont du contenu. */
+export function ProjectOperationsView({ requests, interventions, maintenance, packs, onRefresh, projectId, projectLabel }: ProjectOperationsViewProps) {
+  const empty = requests.length + interventions.length + maintenance.length + packs.length === 0;
+  const openRequests = requests.filter((item) => !['closed', 'converted', 'archived'].includes(item.status)).length;
+  const openInterventions = interventions.filter((item) => !['completed', 'cancelled', 'archived'].includes(item.status)).length;
+  const shownRequests = limitItems(requests, REQUEST_LIMIT);
+  const shownInterventions = limitItems(interventions, INTERVENTION_LIMIT);
+
+  const openAll = (view: 'requests' | 'interventions') => {
+    if (!projectId) return;
+    const detail: OperationsProjectFilter = { projectId, projectLabel: projectLabel ?? '', view };
+    window.dispatchEvent(new CustomEvent(OPEN_OPERATIONS_PROJECT_EVENT, { detail }));
+  };
+
+  return <div className="project-tab-content project-operations-view">
+    {empty && <p className="project-empty">Aucune demande ni intervention sur ce projet pour l’instant.</p>}
+
+    {requests.length > 0 && <OperationSection title={openRequests > 0 ? `Demandes · ${plural(openRequests, 'ouverte', 'ouvertes')}` : 'Demandes'}>
+      {shownRequests.shown.map((request) => <div className="project-operation-row" key={request.id}>
+        <div><strong>{request.subject}</strong><small>{readableLabel(SOURCE_LABELS, request.source)}{request.priority !== 'normal' ? ` · Priorité : ${readableLabel(PRIORITY_LABELS, request.priority)}` : ''}</small></div>
+        <StatusPill tone={operationStatusTone(request.status)}>{readableLabel(REQUEST_STATUS_LABELS, request.status)}</StatusPill>
+      </div>)}
+      {shownRequests.hidden > 0 && <p className="project-operation-more">{hiddenLabel(shownRequests.hidden, 'demande')}{projectId && <> · <button className="link-button" type="button" onClick={() => openAll('requests')}>Voir toutes ({requests.length})</button></>}</p>}
+    </OperationSection>}
+
+    {interventions.length > 0 && <OperationSection title={openInterventions > 0 ? `Interventions · ${openInterventions} en cours` : 'Interventions'}>
+      {shownInterventions.shown.map((intervention) => <div className="project-operation-row" key={intervention.id}>
+        <div><strong>{intervention.number} · {intervention.subject}</strong><small>{[readableLabel(INTERVENTION_TYPE_LABELS, intervention.type), intervention.totalTimeSeconds > 0 ? duration(intervention.totalTimeSeconds) : null, readableLabel(COVERAGE_LABELS, intervention.coverageMode)].filter(Boolean).join(' · ')}</small></div>
+        <StatusPill tone={operationStatusTone(intervention.status)}>{readableLabel(INTERVENTION_STATUS_LABELS, intervention.status)}</StatusPill>
+      </div>)}
+      {shownInterventions.hidden > 0 && <p className="project-operation-more">{hiddenLabel(shownInterventions.hidden, 'intervention')}{projectId && <> · <button className="link-button" type="button" onClick={() => openAll('interventions')}>Voir toutes ({interventions.length})</button></>}</p>}
+    </OperationSection>}
+
+    {maintenance.length > 0 && <OperationSection title="Maintenance">
+      {maintenance.map((subscription) => <div className="project-operation-row" key={subscription.id}>
+        <div><strong>{subscription.planName}</strong><small>{plural(subscription.includedInterventions, 'intervention incluse', 'interventions incluses')} par période</small></div>
+        <StatusPill tone={operationStatusTone(subscription.status)}>{readableLabel(MAINTENANCE_SUBSCRIPTION_STATUS_LABELS, subscription.status)}</StatusPill>
+      </div>)}
+    </OperationSection>}
+
+    {packs.length > 0 && <OperationSection title="Packs d’heures">
+      {packs.map((pack) => <div className="project-operation-row" key={pack.id}>
+        <div><strong>{pack.name}</strong><small>{duration(pack.balanceSeconds)} restant · {duration(pack.consumedSeconds)} consommé</small></div>
+        <StatusPill tone={operationStatusTone(pack.status)}>{readableLabel(HOUR_PACK_STATUS_LABELS, pack.status)}</StatusPill>
+      </div>)}
+    </OperationSection>}
+
+    <button className="secondary-button project-operations-refresh" type="button" onClick={onRefresh}><OperationIcon name="refresh"/>Actualiser</button>
+  </div>;
+}
+
+export function ProjectOperationsTab({ projectId, projectLabel, onMessage }: { projectId: string; projectLabel: string; onMessage: (message: string) => void }) {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [maintenance, setMaintenance] = useState<MaintenanceSubscription[]>([]);
@@ -44,44 +131,10 @@ export function ProjectOperationsTab({ projectId, onMessage }: { projectId: stri
 
   useEffect(() => { void load(); }, [projectId]);
 
-  if (loading) return <div className="project-tab-content"><p className="muted">Chargement des opérations du projet…</p></div>;
-
-  const openRequests = requests.filter((item) => !['closed', 'converted', 'archived'].includes(item.status));
-  const openInterventions = interventions.filter((item) => !['completed', 'cancelled', 'archived'].includes(item.status));
-
-  return <div className="project-tab-content project-operations-tab">
-    <div className="project-operation-kpis">
-      <OperationKpi label="Demandes ouvertes" value={String(openRequests.length)} />
-      <OperationKpi label="Interventions en cours" value={String(openInterventions.length)} />
-      <OperationKpi label="Maintenances" value={String(maintenance.filter((item) => !['ended', 'archived'].includes(item.status)).length)} />
-      <OperationKpi label="Packs" value={String(packs.filter((item) => !['expired', 'archived'].includes(item.status)).length)} />
-    </div>
-
-    <OperationSection title="Demandes" empty="Aucune demande pour ce projet.">
-      {requests.slice(0, 6).map((request) => <div className="project-operation-row" key={request.id}><div><strong>{request.subject}</strong><small>{request.source} · priorité {request.priority}</small></div><span>{request.status}</span></div>)}
-    </OperationSection>
-
-    <OperationSection title="Interventions" empty="Aucune intervention pour ce projet.">
-      {interventions.slice(0, 8).map((intervention) => <div className="project-operation-row" key={intervention.id}><div><strong>{intervention.number} · {intervention.subject}</strong><small>{intervention.type} · {duration(intervention.totalTimeSeconds)} · {intervention.coverageMode}</small></div><span>{intervention.status}</span></div>)}
-    </OperationSection>
-
-    <OperationSection title="Maintenance" empty="Aucune maintenance liée à ce projet.">
-      {maintenance.map((subscription) => <div className="project-operation-row" key={subscription.id}><div><strong>{subscription.planName}</strong><small>{subscription.includedInterventions} intervention(s) incluse(s) / période</small></div><span>{subscription.status}</span></div>)}
-    </OperationSection>
-
-    <OperationSection title="Packs d’heures" empty="Aucun pack lié à ce projet.">
-      {packs.map((pack) => <div className="project-operation-row" key={pack.id}><div><strong>{pack.name}</strong><small>{duration(pack.balanceSeconds)} restant · {duration(pack.consumedSeconds)} consommé</small></div><span>{pack.status}</span></div>)}
-    </OperationSection>
-
-    <button className="secondary-button project-operations-refresh" type="button" onClick={() => void load()}><OperationIcon name="refresh"/>Actualiser</button>
-  </div>;
+  if (loading) return <div className="project-tab-content"><p className="project-empty">Chargement des opérations du projet…</p></div>;
+  return <ProjectOperationsView requests={requests} interventions={interventions} maintenance={maintenance} packs={packs} onRefresh={() => void load()} projectId={projectId} projectLabel={projectLabel} />;
 }
 
-function OperationKpi({ label, value }: { label: string; value: string }) {
-  return <div><span>{label}</span><strong>{value}</strong></div>;
-}
-
-function OperationSection({ title, empty, children }: { title: string; empty: string; children: React.ReactNode }) {
-  const hasChildren = Array.isArray(children) ? children.length > 0 : Boolean(children);
-  return <section className="project-operation-section"><strong>{title}</strong>{hasChildren ? children : <p className="muted">{empty}</p>}</section>;
+function OperationSection({ title, children }: { title: string; children: ReactNode }) {
+  return <section className="project-operation-section"><strong className="project-section-title">{title}</strong>{children}</section>;
 }

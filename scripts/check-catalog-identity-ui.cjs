@@ -83,8 +83,10 @@ const categoryApi={
     window.categoryCalls.push('reconcile');return actual.length;
   },
 };
-window.atoumweb={catalogCategories:categoryApi,catalog:{
+window.atoumweb={/* F67 : les tableaux configurables lisent les préférences d'affichage ; stockage en mémoire. */visualPreferences:(()=>{const m=new Map();return {getItem:k=>m.has(k)?m.get(k):null,setItem:(k,v)=>{m.set(k,v);},removeItem:k=>{m.delete(k);},confirmReset:()=>true,subscribe:()=>()=>{}};})(),catalogCategories:categoryApi,catalog:{
   list:async()=>structuredClone(items),getItem:async(id)=>structuredClone(items.find(i=>i.id===id)),
+  /* F67 : fonctions du catalogue ajoutées depuis la recette ; lues au chargement, ou signalées si un scénario les appelle. */
+  persistenceAvailable:async()=>false,listDrafts:async()=>[],setOfferComponents:async()=>{throw Error('setOfferComponents non simulé')},setDraftAbandoned:async()=>{throw Error('setDraftAbandoned non simulé')},duplicationPreview:async()=>{throw Error('duplicationPreview non simulé')},duplicate:async()=>{throw Error('duplicate non simulé')},createPersistent:async()=>{throw Error('createPersistent non simulé')},
   create:async(input,version)=>{calls.create.push({input,version});const id='new-'+calls.create.length;const v={...version,id:id+'-v1',itemId:id,versionNumber:1,status:'draft',createdAt:'2026-10-03'};const item={...input,id,status:'active',canonicalCode:input.canonicalCode?.toUpperCase()||null,currentVersion:v,versions:[v]};items.push(item);return structuredClone(item)},
   createVersion:async(id,input,requestId)=>{
     const item=items.find(i=>i.id===id);
@@ -159,9 +161,9 @@ app.whenReady().then(async () => {
       const field=(label)=>[...document.querySelectorAll('label')].find(l=>l.textContent.trim().startsWith(label))?.querySelector('input,select,textarea');
       const fill=async(label,value)=>{for(let attempt=0;attempt<25;attempt++){const input=field(label);if(input)return fillField(input,value);await wait();}throw Error('Champ absent : '+label+' ; labels='+[...document.querySelectorAll('label')].map(l=>l.textContent.trim().slice(0,65)).join(' | ')+' ; rendererErrors='+JSON.stringify(window.fixtureErrors)+' ; page='+document.body.textContent.slice(0,1100)+' ; messages='+JSON.stringify(window.messages));};
       await wait();
-      assert('Vue organisée Catalogue visible par défaut',!!document.querySelector('.catalog-overview')&&document.body.textContent.includes('Services complémentaires'));
-      await click("Tableau d'administration");
-      assert('Tableau historique accessible',!!document.querySelector('tbody tr'));
+      await waitFor('.catalog-families-overview','vue par familles');assert('Vue organisée Catalogue visible par défaut',!!document.querySelector('.catalog-families-overview')&&document.body.textContent.includes('Familles commerciales'));
+      await click("Tableau d’administration");
+      await waitFor('tbody tr','tableau d’administration');assert('Tableau historique accessible',!!document.querySelector('tbody tr'));
       document.querySelector('tbody tr').click();
       const identitySection=await waitFor('.catalog-identity-section','fiche après bascule organisée → tableau');
       assert('04C huit onglets accessibles',document.querySelectorAll('.catalog-editor-tabs [role=tab]').length===8);
@@ -199,19 +201,24 @@ app.whenReady().then(async () => {
         items[0].currentVersion.description==='Ancienne offre');
       await click('+ Service / Offre');
       await fill('Nom','Licence de recette');await fill('Code canonique AW','AW-TEST-LICENCE');
+      // F67 : création par étapes ; repères tarifaires à l'étape « Tarifs & Abby », source complétée après création.
+      const createStep=async(label)=>{const b=[...document.querySelectorAll('.ot-create-steps button')].find(b=>b.textContent.endsWith(label));if(!b)throw Error('Étape absente : '+label);b.click();await wait();};
+      assert('Création : première étape limitée à l’identité',!field('Nature commerciale')&&!field('Référence de source'));
+      await createStep('Tarifs & Abby');
       await fill('Nature commerciale','subscription');await fill('Famille canonique','TECH');
       await fill('Libellé Abby','Licence fournisseur de recette');await fill('Unité','licence');await fill('Périodicité','annuelle');
       await fill('Base de prix','actual_cost');
       assert('Coût réel sans tarif fixe',field('Mode tarifaire').value==='quote_only'&&field('Mode tarifaire').disabled&&field('Prix AtoumWeb').disabled);
-      await fill('Référence de source','Catalogue V1 témoin');await fill('Empreinte source SHA-256','ab'.repeat(32));await fill('Ligne ou clé de source','AW-TEST-LICENCE');
-      await click('Créer le brouillon');
+      document.querySelector('.ot-price-confirm input').click();await wait();
+      await click('Enregistrer le brouillon');
       const created=calls.create[0];
       assert('Code et nature transmis sans publication',created.input.canonicalCode==='AW-TEST-LICENCE'&&created.version.commercialKind==='subscription'&&calls.publish===0);
-      assert('Unité, périodicité et provenance transmises',created.version.unit==='licence'&&created.version.periodicity==='annuelle'&&created.version.provenance.recordKey==='AW-TEST-LICENCE');
+      assert('Unité et périodicité transmises, sans source inventée',created.version.unit==='licence'&&created.version.periodicity==='annuelle'&&created.version.provenance===null);
       assert('Pas de faux prix nul',created.version.priceCents===null&&created.version.priceBasis==='actual_cost');
       assert('Coût réel et nature visibles',document.body.textContent.includes('Coût tiers réel')&&document.body.textContent.includes('Abonnement'));
       await click('Reprendre le brouillon');
-      assert('04C brouillon original rouvert',field('Unité').value==='licence'&&field('Périodicité').value==='annuelle'&&field('Base de prix').value==='actual_cost'&&field('Référence de source').value==='Catalogue V1 témoin');
+      assert('04C brouillon original rouvert',field('Unité').value==='licence'&&field('Périodicité').value==='annuelle'&&field('Base de prix').value==='actual_cost');
+      await fill('Référence de source','Catalogue V1 témoin');await fill('Empreinte source SHA-256','ab'.repeat(32));await fill('Ligne ou clé de source','AW-TEST-LICENCE');
       await click('Aide à la vente');
       assert('04E trois champs nouveaux éditables',
         !!field('Argumentaire commercial')&&!!field('Questions de qualification')&&!!field('Objections et réponses'));
@@ -242,6 +249,7 @@ app.whenReady().then(async () => {
         calls.saveDraft[0].input.commercialParameters.objections==='Budget : décrire les livrables'&&
         calls.saveDraft[0].input.commercialParameters.relevantSituations==='Besoin de site vitrine'&&
         calls.saveDraft[0].input.commercialParameters.commercialCautions==='Ne pas promettre un rang SEO');
+      assert('Provenance complétée dans le brouillon et enregistrée',calls.saveDraft[0].input.provenance?.recordKey==='AW-TEST-LICENCE'&&calls.saveDraft[0].input.provenance?.reference==='Catalogue V1 témoin');
       assert('04C même ID de version conservé',calls.saveDraft[0].id===items[1].versions[0].id&&items[1].versions[0].description==='Enregistré en place, sans v2');
       await click('Identité');await click('Reprendre le brouillon');
       await click('Contenu & périmètre');
@@ -253,6 +261,9 @@ app.whenReady().then(async () => {
       assert('04C aucune écriture concurrente ni duplication',calls.saveDraft.length===1&&items[1].versions.length===1&&
         items[1].versions[0].description==='Changement fenêtre concurrente');
       await click('Annuler');
+      // F67 : Annuler passe par la fenêtre commune des modifications non enregistrées ; on abandonne explicitement la saisie locale.
+      await click('Abandonner les modifications');
+      assert('Saisie locale abandonnée, éditeur fermé',!document.querySelector('.catalog-version-editor')&&items[1].versions[0].description==='Changement fenêtre concurrente');
       const search=document.querySelector('.inline-search');await fillField(search,'AW-TEST-LICENCE');
       assert('Recherche par code canonique',document.querySelectorAll('.catalog-compact-item').length===1&&document.querySelector('.catalog-compact-item').textContent.includes('Licence de recette'));
       await fillField(search,'Licence fournisseur de recette');
@@ -274,10 +285,10 @@ app.whenReady().then(async () => {
         !!document.querySelector('[aria-label="Comparer les versions du Catalogue"]')&&
         document.body.textContent.includes('Aides à la vente'));
       await click('Fermer la comparaison');
-      const oldConfirm=window.confirm;window.confirm=()=>true;
+      /* F81 : réponse dans la boîte de la page */(a=>{window.__pcAnswer=a;window.__pcLog=window.__pcLog||[];if(window.__pcObs)return true;const act=()=>{const d=document.querySelector("dialog.page-confirm-dialog[open]");if(!d||d.__pcDone)return;d.__pcDone=true;window.__pcLog.push(d.querySelector("h2").textContent+" "+(d.querySelector(".page-confirm-body")?.textContent||""));const v=window.__pcAnswer,t=d.querySelector("textarea");if(t&&typeof v==="string"){Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value").set.call(t,v);t.dispatchEvent(new Event("input",{bubbles:true}));}setTimeout(()=>{const b=d.querySelectorAll(".form-actions button");(v===false?b[0]:b[1]).click();},60);};window.__pcObs=new MutationObserver(act);window.__pcObs.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:["open"]});return true;})(true);
       const restoreButton=[...historyV1.querySelectorAll('button')]
         .find(button=>button.textContent==='Reprendre dans un brouillon');
-      restoreButton.click();await wait();window.confirm=oldConfirm;
+      restoreButton.click();await wait();(a=>{window.__pcAnswer=a;window.__pcLog=window.__pcLog||[];if(window.__pcObs)return true;const act=()=>{const d=document.querySelector("dialog.page-confirm-dialog[open]");if(!d||d.__pcDone)return;d.__pcDone=true;window.__pcLog.push(d.querySelector("h2").textContent+" "+(d.querySelector(".page-confirm-body")?.textContent||""));const v=window.__pcAnswer,t=d.querySelector("textarea");if(t&&typeof v==="string"){Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value").set.call(t,v);t.dispatchEvent(new Event("input",{bubbles:true}));}setTimeout(()=>{const b=d.querySelectorAll(".form-actions button");(v===false?b[0]:b[1]).click();},60);};window.__pcObs=new MutationObserver(act);window.__pcObs.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:["open"]});return true;})(false);
       assert('04C restauration historique prépare un brouillon sans publication',
         !!document.querySelector('.catalog-version-editor')&&
         calls.publish===0&&items[0].currentVersion.id==='old-v1'&&
@@ -307,27 +318,24 @@ app.whenReady().then(async () => {
         clientNeed:'Visibilité Google',benefits:'Être trouvé localement',keywords:'SEO de proximité',
       };
       await click('Actualiser');await click('Vue organisée');
-      const mainGroups=[...document.querySelectorAll('.catalog-overview-featured-group h4')].map(h=>h.textContent.trim());
-      assert('04B quatre rubriques prioritaires',JSON.stringify(mainGroups)===JSON.stringify(['Site vitrine','Site e-commerce','Site mariage','Maintenance WordPress']));
+      const mainGroups=[...document.querySelectorAll('[data-catalog-family]')].slice(0,4).map(card=>card.querySelector('h3').textContent.trim());
+      assert('04B quatre rubriques prioritaires',JSON.stringify(mainGroups)===JSON.stringify(['Sites web','E-commerce','Sites mariage','Maintenance']));
       assert('04B maintenance conserve son item service',window.items.find(x=>x.id==='test-maint').type==='service');
-      assert('04B inclusions publiées visibles',document.querySelector('[data-catalog-item-id="test-vitrine"]').textContent.includes('Hébergement compris'));
+      assert('04B offre présente dans les offres du catalogue',!!document.querySelector('[data-catalog-item-id="test-vitrine"]'));
       assert('04B code secondaire masqué sur carte',!document.querySelector('[data-catalog-item-id="test-vitrine"]').textContent.includes('AW-WEB-VITRINE'));
-      assert('04B service complémentaire classé', [...document.querySelectorAll('.catalog-overview-category h4')].some(h=>h.textContent.includes('Référencement et visibilité')));
+      assert('04B service complémentaire classé', [...document.querySelectorAll('[data-catalog-family]')].some(card=>card.textContent.includes('Référencement et visibilité')));
       await fillField(document.querySelector('input.inline-search'),'VISIBILITE google');
-      assert('E96 recherche par besoin client versionné',document.querySelectorAll('.catalog-overview-card').length===1&&
-        document.querySelector('.catalog-overview-card').textContent.includes('Audit SEO'));
+      assert('E96 recherche par besoin client versionné',[...document.querySelectorAll('[data-catalog-family]')].length===1&&[...document.querySelectorAll('[data-catalog-family]')][0].textContent.includes('Référencement et visibilité'));
       await fillField(document.querySelector('input.inline-search'),'etre trouve localement');
-      assert('E96 recherche par bénéfice versionné',document.querySelectorAll('.catalog-overview-card').length===1&&
-        document.querySelector('.catalog-overview-card').textContent.includes('Audit SEO'));
+      assert('E96 recherche par bénéfice versionné',[...document.querySelectorAll('[data-catalog-family]')].length===1&&[...document.querySelectorAll('[data-catalog-family]')][0].textContent.includes('Référencement et visibilité'));
       await fillField(document.querySelector('input.inline-search'),'seo de proximite');
-      assert('E96 recherche par mot-clé versionné',document.querySelectorAll('.catalog-overview-card').length===1&&
-        document.querySelector('.catalog-overview-card').textContent.includes('Audit SEO'));
+      assert('E96 recherche par mot-clé versionné',[...document.querySelectorAll('[data-catalog-family]')].length===1&&[...document.querySelectorAll('[data-catalog-family]')][0].textContent.includes('Référencement et visibilité'));
       await click('Réinitialiser les filtres');
       await fillField(document.querySelector('select[aria-label="Filtrer par catégorie"]'),'SEO');
-      assert('04B filtre catégorie explicite',document.querySelectorAll('.catalog-overview-card').length===1&&document.querySelector('.catalog-overview-card').textContent.includes('Audit SEO'));
+      assert('04B filtre catégorie explicite',[...document.querySelectorAll('[data-catalog-family]')].length===1&&[...document.querySelectorAll('[data-catalog-family]')][0].textContent.includes('Référencement et visibilité'));
       await click('Réinitialiser les filtres');
-      assert('04B réinitialisation conserve toutes les prestations',document.querySelectorAll('.catalog-overview-card').length===window.items.length);
-      document.querySelector('[data-catalog-item-id="test-vitrine"]').click();
+      assert('04B réinitialisation conserve toutes les familles',[...document.querySelectorAll('[data-catalog-family]')].length>=5);
+      (document.querySelector('[data-catalog-item-id="test-vitrine"] button')||document.querySelector('[data-catalog-item-id="test-vitrine"]')).click();
       const openedFromCard=await waitFor('[data-search-entity-id="test-vitrine"]','fiche via carte 04B');
       assert('04B carte ouvre le bon item via route existante',openedFromCard.textContent.includes('Site vitrine'));
       await click('Production');
@@ -340,7 +348,7 @@ app.whenReady().then(async () => {
       // E95: exercise React category administration with a mocked IPC contract,
       // alongside backend SQLite tests that enforce actual transactions and FK.
       document.querySelector('.catalog-detail-heading-actions .close-detail').click();await wait();
-      await click('Catégories existantes');
+      await click('Administration');[...document.querySelectorAll('.ot-admin-cards button')].find(b=>b.querySelector('strong')?.textContent==='Catégories existantes').click();await wait();
       await waitFor('.catalog-category-management','panneau gestion E95');
       assert('E95 inventaire affiche valeurs historiques réelles',document.querySelector('.catalog-category-inventory-table').textContent.includes('SEO'));
       assert('E95 valeurs historiques non assimilées en catégories',window.categoryRecords.length===0);
@@ -371,10 +379,14 @@ app.whenReady().then(async () => {
       await click('Fermer les catégories');
       await click('+ Service / Offre');
       await fill('Nom','Nouvel article classé');
-      await fill('Catégorie métier administrée',window.categoryRecords[0].id);
+      await fillField(document.querySelector('select[aria-label="Catégorie métier administrée"]'),window.categoryRecords[0].id);
       assert('E95 catégorie stable choisie pour nouvelle fiche',
         document.body.textContent.includes('Catégorie stable sélectionnée'));
-      await click('Créer le brouillon');
+      // F67 : sur cette base sans persistance minimale, le mode tarifaire se choisit et se confirme à l'étape « Tarifs & Abby ».
+      [...document.querySelectorAll('.ot-create-steps button')].find(b=>b.textContent.endsWith('Tarifs & Abby')).click();await wait();
+      await fill('Mode tarifaire','fixed');
+      document.querySelector('.ot-price-confirm input').click();await wait();
+      await click('Enregistrer le brouillon');
       const newService=window.calls.create.at(-1);
       assert('E95 création Service transmet ID de catégorie gouvernée',
         newService.input.name==='Nouvel article classé'&&
@@ -391,7 +403,7 @@ app.whenReady().then(async () => {
       assert('04C confirmation statut seule déclenche l’écriture',window.calls.statuses.length===1&&
         window.items.at(-1).status==='archived'&&window.items.at(-1).versions.length===1);
       document.querySelector('.catalog-detail-heading-actions .close-detail').click();await wait();
-      await click('Catégories existantes');
+      await click('Administration');[...document.querySelectorAll('.ot-admin-cards button')].find(b=>b.querySelector('strong')?.textContent==='Catégories existantes').click();await wait();
       await waitFor('.catalog-category-management','administration catégories, recette visuelle');
       const visualModes=[];
       const modeDensities=[['compact',14],['comfort',16],['comfort_plus',18]];

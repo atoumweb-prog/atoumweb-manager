@@ -64,9 +64,9 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
     test(db.billingHandoff.get(id).status==='invoiced','09B-UI-05: genuine IPC import marks item invoiced');
     test(await get('!!document.querySelector(".billing-pdf-reference-warning")'),
       '09B-UI-05b: PDF without Abby number shows reference verification warning');
-    test(await get('document.querySelector(".billing-kpi-grid")?.textContent.includes("Facturés avec PDF")'),
+    test(await get('document.querySelector(".aw-keyfigures")?.textContent.includes("Facturés avec PDF")'),
       '09B-UI-05c: PDF-backed invoice KPI labeled without payment assumption');
-    test(await get('document.querySelector(".billing-kpi-grid")?.textContent.includes("À préparer")'),
+    test(await get('document.querySelector(".aw-keyfigures")?.textContent.includes("À préparer")'),
       '09B-UI-05d: planned status has distinct KPI from ready-to-invoice');
     const originalId = db.billingHandoff.get(id).invoiceDocumentId;
     test(!!originalId && !!fs.existsSync(db.clientDocuments.absolutePath(originalId)),
@@ -149,7 +149,7 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
         await navigate('Facturation');
         await wait('!!document.querySelector(".billing-table tbody tr")','billing '+theme+'/'+density);
         const state = await get('({ theme:document.documentElement.dataset.theme, density:document.documentElement.dataset.density,'+
-          ' guidance:!!document.querySelector(".billing-guidance-strip"), kpis:document.querySelectorAll(".billing-kpi-grid article").length,'+
+          ' guidance:!!document.querySelector(".billing-guidance-strip"), kpis:document.querySelectorAll(".aw-keyfigures article").length,'+
           ' invoiceRows:document.querySelectorAll(".billing-table tbody tr").length,'+
           ' viewport:document.querySelector(".content-area")?.clientWidth, content:document.querySelector(".content-area")?.scrollWidth })');
         test(state.theme===theme&&state.density===density&&state.guidance&&state.kpis===4&&state.invoiceRows===2,
@@ -172,7 +172,7 @@ module.exports = async ({win,db,temp,evalUI:js,get,wait,navigate,select,test,sle
     db.database.run('UPDATE billing_items SET due_at=? WHERE id=?',
       ['2026-10-15T12:00:00.000Z','native-09b-second']);
     db.billingHandoff.updateInvoiceMetadata(id,{reference:'ABBY-NATIVE-09B'});
-    await js('document.querySelector(".billing-toolbar button.secondary-button").click()');
+    await js('document.querySelector(".aw-list-toolbar button.secondary-button").click()');
     await wait('document.querySelectorAll(".billing-table tbody tr").length===3','billing list refreshed for advanced filters');
     test(await get('document.querySelector(".billing-advanced-filters")!==null'),
       '09B-FILTER-01: advanced billing filter controls rendered');

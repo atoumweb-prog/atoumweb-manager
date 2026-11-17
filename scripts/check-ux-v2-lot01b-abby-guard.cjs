@@ -16,7 +16,8 @@ if(!process.versions.electron){
  try{
   const main=fs.readFileSync(path.join(repo,'src/renderer/main.tsx'),'utf8');
   const cssFiles=[...main.matchAll(/^import '\.\/([^']+\.css)';$/gm)].map(m=>m[1]);
-  assert(cssFiles.length===31,'CSS import chain changed; update the test');
+  // Règle durable (R2) : ordre relatif des couches, pas un nombre de feuilles figé.
+  assert(cssFiles.length>=25&&cssFiles[0]==='tokens.css'&&cssFiles.indexOf('display-density.css')>=0&&cssFiles.indexOf('display-density.css')<cssFiles.indexOf('ui-typography-consistency.css')&&cssFiles.indexOf('ui-typography-consistency.css')<cssFiles.indexOf('ui-consistency-v2.css'),'CSS import chain changed: tokens.css first, then display-density < ui-typography-consistency < ui-consistency-v2');
   const styles=cssFiles.map(file=>fs.readFileSync(path.join(repo,'src/renderer',file),'utf8')).join('\n');
   assert(!styles.includes('</style'),'Unsafe style fixture content');
   const layout='html,body{overflow:auto!important;min-height:100%!important}.app-shell{display:block!important;height:auto!important}.content-area{overflow:auto!important}';

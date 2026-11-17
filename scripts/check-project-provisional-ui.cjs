@@ -76,12 +76,12 @@ if(!process.versions.electron){
    await check(theme+' — Historique révision et synchronisation','document.body.innerText.includes("Synchronisation 3 · révision commerciale 2")');
    await check(theme+' — Aucun identifiant interne affiché','!document.body.innerText.includes("hidden-")');
    await check(theme+' — Pas de débordement','document.documentElement.scrollWidth<=window.innerWidth');
-   await check(theme+' — Styles et texte lisible','getComputedStyle(document.querySelector(".project-commercial-scope")).fontSize==="14px" && getComputedStyle(document.body).fontFamily.includes("Inter")');
+   await check(theme+' — Styles et texte lisible','getComputedStyle(document.querySelector(".project-commercial-scope")).fontSize==="14px" && getComputedStyle(document.body).fontFamily.includes("Segoe UI")');
    fs.writeFileSync(path.join(output,'ui-provisional-'+theme+'.png'),(await win.webContents.capturePage()).toPNG());
    await click('Conserver');
    await check(theme+' — Résolution explicite, conflit retiré','!document.querySelector(".project-scope-conflict") && window.calls.some(c=>c.action==="resolve"&&c.d==="keep")');
    await show(theme,'frozen');
-   await check(theme+' — Acceptation figée visible','document.body.innerText.includes("Périmètre accepté et figé")');
+   await check(theme+' — Acceptation figée visible','document.body.innerText.includes("Périmètre figé")');
    await check(theme+' — Synchronisation absente après gel','![...document.querySelectorAll("button")].some(b=>b.innerText.includes("Synchroniser"))');
    await show(theme,'legacy');
    await check(theme+' — Historique sans requalification','!document.querySelector(".project-commercial-scope")');

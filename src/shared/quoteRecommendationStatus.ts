@@ -11,6 +11,19 @@ function offerComponents(source:QuoteLine):SnapshotComponent[] {
 }
 
 /** Strictly descriptive: this function never mutates a Quote, Contract or Project. */
+/**
+ * F71a (décision de Carlos du 16/11/2026) : une suggestion vise la prestation et prend sa version publiée,
+ * comme l'assistant de devis ; une prestation suggérée plusieurs fois n'apparaît qu'une fois. Aucune donnée réécrite.
+ */
+export function resolveRecommendationTargets(links:readonly CatalogRecommendationLink[]):CatalogRecommendationLink[] {
+  const seen=new Set<string>();
+  return links.flatMap(link=>{
+    if(seen.has(link.targetItemId))return [];
+    seen.add(link.targetItemId);
+    if(!link.targetPublishedVersionId||link.targetPublishedVersionId===link.targetVersionId)return [link];
+    return [{...link,targetVersionId:link.targetPublishedVersionId,targetVersionNumber:link.targetPublishedVersionNumber??link.targetVersionNumber,targetVersionStatus:'published'}];
+  });
+}
 export function quoteRecommendationState(
   source:QuoteLine,
   target:CatalogRecommendationLink,

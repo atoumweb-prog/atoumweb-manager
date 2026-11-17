@@ -1,4 +1,5 @@
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {hasActiveFilters} from '../ui/tableEmpty';
 import {OperationIcon} from '../operations/OperationIcon';
 import {useSearchTargetConfirmation,type EntityReady} from '../ui/useSearchTargetConfirmation';
 import { requestUnsavedExit } from '../unsaved/unsaved';
@@ -10,7 +11,6 @@ import type { QuoteSummary } from '../../shared/commercial';
 import {
   PROJECT_COMMERCIAL_MODES,
   PROJECT_NODE_STATUSES,
-  PROJECT_PREREQUISITE_STATUSES,
   PROJECT_STATUSES,
   type ProjectCommercialMode,
   type ProjectCompletionReview,
@@ -33,6 +33,17 @@ import { ProjectResourcesTab } from './ProjectResourcesTab';
 import { ProjectSitesTab, type ProjectSitesViewContext } from './ProjectSitesTab';
 import { ProjectTechnicalLibraryTab } from './ProjectTechnicalLibraryTab';
 import { ProjectTimeTab } from './ProjectTimeTab';
+import { StatusPill } from '../ui/StatusPill';
+import { projectStatusTone } from '../ui/projectStatusTone';
+import { countMissingPrerequisites, defaultTaskToOpen, filterActionNodes, phaseDisplayName, projectNowSummary, projectOpeningTab, rootAncestorId } from '../../shared/projectOverview';
+import { ProjectClosedLine, ProjectNowLine } from './ProjectNowLine';
+import { projectTypeLabel } from '../../shared/projectTypeLabel';
+import './project-r5a.css';
+import './project-r5b.css';
+import { dateLabel, duration, money } from './projectFormat';
+import { ProjectCommercialTab } from './ProjectCommercialTab';
+import { ProjectPrerequisitesTab } from './ProjectPrerequisitesTab';
+import { ProjectSummaryTab } from './ProjectSummaryTab';
 import type { TimeSession } from '../../shared/time';
 
 const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
@@ -52,15 +63,6 @@ const NODE_STATUS_LABELS: Record<ProjectNodeStatus, string> = {
   blocked: 'Bloqué',
   to_validate: 'À valider',
   done: 'Terminé',
-};
-
-const PREREQUISITE_STATUS_LABELS: Record<ProjectPrerequisiteStatus, string> = {
-  to_request: 'À demander',
-  requested: 'Demandé',
-  received: 'Reçu',
-  incomplete: 'Incomplet',
-  validated: 'Validé',
-  not_applicable: 'Non applicable',
 };
 
 const COMMERCIAL_MODE_LABELS: Record<ProjectCommercialMode, string> = {
@@ -122,24 +124,6 @@ const PROJECT_TYPES = [
   ['internal', 'Projet interne AtoumWeb'],
 ] as const;
 
-function money(cents: number): string {
-  return `${(cents / 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`;
-}
-
-function duration(minutes: number): string {
-  if (!minutes) return '0 h';
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  if (!hours) return `${rest} min`;
-  return rest ? `${hours} h ${rest.toString().padStart(2, '0')}` : `${hours} h`;
-}
-
-function dateLabel(value?: string | null): string {
-  if (!value) return '—';
-  const date = new Date(value.length === 10 ? `${value}T12:00:00` : value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('fr-FR');
-}
-
 function formatTimer(seconds: number): string {
   const safe = Math.max(0, Math.floor(seconds));
   const hours = Math.floor(safe / 3600);
@@ -177,6 +161,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
   const openEpoch=useRef(0),detailRef=useRef(detail);detailRef.current=detail;
   useEffect(()=>()=>{openEpoch.current++;},[]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(returnContext?.selectedNodeId ?? null);
+  const [actionOnly, setActionOnly] = useState(false);
   const [expandedPhaseIds, setExpandedPhaseIds] = useState<Set<string>>(() => new Set(returnContext?.expandedPhaseIds ?? []));
   const [undoStack, setUndoStack] = useState<ProjectHistoryAction[]>([]);
   const [redoStack, setRedoStack] = useState<ProjectHistoryAction[]>([]);
@@ -187,7 +172,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
   const [projectTopCollapsed, setProjectTopCollapsed] = useState(returnContext?.projectTopCollapsed ?? false);
   const [sitesViewContext, setSitesViewContext] = useState<ProjectSitesViewContext | null>(returnContext?.sitesViewContext ?? null);
   const [productionOverlay, setProductionOverlay] = useState<'resources' | 'technical' | 'time' | 'secrets' | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); const [listError, setListError] = useState<string | null>(null); // P6b (D1)
   const [createMode, setCreateMode] = useState<'quote' | 'internal' | null>(null);
   const [quoteId, setQuoteId] = useState('');
   const [templateVersionId, setTemplateVersionId] = useState('');
@@ -214,7 +199,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
         window.atoumweb.projects.templates.list(),
         window.atoumweb.quotes.list({ status: 'accepted' }),
       ]);
-      setProjects(nextProjects);
+      setProjects(nextProjects); setListError(null);
       setTemplates(nextTemplates);
       const usedQuoteIds = new Set(nextProjects.map((project) => project.sourceQuoteId).filter(Boolean));
       setAcceptedQuotes(nextQuotes.filter((quote) => !usedQuoteIds.has(quote.id)));
@@ -222,7 +207,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
         setDetail(await window.atoumweb.projects.projects.get(selectedId));
       }
     } catch (error) {
-      onMessage(error instanceof Error ? error.message : 'Impossible de charger les projets.');
+      { const text = error instanceof Error ? error.message : 'Impossible de charger les projets.'; setListError(text); onMessage(text); }
     } finally {
       setLoading(false);
     }
@@ -298,6 +283,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
     try {
       setSelectedId(id);
       setSelectedNodeId(null);
+      setActionOnly(false);
       setExpandedPhaseIds(new Set());
       setUndoStack([]);
       setRedoStack([]);
@@ -313,9 +299,15 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
         const availableNodes = new Set(next.nodes.map(node => node.id));
         setSelectedNodeId(returnContext.selectedNodeId && availableNodes.has(returnContext.selectedNodeId) ? returnContext.selectedNodeId : null);
         setExpandedPhaseIds(new Set(returnContext.expandedPhaseIds.filter(nodeId => availableNodes.has(nodeId))));
+      } else {
+        // R5a : le travail à faire est ouvert d'emblée (première tâche en cours, bloquée ou à valider), dans sa phase dépliée.
+        const firstTask = defaultTaskToOpen(next.nodes);
+        setSelectedNodeId(firstTask);
+        const phaseId = firstTask ? rootAncestorId(next.nodes, firstTask) : null;
+        setExpandedPhaseIds(new Set(phaseId ? [phaseId] : []));
       }
       setDetail(next);
-      setDetailTab(returnContext?.projectId === id ? returnContext.detailTab : 'plan');
+      setDetailTab(returnContext?.projectId === id ? returnContext.detailTab : projectOpeningTab({ status: next.status, prerequisitesMissing: projectNowSummary(next.nodes, next.prerequisites, null).prerequisitesMissing }));
     } catch (error) {
       if(epoch!==openEpoch.current)return;
       onEntityReady?.('project',id,error instanceof Error?error.message:'Projet introuvable.');
@@ -708,15 +700,15 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
             <div>
               <span className="eyebrow">{detail.number} · {detail.commercialState === 'provisional' ? 'Projet prévisionnel · devis non signé' : detail.commercialState === 'frozen' ? 'Projet confirmé · devis accepté' : 'Projet historique'}</span>
               <h2>{detail.name}</h2>
-              <p>{detail.commercialState === 'provisional' && !detail.clientAccountId ? 'Prospect : ' : 'Client / contact : '}{detail.clientLabel}</p>
-              {detail.sourceQuoteId && <p className="muted">Devis source associé <button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'quote', entityId: detail.sourceQuoteId, title: 'Devis source du Projet', parentEntityId: detail.id, projectContext: { projectId: detail.id, detailTab, selectedNodeId, expandedPhaseIds: [...expandedPhaseIds], query, statusFilter, commercialFilter, projectTopCollapsed, productionTreeCollapsed, productionSplitPercent, sitesViewContext } } }))}>Ouvrir le devis</button></p>}
+              <p>{detail.commercialState === 'provisional' && !detail.clientAccountId ? 'Prospect : ' : 'Client / contact : '}{detail.clientLabel}{detail.sourceQuoteId && <> · Devis source associé <button className="secondary-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent('atoumweb:navigate', { detail: { entityType: 'quote', entityId: detail.sourceQuoteId, title: 'Devis source du Projet', parentEntityId: detail.id, projectContext: { projectId: detail.id, detailTab, selectedNodeId, expandedPhaseIds: [...expandedPhaseIds], query, statusFilter, commercialFilter, projectTopCollapsed, productionTreeCollapsed, productionSplitPercent, sitesViewContext } } }))}>Ouvrir le devis</button></>}</p>
+              {detail.status === 'completed' ? <ProjectClosedLine completedAt={detail.completedAt} prerequisitesMissing={countMissingPrerequisites(detail.prerequisites)} openTasks={detail.nodes.filter((node) => ['task', 'checklist'].includes(node.type) && node.required && node.status !== 'done').length} onShowAction={() => { selectProjectTab('plan'); setActionOnly(true); }} onShowPrerequisites={() => selectProjectTab('prerequisites')} /> : <ProjectNowLine summary={projectNowSummary(detail.nodes, detail.prerequisites, detail.status === 'archived' ? null : detail.targetDate)} onShowAction={() => { selectProjectTab('plan'); setActionOnly(true); }} onShowPrerequisites={() => selectProjectTab('prerequisites')} />}
               {detail.commercialState === 'provisional' && <p className="muted">Préparation interne : ce dossier n’est pas une commande acceptée.</p>}
             </div>
           </div>
           <div className="project-production-actions">
             <div className="project-history-buttons" aria-label="Historique des modifications">
-              <button type="button" className="secondary-button" disabled={undoStack.length === 0} title={undoStack.length ? `Annuler : ${undoStack.at(-1)?.label}` : 'Rien à annuler'} onClick={() => void undoProjectChange()}>↶</button>
-              <button type="button" className="secondary-button" disabled={redoStack.length === 0} title={redoStack.length ? `Rétablir : ${redoStack.at(-1)?.label}` : 'Rien à rétablir'} onClick={() => void redoProjectChange()}>↷</button>
+              <button type="button" className="secondary-button" disabled={undoStack.length === 0} aria-label="Annuler la dernière modification" title={undoStack.length ? `Annuler : ${undoStack.at(-1)?.label}` : 'Rien à annuler'} onClick={() => void undoProjectChange()}>↶</button>
+              <button type="button" className="secondary-button" disabled={redoStack.length === 0} aria-label="Rétablir la modification" title={redoStack.length ? `Rétablir : ${redoStack.at(-1)?.label}` : 'Rien à rétablir'} onClick={() => void redoProjectChange()}>↷</button>
             </div>
             <div className="project-production-status">
               <label>
@@ -787,9 +779,10 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
               <div className="project-production-tree-head">
                 <div>
                   <span className="eyebrow">Plan de production</span>
-                  <strong>{detail.nodes.filter((node) => !node.parentId).length} phase{detail.nodes.filter((node) => !node.parentId).length > 1 ? 's' : ''}</strong>
+                  <strong>{detail.nodes.filter((node) => !node.parentId).length} phase{detail.nodes.filter((node) => !node.parentId).length > 1 ? 's' : ''}{!detailUsesBlueprint && <span className="project-plan-origin"> · plan issu du modèle d’origine</span>}</strong>
                 </div>
                 <div className="project-production-tree-actions">
+                  <button className="project-tree-filter-button" type="button" aria-pressed={actionOnly} onClick={() => setActionOnly((value) => !value)}>Ce qui demande une action</button>
                   <button className="project-tree-size-button" type="button" title="Masquer le plan de production" aria-label="Masquer le plan de production" onClick={() => setProductionTreeCollapsed(true)}>←</button>
                   <button className="project-tree-size-button" type="button" title="Rétablir le partage 40 / 60" aria-label="Rétablir le partage 40 / 60" onClick={() => setProductionSplitPercent(40)}>↔</button>
                 <details className="project-production-add">
@@ -811,12 +804,9 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
                 </details>
                 </div>
               </div>
-              {!detailUsesBlueprint && <div className="project-legacy-plan-note">
-                <div><strong>Ce projet utilise un ancien plan</strong><span>Il conserve le modèle utilisé lors de sa création.</span></div>
-              </div>}
               <div className="project-production-tree-scroll">
                 <div className="project-tree">{renderProjectProductionTree(
-                  detail.nodes,
+                  actionOnly ? filterActionNodes(detail.nodes) : detail.nodes,
                   updateNodeStatus,
                   moveProjectNode,
                   setSelectedNodeId,
@@ -828,6 +818,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
                   requestPhaseCompletion,
                 )}</div>
                 {detail.nodes.length === 0 && <p className="muted">Le plan est vide. Ajoute un lot, un module ou une tâche.</p>}
+                {actionOnly && filterActionNodes(detail.nodes).length === 0 && <p className="muted">Rien ne demande d’action sur ce plan pour l’instant.</p>}
               </div>
             </section>}
 
@@ -883,18 +874,12 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
           </section>
         </div>}
 
-        {detailTab !== 'plan' && detailTab !== 'sites' && <main className="project-production-secondary">
-          {detailTab === 'summary' && <ProjectSummaryTab project={detail} />}
-          {detailTab === 'prerequisites' && (
-            <div className="project-tab-content">
-              <div className="project-prerequisite-add"><input value={newPrerequisite} onChange={(event) => setNewPrerequisite(event.target.value)} placeholder="Ajouter un prérequis…" /><button className="secondary-button" type="button" onClick={() => void addPrerequisite()}>Ajouter</button></div>
-              <div className="project-prerequisites">{detail.prerequisites.map((item) => <div key={item.id} className="project-prerequisite"><div><strong>{item.label}</strong>{item.description && <small>{item.description}</small>}</div><select value={item.status} onChange={(event) => void updatePrerequisiteStatus(item.id, event.target.value as ProjectPrerequisiteStatus)}>{PROJECT_PREREQUISITE_STATUSES.map((status) => <option key={status} value={status}>{PREREQUISITE_STATUS_LABELS[status]}</option>)}</select></div>)}</div>
-              {detail.prerequisites.length === 0 && <p className="muted">Aucun prérequis enregistré.</p>}
-            </div>
-          )}
+        {detailTab !== 'plan' && detailTab !== 'sites' && <main className={['summary', 'commercial', 'prerequisites', 'operations'].includes(detailTab) ? 'project-production-secondary project-production-secondary--fit' : 'project-production-secondary'}>
+          {detailTab === 'summary' && <ProjectSummaryTab project={detail} onShowPrerequisites={() => selectProjectTab('prerequisites')} />}
+          {detailTab === 'prerequisites' && <ProjectPrerequisitesTab prerequisites={detail.prerequisites} newLabel={newPrerequisite} onNewLabelChange={setNewPrerequisite} onAdd={() => void addPrerequisite()} onStatus={(id, status) => void updatePrerequisiteStatus(id, status)} />}
           {detailTab === 'resources' && <ProjectResourcesTab projectId={detail.id} nodes={detail.nodes} resourceRootPath={detail.resourceRootPath} onMessage={onMessage} />}
           {detailTab === 'technical' && <ProjectTechnicalLibraryTab projectId={detail.id} onMessage={onMessage} />}
-          {detailTab === 'operations' && <ProjectOperationsTab projectId={detail.id} onMessage={onMessage} />}
+          {detailTab === 'operations' && <ProjectOperationsTab projectId={detail.id} projectLabel={detail.name} onMessage={onMessage} />}
           {detailTab === 'time' && <ProjectTimeTab projectId={detail.id} nodes={detail.nodes} onMessage={onMessage} />}
           {detailTab === 'commercial' && <ProjectCommercialTab project={detail} />}
         </main>}
@@ -905,7 +890,7 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
   return (
     <div className="projects-stack">
       <div className="module-toolbar projects-toolbar">
-        <div><strong>{filtered.length}</strong><span> projet{filtered.length > 1 ? 's' : ''}</span></div>
+        <div><strong>{listError ? '—' : filtered.length}</strong><span> projet{filtered.length > 1 ? 's' : ''}</span></div>
         <div className="toolbar-controls project-toolbar-controls">
           <button className="secondary-button" type="button" onClick={() => void refresh()}><OperationIcon name="refresh"/>Actualiser</button>
           <button className="secondary-button" type="button" onClick={() => setView('templates')}>Modèles de projets</button>
@@ -960,12 +945,12 @@ export function ProjectsPage({ onEntityReady, onMessage, initialProjectId, initi
       {loading ? <div className="panel"><p className="muted">Chargement des projets…</p></div> : (
         <div className="projects-layout">
           <section className="panel project-list-panel">
-            <ConfiguredDataTable<(typeof filtered)[number]> scope="projects-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={project=>project.id} onSelect={project=>void openProject(project.id)} className="project-table" caption="Numéro · Client / prospect · Projet · État commercial · Statut · Progression · Temps estimé · Cible · source complète des résultats filtrés" columns={[
+            <ConfiguredDataTable<(typeof filtered)[number]> error={listError} onRetry={() => void refresh()} defaultVisibleColumnIds={['identity','client','name','status','progress','target','open']} emptyText="Aucun projet pour l’instant. Crée-en un depuis un devis accepté." filtersActive={hasActiveFilters([query,statusFilter,commercialFilter])} onClearFilters={()=>{setQuery('');setStatusFilter('all');setCommercialFilter('all');}} scope="projects-list" store={window.atoumweb.visualPreferences} rows={filtered} selectedId={selectedId} getId={project=>project.id} onSelect={project=>void openProject(project.id)} className="project-table" caption="Numéro · Client / prospect · Projet · État commercial · Statut · Progression · Temps estimé · Cible · source complète des résultats filtrés" columns={[
 {id:"identity",label:"Numéro",required:true,sortValue:project=>project.number??null,render:project=><><strong>{project.number}</strong></>},
 {id:"client",label:"Client / prospect",sortValue:project=>project.clientLabel??null,render:project=><>{project.clientLabel}</>},
-{id:"name",label:"Projet",sortValue:project=>project.name??null,render:project=><><strong>{project.name}</strong><small>{project.projectType}</small></>},
+{id:"name",label:"Projet",sortValue:project=>project.name??null,render:project=><><strong>{project.name}</strong><small>{projectTypeLabel(project.projectType)}</small></>},
 {id:"commercial",label:"État commercial",sortValue:project=>project.commercialState??null,render:project=><><span>{project.commercialState === 'provisional' ? 'Prévisionnel · devis non signé' : project.commercialState === 'frozen' ? 'Confirmé · devis accepté' : 'Historique'}</span></>},
-{id:"status",label:"Statut",sortValue:project=>project.status??null,render:project=><><span className={`project-status status-${project.status}`}>{PROJECT_STATUS_LABELS[project.status]}</span></>},
+{id:"status",label:"Statut",sortValue:project=>project.status??null,render:project=><><StatusPill tone={projectStatusTone(project.status)}>{PROJECT_STATUS_LABELS[project.status]}</StatusPill></>},
 {id:"progress",label:"Progression",sortValue:project=>project.progressPercent??null,render:project=><><div className="project-progress-cell"><span>{project.progressPercent} %</span><i><b style={{ width: `${project.progressPercent}%` }} /></i></div></>},
 {id:"estimated",label:"Temps estimé",sortValue:project=>project.estimatedMinutes??null,render:project=><>{duration(project.estimatedMinutes)}</>},
 {id:"target",label:"Cible",sortValue:project=>project.targetDate??null,render:project=><>{dateLabel(project.targetDate)}</>},
@@ -1116,29 +1101,6 @@ function PhaseCompletionReviewPanel({ review, busy, onConfirm, onCancel }: {
       </div>
     </section>
   </div>;
-}
-
-function ProjectSummaryTab({ project }: { project: ProjectDetail }) {
-  const missingPrerequisites = project.prerequisites.filter((item) => item.required && !['validated', 'not_applicable'].includes(item.status)).length;
-  const openTasks = project.nodes.filter((node) => ['task', 'checklist'].includes(node.type) && node.required && node.status !== 'done').length;
-  return (
-    <div className="project-tab-content">
-      <div className="project-kpis"><div><span>Progression</span><strong>{project.progressPercent} %</strong></div><div><span>Temps estimé{project.estimationIncomplete?' — incomplet':''}</span><strong>{duration(project.estimatedMinutes)}</strong></div><div><span>Tâches restantes</span><strong>{openTasks}</strong></div><div><span>Prérequis à traiter</span><strong>{missingPrerequisites}</strong></div></div>
-      <div className="project-summary-list"><div><span>Type</span><strong>{project.projectType}</strong></div><div><span>Mode commercial</span><strong>{COMMERCIAL_MODE_LABELS[project.commercialMode]}</strong></div><div><span>Date cible</span><strong>{dateLabel(project.targetDate)}</strong></div><div><span>Créé le</span><strong>{dateLabel(project.createdAt)}</strong></div>{project.sourceQuoteId && <div><span>Origine</span><strong>{project.commercialState === 'provisional' ? 'Devis non accepté' : project.commercialState === 'frozen' ? 'Devis accepté' : 'Devis source (historique)'}</strong></div>}</div>
-      {project.notes && <div className="project-note"><span className="eyebrow">Notes</span><p>{project.notes}</p></div>}
-    </div>
-  );
-}
-
-function ProjectCommercialTab({ project }: { project: ProjectDetail }) {
-  return (
-    <div className="project-tab-content">
-      <div className="project-commercial-values"><div><span>Valeur commerciale</span><strong>{money(project.commercialValueCents)}</strong></div><div><span>Montant contractuel</span><strong>{money(project.contractValueCents)}</strong></div><div><span>Écart / valeur offerte</span><strong>{money(Math.max(0, project.commercialValueCents - project.contractValueCents))}</strong></div></div>
-      <strong className="project-section-title">Prestations figées depuis le devis</strong>
-      <div className="project-services">{project.services.map((service) => <div key={service.id}><div><strong>{service.label}</strong><small>{service.catalogVersionId ? 'Version catalogue figée' : 'Ligne libre'}</small></div><span>{money(service.contractValueCents)}</span></div>)}</div>
-      {project.services.length === 0 && <p className="muted">Aucune prestation commerciale rattachée.</p>}
-    </div>
-  );
 }
 
 function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, onOpenResources, onOpenTechnical, onOpenTime, onOpenSecrets, showHoverHelp, onMessage }: {
@@ -1341,7 +1303,7 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
         <span className="project-workbench-kicker">Fiche · {positionLabel}</span>
         <input className="project-workbench-title-input" value={nodeName} onChange={(event) => setNodeName(event.target.value)} aria-label="Nom de l’étape" />
         <div className="project-workbench-badges">
-          <span className={`status-${node.status}`}>{NODE_STATUS_LABELS[node.status]}</span>
+          <StatusPill tone={projectStatusTone(node.status)}>{NODE_STATUS_LABELS[node.status]}</StatusPill>
           <span>{node.required ? 'Obligatoire' : 'Optionnel'}</span>
           {node.paused && <span className="paused">⏸ En pause</span>}
         </div>
@@ -1361,7 +1323,7 @@ function ProjectNodeWorkbench({ projectId, node, position, onUpdate, onPause, on
       <small>{activeOnNode ? (activeTime?.paused ? 'En pause' : 'En cours sur cette étape') : 'Temps rattaché à cette étape'}</small>
       <div className="project-node-timer-actions">
         {!activeOnNode
-          ? <button className="primary-button" type="button" disabled={timerBusy} onClick={() => void startNodeTimer()}>▶ Démarrer</button>
+          ? <button className="secondary-button" type="button" disabled={timerBusy} onClick={() => void startNodeTimer()}>▶ Démarrer</button>
           : <>
               <button className="secondary-button" type="button" disabled={timerBusy} onClick={() => void pauseOrResumeNodeTimer()}>{activeTime?.paused ? '▶ Reprendre' : 'Ⅱ Pause'}</button>
               <button className="secondary-button" type="button" disabled={timerBusy} onClick={() => void stopNodeTimer()}>■ Arrêter</button>
@@ -1588,8 +1550,8 @@ function renderProjectProductionTree(
         >
           <span className="project-phase-chevron">{expanded ? '⌄' : '›'}</span>
           <span className="project-phase-number">Phase {phaseIndex + 1}</span>
-          <span className="project-phase-name">{phase.name}</span>
-          <span className="project-phase-meta">{completedSteps}/{trackableSteps.length} · {duration(phase.estimatedMinutes ?? 0)}</span>
+          <span className="project-phase-name">{phaseDisplayName(phase.name)}</span>
+          <span className="project-phase-meta">{completedSteps} sur {trackableSteps.length} {trackableSteps.length > 1 ? 'tâches' : 'tâche'} · Temps estimé {duration(phase.estimatedMinutes ?? 0)}</span>
           <span className="project-phase-progress"><i><b style={{ width: `${progressPercent}%` }} /></i><strong>{progressPercent}%</strong></span>
         </button>
         <details className="project-node-menu" onClick={(event) => event.stopPropagation()}>

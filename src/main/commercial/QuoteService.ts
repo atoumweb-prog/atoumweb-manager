@@ -1,4 +1,6 @@
 import { reconcileLineSchedules } from '../../shared/quoteBillingRules';
+import { defaultPaymentSchedule } from '../../shared/paymentScheduleRules';
+import { withOffPremisesPaymentDelay } from '../../shared/offPremisesRules';
 import {commercialDescription} from '../../shared/commercialDescription';
 import {defaultVitrineLineScope} from '../../shared/siteVitrinePages';
 import {quotePaymentSchedule} from '../../shared/quotePaymentSchedule';
@@ -242,9 +244,11 @@ export class QuoteService {
     if (!Number.isInteger(validityDays) || validityDays <= 0) throw new Error('Durée de validité invalide.');
     const paymentPlan = input.paymentPlan ? approvedPaymentPlan(input.paymentPlan) : null;
     if (input.paymentPlan && !paymentPlan) throw new Error('Échéancier inconnu.');
-    // L'échéancier de l'offre fixe l'acompte : le premier jalon et l'acompte ne peuvent pas diverger.
-    const depositPercent = paymentPlan ? paymentPlan.milestones[0].percent : input.depositPercent ?? defaults.depositPercent;
-    if (!Number.isInteger(depositPercent) || depositPercent < 0 || depositPercent > 100) throw new Error('Acompte invalide.');
+    // F71b : jamais de 30 % par défaut. Un échéancier ou un acompte donné explicitement est un choix manuel ;
+    // sinon la règle (paymentScheduleRules) le pose et le recalcule avec les lignes du brouillon.
+    const manual = Boolean(paymentPlan) || input.depositPercent != null;
+    const depositPercent: number | null = paymentPlan ? paymentPlan.milestones[0].percent : input.depositPercent ?? null;
+    if (depositPercent !== null && (!Number.isInteger(depositPercent) || depositPercent < 0 || depositPercent > 100)) throw new Error('Acompte invalide.');
     const contractAudience = input.contractAudience ?? this.inferContractAudience(input.prospectId, input.clientAccountId);
     if (!['professional', 'consumer'].includes(contractAudience)) throw new Error('Type de client contractuel invalide.');
 
@@ -284,8 +288,10 @@ export class QuoteService {
           nowString,
         ],
       );
-      const contractParameters = emptyContractParameters(contractAudience,depositPercent);
+      const contractParameters = emptyContractParameters(contractAudience,depositPercent ?? 100);
       if (paymentPlan) { contractParameters.payment.preset = paymentPlan.preset; contractParameters.payment.milestones = paymentPlan.milestones; }
+      if (manual) contractParameters.payment.origin = 'manual';
+      else { const decision = defaultPaymentSchedule([]); contractParameters.payment.origin = 'to_define'; contractParameters.payment.preset = 'custom'; contractParameters.payment.milestones = decision.status === 'rule' ? decision.milestones : []; }
       this.database.run('UPDATE quotes SET contract_parameters_json=? WHERE id=?',[JSON.stringify(contractParameters),id]);
       new QuoteDocumentSettingsService(this.database).adopt(id);
       this.writeActivity(id, 'quote_created', `Devis ${number} créé`);
@@ -465,6 +471,10 @@ export class QuoteService {
       });
     }
     this.recalculate(quoteId);
+    // F71a (décision de Carlos du 16/11/2026) : une ligne ajoutée à un brouillon dont les CGV sont posées apporte
+    // aussitôt ses clauses (composition seule : les clauses présentes et leurs versions ne bougent pas).
+    // Un devis créé sans CGV n'en reçoit pas d'office ; un devis figé est refusé plus haut par assertEditable.
+    if (this.database.get('SELECT 1 AS present FROM quote_contract_clauses WHERE quote_id=? LIMIT 1', [quoteId])) this.contractTerms.composeQuote(quoteId);
     return this.get(quoteId);
   }
 
@@ -620,8 +630,8 @@ export class QuoteService {
     this.assertEditable(quoteId);
     const subject = clean(input.subject ?? current.subject);
     if (!subject) throw new Error('L’objet du devis est requis.');
-    const depositPercent = input.depositPercent ?? current.depositPercent ?? 30;
-    if (!Number.isInteger(depositPercent) || depositPercent < 0 || depositPercent > 100) throw new Error('Acompte invalide.');
+    const depositPercent = input.depositPercent ?? current.depositPercent ?? null;
+    if (depositPercent !== null && (!Number.isInteger(depositPercent) || depositPercent < 0 || depositPercent > 100)) throw new Error('Acompte invalide.');
     const validityDays = input.validityDays ?? this.daysUntil(current.validUntil) ?? 30;
     const contractAudience = input.contractAudience ?? current.contractAudience ?? this.inferContractAudience(current.prospectId, current.clientAccountId ?? current.acceptedClientAccountId);
     if (!['professional', 'consumer'].includes(contractAudience)) throw new Error('Type de client contractuel invalide.');
@@ -1079,7 +1089,7 @@ export class QuoteService {
     const catalog = Number(totals?.catalog_total ?? 0);
     const contract = Number(totals?.contract_total ?? 0);
     const discount = Math.max(0, catalog - contract);
-    const depositPercent = quote.deposit_percent ?? 0;
+    const depositPercent = this.database.get<{deposit_percent:number|null}>('SELECT deposit_percent FROM quotes WHERE id=?',[quoteId])?.deposit_percent ?? 0;
     const parameters=this.preparation.parameters(quoteId);
     const paymentLines=this.database.all<{id:string;label:string;contract_line_value_cents:number;snapshot_json:string|null}>('SELECT id,label,contract_line_value_cents,snapshot_json FROM quote_lines WHERE quote_id=?',[quoteId]).map(l=>({id:l.id,label:l.label,contractLineValueCents:l.contract_line_value_cents,snapshot:l.snapshot_json?JSON.parse(l.snapshot_json):null}));
     // Acompte = premiers paiements des prestations ponctuelles ; un abonnement a sa propre échéance (décision du 11/11/2026).
@@ -1103,8 +1113,21 @@ export class QuoteService {
     if (quote.status !== 'draft' || quote.finalized_at || quote.snapshot_locked_at) return;
     const parameters = this.preparation.parameters(String(quote.id));
     if (!parameters) return;
-    const lines = this.database.all<{id:string;snapshot_json:string|null}>('SELECT id,snapshot_json FROM quote_lines WHERE quote_id=? ORDER BY rowid',[quote.id])
-      .map(l => ({id: l.id, snapshot: l.snapshot_json ? JSON.parse(l.snapshot_json) as Record<string, unknown> : null}));
+    const lines = this.database.all<{id:string;snapshot_json:string|null;contract_line_value_cents:number}>('SELECT id,snapshot_json,contract_line_value_cents FROM quote_lines WHERE quote_id=? ORDER BY rowid',[quote.id])
+      .map(l => ({id: l.id, contractLineValueCents: Number(l.contract_line_value_cents ?? 0), snapshot: l.snapshot_json ? JSON.parse(l.snapshot_json) as Record<string, unknown> : null}));
+    if (parameters.payment.origin === 'rule' || parameters.payment.origin === 'to_define') {
+      // F71b : la règle recalcule tout l'échéancier (y compris par ligne) ; un choix manuel ou un devis antérieur n'est jamais touché.
+      const decision = defaultPaymentSchedule(lines);
+      parameters.payment.origin = decision.status === 'rule' ? 'rule' : 'to_define';
+      parameters.payment.preset = decision.status === 'rule' ? decision.preset : 'custom';
+      // Hors établissement (décision du 17/11/2026, art. L. 221-10) : aucun paiement avant le 8e jour après la signature.
+      parameters.payment.milestones = decision.status === 'rule' ? withOffPremisesPaymentDelay(decision.milestones, parameters.conclusion.channel) : [];
+      const schedules = decision.status === 'rule' ? reconcileLineSchedules(lines, parameters.payment.milestones, undefined) : undefined;
+      if (schedules) parameters.payment.lineSchedules = schedules; else delete parameters.payment.lineSchedules;
+      const first = decision.status === 'rule' ? decision.milestones[0].percent : null;
+      this.database.run('UPDATE quotes SET contract_parameters_json=?, deposit_percent=? WHERE id=?', [JSON.stringify(parameters), first, quote.id]);
+      return;
+    }
     const next = reconcileLineSchedules(lines, parameters.payment.milestones, parameters.payment.lineSchedules);
     if (next === undefined) return;
     if (next === null) delete parameters.payment.lineSchedules; else parameters.payment.lineSchedules = next;

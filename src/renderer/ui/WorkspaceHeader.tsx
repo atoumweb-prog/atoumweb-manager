@@ -1,5 +1,6 @@
 import {HeaderAlerts} from './HeaderAlerts';
 import {BrandLogo} from './BrandMark';
+import {shouldRestoreSearchFocus} from './searchFocus';
 import {OperationIcon} from '../operations/OperationIcon';
 import{useEffect,useRef,useState,type ReactNode}from'react';
 import{readHeaderPreference,writeHeaderPreference,HEADER_PREFERENCE_KEY}from'../../shared/headerPresentation';
@@ -34,7 +35,7 @@ export function WorkspaceHeader({store,moduleLabel,recordLabel,railCollapsed,onT
  useEffect(()=>{if(timerDialogOpen){setSearchOpen(false);setOptionsOpen(false);}},[timerDialogOpen]);
  useEffect(()=>{if(timerDialogOpen){const dialog=root.current?.querySelector<HTMLElement>('.aw-header-timer [role=dialog]');if(!dialog?.contains(document.activeElement))dialog?.querySelector<HTMLElement>('textarea,button')?.focus();}},[compact]);
  function toggle(){const next=!compact;setCompact(next);try{writeHeaderPreference(store,{version:1,compact:next});setError('');}catch{setError('Préférence d’en-tête non mémorisée ; les saisies sont conservées.');}}
- function closeSearch(){setSearchOpen(false);requestAnimationFrame(()=>{if(searchTrigger.current?.getClientRects().length)searchTrigger.current.focus();else root.current?.querySelector<HTMLInputElement>('input[role=combobox]')?.focus();});}
+ function closeSearch(){setSearchOpen(false);requestAnimationFrame(()=>{if(!shouldRestoreSearchFocus(document.activeElement,root.current,document.body))return;if(searchTrigger.current?.getClientRects().length)searchTrigger.current.focus();else root.current?.querySelector<HTMLInputElement>('input[role=combobox]')?.focus();});}
  function openSearch(){setOptionsOpen(false);setSearchOpen(true);requestAnimationFrame(()=>{if(!timerDialogCurrent.current&&root.current?.querySelector('.aw-header-search.is-open'))root.current.querySelector<HTMLInputElement>('input[role=combobox],#header-demo-search')?.focus();});}
  function closeOptions(){setOptionsOpen(false);root.current?.querySelector<HTMLButtonElement>('#header-options-trigger')?.focus();}
  return <header ref={root} className={`aw-workspace-header ${workspaceLabel ? "" : "content-area"} ${compact?'is-compact':''}`} data-header-compact={compact}>

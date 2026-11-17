@@ -20,7 +20,8 @@ export function prepareQuoteForTest(db:DatabaseAdapter,id:string):void {
   const preparation=new QuoteContractPreparationService(db),admin=emptyAdministration();
   for(const key of ['identity','administrative','vat','complaints'] as const)admin[key]={state:'filled',value:`Fixture isolée ${key}`,reason:''};
   preparation.saveAdministration(admin);
-  const p=emptyContractParameters(row.contract_audience as 'professional'|'consumer',Number(row.deposit_percent));
+  // F71b : un devis de test sans règle applicable est « à définir » ; la fixture choisit alors à la main l’échéancier 30 / 70 que ces tests supposent.
+  const p=emptyContractParameters(row.contract_audience as 'professional'|'consumer',row.deposit_percent==null?30:Number(row.deposit_percent));
   p.conclusion={...p.conclusion,channel:'on_premises',context:'Fixture en établissement',purchasePurpose:'Test unitaire'};
   p.digital={...p.digital,kinds:['classical_service'],supply:'one_off',delivery:'Remise explicite',qualificationReason:'Fixture de service classique'};
   p.rights.reviewed=true;p.renewal.reviewed=true;

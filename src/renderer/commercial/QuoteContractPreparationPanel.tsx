@@ -75,6 +75,8 @@ export function QuoteContractPreparationPanel({quote,onSave,compact=false}:{quot
         <Field label="Services associés" value={p.digital.associatedServices} onChange={v=>set('digital',{...p.digital,associatedServices:v})}/>
       </details>
       <details data-contract-section="payment"><summary>Paiement et échéancier</summary>
+        {p.payment.origin==='to_define'&&<p role="status"><strong>Échéancier à définir</strong> : aucune règle AtoumWeb ne s’applique à ces lignes. Choisis un modèle ci-dessous ; l’envoi attend ce choix.</p>}
+        {p.payment.origin==='rule'&&<p className="muted">Échéancier posé par la règle AtoumWeb ; il suit les lignes du devis tant que tu ne le modifies pas. Une modification ici devient un choix manuel (facilité de paiement).</p>}
         <label>Paiement initial<select value={p.initialPayment.qualification} onChange={e=>set('initialPayment',{...p.initialPayment,qualification:e.target.value as typeof p.initialPayment.qualification})}><option value="acompte">Acompte</option><option value="arrhes">Arrhes — exception expressément convenue</option></select></label>
         <Field type="date" label="Date du paiement initial, si connue" value={p.initialPayment.dueDate??''} onChange={v=>set('initialPayment',{...p.initialPayment,dueDate:v||null})}/>
         <label><input type="checkbox" checked={!!p.payment.lineSchedules} onChange={e=>{if(e.target.checked)set('payment',{...p.payment,lineSchedules:quote.lines.map(l=>({lineId:l.id,milestones:structuredClone(p.payment.milestones)}))});else{const {lineSchedules,...payment}=p.payment;set('payment',payment);}}}/>Échéances propres à chaque prestation (choix explicite)</label>

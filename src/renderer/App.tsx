@@ -1,22 +1,20 @@
-import {CompanyQuoteSettings} from './commercial/CompanyQuoteSettings';
-import {FieldHelp} from './ui/FieldHelp';
+import {PageHeader} from './ui/PageHeader';
+import {DISPLAY_NOTICE_MS, noticeClearedByRecovery, noticeStaysOnPage, noticeText, noticeTimeout} from './ui/noticeLifetime';
 import {useCallback} from 'react';
 import {SEARCH_DESTINATIONS,searchDestination,readSearchTarget,type SearchNavigationResult} from '../shared/searchNavigation';
 import {useMemo} from 'react';
-import { settingsSectionMatches } from '../shared/settingsSearch';
-import { workspaceDisplayFolder } from '../shared/workspacePresentation';
 import { isStatisticsDrilldownRoute, type StatisticsDrilldownRoute } from '../shared/statisticsDrilldown';
-import { NAVIGATION_MODULES, defaultNavigationPreference, readNavigationPreference, type NavigationPreference } from '../shared/navigationRail';
+import { NAVIGATION_MODULES } from '../shared/navigationRail';
 import type { VisualPreferenceStore } from '../shared/panelLayout';
-import { clearNavigationFavorites, resetRegisteredModuleLayout, saveRailCollapsed, type SupportedLayoutModule } from '../shared/settingsNavigation';
 import {NavigationRail, type NavigationRailControls} from './ui/NavigationRail';
 import {WorkspaceHeader} from './ui/WorkspaceHeader';
 import './ui/manager-shell.css';
 import {requestUnsavedExit,installUnsavedLifecycleBridge} from './unsaved/unsaved';
-import { DemoPanel } from './workflow/DemoPanel';
+import { SettingsPage, THEMES, DENSITIES } from './settings/SettingsPage';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { BootstrapState, DisplayDensity, ThemeName, DatabaseHealth } from '../shared/contracts';
+import type { BootstrapState, DisplayDensity, ThemeName } from '../shared/contracts';
 import type { SearchResult } from '../shared/crm';
+import { OPEN_OPERATIONS_PROJECT_EVENT, type OperationsProjectFilter } from '../shared/operationsProjectFilter';
 import { BusinessBackupsPage } from './backups/BusinessBackupsPage';
 import { BillingPage } from './billing/BillingPage';
 import { ExpensesPage } from './expenses/ExpensesPage';
@@ -82,18 +80,6 @@ const PAGE_HINTS: Record<PageName, string> = {
   Réglages: 'Identité, apparence, stockage, modèles et préférences.',
 };
 
-const THEMES: Array<{ id: ThemeName; label: string; description: string }> = [
-  { id: 'atoumweb', label: 'AtoumWeb', description: 'Marine, clair et accent or — thème par défaut.' },
-  { id: 'noir', label: 'Noir', description: 'Interface sombre et neutre.' },
-  { id: 'blanc', label: 'Blanc', description: 'Interface claire et minimaliste.' },
-];
-
-const DENSITIES: Array<{ id: DisplayDensity; label: string; description: string }> = [
-  { id: 'compact', label: 'Compact', description: 'Plus d’informations visibles avec des espacements resserrés.' },
-  { id: 'comfort', label: 'Confort', description: 'Réglage par défaut, équilibré pour le travail quotidien.' },
-  { id: 'comfort_plus', label: 'Confort +', description: 'Texte et zones cliquables plus grands pour une lecture facilitée.' },
-];
-
 function applyTheme(theme: ThemeName): void {
   document.documentElement.dataset.theme = theme;
 }
@@ -143,7 +129,7 @@ function App() {
   useEffect(()=>()=>cancelSearchNavigation(),[cancelSearchNavigation]);
 
   function requestPage(page:PageName,run:()=>void,replace=false){const transition=()=>{cancelSearchNavigation();if(page!==activePageRef.current||replace){visibleEntity.current=null;setQuoteReturnProjectId(null);setProjectReturnContext(null);}if((page==='Clients'||page==='Prospects')&&page!==activePageRef.current)setCrmTarget(null);run();};if(page===activePageRef.current&&!replace)transition();else requestUnsavedExit(transition);}
-  const [theme, setTheme] = useState<ThemeName>('atoumweb');
+  const [theme, setTheme] = useState<ThemeName>('noir');
   const [displayDensity, setDisplayDensity] = useState<DisplayDensity>('comfort');
   const [showHoverHelp, setShowHoverHelp] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -154,6 +140,8 @@ function App() {
   const [libraryHeaderCollapsed, setLibraryHeaderCollapsed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageAction, setMessageAction] = useState<MessageAction | null>(null);
+  // Échéance liée au texte du message : un message d'erreur posé par un écran n'hérite jamais du délai d'un message précédent.
+  const [messageAutoDismiss, setMessageAutoDismiss] = useState<{ message: string; ms: number } | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [crmTarget,setCrmTarget] = useState<string|null>(null);
   const [prospectViewTarget, setProspectViewTarget] = useState<'directory' | 'pipeline' | 'history' | 'conversions'>('directory');
@@ -175,6 +163,10 @@ function App() {
   const [directoryTarget, setDirectoryTarget] = useState<DirectorySearchTarget | null>(null);
   useEffect(()=>{const open=(event:Event)=>void openSearchResult((event as CustomEvent<SearchResult>).detail,'event');window.addEventListener('atoumweb:navigate',open);return()=>window.removeEventListener('atoumweb:navigate',open);},[]);
   useEffect(() => { const open = (event: Event) => {requestPage((event as CustomEvent<PageName>).detail,()=>{setStatisticsDrilldown(null);setActivePage((event as CustomEvent<PageName>).detail);});}; window.addEventListener('atoumweb:open-page', open); return () => window.removeEventListener('atoumweb:open-page', open); }, []);
+  // P3b (F20) : « Voir toutes (N) » d'un projet ouvre la page Interventions filtrée par ce projet, par la garde habituelle des brouillons.
+  useEffect(() => { const open = (event: Event) => { const detail = (event as CustomEvent<OperationsProjectFilter>).detail; if (!detail?.projectId) return; requestPage('Interventions & Maintenance',()=>{setOperationsProjectFilter(detail);setOperationsSearchTarget(null);setStatisticsDrilldown(null);setNavigationRequest(value=>value+1);setActivePage('Interventions & Maintenance');}); }; window.addEventListener(OPEN_OPERATIONS_PROJECT_EVENT, open); return () => window.removeEventListener(OPEN_OPERATIONS_PROJECT_EVENT, open); }, []);
+  // Le filtre n'existe que sur la page Interventions : toute autre page l'oublie.
+  useEffect(() => { if (activePage !== 'Interventions & Maintenance') setOperationsProjectFilter(null); }, [activePage]);
   useEffect(() => {
     const open = (event: Event) => {const target=(event as CustomEvent<'directory'|'pipeline'|'history'|'conversions'|{view:'directory'|'pipeline'|'history'|'conversions';pipelineFilter?:ProspectPipelineFilter}>).detail;const targetView=typeof target==='string'?target:target.view;const targetFilter=targetView==='pipeline'&&typeof target!=='string'?target.pipelineFilter??'all':'all';requestPage('Prospects',()=>{
       const detail = (event as CustomEvent<
@@ -220,18 +212,38 @@ function App() {
   }, []);
   const [projectSearchTarget, setProjectSearchTarget] = useState<string | null>(null);
   const [operationsSearchTarget, setOperationsSearchTarget] = useState<OperationsSearchTarget | null>(null);
+  const [operationsProjectFilter, setOperationsProjectFilter] = useState<OperationsProjectFilter | null>(null);
   const [librarySearchTarget, setLibrarySearchTarget] = useState<string | null>(null);
   const [backupSearchTarget, setBackupSearchTarget] = useState<string | null>(null);
 
-  function showMessage(nextMessage: string, action?: () => void): void {
+  function showMessage(nextMessage: string, action?: () => void, options?: { autoDismissMs?: number }): void {
     setMessage(nextMessage);
     setMessageAction(action ? { message: nextMessage, run: action } : null);
+    setMessageAutoDismiss(options?.autoDismissMs ? { message: nextMessage, ms: options.autoDismissMs } : null);
   }
+
+  // P6b (D2) : la page d'une notice est notée quand le message change (effet déclaré AVANT celui du changement de page, l'ordre compte quand les deux changent ensemble) ; une notice d'une autre page se ferme.
+  const messagePageRef = useRef<string>(activePage);
+  // F64 : une liste rétablie lève l'avis qui montrait sa propre erreur.
+  const messageRef = useRef<string | null>(message); messageRef.current = message;
+  useEffect(() => { const recovered = (event: Event) => { const error = String((event as CustomEvent<{error?: string}>).detail?.error ?? ''); if (noticeClearedByRecovery(messageRef.current, error)) closeMessage(); };
+    window.addEventListener('atoumweb:list-recovered', recovered); return () => window.removeEventListener('atoumweb:list-recovered', recovered); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { messagePageRef.current = activePage; }, [message]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!noticeStaysOnPage(messagePageRef.current, activePage)) closeMessage(); }, [activePage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function closeMessage(): void {
     setMessage(null);
     setMessageAction(null);
+    setMessageAutoDismiss(null);
   }
+
+  useEffect(() => {
+    if (!message) return undefined;
+    const delay = noticeTimeout({ autoDismissMs: messageAutoDismiss?.message === message ? messageAutoDismiss.ms : undefined, hasAction: messageAction?.message === message });
+    if (delay === null) return undefined;
+    const timer = window.setTimeout(closeMessage, delay);
+    return () => window.clearTimeout(timer);
+  }, [message, messageAction, messageAutoDismiss]);
 
   useEffect(() => {
     const openLibraryItem = (event: Event) => {void openSearchResult({entityType:'atoumweb_library',entityId:(event as CustomEvent<string>).detail,title:'Bibliothèque'},'event');};
@@ -258,14 +270,14 @@ function App() {
     const savedTheme = await window.atoumweb.settings.setTheme(nextTheme);
     setTheme(savedTheme);
     applyTheme(savedTheme);
-    setMessage(`Thème « ${THEMES.find((item) => item.id === savedTheme)?.label ?? savedTheme} » appliqué.`);
+    showMessage(`Thème « ${THEMES.find((item) => item.id === savedTheme)?.label ?? savedTheme} » appliqué.`, undefined, { autoDismissMs: DISPLAY_NOTICE_MS });
   }
 
   async function updateDisplayDensity(nextDensity: DisplayDensity): Promise<void> {
     const savedDensity = await window.atoumweb.settings.setDisplayDensity(nextDensity);
     setDisplayDensity(savedDensity);
     applyDensity(savedDensity);
-    setMessage(`Affichage « ${DENSITIES.find((item) => item.id === savedDensity)?.label ?? savedDensity} » appliqué.`);
+    showMessage(`Affichage « ${DENSITIES.find((item) => item.id === savedDensity)?.label ?? savedDensity} » appliqué.`, undefined, { autoDismissMs: DISPLAY_NOTICE_MS });
   }
 
   async function updateShowHoverHelp(enabled: boolean): Promise<void> {
@@ -304,7 +316,7 @@ function App() {
     setQuoteReturnProjectId(null);
     setProjectReturnContext(null);
     setStatisticsDrilldown(null);
-    if (page === 'Interventions & Maintenance') setOperationsSearchTarget(null);
+    if (page === 'Interventions & Maintenance') { setOperationsSearchTarget(null); setOperationsProjectFilter(null); }
     if (page === 'Projets') setProjectSearchTarget(null);
     if (page === 'Bibliothèque AtoumWeb') setLibrarySearchTarget(null);
     if (page === 'Sauvegardes') setBackupSearchTarget(null);
@@ -317,6 +329,7 @@ function App() {
   function openOperationsTargetDirect(target: OperationsSearchTarget): void {
     setStatisticsDrilldown(null);
     setOperationsSearchTarget(target);
+    setOperationsProjectFilter(null);
     setActivePage('Interventions & Maintenance');
   }
 
@@ -411,25 +424,22 @@ function App() {
             ? <div role="status" className="development-environment-banner functional-recipe-banner">RECETTE / TEST — données fictives isolées — aucune publication</div>
             : /([\\/])Validation-MSI$/i.test(bootstrap.workspacePath) ? <div role="status" className="development-environment-banner">DÉVELOPPEMENT — dossiers TEST — aucune valeur contractuelle réelle</div> : undefined}/>
 
-
-
         <section className={`content-area ${activePage === 'Accueil' ? 'home-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' || activePage === 'Sites' ? 'workspace-content' : ''} ${activePage === 'Projets' ? 'projects-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' ? 'library-workspace-content' : ''} ${activePage === 'Bibliothèque AtoumWeb' && libraryHeaderCollapsed ? 'library-header-collapsed' : ''}`}>
-          {activePage !== 'Accueil' && activePage !== 'Prospects' && <div className="page-heading"><div><span className="eyebrow">AtoumWeb Manager</span><h1><OperationIcon name={NAVIGATION_MODULES.find(item=>item.key===activePage)!.icon}/>{activePage}</h1><FieldHelp text={PAGE_HINTS[activePage]}/></div><div className="database-chip"><span className="health-dot" />SQLite · {bootstrap.database.migrationCount} migration{bootstrap.database.migrationCount > 1 ? 's' : ''}</div></div>}
+          {activePage !== 'Accueil' && activePage !== 'Prospects' && activePage !== 'Clients' && <PageHeader icon={<OperationIcon name={NAVIGATION_MODULES.find(item=>item.key===activePage)!.icon}/>} title={activePage} help={PAGE_HINTS[activePage]} />}
           {message && <div className={`notice ${messageAction?.message === message ? 'is-actionable' : ''}`} role="status">
             {messageAction?.message === message
-              ? <button className="notice-action" type="button" onClick={messageAction.run}><span>{message}</span><small>Ouvrir dans l’Explorateur</small></button>
-              : <span>{message}</span>}
+              ? <button className="notice-action" type="button" onClick={messageAction.run}><span>{noticeText(message)}</span><small>Ouvrir dans l’Explorateur</small></button>
+              : <span>{noticeText(message)}</span>}
             <button className="notice-close" type="button" aria-label="Fermer la notification" onClick={closeMessage}><OperationIcon name="close"/></button>
           </div>}
 
           {activePage === 'Accueil' && <HomeDashboard onMessage={setMessage} />}
-          {activePage === 'Réglages' && <DemoPanel />}
           {activePage === 'Prospects' && <ProspectsPage onEntityReady={markEntityReady} key={`${crmTarget ?? 'none'}:${prospectViewTarget}:${prospectPipelineFilter}`} initialId={crmTarget} initialRequest={navigationRequest} initialView={prospectViewTarget} initialPipelineFilter={prospectPipelineFilter} onMessage={setMessage} />}
           {activePage === 'Clients' && <ClientsPage allowTestFill={bootstrap.clientTestFillAllowed===true} initialRequest={navigationRequest} onEntityReady={markEntityReady} key={crmTarget} initialId={crmTarget} onMessage={setMessage} />}
           {activePage === 'Offres & Tarifs' && <CatalogPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialId={catalogTarget}/>}
           {activePage === 'Devis' && <QuotesPage statisticsDrilldown={statisticsDrilldown?.kind === 'signed' || statisticsDrilldown?.kind === 'decisions' ? statisticsDrilldown : null} onClearStatisticsDrilldown={() => setStatisticsDrilldown(null)} onEntityReady={markEntityReady} key={quoteTarget} initialId={quoteTarget} initialRequest={navigationRequest} returnProjectId={quoteReturnProjectId} onMessage={setMessage} />}
           {activePage === 'Projets' && <ProjectsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={showMessage} initialProjectId={projectSearchTarget} returnContext={projectSearchTarget && projectReturnContext?.projectId === projectSearchTarget ? projectReturnContext : null} showHoverHelp={showHoverHelp} />}
-          {activePage === 'Interventions & Maintenance' && <OperationsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialTarget={operationsSearchTarget} />}
+          {activePage === 'Interventions & Maintenance' && <OperationsPage initialRequest={navigationRequest} onEntityReady={markEntityReady} onMessage={setMessage} initialTarget={operationsSearchTarget} projectFilter={operationsProjectFilter} onClearProjectFilter={() => setOperationsProjectFilter(null)} />}
           {activePage === 'Gestion des temps' && <TimePage statisticsDrilldown={statisticsDrilldown?.kind === 'time' ? statisticsDrilldown : null} onClearStatisticsDrilldown={() => setStatisticsDrilldown(null)} onMessage={setMessage} />}
           {activePage === 'Facturation' && <BillingPage statisticsDrilldown={statisticsDrilldown?.kind === 'invoiced' ? statisticsDrilldown : null} onClearStatisticsDrilldown={() => setStatisticsDrilldown(null)} onMessage={setMessage} />}
           {activePage === 'Dépenses' && <ExpensesPage onMessage={setMessage} />}
@@ -452,7 +462,6 @@ function App() {
   );
 }
 
-
 function GlobalClock() {
   const [now, setNow] = useState(() => new Date());
 
@@ -472,206 +481,6 @@ function GlobalClock() {
     <span className="global-clock-copy"><strong>{greeting}</strong><small>{date}</small></span>
     <b>{time}</b>
   </div>;
-}
-
-function SettingsPage({ visualStore, bootstrap, theme, displayDensity, showHoverHelp, onThemeChange, onDensityChange, onShowHoverHelpChange, onChooseWorkspace, onCreateBackup, onRestoreBackup }: {
-  visualStore: VisualPreferenceStore;
-  bootstrap: BootstrapState;
-  theme: ThemeName;
-  displayDensity: DisplayDensity;
-  showHoverHelp: boolean;
-  onThemeChange: (theme: ThemeName) => Promise<void>;
-  onDensityChange: (density: DisplayDensity) => Promise<void>;
-  onShowHoverHelpChange: (enabled: boolean) => Promise<void>;
-  onChooseWorkspace: () => Promise<void>;
-  onCreateBackup: () => Promise<void>;
-  onRestoreBackup: () => Promise<void>;
-}) {
-  const [search, setSearch] = useState('');
-  const [navigationPreference, setNavigationPreference] = useState<NavigationPreference>(defaultNavigationPreference);
-  const [navigationError, setNavigationError] = useState<string | null>(null);
-  const [diagnostics, setDiagnostics] = useState<DatabaseHealth | null>(null);
-  const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
-  const [diagnosticsLoading, setDiagnosticsLoading] = useState(false);
-  const diagnosticsLock = useRef(false);
-  async function readDiagnostics(): Promise<void> {
-    if (diagnosticsLock.current) return;
-    diagnosticsLock.current = true;
-    setDiagnosticsLoading(true);
-    setDiagnosticsError(null);
-    try { setDiagnostics(await window.atoumweb.database.health()); }
-    catch (cause) {
-      setDiagnostics(null);
-      setDiagnosticsError(cause instanceof Error ? cause.message : 'Lecture de diagnostic indisponible.');
-    } finally { diagnosticsLock.current = false; setDiagnosticsLoading(false); }
-  }
-  const [resetModuleIntent, setResetModuleIntent] = useState<SupportedLayoutModule | null>(null);
-  useEffect(() => {
-    const sync = () => {
-      try { setNavigationPreference(readNavigationPreference(visualStore)); setNavigationError(null); }
-      catch (cause) { setNavigationError(cause instanceof Error ? cause.message : 'Préférences de navigation indisponibles.'); }
-    };
-    sync();
-    window.addEventListener('storage', sync);
-    return () => window.removeEventListener('storage', sync);
-  }, [visualStore]);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const operationLock = useRef(false);
-  const visible = (keywords: string) => settingsSectionMatches(search, keywords);
-
-  async function runSetting(action: () => Promise<void>): Promise<void> {
-    // Le verrou est synchrone : deux clics dans le même frame ne lancent pas deux écritures.
-    if (operationLock.current) return;
-    operationLock.current = true;
-    setSaving(true);
-    setError(null);
-    try { await action(); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : 'Impossible de modifier ce réglage. Le choix précédent est conservé.'); }
-    finally { operationLock.current = false; setSaving(false); }
-  }
-
-  const company=visible('entreprise société identité adresse siret tva email téléphone logo devis modèle conditions cgv présentation');
-  const appearance = visible('apparence thème thèmes noir blanc atoumweb densité compact confort affichage interface lisibilité');
-  const navigation = visible('navigation vues rail favoris modules ordre disposition largeur colonnes liste clients annuaire');
-  const help = visible('aide aides conseil survol ? contextuelle clavier');
-  const workspace = visible('stockage workspace dossier répertoire emplacement local changement données transfert redémarrage');
-  const documents = visible('documents fichiers archivage archives conservation contrats classement clients exports');
-  const advanced = visible('avancé diagnostic diagnostics version migration migrations sqlite intégrité base état erreurs');
-  const security = visible('sécurité sauvegarde backup restauration restore sqlite base copie sécurité');
-  const shortcuts = [
-    ...(company?[{label:"Mon entreprise et devis",id:"settings-company-quotes"}]:[]),
-    ...(appearance ? [{ label: 'Apparence et densité', id: settingsSectionMatches(search, 'densité compact confort lisibilité') ? 'settings-density-compact' : 'settings-theme-atoumweb' }] : []),
-    ...(navigation ? [{ label: 'Navigation et vues', id: 'settings-nav-collapse' }] : []),
-    ...(help ? [{ label: 'Aide contextuelle', id: 'settings-hover-help' }] : []),
-    ...(workspace ? [{ label: 'Workspace local', id: 'settings-choose-workspace' }] : []),
-    ...(documents ? [{ label: 'Documents et archivage', id: 'settings-open-documents' }] : []),
-    ...(advanced ? [{ label: 'Diagnostics avancés', id: 'settings-read-diagnostics' }] : []),
-    ...(security ? [{ label: 'Sauvegarde et sécurité SQLite', id: 'settings-create-backup' }] : []),
-  ];
-
-  return (
-    <div className="settings-grid">
-      <article className="panel panel-large">
-        <label htmlFor="settings-quick-search"><strong>Rechercher un réglage</strong></label>
-        <input id="settings-quick-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Thème, navigation, aide, documents, diagnostics, sauvegarde, workspace…" aria-describedby="settings-search-help" />
-        <p id="settings-search-help" className="muted">Cette recherche filtre uniquement les rubriques visibles ; elle ne modifie aucune préférence.</p>
-        {search.trim() && shortcuts.length > 0 && <nav className="button-row" aria-label="Accès direct aux réglages correspondant à la recherche">
-          {shortcuts.map((shortcut) => <button key={shortcut.id} type="button" className="secondary-button" onClick={() => document.getElementById(shortcut.id)?.focus()}>
-            Aller à : {shortcut.label}
-          </button>)}
-        </nav>}
-        {error && <p role="alert" className="notice">{error}</p>}
-        {!company && !appearance && !navigation && !help && !documents && !advanced && !workspace && !security && <p role="status">Aucun réglage correspondant. Efface la recherche pour retrouver toutes les rubriques.</p>}
-      </article>
-      {company&&<CompanyQuoteSettings/>}
-      {appearance && <article className="panel panel-large">
-        <div className="panel-title"><div><span className="eyebrow">Apparence</span><h2>Thème de l’interface</h2></div>{theme !== 'atoumweb' && <button className="secondary-button" type="button" disabled={saving} onClick={() => void runSetting(() => onThemeChange('atoumweb'))}>Rétablir le thème par défaut</button>}</div>
-        <div className="theme-grid">{THEMES.map((item) => <button className={`theme-card ${theme === item.id ? 'selected' : ''}`} key={item.id} id={item.id === 'atoumweb' ? 'settings-theme-atoumweb' : undefined} disabled={saving} onClick={() => void runSetting(() => onThemeChange(item.id))} type="button" aria-pressed={theme === item.id}><span className={`theme-preview preview-${item.id}`}><i /><b /></span><strong>{item.label}</strong><span>{item.description}</span></button>)}</div>
-        <div className="density-settings">
-          <div><span className="eyebrow">Lisibilité</span><h2>Densité d’affichage</h2><p className="muted">Adapte la taille des textes, les espacements et les zones cliquables à ton confort de travail.</p></div>
-          <div className="density-grid">{DENSITIES.map((item) => <button className={`density-card ${displayDensity === item.id ? 'selected' : ''}`} key={item.id} id={item.id === 'compact' ? 'settings-density-compact' : undefined} type="button" disabled={saving} aria-pressed={displayDensity === item.id} onClick={() => void runSetting(() => onDensityChange(item.id))}><strong>{item.label}</strong><span>{item.description}</span></button>)}</div>
-        </div>
-      </article>}
-      {navigation && <article className="panel panel-large settings-navigation">
-        <div className="panel-title"><div><span className="eyebrow">Navigation et vues</span><h2>Préférences de présentation existantes</h2></div></div>
-        <p className="muted">Ces préférences sont enregistrées dans le workspace et ne modifient ni les Clients, ni les devis, ni les documents. Les dispositions disponibles ici concernent uniquement les listes Clients et Annuaire.</p>
-        {navigationError && <p role="status" className="muted">Préférences indisponibles : {navigationError}. Aucune valeur n’est réinitialisée automatiquement.</p>}
-        <div className="settings-navigation-actions">
-          <div>
-            <strong>Rail latéral</strong>
-            <p className="muted">{navigationPreference.railCollapsed ? 'Navigation réduite' : 'Navigation déployée'} · {navigationPreference.favoriteModuleKeys.length} favori(s).</p>
-          </div>
-          <button id="settings-nav-collapse" type="button" className="secondary-button" disabled={saving || !!navigationError}
-            onClick={() => void runSetting(async () => {
-              setNavigationPreference(saveRailCollapsed(visualStore, !navigationPreference.railCollapsed));
-            })}>{navigationPreference.railCollapsed ? 'Déployer le rail' : 'Réduire le rail'}</button>
-          <button type="button" className="secondary-button" disabled={saving || !!navigationError || navigationPreference.favoriteModuleKeys.length === 0}
-            onClick={() => void runSetting(async () => {
-              if (window.atoumweb.visualPreferences.confirmReset()) {
-                setNavigationPreference(clearNavigationFavorites(visualStore));
-              }
-            })}>Réinitialiser uniquement les favoris</button>
-        </div>
-        <div className="settings-navigation-layouts">
-          <strong>Réinitialiser la largeur d’une liste</strong>
-          <p className="muted">Seule la disposition de la liste indiquée revient au défaut. Les colonnes métier, les filtres enregistrés et les brouillons restent inchangés.</p>
-          <div className="button-row">
-            <button type="button" className="secondary-button" disabled={saving} onClick={() => setResetModuleIntent('clients')}>Largeur liste Clients</button>
-            <button type="button" className="secondary-button" disabled={saving} onClick={() => setResetModuleIntent('directory')}>Largeur liste Annuaire</button>
-          </div>
-          {resetModuleIntent && <div className="settings-navigation-confirm" role="group" aria-label="Confirmation de remise à zéro de la disposition">
-            <p>Réinitialiser uniquement la largeur de la liste <strong>{resetModuleIntent === 'clients' ? 'Clients' : 'Annuaire'}</strong> ? Aucune donnée métier ne sera effacée.</p>
-            <button type="button" className="primary-button" disabled={saving} onClick={() => void runSetting(async () => {
-              resetRegisteredModuleLayout(visualStore, resetModuleIntent);
-              setResetModuleIntent(null);
-            })}>Confirmer la disposition par défaut</button>
-            <button type="button" className="secondary-button" disabled={saving} onClick={() => setResetModuleIntent(null)}>Annuler</button>
-          </div>}
-        </div>
-      </article>}
-      {help && <article className="panel panel-large">
-        <div className="settings-help-row">
-          <div>
-            <span className="eyebrow">Aide contextuelle</span>
-            <h2>Conseils au survol</h2>
-            <p className="muted">Le survol prolongé est facultatif. L’aide « ? » au clic/clavier et les avertissements de sécurité restent toujours disponibles.</p>
-          </div>
-          <label className="settings-switch">
-            <input id="settings-hover-help" type="checkbox" checked={showHoverHelp} disabled={saving} onChange={(event) => void runSetting(() => onShowHoverHelpChange(event.target.checked))} />
-            <span>{showHoverHelp ? 'Survol activé' : 'Survol désactivé'}</span>
-          </label>
-        </div>
-      </article>}
-      {documents && <article className="panel settings-documents" aria-label="Réglages Documents">
-        <span className="eyebrow">Documents et classement</span>
-        <h2>Organisation des fichiers Client</h2>
-        <p className="muted">Les documents Client sont importés et classés depuis « Documents & Contrats ». Chaque document conserve sa catégorie et son motif de conservation propre ; il n’existe pas ici de règle globale permettant leur suppression automatique.</p>
-        <dl className="settings-diagnostic-list">
-          <div><dt>Racine du workspace</dt><dd className="path-value">{bootstrap.workspacePath}</dd></div>
-          <div><dt>Dossier racine des Clients</dt><dd className="path-value">{workspaceDisplayFolder(bootstrap.workspacePath, 'clients')}</dd></div>
-          <div><dt>Exports</dt><dd className="path-value">{workspaceDisplayFolder(bootstrap.workspacePath, 'exports')}</dd></div>
-        </dl>
-        <p className="muted">Chemins conventionnels issus de la configuration ; cette vue ne contrôle ni la présence physique de chaque fichier ni la conformité légale des durées de conservation.</p>
-        <button id="settings-open-documents" className="secondary-button" type="button" onClick={() =>
-          window.dispatchEvent(new CustomEvent('atoumweb:open-page', { detail: 'Documents & Contrats' }))
-        }>Ouvrir Documents & Contrats sans changer les règles d’archivage</button>
-      </article>}
-      {advanced && <article className="panel settings-advanced" aria-label="Diagnostics avancés">
-        <span className="eyebrow">Avancé · lecture seule</span>
-        <h2>Diagnostics du Manager</h2>
-        <p className="muted">Consultation technique uniquement. Cette rubrique n’exécute ni migration, ni restauration, ni indexation, ni suppression de données.</p>
-        <dl className="settings-diagnostic-list">
-          <div><dt>Version de l’application</dt><dd>{bootstrap.appVersion}</dd></div>
-          <div><dt>Base SQLite active</dt><dd className="path-value">{bootstrap.databasePath}</dd></div>
-          <div><dt>Migrations appliquées au démarrage</dt><dd>{bootstrap.database.migrationCount}</dd></div>
-          <div><dt>État au démarrage</dt><dd>{bootstrap.database.healthy ? 'Signalé sain au démarrage' : 'Anomalie signalée au démarrage'}</dd></div>
-          {diagnostics && <>
-            <div><dt>État à la dernière lecture</dt><dd>{diagnostics.healthy ? 'Signalé sain par le service' : 'Anomalie signalée par le service'}</dd></div>
-            <div><dt>Migrations à la dernière lecture</dt><dd>{diagnostics.migrationCount}</dd></div>
-            <div><dt>Chemin confirmé par le service</dt><dd className="path-value">{diagnostics.databasePath}</dd></div>
-          </>}
-        </dl>
-        {diagnosticsError && <p role="alert" className="settings-diagnostic-error">Diagnostic indisponible : {diagnosticsError}. Aucun état sain n’est déduit de cet échec.</p>}
-        <button id="settings-read-diagnostics" type="button" className="secondary-button" disabled={diagnosticsLoading} onClick={() => void readDiagnostics()}>{diagnosticsLoading ? 'Lecture en cours…' : 'Actualiser l’état SQLite (lecture seule)'}</button>
-        <p className="muted">Ce diagnostic ne constitue pas une vérification d’intégrité SQLite complète ou un test de restauration. Utilise le parcours Sécurité distinct pour les sauvegardes techniques.</p>
-      </article>}
-      {workspace && <article className="panel">
-        <span className="eyebrow">Stockage · workspace</span>
-        <h2>Dossier de travail actuel</h2>
-        <p className="path-value">{bootstrap.workspacePath}</p>
-        <p className="muted">Choisir un autre dossier n’y transfère pas automatiquement les Clients, Projets, documents ou fichiers de ce workspace. Un redémarrage peut être nécessaire.</p>
-        <button id="settings-choose-workspace" className="primary-button" type="button" disabled={saving} onClick={() => void runSetting(onChooseWorkspace)}>Choisir un autre dossier</button>
-      </article>}
-      {security && <article className="panel">
-        <span className="eyebrow">Sécurité · base SQLite</span>
-        <h2>Sauvegarde de la base Manager</h2>
-        <p className="muted">Une sauvegarde de la base SQLite est prévue quotidiennement et une copie de sécurité avant restauration. Ces actions ne sauvegardent ni ne restaurent automatiquement tous les documents Clients, photos, sites WordPress et fichiers Bridge.</p>
-        <p className="muted">Le registre « Sauvegardes » sert à déclarer les copies métier : ce n’est pas le moteur de sauvegarde SQLite du Manager. La restauration remplace des données et reste soumise aux vérifications de sécurité du moteur.</p>
-        <div className="button-row"><button id="settings-create-backup" className="secondary-button" type="button" disabled={saving} onClick={() => void runSetting(onCreateBackup)}>Sauvegarder la base maintenant</button><button className="secondary-button" type="button" disabled={saving} onClick={() => void runSetting(onRestoreBackup)}>Restaurer une sauvegarde SQLite</button></div>
-      </article>}
-    </div>
-  );
 }
 
 function ModulePlaceholder({ page }: { page: PageName }) {

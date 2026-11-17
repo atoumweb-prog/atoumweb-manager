@@ -23,6 +23,11 @@ import { assessBridgeReusableValidation } from '../../shared/bridgeReusableValid
 import { generalizeReusableCssColors } from '../../shared/reusableCssColors';
 import { TechnicalContentViewer } from './TechnicalContentViewer';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
+import { KeyFigures } from '../ui/KeyFigures';
+import { ListToolbar } from '../ui/ListToolbar';
+import { MoreMenu } from '../ui/MoreMenu';
+import { plural } from '../../shared/projectTabs';
+import { libraryEmptyText } from '../../shared/ressourcesEmpty';
 import './AtoumWebLibraryPage.css';
 
 const BRIDGE_REUSABLE_GENERATOR_REVISION = 2;
@@ -1199,23 +1204,19 @@ export function AtoumWebLibraryPage({ onEntityReady, onMessage, initialItemId, i
   return (
     <div className={`aw-library ${headerCollapsed ? 'head-collapsed' : ''}`}>
       <div className="aw-library-fixed-head">
-        <div className="aw-library-summary">
-        <Summary icon="package" label="Composants affichés" value={summary.total} />
-        <Summary icon="check-circle" label="Prêts" value={summary.ready} />
-        <Summary icon="wrench" label="À adapter" value={summary.adapt} />
-        <Summary icon="file-text" label="Références" value={summary.references} />
-      </div>
+        <KeyFigures ariaLabel="Synthèse de la Bibliothèque" items={[{ key: 'total', label: 'Composants affichés', value: summary.total }, { key: 'ready', label: 'Prêts', value: summary.ready }, { key: 'adapt', label: 'À adapter', value: summary.adapt }, { key: 'references', label: 'Références', value: summary.references }]} />
 
       {error && <div className="notice aw-library-error"><span>{error}</span><button type="button" onClick={() => setError(null)} aria-label="Fermer" title="Fermer"><OperationIcon name="close"/></button></div>}
 
-      <article className="panel aw-library-toolbar">
-        <div className="aw-library-toolbar-filters">
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher nom, tag, notes ou contenu technique…" />
-          <select value={category} onChange={(event) => setCategory(event.target.value as AtoumWebLibraryCategory | '')}>
+      <ListToolbar
+          countLabel={plural(items.length, 'composant', 'composants')}
+          search={{ value: search, onChange: setSearch, placeholder: 'Nom, tag, notes, contenu…', ariaLabel: 'Rechercher dans la Bibliothèque' }}
+          filters={<>
+<select aria-label="Filtrer par catégorie" value={category} onChange={(event) => setCategory(event.target.value as AtoumWebLibraryCategory | '')}>
             <option value="">Toutes les catégories</option>
             {CATEGORIES.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}
           </select>
-          <select value={reuseStatus} onChange={(event) => setReuseStatus(event.target.value as AtoumWebReuseStatus | '')}>
+          <select aria-label="Filtrer par statut" value={reuseStatus} onChange={(event) => setReuseStatus(event.target.value as AtoumWebReuseStatus | '')}>
             <option value="">Tous les statuts</option>
             {REUSE_STATUSES.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}
           </select>
@@ -1224,19 +1225,21 @@ export function AtoumWebLibraryPage({ onEntityReady, onMessage, initialItemId, i
             {[...new Set([...VERTICAL_SUGGESTIONS, ...items.map((item) => item.vertical).filter((value): value is string => Boolean(value))])].map((value) => <option key={value} value={value} />)}
           </datalist>
           <label className="aw-library-checkbox"><input type="checkbox" checked={includeArchived} onChange={(event) => setIncludeArchived(event.target.checked)} /> Archivés</label>
-        </div>
-        <div className="aw-library-toolbar-actions">
-          <div className="aw-library-action-group" aria-label="Échanges Bridge">
-            <button className="secondary-button" type="button" disabled={occurrenceReturnBusy} onClick={() => void inspectOccurrenceReturn()} title="Importer dans Manager un retour d’occurrence exporté depuis Bridge"><OperationIcon name="upload" size={16} /> Importer un retour</button>
+          </>}
+          primary={<>
             {occurrenceReturns.length > 0 && <button className="secondary-button" type="button" onClick={() => setShowOccurrenceReturns((value) => !value)} title="Ouvrir les retours Bridge déjà importés dans Manager"><OperationIcon name="repeat" size={16} /> {pendingOccurrenceReturnCount ? `À traiter · ${pendingOccurrenceReturnCount}` : `Historique · ${occurrenceReturns.length}`}</button>}
-          </div>
-          <div className="aw-library-action-group" aria-label="Gestion de la Bibliothèque">
-            <button className="secondary-button" type="button" onClick={() => { setCompositionOpen(true); void loadCompositions(); }} title="Assembler plusieurs composants réutilisables dans l’ordre du futur site"><OperationIcon name="package" size={16} /> Composer un site</button>
-            <button className="secondary-button" type="button" disabled={packageBusy} onClick={() => void inspectPackage()} title="Importer un package de composant dans la Bibliothèque"><OperationIcon name="package" size={16} /> Importer un composant</button>
-            <button className="primary-button" type="button" onClick={() => setCreating((value) => !value)}>{creating ? 'Fermer' : 'Nouveau composant'}</button>
-          </div>
-        </div>
-      </article>
+            <MoreMenu items={[
+              { id: 'return', label: 'Importer un retour', disabled: occurrenceReturnBusy },
+              { id: 'compose', label: 'Composer un site' },
+              { id: 'package', label: 'Importer un composant', disabled: packageBusy },
+            ]} onSelect={(id) => {
+              if (id === 'return') void inspectOccurrenceReturn();
+              if (id === 'compose') { setCompositionOpen(true); void loadCompositions(); }
+              if (id === 'package') void inspectPackage();
+            }} />
+            <button className={creating ? 'secondary-button' : 'primary-button'} type="button" onClick={() => setCreating((value) => !value)}>{creating ? 'Fermer' : 'Nouveau composant'}</button>
+          </>}
+        />
       </div>
 
       {compositionOpen && <div className="aw-library-modal-backdrop" role="presentation" onMouseDown={(event) => {
@@ -1480,7 +1483,7 @@ export function AtoumWebLibraryPage({ onEntityReady, onMessage, initialItemId, i
       >
         {!detailExpanded && <article className="panel aw-library-list">
           <div className="panel-title"><div><span className="eyebrow">Bibliothèque</span><h2>Composants AtoumWeb</h2></div><span className="status-pill">{items.length}</span></div>
-          {items.length === 0 && <p className="muted">Aucun composant ne correspond aux filtres.</p>}
+          {items.length === 0 && <p className="muted">{libraryEmptyText({ includeArchived, filtersActive: Boolean(search.trim() || category || reuseStatus || vertical.trim()) })}</p>}
           {libraryTree.map((group) => group.kind === 'standalone'
             ? <LibraryTreeItem key={group.key} item={group.item} selectedId={selected?.id ?? null} onOpen={openItem} />
             : <div className="aw-library-family-tree" key={group.key}>
@@ -1839,16 +1842,16 @@ function BridgeSummaryStages({ item }: { item: AtoumWebTechnicalItemSummary }) {
 
   if (item.libraryVariantId) {
     return <span className="aw-library-stage-badges" aria-label="Famille et variante du composant">
-      <span className="done">Famille ✓</span>
-      <span className="done">{item.variantMode === 'base' ? 'Base' : `Variante ${item.variantKey ?? ''}`} ✓</span>
-      <span className={reusableReady ? 'done' : hasReusable ? 'warning' : 'pending'}>Réutil. {reusableReady ? '✓' : hasReusable ? '⚠' : '—'}</span>
+      <span className="done">Famille</span>
+      <span className="done">{item.variantMode === 'base' ? 'Base' : `Variante ${item.variantKey ?? ''}`}</span>
+      <span className={reusableReady ? 'done' : hasReusable ? 'warning' : 'pending'}>{reusableReady ? 'À réutiliser : prêt' : hasReusable ? 'À réutiliser : à valider' : 'À réutiliser : à faire'}</span>
     </span>;
   }
 
   return <span className="aw-library-stage-badges" aria-label="Étapes du composant">
-    <span className="done">Originale ✓</span>
-    <span className={hasWork ? 'done' : 'pending'}>Travail {hasWork ? '✓' : '—'}</span>
-    <span className={reusableReady ? 'done' : hasReusable ? 'warning' : 'pending'}>Réutil. {reusableReady ? '✓' : hasReusable ? '⚠' : '—'}</span>
+    <span className="done">Originale</span>
+    <span className={hasWork ? 'done' : 'pending'}>{hasWork ? 'Travail : fait' : 'Travail : à faire'}</span>
+    <span className={reusableReady ? 'done' : hasReusable ? 'warning' : 'pending'}>{reusableReady ? 'À réutiliser : prêt' : hasReusable ? 'À réutiliser : à valider' : 'À réutiliser : à faire'}</span>
   </span>;
 }
 
@@ -2969,10 +2972,6 @@ function MetadataEditor({ form, setForm, onSave, pending }: { form: MetadataForm
     </details>
     <button className="primary-button" type="button" disabled={pending} onClick={() => void onSave()}>{pending ? "Enregistrement…" : "Enregistrer"}</button>
   </div>;
-}
-
-function Summary({ icon, label, value }: { icon: OperationIconName; label: string; value: number }) {
-  return <article className="kpi-card aw-library-kpi"><span className="aw-library-kpi-icon"><OperationIcon name={icon} size={20} /></span><div><span>{label}</span><strong>{value}</strong><small>Bibliothèque AtoumWeb</small></div></article>;
 }
 
 function OccurrenceChangesSummary({ changes }: { changes: AtoumWebOccurrenceReturnSummary['changes'] }) {

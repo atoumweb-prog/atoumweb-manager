@@ -1,0 +1,16 @@
+/* R3 : fiche de travail du prospect (en-tête, sections repliables de Besoins et de Préparer l'échange).
+   Jetons uniquement : aucune couleur écrite en dur, aucun !important (garde-fou : ui/importantBudget.test.ts). */
+.prospect-record-header { margin-bottom: var(--ui-gap); padding-bottom: var(--ui-gap); border-bottom: 1px solid var(--border); }
+.prospect-record-header .crm-logo-button { flex: 0 0 auto; }
+.prospect-record-header .aw-record-header-next { display: grid; gap: var(--ui-gap); }
+.prospect-record-temperature { display: flex; flex-direction: column; gap: 4px; color: var(--aw-quiet-text); font-size: var(--aw-font-functional); }
+.prospect-record-temperature select { min-width: 170px; }
+
+/* Sections repliables : le contenu reste monté, seul l'attribut hidden le masque. */
+.needs-section-trigger { width: 100%; border-bottom: 1px solid var(--border); }
+.needs-section-body { display: grid; gap: var(--ui-gap); padding: var(--ui-gap) 4px; }
+.needs-section-body[hidden] { display: none; }
+.needs-save-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-gap); padding-top: var(--ui-gap); }
+
+/* Filtres à bascule du parcours commercial : neutres, l'état actif se lit à la bordure (jamais en jaune plein). */
+.prospect-toolbar .secondary-button[aria-pressed="true"] { border-color: var(--aw-accent-solid); box-shadow: inset 0 0 0 1px var(--aw-accent-solid); }

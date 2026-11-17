@@ -89,7 +89,7 @@
   gap: 3px;
 }
 
-.timer-topline {
+.timer-topline { /* P6b (C5) : l'heure passe sous le libellé si la place manque */ flex-wrap: wrap;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -108,12 +108,10 @@
   letter-spacing: .03em;
 }
 
-.timer-label {
+.timer-label { /* P6b (C5) : « Timer · En cours » sur une seule ligne */ white-space: nowrap;
   color: var(--accent);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: .08em;
 }
 
 .timer-context {
@@ -123,7 +121,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text-muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
 }
 
 .timer-actions {
@@ -138,7 +136,7 @@
   border-left: 1px solid var(--border);
   background: transparent;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
   cursor: pointer;
 }
@@ -185,7 +183,7 @@
 }
 
 .timer-popover > div:first-child strong {
-  font-size: 13px;
+  font-size: var(--aw-font-functional);
 }
 
 .timer-popover label,
@@ -193,7 +191,7 @@
   display: grid;
   gap: 4px;
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
 }
 
@@ -223,40 +221,6 @@
 .time-page-stack {
   display: grid;
   gap: 12px;
-}
-
-.time-toolbar {
-  gap: 10px;
-}
-
-.time-period-tabs {
-  display: flex;
-  gap: 5px;
-}
-
-.time-period-tabs button {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 7px 10px;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 9px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.time-period-tabs button.active {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-  background: var(--accent-soft);
-  color: var(--text);
-}
-
-.time-filters {
-  flex-wrap: wrap;
-}
-
-.time-filters select {
-  min-width: 135px;
 }
 
 .time-visual-strip {
@@ -325,17 +289,18 @@
 }
 
 .time-clock-mark {
+  /* P5b (décision de Carlos du 15/11/2026) : des traits à la place des chiffres à 8 px ; l'heure est écrite en clair à côté */
   position: absolute;
-  color: var(--text-muted);
-  font-size: 8px;
-  font-weight: 650;
-  line-height: 1;
+  width: 2px;
+  height: 8px;
+  border-radius: 1px;
+  background: var(--text-muted);
 }
 
 .time-clock-mark.mark-12 { top: 6px; left: 50%; transform: translateX(-50%); }
-.time-clock-mark.mark-3 { top: 50%; right: 7px; transform: translateY(-50%); }
+.time-clock-mark.mark-3 { top: 50%; right: 7px; transform: translateY(-50%); width: 8px; height: 2px; }
 .time-clock-mark.mark-6 { bottom: 6px; left: 50%; transform: translateX(-50%); }
-.time-clock-mark.mark-9 { top: 50%; left: 7px; transform: translateY(-50%); }
+.time-clock-mark.mark-9 { top: 50%; left: 7px; transform: translateY(-50%); width: 8px; height: 2px; }
 
 .time-now-copy {
   display: grid;
@@ -407,57 +372,6 @@
   50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 0%, transparent); }
 }
 
-.time-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.time-kpi-card {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 11px;
-}
-
-.time-kpi-card > div {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-
-.time-kpi-icon {
-  display: inline-grid;
-  width: 52px;
-  height: 52px;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
-  border-radius: 13px;
-  background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
-  color: var(--accent);
-  font-size: 22px;
-  font-weight: 650;
-}
-
-.time-kpi-label {
-  color: var(--text-muted);
-  font-size: var(--aw-font-functional, 14px);
-  font-weight: 700;
-}
-
-.time-kpi-value {
-  color: var(--text);
-  font-size: 22px;
-  font-weight: 400;
-  line-height: 1.2;
-}
-
-.time-kpi-card small {
-  color: var(--text-muted);
-  font-size: var(--aw-font-functional, 14px);
-  font-weight: 400;
-}
-
 .manual-time-panel {
   display: grid;
   gap: 10px;
@@ -494,14 +408,12 @@
   border-bottom: 1px solid var(--border);
   text-align: left;
   vertical-align: top;
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
 }
 
 .time-table th {
   color: var(--text-muted);
-  font-size: 8px;
-  text-transform: uppercase;
-  letter-spacing: .04em;
+  font-size: var(--aw-font-functional);
 }
 
 .time-table td > strong,
@@ -512,7 +424,7 @@
 .time-table td > small {
   margin-top: 3px;
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
 }
 
 .time-table th {
@@ -606,11 +518,11 @@
 .project-time-tasks small,
 .project-time-history small {
   color: var(--text-muted);
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
 }
 
 .project-time-summary strong {
-  font-size: 12px;
+  font-size: var(--aw-font-functional);
 }
 
 .project-time-start {
@@ -631,7 +543,7 @@
 .project-time-start strong,
 .project-time-tasks > strong,
 .project-time-history > strong {
-  font-size: 10px;
+  font-size: var(--aw-font-functional);
 }
 
 .project-time-tasks,
@@ -686,7 +598,7 @@
 
 .project-time-history > div > span {
   flex: 0 0 auto;
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
 }
 
@@ -709,7 +621,6 @@
     max-width: 210px;
   }
 
-  .time-kpi-grid,
   .project-time-summary {
     grid-template-columns: 1fr;
   }
@@ -821,10 +732,6 @@
   accent-color: var(--accent);
 }
 
-/* Gestion des temps : hiérarchie typographique alignée sur Projet / Prospection. */
-.time-period-tabs button,
-.time-toolbar .primary-button,
-.time-toolbar .secondary-button,
 .manual-time-panel .primary-button,
 .manual-time-panel .secondary-button,
 .time-table .text-button {
@@ -847,10 +754,46 @@
   font-weight: 400;
 }
 
-
-
-.time-kpi-icon-nonbillable svg { transform: scale(1.04); }
-
 .timer-pause-reason textarea { min-height: 82px; resize: vertical; }
 .timer-stop-decision .button-row,
 .timer-pause-reason .button-row { align-items: stretch; }
+
+/* R7 : onglets de période dans la barre d'outils commune (ils passent à la ligne, plus de défilement). */
+.time-period-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.time-period-tabs button {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--aw-font-functional);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.time-period-tabs button.active {
+  border-color: var(--aw-accent-solid);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.time-now-label {
+  color: var(--accent-strong);
+  font-size: var(--aw-font-functional);
+  font-weight: 700;
+}
+
+/* R7 : bouton « Corriger » des sessions au plancher de 14 px. */
+.time-page-stack .text-button { font-size: var(--aw-font-functional); }
+
+/* P4b (Temps, option C) : les quatre listes de la barre d'outils tiennent sur une ligne (la liste des projets prenait 443 px et faisait descendre la quatrième).
+   La règle globale max-width: 100 % annule la borne de list-page.css : la largeur est donc posée par width et flex. */
+.time-page-stack .aw-list-toolbar-filters select { width: 200px; flex: 0 1 200px; min-width: 0; }
+/* Catégorie et facturable : leur texte (« Toutes les catégories », « Facturable + non facturable ») ne doit pas être coupé. */
+.time-page-stack .aw-list-toolbar-filters select:nth-child(3) { width: 215px; flex-basis: 215px; }
+.time-page-stack .aw-list-toolbar-filters select:nth-child(4) { width: 250px; flex-basis: 250px; }

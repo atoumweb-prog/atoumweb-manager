@@ -17,7 +17,12 @@ if(!process.versions.electron){
  try{
   const main=fs.readFileSync(path.join(repo,'src/renderer/main.tsx'),'utf8');
   const files=[...main.matchAll(/^import '\.\/([^']+\.css)';$/gm)].map(x=>x[1]);
-  assert(files.length===31,'CSS import chain changed');
+  /* Règle durable (P6a, F49) : plus de nombre figé de feuilles ; un plancher et l'ordre des couches. */
+  assert(files.length>=31,'CSS import chain shrank below the 31 sheets this workshop was written against: '+files.length);
+  assert(files[0]==='tokens.css'&&files[1]==='styles.css','Base layers must stay first: tokens.css then styles.css');
+  const before=(a,b)=>files.indexOf(a)>-1&&files.indexOf(b)>-1&&files.indexOf(a)<files.indexOf(b);
+  assert(before('ui-typography-consistency.css','ui-consistency-v2.css'),'Typography layer must load before the global consistency layer');
+  assert(files.every(f=>fs.existsSync(path.join(repo,'src/renderer',f))),'Every stylesheet imported by main.tsx must exist');
   const css=files.map(f=>fs.readFileSync(path.join(repo,'src/renderer',f),'utf8')).join('\n');
   assert(!css.includes('</style'),'Unexpected CSS style closer');
   const layout=[

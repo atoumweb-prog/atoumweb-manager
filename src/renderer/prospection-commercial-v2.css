@@ -73,7 +73,6 @@
   .research-opportunity-row { grid-template-columns: 1fr; }
 }
 
-
 /* Annuaire prospects : même logique de lecture que Clients. */
 .prospect-directory-table-panel { min-width: 0; overflow: hidden; }
 .prospect-directory-table { width: 100%; table-layout: auto; }
@@ -157,32 +156,8 @@
   .reference-window-shell .research-check-row { grid-template-columns: 1fr; }
 }
 
-
 /* Statuts permanents de l'annuaire Prospection. */
 .prospect-side-panel-boundary { display: contents; }
-.prospect-directory-status {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  border-radius: 999px;
-  padding: 6px 9px;
-  font-size: .78rem;
-  font-weight: 800;
-  line-height: 1.15;
-  white-space: normal;
-}
-.prospect-directory-status-prepare { background: color-mix(in srgb, #f2b705 18%, #fff); color: #805e21; }
-.prospect-directory-status-ready { background: color-mix(in srgb, #198754 14%, #fff); color: #346d43; }
-.prospect-directory-status-qualifying { background: color-mix(in srgb, #1565c0 11%, #fff); color: #315e8c; }
-.prospect-directory-status-need_identified { background: color-mix(in srgb, #7b61a8 12%, #fff); color: #61498c; }
-.prospect-directory-status-quote_to_prepare,
-.prospect-directory-status-quote_to_send { background: color-mix(in srgb, #a47c34 13%, #fff); color: #6e5225; }
-.prospect-directory-status-quote_sent,
-.prospect-directory-status-follow_up,
-.prospect-directory-status-waiting { background: color-mix(in srgb, #e7b75e 15%, #fff); color: #805e21; }
-.prospect-directory-status-negotiation { background: color-mix(in srgb, #d88946 15%, #fff); color: #8a4f1c; }
-.prospect-directory-status-won { background: color-mix(in srgb, #198754 16%, #fff); color: #286238; }
-.prospect-directory-status-lost { background: color-mix(in srgb, #d62828 12%, #fff); color: #9c3934; }
 
 /* Modules repliables de la fiche de travail. */
 .prospect-work-accordion {
@@ -229,7 +204,6 @@
   .prospect-work-accordion-trigger { grid-template-columns: auto 1fr; }
   .prospect-work-accordion-summary { grid-column: 2; white-space: normal; }
 }
-
 
 /* Température du prospect visible sur toute la ligne, comme la relation Client. */
 .prospect-directory-table tbody tr.prospect-temperature-hot {

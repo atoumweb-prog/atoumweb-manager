@@ -1,4 +1,9 @@
+import { KeyFigures } from '../ui/KeyFigures';
+import { ListToolbar } from '../ui/ListToolbar';
+import { plural } from '../../shared/projectTabs';
+import { timeEmptyTexts } from '../../shared/gestionEmpty';
 import {ConfiguredDataTable} from '../ui/ConfiguredDataTable';
+import {hasActiveFilters} from '../ui/tableEmpty';
 import { BUSINESS_TIME_CATEGORIES, type BusinessTimeCategory } from '../../shared/operational';
 import { useEffect, useMemo, useState } from 'react';
 import type { ProjectSummary } from '../../shared/projects';
@@ -227,6 +232,7 @@ export function TimePage({ onMessage, statisticsDrilldown, onClearStatisticsDril
     }
   }
 
+  const timeEmpty = timeEmptyTexts({ period, drilldown: !!drilldown });
   const secondsAngle = now.getSeconds() * 6;
   const minutesAngle = now.getMinutes() * 6 + now.getSeconds() * 0.1;
   const hoursAngle = (now.getHours() % 12) * 30 + now.getMinutes() * 0.5;
@@ -236,16 +242,17 @@ export function TimePage({ onMessage, statisticsDrilldown, onClearStatisticsDril
       {drilldown && <section className="panel statistics-route-banner" aria-label="Filtre exact Statistiques">
         <strong>Sessions de temps · {drilldown.periodLabel}</strong>
         <p>Durées et tableau calculés uniquement sur les {drilldown.ids.length} sessions identifiées par le KPI. Les contrôles standards de période sont suspendus jusqu’à la sortie de ce filtre.</p>
-        {sessions.length < new Set(drilldown.ids).size && <p role="alert">{new Set(drilldown.ids).size - sessions.length} session(s) de la cohorte sont devenues indisponibles ; aucune session de remplacement n’est ajoutée.</p>}
+        {sessions.length < new Set(drilldown.ids).size && <p role="alert">{(() => { const missing = new Set(drilldown.ids).size - sessions.length; return `${missing > 1 ? `${missing} sessions de la cohorte sont devenues indisponibles` : '1 session de la cohorte est devenue indisponible'} ; aucune session de remplacement n’est ajoutée.`; })()}</p>}
         <button className="secondary-button" type="button" onClick={onClearStatisticsDrilldown}>Quitter le filtre et revenir à ce mois</button>
       </section>}
-      <div className="module-toolbar time-toolbar">
-        <div className="time-period-tabs">
+      <ListToolbar
+        countLabel={plural(sessions.length, 'session', 'sessions')}
+        leading={<div className="time-period-tabs">
           <button className={period === 'today' ? 'active' : ''} type="button" disabled={!!drilldown} onClick={() => setPeriod('today')}>Aujourd’hui</button>
           <button className={period === 'week' ? 'active' : ''} type="button" disabled={!!drilldown} onClick={() => setPeriod('week')}>Cette semaine</button>
           <button className={period === 'month' ? 'active' : ''} type="button" disabled={!!drilldown} onClick={() => setPeriod('month')}>Ce mois</button>
-        </div>
-        <div className="toolbar-controls time-filters">
+        </div>}
+        filters={<>
           <select value={clientId} disabled={!!drilldown} onChange={(event) => {
             const next = event.target.value;
             setClientId(next);
@@ -254,9 +261,9 @@ export function TimePage({ onMessage, statisticsDrilldown, onClearStatisticsDril
           <select value={projectId} disabled={!!drilldown} onChange={(event) => setProjectId(event.target.value)}><option value="">Tous les projets</option>{filteredProjects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select>
           <select value={category} disabled={!!drilldown} onChange={(event) => setCategory(event.target.value as 'all' | TimeCategory)}><option value="all">Toutes les catégories</option>{TIME_CATEGORIES.map((value) => <option key={value} value={value}>{CATEGORY_LABELS[value]}</option>)}</select>
           <select value={billable} disabled={!!drilldown} onChange={(event) => setBillable(event.target.value as typeof billable)}><option value="all">Facturable + non facturable</option><option value="yes">Facturable</option><option value="no">Non facturable</option></select>
-          <button className="primary-button" type="button" onClick={() => { setEditing(null); setManualOpen((value) => !value); }}>+ Temps manuel</button>
-        </div>
-      </div>
+        </>}
+        primary={<button className="primary-button" type="button" onClick={() => { setEditing(null); setManualOpen((value) => !value); }}>+ Temps manuel</button>}
+      />
 
       <section className={`time-visual-strip ${activeSession ? 'has-active-timer' : ''}`}>
         <div className="time-analog-clock" aria-hidden="true">
@@ -264,13 +271,13 @@ export function TimePage({ onMessage, statisticsDrilldown, onClearStatisticsDril
           <span className="time-clock-hand time-clock-hour" style={{ transform: `translateX(-50%) rotate(${hoursAngle}deg)` }} />
           <span className="time-clock-hand time-clock-minute" style={{ transform: `translateX(-50%) rotate(${minutesAngle}deg)` }} />
           <span className="time-clock-hand time-clock-second" style={{ transform: `translateX(-50%) rotate(${secondsAngle}deg)` }} />
-          <span className="time-clock-mark mark-12">12</span>
-          <span className="time-clock-mark mark-3">3</span>
-          <span className="time-clock-mark mark-6">6</span>
-          <span className="time-clock-mark mark-9">9</span>
+          <span className="time-clock-mark mark-12" />
+          <span className="time-clock-mark mark-3" />
+          <span className="time-clock-mark mark-6" />
+          <span className="time-clock-mark mark-9" />
         </div>
         <div className="time-now-copy">
-          <span className="eyebrow">Maintenant</span>
+          <small className="time-now-label">Maintenant</small>
           <strong>{now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</strong>
           <p>{activeSession
             ? `Chrono en cours · ${activeSession.activityLabel || activeSession.projectNodeLabel || activeSession.projectLabel || 'Activité AtoumWeb'}`
@@ -282,11 +289,11 @@ export function TimePage({ onMessage, statisticsDrilldown, onClearStatisticsDril
         </div>
       </section>
 
-      <div className="time-kpi-grid">
-        <article className="kpi-card time-kpi-card"><span className="time-kpi-icon" aria-hidden="true"><OperationIcon name="clock" size={29} /></span><div><strong className="time-kpi-label">Temps total</strong><span className="time-kpi-value">{secondsLabel(summary.totalSeconds)}</span><small>{summary.sessionCount} session{summary.sessionCount > 1 ? 's' : ''}</small></div></article>
-        <article className="kpi-card time-kpi-card"><span className="time-kpi-icon" aria-hidden="true"><OperationIcon name="euro" size={30} /></span><div><strong className="time-kpi-label">Facturable</strong><span className="time-kpi-value">{secondsLabel(summary.billableSeconds)}</span><small>Calculé depuis les sessions</small></div></article>
-        <article className="kpi-card time-kpi-card"><span className="time-kpi-icon time-kpi-icon-nonbillable" aria-hidden="true"><OperationIcon name="piggy-broken" size={31} /></span><div><strong className="time-kpi-label">Non facturable</strong><span className="time-kpi-value">{secondsLabel(summary.nonBillableSeconds)}</span><small>Interne, formation, gestes…</small></div></article>
-      </div>
+      <KeyFigures ariaLabel="Synthèse du temps" items={[
+        { key: 'total', label: 'Temps total', value: secondsLabel(summary.totalSeconds), helper: plural(summary.sessionCount, 'session', 'sessions') },
+        { key: 'billable', label: 'Facturable', value: secondsLabel(summary.billableSeconds), helper: 'Calculé depuis les sessions' },
+        { key: 'non-billable', label: 'Non facturable', value: secondsLabel(summary.nonBillableSeconds), helper: 'Interne, formation, gestes…' },
+      ]} />
 
       {manualOpen && (
         <section className="panel manual-time-panel">
@@ -323,7 +330,7 @@ export function TimePage({ onMessage, statisticsDrilldown, onClearStatisticsDril
       )}
 
       <section className="panel time-list-panel">
-        <ConfiguredDataTable<(typeof sessions)[number]> scope="time-sessions" store={window.atoumweb.visualPreferences} rows={sessions} selectedId={null} getId={session=>session.id} className="time-table" caption="Sessions de la période et des filtres courants · source complète" columns={[
+        <ConfiguredDataTable<(typeof sessions)[number]> emptyText={timeEmpty.empty} emptyFilteredText={timeEmpty.filtered} filtersActive={hasActiveFilters([clientId,projectId,category,billable])} onClearFilters={()=>{setClientId('');setProjectId('');setCategory('all');setBillable('all');}} scope="time-sessions" store={window.atoumweb.visualPreferences} rows={sessions} selectedId={null} getId={session=>session.id} className="time-table" caption="Sessions de la période et des filtres courants · source complète" columns={[
 {id:'identity',label:"Date",required:true,sortValue:session=>session.startedAt??null,render:session=><><span className="time-cell-value">{dateTimeLabel(session.startedAt)}</span>{!session.endedAt && <small className="time-live">En cours{session.paused ? ' · pause' : ''}</small>}</>},
 {id:'context',label:"Contexte",sortValue:session=>session.projectLabel??null,render:session=><><span className="time-cell-value">{session.projectNumber ? `${session.projectNumber} · ${session.projectLabel ?? ''}` : session.projectLabel || 'AtoumWeb'}</span><small>{session.projectNodeLabel || session.activityLabel || '—'}</small></>},
 {id:'category',label:"Catégorie",sortValue:session=>session.category??null,render:session=><><span className="time-category-pill">{CATEGORY_LABELS[session.category]}</span><small>{session.businessCategory ?? 'Métier non qualifié'}</small></>},

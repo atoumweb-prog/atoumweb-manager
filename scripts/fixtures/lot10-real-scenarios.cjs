@@ -14,8 +14,8 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
   await navigate('Statistiques');
   await wait('!!document.querySelector(".statistics-tabs")', 'lot 10 statistiques avec vraies IPC');
   await js("const b=[...document.querySelectorAll('.statistics-tabs button')].find(e=>e.textContent.includes('Commercial'));if(!b)throw Error('Onglet Commercial absent');b.click();");
-  await wait('document.querySelector(".statistics-kpis")?.textContent.includes("Contacts créés")', 'onglet statistiques commerciales');
-  test(await get('document.querySelector(".statistics-kpis")?.textContent.includes("Conversion prospects")'), 'Lot 10B: indicateurs commerciaux accessibles sur UI simple');
+  await wait('document.querySelector(".aw-keyfigures")?.textContent.includes("Contacts créés")', 'onglet statistiques commerciales');
+  test(await get('document.querySelector(".aw-keyfigures")?.textContent.includes("Conversion prospects")'), 'Lot 10B: indicateurs commerciaux accessibles sur UI simple');
   await js("const b=[...document.querySelectorAll('.statistics-tabs button')].find(e=>e.textContent.includes('Analyse financière'));if(!b)throw Error('Onglet analyse absent');b.click();");
   await wait('!!document.querySelector(".phase7-statistics-commercial-section button")', 'analytique consolidée');
   await js("document.querySelector('.phase7-statistics-commercial-section > button').click()");
@@ -30,15 +30,15 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
   await setStatisticsPeriod('quarter');
   await wait('document.querySelector(".statistics-period select")?.value==="quarter" && !!document.querySelector(".phase7-statistics-period-summary")', 'trimestre commun en analyse');
   await js("const b=[...document.querySelectorAll('.statistics-tabs button')].find(e=>e.textContent.includes('Vue d’ensemble'));b.click()");
-  test(await get('document.querySelector(".statistics-period select")?.value==="quarter" && !!document.querySelector(".statistics-kpis")'), 'Lot 10B: le trimestre suit le retour vers la vue simple');
+  test(await get('document.querySelector(".statistics-period select")?.value==="quarter" && !!document.querySelector(".aw-keyfigures")'), 'Lot 10B: le trimestre suit le retour vers la vue simple');
   await setStatisticsPeriod('custom');
   await wait('document.querySelectorAll(".statistics-custom-dates input").length===2', 'plage de dates commune');
-  test(await get('!!document.querySelector(".statistics-period-warning[role=alert]") && !document.querySelector(".statistics-kpis")'), 'Lot 10B: période personnalisée incomplète sans KPI périmé');
+  test(await get('!!document.querySelector(".statistics-period-warning[role=alert]") && !document.querySelector(".aw-keyfigures")'), 'Lot 10B: période personnalisée incomplète sans KPI périmé');
   await nativeInput('.statistics-custom-dates label:first-child input', '2026-09-12');
   await nativeInput('.statistics-custom-dates label:last-child input', '2026-09-10');
-  test(await get('document.querySelector(".statistics-period-warning[role=alert]")?.textContent.includes("début") && !document.querySelector(".statistics-kpis")'), 'Lot 10B: période inversée bloquée sans faux chiffre');
+  test(await get('document.querySelector(".statistics-period-warning[role=alert]")?.textContent.includes("début") && !document.querySelector(".aw-keyfigures")'), 'Lot 10B: période inversée bloquée sans faux chiffre');
   await nativeInput('.statistics-custom-dates label:last-child input', '2026-09-14');
-  await wait('!!document.querySelector(".statistics-kpis") && !document.querySelector(".statistics-period-warning[role=alert]")', 'période valide de nouveau');
+  await wait('!!document.querySelector(".aw-keyfigures") && !document.querySelector(".statistics-period-warning[role=alert]")', 'période valide de nouveau');
   await js("const b=[...document.querySelectorAll('.statistics-tabs button')].find(e=>e.textContent.includes('Analyse financière'));b.click()");
   await wait('document.querySelector(".phase7-statistics-period-summary")?.textContent.includes("12/09/2026")', 'dates personnalisées transmises au SQL');
   test(await get('document.querySelector(".statistics-period select")?.value==="custom" && document.querySelector(".phase7-statistics-period-summary")?.textContent.includes("14/09/2026")'), 'Lot 10B: dates personnalisées conservées et appliquées au SQL');
@@ -124,16 +124,16 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
   const alertProjectA = db.projects.createInternal({ name: 'LOT10 ALERTE SAUVEGARDE A' });
   const alertProjectB = db.projects.createInternal({ name: 'LOT10 ALERTE SAUVEGARDE B' });
   await navigate('Sauvegardes');
-  await wait('document.querySelectorAll(".business-backups-toolbar select").length===4', 'filtres du registre sauvegardes');
+  await wait('document.querySelectorAll(".aw-list-toolbar select").length===4', 'filtres du registre sauvegardes');
   await wait('document.querySelector(".business-backups-alerts")?.textContent.includes("LOT10 ALERTE SAUVEGARDE A")', 'alertes projet sur SQLite TEMP');
   test(await get('document.querySelector(".business-backups-alerts")?.textContent.includes("LOT10 ALERTE SAUVEGARDE B")'), 'Lot 10C: alertes calculées sur les projets actifs réels du fixture TEMP');
-  await js(`const e=document.querySelector('.business-backups-toolbar select[aria-label="Filtrer par projet"]');Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(e,${JSON.stringify(alertProjectA.id)});e.dispatchEvent(new Event('change',{bubbles:true}));`);
+  await js(`const e=document.querySelector('.aw-list-toolbar select[aria-label="Filtrer par projet"]');Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(e,${JSON.stringify(alertProjectA.id)});e.dispatchEvent(new Event('change',{bubbles:true}));`);
   await wait('document.querySelector(".business-backups-alerts")?.textContent.includes("LOT10 ALERTE SAUVEGARDE A") && !document.querySelector(".business-backups-alerts")?.textContent.includes("LOT10 ALERTE SAUVEGARDE B")', 'alerte filtrée par Projet');
   test(await get('document.querySelectorAll(".business-backups-alert").length===1'), 'Lot 10C: alerte du projet B absente du contexte Projet A');
-  await js("const e=document.querySelector('.business-backups-toolbar select[aria-label=\"Filtrer par projet\"]');Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(e,'');e.dispatchEvent(new Event('change',{bubbles:true}));");
-  test(await get('!!document.querySelector(".business-backups-toolbar select[aria-label=\\"Filtrer par client\\"]") && !!document.querySelector(".business-backups-toolbar select[aria-label=\\"Filtrer par projet\\"]")'), 'Lot 10C: sélecteurs Client et Projet réels, sans création de sauvegarde');
-  test(await get('document.querySelector(".business-backups-page .technical-safety-note")?.textContent.includes("ne crée pas de fichiers")'), 'Lot 10C: déclaration ne signifie pas sauvegarde réelle');
-  await js(`const b=[...document.querySelectorAll('.business-backups-toolbar button')].find(b=>b.textContent.includes('Déclarer une sauvegarde'));if(!b)throw Error('Bouton déclaration absent');b.click();`);
+  await js("const e=document.querySelector('.aw-list-toolbar select[aria-label=\"Filtrer par projet\"]');Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(e,'');e.dispatchEvent(new Event('change',{bubbles:true}));");
+  test(await get('!!document.querySelector(".aw-list-toolbar select[aria-label=\\"Filtrer par client\\"]") && !!document.querySelector(".aw-list-toolbar select[aria-label=\\"Filtrer par projet\\"]")'), 'Lot 10C: sélecteurs Client et Projet réels, sans création de sauvegarde');
+  test(await get('document.querySelector(".business-backups-page .business-backups-note")?.textContent.includes("ne crée pas de fichiers")'), 'Lot 10C: déclaration ne signifie pas sauvegarde réelle');
+  await js(`const b=[...document.querySelectorAll('.aw-list-toolbar button')].find(b=>b.textContent.includes('Déclarer une sauvegarde'));if(!b)throw Error('Bouton déclaration absent');b.click();`);
   await wait('!!document.querySelector(".business-backups-create input[placeholder]")', 'formulaire de déclaration');
   await nativeInput('.business-backups-create input[placeholder]', 'LOT10 BROUILLON TEST');
   test(await get('document.querySelector(".business-backups-create input[placeholder]")?.value==="LOT10 BROUILLON TEST"'), 'Lot 10C: brouillon présent en vrai renderer');
@@ -187,15 +187,15 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
 
   // R10B-06/07 : les détails des KPI doivent partager les identifiants réellement agrégés.
   await js("const b=[...document.querySelectorAll('.statistics-tabs button')].find(e=>e.textContent.includes('Vue d’ensemble'));if(!b)throw Error('Vue ensemble absente');b.click()");
-  await wait('!!document.querySelector(".statistics-kpi-inspect")', 'KPI inspectables');
-  await js("const card=[...document.querySelectorAll('.statistics-kpi')].find(e=>e.textContent.includes('Facturé suivi'));if(!card)throw Error('KPI facture absent');card.querySelector('button.statistics-kpi-inspect').click()");
+  await wait('!!document.querySelector(".aw-keyfigure--action")', 'KPI inspectables');
+  await js("const card=[...document.querySelectorAll('.aw-keyfigure--action')].find(e=>e.textContent.includes('Facturé suivi'));if(!card)throw Error('KPI facture absent');card.click()");
   await wait('document.querySelectorAll(".statistics-evidence-table tbody tr").length===2', 'facturation fictive en détail');
   const detailIds = () => get('[...document.querySelectorAll(".statistics-evidence-table td small[title]")].map(e=>e.title)');
   test(JSON.stringify(await detailIds().then(ids=>ids.sort()))===JSON.stringify(['lot10-billing-a','lot10-billing-b']),
     'Lot 10B: détails facture sur les vrais ID du compteur, sans faux routage');
   test(await get('document.querySelector(".statistics-evidence-panel")?.textContent.includes("billing_items") && document.querySelector(".statistics-evidence-panel")?.textContent.includes("Date facturée")'),
     'Lot 10B: source métier et unités explicites dans le détail');
-  await js("const card=[...document.querySelectorAll('.statistics-kpi')].find(e=>e.textContent.includes('Temps travaillé'));card.querySelector('button.statistics-kpi-inspect').click()");
+  await js("const card=[...document.querySelectorAll('.aw-keyfigure--action')].find(e=>e.textContent.includes('Temps travaillé'));card.click()");
   await wait('document.querySelectorAll(".statistics-evidence-table tbody tr").length===2', 'sessions détaillées');
   test(JSON.stringify(await detailIds().then(ids=>ids.sort()))===JSON.stringify(['lot10-time-a','lot10-time-b']),
     'Lot 10B: détail temps avec les mêmes sessions que le KPI');
@@ -208,7 +208,7 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
     ['lot10-billing-outside',firstClient.id,'lot10-billing-outside','other:lot10-billing-outside','LOT10 facture hors cohorte affichée',5000,started,started,started],
   );
   // Ne pas actualiser Statistiques : cet ajout est volontairement postérieur au snapshot utilisateur.
-  await js("const card=[...document.querySelectorAll('.statistics-kpi')].find(e=>e.textContent.includes('Facturé suivi'));card.querySelector('button.statistics-kpi-inspect').click()");
+  await js("const card=[...document.querySelectorAll('.aw-keyfigure--action')].find(e=>e.textContent.includes('Facturé suivi'));card.click()");
   await wait('document.querySelector(".statistics-evidence-panel")?.textContent.includes("Lignes de facturation suivies")', 'cohorte facture resélectionnée');
   await js("document.querySelector('.statistics-open-drilldown').click()");
   await wait('document.querySelector(".statistics-route-banner")?.textContent.includes("Facturation suivie")', 'route Facturation à filtre exact');
@@ -218,13 +218,13 @@ module.exports = async ({ win, db, evalUI: js, get, wait, navigate, test, sleep 
   await wait('document.querySelectorAll(".billing-list-panel tbody tr").length===3', 'sortie explicite du filtre stats');
   test(await get('!document.querySelector(".statistics-route-banner")'), 'R10B-17 : retour à la liste métier complète');
   await navigate('Statistiques');
-  await wait('!!document.querySelector(".statistics-kpi-inspect")', 'retour Statistiques après Facturation');
-  await js("const card=[...document.querySelectorAll('.statistics-kpi')].find(e=>e.textContent.includes('Temps travaillé'));card.querySelector('button.statistics-kpi-inspect').click()");
+  await wait('!!document.querySelector(".aw-keyfigure--action")', 'retour Statistiques après Facturation');
+  await js("const card=[...document.querySelectorAll('.aw-keyfigure--action')].find(e=>e.textContent.includes('Temps travaillé'));card.click()");
   await wait('document.querySelector(".statistics-open-drilldown")?.textContent.includes("sessions")', 'route Temps disponible');
   await js("document.querySelector('.statistics-open-drilldown').click()");
   await wait('document.querySelector(".statistics-route-banner")?.textContent.includes("Sessions de temps")', 'route sessions exacte');
   test(await get('document.querySelectorAll(".time-table tbody tr").length===2'), 'R10B-17 : seulement les deux sessions réellement comptées');
-  test(await get('document.querySelector(".time-kpi-grid")?.textContent.includes("4 h")'), 'R10B-17 : totaux métier du Temps réconciliés avec la cohorte');
+  test(await get('document.querySelector(".aw-keyfigures")?.textContent.includes("4 h")'), 'R10B-17 : totaux métier du Temps réconciliés avec la cohorte');
   await js("document.querySelector('.statistics-route-banner button').click()");
   await wait('!document.querySelector(".statistics-route-banner")', 'sortie filtrage Temps');
 

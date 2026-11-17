@@ -5,73 +5,6 @@
   min-width: 0;
 }
 
-.expenses-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
-  gap: 9px;
-}
-
-.expenses-kpi-grid article {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  padding: 12px 13px;
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface);
-}
-
-.expenses-kpi-grid article > div {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-
-.expenses-kpi-icon {
-  display: inline-grid;
-  width: 48px;
-  height: 48px;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
-  color: var(--accent);
-  font-size: 18px;
-  font-weight: 650;
-}
-
-.expenses-kpi-grid strong {
-  color: var(--text-muted);
-  font-size: var(--aw-font-functional, 14px);
-  font-weight: 700;
-}
-
-.expenses-kpi-grid article span:not(.expenses-kpi-icon) {
-  color: var(--text);
-  font-size: 20px;
-  font-weight: 400;
-  line-height: 1.2;
-}
-
-.expenses-kpi-grid small {
-  color: var(--text-muted);
-  font-size: var(--aw-font-functional, 14px);
-  font-weight: 400;
-}
-
-.expenses-toolbar .toolbar-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-.expenses-toolbar .inline-search {
-  min-width: min(310px, 28vw);
-}
-
 .expenses-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -231,13 +164,13 @@
 }
 
 .expense-status.status-planned {
-  color: #4a6f9b;
-  background: color-mix(in srgb, #4a7fb3 12%, var(--surface));
+  color: var(--aw-info-soft-fg);
+  background: var(--aw-info-soft-bg);
 }
 
 .expense-status.status-committed {
-  color: #946b19;
-  background: color-mix(in srgb, #c58b24 12%, var(--surface));
+  color: var(--aw-warning-soft-fg);
+  background: var(--aw-warning-soft-bg);
 }
 
 .expense-status.status-paid,
@@ -247,8 +180,8 @@
 }
 
 .expense-status.status-cancelled {
-  color: #a63d43;
-  background: color-mix(in srgb, #c44950 9%, var(--surface));
+  color: var(--aw-danger-soft-fg);
+  background: var(--aw-danger-soft-bg);
 }
 
 .expense-category-pill {
@@ -511,7 +444,6 @@ body.expenses-resizing {
 }
 
 @media (max-width: 1250px) {
-  .expenses-kpi-grid,
   .expenses-summary-grid {
     grid-template-columns: repeat(2, minmax(140px, 1fr));
   }
@@ -542,20 +474,17 @@ body.expenses-resizing {
 }
 
 @media (max-width: 620px) {
-  .expenses-kpi-grid,
   .expenses-summary-grid {
     grid-template-columns: 1fr;
   }
 }
 
-.expenses-toolbar .secondary-button,
 .expenses-detail-actions button,
 .expense-category-pill,
 .status-pill {
   align-items: center;
 }
 
-.expenses-toolbar .secondary-button,
 .expenses-detail-actions button {
   display: inline-flex;
   gap: 6px;
@@ -565,22 +494,6 @@ body.expenses-resizing {
 .status-pill svg {
   flex: 0 0 auto;
 }
-
-@media (max-width: 1100px) {
-  .expenses-toolbar {
-    align-items: stretch;
-  }
-
-  .expenses-toolbar .toolbar-controls {
-    width: 100%;
-  }
-
-  .expenses-toolbar .inline-search {
-    flex: 1 1 260px;
-    min-width: 220px;
-  }
-}
-
 
 .expense-overdue-indicator {
   display: inline-block;

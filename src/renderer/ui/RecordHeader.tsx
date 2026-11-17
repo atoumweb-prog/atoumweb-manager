@@ -1,0 +1,39 @@
+import type { ReactNode } from 'react';
+import { MoreMenu } from './MoreMenu';
+import type { MenuItem } from './moreMenuModel';
+import { StatusPill, type StatusTone } from './StatusPill';
+
+/**
+ * En-tête de dossier (contact, devis, projet) : titre, sous-titre, état, actions et menu « Plus ».
+ * Les enfants forment l'emplacement du bloc « Prochaine étape », sous l'en-tête. Aucune règle métier.
+ */
+export function RecordHeader({ leading, title, subtitle, status, actions, moreItems, onMore, closeAction, children, className }: {
+  /** R3 : emplacement avant le titre (logo ou avatar du dossier). */
+  leading?: ReactNode;
+  title: string;
+  subtitle?: string;
+  status?: { label: string; tone?: StatusTone };
+  actions?: ReactNode;
+  moreItems?: MenuItem[];
+  onMore?: (id: string) => void;
+  /** P3a (F2) : action de fermeture, toujours rendue en dernier, après le menu « Plus ». */
+  closeAction?: ReactNode;
+  children?: ReactNode;
+  className?: string;
+}) {
+  const hasMore = Boolean(moreItems && moreItems.length > 0);
+  return <header className={['aw-record-header', className].filter(Boolean).join(' ')}>
+    {leading}
+    <div className="aw-record-header-main">
+      <h2 className="aw-record-header-title">{title}</h2>
+      {subtitle && <p className="aw-record-header-subtitle">{subtitle}</p>}
+    </div>
+    <div className="aw-record-header-side">
+      {status && <StatusPill tone={status.tone}>{status.label}</StatusPill>}
+      {actions}
+      {hasMore && <MoreMenu items={moreItems as MenuItem[]} onSelect={(id) => onMore?.(id)} />}
+      {closeAction}
+    </div>
+    {children && <div className="aw-record-header-next">{children}</div>}
+  </header>;
+}

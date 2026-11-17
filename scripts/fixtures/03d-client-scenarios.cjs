@@ -49,7 +49,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   test(dialogs.length===n+1&&await get('window.__clientInput.value==="TEST03D UNSAVED"&&window.__clientInput.isConnected'),'Close Stay asks exactly once and retains text');
   const originalAdd=db.clientContacts.add.bind(db.clientContacts);let rejectSave;
   db.clientContacts.add=()=>new Promise((resolve,reject)=>{rejectSave=reject;});
-  await click('#client-tab-contacts');await input('#client-panel-contacts .contact-inline-form label:nth-child(2) input','PENDING');await click('#client-panel-contacts .contact-inline-form button[type=submit]');
+  await click('#client-tab-contacts');/* P6a : la liste « Créer ou rattacher une personne » est maintenant le 1er label ; le nom (ancien 2e label) est le 3e, le prénom saisi plus haut reste intact */await input('#client-panel-contacts .contact-inline-form label:nth-child(3) input','PENDING');await click('#client-panel-contacts .contact-inline-form button[type=submit]');
   for(let i=0;i<50&&!rejectSave;i++)await sleep(20);
   test(typeof rejectSave==='function','Contact persistence is actually pending');
   const pendingDialogs=dialogs.length;await click('.client-summary-panel .close-detail');test(dialogs.length===pendingDialogs+1&&await get("window.__clientInput.isConnected&&window.__clientInput.matches(':disabled')"),'Pending prevents closing and editing');
@@ -78,8 +78,8 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   test(await get('document.querySelector(".client-summary-panel").textContent.includes("TEST03D quotes unavailable")'),'Partial service failure is explicit');
   await click('#client-tab-contacts');await wait('document.querySelector("#client-panel-contacts .contact-card")','independent Contacts');test(await get('document.querySelector("#client-panel-contacts").textContent.includes("TEST03D CONTACT")'),'Successful contacts survive Quote service failure');
   failQuotes=false;await textClick('.client-summary-panel [role=alert] button','Réessayer');await wait('!document.querySelector(".client-summary-panel [role=alert]")','explicit recovery');
-  await click('#client-tab-summary');await textClick('#client-panel-summary button','Modifier la note de relation');
-  await input('#client-panel-summary textarea','TEST03D relation dated');await textClick('#client-panel-summary button','Enregistrer la note');await wait('!document.querySelector("#client-panel-summary textarea")','relation saved');
+  await click('#client-tab-summary');/* P6a : « Gestion de la relation » est une section repliée à part (client-summary-management) */await js('document.querySelector(".client-summary-management details").open=true');await sleep(60);await textClick('.client-summary-management button','Modifier la note de relation');
+  await input('.client-summary-management textarea','TEST03D relation dated');await textClick('.client-summary-management button','Enregistrer la note');await wait('!document.querySelector(".client-summary-management textarea")','relation saved');
   test(db.crm.listClients({includeArchived:true}).find(item=>item.id===client.id).relationshipNote==='TEST03D relation dated','Real UI saves only relationship note');
   test(db.crm.listActivity('client',client.id).some(e=>e.action==='relationship_note_changed'),'Relationship note change has dated history');
   await textClick('.clients-table tr',second.displayName);await wait(`document.querySelector('.client-summary-panel')?.dataset.searchEntityId===${JSON.stringify(second.id)}`,'second Client');

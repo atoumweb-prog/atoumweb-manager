@@ -9,6 +9,7 @@ import type {ContractSectionReview} from '../../shared/contractSectionPolicy';
 import {isCurrentContractRequest} from './contractRequestGuard';
 import {useUnsavedDraft,unsavedRegistry,requestUnsavedExit} from '../unsaved/unsaved';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePageConfirm } from '../ui/usePageConfirm';
 import type { CatalogItemSummary, QuoteDetail } from '../../shared/commercial';
 import { commercialAbbyBlock } from '../../shared/commercialAbby';
 import { ContractReadPanel } from './ContractReadPanel';
@@ -38,6 +39,7 @@ function sourceLabel(clause: QuoteContractClause): string {
 
 export function ContractTermsBuilder({ quote,human=false }: { quote: QuoteDetail;human?:boolean }) {
   const [updateProposal,setUpdateProposal]=useState<ContractUpdateProposal|null>(null);
+  const {dialog: confirmDialog, askConfirm} = usePageConfirm();
   const [build, setBuild] = useState<QuoteContractBuild | null>(null);
   const [templates, setTemplates] = useState<ContractClauseTemplate[]>([]);
   const [catalog, setCatalog] = useState<CatalogItemSummary[]>([]);
@@ -252,7 +254,7 @@ export function ContractTermsBuilder({ quote,human=false }: { quote: QuoteDetail
 
   async function applyUpdate():Promise<void>{
     if(!updateProposal||updateProposal.quoteId!==quote.id||unsavedRegistry.active('quote:'+quote.id).length){setError('Enregistrez ou annulez les saisies avant d’appliquer les CGV.');return;}
-    if(!window.confirm('Appliquer uniquement les changements comparés ci-dessous ? Les clauses personnalisées sont conservées.'))return;
+    if(!(await askConfirm({title:'Appliquer uniquement les changements comparés ?',body:'Les clauses personnalisées sont conservées.',confirmLabel:'Appliquer les changements'})))return;
     const proposal=updateProposal;
     if(await run(()=>window.atoumweb.contractTerms.quotes.sync(quote.id,proposal.token)))setUpdateProposal(null);
   }
@@ -447,7 +449,7 @@ export function ContractTermsBuilder({ quote,human=false }: { quote: QuoteDetail
   const libraryView = showLibrary && <div className="cgv-library">
         <div className="cgv-library-heading">{human&&<button type="button" className="secondary-button" onClick={()=>requestUnsavedExit(()=>setShowLibrary(false),'quote:'+quote.id)}>Revenir aux clauses du devis</button>}
           <div><strong>Bibliothèque CGV AtoumWeb</strong><span>Les versions publiées alimentent les devis brouillons. Les devis déjà finalisés ne changent jamais.</span></div>
-          <button className="primary-button" type="button" onClick={() => setShowCreateTemplate((value) => !value)}>{showCreateTemplate ? 'Fermer' : '+ Nouvelle clause'}</button>
+          <button className={showCreateTemplate ? 'secondary-button' : 'primary-button'} type="button" onClick={() => setShowCreateTemplate((value) => !value)}>{showCreateTemplate ? 'Fermer' : '+ Nouvelle clause'}</button>
         </div>
 
         {showCreateTemplate && <div className="cgv-template-form">
@@ -517,13 +519,14 @@ export function ContractTermsBuilder({ quote,human=false }: { quote: QuoteDetail
     return <section className="cgv-builder"><p className="muted">Préparation des CGV du devis…</p></section>;
   }
 
-  if(human)return <><ContractClauseDesk build={build} drafts={drafts} editable={editable} busy={busy} unsaved={unsaved} custom={customView} library={libraryView} comparison={comparisonView} error={error}
+  if(human)return <>{confirmDialog}<ContractClauseDesk build={build} drafts={drafts} editable={editable} busy={busy} unsaved={unsaved} custom={customView} library={libraryView} comparison={comparisonView} error={error}
    onDraft={(id,draft)=>setDrafts(current=>({...current,[id]:draft}))} onSave={saveClause} onCancel={clause=>setDrafts(current=>({...current,[clause.id]:{title:clause.title,body:clause.body}}))}
    onLibrary={clause=>{if(unsavedRegistry.active('quote:'+quote.id).length){setError('Enregistre ou annule la saisie en cours.');return;}setHumanLibraryId(clause.sourceClauseId??'');setShowLibrary(true);}} onCompare={()=>void sync()} onAdd={()=>setShowCustom(true)} onToggle={c=>void toggleClause(c)} onReset={c=>void resetClause(c)} onRemove={c=>void removeCustom(c)} onMove={(id,direction)=>void moveClause(id,direction)}/>
    <QuoteDocumentActions quote={quote}/><details className="quote-extra-options"><summary>Aperçu complet et informations des clauses</summary>{build?.warnings.map(w=><p key={w}>{w}</p>)}{presentation&&<ContractReadPanel key={quote.id} quoteId={quote.id} presentation={presentation} commercial={commercialAbbyBlock(quote)} unsaved={unsaved}/>}</details></>;
 
   return (
     <section className="cgv-builder">
+      {confirmDialog}
       <div className="cgv-builder-heading">
         <div>
           <span className="eyebrow">Devis contractuel</span>

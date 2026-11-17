@@ -182,12 +182,10 @@ table td {
   overflow-wrap: anywhere;
 }
 
-
 /* Recette CRM 22/09/2026 — hiérarchie typographique validée.
    Titres/libellés en gras, informations en graisse normale. */
-.prospect-directory-status,
-.prospect-detail-v2 .status-pill {
-  font-size: 13px !important;
+.prospect-detail-v2 .status-pill{
+  font-size: var(--aw-font-functional) !important;
   font-weight: 750 !important;
   line-height: 1.15;
 }
@@ -263,7 +261,6 @@ table td {
   line-height: 1;
   border-radius: 9px;
 }
-
 
 /* Hiérarchie typographique CRM — règle de lecture unique.
    1. Titres / libellés = gras.
@@ -350,7 +347,6 @@ table td {
   font-weight: 650;
 }
 
-
 /* Recette transverse — boutons dimensionnés sur leur libellé.
    Les CTA ne doivent plus s'étirer sur toute une grille simplement parce que
    le conteneur utilise le comportement stretch par défaut. */
@@ -375,7 +371,6 @@ table td {
   width: 100%;
   justify-self: stretch;
 }
-
 
 /* Passe transverse — boutons compacts, aide contextuelle et hiérarchie des formulaires. */
 .content-area :is(.primary-button, .secondary-button, .danger-button) {
@@ -410,7 +405,7 @@ table td {
   background: var(--surface);
   color: var(--text-muted);
   cursor: help;
-  font-size: 11px !important;
+  font-size: var(--aw-font-functional) !important;
   font-weight: 800 !important;
   line-height: 1;
   vertical-align: middle;
@@ -505,8 +500,7 @@ table td {
 .content-area :is(
   .status-pill,
   .catalog-status,
-  .quote-status,
-  .prospect-directory-status
+  .quote-status
 ) {
   font-weight: 650 !important;
 }
@@ -567,88 +561,25 @@ table td {
   --aw-status-neutral-fg: #c9d0d9;
 }
 
-:root[data-theme='noir'] .prospect-directory-table tbody tr.prospect-temperature-hot {
-  --prospect-temperature-pastel: var(--aw-status-red-bg);
-  --prospect-temperature-color: #e77a6f;
-}
-:root[data-theme='noir'] .prospect-directory-table tbody tr.prospect-temperature-warm {
-  --prospect-temperature-pastel: var(--aw-status-yellow-bg);
-  --prospect-temperature-color: #e7b75e;
-}
-:root[data-theme='noir'] .prospect-directory-table tbody tr.prospect-temperature-cold {
-  --prospect-temperature-pastel: var(--aw-status-blue-bg);
-  --prospect-temperature-color: #79a9d7;
-}
-:root[data-theme='noir'] .prospect-directory-table tbody tr.prospect-temperature-neutral {
-  --prospect-temperature-pastel: var(--aw-status-green-bg);
-  --prospect-temperature-color: #55b98b;
-}
+:root[data-theme] .prospect-directory-table tbody tr.prospect-temperature-hot{--prospect-temperature-pastel: var(--aw-status-red-bg)}
+:root[data-theme='noir'] .prospect-directory-table tbody tr.prospect-temperature-hot{--prospect-temperature-color: #e77a6f}
+:root[data-theme] .prospect-directory-table tbody tr.prospect-temperature-warm{--prospect-temperature-pastel: var(--aw-status-yellow-bg)}
+:root[data-theme='noir'] .prospect-directory-table tbody tr.prospect-temperature-warm{--prospect-temperature-color: #e7b75e}
+:root[data-theme] .prospect-directory-table tbody tr.prospect-temperature-cold{--prospect-temperature-pastel: var(--aw-status-blue-bg)}
+:root[data-theme='noir'] .prospect-directory-table tbody tr.prospect-temperature-cold{--prospect-temperature-color: #79a9d7}
+:root[data-theme] .prospect-directory-table tbody tr.prospect-temperature-neutral{--prospect-temperature-pastel: var(--aw-status-green-bg)}
+:root[data-theme='noir'] .prospect-directory-table tbody tr.prospect-temperature-neutral{--prospect-temperature-color: #55b98b}
 
-:root[data-theme='noir'] .prospect-directory-table tbody tr[class*='prospect-temperature-'] > td,
-:root[data-theme='noir'] .clients-table tbody tr[class*='client-relationship-'] > td {
-  color: var(--text) !important;
-}
+:root[data-theme] .prospect-directory-table tbody tr[class*='prospect-temperature-'] > td,:root[data-theme] .clients-table tbody tr[class*='client-relationship-'] > td{color: var(--text) !important}
 
-:root[data-theme='noir'] .prospect-directory-status-prepare,
-:root[data-theme='noir'] .prospect-directory-status-quote_sent,
-:root[data-theme='noir'] .prospect-directory-status-follow_up,
-:root[data-theme='noir'] .prospect-directory-status-waiting {
-  background: var(--aw-status-yellow-bg) !important;
-  color: var(--aw-status-yellow-fg) !important;
-}
-:root[data-theme='noir'] .prospect-directory-status-ready,
-:root[data-theme='noir'] .prospect-directory-status-won {
-  background: var(--aw-status-green-bg) !important;
-  color: var(--aw-status-green-fg) !important;
-}
-:root[data-theme='noir'] .prospect-directory-status-qualifying {
-  background: var(--aw-status-blue-bg) !important;
-  color: var(--aw-status-blue-fg) !important;
-}
-:root[data-theme='noir'] .prospect-directory-status-need_identified {
-  background: var(--aw-status-purple-bg) !important;
-  color: var(--aw-status-purple-fg) !important;
-}
-:root[data-theme='noir'] .prospect-directory-status-quote_to_prepare,
-:root[data-theme='noir'] .prospect-directory-status-quote_to_send,
-:root[data-theme='noir'] .prospect-directory-status-negotiation {
-  background: var(--aw-status-orange-bg) !important;
-  color: var(--aw-status-orange-fg) !important;
-}
-:root[data-theme='noir'] .prospect-directory-status-lost {
-  background: var(--aw-status-red-bg) !important;
-  color: var(--aw-status-red-fg) !important;
-}
-
-:root[data-theme='noir'] .prospect-ready-yes,
-:root[data-theme='noir'] .research-status-ok {
-  background: var(--aw-status-green-bg) !important;
-  color: var(--aw-status-green-fg) !important;
-}
-:root[data-theme='noir'] .prospect-ready-no,
-:root[data-theme='noir'] .research-status-review {
-  background: var(--aw-status-yellow-bg) !important;
-  color: var(--aw-status-yellow-fg) !important;
-}
-:root[data-theme='noir'] .research-status-missing {
-  background: var(--aw-status-red-bg) !important;
-  color: var(--aw-status-red-fg) !important;
-}
-:root[data-theme='noir'] .research-status-na {
-  background: var(--aw-status-neutral-bg) !important;
-  color: var(--aw-status-neutral-fg) !important;
-}
+:root[data-theme] .prospect-ready-yes,:root[data-theme] .research-status-ok{background: var(--aw-status-green-bg) !important;color: var(--aw-status-green-fg) !important}
+:root[data-theme] .prospect-ready-no,:root[data-theme] .research-status-review{background: var(--aw-status-yellow-bg) !important;color: var(--aw-status-yellow-fg) !important}
+:root[data-theme] .research-status-missing{background: var(--aw-status-red-bg) !important;color: var(--aw-status-red-fg) !important}
+:root[data-theme] .research-status-na{background: var(--aw-status-neutral-bg) !important;color: var(--aw-status-neutral-fg) !important}
 
 /* Anciennes vues commerciales forçaient des cartes blanches.
    En Noir elles réutilisent désormais les surfaces du thème. */
-:root[data-theme='noir'] .prospect-readiness-card,
-:root[data-theme='noir'] .prospect-commercial-priority,
-:root[data-theme='noir'] .prospect-reference-summary,
-:root[data-theme='noir'] .reference-tab-intro,
-:root[data-theme='noir'] .research-check-card,
-:root[data-theme='noir'] .prospect-desk-tabs button,
-:root[data-theme='noir'] .research-tabs button,
-:root[data-theme='noir'] .prospect-detail-v2 :is(
+:root[data-theme] .prospect-readiness-card,:root[data-theme] .prospect-commercial-priority,:root[data-theme] .prospect-reference-summary,:root[data-theme] .reference-tab-intro,:root[data-theme] .research-check-card,:root[data-theme] .prospect-desk-tabs button,:root[data-theme] .research-tabs button,:root[data-theme] .prospect-detail-v2 :is(
   .inline-editor,
   .contact-methods-panel,
   .need-selector-v2,
@@ -659,8 +590,7 @@ table td {
   .linked-contact-row,
   .selected-contact-summary,
   .missing-info-row
-),
-:root[data-theme='noir'] .client-summary-panel :is(
+),:root[data-theme] .client-summary-panel :is(
   .client-primary-card,
   .client-notes,
   .activity-preview,
@@ -670,33 +600,13 @@ table td {
   .contact-card,
   .contact-methods-panel,
   .inline-editor
-),
-:root[data-theme='noir'] .client-relationship-menu,
-:root[data-theme='noir'] .client-relationship-choice {
-  background: var(--surface) !important;
-  color: var(--text) !important;
-  border-color: var(--border) !important;
-}
+),:root[data-theme] .client-relationship-menu,:root[data-theme] .client-relationship-choice{background: var(--surface) !important;color: var(--text) !important;border-color: var(--border) !important}
 
-:root[data-theme='noir'] .prospect-detail-v2.prospect-temperature-hot {
-  --business-pastel: var(--aw-status-red-bg);
-  --business-ink: var(--aw-status-red-fg);
-}
-:root[data-theme='noir'] .prospect-detail-v2.prospect-temperature-warm {
-  --business-pastel: var(--aw-status-yellow-bg);
-  --business-ink: var(--aw-status-yellow-fg);
-}
-:root[data-theme='noir'] .prospect-detail-v2.prospect-temperature-cold {
-  --business-pastel: var(--aw-status-blue-bg);
-  --business-ink: var(--aw-status-blue-fg);
-}
-:root[data-theme='noir'] .prospect-detail-v2.prospect-temperature-neutral {
-  --business-pastel: var(--aw-status-green-bg);
-  --business-ink: var(--aw-status-green-fg);
-}
-:root[data-theme='noir'] .prospect-detail-v2,
-:root[data-theme='noir'] .prospect-detail-v2 .detail-panel-heading,
-:root[data-theme='noir'] .prospect-detail-v2 :is(
+:root[data-theme] .prospect-detail-v2.prospect-temperature-hot{--business-pastel: var(--aw-status-red-bg);--business-ink: var(--aw-status-red-fg)}
+:root[data-theme] .prospect-detail-v2.prospect-temperature-warm{--business-pastel: var(--aw-status-yellow-bg);--business-ink: var(--aw-status-yellow-fg)}
+:root[data-theme] .prospect-detail-v2.prospect-temperature-cold{--business-pastel: var(--aw-status-blue-bg);--business-ink: var(--aw-status-blue-fg)}
+:root[data-theme] .prospect-detail-v2.prospect-temperature-neutral{--business-pastel: var(--aw-status-green-bg);--business-ink: var(--aw-status-green-fg)}
+:root[data-theme] .prospect-detail-v2,:root[data-theme] .prospect-detail-v2 .detail-panel-heading,:root[data-theme] .prospect-detail-v2 :is(
   .prospect-work-section,
   .prospect-quote-panel,
   .activity-preview,
@@ -704,30 +614,16 @@ table td {
   .linked-contacts-panel,
   .qualification-recap,
   .prospect-missing-actions
-) {
-  color: var(--text) !important;
-}
-:root[data-theme='noir'] .prospect-detail-v2 .prospect-temperature-control label {
-  color: var(--text) !important;
-}
+){color: var(--text) !important}
 
 /* Final combined recipe: legacy !important white fields conflicted with the
    shared dark text-fill. Keep existing layout/business tints; theme both inks. */
-:root[data-theme='noir'] :is(.prospect-detail-v2, .client-summary-panel) :is(input, select, textarea) {
-  background: var(--surface) !important;
-  color: var(--text) !important;
-  -webkit-text-fill-color: var(--text);
-  border-color: var(--border) !important;
-  color-scheme: dark;
-}
-:root[data-theme='noir'] .prospect-detail-v2 .missing-action > span { color: var(--text); }
-:root[data-theme='noir'] .prospect-detail-v2 .activity-journal :is(span, small, strong, p) { color: var(--text); }
-:root[data-theme='noir'] .prospect-detail-v2 :is(.prospect-work-section, .prospect-quote-panel, .workflow-fields) :is(p, span, strong, label, small, legend, h2, h3) {
-  color: var(--text);
-}
-:root[data-theme='noir'] .prospect-detail-v2 :is(.prospect-work-section, .prospect-quote-panel) :is(h2, h3, legend) {
-  color: var(--business-ink) !important;
-}
+:root[data-theme] :is(.prospect-detail-v2, .client-summary-panel) :is(input, select, textarea){background: var(--surface) !important;color: var(--text) !important;-webkit-text-fill-color: var(--text);border-color: var(--border) !important}
+:root[data-theme='noir'] :is(.prospect-detail-v2, .client-summary-panel) :is(input, select, textarea){color-scheme: dark}
+:root[data-theme] .prospect-detail-v2 .missing-action > span{color: var(--text)}
+:root[data-theme] .prospect-detail-v2 .activity-journal :is(span, small, strong, p){color: var(--text)}
+:root[data-theme] .prospect-detail-v2 :is(.prospect-work-section, .prospect-quote-panel, .workflow-fields) :is(p, span, strong, label, small, legend, h2, h3){color: var(--text)}
+:root[data-theme] .prospect-detail-v2 :is(.prospect-work-section, .prospect-quote-panel) :is(h2, h3, legend){color: var(--business-ink) !important}
 /* Scope the measured action contrast correction to the panels under review. */
 :root :is(.prospect-detail-v2, .quote-detail-panel, .global-timer) .primary-button {
   background: var(--accent-strong);
@@ -742,42 +638,19 @@ table td {
   color: #18212b;
 }
 
-:root[data-theme='noir'] .client-relationship-excellent {
-  --business-color: #55b98b;
-  --business-ink: var(--aw-status-green-fg);
-  --business-pastel: var(--aw-status-green-bg);
-}
-:root[data-theme='noir'] .client-relationship-good {
-  --business-color: #79a9d7;
-  --business-ink: var(--aw-status-blue-fg);
-  --business-pastel: var(--aw-status-blue-bg);
-}
-:root[data-theme='noir'] .client-relationship-neutral {
-  --business-color: #87919e;
-  --business-ink: var(--aw-status-neutral-fg);
-  --business-pastel: var(--aw-status-neutral-bg);
-}
-:root[data-theme='noir'] .client-relationship-watch {
-  --business-color: #e7b75e;
-  --business-ink: var(--aw-status-yellow-fg);
-  --business-pastel: var(--aw-status-yellow-bg);
-}
-:root[data-theme='noir'] .client-relationship-difficult {
-  --business-color: #e77a6f;
-  --business-ink: var(--aw-status-red-fg);
-  --business-pastel: var(--aw-status-red-bg);
-}
-:root[data-theme='noir'] .client-summary-panel,
-:root[data-theme='noir'] .client-summary-panel .detail-panel-heading {
-  color: var(--text) !important;
-}
-:root[data-theme='noir'] .client-summary-panel :is(.client-since, p, span, strong, label, small, h2, h3) {
-  color: inherit;
-}
-:root[data-theme='noir'] .client-summary-panel .muted,
-:root[data-theme='noir'] .client-summary-panel small {
-  color: var(--muted) !important;
-}
+:root[data-theme] .client-relationship-excellent{--business-ink: var(--aw-status-green-fg);--business-pastel: var(--aw-status-green-bg)}
+:root[data-theme='noir'] .client-relationship-excellent{--business-color: #55b98b}
+:root[data-theme] .client-relationship-good{--business-ink: var(--aw-status-blue-fg);--business-pastel: var(--aw-status-blue-bg)}
+:root[data-theme='noir'] .client-relationship-good{--business-color: #79a9d7}
+:root[data-theme] .client-relationship-neutral{--business-ink: var(--aw-status-neutral-fg);--business-pastel: var(--aw-status-neutral-bg)}
+:root[data-theme='noir'] .client-relationship-neutral{--business-color: #87919e}
+:root[data-theme] .client-relationship-watch{--business-ink: var(--aw-status-yellow-fg);--business-pastel: var(--aw-status-yellow-bg)}
+:root[data-theme='noir'] .client-relationship-watch{--business-color: #e7b75e}
+:root[data-theme] .client-relationship-difficult{--business-ink: var(--aw-status-red-fg);--business-pastel: var(--aw-status-red-bg)}
+:root[data-theme='noir'] .client-relationship-difficult{--business-color: #e77a6f}
+:root[data-theme] .client-summary-panel,:root[data-theme] .client-summary-panel .detail-panel-heading{color: var(--text) !important}
+:root[data-theme] .client-summary-panel :is(.client-since, p, span, strong, label, small, h2, h3){color: inherit}
+:root[data-theme] .client-summary-panel .muted,:root[data-theme] .client-summary-panel small{color: var(--muted) !important}
 
 /* Client — une erreur de fiche ne doit jamais faire disparaître tout le Manager. */
 .client-detail-error-card,
@@ -806,9 +679,7 @@ table td {
   justify-content: flex-start;
 }
 
-:root[data-theme='noir'] .prospect-directory-table tbody tr[class*='prospect-temperature-'] > td {
-  border-color: color-mix(in srgb, var(--prospect-temperature-color) 20%, var(--border));
-}
+:root[data-theme] .prospect-directory-table tbody tr[class*='prospect-temperature-'] > td{border-color: color-mix(in srgb, var(--prospect-temperature-color) 20%, var(--border))}
 
 :root[data-theme='noir'] .prospect-directory-table tbody tr[class*='prospect-temperature-']:hover > td {
   filter: brightness(1.08);
@@ -857,8 +728,6 @@ table td {
 .renderer-fatal-card .secondary-button {
   justify-self: start;
 }
-
-
 
 /* Responsive Prospection — même logique de densité que Interventions / Maintenance. */
 
@@ -959,7 +828,7 @@ table td {
 /* Réagit à la largeur réelle du panneau latéral. */
 @container prospectpanel (max-width: 390px) {
   .prospect-detail-v2 {
-    font-size: 13px;
+    font-size: var(--aw-font-functional);
   }
 
   .prospect-detail-v2 .detail-panel-heading h2 {
@@ -968,7 +837,7 @@ table td {
   }
 
   .prospect-detail-v2 .status-pill {
-    font-size: 11px !important;
+    font-size: var(--aw-font-functional) !important;
     padding: 5px 7px;
   }
 
@@ -992,13 +861,13 @@ table td {
   }
 
   .prospect-detail-panel:not(.prospect-detail-desk) .reference-summary-grid > div > span {
-    font-size: 11px !important;
+    font-size: var(--aw-font-functional) !important;
   }
 
   .prospect-detail-panel:not(.prospect-detail-desk) .reference-summary-grid > div > strong,
   .prospect-detail-panel:not(.prospect-detail-desk) .reference-summary-grid > div > small {
     min-width: 0;
-    font-size: 12px !important;
+    font-size: var(--aw-font-functional) !important;
     overflow-wrap: anywhere;
   }
 
@@ -1034,7 +903,6 @@ table td {
   }
 }
 
-
 /* Historique Prospection — layout indépendant du séparateur Annuaire/Pipeline. */
 .history-view-stack .prospects-layout.with-detail {
   grid-template-columns: minmax(0, 1fr) clamp(320px, 32vw, 500px) !important;
@@ -1069,7 +937,6 @@ table td {
     overflow: visible !important;
   }
 }
-
 
 /* Responsive Clients — même atelier adaptatif que Prospection / Interventions. */
 .clients-layout {
@@ -1202,7 +1069,6 @@ table td {
   }
 }
 
-
 /* Prospection — densité verticale adaptative et tableau qui absorbe l'espace disponible. */
 .content-area:has(.prospects-v2) {
   display: flex;
@@ -1332,7 +1198,7 @@ table td {
   }
 
   .content-area:has(.prospects-v2) > .page-heading p {
-    font-size: 11px;
+    font-size: var(--aw-font-functional);
   }
 
   .prospects-v2 {
@@ -1399,17 +1265,10 @@ table td {
 
 .quote-lines > strong,.quote-add-line > strong {font-size:16px;}
 .quote-line strong {font-size:17px;line-height:1.4;}
-.quote-line small {font-size:12px;color:var(--muted);display:block;margin-top:4px;}
+.quote-line small {color:var(--muted);display:block;margin-top:4px;}
 .quote-line > span,.quote-totals strong {font-size:17px;font-weight:750;}
 .quote-totals span {font-size:15px;}
 .quote-total-main strong {font-size:22px;}
-
-/* Supplanter les tailles historiques de 8/9 px dans les cartes commerciales. */
-.prospect-detail-v2 .need-solution-card .need-name {font-size:18px !important;line-height:1.4;}
-.prospect-detail-v2 .need-solution-card .need-price {font-size:16px !important;}
-.quote-line strong {font-size:17px !important;}
-.quote-totals strong {font-size:17px !important;}
-.quote-total-main strong {font-size:22px !important;}
 
 /* UX/UI V2 — 01A / R01A-07 : contrastes mesurés en Chromium sur les états.
    Corrige uniquement les 4 couples texte/fond sous 4,5:1 observés le 10/10/2026.
@@ -1420,234 +1279,11 @@ table td {
 }
 
 /* Réutilise les encres d'états déjà validées pour les surfaces sombres. */
-:root[data-theme='noir'] .priority-high {
-  color: var(--aw-status-yellow-fg);
-}
+:root[data-theme] .priority-high{color: var(--aw-status-yellow-fg)}
 
-:root[data-theme='noir'] .priority-urgent {
-  color: var(--aw-status-red-fg);
-}
-
-/* UX/UI V2 — 01B.2 pilot presentation primitives.
-   New aw-ui-* classes only; historical module button and field classes unchanged.
-   Reuse 01A theme and density tokens, without defining business effects. */
-.aw-ui-button-wrap {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
-  min-width: 0;
-  max-width: 100%;
-}
-
-:is(.content-area, .aw-workspace-header) .aw-ui-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: fit-content;
-  max-width: 100%;
-  min-height: var(--ui-control-height);
-  padding: var(--ui-control-pad-y) var(--ui-control-pad-x);
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  background: var(--surface);
-  color: var(--text);
-  font-family: inherit;
-  font-size: max(14px, var(--ui-font-base));
-  font-weight: 650;
-  text-align: center;
-  line-height: 1.25;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  cursor: pointer;
-}
-
-:is(.content-area, .aw-workspace-header) .aw-ui-button--primary {
-  background: var(--accent-soft);
-  border-color: var(--accent-strong);
-  color: var(--text);
-  box-shadow: inset 0 0 0 1px var(--accent-strong);
-}
-
-:is(.content-area, .aw-workspace-header) .aw-ui-button--secondary {
-  background: var(--surface-soft);
-  color: var(--text);
-}
-
-:is(.content-area, .aw-workspace-header) .aw-ui-button--quiet {
-  background: transparent;
-  border-color: transparent;
-  color: var(--text);
-}
-
-:is(.content-area, .aw-workspace-header) .aw-ui-button--danger {
-  background: color-mix(in srgb, #d62828 8%, var(--surface));
-  border-color: color-mix(in srgb, #d62828 68%, var(--border));
-  color: var(--text);
-}
-
-:is(.content-area, .aw-workspace-header) .aw-ui-button:not(:disabled):hover {
-  filter: brightness(.98);
-  border-color: var(--accent-strong);
-}
-
-:is(.content-area, .aw-workspace-header) .aw-ui-button:focus-visible {
-  outline: 2px solid var(--accent-strong);
-  outline-offset: 2px;
-}
-
-:is(.content-area, .aw-workspace-header) .aw-ui-button:disabled {
-  opacity: .5;
-  cursor: not-allowed;
-}
-
-.aw-ui-button-icon {
-  display: inline-flex;
-  width: 20px;
-  height: 20px;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-}
-
-.aw-ui-button-icon svg {
-  max-width: 100%;
-  max-height: 100%;
-}
-
-.aw-ui-button-progress {
-  font-weight: 800;
-  line-height: 1;
-}
-
-.aw-ui-control-error,
-.aw-ui-field-error {
-  font-size: max(14px, var(--ui-font-secondary));
-  line-height: 1.45;
-  color: var(--text);
-  border-left: 3px solid #d62828;
-  padding-left: 8px;
-  overflow-wrap: anywhere;
-}
-
-.aw-ui-field {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-  max-width: 100%;
-}
-
-.aw-ui-field-heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px;
-}
-
-.aw-ui-field-label {
-  color: var(--text);
-  font-size: max(14px, var(--ui-font-secondary));
-  font-weight: 700;
-}
-
-.aw-ui-required {
-  color: var(--text);
-}
-
-.aw-ui-field-hint {
-  color: var(--muted);
-  font-size: max(14px, var(--ui-font-secondary));
-  line-height: 1.4;
-}
-
-.content-area .aw-ui-field-input {
-  width: 100%;
-  max-width: 100%;
-  min-height: var(--ui-control-height);
-  font-size: max(14px, var(--ui-font-base));
-  color: var(--text);
-}
-
-.content-area .aw-ui-field-input[aria-invalid='true'] {
-  border-color: #d62828;
-}
-
-.content-area .aw-ui-field-input:focus-visible {
-  outline: 2px solid var(--accent-strong);
-  outline-offset: 2px;
-}
-
-/* UX V2 / 01B.5 — isolated notification pilot, not the existing .notice.
-   Text contrast comes from current theme tokens; state is explicit, never inferred. */
-.content-area .aw-ui-notice {
-  box-sizing: border-box;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  max-width: 100%;
-  min-height: var(--ui-control-height);
-  padding: 11px 13px;
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--accent-strong);
-  border-radius: 10px;
-  background: var(--surface-soft);
-  color: var(--text);
-  font-size: max(14px, var(--ui-font-secondary));
-  font-weight: 400;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-}
-
-.content-area .aw-ui-notice--success {
-  border-left-color: var(--success);
-}
-
-.content-area .aw-ui-notice--warning {
-  border-left-color: var(--aw-status-yellow-fg, var(--accent-strong));
-}
-
-.content-area .aw-ui-notice--error {
-  border-left-color: var(--aw-status-red-fg, #d62828);
-}
-
-.aw-ui-notice-body {
-  flex: 1 1 200px;
-  min-width: 0;
-}
-
-.content-area :is(.aw-ui-notice-action, .aw-ui-notice-close) {
-  flex: 0 0 auto;
-  min-height: 36px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text);
-  font-size: max(14px, var(--ui-font-secondary));
-  font-weight: 650;
-  cursor: pointer;
-}
-
-.content-area .aw-ui-notice-action {
-  padding: 6px 12px;
-}
-
-.content-area .aw-ui-notice-close {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  padding: 0;
-  font-size: 20px;
-}
-
-.content-area :is(.aw-ui-notice-action, .aw-ui-notice-close):focus-visible {
-  outline: 2px solid var(--accent-strong);
-  outline-offset: 2px;
-}
+:root[data-theme] .priority-urgent{color: var(--aw-status-red-fg)}
 
 .field-help-short{pointer-events:none;padding:8px 12px;max-height:120px;font-size:var(--ui-font-secondary)}
 
 /* Match the legacy Client card rule only in dark mode; preserve business status backgrounds. */
-:root[data-theme='noir'] .client-summary-panel :is(.client-primary-card,.client-status-control,.contact-inline-form,.contact-card,.tab-content-stack,.activity-preview) :is(p,span,strong,label,small,h3){color:var(--text)}
+:root[data-theme] .client-summary-panel :is(.client-primary-card,.client-status-control,.contact-inline-form,.contact-card,.tab-content-stack,.activity-preview) :is(p,span,strong,label,small,h3){color:var(--text)}

@@ -56,7 +56,7 @@
   width: fit-content;
   padding: 2px 7px;
   border-radius: 999px;
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
   background: var(--surface);
 }
@@ -107,7 +107,7 @@
   display: grid;
   gap: 6px;
   color: var(--text-muted);
-  font-size: 9px;
+  font-size: var(--aw-font-functional);
   font-weight: 800;
 }
 
@@ -125,7 +125,7 @@
 
 .incident-quick-actions .muted {
   max-width: 65%;
-  font-size: 8px;
+  font-size: var(--aw-font-functional);
 }
 
 @media (max-width: 980px) {

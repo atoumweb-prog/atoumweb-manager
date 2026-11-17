@@ -103,14 +103,14 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
   let confirmations=0;dialog.showMessageBoxSync=()=>{confirmations++;return 0;};
   await navigate('Prospection');
   await js('[...document.querySelectorAll(".aw-rail-group-heading")].find(e=>e.textContent.trim()==="Commercial").click()');await sleep(50);
-  check(await get('!!document.querySelector(".aw-rail-group-heading[data-group-active=true][aria-expanded=false]")'),'Collapsed group still identifies its active destination');
+  check(await get('!!document.querySelector(".aw-rail-group-heading[data-group-active=true][aria-expanded=true]")&&!document.querySelector(".aw-rail-group-heading[data-group-active=true][aria-expanded=false]")'),'Group holding the active page stays open and identified when a collapse is requested (R7)');
   states.push({name:'extras/active-group-collapsed',...await capture('extras/active-group-collapsed')});
   await js('[...document.querySelectorAll(".aw-rail-group-heading")].find(e=>e.textContent.trim()==="Commercial").click()');
-  await js('document.querySelector(".prospection-pilot-heading .primary-button").click()');await sleep(50);
+  await js('document.querySelector(".prospects-v2>.page-heading .primary-button").click()');await sleep(50);
   await js(`const e=document.querySelector('.prospect-create-v2 input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'TEST UX LOT1 DRAFT');e.dispatchEvent(new Event('input',{bubbles:true}));window.__lot1Draft=document.querySelector('.prospect-create-v2')`);await sleep(60);
   await js('document.querySelector("#header-settings-trigger").click()');await sleep(60);
   check(confirmations===1&&await get('document.querySelector(".prospect-create-v2 input").value==="TEST UX LOT1 DRAFT"&&window.__lot1Draft===document.querySelector(".prospect-create-v2")'),'UX01 Stay preserves exact draft and mounted editor');
-  check(await get('!document.querySelector(".aw-brand-home-reference")'),'Home logo variant is absent from Prospection');
+  check(await get('(()=>{const visible=[...document.querySelectorAll(".aw-rail-brand .aw-brand-logotype")].filter(e=>e.getClientRects().length);return visible.length===1&&visible[0].classList.contains("aw-brand-home-reference")})()'),'Prospection shows the same single rail logo as Home (R2, one logo on every page)');
   await js(`const e=document.querySelector('.prospect-create-v2 input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'');e.dispatchEvent(new Event('input',{bubbles:true}));`);await sleep(50);
  }finally{dialog.showMessageBoxSync=originalDialog;}
  await navigate('Accueil');await wait('document.querySelectorAll("[data-source-status=ready]").length===9','back Home');
@@ -118,7 +118,7 @@ module.exports=async({win,db,evalUI:js,get,wait,navigate,test,sleep})=>{
  await js('window.dispatchEvent(new CustomEvent("atoumweb:time-changed"))');await wait('document.querySelector(".global-timer.running")','actual active timer');
  await js('window.__lot1ActiveTimer=document.querySelector(".global-timer")');
  for(const [w,z] of [[1280,1.5],[1366,1.25]]){win.setContentSize(w,720);win.webContents.setZoomFactor(z);await sleep(80);check(await get('document.querySelectorAll(".global-timer").length===1&&window.__lot1ActiveTimer===document.querySelector(".global-timer")'),'Active timer remains mounted '+w);}
- await js('window.dispatchEvent(new CustomEvent("atoumweb:timer-context",{detail:{activityLabel:"TEST — Changement proposé",category:"development",billable:false}}))');await wait('document.querySelector(".timer-switch-popover")','active timer switch dialog');
+ await js('window.dispatchEvent(new CustomEvent("atoumweb:timer-context",{detail:{activityLabel:"TEST — Changement proposé",category:"development",billable:false}}))');/* P6b (F53) : l'en-tête désactive ses commandes un rendu après l'ouverture de la fenêtre (effet de GlobalTimer) ; on attend cet état, sans délai fixe. */await wait('document.querySelector(".timer-switch-popover")&&document.querySelector("#header-alerts-trigger").disabled&&document.querySelector("#header-settings-trigger").disabled','active timer switch dialog with exclusive header');
  check(await get('document.querySelector("#header-alerts-trigger").disabled&&document.querySelector("#header-settings-trigger").disabled&&window.__lot1ActiveTimer===document.querySelector(".global-timer")'),'Active timer dialog preserves timer and exclusive layer');
  states.push({name:'extras/active-timer-dialog',...await capture('extras/active-timer-dialog')});
  await js('document.querySelector(".timer-switch-popover .secondary-button").focus()');win.focus();win.webContents.focus();win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(80);

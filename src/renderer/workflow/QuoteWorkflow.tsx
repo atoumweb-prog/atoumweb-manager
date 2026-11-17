@@ -48,7 +48,7 @@ export function QuoteProjectPanel({quote,requirePreviewBeforePrepare=false}:{quo
   return <section className="workflow-fields quote-project-create">
     <h3>{quote.status==='accepted'?'Projet du devis accepté':'Préparer le Projet'}</h3>
     {loadingProject ? <p role="status">Vérification du Projet déjà lié au devis…</p> : lookupFailed ? <p className="form-error" role="alert">Vérification du Projet impossible : {error}. Aucun nouveau Projet ne sera créé tant que le lien existant n'est pas vérifié.</p> : project
-      ? <>{project.commercialState==='provisional'&&quote.status!=='accepted'&&<p role="status">Projet en préparation — devis non signé.</p>}<button type="button" className="primary-button" onClick={()=>openEntity({entityType:'project',entityId:project.id,title:project.name})}>Ouvrir {project.name}</button><ProjectCommercialScopePanel key={project.id+project.commercialState+quote.status} projectId={project.id} onChanged={setProject}/></>
+      ? <>{project.commercialState==='provisional'&&quote.status!=='accepted'&&<p role="status">Projet en préparation — devis non signé.</p>}<button type="button" className="secondary-button" onClick={()=>openEntity({entityType:'project',entityId:project.id,title:project.name})}>Ouvrir {project.name}</button><ProjectCommercialScopePanel key={project.id+project.commercialState+quote.status} projectId={project.id} onChanged={setProject}/></>
       : <>
           <p>Préparer les étapes, Sites, Pages et prérequis depuis les lignes du devis. Les options seulement disponibles ne contribuent pas. L’acceptation activera et figera le même Projet.</p>
           <label>Plan de production<select value={template} onChange={e=>{setTemplate(e.target.value);setError('');setPreview(null);}}>

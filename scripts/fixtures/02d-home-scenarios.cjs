@@ -26,13 +26,13 @@ module.exports=async({win,db,temp,registered,evalUI:js,get,wait,navigate,test,sl
   await click('[data-widget-setting=watch] input');
   test(await get('document.querySelector("[data-home-widget=watch]").hidden&&document.querySelectorAll("[data-home-critical]").length>=1'),'Hiding watch keeps critical alerts visible');
   test(writes===1&&snapshot()===before,'One preference write, no business mutation');
-  await click('[aria-label="Monter Temps et facturation"]');
+  await click('[aria-label="Monter Temps & facturation"]');
   test(writes===2&&await get('window.__todayHome===document.querySelector("[data-home-widget=today]")'),'Keyboard reorder retains Today mounted and writes once');
   const preDrag=writes;
   await js("const event=new DragEvent('dragover',{bubbles:true,cancelable:true,dataTransfer:new DataTransfer()});document.querySelector('[data-widget-setting=kpis]').dispatchEvent(event)");
   test(writes===preDrag,'Drag preview never persists');
   await js("const data=new DataTransfer();data.setData('text/plain','actions');document.querySelector('[data-widget-setting=kpis]').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:data}))");await sleep(60);
-  test(writes===preDrag+1&&await get('document.querySelectorAll("[data-home-widget]")[1].dataset.homeWidget==="actions"'),'Drop commits one visual order change');
+  test(writes===preDrag+1&&await get('(()=>{const keys=[...document.querySelectorAll("[data-home-widget]")].map(e=>e.dataset.homeWidget);return keys.indexOf("actions")===keys.indexOf("kpis")-1&&keys[0]==="today"})()'),'Drop commits one visual order change');
   const pref=await get(`window.atoumweb.visualPreferences.getItem(${JSON.stringify(key)})`);
   test(!/selectedId|entityId|HOME TEMP|notes|query/.test(pref),'Only widget presentation in persisted schema');
   second=new BrowserWindow({show:false,webPreferences:{preload:path.join(temp,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});await second.loadFile(path.join(temp,'index.html'));
@@ -40,7 +40,7 @@ module.exports=async({win,db,temp,registered,evalUI:js,get,wait,navigate,test,sl
   test(await second.webContents.executeJavaScript('document.querySelector("[data-home-widget=watch]").hidden'),'Second native window restores workspace Home layout');
   db.setSetting=(name,value)=>{if(name==='ux_v2_visual_preferences_v1')throw Error('Injected preference disk refusal');return originalSetting(name,value);};
   const layoutBefore=await get('Array.from(document.querySelectorAll("[data-home-widget]")).map(e=>e.dataset.homeWidget).join(",")');
-  await click('[aria-label="Descendre Accès rapides"]');
+  await click('[aria-label="Descendre Indicateurs"]');
   test(await get('!!document.querySelector(".home-dashboard .aw-ui-notice--error")')&&await get('Array.from(document.querySelectorAll("[data-home-widget]")).map(e=>e.dataset.homeWidget).join(",")')===layoutBefore,'Failed persistence never announces or applies saved layout');
   db.setSetting=originalSetting;
   // Cache remains explicitly stale on service error; no forced zero/false all-clear.
@@ -55,7 +55,7 @@ module.exports=async({win,db,temp,registered,evalUI:js,get,wait,navigate,test,sl
   await refresh();for(let i=0;i<60&&!finishAway;i++)await sleep(20);test(!!finishAway,'Pending Home source before context change');
   await click('.quick-prospect');await wait('!!document.querySelector(".prospection-v2,.prospects-v2,.prospects-page,.prospect-toolbar")||document.querySelector(".page-heading h1")?.textContent==="Prospection"','honest quick navigation');
   await navigate('Clients');
-  await js("[...document.querySelectorAll('.client-toolbar button')].find(b=>b.textContent.includes('+ Nouveau client')).click()");await sleep(60);
+  await js("[...document.querySelectorAll('.content-area .page-heading button')].find(b=>b.textContent.includes('+ Nouveau client')).click()");await sleep(60);
   await js("const e=document.querySelector('.crm-form input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'HOME IPC DRAFT');e.dispatchEvent(new Event('input',{bubbles:true}));window.__homeClientForm=document.querySelector('.crm-form')");await sleep(60);
   finishAway();await sleep(90);
   test(await get('window.__homeClientForm===document.querySelector(".crm-form")&&document.querySelector(".crm-form input").value==="HOME IPC DRAFT"&&!document.querySelector(".home-dashboard")'),'Late Home response keeps current Client draft and exact mounted instance');
@@ -74,11 +74,11 @@ module.exports=async({win,db,temp,registered,evalUI:js,get,wait,navigate,test,sl
   await click('[data-home-critical]');await wait(`!!document.querySelector('[data-search-entity-type="intervention"][data-search-entity-id="${incident.id}"]')`,'critical opens exact real intervention');
   test(await get('window.__timerHome===document.querySelector(".global-timer")&&document.querySelectorAll(".global-timer").length===1'),'Real unique timer retained across Home navigation');
   await navigate('Accueil');await ready();
-  await click('.home-today-item');await wait(`!!document.querySelector('[data-search-entity-type="client"][data-search-entity-id="${client.id}"]')`,'today opens actual client');
+  await click('[aria-label="Ouvrir HOME TEMP TODAY"]');await wait(`!!document.querySelector('[data-search-entity-type="client"][data-search-entity-id="${client.id}"]')`,'today opens actual client');
   test(snapshot()===before,'Home alert/today navigation never writes business rows');
   await navigate('Accueil');await ready();await click('.home-widget-settings summary');
   await js("[...document.querySelectorAll('.home-widget-settings button')].find(b=>b.textContent==='Réinitialiser l’Accueil').click()");await sleep(80);
-  test(await get('!document.querySelector("[data-home-widget=watch]").hidden&&document.querySelectorAll("[data-home-widget]")[1].dataset.homeWidget==="kpis"'),'Home reset restores only standard presentation');
+  test(await get('!document.querySelector("[data-home-widget=watch]").hidden&&Array.from(document.querySelectorAll("[data-home-widget]")).map(e=>e.dataset.homeWidget).join(",")==="today,watch,kpis,pipeline,time,actions"'),'Home reset restores only standard presentation');
   test(snapshot()===before,'Reset keeps all business tables and historic rows');
   // Fresh mount with a failed critical source must never claim all alerts are current.
   await navigate('Clients');replaceAlerts(()=>{throw Error('Injected fresh mount error');});await navigate('Accueil');

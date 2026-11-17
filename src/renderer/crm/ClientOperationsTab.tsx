@@ -3,6 +3,7 @@ import type {HourPack, Intervention, MaintenanceSubscription, MaintenancePeriod,
 import type {SearchResult} from '../../shared/crm';
 import {OperationIcon, type OperationIconName} from '../operations/OperationIcon';
 import {AppButton} from '../ui/AppButton';
+import {KeyFigures} from '../ui/KeyFigures';
 import {openEntity} from '../workflow/DossierPanel';
 import './ClientOperationsTab.css';
 
@@ -61,12 +62,12 @@ export function ClientOperationsTab({clientId,onMessage}:{clientId:string;onMess
   const show=(category:Category)=>view===category||(view==='all'&&counts[category]>0);
   return <div className="client-operations-tab">
     <header className="client-operations-heading"><OperationIcon name="wrench"/><div><h3>Interventions et maintenance</h3><p>Suivi opérationnel des interventions, maintenances et packs d’heures du client.</p></div><span className="client-operations-count">{unavailable?'—':`${interventions.length} intervention${interventions.length===1?'':'s'} · ${packs.length} pack${packs.length===1?'':'s'}`}</span></header>
-    <div className="client-operations-kpis" aria-label="Situation des interventions">
-      <OperationKpi icon="wrench" label="En cours" value={unavailable?'—':String(indicators.inProgress)}/>
-      <OperationKpi icon="calendar" label="À planifier" value={unavailable?'—':String(indicators.toPlan)}/>
-      <OperationKpi icon="check-circle" label="Terminées" value={unavailable?'—':String(indicators.completed)}/>
-      <OperationKpi icon="layers" label="Packs actifs" value={unavailable?'—':String(indicators.activePacks)}/>
-    </div>
+    <KeyFigures ariaLabel="Situation des interventions" className="client-operations-kpis" items={[
+      { key: 'progress', icon: <OperationIcon name="wrench"/>, label: 'En cours', value: unavailable?'—':String(indicators.inProgress) },
+      { key: 'plan', icon: <OperationIcon name="calendar"/>, label: 'À planifier', value: unavailable?'—':String(indicators.toPlan) },
+      { key: 'done', icon: <OperationIcon name="check-circle"/>, label: 'Terminées', value: unavailable?'—':String(indicators.completed) },
+      { key: 'packs', icon: <OperationIcon name="layers"/>, label: 'Packs actifs', value: unavailable?'—':String(indicators.activePacks) },
+    ]} />
     <nav className="client-operations-navigation" aria-label="Catégories opérationnelles">
       <AppButton variant={view==='all'?'primary':'secondary'} aria-pressed={view==='all'} onAction={()=>setView('all')}>Vue d’ensemble</AppButton>
       {CATEGORIES.map(category=><AppButton key={category.id} variant={view===category.id?'primary':'secondary'} aria-pressed={view===category.id} icon={<OperationIcon name={category.icon}/>} onAction={()=>setView(category.id)}>{category.label}{!unavailable&&` (${counts[category.id]})`}</AppButton>)}
@@ -104,7 +105,6 @@ export function ClientOperationsTab({clientId,onMessage}:{clientId:string;onMess
     <AppButton className="client-operations-refresh" icon={<OperationIcon name="refresh"/>} onAction={()=>load()} disabled={loading}>Actualiser</AppButton>
   </div>;
 }
-function OperationKpi({icon,label,value}:{icon:OperationIconName;label:string;value:string}) {return <div className="client-operation-kpi"><OperationIcon name={icon}/><strong>{value}</strong><span>{label}</span></div>;}
 function OriginLink({type,id,title}:{type:SearchResult['entityType'];id:string;title:string}) {return <AppButton variant="quiet" onAction={()=>{openEntity({entityType:type,entityId:id,title});}}>{title}</AppButton>;}
 function OperationCard({target,icon,title,status,statusLabel,children}:{target:SearchResult;icon:OperationIconName;title:string;status:string;statusLabel:string;children:ReactNode}) {return <article className="client-operation-card" data-operation-id={target.entityId}><OperationIcon name={icon}/><div className="client-operation-content"><h5>{title}</h5><div className="client-operation-meta">{children}</div></div><span className="client-operation-status" data-status={status}>{statusLabel}</span><AppButton icon={<OperationIcon name="external-link"/>} onAction={()=>{openEntity(target);}}>Ouvrir</AppButton></article>;}
 function OperationSection({id,icon,title,count,empty,children}:{id:Category;icon:OperationIconName;title:string;count:number;empty:string;children:ReactNode}) {return <section className="client-operation-section" data-operation-category={id}><h4><OperationIcon name={icon}/>{title} ({count})</h4>{count?children:<p className="client-operations-empty">{empty}</p>}</section>;}

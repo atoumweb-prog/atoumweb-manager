@@ -1,3 +1,4 @@
+import { plural } from '../../shared/projectTabs';
 import { useEffect, useMemo, useState } from 'react';
 import {
   INCIDENT_CRITICALITIES,
@@ -97,7 +98,7 @@ export function OperationsAlertsPanel({ refreshKey, onNavigate, onMessage }: {
       <span className="operations-health-icon"><OperationIcon name={attentionCount === 0 ? 'shield-check' : 'alert'} size={22} /></span>
       <div>
         <span className="eyebrow">Suivi opérationnel</span>
-        <strong>{attentionCount === 0 ? 'Tout est à jour' : `${attentionCount} point(s) à traiter`}</strong>
+        <strong>{attentionCount === 0 ? 'Tout est à jour' : `${plural(attentionCount, 'point', 'points')} à traiter`}</strong>
         <small>Incidents, facturation, maintenance et packs d’heures.</small>
       </div>
     </div>

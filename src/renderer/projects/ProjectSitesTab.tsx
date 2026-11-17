@@ -598,7 +598,12 @@ export function ProjectSitesTab({
       </div>
     </div>}
 
-    <div
+    {v2 && sites.length === 0 && pages.length === 0 ? <section className="panel project-sites-empty-state" aria-label="Sites et pages du projet">
+      <h3>Aucun Site ni Page pour le moment</h3>
+      <p>Ce projet n’a pas encore de Site ni de Page.</p>
+      <p>« Compléter depuis le modèle » crée ceux que prévoit le modèle du projet.</p>
+      <p>« + Site » et « + Page » les ajoutent à la main.</p>
+    </section> : <div
       className={`project-sites-workspace ${treeCollapsed ? 'tree-collapsed' : ''} ${detailCollapsed ? 'detail-collapsed' : ''} ${inspectorOpen ? 'inspector-open' : ''} ${inspectorCollapsed ? 'inspector-collapsed' : ''} ${focusedWorkshop ? 'atelier-focus' : ''} ${v2 && availableWidth < 900 ? 'sites-v2-narrow' : ''}`}
       style={{ gridTemplateColumns: v2 ? v2Columns : workspaceColumns }}
     >
@@ -896,6 +901,6 @@ export function ProjectSitesTab({
         {focusedWorkshop && <div className="sites-v2-workshop-nav"><button type="button" className="secondary-button" onClick={() => setInspectorCollapsed(true)}>← Arborescence et page</button><strong>Atelier · {selectedPage?.name}</strong></div>}
         <div id={inspectorHostId} className="project-sites-inspector-host" />
       </aside>
-    </div>
+    </div>}
   </section>;
 }

@@ -11,6 +11,8 @@ if(!process.versions.electron){
  const {app,BrowserWindow,clipboard,dialog}=require('electron'),args=process.argv.slice(2),option=k=>args[args.indexOf(k)+1];
  // Lot 4 : l'envoi d'un devis montre le PDF et ouvre un brouillon d'e-mail ; en recette, rien ne sort du banc.
  {const {shell}=require('electron');shell.openExternal=async()=>{};shell.showItemInFolder=()=>{};}
+ // F88 : aucune boîte Windows ne doit s’ouvrir pendant la recette (elle bloquerait l’écran de l’utilisateur) ; chacune est notée, répondue « Rester », et fait échouer la recette.
+ const nativeDialogs=[];{const stay=o=>{const x=o.find(v=>v&&typeof v==='object'&&!v.webContents)||{};nativeDialogs.push({message:x.message,detail:x.detail});return x.cancelId??0;};dialog.showMessageBoxSync=(...o)=>stay(o);dialog.showMessageBox=async(...o)=>({response:stay(o),checkboxChecked:false});}
  if(!args.includes('--development-confirmed')||!args.includes('--workspace')||!args.includes('--output'))throw Error('Explicit development confirmation, workspace and output required');
  const workspace=path.resolve(option('--workspace')),output=path.resolve(option('--output'));
  if(path.basename(workspace)!=='Validation-MSI')throw Error('Only Validation-MSI development is authorized');
@@ -38,7 +40,7 @@ if(!process.versions.electron){
   const navigate=async(type,id)=>{await js(`window.dispatchEvent(new CustomEvent('atoumweb:navigate',{detail:${JSON.stringify({entityType:type,entityId:id,title:'TEST'})}}))`);await sleep(150);};
   const openQuote=async quote=>{await js(`window.dispatchEvent(new CustomEvent('atoumweb:open-page',{detail:'Accueil'}))`);await sleep(60);await navigate('quote',quote.id);await wait(`document.querySelector('.quote-detail-panel h2')?.textContent===${JSON.stringify(quote.subject)}`);};
   await wait('!!window.atoumweb && document.body.innerText.includes("DÉVELOPPEMENT")');
-  await js("(()=>{window.confirm=()=>true;return true;})()"); // Explicit TEST operator acknowledgement; backend guards remain real.
+  await js("(a=>{window.__pcAnswer=a;window.__pcLog=window.__pcLog||[];if(window.__pcObs)return true;const act=()=>{const d=document.querySelector(\"dialog.page-confirm-dialog[open]\");if(!d||d.__pcDone)return;d.__pcDone=true;window.__pcLog.push(d.querySelector(\"h2\").textContent+\" \"+(d.querySelector(\".page-confirm-body\")?.textContent||\"\"));const v=window.__pcAnswer,t=d.querySelector(\"textarea\");if(t&&typeof v===\"string\"){Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,\"value\").set.call(t,v);t.dispatchEvent(new Event(\"input\",{bubbles:true}));}setTimeout(()=>{const b=d.querySelectorAll(\".form-actions button\");(v===false?b[0]:b[1]).click();},60);};window.__pcObs=new MutationObserver(act);window.__pcObs.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:[\"open\"]});return true;})(true)"); /* F81 : réponse dans la boîte de la page */ // Explicit TEST operator acknowledgement; backend guards remain real.
   check('Native Manager API, no isolated recipe API',await js('!!window.atoumweb.quotes&&!window.atoumwebOperationalRecipe'));
   const admin=S.emptyAdministration();for(const key of Object.keys(admin))admin[key]={state:'filled',value:`TEST — ${key} fictif, non utilisable dans un dossier réel`,reason:'Recette de développement autorisée'};await call('quotePreparation.saveAdministration',admin);
   const approved=JSON.parse(fs.readFileSync(path.join(repo,'data/approved/2026-11-08/CATALOGUE_V394_130_EXTRAIT_WORD.json'),'utf8'));
@@ -56,12 +58,15 @@ if(!process.versions.electron){
   const missingPublished=expectedPublishable.map(item=>item.code_source).filter(code=>!publishedCodes.has(code));
   const unexpectedlyPublished=allCanonical.filter(item=>item.currentVersion?.status==='published'&&!expectedCodes.has(item.canonicalCode)).map(item=>item.canonicalCode);
   fs.writeFileSync(path.join(output,'commercial-publication-matrix.json'),JSON.stringify({sourceVersion:approved.version,sourceDate:approved.date_decision_metier,counts:{source:approved.references.length,expectedPublishable:expectedPublishable.length,expectedRestricted:expectedRestricted.length,clauses:clauses.clauses.length,activeCanonical:allCanonical.length,publishedCanonical:references.length,missingPublished:missingPublished.length,unexpectedlyPublished:unexpectedlyPublished.length},expectedPublishable:expectedPublishable.map(r=>({code:r.code_source,status:r.statut_source})),missingPublished,unexpectedlyPublished,restricted:expectedRestricted.map(r=>({code:r.code_source,status:r.statut_source}))},null,2));
-  check('Active canonical identity count',allCanonical.length===112);
-  check('Published catalogue matches approved publication matrix',missingPublished.length===0&&unexpectedlyPublished.length===0);
-  check('Published contract clause count matches approved matrix',database.database.get("SELECT COUNT(*) AS n FROM contract_clause_versions WHERE status='published'").n===clauses.clauses.length);
-  check('Restricted source references are not published',expectedRestricted.every(r=>!publishedCodes.has(r.code_source)));
+  // F85 (décision de Carlos du 16/11/2026, « rapport seulement ») : la base de recette n'est plus comparée au pack approuvé.
+  // L'écart est écrit dans commercial-publication-matrix.json et dans le rapport ; le pack reste vérifié par les tests automatiques sur base construite.
+  const matrixDrift={activeCanonical:allCanonical.length,duplicateCanonicalCodes:allCanonical.length-new Set(allCanonical.map(item=>item.canonicalCode)).size,missingPublished,unexpectedlyPublished,
+    publishedClauses:database.database.get("SELECT COUNT(*) AS n FROM contract_clause_versions WHERE status='published'").n,approvedClauses:clauses.clauses.length,
+    restrictedPublished:expectedRestricted.map(r=>r.code_source).filter(code=>publishedCodes.has(code))};
+  trace('approved-matrix-drift (rapport seulement)',matrixDrift);checks.push({name:'Approved matrix drift reported (not enforced on the recipe base)',passed:true,drift:matrixDrift});
   const parameters=async quote=>{
-   const p=S.emptyContractParameters(quote.contractAudience,quote.depositPercent);
+   // F71b : un devis « à définir » (acompte null) reçoit ici un échéancier choisi à la main pour la recette.
+   const p=S.emptyContractParameters(quote.contractAudience,quote.depositPercent??30);
    p.conclusion={...p.conclusion,channel:'on_premises',context:'TEST — faux dossier en établissement',purchasePurpose:'Recette de développement'};
    p.digital={...p.digital,kinds:['classical_service'],supply:'one_off',delivery:'TEST livraison explicitement convenue',qualificationReason:'Qualification fictive pour tester le parcours, non validation juridique de la prestation'};
    p.rights.reviewed=true;p.renewal.reviewed=true;p.milestones=[{label:'TEST livraison',date:'2027-06-01'}];
@@ -70,9 +75,13 @@ if(!process.versions.electron){
    if(p.audience==='consumer')p.consumer.informationDelivered=true;
    await call('quotePreparation.save',quote.id,p);
   };
+  // F85 : appliquer les CGV passe par « comparer puis appliquer » (jeton de comparaison), comme dans l’écran.
+  const syncTerms=async id=>{const proposal=await call('contractTerms.quotes.proposeUpdate',id);return call('contractTerms.quotes.sync',id,proposal.token);};
   const newQuote=async(code,clientId)=>{
    let owner={clientAccountId:clientId};if(!clientId){const org=await call('crm.organizations.create',{name:`TEST — ${code} — ${new Date().toISOString()}`});const prospect=await call('crm.prospects.create',{organizationId:org.id,primaryNeed:`TEST ${code}`});owner={prospectId:prospect.id};}
-   return call('quotes.create',{...owner,subject:`TEST — recette ${code} — ${Date.now()}`,contractAudience:code.includes('MARIAGE')?'consumer':'professional'});
+   const created=await call('quotes.create',{...owner,subject:`TEST — recette ${code} — ${Date.now()}`,contractAudience:code.includes('MARIAGE')?'consumer':'professional'});
+   // F85 : l'assistant de devis pose les CGV dès la création (applyContractTerms) ; la recette, qui crée le devis vide, les pose ici.
+   await syncTerms(created.id);return call('quotes.get',created.id);
   };
   const addUI=async(quote,code,quantity=1)=>{
    await input('[aria-label="Rechercher dans le catalogue"]',code);const item=references.find(r=>r.canonicalCode===code);if(!item)throw Error('Unknown canonical '+code);
@@ -90,17 +99,20 @@ if(!process.versions.electron){
   const prepareUI=async quote=>{await click('Vérifier le plan sans créer de Projet');await wait('document.querySelector(".quote-project-create [role=status]")!==null');await click('Préparer le Projet');await wait(`document.querySelector('[aria-label="Périmètre commercial du Projet"]')!==null`);return call('quotes.get',quote.id);};
   const acceptUI=async quote=>{
    await parameters(await call('quotes.get',quote.id));await openQuote(await call('quotes.get',quote.id));
-   await click('Envoyer le devis','.quote-detail-panel button');await wait(`[...document.querySelectorAll('.quote-detail-panel button')].some(b=>b.textContent==='C’est envoyé')`);await input('.quote-detail-panel .quote-send-steps input','Recette native — envoi fictif');
-   await click('C’est envoyé','.quote-detail-panel button');await wait(`document.querySelector('.quote-detail-panel .quote-status')?.textContent==='Envoyé'`);
+   await click('Envoyer le devis','.quote-detail-panel button');await wait(`[...document.querySelectorAll('.quote-detail-panel button')].some(b=>b.textContent==='C’est envoyé')`);await input('.quote-detail-panel .quote-send-steps input:not([type=checkbox])','Recette native — envoi fictif');
+   // F85 : lot 6 (RGPD), si l’offre exige le modèle d’accord, cocher « Modèle d’accord RGPD remis au client avec le devis » avant « C’est envoyé ».
+   if(await js("!!document.querySelector('.quote-detail-panel .quote-send-check input')")){await wait("!document.querySelector('.quote-detail-panel .quote-send-check input').disabled");await js("(()=>{const c=document.querySelector('.quote-detail-panel .quote-send-check input');if(!c.checked)c.click();return true;})()");await wait("document.querySelector('.quote-detail-panel .quote-send-check input').checked");}
+   await click('C’est envoyé','.quote-detail-panel button');await wait(`document.querySelector('.quote-detail-panel .detail-badges .aw-status-pill')?.textContent==='Envoyé'`);
    await call('quotePreparation.recordAcceptance',quote.id,'TEST — acceptation explicite fictive, aucune signature réelle',new Date().toISOString(),'Recette native');
-   await click('Valider','.quote-detail-panel button');await wait(`document.querySelector('.quote-detail-panel .quote-status')?.textContent==='Accepté'`);return call('quotes.get',quote.id);
+   await click('Confirmer accepté dans Abby','.quote-detail-panel button'); /* G1 (F61) : confirmation dans la boîte de la page */await wait(`document.querySelector('.quote-detail-panel .detail-badges .aw-status-pill')?.textContent==='Accepté'`);return call('quotes.get',quote.id);
   };
   // A real fake Prospect -> Quote -> provisional Project -> same frozen Project, used as operational context.
   let seed=await newQuote('CONTEXTE-WOO');await openQuote(seed);seed=await addUI(seed,'AW-ECOM-BASE');seed=await prepareUI(seed);const seedProjectId=seed.projectId;seed=await acceptUI(seed);
   check('Native seed Prospect conversion, same Project',seed.projectId===seedProjectId&&!!seed.acceptedClientAccountId);
-  const contextSite=(await call('projects.sites.list',seed.projectId))[0];
+  // 17/11/2026 : les modèles du référentiel ne déclarent pas de Site ; la recette en crée un, explicitement, pour les services rattachés à un site.
+  const contextSite=(await call('projects.sites.list',seed.projectId))[0]??await call('projects.sites.create',seed.projectId,{name:'TEST — site de contexte de la recette'});
   const contextProject=await call('projects.projects.addNode',seed.projectId,{type:'module',name:'TEST — contexte logiciel / document',estimatedMinutes:0});const contextNode=contextProject.nodes.find(n=>n.name==='TEST — contexte logiciel / document');
-  const clientId=seed.acceptedClientAccountId,codeFilter=args.includes('--codes')?option('--codes').split(','):null;
+  const clientId=seed.acceptedClientAccountId,codeFilter=args.includes('--codes')?option('--codes').split(','):references.filter(r=>database.database.get("SELECT 1 FROM catalog_operational_links WHERE catalog_version_id=? AND status='ready'",[r.currentVersion.id])).map(r=>r.canonicalCode); // 17/11/2026 : par défaut, les services suivis (8B) ; la production passe par les modèles de projet (tests ReferentialProjectTemplates, contrôle 98/98).
   const mainGbpProject=await call('projects.projects.addNode',seed.projectId,{type:'module',name:'TEST — établissement GBP principal'}),mainGbpNode=mainGbpProject.nodes.find(n=>n.name==='TEST — établissement GBP principal');
   const extraGbpProject=await call('projects.projects.addNode',seed.projectId,{type:'module',name:'TEST — établissement GBP supplémentaire'}),extraGbpNode=extraGbpProject.nodes.find(n=>n.name==='TEST — établissement GBP supplémentaire');
   let gbp=await newQuote('GBP-PRINCIPAL-DE-CONTEXTE',clientId);await openQuote(gbp);gbp=await addUI(gbp,'AW-SEO-GBP-M');
@@ -120,11 +132,13 @@ if(!process.versions.electron){
     check(code+' native code/version label',await js(`document.querySelector('.quote-lines').innerText.includes(${JSON.stringify(code)})`));
     check(code+' Abby commercial native text',await js(`document.querySelector('[aria-label="Bloc commercial Abby"]').value.includes(${JSON.stringify(code)})`));
     const params={};if(rules?.attachment){params.parentLineId=parent.id;if(rules.attachment.kind==='priority'){params.requestedDeadline='2027-02-01T10:00';params.availabilityConfirmed=true;params.acceptedDeadline='2027-02-02T10:00';}}
+    // Règle du Manager : une offre qui renvoie à « même périmètre… » exige un périmètre détaillé sur la ligne avant finalisation.
+    if(/mêmes? (périmètre|exclusions|prérequis)|mêmes? .*mensuel/i.test(JSON.stringify(item.currentVersion.inclusions||[])))params.scope='TEST — périmètre détaillé explicitement pour ce dossier';
     if(model.estimateRequired){params.scope='TEST — périmètre spécifique décrit';params.currentEstimateMinutes=model.referenceMinutes+240;params.productionPlan='TEST — production complémentaire et contrôle définis explicitement pour ce dossier';}
     if(model.lot==='8B'){params.serviceStartDate=new Date().toISOString().slice(0,10);params.periodAlignment='anniversary';params.operationalProjectId=seed.projectId;if(config.operations.targetRequirement==='site')params.siteId=contextSite.id;else if(config.operations.targetRequirement==='context')params.contextNodeId=code.startsWith('AW-SEO-GBP-')?(config.operations.kind==='recurring_addon'?extraGbpNode.id:mainGbpNode.id):contextNode.id;if(config.operations.kind==='recurring_addon')params.parentOperationalSaleId=principalGbpSale.id;if(config.operations.setupEstimateRequired)params.setupEstimateMinutes=60;}
     if(Object.keys(params).length)await call('quotes.setLineParameters',line.id,params);
     if(parent?.snapshot?.operational?.lot==='8B')await call('quotes.setLineParameters',parent.id,{serviceStartDate:new Date().toISOString().slice(0,10),periodAlignment:'anniversary',operationalProjectId:seed.projectId,siteId:contextSite.id});
-    const build=await call('contractTerms.quotes.sync',quote.id);check(code+' base clauses',build.clauses.some(c=>c.sourceKind==='base'&&c.enabled));
+    const build=await syncTerms(quote.id);check(code+' base clauses',build.clauses.some(c=>c.sourceKind==='base'&&c.enabled));
     result.clauses=build.clauses.filter(c=>c.enabled).map(c=>c.title);result.proof.push('Ajout par sélection native ; snapshot AW/version/prix ; clauses compilées ; bloc Abby');
     if(code==='AW-MARIAGE-HISTOIRE')check('Histoire particular conditions present',build.clauses.some(c=>c.title==='Conditions particulières — Mariage Histoire'&&c.body.includes('soixante jours')));
     const prepareProject=model.lot==='8A'&&!(rules?.attachment?.kind==='priority'&&parent?.snapshot?.operational?.lot==='8B');
@@ -176,8 +190,8 @@ if(!process.versions.electron){
       }
 }
     result.proof.push('Snapshot contractuel figé ; acceptation explicite TEST');
-    await openQuote(quote);await click('📋 Copier pour Abby','.quote-detail-panel button');check(code+' contract clipboard frozen', (await clipboard.readText()).includes(quote.contractTextSnapshot.slice(0,80)));
-    await click('Prévisualiser côté client','.quote-detail-panel button');await wait('!!document.querySelector(".quote-document")');
+    await openQuote(quote);await click('Copier pour Abby','.quote-detail-panel button');{const frozen=quote.contractSnapshotJson&&JSON.parse(quote.contractSnapshotJson).presentation?.text||quote.contractTextSnapshot; /* G1 : la copie reprend le contrat tel que présenté, figé */ check(code+' contract clipboard frozen',(await clipboard.readText()).includes(String(frozen).slice(0,80)));}
+    await click('Prévisualiser côté client','.quote-detail-panel button');await wait('!!document.querySelector(".quote-client-preview .quote-document-frame")'); /* G1 : aperçu dans un cadre */
     const pdf=path.join(output,code+'-PDF-TEST-accepte.pdf');fs.writeFileSync(pdf,await win.webContents.printToPDF({printBackground:true}));
     await click('Fermer','.quote-client-preview button');
     const chooser=dialog.showOpenDialog;dialog.showOpenDialog=async()=>({canceled:false,filePaths:[pdf]}); // Only the external TEST file chooser is supplied by automation.
@@ -194,7 +208,7 @@ if(!process.versions.electron){
   }
   const supplemental=[];
   const record=(name,data)=>supplemental.push({name,...data});
-  if(!codeFilter||args.includes('--supplements')){
+  if(args.includes('--supplements')){ // scénarios d’options et révisions écrits pour les actions de production d’octobre (8A) : sur demande seulement
     let q=await newQuote('OPTIONS-ET-REVISIONS',clientId);await openQuote(q);q=await addUI(q,'AW-WEB-VITRINE');
     const available=await call('projects.projects.previewQuote',{quoteId:q.id,templateVersionId:null});
     check('Available option has no effects',available.operations.actions.filter(a=>a.action).length===21);record('Option disponible non achetée',{quoteId:q.id,actions:21});
@@ -226,6 +240,7 @@ if(!process.versions.electron){
     }
     fs.writeFileSync(path.join(output,'scenarios-transversaux.json'),JSON.stringify(supplemental,null,2));
   }
+  check('No native Windows dialog during the recipe'+(nativeDialogs.length?' : '+JSON.stringify(nativeDialogs):''),nativeDialogs.length===0);
   check('SQLite integrity',database.database.get('PRAGMA integrity_check').integrity_check==='ok');check('SQLite foreign keys',database.database.all('PRAGMA foreign_key_check').length===0);
   persist();process.stdout.write(JSON.stringify({references:results.length,blocked:results.filter(r=>r.status==='bloquante').length,checks:checks.length})+'\n');process.exitCode=results.some(r=>r.status==='bloquante')?1:0;
  }).catch(error=>{errors.push(error.stack||String(error));persist();process.stderr.write(error.stack+'\n');process.exitCode=1;}).finally(()=>{win?.destroy();database?.close();app.exit(process.exitCode||0);});

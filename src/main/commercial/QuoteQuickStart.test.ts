@@ -54,7 +54,8 @@ describe('Lot 3 — devis rapide', {timeout: 30000}, () => {
     const q = quotes.createWithLines({prospectId: p.id, subject: 'TEST historique'}, [{catalogVersionId: versionOf('AW-WEB-VITRINE'), input: {label: 'Site vitrine 5 pages'}}]);
     expect(terms.getQuoteBuild(q.id).clauses).toHaveLength(0);
     expect(stage(p.id)).toBe('new');
-    expect(preparation.parameters(q.id)!.payment.preset).toBe('30_70');
+    // F71b : plus jamais 30 / 70 par défaut ; la vitrine suit la règle des sites (40 / 60 sous 1 000 €).
+    expect(preparation.parameters(q.id)!.payment.milestones.map(m => m.percent)).toEqual([40, 60]);
   });
 
   it('refuse un échéancier inconnu sans créer de devis ni réserver de numéro', () => {

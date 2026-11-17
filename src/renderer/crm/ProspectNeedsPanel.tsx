@@ -5,7 +5,10 @@ import {ProspectInitialRequest} from './ProspectInitialRequest';
 import {ProspectCommercialEstimate} from './ProspectCommercialEstimate';
 import {OperationIcon} from '../operations/OperationIcon';
 import {useUnsavedDraft,requestUnsavedExit} from '../unsaved/unsaved';
+import { NeedsSectionHeader } from './NeedsSectionHeader';
+import { needsSectionSummary } from '../../shared/prospectNeedsSections';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePageConfirm } from '../ui/usePageConfirm';
 import type { CatalogItemSummary, CatalogVersion, PriceMode } from '../../shared/commercial';
 import { prospectProjectBriefSnapshot, type ProspectProjectBrief, type ProspectSummary } from '../../shared/crm';
 import type { Need, NeedInput } from '../../shared/workflow';
@@ -202,8 +205,9 @@ function newInformationId(): string {
   return `info-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function ProspectNeedsPanel({ prospectId, onChanged, section='brief', highlightMissing=false, onPrepareQuote, onContinue }: { prospectId: string; onChanged?: () => void; section?:'brief'|'commercial'|'services'; highlightMissing?:boolean; onPrepareQuote?:()=>void; /** Lot 5 : après un enregistrement réussi, passer à la suite. */ onContinue?:()=>void }) {
+export function ProspectNeedsPanel({ prospectId, onChanged, open, onToggle, highlightMissing=false }: { prospectId: string; onChanged?: () => void; /** R3 : sections repliables, pilotées par la fiche (le contenu reste monté même replié). */ open: Record<'brief'|'commercial'|'services', boolean>; onToggle: (id: string) => void; highlightMissing?:boolean; }) {
   const [prospect, setProspect] = useState<ProspectSummary | null>(null);
+  const { dialog: confirmDialog, askConfirm } = usePageConfirm();
   const [projectSummary, setProjectSummary] = useState('');
   const [projectContext, setProjectContext] = useState('');
   const [budgetPreset, setBudgetPreset] = useState<BudgetPreset>('not_disclosed');
@@ -231,8 +235,8 @@ export function ProspectNeedsPanel({ prospectId, onChanged, section='brief', hig
   const projectBriefConflictRef = useRef(false);
   const savedProjectBriefRef = useRef<{ prospectId: string; value: ProspectProjectBrief } | null>(null);
   const savingProjectBriefRef = useRef(false);
-  const lastSaveSucceeded = useRef(false); // lot 5 : « Enregistrer et continuer » n'avance que si l'enregistrement a réussi.
-  async function saveAndThen(next?:()=>void){lastSaveSucceeded.current=false;await saveIdentification();if(lastSaveSucceeded.current)next?.();}
+  const lastSaveSucceeded = useRef(false); // R3 : la garde de sortie et « saveThenRun » ne continuent que si l'enregistrement a réussi.
+  async function saveForGuard(){lastSaveSucceeded.current=false;await saveIdentification();return lastSaveSucceeded.current;}
   const informationConflictRef = useRef(false);
   // Revision portant exclusivement sur missing_information : une modification
   // du budget ou du calendrier dans une autre fenêtre n'est pas un conflit de checklist.
@@ -251,7 +255,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged, section='brief', hig
 
   const infoValue={projectSummary,projectContext,budgetPreset,budgetMin,budgetMax,budgetExact,timelineStatus,targetDate,timelineNote,existingStatus,existingUrl,existingNotes,informationItems,newInformation,newInformationBlocking};
   const savedFormBaselineRef = useRef<typeof infoValue | null>(null);
-  const infoGuard=useUnsavedDraft('Identification du besoin',infoValue,{pending:busy || savingInformation > 0,discard:s=>{setProjectSummary(s.projectSummary);setProjectContext(s.projectContext);setBudgetPreset(s.budgetPreset);setBudgetMin(s.budgetMin);setBudgetMax(s.budgetMax);setBudgetExact(s.budgetExact);setTimelineStatus(s.timelineStatus);setTargetDate(s.targetDate);setTimelineNote(s.timelineNote);setExistingStatus(s.existingStatus);setExistingUrl(s.existingUrl);setExistingNotes(s.existingNotes);setInformationDraft(s.informationItems);setNewInformation(s.newInformation);setNewInformationBlocking(s.newInformationBlocking);}});
+  const infoGuard=useUnsavedDraft('Identification du besoin',infoValue,{pending:busy || savingInformation > 0,discard:s=>{setProjectSummary(s.projectSummary);setProjectContext(s.projectContext);setBudgetPreset(s.budgetPreset);setBudgetMin(s.budgetMin);setBudgetMax(s.budgetMax);setBudgetExact(s.budgetExact);setTimelineStatus(s.timelineStatus);setTargetDate(s.targetDate);setTimelineNote(s.timelineNote);setExistingStatus(s.existingStatus);setExistingUrl(s.existingUrl);setExistingNotes(s.existingNotes);setInformationDraft(s.informationItems);setNewInformation(s.newInformation);setNewInformationBlocking(s.newInformationBlocking);},save:()=>saveForGuard()});
 
 
   async function load() {
@@ -342,7 +346,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged, section='brief', hig
 
   async function reloadChecklistAfterConflict() {
     if (busy || activeInformationWrites.current !== 0 || !informationConflictRef.current) return;
-    if (!window.confirm('Recharger les points enregistrés dans le dossier ? Les modifications locales NON enregistrées de cette checklist seront remplacées. Les autres champs saisis resteront inchangés.')) return;
+    if (!(await askConfirm({title: 'Recharger les points enregistrés dans le dossier ?', body: 'Les modifications locales NON enregistrées de cette checklist seront remplacées. Les autres champs saisis resteront inchangés.', confirmLabel: 'Recharger'}))) return;
     const ownerId = prospectId;
     setBusy(true);
     try {
@@ -388,7 +392,7 @@ export function ProspectNeedsPanel({ prospectId, onChanged, section='brief', hig
 
   async function reloadProjectBriefAfterConflict() {
     if (busy || savingProjectBriefRef.current || !projectBriefConflictRef.current) return;
-    if (!window.confirm('Recharger le projet, le budget et le calendrier enregistrés ? Les modifications locales de CES champs seront remplacées. La checklist reste inchangée.')) return;
+    if (!(await askConfirm({title: 'Recharger le projet, le budget et le calendrier enregistrés ?', body: 'Les modifications locales de CES champs seront remplacées. La checklist reste inchangée.', confirmLabel: 'Recharger'}))) return;
     const ownerId = prospectId;
     setBusy(true);
     try {
@@ -489,7 +493,8 @@ export function ProspectNeedsPanel({ prospectId, onChanged, section='brief', hig
   const openBlockingInformation = informationItems.filter((item) => item.status === 'open' && item.isBlocking);
   const openLaterInformation = informationItems.filter((item) => item.status !== 'resolved' && !item.isBlocking);
 
-  return <section data-needs-section={section} className="prospect-work-section needs-panel-v2"><fieldset disabled={Boolean(prospect?.clientAccountId||prospect?.archivedAt)} style={{border:0,padding:0,margin:0,minWidth:0}}> <div hidden={section!=='brief'} className="crm-initial-request">{prospect&&<ProspectInitialRequest prospect={prospect} onSaved={()=>void load()}/>}</div><div hidden={section!=='commercial'}>{prospect&&<ProspectCommercialEstimate prospect={prospect} onSaved={()=>void load()}/>}</div>
+  const sectionSummary = (id: 'brief' | 'commercial' | 'services') => needsSectionSummary(id, { projectSummary: prospect?.projectSummary, budgetStatus: prospect?.budgetStatus, timelineStatus: prospect?.timelineStatus, informationCount: informationItems.length, openInformationCount: informationItems.filter((item) => item.status === 'open').length, blockingInformationCount: openBlockingInformation.length });
+  return <section className="prospect-work-section needs-panel-v2">{confirmDialog}<fieldset disabled={Boolean(prospect?.clientAccountId||prospect?.archivedAt)} style={{border:0,padding:0,margin:0,minWidth:0}}>
 
     {error && <p className="form-error" role="alert">{error}</p>}
     {projectBriefConflict && <div className="prospect-checklist-conflict" role="status">
@@ -507,12 +512,24 @@ export function ProspectNeedsPanel({ prospectId, onChanged, section='brief', hig
       </button>
     </div>}
 
+    <NeedsSectionHeader id="brief" title="Demande et besoin" summary={sectionSummary('brief')} open={open.brief} onToggle={onToggle} />
+    <div id="needs-section-brief" className="needs-section-body" hidden={!open.brief}>
+    <div className="crm-initial-request">{prospect&&<ProspectInitialRequest prospect={prospect} onSaved={()=>void load()}/>}</div>
     <div className="need-identification-fields">
       <div className="workflow-fields">
-        <div className="crm-brief-fields" hidden={section!=='brief'}><div hidden={!prospect?.legacyBriefJson} className="form-span-3">{prospect?.legacyBriefJson&&<details><summary>Informations reprises de l’ancienne fiche — sens initial non déterminé</summary><p>{Object.values(JSON.parse(prospect.legacyBriefJson) as Record<string,unknown>).filter((v,i)=>i>0&&typeof v==='string'&&v.trim()).map(v=>String(v)).join(' · ')}</p></details>}</div>{prospect?.initialRequest&&!projectSummary&&<button type="button" className="secondary-button form-span-3" disabled={busy} onClick={()=>setProjectSummary(prospect.initialRequest??'')}>Reprendre la demande initiale comme point de départ du besoin confirmé</button>}{prospect?.legacyBriefJson&&!prospect.confirmedBriefAt&&<p className="form-span-3">Le résumé ci-dessous provient de l’ancienne fiche. Son sens initial n’est pas déterminé ; relis-le avant de confirmer le besoin.</p>}<label className="form-span-2">Besoin confirmé — résultat attendu<textarea aria-label="Besoin confirmé" aria-invalid={highlightMissing&&!projectSummary.trim()} rows={3} value={projectSummary} onChange={(e) => setProjectSummary(e.target.value)} placeholder="Ce que le prospect veut obtenir ou résoudre" disabled={busy} /></label>
+        <div className="crm-brief-fields"><div hidden={!prospect?.legacyBriefJson} className="form-span-3">{prospect?.legacyBriefJson&&<details><summary>Informations reprises de l’ancienne fiche — sens initial non déterminé</summary><p>{Object.values(JSON.parse(prospect.legacyBriefJson) as Record<string,unknown>).filter((v,i)=>i>0&&typeof v==='string'&&v.trim()).map(v=>String(v)).join(' · ')}</p></details>}</div>{prospect?.initialRequest&&!projectSummary&&<button type="button" className="secondary-button form-span-3" disabled={busy} onClick={()=>setProjectSummary(prospect.initialRequest??'')}>Reprendre la demande initiale comme point de départ du besoin confirmé</button>}{prospect?.legacyBriefJson&&!prospect.confirmedBriefAt&&<p className="form-span-3">Le résumé ci-dessous provient de l’ancienne fiche. Son sens initial n’est pas déterminé ; relis-le avant de confirmer le besoin.</p>}<label className="form-span-2">Besoin confirmé — résultat attendu<textarea aria-label="Besoin confirmé" aria-invalid={highlightMissing&&!projectSummary.trim()} rows={3} value={projectSummary} onChange={(e) => setProjectSummary(e.target.value)} placeholder="Ce que le prospect veut obtenir ou résoudre" disabled={busy} /></label>
         <label className="form-span-2">Contexte, contraintes et éléments hors socle<textarea value={projectContext} onChange={(e) => setProjectContext(e.target.value)} placeholder="Fonctionnalité particulière, volume, intégration, contenu important, contrainte technique…" disabled={busy} /></label>
 
-        </div><div className="crm-commercial-fields" hidden={section!=='commercial'}><label>Budget communiqué par le prospect<select aria-invalid={highlightMissing&&!prospect?.budgetStatus} value={budgetPreset} onChange={(e) => setBudgetPreset(e.target.value as BudgetPreset)} disabled={busy}>{BUDGET_PRESETS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        </div>
+      </div>
+    </div>
+    </div>
+    <NeedsSectionHeader id="commercial" title="Budget et délais" summary={sectionSummary('commercial')} open={open.commercial} onToggle={onToggle} />
+    <div id="needs-section-commercial" className="needs-section-body" hidden={!open.commercial}>
+    <div>{prospect&&<ProspectCommercialEstimate prospect={prospect} onSaved={()=>void load()}/>}</div>
+    <div className="need-identification-fields">
+      <div className="workflow-fields">
+        <div className="crm-commercial-fields"><label>Budget communiqué par le prospect<select aria-invalid={highlightMissing&&!prospect?.budgetStatus} value={budgetPreset} onChange={(e) => setBudgetPreset(e.target.value as BudgetPreset)} disabled={busy}>{BUDGET_PRESETS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         {budgetPreset === 'custom' && <div className="qualification-two-fields form-span-2"><label>Minimum (€)<input inputMode="decimal" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} disabled={busy} /></label><label>Maximum (€)<input inputMode="decimal" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} disabled={busy} /></label></div>}
         {budgetPreset === 'exact' && <label>Montant précis (€)<input inputMode="decimal" value={budgetExact} onChange={(e) => setBudgetExact(e.target.value)} disabled={busy} /></label>}
 
@@ -524,7 +541,15 @@ export function ProspectNeedsPanel({ prospectId, onChanged, section='brief', hig
         {existingStatus === 'yes' && <label>URL / référence existante<input value={existingUrl} onChange={(e) => setExistingUrl(e.target.value)} placeholder="Référence de l’outil ou du système à remplacer" disabled={busy} /></label>}
         {existingStatus !== 'no' && <label className="form-span-2">Précisions sur l’existant<input value={existingNotes} onChange={(e) => setExistingNotes(e.target.value)} disabled={busy} /></label>}
 
-        </div><div className="missing-info-checklist" hidden={section!=='services'}>
+        </div>
+      </div>
+    </div>
+    </div>
+    <NeedsSectionHeader id="services" title="Prestations et points à confirmer" summary={sectionSummary('services')} open={open.services} onToggle={onToggle} />
+    <div id="needs-section-services" className="needs-section-body" hidden={!open.services}>
+    <div className="need-identification-fields">
+      <div className="workflow-fields">
+        <div className="missing-info-checklist">
           <div className="need-selector-title"><strong>Informations / points à confirmer</strong><small>Garde les questions dans le dossier. Seuls les points « À obtenir » marqués bloquants empêchent le devis.</small></div>
           {informationItems.length > 0 && <div className="missing-info-list">{informationItems.map((item) => <div className={`missing-info-row ${item.status === 'resolved' ? 'resolved' : ''}`} key={item.id}>
             <strong>{item.label}</strong>
@@ -543,12 +568,12 @@ export function ProspectNeedsPanel({ prospectId, onChanged, section='brief', hig
           </div>
         </div>
 
-        <div hidden={section!=='services'} className="need-scope-assessment form-span-2"><span className="eyebrow">Lecture du périmètre</span><strong>{openBlockingInformation.length > 0 ? `${openBlockingInformation.length} point${openBlockingInformation.length > 1 ? 's' : ''} bloquant${openBlockingInformation.length > 1 ? 's' : ''} avant devis` : openLaterInformation.length > 0 ? 'Périmètre prêt pour contrôle — certains points seront obtenus plus tard' : projectContext.trim() ? 'Périmètre décrit — contrôle final à effectuer' : 'Aucun point bloquant déclaré'}</strong><small>Les points résolus restent dans le dossier : aucune information n’a besoin d’être effacée pour avancer.</small></div>
-        {onContinue&&<button type="button" className="primary-button" disabled={busy} onClick={() => void saveAndThen(onContinue)}>{busy ? 'Enregistrement…' : 'Enregistrer et continuer'}</button>}<button type="button" className={onContinue?'secondary-button':'primary-button'} disabled={busy} onClick={() => void saveIdentification()}>{busy ? 'Enregistrement…' : 'Enregistrer le besoin'}</button>{savedNotice&&<p role="status">{savedNotice}</p>}{error&&<p role="alert" className="form-error">{error}</p>}
+        <div className="need-scope-assessment form-span-2"><span className="eyebrow">Lecture du périmètre</span><strong>{openBlockingInformation.length > 0 ? `${openBlockingInformation.length} point${openBlockingInformation.length > 1 ? 's' : ''} bloquant${openBlockingInformation.length > 1 ? 's' : ''} avant devis` : openLaterInformation.length > 0 ? 'Périmètre prêt pour contrôle — certains points seront obtenus plus tard' : projectContext.trim() ? 'Périmètre décrit — contrôle final à effectuer' : 'Aucun point bloquant déclaré'}</strong><small>Les points résolus restent dans le dossier : aucune information n’a besoin d’être effacée pour avancer.</small></div>
       </div>
     </div>
 
-    <div hidden={section!=='services'}><ProspectIntentChecklist prospectId={prospectId} readOnly={Boolean(prospect?.clientAccountId||prospect?.archivedAt)} onChanged={()=>{void load();onChanged?.();}}/></div>
-    {onPrepareQuote&&<div className="crm-need-footer"><button type="button" className="primary-button" disabled={busy} onClick={()=>void saveAndThen(onPrepareQuote)}>Enregistrer et faire le devis</button></div>}
+    <div><ProspectIntentChecklist prospectId={prospectId} readOnly={Boolean(prospect?.clientAccountId||prospect?.archivedAt)} onChanged={()=>{void load();onChanged?.();}}/></div>
+    </div>
+    <div className="needs-save-row"><button type="button" className={infoGuard.dirty ? 'primary-button' : 'secondary-button'} disabled={busy} onClick={() => void saveIdentification()}>{busy ? 'Enregistrement…' : 'Enregistrer'}</button>{savedNotice&&<p role="status">{savedNotice}</p>}{error&&<p role="alert" className="form-error">{error}</p>}</div>
   </fieldset></section>;
 }

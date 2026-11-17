@@ -99,34 +99,42 @@ export class WorkflowService {
   dashboard(): DashboardEntry[] {
     const entries: DashboardEntry[]=[];
     const prospects=this.crm.listProspects();
+    const quoteList=this.quotes.list();
+    // Un prospect qui a déjà un devis brouillon n'apparaît pas une seconde fois : le devis porte l'entrée « Devis à préparer ».
+    const draftProspectIds=new Set(quoteList.filter(q=>q.status==='draft'&&q.prospectId).map(q=>q.prospectId as string));
+    const prospectNames=new Map(prospects.map(p=>[p.id,p.displayName]));
+    let clientNames:Map<string,string>|null=null;
+    const clientName=(id:string)=>{if(!clientNames)clientNames=new Map(this.crm.listClients({includeArchived:true}).map(c=>[c.id,c.displayName]));return clientNames.get(id);};
+    // Nom du dossier : absent (jamais une chaîne vide) quand il est introuvable.
+    const named=(subtitle:string|null|undefined)=>subtitle?{subtitle}:{};
     for (const p of prospects) {
       if (['won','lost'].includes(p.stage ?? '')) continue;
       const target={entityType:'prospect' as const,entityId:p.id,title:p.displayName,status:p.stage};
       if (p.stage==='follow_up' || p.nextActionAt && p.nextActionAt.slice(0,10)<=new Date().toISOString().slice(0,10)) entries.push({group:'Prospects à relancer',target});
       if (p.stage==='need_identified') entries.push({group:'Besoins à identifier',target});
-      if (p.stage==='quote_to_prepare') entries.push({group:'Devis à préparer',target});
+      if (p.stage==='quote_to_prepare' && !draftProspectIds.has(p.id)) entries.push({group:'Devis à préparer',target});
       if (p.stage==='quote_to_send') entries.push({group:'Devis à envoyer',target});
       if (p.stage==='quote_sent') entries.push({group:'Devis en attente de retour',target});
     }
-    for (const q of this.quotes.list()) {
+    for (const q of quoteList) {
       const group=q.status==='draft'?'Devis à préparer':['sent','viewed'].includes(q.status)?'Devis en attente de retour':q.status==='accepted' && !this.db.get('SELECT id FROM projects WHERE source_quote_id=?',[q.id])?'Devis acceptés à démarrer':null;
-      if(group) entries.push({group,target:{entityType:'quote',entityId:q.id,title:`${q.number} · ${q.subject}`,status:q.status}});
+      if(group) entries.push({group,target:{entityType:'quote',entityId:q.id,title:`${q.number} · ${q.subject}`,status:q.status,...named(q.ownerLabel)}});
     }
     const labels:Record<string,string>={to_prepare:'Projets à préparer',in_progress:'Projets en cours',waiting_client:'Projets en attente Client',blocked:'Projets bloqués',to_validate:'Projets à valider'};
     const today=new Date().toISOString().slice(0,10), soon=new Date(Date.now()+7*86400000).toISOString().slice(0,10);
     for(const p of this.projects.listProjects()) {
       if(!labels[p.status]) continue;
-      const target={entityType:'project' as const,entityId:p.id,title:p.name,status:p.status};
+      const target={entityType:'project' as const,entityId:p.id,title:p.name,status:p.status,...named(p.clientLabel)};
       if(p.commercialState==='provisional') { entries.push({group:'Projets prévisionnels',target}); continue; }
       entries.push({group:labels[p.status],target});
       if(p.targetDate && p.targetDate.slice(0,10)<today) entries.push({group:'Projets en retard',target});
       else if(p.targetDate && p.targetDate.slice(0,10)<=soon) entries.push({group:'Échéances proches',target});
     }
-    for(const r of this.operations.listRequests()) if(r.status==='new') entries.push({group:'Demandes nouvelles',target:{entityType:'service_request',entityId:r.id,title:r.subject,status:r.status}});
-    for(const i of this.operations.listInterventions()) if(['in_progress','to_validate'].includes(i.status)) entries.push({group:i.status==='in_progress'?'Interventions en cours':'Interventions à valider',target:{entityType:'intervention',entityId:i.id,title:i.subject,status:i.status}});
+    for(const r of this.operations.listRequests()) if(r.status==='new') entries.push({group:'Demandes nouvelles',target:{entityType:'service_request',entityId:r.id,title:r.subject,status:r.status,...named(r.clientLabel)}});
+    for(const i of this.operations.listInterventions()) if(['in_progress','to_validate'].includes(i.status)) entries.push({group:i.status==='in_progress'?'Interventions en cours':'Interventions à valider',target:{entityType:'intervention',entityId:i.id,title:i.subject,status:i.status,...named(i.clientLabel)}});
     for(const action of this.db.all<{id:string;owner_type:'prospect'|'client';prospect_id:string|null;client_account_id:string|null;title:string;due_at:string|null}>("SELECT id,owner_type,prospect_id,client_account_id,title,due_at FROM crm_actions WHERE status='open' AND due_at IS NOT NULL ORDER BY due_at")) {
       const day=action.due_at?.slice(0,10)??'',group=day<=today?'Aujourd’hui':day<=soon?'À venir':null;if(!group)continue;
-      entries.push({group,target:{entityType:action.owner_type,entityId:(action.prospect_id??action.client_account_id)!,title:action.title,status:day}});
+      entries.push({group,target:{entityType:action.owner_type,entityId:(action.prospect_id??action.client_account_id)!,title:action.title,status:day,...named(action.owner_type==='prospect'?prospectNames.get(action.prospect_id as string):clientName(action.client_account_id as string))}});
     }
     for(const doc of this.db.all<{id:string;client_account_id:string;title:string;retention_until:string}>("SELECT id,client_account_id,title,retention_until FROM client_documents WHERE archived_at IS NULL AND retention_until IS NOT NULL AND retention_until<=date('now','+90 days') ORDER BY retention_until")) entries.push({group:'RGPD / conservation',target:{entityType:'client_document',entityId:doc.id,parentEntityId:doc.client_account_id,title:doc.title,status:doc.retention_until}});
     return entries;

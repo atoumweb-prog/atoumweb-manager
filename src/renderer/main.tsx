@@ -2,6 +2,7 @@ import {OperationalRecipePage} from './projects/recipe/OperationalRecipePage';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import './tokens.css';
 import './styles.css';
 import './crm.css';
 import './crm-extras.css';
@@ -33,8 +34,11 @@ import './pre-phase5-commercial-ux.css';
 import './prospection-commercial-v2.css';
 import './ui-typography-consistency.css';
 import './ui-consistency-v2.css';
+import './ui/shared-controls.css';
 import './crm/client-list-quick-v2.css';
 import './convergence-visual-consistency.css';
+import './ui/next-step.css';
+import './ui/page-header.css';
 
 const rootElement = document.getElementById('root');
 

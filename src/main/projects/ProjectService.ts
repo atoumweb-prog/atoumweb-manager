@@ -239,6 +239,17 @@ export class ProjectService {
     return this.getTemplateVersion(versionId);
   }
 
+  /** Durée estimée d'une tâche d'une version brouillon (17/11/2026) ; une version publiée reste figée. */
+  setTemplateNodeMinutes(nodeId: string, minutes: number | null): ProjectTemplateVersion {
+    const row = this.database.get<{ template_version_id: string }>('SELECT template_version_id FROM project_template_nodes WHERE id=?', [nodeId]);
+    if (!row) throw new Error('Nœud de modèle introuvable.');
+    const version = this.getTemplateVersion(row.template_version_id);
+    if (version.status !== 'draft' || version.operationalReady) throw new Error('Une version publiée est figée. Crée une nouvelle version.');
+    if (minutes !== null && (!Number.isSafeInteger(minutes) || minutes < 0)) throw new Error('Durée estimée invalide.');
+    this.database.run('UPDATE project_template_nodes SET estimated_minutes=? WHERE id=?', [minutes, nodeId]);
+    return this.getTemplateVersion(row.template_version_id);
+  }
+
   removeTemplateNode(nodeId: string): ProjectTemplateVersion {
     const row = this.database.get<{ template_version_id: string }>('SELECT template_version_id FROM project_template_nodes WHERE id=?', [nodeId]);
     if (!row) throw new Error('Nœud de modèle introuvable.');

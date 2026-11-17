@@ -1,0 +1,74 @@
+{
+  "note": "Cas de figure fictifs pour juger les onglets Prérequis et Interventions des projets (R5b). Appliqué par scripts/seed-projets-cas-de-figure.cjs aux trois projets TEST. Données uniquement fictives.",
+  "projects": [
+    {
+      "projectName": "TEST — Site vitrine à 699 €",
+      "cas": "Tout est prêt : prérequis tous validés ou sans objet, contrats de maintenance et de pack d'heures, aucune demande",
+      "prerequisites": [
+        { "label": "Logo et charte graphique", "description": "Fichiers vectoriels reçus et contrôlés", "status": "validated" },
+        { "label": "Textes des pages", "description": "Accueil, À propos, Services, Contact", "status": "validated" },
+        { "label": "Photos de la boulangerie", "status": "validated" },
+        { "label": "Accès au nom de domaine", "description": "Le client n'a pas de domaine : on en crée un", "status": "not_applicable" }
+      ],
+      "maintenancePlan": { "name": "TEST — Maintenance mensuelle", "periodicPriceCents": 4900, "includedInterventions": 2 },
+      "maintenanceSubscription": true,
+      "hourPack": { "name": "TEST — Pack 5 heures", "purchasedSeconds": 18000, "contractPriceCents": 25000 },
+      "requests": [],
+      "interventions": []
+    },
+    {
+      "projectName": "TEST — Boutique en ligne",
+      "cas": "Il manque des choses : un prérequis de chaque statut dont un facultatif, trois demandes, deux interventions",
+      "prerequisites": [
+        { "label": "Logo et charte graphique", "status": "validated" },
+        { "label": "Photos des produits", "description": "Reçues en vrac, à trier avant de les valider", "status": "received" },
+        { "label": "Liste des produits et des prix", "description": "Il manque les prix des 12 derniers produits", "status": "incomplete" },
+        { "label": "Accès à l'hébergement et au nom de domaine", "status": "to_request" },
+        { "label": "Mentions légales fournies par le client", "description": "Facultatif : on peut les rédiger nous-mêmes", "status": "requested", "required": false }
+      ],
+      "requests": [
+        { "subject": "Changer la couleur du bouton Ajouter au panier", "source": "email", "priority": "normal", "status": "to_qualify" },
+        { "subject": "Le client voudrait un deuxième mode de livraison", "source": "phone", "priority": "high", "status": "waiting_client", "description": "À confirmer avec le transporteur avant de chiffrer" },
+        { "subject": "Question sur la facturation de l'acompte", "source": "message", "priority": "low", "status": "new" }
+      ],
+      "interventions": [
+        { "subject": "Correction de l'affichage mobile du panier", "type": "correction", "status": "in_progress", "coverageMode": "included_project", "priority": "high" },
+        { "subject": "Formation à la gestion des commandes", "type": "training", "status": "planned", "coverageMode": "out_of_scope", "priority": "normal", "scheduledInDays": 7 }
+      ]
+    },
+    {
+      "projectName": "TEST — Landing page",
+      "cas": "Trop d'éléments et textes très longs : 8 demandes (limite d'affichage à 6), 9 interventions (limite à 8), libellés longs",
+      "prerequisites": [
+        { "label": "Texte d'accroche principal de la page et des trois bénéfices clés, validé par la direction du client avant toute maquette", "description": "Le client a transmis trois versions différentes, aucune n'a encore été arbitrée par sa direction, ce qui bloque la maquette et le calendrier de livraison prévu", "status": "incomplete" },
+        { "label": "Visuel principal", "status": "to_request" },
+        { "label": "Code de suivi des statistiques", "status": "requested" },
+        { "label": "Mentions légales", "status": "received" },
+        { "label": "Adresse de réception des demandes", "status": "validated" },
+        { "label": "Politique de cookies", "status": "to_request", "required": false }
+      ],
+      "hourPack": { "name": "TEST — Pack de 10 heures de retouches et d'ajustements après mise en ligne, valable un an", "purchasedSeconds": 36000, "contractPriceCents": 45000 },
+      "requests": [
+        { "subject": "Modifier le titre principal", "source": "email", "priority": "normal", "status": "new" },
+        { "subject": "Ajouter un second bouton d'appel à l'action", "source": "email", "priority": "normal", "status": "to_qualify" },
+        { "subject": "Remplacer la photo de l'équipe", "source": "message", "priority": "low", "status": "waiting_client" },
+        { "subject": "Le formulaire n'envoie plus de message depuis hier soir", "source": "phone", "priority": "urgent", "status": "new" },
+        { "subject": "Changer la couleur du bandeau", "source": "meeting", "priority": "low", "status": "new" },
+        { "subject": "Ajouter une section témoignages avec trois citations de clients et leurs logos", "source": "email", "priority": "normal", "status": "to_qualify" },
+        { "subject": "Traduire la page en anglais", "source": "website_form", "priority": "low", "status": "waiting_client" },
+        { "subject": "Vérifier le suivi des conversions", "source": "other", "priority": "high", "status": "new" }
+      ],
+      "interventions": [
+        { "subject": "Correction du formulaire de contact", "type": "correction", "status": "in_progress", "coverageMode": "included_project", "priority": "urgent" },
+        { "subject": "Modification du titre principal", "type": "modification", "status": "to_plan", "coverageMode": "included_project", "priority": "normal" },
+        { "subject": "Ajout d'un second bouton d'appel à l'action", "type": "addition", "status": "planned", "coverageMode": "out_of_scope", "priority": "normal", "scheduledInDays": 3 },
+        { "subject": "Remplacement de la photo de l'équipe", "type": "modification", "status": "waiting_client", "coverageMode": "internal", "priority": "low" },
+        { "subject": "Assistance pour le suivi des statistiques", "type": "support", "status": "to_validate", "coverageMode": "commercial_gesture", "priority": "normal" },
+        { "subject": "Ajustement de l'espacement sur mobile", "type": "correction", "status": "completed", "coverageMode": "included_project", "priority": "low" },
+        { "subject": "Test de vitesse de chargement", "type": "other", "status": "completed", "coverageMode": "internal", "priority": "low" },
+        { "subject": "Changement de la police des titres", "type": "modification", "status": "cancelled", "coverageMode": "out_of_scope", "priority": "low" },
+        { "subject": "Mise à jour du plugin de formulaire", "type": "maintenance", "status": "blocked", "coverageMode": "out_of_scope", "priority": "normal" }
+      ]
+    }
+  ]
+}

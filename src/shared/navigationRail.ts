@@ -25,6 +25,8 @@ export type NavigationModule = typeof NAVIGATION_MODULES[number];
 export const NAVIGATION_PREFERENCE_KEY = 'atoumweb:navigation:rail:v1';
 export interface NavigationPreference {version:1;railCollapsed:boolean;favoriteModuleKeys:NavigationModuleKey[];collapsedGroups?:NavigationGroup[]}
 export const defaultNavigationPreference = ():NavigationPreference=>({version:1,railCollapsed:false,favoriteModuleKeys:[]});
+/** R7 : un groupe replié s'affiche quand même ouvert tant que la page active en fait partie. La préférence de repli n'est jamais modifiée par cette règle. */
+export const isGroupExpanded=(group:NavigationGroup,active:NavigationModuleKey,collapsedGroups:readonly NavigationGroup[]|undefined):boolean=>!collapsedGroups?.includes(group)||NAVIGATION_MODULES.find(module=>module.key===active)?.group===group;
 export const isNavigationModuleKey = (value:unknown):value is NavigationModuleKey=>typeof value==='string'&&NAVIGATION_MODULES.some(module=>module.key===value);
 export function normalizeNavigationPreference(value:unknown):NavigationPreference {
   if(!value||typeof value!=='object')throw Error('Préférence de navigation invalide.');

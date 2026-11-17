@@ -1,29 +1,62 @@
+// Galerie de recette de la fiche de travail du prospect (refonte R3, thème Noir, densité Confort).
+// Règles durables, pas de comptage de feuilles CSS : on vérifie la structure visible (en-tête, carte « Prochaine étape »,
+// menu « Plus », sections repliables, fenêtre « Programmer une action », trois vues, en-tête de Clients).
 module.exports=async({win,db,evalUI:js,get,wait,navigate,sleep})=>{
  const fs=require('node:fs'),path=require('node:path');
- const out=path.resolve('outputs/prospection-galerie-20261022');fs.mkdirSync(out,{recursive:true});const shots=[];
- const click=async s=>{await js(`document.querySelector(${JSON.stringify(s)}).click()`);await sleep(180);};
+ const out=path.resolve('outputs/prospection-galerie-r3-20261113');fs.mkdirSync(out,{recursive:true});const shots=[];
+ const fail=[];const check=(ok,label)=>{if(!ok){fail.push(label);console.log('ECHEC '+label);}else console.log('OK '+label);};
+ const click=async s=>{await js(`document.querySelector(${JSON.stringify(s)}).click()`);await sleep(200);};
+ const clickText=async(scope,label)=>{await js(`(()=>{const b=[...document.querySelectorAll(${JSON.stringify(scope)})].find(e=>e.textContent.trim().includes(${JSON.stringify(label)}));if(!b)throw Error('Absent : '+${JSON.stringify(label)});b.click()})()`);await sleep(220);};
  async function shot(name){await js('document.activeElement?.blur()');await sleep(180);const file=String(shots.length+1).padStart(3,'0')+'-'+name+'.png';fs.writeFileSync(path.join(out,file),(await win.webContents.capturePage()).toPNG());shots.push(file);console.log('CAPTURE '+file);}
- async function pages(name){const sel='.prospect-desk-content';await js(`document.querySelector('${sel}').scrollTop=0`);await sleep(120);const size=await get(`(()=>{const e=document.querySelector('${sel}');return {h:e.clientHeight,total:e.scrollHeight}})()`);for(let y=0,i=1;y<size.total;y+=Math.max(300,size.h-100),i++){await js(`document.querySelector('${sel}').scrollTop=${y}`);await shot(name+'-'+i);if(y+size.h>=size.total)break;}}
- async function group(name){await js(`document.querySelectorAll('.prospect-section-group').forEach(e=>e.open=e.dataset.group===${JSON.stringify(name)})`);await sleep(200);}
- async function button(text){await js(`(()=>{const b=[...document.querySelectorAll('.prospect-detail-desk button')].find(e=>e.textContent.trim()===${JSON.stringify(text)});if(!b)throw Error('Bouton absent: '+${JSON.stringify(text)});b.click()})()`);await sleep(160);}
- const ids=[];for(const [name,stage] of [['Toutes les Fleurs','qualifying'],['Euro Trans Sécurité','need_identified'],['Cazor Auto Passion','quote_to_prepare'],['Maison Lefèvre','quote_sent'],['Studio Photo','negotiation'],['Atelier du Bois','new']]){
- const o=db.crm.createOrganization({name:'TEST — '+name,industry:'Artisan',city:'Dijon',website:'https://example.test'}),c=db.crm.createContact({organizationId:o.id,firstName:'Camille',lastName:name.split(' ')[0],jobTitle:'Responsable'}),p=db.crm.createProspect({organizationId:o.id,contactId:c.id,stage,primaryNeed:'Refonte du site et développement de la visibilité locale.',source:'referral'});ids.push(p.id);db.crm.saveContactMethod({contactId:c.id,type:'email',value:'demo@example.test',isPrimary:true});db.crm.saveContactMethod({contactId:c.id,type:'phone',value:'0612345678',isPrimary:true});db.actions.create({ownerType:'prospect',ownerId:p.id,type:'follow_up',title:'Échanger sur le projet',dueAt:new Date().toISOString()});if(stage==='quote_to_prepare')db.quotes.create({prospectId:p.id,subject:'TEST — Proposition site vitrine'});
+ const stages=[['Toutes les Fleurs','new'],['Euro Trans Sécurité','qualifying'],['Cazor Auto Passion','need_identified'],['Maison Lefèvre','quote_sent']];
+ const ids=[];
+ for(const [name,stage] of stages){
+  const o=db.crm.createOrganization({name:'TEST — '+name,industry:'Artisan',city:'Dijon',website:'https://example.test'}),c=db.crm.createContact({organizationId:o.id,firstName:'Camille',lastName:name.split(' ')[0],jobTitle:'Responsable'}),p=db.crm.createProspect({organizationId:o.id,contactId:c.id,stage,primaryNeed:'Refonte du site et visibilité locale.',source:'referral'});
+  ids.push(p.id);db.crm.saveContactMethod({contactId:c.id,type:'email',value:'demo@example.test',isPrimary:true});
+  if(stage==='quote_sent')db.actions.create({ownerType:'prospect',ownerId:p.id,type:'follow_up',title:'Relancer le devis',dueAt:new Date(Date.now()+7*864e5).toISOString()});
  }
  const old=db.crm.createOrganization({name:'TEST — Dossier historique'}),lost=db.crm.createProspect({organizationId:old.id,stage:'new'});db.crm.changeProspectStage(lost.id,'lost','TEST — Sans suite');
- win.setContentSize(1920,1080);win.webContents.setZoomFactor(1);await navigate('Prospection');await js("document.documentElement.dataset.theme='noir';document.documentElement.dataset.density='comfort'");await wait('document.querySelector(".prospect-directory-table tbody tr")','annuaire');await shot('annuaire');
- await click('.prospection-pilot-heading .primary-button');await shot('creation-entreprise');await click('.prospection-pilot-heading .primary-button');await click('.aw-table-preferences>summary');await shot('colonnes-et-vues');await click('.aw-table-preferences>summary');
- await click(`tr[data-record-id="${ids[0]}"]`);await shot('fiche-rapide');await js("document.querySelectorAll('.prospection-quick-more').forEach(e=>e.open=true)");await shot('fiche-rapide-details');await click('[aria-label="Agrandir la fiche"]');await wait('document.querySelector(".prospect-workspace")','bureau');await pages('fiche-travail');
- await click('.prospect-workspace-identity>summary');await shot('identite-logo');await click('.prospect-workspace-identity>summary');await click('.prospect-workspace-associations>summary');await shot('associations');await click('.prospect-workspace-associations>summary');
- await group('identity');await pages('entreprise-contacts');await button('Modifier l’entreprise et le contact');await pages('modifier-entreprise-contact');await button('Fermer la modification');await button('Ajouter un contact');await pages('ajouter-contact');await button('Fermer l’ajout');await click('.contact-methods-panel>summary');await pages('coordonnees');
- await group('needs');await pages('qualification');
- await group('activities');await js("document.querySelectorAll('.prospect-work-accordion-trigger').forEach(b=>{if(b.getAttribute('aria-expanded')==='false')b.click()})");await pages('activites-historique');await button('Classer comme perdu');await pages('confirmation-perdu');await button('Annuler');await button('Archiver le prospect');await pages('confirmation-archivage');await button('Annuler');
- await click('.prospect-desk-tabs button:nth-child(2)');await wait('document.querySelector(".research-tabs")','reference');
- const tabs=await get('[...document.querySelectorAll(".research-tabs button")].map(b=>b.textContent.trim())');for(let i=0;i<tabs.length;i++){await click(`.research-tabs button:nth-child(${i+1})`);await pages('reference-lecture-'+(i+1));}
- await click('.research-edit-toggle');for(let i=0;i<tabs.length;i++){await click(`.research-tabs button:nth-child(${i+1})`);await pages('reference-modification-'+(i+1));}await click('.research-edit-toggle');await click('.prospect-detail-desk .close-detail');
- for(const index of [1,2,5]){await click(`tr[data-record-id="${ids[index]}"]`);await click('[aria-label="Agrandir la fiche"]');await group(index===1?'needs':index===2?'activities':'needs');await js("document.querySelectorAll('.prospect-work-accordion-trigger').forEach(b=>{if(b.getAttribute('aria-expanded')==='false')b.click()})");await pages(['','',''][0]||('etape-'+['qualification','besoins','devis','attente','negociation','nouveau'][index]));await click('.prospect-detail-desk .close-detail');}
- await click('.prospect-view-switch button:nth-child(2)');await shot('parcours-commercial');await click('.pipeline-card-summary');await pages('ouverture-carte-parcours');await click('.prospect-detail-desk .close-detail');await click('.prospect-view-switch button:last-child');await shot('historique');await click('.prospect-history-table tbody tr button');await shot('historique-detail');
- const file=require('node:url').fileURLToPath(win.webContents.getURL());await win.loadFile(file,{query:{prospectReference:ids[0]}});await wait('document.querySelector(".research-tabs")','reference-separee');await shot('reference-fenetre-separee');await click('.research-edit-toggle');await shot('reference-fenetre-separee-modification');
- fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify({date:'2026-10-22',viewport:[1920,1080],onlyTemp:true,currentLocalSources:true,tabs,shots},null,2));
- fs.writeFileSync(path.join(out,'index.html'),'<!doctype html><html lang="fr"><meta charset="utf-8"><title>Prospection — modèle actuel</title><style>body{background:#031321;color:white;font:16px system-ui;margin:24px}img{width:100%;height:auto}a{color:#ffe337}section{margin:32px 0}</style><h1>Prospection — modèle actuel en cours de création</h1><p>Captures réelles des sources locales au 22/10/2026. Données fictives TEMP. Noir / Confort / 1920×1080 / 100 %. Plusieurs captures successives pour les rubriques longues. Ce dossier ne représente pas une refonte future déjà approuvée.</p>'+shots.map(f=>'<section><h2>'+f+'</h2><a href="'+f+'"><img loading="lazy" src="'+f+'"></a></section>').join('')+'</html>');
- console.log('GALERIE_TERMINEE '+shots.length);
+ win.setContentSize(1920,1080);win.webContents.setZoomFactor(1);
+ await navigate('Prospection');await js("document.documentElement.dataset.theme='noir';document.documentElement.dataset.density='comfort'");
+ await wait('document.querySelector(".prospect-directory-table tbody tr")','liste');
+ check(await get('document.querySelectorAll(".prospects-v2 .page-heading h1").length===1'),'un seul en-tête de page Prospection');
+ check(await get('[...document.querySelectorAll(".prospect-view-switch button")].map(b=>b.textContent.trim().replace(/\\s*\\d+$/,"")).join("|")==="Liste|Parcours commercial|Historique"'),'trois vues : Liste, Parcours commercial, Historique');
+ await shot('liste');
+ await click('.prospects-v2>.page-heading .primary-button');await shot('creation');await click('.prospects-v2>.page-heading .secondary-button');
+ // Une fiche par étape : carte « Prochaine étape », onglet d'ouverture, un seul bouton jaune dans la carte.
+ const expected=[['new','Démarrer la prospection','Entreprise'],['qualifying','la qualification','Préparer l’échange'],['need_identified','Préparer le devis','Besoins'],['quote_sent','Poursuivre le devis','Devis']];
+ for(let i=0;i<ids.length;i++){
+  await click(`tr[data-record-id="${ids[i]}"]`);await click('[aria-label="Agrandir la fiche"]');await wait('document.querySelector(".prospect-record-header .aw-next-step")','fiche '+expected[i][0]);
+  const info=await get('(()=>({primary:[...document.querySelectorAll(".aw-next-step .aw-ui-button--primary")].map(b=>b.textContent.trim()),active:document.querySelector(".prospect-desk-tabs .active")?.textContent.trim(),oldSave:document.body.textContent.includes("Enregistrer et continuer")}))()');
+  check(info.primary.length===1&&info.primary[0].includes(expected[i][1]),`étape ${expected[i][0]} : action principale « ${expected[i][1]} »`);
+  check(info.active===expected[i][2],`étape ${expected[i][0]} : ouverture sur l'onglet ${expected[i][2]} (obtenu ${info.active})`);
+  check(!info.oldSave,`étape ${expected[i][0]} : plus de « Enregistrer et continuer »`);
+  await shot('fiche-'+expected[i][0]);
+  if(expected[i][0]==='need_identified'){
+   await js('[...document.querySelectorAll(".needs-section-trigger")].forEach(b=>{if(b.getAttribute("aria-expanded")==="false")b.click()})');await sleep(250);
+   check(await get('document.querySelectorAll(".needs-section-trigger").length===4&&[...document.querySelectorAll(".prospect-desk-content button")].filter(b=>b.textContent.trim()==="Enregistrer").length===1'),'Besoins : sections repliables et un seul « Enregistrer »');
+   await shot('besoins-sections-ouvertes');
+   await clickText('.prospect-record-header .aw-more-menu-trigger','Plus');await sleep(200);
+   check(await get('[...document.querySelectorAll("[role=menuitem]")].map(b=>b.textContent.trim()).join("|").includes("Archiver")'),'menu « Plus » visible avec « Archiver »');
+   await shot('menu-plus');
+   await clickText('[role=menuitem]','Associations');await wait('document.querySelector("dialog[open], .prospect-dialog, [role=dialog]")','associations');await shot('associations');
+   await js('(()=>{const b=[...document.querySelectorAll("[role=dialog] button, dialog button")].find(e=>e.textContent.trim()==="Fermer");if(b)b.click()})()');await sleep(250);
+  }
+  if(expected[i][0]==='quote_sent'){
+   await clickText('.aw-next-step button','Programmer une action');await wait('document.querySelector(".prospect-action-dialog")','fenêtre action');
+   check(await get('document.querySelectorAll(".prospect-action-dialog").length===1'),'une seule fenêtre « Planifier une action »');await shot('programmer-une-action');
+   await js('(()=>{const b=[...document.querySelectorAll(".prospect-action-dialog button")].find(e=>e.textContent.trim().startsWith("Annuler"));if(b)b.click()})()');await sleep(250);
+  }
+  await click('.prospect-record-header .close-detail');await sleep(250);
+ }
+ await click('.prospect-view-switch button:nth-child(2)');await wait('document.querySelector(".kanban-board")','parcours');
+ check(await get('document.querySelectorAll(".prospect-toolbar .primary-button").length===0'),'parcours commercial : aucun filtre en jaune');
+ await shot('parcours-commercial');
+ await click('.prospect-view-switch button:last-child');await sleep(300);await shot('historique');
+ await navigate('Clients');await sleep(500);await js("document.documentElement.dataset.theme='noir';document.documentElement.dataset.density='comfort'");
+ check(await get('document.querySelectorAll(".content-area .page-heading h1").length===1&&document.querySelector(".page-heading h1").textContent.trim()==="Clients"'),'Clients : un seul en-tête de page');
+ await shot('clients');
+ fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify({date:'2026-11-13',viewport:[1920,1080],theme:'noir',density:'comfort',failures:fail,shots},null,2));
+ console.log('GALERIE_TERMINEE '+shots.length+' captures, '+fail.length+' échec(s)');
+ if(fail.length)throw new Error(fail.join(' ; '));
 };

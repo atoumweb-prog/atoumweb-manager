@@ -18,6 +18,7 @@ import {
 } from '../../shared/operations';
 import type { ProjectSummary } from '../../shared/projects';
 import { OperationIcon } from './OperationIcon';
+import { KeyFigures } from '../ui/KeyFigures';
 import { MaintenanceOveragePanel } from './MaintenanceOveragePanel';
 import { MaintenanceReportPanel } from './MaintenanceReportPanel';
 
@@ -297,12 +298,12 @@ export function MaintenancePanel({ onEntityReady, initialRequest, clients, proje
   }
 
   return <div className="maintenance-panel-stack">
-    <section className="maintenance-dashboard" aria-label="Synthèse Maintenance">
-      <article><span className="maintenance-dashboard-icon" aria-hidden="true">✓</span><div><strong>Maintenances actives</strong><span>{activeCount}</span><small>Contrats actuellement suivis</small></div></article>
-      <article><span className="maintenance-dashboard-icon" aria-hidden="true">Ⅱ</span><div><strong>Suspendues</strong><span>{suspendedCount}</span><small>À reprendre ou à clôturer</small></div></article>
-      <article><span className="maintenance-dashboard-icon" aria-hidden="true">▤</span><div><strong>Plans actifs</strong><span>{activePlansCount}</span><small>Références disponibles</small></div></article>
-      <article><span className="maintenance-dashboard-icon" aria-hidden="true">€</span><div><strong>Valeur / période</strong><span>{euro(contractValue)}</span><small>Souscriptions actives</small></div></article>
-    </section>
+    <KeyFigures ariaLabel="Synthèse Maintenance" items={[
+      { key: 'active', icon: '✓', label: 'Maintenances actives', value: activeCount, helper: 'Contrats actuellement suivis' },
+      { key: 'suspended', icon: 'Ⅱ', label: 'Suspendues', value: suspendedCount, helper: 'À reprendre ou à clôturer' },
+      { key: 'plans', icon: '▤', label: 'Plans actifs', value: activePlansCount, helper: 'Références disponibles' },
+      { key: 'value', icon: '€', label: 'Valeur / période', value: euro(contractValue), helper: 'Souscriptions actives' },
+    ]} />
     <div className="module-toolbar operations-toolbar">
       <div><strong>{activeSubscriptions.length}</strong><span> maintenance(s)</span></div>
       <div className="toolbar-controls">

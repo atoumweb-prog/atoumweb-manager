@@ -1,6 +1,6 @@
 import { useEffect,useRef,useState } from 'react';
 import type { CatalogRecommendationLink,QuoteDetail,QuoteLine } from '../../shared/commercial';
-import { quoteRecommendationState,QUOTE_RECOMMENDATION_STATE_LABELS } from '../../shared/quoteRecommendationStatus';
+import { quoteRecommendationState,QUOTE_RECOMMENDATION_STATE_LABELS,resolveRecommendationTargets } from '../../shared/quoteRecommendationStatus';
 import { useUnsavedDraft } from '../unsaved/unsaved';
 
 /** 04D: read-only advice until a user explicitly adds a line to an editable Quote. */
@@ -28,7 +28,7 @@ export function QuoteCatalogRecommendationsPanel({quote,source,onSave}:{
     setLinks([]);setError('');setLoading(Boolean(sourceVersionId));
     if(!sourceVersionId)return;
     void window.atoumweb.catalog.listRecommendations(sourceVersionId)
-      .then(rows=>{if(request!==epoch.current)return;setLinks(rows.filter(link=>link.status!=='paused'));setLoading(false);})
+      .then(rows=>{if(request!==epoch.current)return;setLinks(resolveRecommendationTargets(rows.filter(link=>link.status!=='paused')));setLoading(false);})
       .catch(err=>{if(request!==epoch.current)return;
         setError(err instanceof Error?err.message:'Lecture des recommandations impossible.');
         setLoading(false);

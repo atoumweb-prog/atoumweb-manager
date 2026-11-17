@@ -14,6 +14,12 @@ import type { Intervention } from '../../shared/operations';
 import { OperationIcon, type OperationIconName } from '../operations/OperationIcon';
 import { businessBackupInterventionLinkIssue, businessBackupLocationActionLabel, businessBackupLocationStatus, filterBusinessBackupAlerts } from '../../shared/businessBackupPresentation';
 import { useUnsavedDraft } from '../unsaved/unsaved';
+import { KeyFigures } from '../ui/KeyFigures';
+import { ListLoadError } from '../ui/ListLoadError';
+import { noticeText } from '../ui/noticeLifetime';
+import { ListToolbar } from '../ui/ListToolbar';
+import { limitItems, plural } from '../../shared/projectTabs';
+import { backupsEmptyText } from '../../shared/ressourcesEmpty';
 import './BusinessBackupsPage.css';
 
 const BACKUP_TYPES: Array<{ id: BusinessBackupType; label: string }> = [
@@ -64,7 +70,9 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
   const [clientFilter, setClientFilter] = useState('');
   const [projectFilter, setProjectFilter] = useState('');
   const [creating, setCreating] = useState(false);
+  const [showAllAlerts, setShowAllAlerts] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
   // Le verrou ref protège dès le premier clic, avant toute mise à jour React.
   const mutationLock = useRef(false);
   const [mutationBusy, setMutationBusy] = useState(false);
@@ -136,7 +144,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
           })),
       ]);
       if(epoch!==loadEpoch.current)return;
-      setRecords(nextRecords);
+      setRecords(nextRecords); setListError(null);
       setProjects(nextProjects);
       setClients(nextClients);
       setOverview(nextOverview);
@@ -157,7 +165,7 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
     } catch (loadError) {
       if(epoch!==loadEpoch.current)return;
       if(preferredId)onEntityReady?.('backup_record',preferredId,loadError instanceof Error?loadError.message:'Sauvegardes indisponibles.');
-      setError(loadError instanceof Error ? loadError.message : 'Impossible de charger les sauvegardes métier.');
+      setListError(loadError instanceof Error ? loadError.message : 'Impossible de charger les sauvegardes métier.'); // P6b (D1) : montré dans la liste, pas comme une notice brute
     }
   }
 
@@ -341,18 +349,13 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
 
   return (
     <div className="business-backups-page">
-      <div className="business-backups-kpis">
-        <BackupKpi icon="database" label="Sauvegardes connues" value={overview?.totalRecords ?? 0} detail={overview?.latestKnown ? dateLabel(overview.latestKnown.backupAt) : 'Aucune'} />
-        <BackupKpi icon="folder" label="Copies locales présentes" value={overview?.localCopies ?? 0} detail={overview?.latestLocal ? `Dernière : ${dateLabel(overview.latestLocal.backupAt)}` : 'Aucune copie locale'} />
-        <BackupKpi icon="alert" label="Copies locales manquantes" value={overview?.missingLocalCopies ?? 0} detail={overview?.missingLocalCopies ? 'À relocaliser' : 'Aucune anomalie'} />
-        <BackupKpi icon="check-circle" label="Référence stable déclarée" value={overview?.latestStable ? '1' : '0'} detail={overview?.latestStable?.label ?? 'Non définie'} />
-      </div>
+      <KeyFigures ariaLabel="Synthèse des sauvegardes" items={[{ key: 'known', label: 'Sauvegardes connues', value: overview?.totalRecords ?? 0, helper: overview?.latestKnown ? dateLabel(overview.latestKnown.backupAt) : 'Aucune' }, { key: 'local', label: 'Copies locales présentes', value: overview?.localCopies ?? 0, helper: overview?.latestLocal ? `Dernière : ${dateLabel(overview.latestLocal.backupAt)}` : 'Aucune copie locale' }, { key: 'missing', label: 'Copies locales manquantes', value: overview?.missingLocalCopies ?? 0, helper: overview?.missingLocalCopies ? 'À relocaliser' : 'Aucune anomalie' }, { key: 'stable', label: 'Référence stable déclarée', value: overview?.latestStable ? '1' : '0', helper: overview?.latestStable?.label ?? 'Non définie' }].map(item => listError ? { ...item, value: '—', helper: 'Indisponible : la liste n’a pas pu être chargée' } : item)} />
 
-      <p className="technical-safety-note" role="note">Ce registre recense des sauvegardes déclarées. Il ne crée pas de fichiers, ne restaure pas WordPress et ne certifie ni intégrité ni restauration testée. La sauvegarde SQLite du Manager est une opération distincte dans Réglages.</p>
+      <p className="business-backups-note" role="note">Ce registre recense des sauvegardes déclarées. Il ne crée pas de fichiers, ne restaure pas WordPress et ne certifie ni intégrité ni restauration testée. La sauvegarde SQLite du Manager est une opération distincte dans Réglages.</p>
 
       <section className="panel business-backups-interventions" aria-label="Sauvegardes avant et après intervention">
         <div className="panel-title">
-          <div><span className="eyebrow">Prévention opérationnelle</span><h2>Avant / après intervention</h2></div>
+          <div><h2>Avant / après intervention</h2></div>
         </div>
         <p className="muted">Contrôle des déclarations liées à une intervention, sans effectuer de sauvegarde ni certifier un test de restauration.</p>
         <label>Intervention à contrôler
@@ -401,15 +404,15 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
 
       <section className="panel business-backups-alerts" aria-label="Alertes de sauvegarde des projets">
         <div className="panel-title">
-          <div><span className="eyebrow">Vigilance métier</span><h2>Alertes des projets actifs</h2></div>
-          <span className="status-pill">{alertsError ? 'Indisponible' : contextAlerts.length}</span>
+          <div><h2>Alertes des projets actifs</h2></div>
+          <span className="status-pill">{alertsError || listError ? 'Indisponible' : contextAlerts.length}</span>
         </div>
-        {alertsError
-          ? <p role="status" className="muted">Impossible de lire les alertes des sauvegardes : {alertsError}. Ce statut ne signifie pas qu’aucune alerte n’existe.</p>
+        {alertsError || listError
+          ? <p role="status" className="muted">Impossible de lire les alertes des sauvegardes : {noticeText(alertsError ?? listError ?? '')}. Ce statut ne signifie pas qu’aucune alerte n’existe.</p>
           : contextAlerts.length === 0
             ? <p className="muted">Aucune alerte remontée pour ce contexte. Cela ne certifie ni l’existence d’une sauvegarde ni la possibilité de restaurer.</p>
             : <div className="business-backups-alert-list">
-              {contextAlerts.slice(0, 5).map((alert) => <div className="business-backups-alert" key={alert.id}>
+              {(showAllAlerts ? contextAlerts : limitItems(contextAlerts, 3).shown).map((alert) => <div className="business-backups-alert" key={alert.id}>
                 <OperationIcon name="alert" size={18} />
                 <div><strong>{alert.title}</strong><p>{alert.detail}</p></div>
                 {alert.projectId && <button className="secondary-button" type="button" onClick={() => {
@@ -417,24 +420,27 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
                   setProjectFilter(alert.projectId ?? '');
                 }}>Voir ce projet</button>}
               </div>)}
-              {contextAlerts.length > 5 && <p className="muted">{contextAlerts.length - 5} autre(s) alerte(s) : filtre par Client ou Projet pour affiner.</p>}
+              {contextAlerts.length > 3 && <button className="secondary-button" type="button" aria-expanded={showAllAlerts} onClick={() => setShowAllAlerts((value) => !value)}>{showAllAlerts ? 'Réduire la liste' : `Afficher les ${contextAlerts.length - 3} autres`}</button>}
             </div>}
         <p className="muted business-backups-alerts-note">Avertissements issus des sauvegardes déclarées et des politiques existantes ; ils ne remplacent pas une vérification technique avant intervention.</p>
       </section>
 
       {error && <div className="notice business-backups-error" role="alert"><span>{error}</span><button type="button" onClick={() => setError(null)} aria-label="Fermer" title="Fermer"><OperationIcon name="close"/></button></div>}
 
-      <article className="panel business-backups-toolbar">
-        <input aria-label="Rechercher des sauvegardes" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher une sauvegarde ou un emplacement…" />
-        <select aria-label="Filtrer par client" value={clientFilter} onChange={(event) => { setClientFilter(event.target.value); setProjectFilter(''); }}><option value="">Tous les clients</option>{clients.map((client) => <option value={client.id} key={client.id}>{client.displayName}</option>)}</select>
-        <select aria-label="Filtrer par projet" value={projectFilter} onChange={(event) => setProjectFilter(event.target.value)}><option value="">Tous les projets</option>{projects.filter((project) => !clientFilter || project.clientAccountId === clientFilter).map((project) => <option value={project.id} key={project.id}>{project.number} · {project.name}</option>)}</select>
-        <select aria-label="Filtrer par type" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as BusinessBackupType | '')}><option value="">Tous les types</option>{BACKUP_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}</select>
-        <select aria-label="Filtrer par emplacement" value={locationFilter} onChange={(event) => setLocationFilter(event.target.value as BusinessBackupLocationType | '')}><option value="">Tous les emplacements</option>{LOCATION_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}</select>
-        <button className="primary-button" type="button" disabled={mutationBusy} onClick={() => { if (creating) createDraft.request(() => setCreating(false)); else setCreating(true); }}>{creating ? <><OperationIcon name="close" size={16} /> Fermer</> : <><OperationIcon name="database" size={16} /> Déclarer une sauvegarde</>}</button>
-      </article>
+      <ListToolbar
+          countLabel={listError ? '—' : plural(records.length, 'sauvegarde', 'sauvegardes')}
+          search={{ value: search, onChange: setSearch, placeholder: 'Sauvegarde ou emplacement…', ariaLabel: 'Rechercher des sauvegardes' }}
+          filters={<>
+            <select aria-label="Filtrer par client" value={clientFilter} onChange={(event) => { setClientFilter(event.target.value); setProjectFilter(''); }}><option value="">Tous les clients</option>{clients.map((client) => <option value={client.id} key={client.id}>{client.displayName}</option>)}</select>
+            <select aria-label="Filtrer par projet" value={projectFilter} onChange={(event) => setProjectFilter(event.target.value)}><option value="">Tous les projets</option>{projects.filter((project) => !clientFilter || project.clientAccountId === clientFilter).map((project) => <option value={project.id} key={project.id}>{project.number} · {project.name}</option>)}</select>
+            <select aria-label="Filtrer par type" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as BusinessBackupType | '')}><option value="">Tous les types</option>{BACKUP_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}</select>
+            <select aria-label="Filtrer par emplacement" value={locationFilter} onChange={(event) => setLocationFilter(event.target.value as BusinessBackupLocationType | '')}><option value="">Tous les emplacements</option>{LOCATION_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}</select>
+          </>}
+          primary={<button className={creating ? 'secondary-button' : 'primary-button'} type="button" disabled={mutationBusy} onClick={() => { if (creating) createDraft.request(() => setCreating(false)); else setCreating(true); }}>{creating ? <><OperationIcon name="close" size={16} /> Fermer</> : <><OperationIcon name="database" size={16} /> Déclarer une sauvegarde</>}</button>}
+        />
 
       {creating && <article className="panel business-backups-create">
-        <div className="panel-title"><div><span className="eyebrow">Nouvel enregistrement</span><h2>Sauvegarde métier</h2></div></div>
+        <div className="panel-title"><div><h2>Sauvegarde métier</h2></div></div>
         <div className="business-backups-form-grid">
           <label>Projet<select value={form.projectId} onChange={(event) => setForm((value) => ({ ...value, projectId: event.target.value }))}><option value="">Aucun projet</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.number} · {project.name}</option>)}</select></label>
           <label>Client<select value={form.clientAccountId} onChange={(event) => setForm((value) => ({ ...value, clientAccountId: event.target.value }))}><option value="">Déduit du projet / aucun</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.displayName}{client.status === 'archived' ? ' · Archivé' : client.status === 'inactive' ? ' · Ancien client' : ''}</option>)}</select></label>
@@ -452,8 +458,9 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
         style={selected && !detailExpanded ? { gridTemplateColumns: `${splitPercent}% 8px minmax(0, 1fr)` } : undefined}
       >
         {!detailExpanded && <article className="panel business-backups-list">
-          <div className="panel-title"><div><span className="eyebrow">Historique</span><h2>Sauvegardes</h2></div><span className="status-pill">{records.length}</span></div>
-          {records.length === 0 && <p className="muted">Aucune sauvegarde ne correspond aux filtres.</p>}
+          <div className="panel-title"><div><h2>Sauvegardes</h2></div><span className="status-pill">{listError ? '—' : records.length}</span></div>
+          <ListLoadError error={listError} onRetry={() => void load()}/>
+          {records.length === 0 && !listError && <p className="muted">{backupsEmptyText({ total: records.length, filtersActive: Boolean(search.trim() || clientFilter || projectFilter || typeFilter || locationFilter) })}</p>}
           {records.map((record) => <button type="button" key={record.id} className={`business-backup-row ${selected?.id === record.id ? 'selected' : ''}`} disabled={mutationBusy} onClick={() => changeSelected(record)}>
             <div><strong>{record.label}</strong><span>{backupTypeLabel(record.backupType)} · {dateLabel(record.backupAt)}</span></div>
             <div>{record.stable && <span className="stable-badge">Stable</span>}<span>{record.locations.length} emplacement{record.locations.length > 1 ? 's' : ''}</span></div>
@@ -502,10 +509,6 @@ export function BusinessBackupsPage({ onEntityReady, onMessage, initialRecordId,
       </div>
     </div>
   );
-}
-
-function BackupKpi({ icon, label, value, detail }: { icon: OperationIconName; label: string; value: number | string; detail: string }) {
-  return <article className="kpi-card business-backup-kpi"><span className="business-backup-kpi-icon"><OperationIcon name={icon} size={27} /></span><div><span>{label}</span><strong>{value}</strong><small>{detail}</small></div></article>;
 }
 
 function backupTypeLabel(type: BusinessBackupType): string {

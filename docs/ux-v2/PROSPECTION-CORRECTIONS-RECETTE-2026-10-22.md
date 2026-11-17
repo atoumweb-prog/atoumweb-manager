@@ -24,3 +24,5 @@ Aucune suite générale ni matrice écrans/thèmes. Aucune donnée réelle ou Va
 ## Ajustement pendant la recette
 
 L’utilisateur juge encore le parcours comprimé par sa fiche latérale et signale la carte archivée restée sélectionnée. Le parcours utilise maintenant toute la largeur, six étapes visibles à la taille standard et listes défilantes par colonne. Un clic sur le titre d’une carte ouvre la fiche de travail du dossier actif cliqué ; le résumé et ses actions existants restent accessibles via Voir le résumé. Aucune fiche latérale persistante dans ce parcours ; annuaire et historique gardent leurs présentations propres. Trois assertions ciblées supplémentaires, même configuration (41 contrôles natifs au total).
+
+Note du 14/11/2026 (passe de finitions, lot P1) : la commande `--corrections` et le scénario `prospection-corrections.cjs` ont été retirés (ils visaient la fiche d’avant R3, supprimée). Voir `docs/refonte/plans/2026-11-14-p1-recettes-journal.md`.

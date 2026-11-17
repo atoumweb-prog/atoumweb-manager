@@ -1,0 +1,7 @@
+{
+  "comment": "Budget des font-size en px inférieurs à 14 (R2). Ne peut que baisser : régénérer seulement à la baisse.",
+  "total": 12,
+  "files": {
+    "quote-client-preview.css": 12
+  }
+}

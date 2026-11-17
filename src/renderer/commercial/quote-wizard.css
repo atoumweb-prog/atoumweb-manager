@@ -11,7 +11,7 @@
   border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text);
 }
 .quote-family-tile strong { font-size: 15px; line-height: 1.25; }
-.quote-family-tile small { font-size: 13px; color: var(--muted); }
+.quote-family-tile small { font-size: var(--aw-font-functional); color: var(--muted); }
 .quote-family-tile:hover, .quote-family-tile:focus-visible, .quote-family-tile.selected { border-color: var(--accent); background: var(--accent-soft); }
 .quote-family-icon {
   display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; flex: none;
@@ -28,13 +28,13 @@
 }
 .quote-offer-card strong { font-size: 15px; line-height: 1.25; }
 .quote-offer-card small {
-  font-size: 13px; color: var(--muted); line-height: 1.35;
+  font-size: var(--aw-font-functional); color: var(--muted); line-height: 1.35;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 .quote-offer-price { font-size: 15px; font-weight: 800; color: var(--accent-strong); white-space: nowrap; }
 .quote-offer-card:hover, .quote-offer-card:focus-visible { border-color: var(--accent); }
 .quote-offer-card.selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
-.quote-offer-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--success); }
+.quote-offer-check { display: inline-flex; align-items: center; gap: 6px; font-size: var(--aw-font-functional); font-weight: 700; color: var(--success); }
 .quote-offer-check svg { width: 16px; height: 16px; }
 
 .quote-offer-chosen {
@@ -53,13 +53,13 @@
 .quote-option.selected { border-color: var(--accent); background: var(--accent-soft); }
 .quote-wizard .quote-step-content .quote-option input, .quote-wizard .quote-step-content .quote-radio input[type=radio] { width: 18px; height: 18px; padding: 0; }
 .quote-option > span:nth-child(2) { display: grid; gap: 2px; }
-.quote-option small { font-size: 13px; color: var(--muted); }
+.quote-option small { font-size: var(--aw-font-functional); color: var(--muted); }
 
 .quote-payment-choice { display: grid; gap: 8px; margin: 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; }
 .quote-payment-choice legend { padding: 0 6px; font-size: 14px; font-weight: 700; color: var(--muted); }
 .quote-wizard .quote-step-content label.quote-radio { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 10px; font-size: 15px; font-weight: 400; color: var(--text); cursor: pointer; }
 .quote-radio > span { display: grid; gap: 3px; }
-.quote-radio small { font-size: 13px; color: var(--muted); }
+.quote-radio small { font-size: var(--aw-font-functional); color: var(--muted); }
 .quote-deposit-field { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
 .quote-wizard .quote-step-content .quote-deposit-field input { width: 72px; }
 .quote-preview-need { white-space: pre-wrap; }
@@ -74,3 +74,10 @@
 @media (max-width: 900px) {
   .quote-offer-chosen { grid-template-columns: 1fr; align-items: stretch; }
 }
+
+/* R4 : raison visible du blocage de « Suivant » et outil de recette replié. Jetons uniquement, aucun !important. */
+/* P3a (F3) : la raison se lit juste avant « Suivant », dans le même groupe aligné à droite. */
+.quote-wizard-next { display: flex; align-items: center; justify-content: flex-end; gap: var(--ui-gap); min-width: 0; }
+.quote-wizard-hint { color: var(--aw-quiet-text, var(--text)); font-size: var(--aw-font-functional); }
+.quote-wizard-recipe { margin: 0 0 var(--ui-gap); }
+.quote-wizard-recipe > summary { cursor: pointer; color: var(--aw-quiet-text, var(--text)); font-size: var(--aw-font-functional); }

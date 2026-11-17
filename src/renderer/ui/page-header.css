@@ -1,0 +1,5 @@
+/* R2 : en-tête de page unique. Jetons uniquement, aucun !important. */
+.aw-page-header-title { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-width: 0; }
+.aw-page-header-title h1 { display: flex; align-items: center; gap: 10px; }
+.aw-page-header-meta { color: var(--muted); font-size: var(--aw-font-functional); }
+.aw-page-header-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-gap, 12px); }

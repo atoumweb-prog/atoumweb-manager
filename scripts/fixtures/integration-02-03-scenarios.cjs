@@ -28,18 +28,21 @@ module.exports=async context=>{
   await wait('!!document.querySelector(".prospect-desk-overlay")','work desk');
   test(await get('document.querySelector(".prospect-desk-overlay [data-search-entity-type=prospect]")?.dataset.searchEntityId')===p.id,'C02 work desk confirms its displayed identity');
   // Existing commercial APIs prepare deterministic fixture facts; UI never infers new rules.
-  await click('.prospect-desk-overlay .start-qualification-button');
-  await wait('!!document.querySelector(".qualification-panel-v2")','explicit UI start');
+  await textClick('.prospect-desk-overlay .aw-next-step-actions button','Démarrer la prospection');
+  /* P6a (F47) : depuis la fiche de R3, le démarrage explicite passe le dossier à « À qualifier » ; la qualification se remplit dans l'onglet Besoins, atteint par le bouton principal de la carte « Prochaine étape ». */
+  await wait('[...document.querySelectorAll(".prospect-desk-overlay .aw-next-step-actions button")].some(b=>b.textContent.includes("Compléter la qualification"))','qualification step offered after explicit start');
+  await textClick('.prospect-desk-overlay .aw-next-step-actions button','Compléter la qualification');
+  await wait('!!document.querySelector(".qualification-panel-v2")','qualification panel in the Besoins tab');
   db.workflow.saveNeed('prospect',p.id,{otherText:'CONVERGENCE SITE'});await emit();await sleep(100);
   test(db.crm.listProspects().find(item=>item.id===p.id).stage==='qualifying','C05 explicit start is distinct from quote creation');
   test(await get('!!document.querySelector(".prospect-qualification-panel,.qualification-panel,.prospect-workspace")')||await get('document.querySelector(".prospect-desk-overlay").textContent.includes("Qualification")'),'C08 qualification available in actual desk');
-  await wait('!!document.querySelector(".qualification-panel-v2 textarea")','actual qualification field');
-  await input('.qualification-panel-v2 textarea','CONVERGENCE QUALIFICATION DIRTY');
+  await wait('!!document.querySelector(".qualification-panel-v2 select[aria-label^=Situation]")','actual qualification field');
+  await js('const e=document.querySelector(".qualification-panel-v2 select[aria-label^=Situation]");Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,"value").set.call(e,"yes");e.dispatchEvent(new Event("change",{bubbles:true}))');await sleep(80);
   await js('window.__combinedDesk=document.querySelector(".prospect-desk-overlay")');
   const before=dialogs.length;await search('CONVERGENCE QUOTE','quote',q.id);
   await wait('!!document.querySelector(".search-results-panel [role=alert]")','qualification Stay');
   test(dialogs.length===before+1&&dialogs.at(-1).defaultId===0,'C07 dirty qualification asks exactly once, Stay default');
-  test(await get('window.__combinedDesk===document.querySelector(".prospect-desk-overlay")&&document.querySelector(".qualification-panel-v2 textarea").value==="CONVERGENCE QUALIFICATION DIRTY"'),'C07 search refusal keeps mounted desk and qualification draft');
+  test(await get('window.__combinedDesk===document.querySelector(".prospect-desk-overlay")&&document.querySelector(".qualification-panel-v2 select[aria-label^=Situation]").value==="yes"'),'C07 search refusal keeps mounted desk and qualification draft');
   await js('document.querySelector(".global-search input").focus()');win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(80);
   const realSave=db.crm.updateProspectQualificationBriefIfUnchanged.bind(db.crm);let rejectSave;
   db.crm.updateProspectQualificationBriefIfUnchanged=()=>new Promise((_resolve,reject)=>{rejectSave=reject;});
@@ -51,18 +54,24 @@ module.exports=async context=>{
    test(dialogs.length===pendingCount+1&&await get('window.__combinedDesk===document.querySelector(".prospect-desk-overlay")'),'C07 pending qualification blocks search replacement without remount');
    rejectSave(Error('Injected combined qualification save refusal'));
    await wait('!document.querySelector(".qualification-actions button").disabled','qualification failure completed');
-   test(await get('document.querySelector(".qualification-panel-v2 textarea").value==="CONVERGENCE QUALIFICATION DIRTY"'),'C07 failed pending save never clears qualification draft');
+   test(await get('document.querySelector(".qualification-panel-v2 select[aria-label^=Situation]").value==="yes"'),'C07 failed pending save never clears qualification draft');
   }finally{db.crm.updateProspectQualificationBriefIfUnchanged=realSave;}
   await js('document.querySelector(".global-search input").focus()');win.webContents.sendInputEvent({type:'keyDown',keyCode:'Escape'});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});await sleep(80);
   await textClick('.qualification-actions button','Enregistrer la qualification');
   await wait('!document.querySelector(".qualification-actions button").disabled','qualification save confirmed');
-  test(db.crm.listProspects().find(item=>item.id===p.id).projectSummary==='CONVERGENCE QUALIFICATION DIRTY','C08 inbound qualification project summary persisted through optimistic IPC');
-  db.crm.updateProspectQualification(p.id,{projectSummary:'CONVERGENCE SITE',decisionStatus:'unknown',budgetStatus:'not_disclosed',timelineStatus:'not_disclosed'});
+  await textClick('.qualification-panel-v2 button','Enregistrer le décisionnaire');
+  for(let i=0;i<100&&db.crm.listProspects().find(item=>item.id===p.id).decisionStatus!=='yes';i++)await sleep(30);
+  test(db.crm.listProspects().find(item=>item.id===p.id).decisionStatus==='yes','C08 decision status saved from the qualification panel persists on the same Prospect');
+  /* P6a (F47) : le formulaire Besoins, monté depuis l'onglet, détecte toute modification faite ailleurs (« Conflit entre fenêtres ») ; le parcours ne touche donc plus au résumé derrière lui. */
+  db.crm.updateProspectQualification(p.id,{decisionStatus:'unknown',budgetStatus:'not_disclosed',timelineStatus:'not_disclosed'});
   db.crm.changeProspectStage(p.id,'need_identified',null,true);await emit();
-  await wait('document.querySelector(".need-identification-fields textarea")?.value==="CONVERGENCE SITE"','actual Needs model loaded');
+  /* P6a (F47) : les écritures du parcours en base font avancer la version du dossier ; comme un utilisateur, on quitte l'onglet Besoins puis on y revient pour remonter un formulaire à jour (sinon : « Conflit entre fenêtres », comportement voulu). */
+  await wait('(await window.atoumweb.crm.prospects.list()).find(x=>x.id==='+JSON.stringify(p.id)+')?.stage==="need_identified"','list refreshed after the parcours database writes');await sleep(1200);
+  await textClick('.prospect-desk-overlay [role=tab]','Devis');await sleep(250);await textClick('.prospect-desk-overlay [role=tab]','Besoins');await sleep(250);
+  await wait('!!document.querySelector(".need-identification-fields textarea")','actual Needs form mounted in the Besoins tab');
   await input('.need-identification-fields textarea','CONVERGENCE NEEDS');
-  await textClick('.need-identification-fields button','Enregistrer l’identification du besoin');
-  await wait(`(await window.atoumweb.crm.prospects.list()).find(p=>p.id===${JSON.stringify(p.id)})?.projectSummary==='CONVERGENCE NEEDS'&&!document.querySelector('.need-identification-fields button.primary-button').disabled`,'Needs save confirmed by persisted model');
+  await textClick('.needs-save-row button','Enregistrer');
+  await wait(`(await window.atoumweb.crm.prospects.list()).find(p=>p.id===${JSON.stringify(p.id)})?.projectSummary==='CONVERGENCE NEEDS'&&!document.querySelector('.needs-save-row button.primary-button')`,'Needs save confirmed by persisted model');
   test(db.crm.listProspects().find(item=>item.id===p.id).projectSummary==='CONVERGENCE NEEDS','C08 actual Needs saves correct Prospect, existing quote not duplicated');
   test(db.quotes.list({prospectId:p.id}).length===1,'C08 qualification and Needs never duplicate the Quote');
   await js('document.querySelector(".prospect-desk-overlay .close-detail").click()');await sleep(80);
@@ -85,11 +94,12 @@ module.exports=async context=>{
   test(project.id===projectId&&project.client_account_id===accepted.acceptedClientAccountId&&project.commercial_state!=='provisional','C08 acceptance activates same Project and links same Client');
   await emit();await search('CONVERGENCE JOURNEY','client',accepted.acceptedClientAccountId);await loaded('client',accepted.acceptedClientAccountId);
   test(await get('document.querySelector(".client-summary-panel").dataset.searchEntityId')===accepted.acceptedClientAccountId,'C08 converted Client navigation uses actual ID');
-  await navigate('Prospection');await textClick('.prospect-view-switch button','Parcours commercial');await textClick('.pipeline-conversion-history button','Voir les conversions');
-  await click('.history-prospect-row');await loaded('prospect',p.id);
-  test(await get('document.querySelector(".history-view-stack [data-search-entity-type=prospect]")?.dataset.searchEntityId')===p.id,'C02 Conversion pane acknowledges converted Prospect');
-  await input('.history-view-stack .inline-search','NO MATCH CONVERGENCE');
-  test(await get('!document.querySelector(".history-view-stack [data-search-entity-type=prospect]")'),'C02 filtered historical pane is never falsely acknowledged');
+  await navigate('Prospection');await textClick('.prospect-view-switch button','Parcours commercial');await textClick('.pipeline-conversion-history button','Clients acquis');
+  /* P6a (F47) : depuis R3, l'historique est un tableau ; le détail d'une ligne ne porte plus d'attribut d'identité de recherche, on vérifie donc le dossier affiché. */
+  await textClick('.prospect-history-table button','Consulter');await wait('document.querySelector(".prospect-history-detail h2")?.textContent.includes("CONVERGENCE JOURNEY")','history detail of the converted Prospect');
+  test(await get('document.querySelector(".prospect-history-detail h2")?.textContent.includes("CONVERGENCE JOURNEY")'),'C02 Conversion pane shows the converted Prospect it was asked for');
+  await input('.history-view-stack input[aria-label^=Rechercher]','NO MATCH CONVERGENCE');
+  test(await get('document.querySelectorAll(".prospect-history-table tbody tr").length===0'),'C02 filtered historical pane lists no dossier when nothing matches');
   await search('CONVERGENCE JOURNEY','prospect',p.id);await loaded('prospect',p.id);
   test(await get(`document.querySelector('[data-search-entity-type=prospect][data-search-entity-id="${p.id}"]').getClientRects().length>0&&document.querySelector('.prospect-detail-panel').textContent.includes('CONVERGENCE JOURNEY')`),'C02 search from filtered Conversion returns to visible exact record');
   // Two real list refreshes return out of order while the actual Prospect remains selected.
@@ -124,8 +134,8 @@ module.exports=async context=>{
   require(fixture).finalizeForTest(db.database,db.quotes,agreed.id);require(fixture).sendForTest(db.quotes,agreed.id);db.quotes.confirmPrincipleAgreement(agreed.id);
   await navigate('Accueil');await wait('document.querySelectorAll("[data-home-source][data-source-status=ready]").length===9','combined Home sources');
   test(await get('document.querySelectorAll("[data-home-pipeline]").length===7&&document.querySelector("[data-home-pipeline=finalization] strong").textContent==="1"&&document.querySelector("[data-home-pipeline=conversions] strong").textContent==="1"'),'C06/C09 Home reuses real six+one projection including current E73 and archived historical Conversion');
-  await click('[data-home-pipeline=conversions]');await wait('!!document.querySelector(".history-prospect-row")','Home Conversion navigation');
-  test(await get('document.querySelector(".prospect-toolbar").textContent.includes("Conversions réelles")'),'C08 Home Conversion opens existing historical view');
+  await click('[data-home-pipeline=conversions]');await wait('!!document.querySelector(".prospect-history-table tbody tr")','Home Conversion navigation');
+  test(await get('document.querySelector(".prospect-toolbar").textContent.includes("Clients acquis")'),'C08 Home Conversion opens existing historical view');
   const qa=db.quotes.create({prospectId:active.id,subject:'CONVERGENCE LATE A'}),qb=db.quotes.create({prospectId:active.id,subject:'CONVERGENCE LATE B'});
   const realGet=db.quotes.get.bind(db.quotes);let reads=0,finish,rejectRead;
   db.quotes.get=id=>{const value=realGet(id);if(id===qa.id&&++reads===2)return new Promise((resolve,reject)=>{finish=()=>resolve(value);rejectRead=reject;});return value;};
