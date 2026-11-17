@@ -363,6 +363,19 @@ module.exports = async ({win, db, evalUI: js, get, wait, navigate, test, sleep, 
 
     // F86 : passage « Contrôler avant devis » retiré : le pré-devis a été remplacé par le devis intégré à la fiche (3c118101, 23/10/2026).
     test(db.quotes.list({prospectId:needProspect.id}).length===0,'R03C-08: la qualification seule ne crée aucun devis');
+    // 17/11/2026 : création du devis depuis la fiche de travail (onglet Devis, assistant intégré), à la place de l’ancien pré-devis.
+    await clickText('.prospect-desk-overlay [role=tab]','Devis');
+    await wait('!!document.querySelector(".prospect-desk-overlay .quote-wizard")','assistant de devis dans la fiche');
+    test(await get('document.querySelector(".prospect-desk-overlay .quote-wizard-title")?.textContent.includes("TEST 03C Besoin Dijon")'),
+      'R03C-08: l’assistant est déjà adressé au prospect de la fiche');
+    for(let i=0;i<8&&!(await get('[...document.querySelectorAll(".prospect-desk-overlay .quote-wizard button")].some(b=>b.textContent.trim()==="Créer le devis")'));i++)
+      await clickText('.prospect-desk-overlay .quote-wizard button','Suivant →');
+    test(db.quotes.list({prospectId:needProspect.id}).length===0,'R03C-08: parcourir l’assistant ne crée aucun devis');
+    await clickText('.prospect-desk-overlay .quote-wizard button','Créer le devis');
+    for(let i=0;i<100&&db.quotes.list({prospectId:needProspect.id}).length===0;i++)await sleep(70);
+    const made=db.quotes.list({prospectId:needProspect.id});
+    test(made.length===1&&made[0].status==='draft','R03C-08: un seul devis brouillon créé après le clic');
+    test(!prospectStage(needProspect.id).clientAccountId,'R03C-08: créer le devis ne convertit pas le prospect');
     test(db.database.get('PRAGMA integrity_check').integrity_check==='ok',
       'R03C-18: intégrité SQLite TEMP après création devis');
     test(db.database.get('PRAGMA integrity_check').integrity_check==='ok','R03B-20: intégrité SQLite TEMP');

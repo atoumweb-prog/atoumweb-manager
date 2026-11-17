@@ -1301,9 +1301,7 @@
    "minorInterventions": 4,
    "maximumMinorMinutes": 30,
    "targetRequirement": "site",
-   "requires": [
-    "woocommerce"
-   ],
+   "requires": [],
    "periodAlignment": "anniversary",
    "quantityMeaning": "billing_periods"
   },
@@ -1315,9 +1313,7 @@
    "minorInterventions": 4,
    "maximumMinorMinutes": 30,
    "targetRequirement": "site",
-   "requires": [
-    "woocommerce"
-   ],
+   "requires": [],
    "periodAlignment": "anniversary",
    "quantityMeaning": "billing_periods"
   },
@@ -1537,5 +1533,8 @@
   "AW-TECH-DEPANNAGE",
   "AW-DEVWP-AJUST",
   "AW-APP-EVOL"
+ ],
+ "_decisions": [
+  "17/11/2026 (Carlos) : maintenance WooCommerce sans exigence de site certifié WooCommerce ; le site est choisi par l’utilisateur."
  ]
 }

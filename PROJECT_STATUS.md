@@ -9,7 +9,12 @@
 - [x] **Hors établissement** : `shared/offPremisesRules.ts` (5 tests) ; échéancier de règle décalé au 8e jour ; échéancier manuel bloquant (`OFF_PREMISES_PAYMENT`) ; contrôle détaillé.
 - **Décisions** : 3 options « délai accéléré » : décision du 11/11 conservée ; 10 offres gardées.
 - **Preuves** : typecheck propre ; suite **342 fichiers, 2 829 tests**. **Autocontrôle de l'auteur.**
-- Prochaine action : simulation puis application des durées et des routines en préproduction ; recettes F85 et devis depuis la fiche prospect ; nouvelle construction de l'application.
+- [x] **Appliqué en préproduction** (accord « Oui, applique ») : durées des 32 modèles (nouvelle version, 97 liens déplacés) et 5 routines ; sauvegardes `avant-durees-modeles-2026-11-17T00-26-15-520Z` et `avant-suivi-apres-vente-2026-11-17T00-26-17-398Z` ; empreinte `416de0126b0aafab`. Contrôle sur copie : 98/98 offres en projet, devis « site vitrine + logo » en un seul projet (19 tâches, durées comprises).
+- [x] **Fiche Site** (décision de Carlos : sites, boutiques, mariage **et landing**) : `ReferentialTemplateSites` (3 tests) et script `apply-template-sites.cjs` ; 7 modèles déclarent un « Site principal ». Conséquence acceptée : un devis « site vitrine + landing page » est refusé (deux sites) et doit être scindé.
+- [x] **Maintenance WooCommerce** (décision de Carlos) : exigence de site certifié WooCommerce retirée (seule la couche d'octobre savait certifier) ; rattachée au site choisi.
+- [x] **Recettes** : F85 recentrée sur les 27 services suivis, **27/27 verts** (25 en recette complète, les 2 maintenances WooCommerce après la décision) ; 03B : création du devis depuis la fiche (75 contrôles).
+- **Preuves** : suite **343 fichiers, 2 832 tests**, typecheck propre. Simulations sur copies ; la fiche Site et la règle WooCommerce ne sont pas encore écrites en préproduction.
+- Prochaine action : accord de Carlos pour écrire la fiche Site et la règle WooCommerce en préproduction ; reconstruire l'application ; push et PR sur accord.
 
 ## 17/11/2026 : finitions F64, F65 et F76 (commit local)
 

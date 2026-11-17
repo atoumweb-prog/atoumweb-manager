@@ -109,9 +109,10 @@ if(!process.versions.electron){
   // A real fake Prospect -> Quote -> provisional Project -> same frozen Project, used as operational context.
   let seed=await newQuote('CONTEXTE-WOO');await openQuote(seed);seed=await addUI(seed,'AW-ECOM-BASE');seed=await prepareUI(seed);const seedProjectId=seed.projectId;seed=await acceptUI(seed);
   check('Native seed Prospect conversion, same Project',seed.projectId===seedProjectId&&!!seed.acceptedClientAccountId);
-  const contextSite=(await call('projects.sites.list',seed.projectId))[0];
+  // 17/11/2026 : les modèles du référentiel ne déclarent pas de Site ; la recette en crée un, explicitement, pour les services rattachés à un site.
+  const contextSite=(await call('projects.sites.list',seed.projectId))[0]??await call('projects.sites.create',seed.projectId,{name:'TEST — site de contexte de la recette'});
   const contextProject=await call('projects.projects.addNode',seed.projectId,{type:'module',name:'TEST — contexte logiciel / document',estimatedMinutes:0});const contextNode=contextProject.nodes.find(n=>n.name==='TEST — contexte logiciel / document');
-  const clientId=seed.acceptedClientAccountId,codeFilter=args.includes('--codes')?option('--codes').split(','):null;
+  const clientId=seed.acceptedClientAccountId,codeFilter=args.includes('--codes')?option('--codes').split(','):references.filter(r=>database.database.get("SELECT 1 FROM catalog_operational_links WHERE catalog_version_id=? AND status='ready'",[r.currentVersion.id])).map(r=>r.canonicalCode); // 17/11/2026 : par défaut, les services suivis (8B) ; la production passe par les modèles de projet (tests ReferentialProjectTemplates, contrôle 98/98).
   const mainGbpProject=await call('projects.projects.addNode',seed.projectId,{type:'module',name:'TEST — établissement GBP principal'}),mainGbpNode=mainGbpProject.nodes.find(n=>n.name==='TEST — établissement GBP principal');
   const extraGbpProject=await call('projects.projects.addNode',seed.projectId,{type:'module',name:'TEST — établissement GBP supplémentaire'}),extraGbpNode=extraGbpProject.nodes.find(n=>n.name==='TEST — établissement GBP supplémentaire');
   let gbp=await newQuote('GBP-PRINCIPAL-DE-CONTEXTE',clientId);await openQuote(gbp);gbp=await addUI(gbp,'AW-SEO-GBP-M');
@@ -131,6 +132,8 @@ if(!process.versions.electron){
     check(code+' native code/version label',await js(`document.querySelector('.quote-lines').innerText.includes(${JSON.stringify(code)})`));
     check(code+' Abby commercial native text',await js(`document.querySelector('[aria-label="Bloc commercial Abby"]').value.includes(${JSON.stringify(code)})`));
     const params={};if(rules?.attachment){params.parentLineId=parent.id;if(rules.attachment.kind==='priority'){params.requestedDeadline='2027-02-01T10:00';params.availabilityConfirmed=true;params.acceptedDeadline='2027-02-02T10:00';}}
+    // Règle du Manager : une offre qui renvoie à « même périmètre… » exige un périmètre détaillé sur la ligne avant finalisation.
+    if(/mêmes? (périmètre|exclusions|prérequis)|mêmes? .*mensuel/i.test(JSON.stringify(item.currentVersion.inclusions||[])))params.scope='TEST — périmètre détaillé explicitement pour ce dossier';
     if(model.estimateRequired){params.scope='TEST — périmètre spécifique décrit';params.currentEstimateMinutes=model.referenceMinutes+240;params.productionPlan='TEST — production complémentaire et contrôle définis explicitement pour ce dossier';}
     if(model.lot==='8B'){params.serviceStartDate=new Date().toISOString().slice(0,10);params.periodAlignment='anniversary';params.operationalProjectId=seed.projectId;if(config.operations.targetRequirement==='site')params.siteId=contextSite.id;else if(config.operations.targetRequirement==='context')params.contextNodeId=code.startsWith('AW-SEO-GBP-')?(config.operations.kind==='recurring_addon'?extraGbpNode.id:mainGbpNode.id):contextNode.id;if(config.operations.kind==='recurring_addon')params.parentOperationalSaleId=principalGbpSale.id;if(config.operations.setupEstimateRequired)params.setupEstimateMinutes=60;}
     if(Object.keys(params).length)await call('quotes.setLineParameters',line.id,params);
@@ -187,8 +190,8 @@ if(!process.versions.electron){
       }
 }
     result.proof.push('Snapshot contractuel figé ; acceptation explicite TEST');
-    await openQuote(quote);await click('📋 Copier pour Abby','.quote-detail-panel button');check(code+' contract clipboard frozen', (await clipboard.readText()).includes(quote.contractTextSnapshot.slice(0,80)));
-    await click('Prévisualiser côté client','.quote-detail-panel button');await wait('!!document.querySelector(".quote-document")');
+    await openQuote(quote);await click('Copier pour Abby','.quote-detail-panel button');{const frozen=quote.contractSnapshotJson&&JSON.parse(quote.contractSnapshotJson).presentation?.text||quote.contractTextSnapshot; /* G1 : la copie reprend le contrat tel que présenté, figé */ check(code+' contract clipboard frozen',(await clipboard.readText()).includes(String(frozen).slice(0,80)));}
+    await click('Prévisualiser côté client','.quote-detail-panel button');await wait('!!document.querySelector(".quote-client-preview .quote-document-frame")'); /* G1 : aperçu dans un cadre */
     const pdf=path.join(output,code+'-PDF-TEST-accepte.pdf');fs.writeFileSync(pdf,await win.webContents.printToPDF({printBackground:true}));
     await click('Fermer','.quote-client-preview button');
     const chooser=dialog.showOpenDialog;dialog.showOpenDialog=async()=>({canceled:false,filePaths:[pdf]}); // Only the external TEST file chooser is supplied by automation.
@@ -205,7 +208,7 @@ if(!process.versions.electron){
   }
   const supplemental=[];
   const record=(name,data)=>supplemental.push({name,...data});
-  if(!codeFilter||args.includes('--supplements')){
+  if(args.includes('--supplements')){ // scénarios d’options et révisions écrits pour les actions de production d’octobre (8A) : sur demande seulement
     let q=await newQuote('OPTIONS-ET-REVISIONS',clientId);await openQuote(q);q=await addUI(q,'AW-WEB-VITRINE');
     const available=await call('projects.projects.previewQuote',{quoteId:q.id,templateVersionId:null});
     check('Available option has no effects',available.operations.actions.filter(a=>a.action).length===21);record('Option disponible non achetée',{quoteId:q.id,actions:21});
